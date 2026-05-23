@@ -116,19 +116,19 @@ used.
 All final validation commands completed successfully.
 
 ```text
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" analyze
+flutter analyze
 Result: PASS. No issues found.
 
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/p0_importers_test.dart --concurrency=1
+flutter test test/p0_importers_test.dart --concurrency=1
 Result: PASS. All tests passed.
 
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/p0_importers_test.dart --concurrency=1
+flutter test test/p0_importers_test.dart --concurrency=1
 Result: PASS. All tests passed.
 
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/knowledge_base_release_service_test.dart
+flutter test test/knowledge_base_release_service_test.dart
 Result: PASS. All tests passed.
 
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/clinical_decision_support_service_test.dart test/runtime_rule_engine_test.dart test/database_backed_meal_check_usecase_test.dart
+flutter test test/clinical_decision_support_service_test.dart test/runtime_rule_engine_test.dart test/database_backed_meal_check_usecase_test.dart
 Result: PASS. All tests passed.
 ```
 

@@ -65,8 +65,8 @@ Rules must pass both static contract checks and live environment checks.
 Static checks:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/firebase_user_binding_test.dart
+cd ParkinSUM
+flutter test test/firebase_user_binding_test.dart
 node tool/firestore_rules_contract_check.mjs
 ```
 

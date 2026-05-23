@@ -1,11 +1,11 @@
 {
-    "name": "flutter_application_1",
-    "short_name": "flutter_application_1",
+    "name": "ParkinSUM Companion",
+    "short_name": "ParkinSUM",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Production-architecture prototype for Firebase governance and CDSS-style rule explanation.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

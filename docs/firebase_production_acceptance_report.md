@@ -140,14 +140,13 @@ System setup completed on this machine:
 
 - Homebrew `node` installed; `npm 11.12.1` is available.
 - Homebrew `corepack 0.35.0` is available.
-- `~/.zshrc` now adds `/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin`
-  to interactive zsh `PATH`.
+- `~/.zshrc` now adds the local Flutter SDK `bin` directory to interactive
+  zsh `PATH`.
 - Google Cloud CLI installed, and `~/.zshrc` now adds
   `/opt/homebrew/share/google-cloud-sdk/bin` to interactive zsh `PATH`.
 - Application Default Credentials were created with
-  `gcloud auth application-default login` at
-  `/Users/zhouzhenghang/.config/gcloud/application_default_credentials.json`;
-  `~/.zshrc` exports this path as `GOOGLE_APPLICATION_CREDENTIALS`.
+  `gcloud auth application-default login`; the local shell exports the ADC
+  path as `GOOGLE_APPLICATION_CREDENTIALS`.
 - `firebase-admin` dependency installed into local `node_modules`.
 - `firebase-admin` was updated to `13.10.0`.
 - `npm audit --audit-level=low`: PASS, found 0 vulnerabilities.

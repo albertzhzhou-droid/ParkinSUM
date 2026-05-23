@@ -29,8 +29,8 @@ to the wrong project.
 Local mode is the default. It does not pass `PARKINSUM_BACKEND=firebase`.
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" run -d chrome
+cd ParkinSUM
+flutter run -d chrome
 ```
 
 Use local mode for UI work, local persistence checks, and development that does
@@ -41,8 +41,8 @@ not need real Firebase Auth or Firestore behavior.
 Firebase mode is enabled with a Dart define:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" run -d chrome --dart-define=PARKINSUM_BACKEND=firebase
+cd ParkinSUM
+flutter run -d chrome --dart-define=PARKINSUM_BACKEND=firebase
 ```
 
 Use Firebase mode for account binding, Firestore rules checks, backend-backed
@@ -105,7 +105,7 @@ monitoring, and user data operations, use
 Use the guarded deployment helper for release validation:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
+cd ParkinSUM
 PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage tool/release_deploy.sh
 ```
 
@@ -127,7 +127,7 @@ PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage tool/release_d
 Deploy rules and indexes only after reviewing the target Firebase project:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
+cd ParkinSUM
 firebase deploy --only firestore:rules,firestore:indexes --project parkinsum-companion
 ```
 
@@ -152,22 +152,22 @@ Production rule expectations:
 Build the Firebase-backed web artifact:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion
+cd ParkinSUM
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion
 ```
 
 Build the stage Firebase-backed web artifact:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage
+cd ParkinSUM
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage
 ```
 
 Build the dev Firebase-backed web artifact:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=dev --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-dev
+cd ParkinSUM
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=dev --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-dev
 ```
 
 The output is `build/web`. Stage and prod now use Firebase Hosting with the
@@ -180,8 +180,8 @@ contact, monitoring, backup, and reviewer sign-off blockers are closed.
 Export curated official catalog/CDSS seed rows:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/dart" run tool/firebase_seed_export.dart --user-uid=<firebase_uid>
+cd ParkinSUM
+dart run tool/firebase_seed_export.dart --user-uid=<firebase_uid>
 ```
 
 The export requires a uid so CDSS rows are written under
@@ -191,14 +191,14 @@ user-scoped.
 Dry-run upload:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
+cd ParkinSUM
 node tool/firestore_seed_upload.mjs build/firebase_seed/official_core_seed.json --dry-run
 ```
 
 Upload after operator approval:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
+cd ParkinSUM
 node tool/firestore_seed_upload.mjs build/firebase_seed/official_core_seed.json
 ```
 
