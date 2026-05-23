@@ -26,6 +26,6 @@ Run before submitting:
 ```sh
 npm run public:preflight
 node tool/firestore_rules_contract_check.mjs
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" analyze
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test --concurrency=1
+flutter analyze
+flutter test --concurrency=1
 ```

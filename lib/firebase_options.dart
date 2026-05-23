@@ -126,7 +126,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '429989696553',
     projectId: 'parkinsum-companion',
     storageBucket: 'parkinsum-companion.firebasestorage.app',
-    iosBundleId: 'com.example.flutterApplication1',
+    iosBundleId: 'com.parkinsum.companion',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -135,6 +135,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '429989696553',
     projectId: 'parkinsum-companion',
     storageBucket: 'parkinsum-companion.firebasestorage.app',
-    iosBundleId: 'com.example.flutterApplication1',
+    iosBundleId: 'com.parkinsum.companion',
   );
 }
