@@ -1,0 +1,41 @@
+name: parkinsum_companion
+description: ParkinSUM Companion (local-first) Flutter app.
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.6
+
+  # 状态管理（代码里用到 Provider / ChangeNotifierProxyProvider）
+  provider: ^6.1.2
+
+  # 本地持久化（DataService 的 SharedPreferences 实现）
+  shared_preferences: ^2.2.3
+  sqflite: ^2.3.3+1
+  path: ^1.9.0
+  yaml: ^3.1.2
+  http: ^1.2.1
+  xml: ^6.5.0
+  archive: ^3.6.1
+  csv: ^6.0.0
+  firebase_core: ^4.7.0
+  firebase_auth: ^6.4.0
+  cloud_firestore: ^6.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

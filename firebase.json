@@ -1,0 +1,88 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "parkinsum-companion",
+          "appId": "1:429989696553:android:2b43afa49913cccede3838",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "parkinsum-companion",
+          "appId": "1:429989696553:ios:8f5a5d283008a451de3838",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "parkinsum-companion",
+          "appId": "1:429989696553:ios:8f5a5d283008a451de3838",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "parkinsum-companion",
+          "configurations": {
+            "android": "1:429989696553:android:2b43afa49913cccede3838",
+            "ios": "1:429989696553:ios:8f5a5d283008a451de3838",
+            "macos": "1:429989696553:ios:8f5a5d283008a451de3838",
+            "web": "1:429989696553:web:79cbc62531c6861ade3838",
+            "windows": "1:429989696553:web:f31c4b0549292b71de3838"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|mjs|css|wasm|png|jpg|jpeg|gif|svg|ico|ttf|woff|woff2)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

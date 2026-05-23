@@ -1,0 +1,29 @@
+name: Public release preflight
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - run: npm ci
+      - run: npm run public:preflight
+      - run: node tool/firestore_rules_contract_check.mjs
+      - run: flutter analyze
+      - run: flutter test --concurrency=1

@@ -1,0 +1,37 @@
+name: Bug report
+description: Report a reproducible issue with the public prototype.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include personal health information, medication schedules, symptoms, Firebase tokens, service account keys, user exports, raw audit logs, real emails, or full UIDs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Use synthetic/sample data only.
+      placeholder: "1. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser, Flutter version, OS, or command output with secrets removed.
+    validations:
+      required: false

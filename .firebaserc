@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "parkinsum-companion-stage",
+    "dev": "parkinsum-companion-dev",
+    "stage": "parkinsum-companion-stage",
+    "prod": "parkinsum-companion"
+  }
+}

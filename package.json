@@ -1,0 +1,31 @@
+{
+  "name": "parkinsum-p0-ops",
+  "private": true,
+  "type": "module",
+  "description": "ParkinSUM Firebase P0 operator tooling.",
+  "scripts": {
+    "public:preflight": "node tool/public_repo_preflight.mjs",
+    "rules:contract": "node tool/firestore_rules_contract_check.mjs",
+    "firebase:ops": "node tool/firebase_ops.mjs",
+    "firebase:live-probe": "node tool/firestore_live_probe.mjs",
+    "firebase:stage-test-accounts": "node tool/firebase_stage_test_accounts.mjs",
+    "firebase:prod-readonly-accounts": "node tool/firebase_prod_readonly_accounts.mjs",
+    "firebase:token-refresh": "node tool/firebase_token_refresh.mjs",
+    "real-data:acceptance": "node tool/real_data_acceptance_report.mjs",
+    "operator:structure": "node tool/production_structure_check.mjs",
+    "operator:backup-prereq": "node tool/backup_prereq_check.mjs",
+    "operator:authenticated-e2e": "node tool/authenticated_e2e_smoke.mjs",
+    "operator:monitoring-gate": "node tool/monitoring_gate.mjs",
+    "operator:clinical-engine": "node tool/clinical_engine_gate.mjs",
+    "operator:audit-summary": "node tool/operator_audit_summary.mjs",
+    "operator:hosting-smoke": "node tool/hosting_smoke.mjs",
+    "operator:clinical-review": "node tool/clinical_review_report.mjs",
+    "operator:gate": "node tool/operator_gate.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
+  }
+}

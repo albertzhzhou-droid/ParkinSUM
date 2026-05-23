@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdminOrImporter() {
+      return signedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.cdssImporter == true
+      );
+    }
+
+    match /users/{uid}/{document=**} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /users/{uid}/cdss_tables/{table}/rows/{rowId} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /app_catalog/{table}/rows/{rowId} {
+      allow read: if signedIn();
+      allow write: if isAdminOrImporter();
+    }
+
+    match /cdss_tables/{table}/rows/{rowId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

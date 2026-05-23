@@ -1,0 +1,41 @@
+const Map<String, dynamic> pdrJsonSchema = {
+  'required': [
+    'rule_id',
+    'version',
+    'status',
+    'rule_type',
+    'priority_band',
+    'jurisdiction',
+    'when',
+    'then',
+    'provenance',
+  ],
+  'properties': {
+    'rule_id': {'type': 'string'},
+    'version': {'type': 'string'},
+    'status': {
+      'type': 'string',
+      'enum': ['draft', 'active', 'deprecated', 'disabled'],
+    },
+    'rule_type': {
+      'type': 'string',
+      'enum': [
+        'hard_constraint',
+        'soft_rule',
+        'temporal_rule',
+        'dose_dependent_rule',
+        'jurisdiction_override',
+        'source_resolution_rule',
+        'escalation_rule',
+      ],
+    },
+    'priority_band': {'type': 'integer'},
+    'specificity_band': {'type': 'integer'},
+    'jurisdiction': {'type': 'array'},
+    'applies_to': {'type': 'object'},
+    'when': {'type': 'object'},
+    'then': {'type': 'object'},
+    'provenance': {'type': 'object'},
+    'override': {'type': 'object'},
+  },
+};
