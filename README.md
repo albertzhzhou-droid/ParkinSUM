@@ -54,33 +54,32 @@ health decisions.
 
 ## Local Commands
 
-Run all commands from this directory.
+Clone the repository and run commands from the repository root. The examples
+assume `flutter`, `dart`, `node`, and `npm` are available on `PATH`.
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" pub get
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" analyze
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test
+git clone https://github.com/albertzhzhou-droid/ParkinSUM.git
+cd ParkinSUM
+flutter pub get
+flutter analyze
+flutter test
 ```
 
 Run the app in local mode:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" run -d chrome
+flutter run -d chrome
 ```
 
 Run the public repository preflight:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
 npm run public:preflight
 ```
 
 Run Firebase rules contract validation:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
 node tool/firestore_rules_contract_check.mjs
 ```
 
@@ -93,21 +92,18 @@ health data in public demos.
 Run the app against stage Firebase:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" run -d chrome --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage
+flutter run -d chrome --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage
 ```
 
 Build the Firebase-backed web artifact:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion
 ```
 
 Lightweight operator gates:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
 node tool/operator_gate.mjs --env stage --project parkinsum-companion-stage --release-id p1_stage_gate
 node tool/operator_gate.mjs --env prod --project parkinsum-companion --read-only --release-id p1_prod_gate
 ```
@@ -132,8 +128,7 @@ Export and upload workflows are internal operator examples. Do not run them
 against public demo data or with real user health records.
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/dart" run tool/firebase_seed_export.dart --user-uid=<firebase_uid>
+dart run tool/firebase_seed_export.dart --user-uid=<firebase_uid>
 node tool/firestore_seed_upload.mjs build/firebase_seed/official_core_seed.json --dry-run
 ```
 

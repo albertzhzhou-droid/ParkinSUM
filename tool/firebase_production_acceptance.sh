@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-FLUTTER_BIN="${FLUTTER_BIN:-/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter}"
+FLUTTER_BIN="${FLUTTER_BIN:-flutter}"
 ENVIRONMENT="${PARKINSUM_ENV:-prod}"
 FIREBASE_PROJECT_ID="${PARKINSUM_FIREBASE_PROJECT_ID:-${FIREBASE_PROJECT_ID:-parkinsum-companion}}"
 RUN_FULL_TESTS="${RUN_FULL_TESTS:-0}"
@@ -43,8 +43,8 @@ done
 
 cd "$ROOT_DIR"
 
-if [[ ! -x "$FLUTTER_BIN" ]]; then
-  echo "Flutter binary is not executable: $FLUTTER_BIN" >&2
+if ! command -v "$FLUTTER_BIN" >/dev/null 2>&1 && [[ ! -x "$FLUTTER_BIN" ]]; then
+  echo "Flutter binary is not available: $FLUTTER_BIN" >&2
   exit 2
 fi
 

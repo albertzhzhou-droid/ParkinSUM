@@ -37,12 +37,12 @@ professional review is not claimed.
 Recommended commands:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" pub get
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" analyze
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/p0_importers_test.dart --concurrency=1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" build web --dart-define=PARKINSUM_BACKEND=firebase
+cd ParkinSUM
+flutter pub get
+flutter analyze
+flutter test
+flutter test test/p0_importers_test.dart --concurrency=1
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase
 ```
 
 Latest P0 local gate results:

@@ -31,11 +31,11 @@ operator checks before publishing a CDSS snapshot.
 
 ## Verification commands
 
-Run these from `flutter_application_1` before a production_candidate publish:
+Run these from the repository root before a production_candidate publish:
 
 ```sh
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" analyze
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/knowledge_base_release_service_test.dart test/clinical_decision_support_service_test.dart test/runtime_rule_engine_test.dart test/database_backed_meal_check_usecase_test.dart test/p0_importers_test.dart
+flutter analyze
+flutter test test/knowledge_base_release_service_test.dart test/clinical_decision_support_service_test.dart test/runtime_rule_engine_test.dart test/database_backed_meal_check_usecase_test.dart test/p0_importers_test.dart
 node tool/firestore_rules_contract_check.mjs
 ```
 
@@ -76,7 +76,7 @@ approval:
 For importer smoke/audit verification, prefer:
 
 ```sh
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test test/p0_importers_test.dart --concurrency=1
+flutter test test/p0_importers_test.dart --concurrency=1
 ```
 
 The importer audit smoke should be repeatable. Do not remove audit assertions to

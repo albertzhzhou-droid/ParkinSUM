@@ -11,7 +11,7 @@ const markdownOutput = output.replace(/\.json$/, '.md');
 const flutter =
   args.flutter ??
   process.env.FLUTTER_BIN ??
-  '/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter';
+  'flutter';
 
 const evidenceFiles = [
   'test/database_backed_meal_check_usecase_test.dart',

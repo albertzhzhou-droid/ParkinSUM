@@ -139,9 +139,9 @@ After applying rollback:
 Minimum verification:
 
 ```sh
-cd /Users/zhouzhenghang/Desktop/ParkinSUM/flutter_application_1
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" analyze
-"/Users/zhouzhenghang/Applications/Flutter SDK/flutter/bin/flutter" test
+cd ParkinSUM
+flutter analyze
+flutter test
 ```
 
 Then verify in Firebase/stage or prod:
