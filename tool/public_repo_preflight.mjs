@@ -15,10 +15,14 @@ const requiredFiles = [
   'PUBLIC_SHOWCASE_READINESS.md',
   'SECURITY.md',
   'CONTRIBUTING.md',
+  'CHANGELOG.md',
   'LICENSE',
   'docs/PUBLIC_DEMO_BOUNDARY.md',
   'docs/ARCHITECTURE.md',
   'docs/RELEASE_EVIDENCE_INDEX.md',
+  'docs/release/v0.1.0-alpha-notes.md',
+  'docs/release/synthetic-demo-data.md',
+  'docs/release/release-checklist.md',
   '.github/ISSUE_TEMPLATE/bug_report.yml',
   '.github/ISSUE_TEMPLATE/config.yml',
   '.github/pull_request_template.md',
@@ -256,6 +260,8 @@ function checkContentSecrets(files) {
     if (/AIza[0-9A-Za-z_-]{20,}/.test(content)) {
       if (isLikelyFirebaseWebConfig(file.relative, content)) {
         add('WARN', 'firebase_web_api_key_present', 'Firebase Web API key appears in client config; expected public Firebase config, not an admin secret.', file.relative);
+      } else if (isGenerated(file.relative)) {
+        add('WARN', 'generated_api_key_like_value', 'API-key-like value appears in generated/local build output.', file.relative);
       } else {
         add('BLOCKER', 'api_key_like_secret', 'API-key-like value appears outside known Firebase client config.', file.relative);
       }

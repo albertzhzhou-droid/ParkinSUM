@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="ParkinSUM Companion is an educational Flutter prototype for local-first diet-medication awareness demonstrations using synthetic data."
+    />
+    <title>ParkinSUM Companion | Educational Prototype</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23166146'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='24' font-family='Arial' font-weight='700' fill='white'%3EPS%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="#home" aria-label="ParkinSUM Companion home">
+          ParkinSUM
+        </a>
+        <div class="nav-links">
+          <a href="#problem">Problem</a>
+          <a href="#features">Features</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#safety">Safety</a>
+          <a href="#demo">Demo</a>
+          <a href="#roadmap">Roadmap</a>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="home">
+        <div class="hero-content">
+          <p class="eyebrow">Educational digital-health prototype</p>
+          <h1>ParkinSUM Companion</h1>
+          <p class="hero-copy">
+            A local-first Flutter prototype that demonstrates how meal logging,
+            medication context, deterministic rule checks, and evidence-oriented
+            explanations can support education about Parkinson's disease
+            diet-medication awareness.
+          </p>
+          <div class="cta-row" aria-label="Primary actions">
+            <a class="button primary" href="https://github.com/albertzhzhou-droid/ParkinSUM">
+              View GitHub repository
+            </a>
+            <a class="button" href="../../DISCLAIMER.md">Read safety disclaimer</a>
+            <a class="button" href="../../ROADMAP.md">View roadmap</a>
+            <a class="button" href="#demo">View demo</a>
+          </div>
+          <p class="boundary-note">
+            Educational prototype only. Synthetic/demo data only. Not medical
+            advice, not a medical device, and no clinical validation is claimed.
+          </p>
+        </div>
+      </section>
+
+      <section class="section" id="problem">
+        <div class="section-header">
+          <p class="eyebrow">Problem</p>
+          <h2>Health education tools need clear boundaries and explainable behavior.</h2>
+        </div>
+        <div class="split">
+          <p>
+            People learning about Parkinson's disease diet-medication topics may
+            see complex interactions between meals, medication timing, evidence
+            sources, and safety warnings. Public software demos can easily
+            overstate what they prove if they do not separate education from
+            medical advice.
+          </p>
+          <p>
+            ParkinSUM focuses on the software pattern: local-first data flow,
+            deterministic rule checks, source-aware explanations, and visible
+            safety language. The goal is to make the prototype understandable
+            for teachers, mentors, digital-health reviewers, and non-technical
+            visitors without asking them to inspect the code first.
+          </p>
+        </div>
+      </section>
+
+      <section class="section alt" id="features">
+        <div class="section-header">
+          <p class="eyebrow">Prototype features</p>
+          <h2>What the alpha demonstrates</h2>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <h3>Meal and context flow</h3>
+            <p>
+              A Flutter app flow for synthetic meal entries, medication context,
+              timeline review, and educational result screens.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Deterministic checks</h3>
+            <p>
+              Rule-based interaction checks that show why a prototype result was
+              produced instead of relying on opaque medical claims.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Evidence-oriented copy</h3>
+            <p>
+              User-facing explanations are designed to point back to rule logic,
+              source context, and known limitations.
+            </p>
+          </article>
+          <article class="feature-card">
+            <h3>Public guardrails</h3>
+            <p>
+              Repository policies, release notes, CI checks, and safety
+              documents keep the public showcase limited to education and
+              synthetic/demo data.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="section-header">
+          <p class="eyebrow">Architecture</p>
+          <h2>A small local-first prototype with visible rule boundaries</h2>
+        </div>
+        <div class="architecture-flow" aria-label="Architecture flow">
+          <div>Flutter UI</div>
+          <div>App state</div>
+          <div>Local-first data layer</div>
+          <div>Deterministic rule engine</div>
+          <div>Evidence explanation</div>
+          <div>Educational output</div>
+        </div>
+        <p class="section-copy">
+          Firebase-backed paths exist for internal operator validation and
+          governance review, but the public showcase is intended to run in local
+          mode with synthetic or sample data. See the
+          <a href="../ARCHITECTURE.md">architecture overview</a> and
+          <a href="../RULE_ENGINE.md">rule engine overview</a> for technical
+          detail.
+        </p>
+      </section>
+
+      <section class="section safety" id="safety">
+        <div class="section-header">
+          <p class="eyebrow">Safety boundary</p>
+          <h2>What this project is, and what it is not</h2>
+        </div>
+        <div class="safety-grid">
+          <div>
+            <h3>Appropriate use</h3>
+            <ul>
+              <li>Educational software demonstration</li>
+              <li>Architecture and mentoring discussion</li>
+              <li>Synthetic-data walkthroughs</li>
+              <li>Open-source review of app structure and rule explanations</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Not appropriate for</h3>
+            <ul>
+              <li>Diagnosis, treatment, monitoring, or prevention</li>
+              <li>Medication timing or individualized dietary advice</li>
+              <li>Real patient records or real medication schedules</li>
+              <li>Claims of clinical validation or medical-device approval</li>
+            </ul>
+          </div>
+        </div>
+        <p class="section-copy">
+          Read the <a href="../../DISCLAIMER.md">safety disclaimer</a> and
+          <a href="../PUBLIC_DEMO_BOUNDARY.md">public demo boundary</a> before
+          presenting or reusing this project.
+        </p>
+      </section>
+
+      <section class="section alt" id="demo">
+        <div class="section-header">
+          <p class="eyebrow">Demo media</p>
+          <h2>Media slots are ready for synthetic screenshots and GIFs.</h2>
+        </div>
+        <div class="media-grid">
+          <figure class="media-placeholder">
+            <div class="placeholder-box">Screenshot placeholder</div>
+            <figcaption>
+              Dashboard:
+              <code>../assets/screenshots/dashboard.png</code>
+            </figcaption>
+          </figure>
+          <figure class="media-placeholder">
+            <div class="placeholder-box">Screenshot placeholder</div>
+            <figcaption>
+              Meal entry:
+              <code>../assets/screenshots/meal-entry.png</code>
+            </figcaption>
+          </figure>
+          <figure class="media-placeholder">
+            <div class="placeholder-box">GIF placeholder</div>
+            <figcaption>
+              Short demo:
+              <code>../assets/demo/parkinsum-demo.gif</code>
+            </figcaption>
+          </figure>
+        </div>
+        <p class="section-copy">
+          Real public media should be captured only with synthetic or sample
+          data. Follow the
+          <a href="../media-capture-checklist.md">media capture checklist</a>
+          before adding screenshots, GIFs, or videos.
+        </p>
+      </section>
+
+      <section class="section" id="roadmap">
+        <div class="section-header">
+          <p class="eyebrow">Roadmap</p>
+          <h2>Next steps keep the prototype educational and reviewable.</h2>
+        </div>
+        <div class="roadmap-list">
+          <div>
+            <h3>Demo polish</h3>
+            <p>Capture synthetic screenshots and a short demo GIF.</p>
+          </div>
+          <div>
+            <h3>Accessibility and localization</h3>
+            <p>Improve readable copy, language coverage, and inclusive UI review.</p>
+          </div>
+          <div>
+            <h3>Evidence review</h3>
+            <p>Keep rule explanations traceable and limitations visible.</p>
+          </div>
+          <div>
+            <h3>Public-release hygiene</h3>
+            <p>Maintain CI, safety docs, release notes, and synthetic-data checks.</p>
+          </div>
+        </div>
+        <div class="cta-row">
+          <a class="button primary" href="../../ROADMAP.md">View roadmap</a>
+          <a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM">
+            View GitHub repository
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>
+        ParkinSUM Companion is an educational prototype. Use synthetic/demo data
+        only. Not medical advice, not a medical device, and no clinical
+        validation is claimed.
+      </p>
+      <a href="https://github.com/albertzhzhou-droid/ParkinSUM">
+        GitHub repository
+      </a>
+    </footer>
+  </body>
+</html>
