@@ -157,6 +157,7 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Changelog](CHANGELOG.md)
 - [v0.1.0-alpha release notes](docs/release/v0.1.0-alpha-notes.md)
 - [Synthetic demo data](docs/release/synthetic-demo-data.md)
+- [Synthetic demo scenarios](docs/demo-scenarios.md)
 - [Release checklist](docs/release/release-checklist.md)
 - [Project website](docs/site/index.html)
 - [GitHub Pages setup](docs/site/README.md)

@@ -20,6 +20,7 @@ const requiredFiles = [
   'docs/PUBLIC_DEMO_BOUNDARY.md',
   'docs/ARCHITECTURE.md',
   'docs/RELEASE_EVIDENCE_INDEX.md',
+  'docs/demo-scenarios.md',
   'docs/release/v0.1.0-alpha-notes.md',
   'docs/release/synthetic-demo-data.md',
   'docs/release/release-checklist.md',

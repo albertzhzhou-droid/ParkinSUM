@@ -1,0 +1,345 @@
+{
+  "schemaVersion": "0.1.0-alpha",
+  "packId": "parkinsum_synthetic_demo_scenarios_v0_1_alpha",
+  "title": "ParkinSUM Synthetic Demo Scenario Pack",
+  "labels": [
+    "synthetic data",
+    "fictional user",
+    "educational demonstration",
+    "not medical advice",
+    "not a medical device"
+  ],
+  "safetyNotice": {
+    "summary": "This pack uses fictional demo inputs only. It is intended to demonstrate ParkinSUM's educational food-drug interaction awareness flow.",
+    "mustNotUseFor": [
+      "diagnosis",
+      "treatment decisions",
+      "medication timing changes",
+      "dietary instructions",
+      "clinical decision-making",
+      "patient care",
+      "emergency support"
+    ],
+    "patientData": "No real patient, caregiver, account, medication schedule, symptom, location, contact, or clinical record is included."
+  },
+  "fictionalUser": {
+    "id": "demo_user_fictional_alpha",
+    "displayName": "Demo User Alpha",
+    "registrationRegion": "US",
+    "displayLocale": "en-US",
+    "timezone": "America/Toronto",
+    "description": "Fictional educational profile for public demos only."
+  },
+  "activeDrugContext": {
+    "id": "demo_drug_levodopa_context",
+    "genericName": "carbidopa/levodopa",
+    "brandName": "Synthetic Demo Context",
+    "activeIngredients": [
+      "carbidopa",
+      "levodopa"
+    ],
+    "substanceTags": [
+      "levodopa"
+    ],
+    "formulation": "tablet",
+    "dosageForm": "tablet",
+    "route": "oral",
+    "releaseType": "immediate",
+    "dailyDoseMg": 300,
+    "jurisdiction": "US",
+    "disclaimer": "Synthetic medication context for app demonstration only; not a prescription and not a dosing recommendation."
+  },
+  "scenarios": [
+    {
+      "id": "demo_high_protein_near_medication",
+      "title": "High-protein meal near synthetic medication time",
+      "educationalPurpose": "Shows how the baseline levodopa/protein timing awareness rule is surfaced when protein context is high and the meal time is near the synthetic medication event.",
+      "meal": {
+        "id": "demo_meal_high_protein_near_medication",
+        "eatenAt": "2026-01-01T09:00:00Z",
+        "recordedAt": "2026-01-01T09:05:00Z",
+        "occurredAt": "2026-01-01T09:00:00Z",
+        "timeSource": "synthetic_demo_fixed",
+        "timePrecision": "exact",
+        "title": "Synthetic tofu and lentil bowl",
+        "items": [
+          {
+            "foodId": "demo_food_firm_tofu",
+            "foodName": "Synthetic firm tofu",
+            "foodCategory": "protein",
+            "quantityFactor": 1.5,
+            "foodTags": [
+              "synthetic",
+              "demo",
+              "plant_protein"
+            ],
+            "proteinPer100g": 12,
+            "carbsPer100g": 2,
+            "fatPer100g": 7,
+            "fiberPer100g": 1,
+            "sodiumPer100g": 10
+          },
+          {
+            "foodId": "demo_food_lentils",
+            "foodName": "Synthetic cooked lentils",
+            "foodCategory": "protein",
+            "quantityFactor": 1.2,
+            "foodTags": [
+              "synthetic",
+              "demo",
+              "legume"
+            ],
+            "proteinPer100g": 9,
+            "carbsPer100g": 20,
+            "fatPer100g": 0.4,
+            "fiberPer100g": 8,
+            "sodiumPer100g": 2
+          }
+        ]
+      },
+      "intakes": [
+        {
+          "id": "demo_intake_high_protein_context",
+          "drugId": "demo_drug_levodopa_context",
+          "takenAt": "2026-01-01T08:00:00Z",
+          "dosageNote": "Synthetic demo intake only; not a prescription, schedule, or personal medical instruction."
+        }
+      ],
+      "expectedEngineBehavior": {
+        "baselineRuleMatches": [
+          "pd.ldopa.protein.window.v1"
+        ],
+        "explanationFocus": [
+          "protein context",
+          "relative timing",
+          "evidence-linked educational warning"
+        ],
+        "mustNotSay": [
+          "change medication timing",
+          "change dose",
+          "replace clinician advice"
+        ]
+      }
+    },
+    {
+      "id": "demo_balanced_meal_outside_sensitive_window",
+      "title": "Balanced meal outside the baseline sensitive timing window",
+      "educationalPurpose": "Shows a low-alert baseline comparison when the synthetic meal is outside the current levodopa/protein timing window.",
+      "meal": {
+        "id": "demo_meal_balanced_outside_window",
+        "eatenAt": "2026-01-01T13:30:00Z",
+        "recordedAt": "2026-01-01T13:35:00Z",
+        "occurredAt": "2026-01-01T13:30:00Z",
+        "timeSource": "synthetic_demo_fixed",
+        "timePrecision": "exact",
+        "title": "Synthetic rice, vegetables, and fruit",
+        "items": [
+          {
+            "foodId": "demo_food_rice",
+            "foodName": "Synthetic cooked rice",
+            "foodCategory": "grain",
+            "quantityFactor": 1.5,
+            "foodTags": [
+              "synthetic",
+              "demo"
+            ],
+            "proteinPer100g": 2.7,
+            "carbsPer100g": 28,
+            "fatPer100g": 0.3,
+            "fiberPer100g": 0.4,
+            "sodiumPer100g": 1
+          },
+          {
+            "foodId": "demo_food_mixed_vegetables",
+            "foodName": "Synthetic mixed vegetables",
+            "foodCategory": "vegetable",
+            "quantityFactor": 1,
+            "foodTags": [
+              "synthetic",
+              "demo"
+            ],
+            "proteinPer100g": 2,
+            "carbsPer100g": 7,
+            "fatPer100g": 0.2,
+            "fiberPer100g": 3,
+            "sodiumPer100g": 20
+          },
+          {
+            "foodId": "demo_food_apple",
+            "foodName": "Synthetic apple slices",
+            "foodCategory": "fruit",
+            "quantityFactor": 1,
+            "foodTags": [
+              "synthetic",
+              "demo"
+            ],
+            "proteinPer100g": 0.3,
+            "carbsPer100g": 14,
+            "fatPer100g": 0.2,
+            "fiberPer100g": 2.4,
+            "sodiumPer100g": 1
+          }
+        ]
+      },
+      "intakes": [
+        {
+          "id": "demo_intake_balanced_context",
+          "drugId": "demo_drug_levodopa_context",
+          "takenAt": "2026-01-01T08:00:00Z",
+          "dosageNote": "Synthetic demo intake only; not a prescription, schedule, or personal medical instruction."
+        }
+      ],
+      "expectedEngineBehavior": {
+        "baselineRuleMatches": [],
+        "explanationFocus": [
+          "outside baseline timing window",
+          "deterministic no-match comparison"
+        ],
+        "mustNotSay": [
+          "safe for a real patient",
+          "clinical validation"
+        ]
+      }
+    },
+    {
+      "id": "demo_fiber_fat_heavy_meal_context",
+      "title": "Fiber/fat-heavy meal context with protein timing awareness",
+      "educationalPurpose": "Shows that the app can carry fiber and fat context while still only making baseline claims that are supported by active rules.",
+      "meal": {
+        "id": "demo_meal_fiber_fat_context",
+        "eatenAt": "2026-01-01T08:45:00Z",
+        "recordedAt": "2026-01-01T08:50:00Z",
+        "occurredAt": "2026-01-01T08:45:00Z",
+        "timeSource": "synthetic_demo_fixed",
+        "timePrecision": "exact",
+        "title": "Synthetic avocado and nut-spread toast",
+        "items": [
+          {
+            "foodId": "demo_food_avocado",
+            "foodName": "Synthetic avocado",
+            "foodCategory": "fat",
+            "quantityFactor": 1,
+            "foodTags": [
+              "synthetic",
+              "demo",
+              "fat_context",
+              "fiber_context"
+            ],
+            "proteinPer100g": 2,
+            "carbsPer100g": 9,
+            "fatPer100g": 15,
+            "fiberPer100g": 7,
+            "sodiumPer100g": 7
+          },
+          {
+            "foodId": "demo_food_nut_spread",
+            "foodName": "Synthetic nut spread",
+            "foodCategory": "fat",
+            "quantityFactor": 0.8,
+            "foodTags": [
+              "synthetic",
+              "demo",
+              "fat_context",
+              "plant_protein"
+            ],
+            "proteinPer100g": 25,
+            "carbsPer100g": 20,
+            "fatPer100g": 50,
+            "fiberPer100g": 6,
+            "sodiumPer100g": 17
+          },
+          {
+            "foodId": "demo_food_whole_grain_toast",
+            "foodName": "Synthetic whole-grain toast",
+            "foodCategory": "grain",
+            "quantityFactor": 0.8,
+            "foodTags": [
+              "synthetic",
+              "demo",
+              "fiber_context"
+            ],
+            "proteinPer100g": 10,
+            "carbsPer100g": 43,
+            "fatPer100g": 4,
+            "fiberPer100g": 7,
+            "sodiumPer100g": 450
+          }
+        ]
+      },
+      "intakes": [
+        {
+          "id": "demo_intake_fiber_fat_context",
+          "drugId": "demo_drug_levodopa_context",
+          "takenAt": "2026-01-01T08:00:00Z",
+          "dosageNote": "Synthetic demo intake only; not a prescription, schedule, or personal medical instruction."
+        }
+      ],
+      "expectedEngineBehavior": {
+        "baselineRuleMatches": [
+          "pd.ldopa.protein.window.v1"
+        ],
+        "highFatHighCalorieContext": true,
+        "explanationFocus": [
+          "fat and fiber are carried as context",
+          "baseline match is still protein timing",
+          "no standalone fat/fiber clinical claim"
+        ],
+        "mustNotSay": [
+          "fat requires a medication change",
+          "fiber requires a treatment change"
+        ]
+      }
+    },
+    {
+      "id": "demo_low_risk_educational_example",
+      "title": "Low-risk educational snack example",
+      "educationalPurpose": "Shows a simple synthetic example where the baseline rules do not produce a food-drug warning.",
+      "meal": {
+        "id": "demo_meal_low_risk_snack",
+        "eatenAt": "2026-01-01T10:30:00Z",
+        "recordedAt": "2026-01-01T10:32:00Z",
+        "occurredAt": "2026-01-01T10:30:00Z",
+        "timeSource": "synthetic_demo_fixed",
+        "timePrecision": "exact",
+        "title": "Synthetic applesauce snack",
+        "items": [
+          {
+            "foodId": "demo_food_applesauce",
+            "foodName": "Synthetic applesauce",
+            "foodCategory": "fruit",
+            "quantityFactor": 1,
+            "foodTags": [
+              "synthetic",
+              "demo"
+            ],
+            "proteinPer100g": 0.2,
+            "carbsPer100g": 17,
+            "fatPer100g": 0.1,
+            "fiberPer100g": 1.2,
+            "sodiumPer100g": 2
+          }
+        ]
+      },
+      "intakes": [
+        {
+          "id": "demo_intake_low_risk_context",
+          "drugId": "demo_drug_levodopa_context",
+          "takenAt": "2026-01-01T08:00:00Z",
+          "dosageNote": "Synthetic demo intake only; not a prescription, schedule, or personal medical instruction."
+        }
+      ],
+      "expectedEngineBehavior": {
+        "baselineRuleMatches": [],
+        "explanationFocus": [
+          "low protein context",
+          "no baseline rule match",
+          "educational comparison only"
+        ],
+        "mustNotSay": [
+          "safe for a real patient",
+          "medical clearance"
+        ]
+      }
+    }
+  ]
+}

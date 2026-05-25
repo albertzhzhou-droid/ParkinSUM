@@ -1,8 +1,13 @@
 # Synthetic Demo Data
 
-ParkinSUM Companion v0.1.0-alpha does not include a committed standalone demo
-dataset. Public demos should use the app's local mode and manually entered
-synthetic examples, or screenshots/videos captured from synthetic examples.
+ParkinSUM Companion v0.1.0-alpha includes a small committed synthetic demo
+scenario pack at `docs/assets/demo/synthetic-scenarios.json`. Public demos
+should use the app's local mode and manually entered synthetic examples from
+that pack, or screenshots/videos captured from those synthetic examples.
+
+The current app does not expose a public one-click demo-data loader. Treat the
+JSON pack as copy-ready demo input, a manual walkthrough guide, and a future
+loader fixture.
 
 Do not use real patient data, real medication schedules, symptoms, private
 notes, real user accounts, real email addresses, private Firebase exports, or
@@ -47,4 +52,5 @@ prescription or recommended schedule.
   operator audit artifacts.
 
 See `docs/media-capture-checklist.md` and
-`docs/PUBLIC_DEMO_BOUNDARY.md` before adding public media.
+`docs/PUBLIC_DEMO_BOUNDARY.md` before adding public media. See
+`docs/demo-scenarios.md` for the complete scenario walkthrough.
