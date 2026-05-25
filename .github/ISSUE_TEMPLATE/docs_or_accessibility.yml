@@ -1,0 +1,35 @@
+name: Docs or accessibility improvement
+description: Propose a documentation, UI copy, or accessibility improvement.
+title: "[Docs/A11y]: "
+labels: ["documentation", "accessibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include personal health information, real medication schedules, symptoms, Firebase tokens, service account keys, user exports, raw audit logs, real emails, or full UIDs.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should be improved?
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Primary impact
+      options:
+        - Easier reviewer understanding
+        - Better older-user accessibility
+        - Clearer safety boundary
+        - Better multilingual wording
+        - Better open-source contribution flow
+    validations:
+      required: true
+  - type: textarea
+    id: suggested_change
+    attributes:
+      label: Suggested change
+      description: Use synthetic/sample examples only.
+    validations:
+      required: false

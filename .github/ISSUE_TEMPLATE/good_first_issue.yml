@@ -1,0 +1,37 @@
+name: Good first issue
+description: Suggest or track a beginner-friendly contribution.
+title: "[Good first issue]: "
+labels: ["good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use synthetic/sample data only. Do not include personal health information, medication schedules, symptoms, Firebase tokens, service account keys, user exports, raw audit logs, real emails, or full UIDs.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Contribution area
+      options:
+        - Multilingual UI strings
+        - Synthetic food-medication examples
+        - Accessibility for older users
+        - Dark mode
+        - Conflict-checking tests
+        - Caregiver onboarding
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: Task
+      description: What should be changed?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: How will a reviewer know this is done?
+    validations:
+      required: true

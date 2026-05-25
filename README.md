@@ -1,58 +1,88 @@
 # ParkinSUM Companion
 
+Local-first Flutter prototype for Parkinson's disease diet-medication education
+and levodopa-food interaction awareness.
+
 ParkinSUM Companion is a production-architecture prototype and educational
-research project. It demonstrates privacy-aware Firebase governance,
-CDSS-style rule execution, provenance-first official-data ingestion, and
-operator release workflows using a Parkinson medication-food interaction
-scenario.
+research project. It helps reviewers see how a Parkinson-focused companion app
+could combine meal logging, medication context, deterministic rule checks,
+evidence explanations, and privacy-aware data handling without presenting itself
+as clinical software.
 
-This repository is intended for architecture review, portfolio presentation,
-technical evaluation, and synthetic-data demonstration. It is not intended for
-real-world clinical use, diagnosis, treatment, medication timing decisions,
-patient care, or personal health management.
+> Safety boundary: ParkinSUM is not a medical device and does not provide
+> diagnosis, treatment, individualized dietary guidance, medication timing
+> advice, patient care, or emergency support. Public demos must use synthetic or
+> sample data only. See [DISCLAIMER.md](DISCLAIMER.md) and
+> [PUBLIC_SHOWCASE_READINESS.md](PUBLIC_SHOWCASE_READINESS.md).
 
-## Public Showcase Status
+## Who It Is For
 
-- Public release type: prototype showcase.
-- Package name: `parkinsum_companion`.
-- Current app version: `1.0.0+1`.
-- Default backend: local mode.
-- Firebase backend mode: available for internal operator validation.
-- Firebase projects in config: `parkinsum-companion-dev`,
-  `parkinsum-companion-stage`, `parkinsum-companion`.
-- Firestore configuration: rules and indexes are present.
-- Firebase Hosting configuration: `firebase.json` points Hosting at
-  `build/web` with no-store HTML and long-cache static assets.
-- Public contact: `parkinsumservice@gmail.com`.
+- Patients and caregivers in supervised educational demonstrations.
+- Community health educators explaining diet-medication awareness concepts.
+- Student researchers studying local-first digital health architecture.
+- Flutter, Firebase, and open-source reviewers evaluating the prototype design.
 
-Public GitHub visibility does not claim external clinical, legal, privacy, or
-regulatory approval. See [DISCLAIMER.md](DISCLAIMER.md) and
-[PUBLIC_SHOWCASE_READINESS.md](PUBLIC_SHOWCASE_READINESS.md).
+## Why It Is Different
 
-## What This Prototype Demonstrates
+- Local-first default mode for public demos and development.
+- Deterministic CDSS-style rule execution instead of black-box medical advice.
+- Provenance-aware data ingestion and evidence references for explainable output.
+- Privacy-aware Firebase governance for internal operator validation.
+- Multilingual and accessibility direction for broader education use.
+- Clear public boundary: synthetic data only, no clinical-use claims.
 
-- Firebase Auth and Firestore account-bound user paths.
-- Firestore security rules for owner-only private records and
-  admin/importer-governed catalog writes.
-- CDSS-style deterministic rule traces, source references, and explainable
-  result copy.
-- Provenance-first official-data importer and seed workflows.
-- Operator tooling for release manifests, backup evidence, monitoring checks,
-  audit summaries, and rollback records.
-- Public showcase boundaries that keep real health data out of public demos.
+## What Works Now
 
-## Safety Boundary
+- Onboarding with region, language, and prototype boundary surfaces.
+- Meal logging and medication context flows.
+- Rule-based meal-medication conflict checks.
+- Explainable output with rule traces, severity, and evidence-oriented copy.
+- Local data mode plus Firebase-backed internal validation paths.
+- Importer, release, preflight, audit, monitoring, and rollback tooling.
+- Public-safety documents for demo boundaries and contribution rules.
 
-Use only synthetic or sample data when demonstrating this project publicly. Do
-not submit real health information, medication schedules, symptoms, account
-tokens, Firebase credentials, service account keys, user exports, or raw
-operator audit logs to this repository.
+## Visual Showcase
 
-The app may contain CDSS-style example logic, but those examples are for
-software architecture demonstration only. They are not instructions for real
-health decisions.
+Real screenshots and demo media should be captured from the current app build
+before a public release. The expected asset slots are documented here:
 
-## Local Commands
+- [Screenshot capture checklist](docs/assets/screenshots/README.md)
+- [Demo media checklist](docs/assets/demo/README.md)
+
+Target files:
+
+- `docs/assets/screenshots/dashboard.png`
+- `docs/assets/screenshots/meal-entry.png`
+- `docs/assets/screenshots/conflict-result.png`
+- `docs/assets/demo/parkinsum-demo.gif` or an external YouTube/Loom link
+
+Do not add mock patient data, real health records, real medication schedules, or
+credential-bearing operator logs to screenshots or videos.
+
+## Architecture At A Glance
+
+```mermaid
+flowchart LR
+  UI["Flutter UI"]
+  Data["Local/Firebase Data Layer"]
+  Engine["Rule-Based CDSS Engine"]
+  Output["Conflict Output"]
+  Evidence["Evidence Explanation Layer"]
+  Education["User Education / Logging"]
+
+  UI --> Data
+  Data --> Engine
+  Engine --> Output
+  Output --> Evidence
+  Evidence --> Education
+```
+
+The app separates user-facing UI, data adapters, deterministic rule evaluation,
+evidence-aware explanations, and operator governance. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and
+[docs/RULE_ENGINE.md](docs/RULE_ENGINE.md).
+
+## Quick Start
 
 Clone the repository and run commands from the repository root. The examples
 assume `flutter`, `dart`, `node`, and `npm` are available on `PATH`.
@@ -82,6 +112,27 @@ Run Firebase rules contract validation:
 ```sh
 node tool/firestore_rules_contract_check.mjs
 ```
+
+## Project Status
+
+- Public release type: prototype showcase.
+- Package name: `parkinsum_companion`.
+- Current app version: `1.0.0+1`.
+- Default backend: local mode.
+- Firebase backend mode: available for internal operator validation.
+- Firebase projects in config: `parkinsum-companion-dev`,
+  `parkinsum-companion-stage`, `parkinsum-companion`.
+- Public contact: `parkinsumservice@gmail.com`.
+
+Public GitHub visibility does not claim external clinical, legal, privacy, or
+regulatory approval.
+
+## Roadmap
+
+Near-term work is tracked in [ROADMAP.md](ROADMAP.md). Priorities include an
+evidence-linked rule registry, alpha APK release packaging, sample demo data,
+accessibility improvements, caregiver-oriented onboarding, and offline education
+booklet integration.
 
 ## Internal Firebase Operator Commands
 
@@ -114,7 +165,10 @@ node tool/operator_gate.mjs --env prod --project parkinsum-companion --read-only
 - [Public showcase readiness](PUBLIC_SHOWCASE_READINESS.md)
 - [Security policy](SECURITY.md)
 - [Contribution guide](CONTRIBUTING.md)
+- [Roadmap](ROADMAP.md)
 - [Architecture overview](docs/ARCHITECTURE.md)
+- [Rule engine overview](docs/RULE_ENGINE.md)
+- [v0.1.0-alpha release notes draft](docs/releases/v0.1.0-alpha.md)
 - [Public demo boundary](docs/PUBLIC_DEMO_BOUNDARY.md)
 - [Release evidence index](docs/RELEASE_EVIDENCE_INDEX.md)
 - [Firebase production operations runbook](docs/firebase_operations_runbook.md)
@@ -122,15 +176,12 @@ node tool/operator_gate.mjs --env prod --project parkinsum-companion --read-only
 - [Rollback runbook](docs/rollback_runbook.md)
 - [Known risks](docs/known_risks.md)
 
-## Firebase Seed Workflow
+## Contributing
 
-Export and upload workflows are internal operator examples. Do not run them
-against public demo data or with real user health records.
-
-```sh
-dart run tool/firebase_seed_export.dart --user-uid=<firebase_uid>
-node tool/firestore_seed_upload.mjs build/firebase_seed/official_core_seed.json --dry-run
-```
+Contributions are welcome when they keep the public prototype boundary intact.
+Good first areas include documentation, UI strings, accessibility notes, sample
+synthetic interactions, and focused tests. Start with
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Public GitHub Preflight
 
