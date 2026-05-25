@@ -66,6 +66,10 @@ Any Android APK generated for this alpha must be labeled as an alpha/demo/debug 
 
 A lightweight GitHub Pages landing page is available in [docs/site/index.html](docs/site/index.html). Setup instructions are in [docs/site/README.md](docs/site/README.md).
 
+## Contribute
+
+Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. Public examples must use synthetic or sample data only.
+
 ## Architecture Overview
 
 ```mermaid
@@ -154,6 +158,7 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Security policy](SECURITY.md)
 - [Roadmap](ROADMAP.md)
 - [Contribution guide](CONTRIBUTING.md)
+- [Contribution backlog](docs/contribution-backlog.md)
 - [Changelog](CHANGELOG.md)
 - [Rule engine testing](docs/rule-engine-testing.md)
 - [v0.1.0-alpha release notes](docs/release/v0.1.0-alpha-notes.md)

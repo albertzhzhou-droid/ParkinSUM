@@ -1,0 +1,54 @@
+name: Feature request
+description: Propose a bounded improvement for the educational prototype.
+title: "[Feature]: "
+labels: ["enhancement", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ParkinSUM is an educational prototype. Use synthetic or sample data only. Do not include personal health information, real medication schedules, symptoms, Firebase tokens, service account keys, user exports, raw audit logs, real emails, full UIDs, or local credential paths.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or opportunity
+      description: What should become easier, clearer, safer, or more useful for a public educational demo?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_change
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful change. Avoid clinical advice claims.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Primary area
+      options:
+        - Documentation
+        - Accessibility
+        - Synthetic data
+        - UI localization
+        - Rule-engine evidence mapping
+        - Testing
+        - Demo or release
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Expected output
+      description: What files, screens, or docs should change?
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: This request is for educational/demo use only and uses synthetic or sample data.
+          required: true
+        - label: This request does not claim clinical validation, medical-device approval, or real-world patient-care suitability.
+          required: true

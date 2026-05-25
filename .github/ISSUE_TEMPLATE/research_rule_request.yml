@@ -1,0 +1,60 @@
+name: Research rule request
+description: Propose an evidence-mapped educational rule or rule-copy improvement.
+title: "[Research rule]: "
+labels: ["research", "rule-engine", "needs evidence", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This template is for evidence mapping in an educational prototype. Do not request or provide diagnosis, treatment, medication timing advice, individualized dietary guidance, patient care, or emergency support. Do not include personal health information, real medication schedules, symptoms, private records, Firebase tokens, service account keys, user exports, raw audit logs, real emails, or full UIDs.
+  - type: textarea
+    id: educational_question
+    attributes:
+      label: Educational question
+      description: What concept should the prototype explain more clearly?
+      placeholder: "Example: explain why high-protein meals may be relevant to a levodopa education scenario."
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_source
+    attributes:
+      label: Citation or evidence source
+      description: Provide a source title, URL/DOI, guideline label, product-label section, or official documentation reference.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_mapping
+    attributes:
+      label: Proposed rule/evidence mapping
+      description: Describe the educational mapping, not a clinical instruction.
+    validations:
+      required: true
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Evidence confidence for prototype review
+      options:
+        - Official label or guideline source
+        - Peer-reviewed source
+        - Educational background source
+        - Needs reviewer help finding a better source
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files likely involved
+      description: Optional. List rule, copy, test, importer, or documentation files if known.
+    validations:
+      required: false
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: This request is for educational explanation only, not clinical advice.
+          required: true
+        - label: I included a citation or clearly marked where evidence help is needed.
+          required: true
+        - label: I did not include real patient data, real medication schedules, or private health records.
+          required: true

@@ -1,0 +1,40 @@
+name: Documentation improvement
+description: Report confusing docs, missing setup steps, or unclear public-facing copy.
+title: "[Docs]: "
+labels: ["documentation", "needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Documentation issues should not include personal health information, real medication schedules, Firebase tokens, service account keys, user exports, raw audit logs, real emails, full UIDs, or local credential paths.
+  - type: textarea
+    id: page
+    attributes:
+      label: Page or file
+      description: Link or name the file that should change.
+      placeholder: "README.md, docs/site/index.html, docs/RULE_ENGINE.md, ..."
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is unclear or missing?
+      description: Describe the reader problem.
+    validations:
+      required: true
+  - type: textarea
+    id: suggested_fix
+    attributes:
+      label: Suggested wording or structure
+      description: Optional. Keep claims conservative and educational.
+    validations:
+      required: false
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: The suggested documentation keeps ParkinSUM educational-only and does not add unsupported medical claims.
+          required: true
+        - label: Any examples use synthetic or sample data only.
+          required: true

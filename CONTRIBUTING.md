@@ -16,6 +16,9 @@ ParkinSUM is an educational and research prototype, not clinical software.
 
 ## Good First Issue Areas
 
+Start with the public [contribution backlog](docs/contribution-backlog.md) or
+copy a draft issue from [docs/issues/](docs/issues/).
+
 - Improve multilingual UI strings or documentation wording.
 - Add synthetic sample food-medication interaction examples.
 - Improve accessibility for older users, including contrast, tap targets, and

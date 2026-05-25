@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Contribution backlog
+    url: https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/contribution-backlog.md
+    about: Pick a scoped task or copy a draft issue from docs/issues.
   - name: Security or private data concern
     url: mailto:parkinsumservice@gmail.com
     about: Do not post secrets, credentials, or personal health information publicly.

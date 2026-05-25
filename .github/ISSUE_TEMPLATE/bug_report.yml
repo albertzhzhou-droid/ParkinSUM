@@ -1,12 +1,12 @@
 name: Bug report
 description: Report a reproducible issue with the public prototype.
 title: "[Bug]: "
-labels: ["bug"]
+labels: ["bug", "needs triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Do not include personal health information, medication schedules, symptoms, Firebase tokens, service account keys, user exports, raw audit logs, real emails, or full UIDs.
+        Use synthetic or sample data only. Do not include personal health information, real medication schedules, symptoms, Firebase tokens, service account keys, user exports, raw audit logs, real emails, full UIDs, or local credential paths.
   - type: textarea
     id: summary
     attributes:
@@ -35,3 +35,12 @@ body:
       description: Browser, Flutter version, OS, or command output with secrets removed.
     validations:
       required: false
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety confirmation
+      options:
+        - label: I removed personal health information, real medication schedules, credentials, tokens, and private identifiers.
+          required: true
+        - label: This report does not ask for diagnosis, treatment, medication timing, dietary guidance, patient care, or emergency support.
+          required: true

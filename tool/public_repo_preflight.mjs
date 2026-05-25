@@ -17,6 +17,7 @@ const requiredFiles = [
   'CONTRIBUTING.md',
   'CHANGELOG.md',
   'LICENSE',
+  'docs/contribution-backlog.md',
   'docs/PUBLIC_DEMO_BOUNDARY.md',
   'docs/ARCHITECTURE.md',
   'docs/RELEASE_EVIDENCE_INDEX.md',
@@ -26,8 +27,11 @@ const requiredFiles = [
   'docs/release/synthetic-demo-data.md',
   'docs/release/release-checklist.md',
   '.github/ISSUE_TEMPLATE/bug_report.yml',
+  '.github/ISSUE_TEMPLATE/feature_request.yml',
+  '.github/ISSUE_TEMPLATE/documentation.yml',
+  '.github/ISSUE_TEMPLATE/research_rule_request.yml',
   '.github/ISSUE_TEMPLATE/config.yml',
-  '.github/pull_request_template.md',
+  '.github/PULL_REQUEST_TEMPLATE.md',
   '.github/workflows/public-release-preflight.yml',
 ];
 
