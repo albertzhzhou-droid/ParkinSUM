@@ -155,6 +155,7 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Roadmap](ROADMAP.md)
 - [Contribution guide](CONTRIBUTING.md)
 - [Changelog](CHANGELOG.md)
+- [Rule engine testing](docs/rule-engine-testing.md)
 - [v0.1.0-alpha release notes](docs/release/v0.1.0-alpha-notes.md)
 - [Synthetic demo data](docs/release/synthetic-demo-data.md)
 - [Synthetic demo scenarios](docs/demo-scenarios.md)
