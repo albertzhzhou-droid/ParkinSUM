@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you cite ParkinSUM Companion, cite it as an educational software prototype, not as a clinical intervention."
+title: "ParkinSUM Companion: a local-first Flutter prototype for Parkinson's disease diet-medication education"
+version: "0.1.0-alpha"
+date-released: "2026-05-25"
+type: software
+authors:
+  - family-names: Zhou
+    given-names: Zhenghang
+abstract: >-
+  ParkinSUM Companion is a local-first Flutter educational prototype for
+  Parkinson's disease diet-medication awareness. It demonstrates meal logging,
+  medication-context capture, deterministic food-drug interaction checks, and
+  evidence-oriented explanations using synthetic or sample data only. It is not
+  medical advice, not a medical device, and no clinical validation is claimed.
+keywords:
+  - Flutter
+  - Parkinson's disease
+  - levodopa
+  - food-drug interactions
+  - local-first
+  - digital health education
+  - patient education
+  - mHealth
+  - offline-first
+license: Apache-2.0
+repository-code: "https://github.com/albertzhzhou-droid/ParkinSUM"
+url: "https://github.com/albertzhzhou-droid/ParkinSUM"
+preferred-citation:
+  type: software
+  title: "ParkinSUM Companion: a local-first Flutter prototype for Parkinson's disease diet-medication education"
+  authors:
+    - family-names: Zhou
+      given-names: Zhenghang
+  version: "0.1.0-alpha"
+  date-released: "2026-05-25"
+  repository-code: "https://github.com/albertzhzhou-droid/ParkinSUM"
