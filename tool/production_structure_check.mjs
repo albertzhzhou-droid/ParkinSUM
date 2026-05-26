@@ -105,9 +105,17 @@ function checkFirestoreFiles() {
   return expectAll('firestore_rules_and_indexes', [
     ['rules file exists', rules.length > 0],
     ['indexes file exists', indexes],
-    ['users owner-only rule', /match\s+\/users\/\{uid\}\/\{document=\*\*\}[\s\S]*allow\s+read,\s*write:\s*if\s+isOwner\(uid\)/.test(rules)],
+    [
+      'no blanket users owner write',
+      !/match\s+\/users\/\{uid\}\/\{document=\*\*\}/.test(rules) &&
+        !/allow\s+read,\s*write:\s*if\s+isOwner\(uid\);/.test(rules),
+    ],
+    ['profile uid binding', /validProfile\(uid\)[\s\S]*request\.resource\.data\.patientId\s*==\s*uid/.test(rules)],
+    ['runtime collection validators', /match\s+\/meals\/\{mealId\}[\s\S]*validMeal\(mealId\)/.test(rules) && /match\s+\/intakes\/\{intakeId\}[\s\S]*validIntake\(intakeId\)/.test(rules)],
+    ['clinical audits create-only', /match\s+\/clinical_audits\/\{auditId\}[\s\S]*allow\s+create:[\s\S]*validClinicalAudit\(uid,\s*auditId\)[\s\S]*allow\s+update,\s*delete:\s*if\s+false/.test(rules)],
+    ['user cdss read-only', /match\s+\/cdss_tables\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+read:\s*if\s+isOwner\(uid\)[\s\S]*allow\s+write:\s*if\s+false/.test(rules)],
     ['catalog signed-in read', /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+read:\s*if\s+signedIn\(\)/.test(rules)],
-    ['catalog admin importer write', /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+write:\s*if\s+isAdminOrImporter\(\)/.test(rules)],
+    ['catalog admin importer write', /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+write:\s*if\s+isAdminOrImporter\(\)\s*&&\s*validAppCatalogWrite\(table,\s*rowId\)/.test(rules)],
     ['top-level cdss denied', /match\s+\/cdss_tables\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+read,\s*write:\s*if\s+false/.test(rules)],
     ['fallback deny-all', /match\s+\/\{document=\*\*\}[\s\S]*allow\s+read,\s*write:\s*if\s+false/.test(rules)],
   ]);

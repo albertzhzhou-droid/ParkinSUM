@@ -28,6 +28,12 @@ import '../../data/datasources/remote/p0_import_models.dart';
 import '../../data/datasources/remote/p0_ingestion_orchestrator.dart';
 import '../utils/local_p0_import_locator.dart';
 
+void _debugLog(String message) {
+  if (kDebugMode) {
+    debugPrint(message);
+  }
+}
+
 class ImportTaskResult {
   final bool succeeded;
   final String summary;
@@ -273,7 +279,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> bootstrap() async {
-    debugPrint('[AppState] bootstrap:start');
+    _debugLog('[AppState] bootstrap:start');
     _isBootstrapping = true;
     _authError = null;
     notifyListeners();
@@ -283,7 +289,7 @@ class AppState extends ChangeNotifier {
     if (FirebaseBackend.enabled && services.authService.currentUserId == null) {
       _clearVisiblePatientData();
       _isBootstrapping = false;
-      debugPrint('[AppState] bootstrap:waiting_for_firebase_sign_in');
+      _debugLog('[AppState] bootstrap:waiting_for_firebase_sign_in');
       notifyListeners();
       return;
     }
@@ -315,7 +321,7 @@ class AppState extends ChangeNotifier {
     await refreshCdssOpsOverview();
 
     _isBootstrapping = false;
-    debugPrint(
+    _debugLog(
       '[AppState] bootstrap:done meals=${_meals.length} intakes=${_intakes.length} drugs=${_activeDrugIds.length}',
     );
     notifyListeners();
@@ -418,8 +424,11 @@ class AppState extends ChangeNotifier {
     Intake? initialIntake,
   }) async {
     if (profile != null) {
-      _userProfile = profile;
-      await services.userDataService.saveUserProfile(profile);
+      final scopedProfile = FirebaseBackend.enabled && _authUserId != null
+          ? profile.copyWith(patientId: _authUserId)
+          : profile;
+      _userProfile = scopedProfile;
+      await services.userDataService.saveUserProfile(scopedProfile);
     }
     if (activeDrugIds != null) {
       _activeDrugIds = List<String>.from(activeDrugIds);
@@ -441,13 +450,16 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> saveUserProfile(UserProfile profile) async {
-    _userProfile = profile;
-    await services.userDataService.saveUserProfile(profile);
+    final scopedProfile = FirebaseBackend.enabled && _authUserId != null
+        ? profile.copyWith(patientId: _authUserId)
+        : profile;
+    _userProfile = scopedProfile;
+    await services.userDataService.saveUserProfile(scopedProfile);
     await _refreshRecommendations();
     await _refreshMealChecks();
     await refreshLocalAiAvailability();
-    debugPrint(
-      '[AppState] saveUserProfile region=${profile.registrationRegion} locale=${profile.displayLocale} override=${profile.contentJurisdictionOverride.join(",")}',
+    _debugLog(
+      '[AppState] saveUserProfile:done region=${scopedProfile.registrationRegion} locale=${scopedProfile.displayLocale}',
     );
     notifyListeners();
   }
@@ -498,24 +510,22 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addMeal(Meal meal) async {
-    debugPrint(
-        '[AppState] addMeal:start mealId=${meal.id} title=${meal.title} items=${meal.items.length}');
+    _debugLog('[AppState] addMeal:start items=${meal.items.length}');
     _meals = [meal, ..._meals];
     await services.userDataService.saveMeals(_meals);
     await _refreshRecommendations();
     await _refreshMealChecks();
-    debugPrint('[AppState] addMeal:saved totalMeals=${_meals.length}');
+    _debugLog('[AppState] addMeal:saved totalMeals=${_meals.length}');
     notifyListeners();
   }
 
   Future<void> updateMeal(Meal meal) async {
-    debugPrint(
-        '[AppState] updateMeal:start mealId=${meal.id} title=${meal.title} items=${meal.items.length}');
+    _debugLog('[AppState] updateMeal:start items=${meal.items.length}');
     _meals = _meals.map((m) => m.id == meal.id ? meal : m).toList();
     await services.userDataService.saveMeals(_meals);
     await _refreshRecommendations();
     await _refreshMealChecks();
-    debugPrint('[AppState] updateMeal:saved totalMeals=${_meals.length}');
+    _debugLog('[AppState] updateMeal:saved totalMeals=${_meals.length}');
     notifyListeners();
   }
 
@@ -528,41 +538,38 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addIntake(Intake intake) async {
-    debugPrint(
-        '[AppState] addIntake:start intakeId=${intake.id} drugId=${intake.drugId}');
+    _debugLog('[AppState] addIntake:start');
     _intakes = [intake, ..._intakes];
     await services.userDataService.saveIntakes(_intakes);
     await _refreshRecommendations();
     await _refreshMealChecks();
-    debugPrint('[AppState] addIntake:saved totalIntakes=${_intakes.length}');
+    _debugLog('[AppState] addIntake:saved totalIntakes=${_intakes.length}');
     notifyListeners();
   }
 
   Future<void> updateIntake(Intake intake) async {
-    debugPrint(
-        '[AppState] updateIntake:start intakeId=${intake.id} drugId=${intake.drugId}');
+    _debugLog('[AppState] updateIntake:start');
     _intakes =
         _intakes.map((item) => item.id == intake.id ? intake : item).toList();
     await services.userDataService.saveIntakes(_intakes);
     await _refreshRecommendations();
     await _refreshMealChecks();
-    debugPrint('[AppState] updateIntake:saved totalIntakes=${_intakes.length}');
+    _debugLog('[AppState] updateIntake:saved totalIntakes=${_intakes.length}');
     notifyListeners();
   }
 
   Future<void> deleteIntake(String intakeId) async {
-    debugPrint('[AppState] deleteIntake:start intakeId=$intakeId');
+    _debugLog('[AppState] deleteIntake:start');
     _intakes = _intakes.where((item) => item.id != intakeId).toList();
     await services.userDataService.saveIntakes(_intakes);
     await _refreshRecommendations();
     await _refreshMealChecks();
-    debugPrint('[AppState] deleteIntake:saved totalIntakes=${_intakes.length}');
+    _debugLog('[AppState] deleteIntake:saved totalIntakes=${_intakes.length}');
     notifyListeners();
   }
 
   Future<InteractionResult> checkMeal(Meal meal) async {
-    debugPrint(
-        '[AppState] checkMeal:start mealId=${meal.id} items=${meal.items.length}');
+    _debugLog('[AppState] checkMeal:start items=${meal.items.length}');
     final rawResult = await services.databaseBackedMealCheckUseCase(
       meal: meal,
       activeDrugs: _drugsForMealCheck(),
@@ -630,7 +637,7 @@ class AppState extends ChangeNotifier {
     final r = Random().nextInt(1 << 31);
     final now = DateTime.now().microsecondsSinceEpoch;
     final id = '${prefix}_${now}_$r';
-    debugPrint('[AppState] newId prefix=$prefix id=$id');
+    _debugLog('[AppState] newId prefix=$prefix');
     return id;
   }
 
@@ -652,7 +659,9 @@ class AppState extends ChangeNotifier {
         ),
       );
     } catch (error) {
-      debugPrint('[AppState] locale_resource_bundle load skipped: $error');
+      _debugLog(
+        '[AppState] locale_resource_bundle load skipped: ${error.runtimeType}',
+      );
     }
   }
 

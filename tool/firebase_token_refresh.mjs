@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -53,7 +54,8 @@ console.log(JSON.stringify({
   input,
   output,
   role,
-  uid: account.uid,
+  uidHash: hashValue(account.uid),
+  email: account.email ? redactEmail(account.email) : undefined,
   refreshedAt: account.refreshedAt,
   idTokenWritten: true,
 }, null, 2));
@@ -107,7 +109,9 @@ async function signInWithPassword(email, password) {
   );
   const json = await response.json();
   if (!response.ok) {
-    throw new Error(`signInWithPassword failed for ${email}: ${JSON.stringify(json)}`);
+    throw new Error(
+      `signInWithPassword failed for ${redactEmail(email)}: ${JSON.stringify(json)}`,
+    );
   }
   return {
     idToken: json.idToken,
@@ -192,4 +196,14 @@ function inferFirebaseWebApiKey(env, expectedProjectId) {
     );
   }
   return block.match(/apiKey:\s*'([^']+)'/)?.[1];
+}
+
+function redactEmail(email) {
+  const [local, domain] = String(email).split('@');
+  if (!domain) return '[EMAIL_REDACTED]';
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
+function hashValue(value) {
+  return `sha256:${crypto.createHash('sha256').update(String(value)).digest('hex').slice(0, 12)}`;
 }

@@ -5,6 +5,7 @@
   "description": "ParkinSUM Firebase P0 operator tooling.",
   "scripts": {
     "public:preflight": "node tool/public_repo_preflight.mjs",
+    "security:backend": "node tool/backend_security_gate.mjs",
     "rules:contract": "node tool/firestore_rules_contract_check.mjs",
     "firebase:ops": "node tool/firebase_ops.mjs",
     "firebase:live-probe": "node tool/firestore_live_probe.mjs",

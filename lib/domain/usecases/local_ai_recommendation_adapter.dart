@@ -706,9 +706,14 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
 
   bool _isLocalhostEndpoint(String endpoint) {
     try {
-      final uri = Uri.parse(endpoint);
+      final uri = Uri.parse(endpoint.trim());
+      final scheme = uri.scheme.toLowerCase();
       final host = uri.host.toLowerCase();
-      return host == '127.0.0.1' || host == 'localhost';
+      if (scheme != 'http' && scheme != 'https') return false;
+      if (uri.userInfo.isNotEmpty || uri.hasQuery || uri.hasFragment) {
+        return false;
+      }
+      return host == '127.0.0.1' || host == 'localhost' || host == '::1';
     } catch (_) {
       return false;
     }

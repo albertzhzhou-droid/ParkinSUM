@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,6 +8,12 @@ import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';
 import '../catalog/catalog_detail_pages.dart';
 import '../shared/interaction_result_view.dart';
+
+void _entryDebugLog(String message) {
+  if (kDebugMode) {
+    debugPrint(message);
+  }
+}
 
 class EntryPage extends StatefulWidget {
   final Meal? initialMeal;
@@ -72,7 +79,7 @@ class _EntryPageState extends State<EntryPage> {
     _enteralFeedProteinCtrl = TextEditingController(
       text: initialMeal?.enteralFeedProteinGPerDay?.toStringAsFixed(0) ?? '',
     );
-    debugPrint(
+    _entryDebugLog(
       '[EntryPage] init mode=${widget.isEditing ? 'edit' : 'create'} items=${_items.length}',
     );
   }
@@ -97,17 +104,17 @@ class _EntryPageState extends State<EntryPage> {
   }
 
   Future<void> _saveMeal() async {
-    debugPrint(
+    _entryDebugLog(
         '[EntryPage] save:pressed items=${_items.length} mounted=$mounted');
 
     final i18n = context.appI18n;
     if (_isSaving) {
-      debugPrint('[EntryPage] save:ignored duplicate tap');
+      _entryDebugLog('[EntryPage] save:ignored duplicate tap');
       return;
     }
 
     if (_items.isEmpty) {
-      debugPrint('[EntryPage] save:blocked empty-items');
+      _entryDebugLog('[EntryPage] save:blocked empty-items');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(i18n.tr('entry.add_food_first'))),
       );
@@ -163,24 +170,24 @@ class _EntryPageState extends State<EntryPage> {
     });
 
     try {
-      debugPrint('[EntryPage] save:checking mealId=${meal.id}');
+      _entryDebugLog('[EntryPage] save:checking');
       final result = await appState.checkMeal(meal);
-      debugPrint(
+      _entryDebugLog(
         '[EntryPage] save:checkResult score=${result.score} severity=${result.overallSeverity.name}',
       );
 
       if (widget.isEditing) {
-        debugPrint('[EntryPage] save:updateMeal start');
+        _entryDebugLog('[EntryPage] save:updateMeal start');
         await appState.updateMeal(meal);
       } else {
-        debugPrint('[EntryPage] save:addMeal start');
+        _entryDebugLog('[EntryPage] save:addMeal start');
         await appState.addMeal(meal);
       }
-      debugPrint('[EntryPage] save:persisted mealId=${meal.id}');
+      _entryDebugLog('[EntryPage] save:persisted');
 
       if (!mounted) return;
 
-      debugPrint('[EntryPage] save:showDialog');
+      _entryDebugLog('[EntryPage] save:showDialog');
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -201,14 +208,16 @@ class _EntryPageState extends State<EntryPage> {
           ],
         ),
       );
-      debugPrint('[EntryPage] save:dialog closed');
+      _entryDebugLog('[EntryPage] save:dialog closed');
 
       if (!mounted) return;
       Navigator.of(context).pop();
-      debugPrint('[EntryPage] save:navigate back');
+      _entryDebugLog('[EntryPage] save:navigate back');
     } catch (error, stackTrace) {
-      debugPrint('[EntryPage] save:error $error');
-      debugPrintStack(stackTrace: stackTrace);
+      _entryDebugLog('[EntryPage] save:error ${error.runtimeType}');
+      if (kDebugMode) {
+        debugPrintStack(stackTrace: stackTrace);
+      }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -230,8 +239,7 @@ class _EntryPageState extends State<EntryPage> {
       // 已存量数据仍可能保留旧语言 foodName；新加入条目在 UI 层先写入当前语言显示名。
       _items = [..._items, item.copyWith(foodName: localizedFoodName)];
     });
-    debugPrint(
-        '[EntryPage] addFood food=$localizedFoodName items=${_items.length}');
+    _entryDebugLog('[EntryPage] addFood items=${_items.length}');
     final messenger = ScaffoldMessenger.of(context);
     messenger
       ..hideCurrentSnackBar()
@@ -257,18 +265,16 @@ class _EntryPageState extends State<EntryPage> {
             _items[i],
       ];
     });
-    debugPrint(
+    _entryDebugLog(
       '[EntryPage] updateQuantity index=$index factor=${clampedFactor.toStringAsFixed(2)}',
     );
   }
 
   void _removeItem(int index) {
-    final removed = _items[index];
     setState(() {
       _items = [..._items]..removeAt(index);
     });
-    debugPrint(
-        '[EntryPage] removeFood food=${removed.foodName} items=${_items.length}');
+    _entryDebugLog('[EntryPage] removeFood items=${_items.length}');
   }
 
   Future<void> _showQuantityEditor(int index) async {

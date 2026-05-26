@@ -59,7 +59,11 @@ Latest P0 local gate results:
 - [ ] Target Firebase environment recorded: dev, stage, or prod.
 - [ ] Target Firebase project id recorded.
 - [ ] `firestore.rules` reviewed for the target project.
-- [ ] `users/{uid}` owner-only access verified.
+- [ ] `users/{uid}` has no blanket owner-write rule.
+- [ ] Runtime user writes are limited to explicit validated collections.
+- [ ] Profile and clinical-audit patient identifiers bind to auth uid.
+- [ ] Firebase App Check provider is configured and enforcement plan recorded.
+- [ ] Hosting security headers are present in `firebase.json`.
 - [ ] `app_catalog` read/write policy verified.
 - [ ] Top-level `cdss_tables` remains closed.
 - [ ] Admin/importer custom-claim assignment process recorded.

@@ -104,6 +104,58 @@ void main() {
     expect(result.message, contains('localhost'));
   });
 
+  test('probe rejects localhost endpoints with unsafe URL components',
+      () async {
+    final client = MockClient((request) async {
+      fail('network should not be called for unsafe localhost endpoints');
+    });
+    final adapter = LocalAiRecommendationAdapter(client: client);
+    const endpoints = [
+      'ftp://localhost:11434/api/chat',
+      'http://user:pass@localhost:11434/api/chat',
+      'http://localhost:11434/api/chat?redirect=https://example.com',
+      'http://localhost:11434/api/chat#fragment',
+      'http://0.0.0.0:11434/api/chat',
+    ];
+
+    for (final endpoint in endpoints) {
+      final result = await adapter.probe(
+        userProfile: buildProfile(
+          provider: LocalAiProviders.ollama,
+          ollamaEndpoint: endpoint,
+        ),
+      );
+      expect(result.available, isFalse, reason: endpoint);
+      expect(result.message, contains('localhost'), reason: endpoint);
+    }
+  });
+
+  test('probe accepts IPv6 loopback endpoint', () async {
+    final client = MockClient((request) async {
+      expect(request.method, 'GET');
+      expect(request.url.toString(), 'http://[::1]:11434/api/tags');
+      return http.Response(
+        jsonEncode({
+          'models': [
+            {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
+          ]
+        }),
+        200,
+      );
+    });
+    final adapter = LocalAiRecommendationAdapter(client: client);
+
+    final result = await adapter.probe(
+      userProfile: buildProfile(
+        provider: LocalAiProviders.ollama,
+        ollamaEndpoint: 'http://[::1]:11434/api/chat',
+      ),
+    );
+
+    expect(result.available, isTrue);
+    expect(result.provider, LocalAiProviders.ollama);
+  });
+
   test('rerank rejects ids outside the safe whitelist', () async {
     final client = MockClient((request) async {
       if (request.url.path == '/api/tags') {

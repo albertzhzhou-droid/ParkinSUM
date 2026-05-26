@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -264,11 +265,11 @@ async function requestCheck({ name, token, method, documentPath, expected, body 
   return {
     name,
     method,
-    documentPath,
+    documentPath: redactFirestorePath(documentPath),
     status: response.status,
     expected,
     pass,
-    responseExcerpt: text.slice(0, 240),
+    responseExcerpt: redactText(text.slice(0, 240)),
   };
 }
 
@@ -281,7 +282,7 @@ function writeAudit(record) {
     ...record,
   };
   fs.mkdirSync(path.dirname(auditLogPath), { recursive: true });
-  fs.appendFileSync(auditLogPath, `${JSON.stringify(entry)}\n`);
+  fs.appendFileSync(auditLogPath, `${JSON.stringify(sanitizeAudit(entry))}\n`);
 }
 
 function parseArgs(argv) {
@@ -348,4 +349,44 @@ function defaultProjectForEnvironment(env) {
 
 function encodePathSegment(segment) {
   return encodeURIComponent(segment).replaceAll('%2F', '_');
+}
+
+function sanitizeAudit(value, key = '') {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeAudit(item, key));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [
+        entryKey,
+        sanitizeAudit(entryValue, entryKey),
+      ]),
+    );
+  }
+  if (typeof value !== 'string') return value;
+  if (/token$/i.test(key)) return '[REDACTED]';
+  if (/uid$/i.test(key)) return hashValue(value);
+  if (key === 'documentPath' || key === 'path' || key === 'scope') {
+    return redactFirestorePath(value);
+  }
+  return redactText(value);
+}
+
+function redactFirestorePath(value) {
+  return String(value).replace(/users\/([^/\s]+)/g, (_match, uid) => {
+    return `users/${hashValue(decodeURIComponent(uid))}`;
+  });
+}
+
+function redactText(value) {
+  return String(value)
+    .replace(/users\/([^/\s"'\\]+)/g, (_match, uid) => {
+      return `users/${hashValue(decodeURIComponent(uid))}`;
+    })
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?/g, '[JWT_REDACTED]')
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[EMAIL_REDACTED]');
+}
+
+function hashValue(value) {
+  return `sha256:${crypto.createHash('sha256').update(String(value)).digest('hex').slice(0, 12)}`;
 }

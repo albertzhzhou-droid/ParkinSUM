@@ -140,8 +140,12 @@ firebase deploy --only firestore:rules,firestore:indexes --project parkinsum-com
 
 Production rule expectations:
 
-- `users/{uid}` is owner-only.
-- `users/{uid}/cdss_tables/...` is user-scoped.
+- `users/{uid}` has no blanket owner-write rule.
+- profile, meal, intake, active-drug, app metadata, and clinical-audit writes
+  use explicit validators.
+- profile and clinical-audit patient identifiers are bound to
+  `request.auth.uid`.
+- `users/{uid}/cdss_tables/...` is owner-read-only.
 - `app_catalog/...` is readable by signed-in users.
 - `app_catalog/...` writes require admin/importer custom claims.
 - top-level `cdss_tables/...` is closed.
@@ -155,6 +159,15 @@ Build the Firebase-backed web artifact:
 cd ParkinSUM
 flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion
 ```
+
+For production App Check enforcement, add the provider dart defines after the
+reCAPTCHA provider is configured in Firebase Console:
+
+```sh
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion --dart-define=PARKINSUM_FIREBASE_APP_CHECK=true --dart-define=PARKINSUM_RECAPTCHA_SITE_KEY=<recaptcha-v3-site-key>
+```
+
+Use `PARKINSUM_RECAPTCHA_ENTERPRISE_SITE_KEY` instead for reCAPTCHA Enterprise.
 
 Build the stage Firebase-backed web artifact:
 

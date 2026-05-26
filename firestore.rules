@@ -17,17 +17,328 @@ service cloud.firestore {
       );
     }
 
-    match /users/{uid}/{document=**} {
-      allow read, write: if isOwner(uid);
+    function safeId(value) {
+      return value is string &&
+        value.size() > 0 &&
+        value.size() <= 160 &&
+        value.matches('^[A-Za-z0-9._:-]+$');
     }
 
-    match /users/{uid}/cdss_tables/{table}/rows/{rowId} {
-      allow read, write: if isOwner(uid);
+    function validString(key, maxSize) {
+      return key in request.resource.data &&
+        request.resource.data[key] is string &&
+        request.resource.data[key].size() <= maxSize;
+    }
+
+    function optionalString(key, maxSize) {
+      return !(key in request.resource.data) ||
+        request.resource.data[key] == null ||
+        (
+          request.resource.data[key] is string &&
+          request.resource.data[key].size() <= maxSize
+        );
+    }
+
+    function optionalStringList(key, maxItems) {
+      return !(key in request.resource.data) ||
+        request.resource.data[key] == null ||
+        (
+          request.resource.data[key] is list &&
+          request.resource.data[key].size() <= maxItems
+        );
+    }
+
+    function optionalNumber(key) {
+      return !(key in request.resource.data) ||
+        request.resource.data[key] == null ||
+        request.resource.data[key] is int ||
+        request.resource.data[key] is float;
+    }
+
+    function optionalBool(key) {
+      return !(key in request.resource.data) ||
+        request.resource.data[key] == null ||
+        request.resource.data[key] is bool;
+    }
+
+    function optionalTimestampOrString(key) {
+      return !(key in request.resource.data) ||
+        request.resource.data[key] == null ||
+        request.resource.data[key] is timestamp ||
+        (
+          request.resource.data[key] is string &&
+          request.resource.data[key].size() <= 80
+        );
+    }
+
+    function optionalMap(key, maxKeys) {
+      return !(key in request.resource.data) ||
+        request.resource.data[key] == null ||
+        (
+          request.resource.data[key] is map &&
+          request.resource.data[key].keys().size() <= maxKeys
+        );
+    }
+
+    function validProfile(uid) {
+      return request.resource.data.keys().hasOnly([
+        'patientId',
+        'registrationRegion',
+        'displayLocale',
+        'contentJurisdictionOverride',
+        'dietProfileRegion',
+        'timezone',
+        'swallowingTextureMode',
+        'localAiConsentEnabled',
+        'localAiProviderPreference',
+        'localAiModel',
+        'localAiMedicalModel',
+        'localAiOllamaEndpoint',
+        'localAiOpenAiCompatEndpoint',
+        'localAiTimeoutMs',
+      ]) &&
+      validString('patientId', 160) &&
+      request.resource.data.patientId == uid &&
+      validString('registrationRegion', 16) &&
+      validString('displayLocale', 32) &&
+      optionalStringList('contentJurisdictionOverride', 16) &&
+      optionalString('dietProfileRegion', 16) &&
+      validString('timezone', 64) &&
+      validString('swallowingTextureMode', 48) &&
+      optionalBool('localAiConsentEnabled') &&
+      validString('localAiProviderPreference', 32) &&
+      validString('localAiModel', 128) &&
+      validString('localAiMedicalModel', 180) &&
+      validString('localAiOllamaEndpoint', 160) &&
+      validString('localAiOpenAiCompatEndpoint', 180) &&
+      request.resource.data.localAiTimeoutMs is int &&
+      request.resource.data.localAiTimeoutMs >= 1000 &&
+      request.resource.data.localAiTimeoutMs <= 60000;
+    }
+
+    function validMeal(mealId) {
+      return safeId(mealId) &&
+      request.resource.data.keys().hasOnly([
+        'id',
+        'eatenAt',
+        'recordedAt',
+        'occurredAt',
+        'occurredRangeStart',
+        'occurredRangeEnd',
+        'timeSource',
+        'timePrecision',
+        'nextMealWindowStart',
+        'nextMealWindowEnd',
+        'coeventTime',
+        'coeventSubstanceTags',
+        'thickenerType',
+        'enteralFeedMode',
+        'enteralFeedFormula',
+        'enteralFeedProteinGPerDay',
+        'title',
+        'items',
+        'eatenAtIso',
+      ]) &&
+      request.resource.data.id == mealId &&
+      validString('eatenAt', 80) &&
+      optionalString('recordedAt', 80) &&
+      optionalString('occurredAt', 80) &&
+      optionalString('occurredRangeStart', 80) &&
+      optionalString('occurredRangeEnd', 80) &&
+      optionalString('timeSource', 48) &&
+      optionalString('timePrecision', 32) &&
+      optionalString('nextMealWindowStart', 80) &&
+      optionalString('nextMealWindowEnd', 80) &&
+      optionalString('coeventTime', 80) &&
+      optionalStringList('coeventSubstanceTags', 24) &&
+      optionalString('thickenerType', 80) &&
+      optionalString('enteralFeedMode', 80) &&
+      optionalString('enteralFeedFormula', 160) &&
+      optionalNumber('enteralFeedProteinGPerDay') &&
+      validString('title', 240) &&
+      request.resource.data.items is list &&
+      request.resource.data.items.size() <= 50 &&
+      optionalString('eatenAtIso', 80);
+    }
+
+    function validIntake(intakeId) {
+      return safeId(intakeId) &&
+      request.resource.data.keys().hasOnly([
+        'id',
+        'drugId',
+        'takenAt',
+        'dosageNote',
+        'takenAtIso',
+      ]) &&
+      request.resource.data.id == intakeId &&
+      validString('drugId', 160) &&
+      validString('takenAt', 80) &&
+      optionalString('dosageNote', 240) &&
+      optionalString('takenAtIso', 80);
+    }
+
+    function validActiveDrug(drugId) {
+      return safeId(drugId) &&
+        request.resource.data.keys().hasOnly(['id']) &&
+        request.resource.data.id == drugId;
+    }
+
+    function validAppMeta(uid, key) {
+      return safeId(key) &&
+      request.resource.data.keys().hasOnly([
+        'value',
+        'probe_run_id',
+        'owner_uid',
+        'created_at',
+        'purpose',
+      ]) &&
+      (
+        !('value' in request.resource.data) ||
+        request.resource.data.value is bool
+      ) &&
+      optionalString('probe_run_id', 160) &&
+      (
+        !('owner_uid' in request.resource.data) ||
+        request.resource.data.owner_uid == uid
+      ) &&
+      optionalTimestampOrString('created_at') &&
+      optionalString('purpose', 160);
+    }
+
+    function validKv(key) {
+      return safeId(key) &&
+      request.resource.data.keys().hasOnly(['value', 'updated_at']) &&
+      validString('value', 200000) &&
+      optionalTimestampOrString('updated_at');
+    }
+
+    function validClinicalAudit(uid, auditId) {
+      return safeId(auditId) &&
+      request.resource.data.keys().hasOnly([
+        'type',
+        'meal_id',
+        'patient_id',
+        'registration_region',
+        'display_locale',
+        'diet_profile_region',
+        'active_drug_ids',
+        'intake_ids',
+        'related_intakes',
+        'meal',
+        'result',
+        'score',
+        'severity',
+        'generated_at',
+        'intake_count',
+        'meal_count',
+        'decision_path',
+        'explanations',
+        'gate_reasons',
+        'ai_used',
+        'recommendations',
+        'release_id',
+        'redaction_contract',
+        'created_at',
+      ]) &&
+      validString('type', 80) &&
+      optionalString('meal_id', 160) &&
+      optionalString('patient_id', 160) &&
+      (
+        !('patient_id' in request.resource.data) ||
+        request.resource.data.patient_id == uid
+      ) &&
+      optionalString('registration_region', 16) &&
+      optionalString('display_locale', 32) &&
+      optionalString('diet_profile_region', 16) &&
+      optionalStringList('active_drug_ids', 64) &&
+      optionalStringList('intake_ids', 64) &&
+      optionalStringList('explanations', 32) &&
+      optionalStringList('gate_reasons', 32) &&
+      optionalMap('meal', 32) &&
+      optionalMap('result', 32) &&
+      optionalNumber('score') &&
+      optionalString('severity', 32) &&
+      optionalTimestampOrString('generated_at') &&
+      optionalNumber('intake_count') &&
+      optionalNumber('meal_count') &&
+      optionalString('decision_path', 120) &&
+      optionalBool('ai_used') &&
+      optionalString('release_id', 160) &&
+      optionalString('redaction_contract', 240) &&
+      optionalTimestampOrString('created_at');
+    }
+
+    function validAppCatalogWrite(table, rowId) {
+      return safeId(rowId) &&
+      (
+        table in ['foods', 'medications', 'interaction_rules'] ||
+        table.matches('^live_probe.*$')
+      ) &&
+      request.resource.data.keys().size() <= 48;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+
+      match /profile/{profileId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) &&
+          profileId == 'current' &&
+          validProfile(uid);
+        allow delete: if false;
+      }
+
+      match /app_meta/{key} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validAppMeta(uid, key);
+        allow delete: if false;
+      }
+
+      match /kv/{key} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validKv(key);
+        allow delete: if isOwner(uid) && safeId(key);
+      }
+
+      match /active_drugs/{drugId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validActiveDrug(drugId);
+        allow delete: if isOwner(uid) && safeId(drugId);
+      }
+
+      match /meals/{mealId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validMeal(mealId);
+        allow delete: if isOwner(uid) && safeId(mealId);
+      }
+
+      match /intakes/{intakeId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validIntake(intakeId);
+        allow delete: if isOwner(uid) && safeId(intakeId);
+      }
+
+      match /clinical_audits/{auditId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validClinicalAudit(uid, auditId);
+        allow update, delete: if false;
+      }
+
+      match /cdss_tables/{table}/rows/{rowId} {
+        allow read: if isOwner(uid) && safeId(table) && safeId(rowId);
+        allow write: if false;
+      }
+
+      match /{document=**} {
+        allow read, write: if false;
+      }
     }
 
     match /app_catalog/{table}/rows/{rowId} {
       allow read: if signedIn();
-      allow write: if isAdminOrImporter();
+      allow write: if isAdminOrImporter() &&
+        validAppCatalogWrite(table, rowId);
     }
 
     match /cdss_tables/{table}/rows/{rowId} {

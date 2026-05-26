@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -61,7 +62,7 @@ try {
     output: outputPath,
     accounts: accounts.map((account) => ({
       role: account.role,
-      email: account.email,
+      email: redactEmail(account.email),
       claims: maskClaims(account.claims),
     })),
   };
@@ -108,8 +109,8 @@ try {
     ...summary,
     accounts: created.map((account) => ({
       role: account.role,
-      uid: account.uid,
-      email: account.email,
+      uidHash: hashValue(account.uid),
+      email: redactEmail(account.email),
       claims: account.claims,
       idTokenWritten: true,
       refreshTokenWritten: true,
@@ -190,7 +191,9 @@ async function signInWithPassword(email, password) {
   );
   const json = await response.json();
   if (!response.ok) {
-    throw new Error(`signInWithPassword failed for ${email}: ${JSON.stringify(json)}`);
+    throw new Error(
+      `signInWithPassword failed for ${redactEmail(email)}: ${JSON.stringify(json)}`,
+    );
   }
   return {
     idToken: json.idToken,
@@ -214,7 +217,7 @@ function writeAudit(record) {
     ...record,
   };
   fs.mkdirSync(path.dirname(auditLogPath), { recursive: true });
-  fs.appendFileSync(auditLogPath, `${JSON.stringify(entry)}\n`);
+  fs.appendFileSync(auditLogPath, `${JSON.stringify(sanitizeAudit(entry))}\n`);
 }
 
 function maskClaims(claims) {
@@ -222,6 +225,40 @@ function maskClaims(claims) {
     admin: claims.admin === true,
     cdssImporter: claims.cdssImporter === true,
   };
+}
+
+function sanitizeAudit(value, key = '') {
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeAudit(item, key));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [
+        entryKey,
+        sanitizeAudit(entryValue, entryKey),
+      ]),
+    );
+  }
+  if (typeof value !== 'string') return value;
+  if (/^(idToken|refreshToken|password)$/i.test(key)) {
+    return '[REDACTED]';
+  }
+  if (/uid$/i.test(key)) {
+    return hashValue(value);
+  }
+  return value
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, redactEmail)
+    .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)?/g, '[JWT_REDACTED]');
+}
+
+function redactEmail(email) {
+  const [local, domain] = String(email).split('@');
+  if (!domain) return '[EMAIL_REDACTED]';
+  return `${local.slice(0, 2)}***@${domain}`;
+}
+
+function hashValue(value) {
+  return `sha256:${crypto.createHash('sha256').update(String(value)).digest('hex').slice(0, 12)}`;
 }
 
 function parseArgs(argv) {

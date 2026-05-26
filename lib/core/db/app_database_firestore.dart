@@ -36,6 +36,15 @@ class FirestoreAppDatabase implements AppDatabase {
   FirebaseFirestore get firestore =>
       _providedFirestore ?? FirebaseFirestore.instance;
 
+  Future<String> _requireUid() async {
+    await FirebaseBackend.ensureInitialized();
+    final uid = authService.currentUserId;
+    if (uid == null) {
+      throw StateError('Firebase user is not signed in.');
+    }
+    return uid;
+  }
+
   CollectionReference<Map<String, dynamic>> _catalog(String table) {
     return firestore.collection('app_catalog').doc(table).collection('rows');
   }
@@ -43,11 +52,7 @@ class FirestoreAppDatabase implements AppDatabase {
   Future<CollectionReference<Map<String, dynamic>>> _userRows(
     String table,
   ) async {
-    await FirebaseBackend.ensureInitialized();
-    final uid = authService.currentUserId;
-    if (uid == null) {
-      throw StateError('Firebase user is not signed in.');
-    }
+    final uid = await _requireUid();
     final paths = FirebaseUserDataPaths(uid);
     return firestore.collection(paths.collection(table));
   }
@@ -193,6 +198,9 @@ class FirestoreAppDatabase implements AppDatabase {
 
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
-    await (await _userRows('profile')).doc('current').set(profile.toJson());
+    final uid = await _requireUid();
+    final rows =
+        firestore.collection(FirebaseUserDataPaths(uid).collection('profile'));
+    await rows.doc('current').set(profile.copyWith(patientId: uid).toJson());
   }
 }

@@ -20,14 +20,34 @@ const checks = [
       /request\.auth\.token\.cdssImporter\s*==\s*true/.test(rules),
   },
   {
-    name: 'users/{uid} subtree is owner-only',
+    name: 'no blanket owner write on users/{uid} subtree',
     pass:
-      /match\s+\/users\/\{uid\}\/\{document=\*\*\}\s*\{\s*allow\s+read,\s*write:\s*if\s+isOwner\(uid\);/s.test(rules),
+      !/match\s+\/users\/\{uid\}\/\{document=\*\*\}/s.test(rules) &&
+      !/allow\s+read,\s*write:\s*if\s+isOwner\(uid\);/s.test(rules),
   },
   {
-    name: 'user-scoped cdss_tables are owner-only',
+    name: 'profile writes bind patientId to auth uid',
     pass:
-      /match\s+\/users\/\{uid\}\/cdss_tables\/\{table\}\/rows\/\{rowId\}\s*\{\s*allow\s+read,\s*write:\s*if\s+isOwner\(uid\);/s.test(rules),
+      /function\s+validProfile\(uid\)[\s\S]*request\.resource\.data\.patientId\s*==\s*uid/s.test(rules),
+  },
+  {
+    name: 'runtime patient collections use explicit validators',
+    pass:
+      /match\s+\/profile\/\{profileId\}[\s\S]*validProfile\(uid\)/s.test(rules) &&
+      /match\s+\/meals\/\{mealId\}[\s\S]*validMeal\(mealId\)/s.test(rules) &&
+      /match\s+\/intakes\/\{intakeId\}[\s\S]*validIntake\(intakeId\)/s.test(rules) &&
+      /match\s+\/active_drugs\/\{drugId\}[\s\S]*validActiveDrug\(drugId\)/s.test(rules),
+  },
+  {
+    name: 'clinical audits are create-only and uid-bound',
+    pass:
+      /function\s+validClinicalAudit\(uid,\s*auditId\)[\s\S]*request\.resource\.data\.patient_id\s*==\s*uid/s.test(rules) &&
+      /match\s+\/clinical_audits\/\{auditId\}[\s\S]*allow\s+create:\s*if\s+isOwner\(uid\)\s*&&\s*validClinicalAudit\(uid,\s*auditId\);[\s\S]*allow\s+update,\s*delete:\s*if\s+false;/s.test(rules),
+  },
+  {
+    name: 'user-scoped cdss_tables are owner-read-only',
+    pass:
+      /match\s+\/cdss_tables\/\{table\}\/rows\/\{rowId\}\s*\{\s*allow\s+read:\s*if\s+isOwner\(uid\)\s*&&\s*safeId\(table\)\s*&&\s*safeId\(rowId\);\s*allow\s+write:\s*if\s+false;/s.test(rules),
   },
   {
     name: 'app_catalog read requires signed-in user',
@@ -35,9 +55,9 @@ const checks = [
       /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}\s*\{\s*allow\s+read:\s*if\s+signedIn\(\);/s.test(rules),
   },
   {
-    name: 'app_catalog write requires admin/importer',
+    name: 'app_catalog write requires admin/importer and schema gate',
     pass:
-      /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+write:\s*if\s+isAdminOrImporter\(\);/s.test(rules),
+      /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+write:\s*if\s+isAdminOrImporter\(\)\s*&&\s*validAppCatalogWrite\(table,\s*rowId\);/s.test(rules),
   },
   {
     name: 'top-level cdss_tables are closed',

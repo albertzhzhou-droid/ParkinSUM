@@ -90,17 +90,30 @@ void main() {
     );
   });
 
-  test('Firestore rules keep user data and CDSS tables owner-only', () {
+  test('Firestore rules keep user writes on explicit safe collections', () {
     final rules = File('firestore.rules').readAsStringSync();
 
-    expect(rules, contains('match /users/{uid}/{document=**}'));
-    expect(rules, contains('allow read, write: if isOwner(uid);'));
+    expect(rules, isNot(contains('match /users/{uid}/{document=**}')));
+    expect(rules, isNot(contains('allow read, write: if isOwner(uid);')));
+    expect(rules, contains('request.resource.data.patientId == uid'));
+    expect(rules, contains('match /profile/{profileId}'));
+    expect(rules, contains('match /meals/{mealId}'));
+    expect(rules, contains('match /intakes/{intakeId}'));
+    expect(rules, contains('match /clinical_audits/{auditId}'));
+    expect(
+        rules,
+        contains(
+            'allow create: if isOwner(uid) && validClinicalAudit(uid, auditId);'));
+    expect(rules, contains('allow update, delete: if false;'));
+    expect(rules, contains('match /cdss_tables/{table}/rows/{rowId}'));
     expect(
       rules,
-      contains('match /users/{uid}/cdss_tables/{table}/rows/{rowId}'),
+      contains(
+          'allow read: if isOwner(uid) && safeId(table) && safeId(rowId);'),
     );
     expect(rules, contains('match /cdss_tables/{table}/rows/{rowId}'));
     expect(rules, contains('match /app_catalog/{table}/rows/{rowId}'));
+    expect(rules, contains('validAppCatalogWrite(table, rowId)'));
     expect(rules, contains('allow read, write: if false;'));
     expect(rules, isNot(contains('allow read, write: if true')));
     expect(
