@@ -69,6 +69,8 @@ A lightweight GitHub Pages landing page is available in [docs/site/index.html](d
 
 Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. A small real contributor PR request is drafted in [docs/mentor-pr-request.md](docs/mentor-pr-request.md) for classmates or mentors who want to test the project without making medical claims. Public examples must use synthetic or sample data only.
 
+Secondary creators who need to fork the project, configure local GitHub authentication, and submit updates by pull request should follow the [secondary creator token flow](docs/secondary-creator-token-flow.md). The repository documents fork-scoped token permissions and setup steps, but never stores real token values.
+
 ## Architecture Overview
 
 ```mermaid
@@ -158,6 +160,7 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Roadmap](ROADMAP.md)
 - [Contribution guide](CONTRIBUTING.md)
 - [Contribution backlog](docs/contribution-backlog.md)
+- [Secondary creator token flow](docs/secondary-creator-token-flow.md)
 - [Mentor/classmate PR request](docs/mentor-pr-request.md)
 - [Changelog](CHANGELOG.md)
 - [Citation metadata](CITATION.cff)

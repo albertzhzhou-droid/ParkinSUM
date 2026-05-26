@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "1.0",
+  "purpose": "Safe fork-first GitHub token and pull-request sequence for secondary creators of ParkinSUM.",
+  "publicRepository": "albertzhzhou-droid/ParkinSUM",
+  "securityBoundary": {
+    "neverCommit": [
+      "personal access token values",
+      ".env files",
+      "Firebase ID tokens",
+      "refresh tokens",
+      "service account keys",
+      "credential file paths",
+      "user exports",
+      "raw operator audit logs",
+      "real emails",
+      "full Firebase UIDs",
+      "private screenshots",
+      "personal health information"
+    ],
+    "dataRule": "Use synthetic or sample data only."
+  },
+  "recommendedToken": {
+    "type": "GitHub fine-grained personal access token",
+    "repositoryScope": "Only the creator fork of ParkinSUM.",
+    "minimumPermissions": [
+      {
+        "permission": "Metadata",
+        "level": "Read",
+        "reason": "Required by GitHub for repository access."
+      },
+      {
+        "permission": "Contents",
+        "level": "Read and write",
+        "reason": "Allows pushing contributor branches to the creator fork."
+      },
+      {
+        "permission": "Pull requests",
+        "level": "Read and write",
+        "reason": "Allows opening and updating pull requests."
+      }
+    ],
+    "optionalPermissions": [
+      {
+        "permission": "Issues",
+        "level": "Read and write",
+        "useOnlyWhen": "The assigned task includes issue triage or issue updates."
+      },
+      {
+        "permission": "Actions",
+        "level": "Read",
+        "useOnlyWhen": "The creator needs to inspect GitHub Actions results through tooling."
+      }
+    ]
+  },
+  "sequence": [
+    {
+      "step": 1,
+      "name": "create_token",
+      "action": "Create a fine-grained personal access token in GitHub.",
+      "storesSecret": false
+    },
+    {
+      "step": 2,
+      "name": "scope_token",
+      "action": "Limit the token to the creator fork.",
+      "storesSecret": false
+    },
+    {
+      "step": 3,
+      "name": "authenticate_locally",
+      "command": "gh auth login",
+      "storesSecret": true,
+      "storageRule": "Use GitHub CLI or the system credential manager; do not write the token into repository files."
+    },
+    {
+      "step": 4,
+      "name": "clone_public_repo",
+      "command": "git clone https://github.com/albertzhzhou-droid/ParkinSUM.git",
+      "storesSecret": false
+    },
+    {
+      "step": 5,
+      "name": "connect_fork_remote",
+      "commands": [
+        "git remote rename origin upstream",
+        "git remote add origin https://github.com/<your-user>/ParkinSUM.git",
+        "git fetch upstream"
+      ],
+      "storesSecret": false
+    },
+    {
+      "step": 6,
+      "name": "create_branch",
+      "command": "git switch -c contributor/<short-change-name>",
+      "storesSecret": false
+    },
+    {
+      "step": 7,
+      "name": "run_public_checks",
+      "commands": [
+        "npm ci",
+        "npm run public:preflight",
+        "flutter analyze",
+        "flutter test --concurrency=1"
+      ],
+      "storesSecret": false
+    },
+    {
+      "step": 8,
+      "name": "push_branch",
+      "command": "git push -u origin contributor/<short-change-name>",
+      "storesSecret": false
+    },
+    {
+      "step": 9,
+      "name": "open_pull_request",
+      "command": "gh pr create --repo albertzhzhou-droid/ParkinSUM --base main --head <your-user>:contributor/<short-change-name>",
+      "storesSecret": false
+    },
+    {
+      "step": 10,
+      "name": "confirm_safety_boundary",
+      "action": "State in the PR that the change uses synthetic/sample data only and contains no credentials or private records.",
+      "storesSecret": false
+    }
+  ],
+  "revocationTrigger": [
+    "token pasted into chat",
+    "token committed to a repository",
+    "token shown in a public screenshot",
+    "token printed in public logs",
+    "token stored on a shared machine"
+  ],
+  "contact": "parkinsumservice@gmail.com"
+}

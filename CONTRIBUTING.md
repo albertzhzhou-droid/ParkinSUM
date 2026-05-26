@@ -51,6 +51,17 @@ flutter test --concurrency=1
 If your change is documentation-only and local tooling is unavailable, say so in
 the PR and list the files you reviewed manually.
 
+## Secondary Creator Token Flow
+
+If you are remixing the project or testing a classmate or mentor contribution,
+use the fork-first GitHub token sequence in
+[docs/secondary-creator-token-flow.md](docs/secondary-creator-token-flow.md).
+Scope the token to your fork, push your branch there, and open a pull request
+back to `albertzhzhou-droid/ParkinSUM:main`. The repository provides permission
+guidance and a machine-readable sequence, not real token values. Store personal
+access tokens locally through GitHub CLI or a system credential manager, never
+in source files.
+
 ## Public Demo Media
 
 Screenshots and videos must use synthetic/sample data only. Before adding media,
