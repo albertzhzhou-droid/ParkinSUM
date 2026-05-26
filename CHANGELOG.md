@@ -18,6 +18,8 @@ real-world patient-care readiness.
 - Release checklist at `docs/release/release-checklist.md`.
 - GitHub Actions CI documentation through the README badge and local
   verification commands.
+- Synthetic visual showcase media in the README: dashboard, meal-entry,
+  conflict-result screenshots, and a short demo GIF.
 
 ### Included
 
