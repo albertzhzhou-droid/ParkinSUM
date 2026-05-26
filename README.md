@@ -19,16 +19,15 @@ Public demos should use synthetic or sample data only.
 
 ## Demo Media
 
-Real screenshots and GIFs have not been committed yet. Until they are captured, the README intentionally uses planned media slots instead of broken image embeds.
+The screenshots and GIF below use synthetic local demo data only. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
 
-| Slot | Planned file | Status |
-| --- | --- | --- |
-| Dashboard | `docs/assets/screenshots/dashboard.png` | Placeholder |
-| Meal entry | `docs/assets/screenshots/meal-entry.png` | Placeholder |
-| Medication context | `docs/assets/screenshots/medication-context.png` | Placeholder |
-| Conflict explanation | `docs/assets/screenshots/conflict-result.png` | Placeholder |
-| Import/evidence explanation flow | `docs/assets/screenshots/import-evidence-flow.png` | Placeholder if available in the build |
-| Short demo GIF | `docs/assets/demo/parkinsum-demo.gif` | Placeholder |
+![ParkinSUM dashboard with synthetic meals, medication context, and local-first recommendation summaries](docs/assets/screenshots/dashboard.png)
+
+![Synthetic meal-entry screen showing editable meal context and deterministic rule-check controls](docs/assets/screenshots/meal-entry.png)
+
+![Synthetic conflict-result dialog showing evidence-oriented educational explanation boundaries](docs/assets/screenshots/conflict-result.png)
+
+![Short synthetic ParkinSUM demo flow showing dashboard, meal entry, and conflict explanation](docs/assets/demo/parkinsum-demo.gif)
 
 Capture requirements are tracked in [docs/media-capture-checklist.md](docs/media-capture-checklist.md), with asset-folder notes in [docs/assets/screenshots/README.md](docs/assets/screenshots/README.md) and [docs/assets/demo/README.md](docs/assets/demo/README.md).
 
@@ -68,7 +67,7 @@ A lightweight GitHub Pages landing page is available in [docs/site/index.html](d
 
 ## Contribute
 
-Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. Public examples must use synthetic or sample data only.
+Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. A small real contributor PR request is drafted in [docs/mentor-pr-request.md](docs/mentor-pr-request.md) for classmates or mentors who want to test the project without making medical claims. Public examples must use synthetic or sample data only.
 
 ## Architecture Overview
 
@@ -159,6 +158,7 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Roadmap](ROADMAP.md)
 - [Contribution guide](CONTRIBUTING.md)
 - [Contribution backlog](docs/contribution-backlog.md)
+- [Mentor/classmate PR request](docs/mentor-pr-request.md)
 - [Changelog](CHANGELOG.md)
 - [Citation metadata](CITATION.cff)
 - [Repository metadata recommendations](docs/repository-metadata.md)
