@@ -21,7 +21,8 @@
     "operator:audit-summary": "node tool/operator_audit_summary.mjs",
     "operator:hosting-smoke": "node tool/hosting_smoke.mjs",
     "operator:clinical-review": "node tool/clinical_review_report.mjs",
-    "operator:gate": "node tool/operator_gate.mjs"
+    "operator:gate": "node tool/operator_gate.mjs",
+    "mechanistic:replay": "node tool/run_mechanistic_replay.mjs"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0"

@@ -6,6 +6,7 @@ import '../../core/i18n/app_i18n.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
+import '../shared/mechanistic_trace_view.dart';
 
 /// 下餐推荐：以冲突引擎为主、本地 AI 为可选润色。
 ///
@@ -568,6 +569,36 @@ class _ResultBlock extends StatelessWidget {
               ),
             ),
           ),
+        if (result.mechanisticTrace != null) ...[
+          const SizedBox(height: 12),
+          MechanisticConflictTraceCard(typedResult: result.mechanisticTrace),
+        ],
+        if (result.mechanisticCandidateScores != null &&
+            result.mechanisticCandidateScores!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          const Text(
+            'Model trace per candidate (educational)',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: LiquidGlass.onSurfaceMuted,
+            ),
+          ),
+          const SizedBox(height: 6),
+          for (final s in result.mechanisticCandidateScores!.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: MechanisticCandidateScoreLine(score: s),
+            ),
+        ],
+        if (result.rankerUsed != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'Ranker used: ${result.rankerUsed}',
+            style: const TextStyle(
+                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+          ),
+        ],
       ],
     );
   }

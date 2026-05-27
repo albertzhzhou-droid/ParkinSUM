@@ -16,6 +16,7 @@ import '../services/services.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
 import '../../domain/entities/food_recommendation.dart';
+import '../models/food_item.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
 import '../../domain/entities/protein_trend_point.dart';
 import '../../domain/entities/cdss_records.dart';
@@ -312,6 +313,12 @@ class AppState extends ChangeNotifier {
     final catalogDrugs = await services.appRepository.loadMedications();
     services.foodRepository.replaceAll(catalogFoods);
     services.medicationRepository.replaceAll(catalogDrugs);
+    // Best-effort: extend the food repository with CDSS-projected foods so
+    // the mechanistic next-meal scorer can rank real catalog-backed
+    // candidates (not only synthetic replay scenarios). Failures here are
+    // swallowed because the seed/persisted catalog already provides a
+    // working baseline.
+    await _augmentFoodRepoFromProjection();
     _activeDrugIds = await services.userDataService.loadActiveDrugIdsCompat();
     _meals = await services.userDataService.loadMeals();
     _intakes = await services.userDataService.loadIntakes();
@@ -639,6 +646,30 @@ class AppState extends ChangeNotifier {
     final id = '${prefix}_${now}_$r';
     _debugLog('[AppState] newId prefix=$prefix');
     return id;
+  }
+
+  /// Best-effort augmentation of the food repository with foods projected
+  /// from CDSS observations. Educational simulation only; failures are
+  /// swallowed because the persisted catalog already provides a working
+  /// baseline. The projection adds items via id-keyed merge (seed/persisted
+  /// items win for duplicate ids; projection-only items are appended).
+  Future<void> _augmentFoodRepoFromProjection() async {
+    try {
+      final projected =
+          await services.cdssCatalogProjectionService.projectFoods();
+      if (projected.isEmpty) return;
+      final existing = services.foodRepository.allFoods;
+      final byId = <String, FoodItem>{
+        for (final f in existing) f.id: f,
+      };
+      for (final p in projected) {
+        byId.putIfAbsent(p.id, () => p);
+      }
+      services.foodRepository.replaceAll(byId.values.toList(growable: false));
+    } catch (_) {
+      // Projection unavailable on this device (e.g. CDSS DB empty);
+      // existing seed/persisted catalog remains active.
+    }
   }
 
   /// Pull every row from the `locale_resource_bundle` table and install it

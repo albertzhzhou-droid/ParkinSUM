@@ -159,6 +159,13 @@ class InteractionResult {
   final int score;
   final List<InteractionScoreFactor> scoreFactors;
 
+  /// Deterministic mechanistic time-axis simulation trace, when one was
+  /// computed for this run. Stored as a JSON map (rather than the typed
+  /// `MechanisticConflictResult`) so the existing `toJson` / `fromJson`
+  /// serialization continues to work for callers that haven't migrated to
+  /// the typed shape. Educational simulation only; not medical advice.
+  final Map<String, dynamic>? mechanisticTraceJson;
+
   InteractionResult({
     required this.mealId,
     required this.status,
@@ -171,6 +178,7 @@ class InteractionResult {
     required this.generatedAt,
     required this.score,
     this.scoreFactors = const <InteractionScoreFactor>[],
+    this.mechanisticTraceJson,
   });
 
   InteractionResult copyWith({
@@ -185,6 +193,7 @@ class InteractionResult {
     DateTime? generatedAt,
     int? score,
     List<InteractionScoreFactor>? scoreFactors,
+    Map<String, dynamic>? mechanisticTraceJson,
   }) {
     return InteractionResult(
       mealId: mealId ?? this.mealId,
@@ -198,6 +207,7 @@ class InteractionResult {
       generatedAt: generatedAt ?? this.generatedAt,
       score: score ?? this.score,
       scoreFactors: scoreFactors ?? this.scoreFactors,
+      mechanisticTraceJson: mechanisticTraceJson ?? this.mechanisticTraceJson,
     );
   }
 
@@ -236,6 +246,8 @@ class InteractionResult {
         'generatedAt': generatedAt.toIso8601String(),
         'score': score,
         'scoreFactors': scoreFactors.map((item) => item.toJson()).toList(),
+        if (mechanisticTraceJson != null)
+          'mechanisticTrace': mechanisticTraceJson,
       };
 
   static InteractionResult fromJson(Map<String, dynamic> json) {
@@ -270,6 +282,9 @@ class InteractionResult {
                 InteractionScoreFactor.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
+      mechanisticTraceJson: json['mechanisticTrace'] is Map
+          ? Map<String, dynamic>.from(json['mechanisticTrace'] as Map)
+          : null,
     );
   }
 }
