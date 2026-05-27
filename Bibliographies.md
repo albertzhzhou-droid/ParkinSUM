@@ -74,6 +74,17 @@ patient-calibrated.
     https://www.federalregister.gov/documents/2022/09/28/2022-20993/clinical-decision-support-software-guidance-for-industry-and-food-and-drug-administration-staff.
     Accessed 27 May 2026.
 
+12. U.S. Department of Agriculture, Agricultural Research Service. *FDC
+    Nutrient Data OpenAPI Documentation.* USDA FoodData Central,
+    https://fdc.nal.usda.gov/api-spec/fdc_api.html. Accessed 27 May 2026.
+
+13. Virmani, Tuhin, et al. "To Restrict or Not to Restrict? Practical
+    Considerations for Optimizing Dietary Protein Interactions on Levodopa
+    Absorption in Parkinson's Disease." *npj Parkinson's Disease*, vol. 9,
+    no. 1, 2023, article 87. PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC10290638/.
+    Accessed 27 May 2026.
+
 ## Model assumptions mapped to sources
 
 Each row maps a quantitative assumption used inside the educational model to
@@ -94,6 +105,10 @@ source is cited only for *mechanism direction*.
 | `ldopa.protein.lnaa_competition` | Dietary LNAAs from protein compete with levodopa for transport. | [1], [3], [4], [5], [6], [7] | `label` + `mechanism` | Competition magnitude varies by individual diet and PK state. |
 | `ldopa.dose.mg_unit_required` | Carbidopa/levodopa strength is specified in mg; bare numbers are not analyzable doses. | [1], [2] | `label` | Direct label grounding. |
 | `cds.intended_use.non_clinical` | This software is an educational prototype and not a clinical decision tool; outputs are non-prescriptive and reviewable. | [11] | `regulatory_guidance` | Aligns with the spirit of CDS criterion 4. |
+| `aa.lnaa.source_type_load_factor` | The LNAA-competition proxy multiplies the protein amplitude by a coarse load factor that depends on the protein source type (animal protein generally carries higher LNAA per gram than plant protein). Direction is supported; magnitude is illustrative. | [4], [5], [6], [7], [13] | `prototype_heuristic` | ParkinSUM does not yet capture amino-acid composition per food. The load factors are direction-only educational approximations. Implemented in `lib/domain/entities/protein_source.dart`. |
+| `ge.params.parameter_set_centralized` | Gastric-emptying numeric values are now consolidated in `GastricEmptyingParameterSet.literatureInformedDefault()` with per-parameter `sourceRefs`, `confidence`, and `limitation`. | [9], [10] | `internal_safety_boundary` | Centralization is implementation-only; no clinical claim. |
+| `catalog.projection_wiring` | The runtime food repository is augmented at app boot with foods projected from CDSS observations (`CdssCatalogProjectionService.projectFoods()`) so the mechanistic next-meal scorer can rank catalog-backed candidates, not only synthetic replay scenarios. | (implementation note) | `internal_safety_boundary` | Best-effort: failures fall back gracefully to the seed/persisted catalog. |
+| `fdc.amino_acid_field_availability` | USDA FoodData Central exposes amino-acid nutrient numbers (e.g. 505 leucine, 509 phenylalanine, 511 valine). ParkinSUM's FDC importer does not extract these today; the LNAA layer is structured to consume them when added. | [12] | `mechanism` | Documentation of upstream-data availability only; no clinical inference. |
 
 ## Notes on usage
 

@@ -463,4 +463,27 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       _candidateMissingNutrients,
     ],
   ),
+  MechanisticReplayScenario(
+    scenarioId: 's15_multi_point_window_variation',
+    title:
+        'User-defined window that straddles the levodopa absorption window — '
+        'multi-point sampling should produce varying overlap across the window',
+    // Base context has no prior meal, so the engine reports
+    // `noModeledInteraction`; the multi-point sampling happens against the
+    // candidates' hypothetical meal events placed inside the user window.
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-15)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: -10, endMinute: 110),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [
+      _candidateBanana,
+      _candidateProteinShake,
+      _candidateRiceCake,
+    ],
+  ),
 ];

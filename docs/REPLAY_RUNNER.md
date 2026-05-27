@@ -73,7 +73,10 @@ Per-case report row (see `MechanisticReplayCaseReport`):
 | `blockedMechanisms` | Mechanisms that were *not allowed* to fire (e.g. when context is invalid). |
 | `sourceRefs` | `model_assumption_registry.dart` source IDs. |
 | `bannedPhraseHits` | Always empty in a passing run. |
-| `nextMealRecommendationResult` | Candidate scores, when the scenario includes a user window + candidates. |
+| `nextMealRecommendationResult` | Candidate scores, when the scenario includes a user window + candidates. Each score carries `sampledWindowSummary` with per-sample offsets, overlap, and confidence. |
+| `competitionLnaaSummary` | LNAA load summary (effective load factor, protein sources present, whether uncertainty was widened) when a meal had protein. |
+| `rankerUsed` | Which ranker the orchestrator-equivalent path would use for this scenario (`mechanistic_engine_only` or `mechanistic_primary_window_sampled`). |
+| `sampledWindowOffsets` | Deterministic list of per-sample offsets (minutes within the user window). Empty when no candidates. |
 | `pass` / `failureReason` | Bool + diagnostic message. |
 
 ## Banned-phrase scan

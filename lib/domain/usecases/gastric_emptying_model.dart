@@ -1,27 +1,23 @@
+import '../entities/gastric_emptying_parameters.dart';
 import '../entities/gastric_emptying_profile.dart';
 import '../entities/meal_composition.dart';
 import '../entities/time_axis_events.dart';
 
 /// Semi-mechanistic, deterministic gastric emptying model.
 ///
-/// All numeric magnitudes here are "prototype heuristics" (see
-/// `model_assumption_registry.dart` → `internalPrototypeHeuristic`). The
-/// *direction* of each effect (solids lag, liquids fast, fat slows, large
-/// meals slow, fiber widens uncertainty, mixed meals cumulate) is grounded
-/// in the cited literature; the exact numbers are illustrative.
+/// All numeric magnitudes are sourced from
+/// `GastricEmptyingParameterSet.literatureInformedDefault()`, which tags
+/// each value with provenance (literature-informed mechanism direction vs
+/// prototype_heuristic magnitude). The *direction* of each effect (solids
+/// lag, liquids fast, fat slows, large meals slow, fiber widens
+/// uncertainty, mixed meals cumulate) is grounded in the cited literature;
+/// exact magnitudes are illustrative and are not patient-calibrated.
 class GastricEmptyingModel {
-  static const double referenceSolidLagMinutes = 20.0; // 10–30 min direction
-  static const double referenceSolidHalfMinutes = 90.0; // 60–120 min direction
-  static const double referenceLiquidLagMinutes = 0.0;
-  static const double referenceLiquidHalfMinutes = 15.0; // 10–20 min direction
-  static const double referenceMealCalories = 400.0;
+  final GastricEmptyingParameterSet parameters;
 
-  static const List<String> _baseSourceRefs = [
-    'src.camilleri.ge.halftime.2009',
-    'src.hens.foodphysical.2024',
-    'src.contin.levodopa.pk.2010',
-    'src.internal.prototype.heuristic',
-  ];
+  GastricEmptyingModel({GastricEmptyingParameterSet? parameters})
+      : parameters = parameters ??
+            GastricEmptyingParameterSet.literatureInformedDefault();
 
   GastricEmptyingProfile build({
     required String mealId,
@@ -49,8 +45,10 @@ class GastricEmptyingModel {
 
     double sizeMultiplier;
     if (sizeAvailable) {
-      sizeMultiplier =
-          0.6 + 0.4 * (composition.totalCalories! / referenceMealCalories);
+      sizeMultiplier = 0.6 +
+          0.4 *
+              (composition.totalCalories! /
+                  parameters.referenceMealCalories.value);
       sizeMultiplier = sizeMultiplier.clamp(0.6, 2.0);
       assumptions.add(
           'ge.size.linear_scale (size multiplier ${sizeMultiplier.toStringAsFixed(2)})');
@@ -61,10 +59,11 @@ class GastricEmptyingModel {
     }
 
     double fatMultiplier;
-    if (fatFraction != null && fatFraction >= 0.3) {
-      fatMultiplier = 1.5;
-      modifiers.add('fat_slowdown_1_5x');
-      assumptions.add('ge.fat.slowdown.1_5x');
+    if (fatFraction != null &&
+        fatFraction >= parameters.fatFractionThreshold.value) {
+      fatMultiplier = parameters.fatSlowdownMultiplier.value;
+      modifiers.add('fat_slowdown_${fatMultiplier.toStringAsFixed(2)}x');
+      assumptions.add(parameters.fatSlowdownMultiplier.id);
     } else {
       fatMultiplier = 1.0;
     }
@@ -73,8 +72,9 @@ class GastricEmptyingModel {
     final highFiber = composition.fiberAmountBand == AmountBand.high;
     double fiberMultiplier = 1.0;
     if (highFiber) {
-      fiberMultiplier = 1.1;
-      assumptions.add('ge.fiber.uncertainty (high fiber, slight slowdown)');
+      fiberMultiplier = parameters.fiberSlowdownMultiplier.value;
+      assumptions.add(
+          '${parameters.fiberSlowdownMultiplier.id} (high fiber, slight slowdown)');
       modifiers.add('fiber_uncertainty_widen');
     }
     if (composition.fiberAmountBand == AmountBand.unknown) {
@@ -148,7 +148,7 @@ class GastricEmptyingModel {
       uncertaintyBand: uncertaintyBand,
       assumptions: List.unmodifiable(assumptions),
       missingInputs: List.unmodifiable(missingInputs),
-      sourceRefs: _baseSourceRefs,
+      sourceRefs: parameters.unionSourceRefs,
       aggregateLagMinutes: aggregateLag,
       peakEmptyingWindow:
           TimelineWindow(startMinute: peakStart, endMinute: peakEnd),
@@ -168,15 +168,15 @@ class GastricEmptyingModel {
   }) {
     final isLiquid = form == MealPhysicalForm.liquid;
     final baseLag = isLiquid
-        ? referenceLiquidLagMinutes
+        ? parameters.liquidLagMinutes.value
         : (form == MealPhysicalForm.unknown
-            ? referenceSolidLagMinutes * 0.7
-            : referenceSolidLagMinutes);
+            ? parameters.solidLagMinutes.value * 0.7
+            : parameters.solidLagMinutes.value);
     final baseHalf = isLiquid
-        ? referenceLiquidHalfMinutes
+        ? parameters.liquidHalfMinutes.value
         : (form == MealPhysicalForm.unknown
-            ? referenceSolidHalfMinutes * 0.9
-            : referenceSolidHalfMinutes);
+            ? parameters.solidHalfMinutes.value * 0.9
+            : parameters.solidHalfMinutes.value);
 
     return EmptyingComponentProfile(
       componentId: componentId,
@@ -198,9 +198,13 @@ class GastricEmptyingModel {
     if (compositionCompleteness < 0.99) score += 1;
     if (compositionCompleteness < 0.75) score += 1;
     if (compositionCompleteness < 0.5) score += 1;
-    if (overlappingResidualLoad > 0.1) score += 1;
-    if (overlappingResidualLoad > 0.3) score += 1;
-    if (highFiber) score += 1;
+    if (overlappingResidualLoad > 0.1) {
+      score += parameters.overlapUncertaintyBoost.value;
+    }
+    if (overlappingResidualLoad > 0.3) {
+      score += parameters.overlapUncertaintyBoost.value;
+    }
+    if (highFiber) score += parameters.mixedMealUncertaintyBoost.value;
     switch (score) {
       case 0:
         return UncertaintyBand.narrow;

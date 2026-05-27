@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../../core/models/interaction_result.dart';
+import 'mechanistic_trace_view.dart';
 
 Color interactionSeverityColor(InteractionSeverity severity) {
   switch (severity) {
@@ -134,6 +135,10 @@ class InteractionSummaryCard extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('• ${copy.dataNote(note)}'),
               ),
+          ],
+          if (result.mechanisticTraceJson != null) ...[
+            const SizedBox(height: 12),
+            MechanisticConflictTraceCard(result: result),
           ],
           if (result.issues.isNotEmpty) ...[
             const SizedBox(height: 12),

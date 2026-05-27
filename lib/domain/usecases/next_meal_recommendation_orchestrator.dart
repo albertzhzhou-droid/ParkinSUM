@@ -13,6 +13,7 @@ import '../entities/meal_composition.dart';
 import '../entities/next_meal_recommendation_models.dart';
 import '../entities/cdss_records.dart';
 import '../entities/time_axis_events.dart';
+import 'catalog_food_to_candidate.dart';
 import 'cdss_catalog_projection_service.dart';
 import 'get_food_recommendations_usecase.dart';
 import 'local_ai_recommendation_adapter.dart';
@@ -617,6 +618,12 @@ class NextMealRecommendationOrchestrator {
     return 0.2;
   }
 
+  // LEGACY HEURISTIC FALLBACK — superseded by `MechanisticConflictEngine`
+  // when the user-defined window is present and mechanistic context is
+  // sufficient. See `_enrichWithMechanistic` and the `rankerUsed` field on
+  // `NextMealRecommendationResult` for the promotion logic. Kept here so
+  // existing benchmark fixtures and tests continue to pass when no window
+  // is provided.
   double _levodopaWindowPenalty({
     required DateTime midpoint,
     required List<DrugDefinition> activeDrugs,
@@ -841,7 +848,7 @@ class NextMealRecommendationOrchestrator {
     List<MechanisticCandidateScore>? candidateScores;
     if (request.userDefinedWindow != null && candidateFoods.isNotEmpty) {
       final candidates =
-          candidateFoods.map(_foodItemToCandidate).toList(growable: false);
+          candidateFoods.map(foodItemToCandidateFood).toList(growable: false);
       candidateScores = mechanisticScorer.score(
         baseContext: context,
         baseMealCompositionsById: compositionsById,
@@ -849,8 +856,36 @@ class NextMealRecommendationOrchestrator {
       );
     }
 
+    // ---- Mechanistic-primary ranking (Gap 2) -------------------------------
+    // Replace the heuristic ranking only when the mechanistic engine has
+    // sufficient context (user window + medium/high confidence + every
+    // candidate scored). Otherwise the existing heuristic ranking stays
+    // untouched and we record `rankerUsed = "heuristic_legacy_fallback"`.
+    var rankerUsed = 'heuristic_legacy_fallback';
+    var recommendations = base.recommendations;
+    final canPromoteMechanistic = request.userDefinedWindow != null &&
+        candidateScores != null &&
+        candidateScores.isNotEmpty &&
+        candidateScores.every((s) => !s.insufficientContext) &&
+        (trace.confidenceBand == ConfidenceBand.high ||
+            trace.confidenceBand == ConfidenceBand.medium);
+    if (canPromoteMechanistic) {
+      final orderById = <String, int>{};
+      for (var i = 0; i < candidateScores.length; i++) {
+        orderById[candidateScores[i].candidateFoodId] = i;
+      }
+      final reordered = [...base.recommendations];
+      reordered.sort((a, b) {
+        final ia = orderById[a.food.id] ?? 1 << 30;
+        final ib = orderById[b.food.id] ?? 1 << 30;
+        return ia.compareTo(ib);
+      });
+      recommendations = List.unmodifiable(reordered);
+      rankerUsed = 'mechanistic_primary';
+    }
+
     return NextMealRecommendationResult(
-      recommendations: base.recommendations,
+      recommendations: recommendations,
       aiUsed: base.aiUsed,
       decisionPath: base.decisionPath,
       explanations: base.explanations,
@@ -865,6 +900,7 @@ class NextMealRecommendationOrchestrator {
       benchmarkDataset: base.benchmarkDataset,
       mechanisticTrace: trace,
       mechanisticCandidateScores: candidateScores,
+      rankerUsed: rankerUsed,
     );
   }
 
@@ -952,40 +988,12 @@ class NextMealRecommendationOrchestrator {
     return result;
   }
 
-  MealPhysicalForm _textureToPhysicalForm(String? textureClass) {
-    switch ((textureClass ?? '').toLowerCase()) {
-      case 'liquid':
-        return MealPhysicalForm.liquid;
-      case 'soft':
-      case 'solid':
-        return MealPhysicalForm.solid;
-      default:
-        return MealPhysicalForm.unknown;
-    }
-  }
+  // _textureToPhysicalForm was extracted alongside the candidate adapter to
+  // `catalog_food_to_candidate.dart`; the orchestrator now delegates.
 
-  CandidateFood _foodItemToCandidate(FoodItem item) {
-    return CandidateFood(
-      id: item.id,
-      name: item.name,
-      regionalFoodLibraryRef: item.sourceSystem,
-      declaredPhysicalForm: _textureToPhysicalForm(item.textureClass),
-      components: [
-        FoodComponent(
-          id: item.id,
-          name: item.name,
-          physicalForm: _textureToPhysicalForm(item.textureClass),
-          proteinGrams: item.proteinG,
-          fatGrams: item.fatG,
-          fiberGrams: item.fiberG,
-          carbohydrateGrams: item.carbsG,
-          calories: null,
-          portionGrams: null,
-          sourceDocId: item.sourceSystem,
-        ),
-      ],
-    );
-  }
+  // _foodItemToCandidate was extracted to `catalog_food_to_candidate.dart`
+  // (`foodItemToCandidateFood`) so it can be reused by tests and any future
+  // catalog wiring.
 }
 
 class _TemplateContext {

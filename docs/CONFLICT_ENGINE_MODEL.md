@@ -69,6 +69,14 @@ indexed by `compositionId`.
 
 ## 6. Gastric emptying assumptions
 
+All gastric-emptying numeric values are sourced from
+`GastricEmptyingParameterSet.literatureInformedDefault()`
+(`lib/domain/entities/gastric_emptying_parameters.dart`). Each parameter
+carries `sourceRefs`, an evidence-level (`mechanism` vs
+`prototype_heuristic`), and a `limitation` string. Reviewers can trace any
+modeled value back to a `Bibliographies.md` row via the parameter's
+`sourceRefs`.
+
 The model uses a per-component lag-shifted single-exponential decay:
 
 ```
@@ -165,9 +173,18 @@ This is an educational simulation, not a PK prediction.
 ## 13. Amino-acid competition assumptions
 
 The competition pressure proxy is the product of (a) the meal's
-instantaneous intestinal arrival rate (derivative of `emptiedFractionAt`)
-and (b) a protein amplitude factor scaled against a 20 g reference. The
-competition score is the *average pressure inside the absorption
+instantaneous intestinal arrival rate (derivative of `emptiedFractionAt`),
+(b) a protein amplitude factor scaled against a 20 g reference, and (c)
+an **LNAA load factor** that depends on the protein source type of each
+food component (`ProteinSourceType` in `lib/domain/entities/protein_source.dart`).
+The load factor is direction-only: animal protein generally carries higher
+LNAA per gram than plant protein. Magnitudes are tagged
+`prototype_heuristic`; direction is grounded in the cited reviews (Nutt et
+al. 1989; Cereda et al. 2017; Boelens Keun et al. 2021; Virmani et al.
+2023). When the component's protein source is `unknown`, the uncertainty
+band widens by one step rather than the model faking precision.
+
+The competition score is the *average pressure inside the absorption
 opportunity window*. Discretized bands:
 
 | Overlap (avg pressure × overlap fraction) | Competition band |
@@ -254,13 +271,35 @@ cover:
   returns `insufficient_context`.
 - **Never picks the window.** The window comes from the caller; the
   scorer only evaluates candidates inside it.
-- Evaluates each candidate at the window's *start* and *midpoint*, picks
-  the worse-overlap of the two (conservative).
-- Ranks candidates ascending by `conflictOverlapScore`, breaking ties by
-  `nutritionDataCompleteness` descending.
+- Uses **multi-point sampling** inside the window:
+  `max(5, ceil(window_minutes / 15))` samples, capped at 12. Each sample
+  is a hypothetical meal event at a candidate offset; the engine runs
+  end-to-end for each. The conservative (worst-case) overlap drives
+  ranking; best, average, and per-sample summaries are surfaced in
+  `MechanisticCandidateScore.sampledWindowSummary` for trace and UI.
+- Ranks candidates ascending by worst-case `conflictOverlapScore`,
+  breaking ties by `nutritionDataCompleteness` descending, then by
+  candidate id for deterministic order.
 - Returns `insufficient_context` for *every* candidate when the
   medication context is invalid — never pretends to optimize against a
   bare numeric dose.
+
+### Mechanistic-primary ranking promotion
+
+`NextMealRecommendationOrchestrator._enrichWithMechanistic` promotes the
+mechanistic engine to be the **primary ranker** of `recommendations`
+exactly when **all** of these hold:
+
+1. `request.userDefinedWindow != null`, and
+2. `mechanisticTrace.confidenceBand` is `medium` or `high`, and
+3. every candidate has a `MechanisticCandidateScore` with
+   `insufficientContext == false`.
+
+In every other case the existing legacy heuristic (`_levodopaWindowPenalty`,
+documented as a fallback in the orchestrator source) drives ordering.
+The result's new `rankerUsed` field surfaces which path ran
+(`mechanistic_primary` or `heuristic_legacy_fallback`) so reviewers can
+audit ranking decisions without reading code.
 
 ## 19. What the model does NOT infer
 
@@ -274,17 +313,29 @@ cover:
 
 ## 20. Implementation status
 
-- **Engine + scorer:** complete and exercised by 32 focused tests + a
-  14-scenario replay runner.
-- **Wiring:**
-  - `NextMealRecommendationOrchestrator.recommend(...)` now attaches a
-    `mechanisticTrace` and (when `userDefinedWindow` is provided)
-    `mechanisticCandidateScores` to `NextMealRecommendationResult`.
-  - `DatabaseBackedMealCheckUseCase.call(...)` attaches the trace JSON
-    to `InteractionResult.mechanisticTraceJson` for downstream rendering
-    and replay.
-- **UI:** consumers see the new fields. Visual presentation in
-  `lib/features/next_meal/next_meal_page.dart` is a follow-up.
+- **Engine + scorer:** complete; exercised by 38+ focused tests + a
+  15-scenario replay runner.
+- **Centralized gastric-emptying parameter set:** complete
+  (`lib/domain/entities/gastric_emptying_parameters.dart`).
+- **LNAA / protein-source proxy:** complete
+  (`lib/domain/entities/protein_source.dart`,
+  `lib/domain/usecases/amino_acid_competition_model.dart`); load factors are
+  direction-only and tagged `prototype_heuristic`.
+- **Multi-point window sampling:** complete; deterministic, 5–12 samples.
+- **Mechanistic-primary ranking promotion:** complete in
+  `NextMealRecommendationOrchestrator`; `rankerUsed` surfaces which path
+  ran.
+- **Catalog wiring:** `AppState._augmentFoodRepoFromProjection` merges
+  CDSS-projected foods into the runtime food repository at boot, best-
+  effort. The seed/persisted catalog remains the fallback.
+- **Wiring (data fields):**
+  - `NextMealRecommendationResult` carries `mechanisticTrace`,
+    `mechanisticCandidateScores`, `rankerUsed`.
+  - `InteractionResult.mechanisticTraceJson` survives JSON round-trip.
+- **UI:** `MechanisticConflictTraceCard` +
+  `MechanisticCandidateScoreLine` render compact, non-prescriptive
+  summaries in `next_meal_page.dart` and `interaction_result_view.dart`
+  via an `ExpansionTile`. Raw JSON is not shown by default.
 
 ## 21. Future literature-calibration path
 

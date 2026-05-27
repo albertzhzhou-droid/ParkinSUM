@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/meal_composition.dart';
@@ -30,9 +32,19 @@ class CandidateFood {
 /// Critical contract: the scorer NEVER picks the window. If the window or
 /// medication context is missing, every candidate returns
 /// `insufficient_context`.
+///
+/// Sampling strategy: deterministic multi-point sampling across the user
+/// window (`max(5, ceil(window_minutes / 15))`, capped at 12). For each
+/// candidate the worst-case overlap across samples is used as the
+/// conservative ranking score; best, average, and per-sample summaries are
+/// surfaced for trace/UI only.
 class MechanisticNextMealScorer {
   final MechanisticConflictEngine engine;
   final MealCompositionNormalizer normalizer;
+
+  static const int minSampleCount = 5;
+  static const int maxSampleCount = 12;
+  static const int sampleStrideMinutes = 15;
 
   MechanisticNextMealScorer({
     MechanisticConflictEngine? engine,
@@ -49,18 +61,24 @@ class MechanisticNextMealScorer {
     final window = userDefinedWindow ?? baseContext.userDefinedWindow;
     if (window == null) {
       return candidates
-          .map((c) => _insufficient(c,
-              window: _placeholderWindow(),
-              reason: 'user_defined_window_missing'))
+          .map((c) => _insufficient(
+                c,
+                window: _placeholderWindow(),
+                reason: 'user_defined_window_missing',
+              ))
           .toList(growable: false);
     }
     if (baseContext.medicationEvents.isEmpty) {
       return candidates
-          .map((c) => _insufficient(c,
-              window: window, reason: 'medication_context_invalid'))
+          .map((c) => _insufficient(
+                c,
+                window: window,
+                reason: 'medication_context_invalid',
+              ))
           .toList(growable: false);
     }
 
+    final sampleOffsets = _sampleOffsets(window);
     final scores = <MechanisticCandidateScore>[];
     for (final candidate in candidates) {
       scores.add(_scoreOne(
@@ -68,18 +86,37 @@ class MechanisticNextMealScorer {
         baseContext: baseContext,
         baseMealCompositionsById: baseMealCompositionsById,
         userDefinedWindow: window,
+        sampleOffsets: sampleOffsets,
       ));
     }
 
-    // Rank ascending by conflict overlap (lower modeled overlap = better
-    // match within the user's window).
+    // Rank ascending by worst-case overlap (conservative), then by
+    // nutrition completeness DESC, then by name for deterministic order.
     scores.sort((a, b) {
       final byOverlap =
           a.conflictOverlapScore.compareTo(b.conflictOverlapScore);
       if (byOverlap != 0) return byOverlap;
-      return b.nutritionDataCompleteness.compareTo(a.nutritionDataCompleteness);
+      final byCompleteness =
+          b.nutritionDataCompleteness.compareTo(a.nutritionDataCompleteness);
+      if (byCompleteness != 0) return byCompleteness;
+      return a.candidateFoodId.compareTo(b.candidateFoodId);
     });
     return List.unmodifiable(scores);
+  }
+
+  List<int> _sampleOffsets(UserDefinedMealWindow window) {
+    final durationMinutes = window.window.endMinute - window.window.startMinute;
+    if (durationMinutes <= 0) {
+      return [window.window.startMinute];
+    }
+    var count = math.max(
+        minSampleCount, (durationMinutes / sampleStrideMinutes).ceil());
+    count = math.min(count, maxSampleCount);
+    if (count < 2) return [window.window.startMinute];
+    final step = durationMinutes / (count - 1);
+    return List<int>.generate(
+        count, (i) => window.window.startMinute + (i * step).round(),
+        growable: false);
   }
 
   MechanisticCandidateScore _scoreOne({
@@ -87,6 +124,7 @@ class MechanisticNextMealScorer {
     required TimeAxisConflictContext baseContext,
     required Map<String, MealComposition> baseMealCompositionsById,
     required UserDefinedMealWindow userDefinedWindow,
+    required List<int> sampleOffsets,
   }) {
     final composition = normalizer.normalize(
       mealId: 'candidate_${candidate.id}',
@@ -94,44 +132,60 @@ class MechanisticNextMealScorer {
       declaredPhysicalForm: candidate.declaredPhysicalForm,
     );
 
-    // Build hypothetical timelines at window start and midpoint; pick the
-    // worse-overlap of the two to keep the score conservative without
-    // searching the entire continuum.
-    final candidateA = _hypotheticalContext(
-      baseContext: baseContext,
-      candidate: candidate,
-      compositionId: composition.id,
-      candidateMinute: userDefinedWindow.window.startMinute,
-    );
-    final candidateB = _hypotheticalContext(
-      baseContext: baseContext,
-      candidate: candidate,
-      compositionId: composition.id,
-      candidateMinute: userDefinedWindow.midpointMinute,
-    );
-
     final mergedCompositions = <String, MealComposition>{
       ...baseMealCompositionsById,
       composition.id: composition,
     };
 
-    final resultA = engine.evaluate(
-      context: candidateA,
-      mealCompositionsById: mergedCompositions,
-      resultId: 'cand_${candidate.id}_start',
-    );
-    final resultB = engine.evaluate(
-      context: candidateB,
-      mealCompositionsById: mergedCompositions,
-      resultId: 'cand_${candidate.id}_mid',
-    );
+    final samples = <MechanisticCandidateSampleSummary>[];
+    final perSampleResults = <MechanisticConflictResult>[];
+    for (final offset in sampleOffsets) {
+      final ctx = _hypotheticalContext(
+        baseContext: baseContext,
+        candidate: candidate,
+        compositionId: composition.id,
+        candidateMinute: offset,
+      );
+      final result = engine.evaluate(
+        context: ctx,
+        mealCompositionsById: mergedCompositions,
+        resultId: 'cand_${candidate.id}_$offset',
+      );
+      perSampleResults.add(result);
+      samples.add(MechanisticCandidateSampleSummary(
+        offsetMinutes: offset - userDefinedWindow.window.startMinute,
+        conflictOverlap: result.interactionScore,
+        confidenceBand: result.confidenceBand.name,
+      ));
+    }
 
-    final worse = resultA.interactionScore >= resultB.interactionScore
-        ? resultA
-        : resultB;
+    // Conservative selection: pick the WORST-overlap sample as the ranking
+    // score; capture best/average for trace.
+    var worstIdx = 0;
+    for (var i = 1; i < perSampleResults.length; i++) {
+      if (perSampleResults[i].interactionScore >
+          perSampleResults[worstIdx].interactionScore) {
+        worstIdx = i;
+      }
+    }
+    var bestIdx = 0;
+    for (var i = 1; i < perSampleResults.length; i++) {
+      if (perSampleResults[i].interactionScore <
+          perSampleResults[bestIdx].interactionScore) {
+        bestIdx = i;
+      }
+    }
+    final worst = perSampleResults[worstIdx];
+    final best = perSampleResults[bestIdx];
 
-    final overlap = worse.interactionScore;
-    final uncertaintyPenalty = switch (worse.confidenceBand) {
+    final overlap = worst.interactionScore;
+    final bestOverlap = best.interactionScore;
+    final avgOverlap = perSampleResults
+            .map((r) => r.interactionScore)
+            .fold<double>(0, (a, b) => a + b) /
+        perSampleResults.length;
+
+    final uncertaintyPenalty = switch (worst.confidenceBand) {
       ConfidenceBand.high => 0.0,
       ConfidenceBand.medium => 0.1,
       ConfidenceBand.low => 0.25,
@@ -141,15 +195,20 @@ class MechanisticNextMealScorer {
         (1.0 - overlap - 0.2 * uncertaintyPenalty).clamp(0.0, 1.0);
 
     final explanation = <String>[
-      'Within the time window you provided, this candidate has a modeled '
-          'overlap of ${(overlap * 100).toStringAsFixed(0)}% with the levodopa '
-          'absorption opportunity in the educational simulation.',
+      'Within the time window you provided, this candidate has a worst-case '
+          'modeled overlap of ${(overlap * 100).toStringAsFixed(0)}% with '
+          'the levodopa absorption opportunity (best-case '
+          '${(bestOverlap * 100).toStringAsFixed(0)}%, average '
+          '${(avgOverlap * 100).toStringAsFixed(0)}%) across '
+          '${perSampleResults.length} sample points in the educational '
+          'simulation.',
       'Modeled meal physical form: ${composition.mealPhysicalForm.name}.',
       'Composition completeness: '
           '${(composition.compositionCompleteness * 100).toStringAsFixed(0)}%.',
-      if (worse.primaryDrivers.isNotEmpty)
-        'Primary modeled drivers: ${worse.primaryDrivers.join(', ')}.',
-      'This is not dietary, medication, or clinical advice.',
+      if (worst.primaryDrivers.isNotEmpty)
+        'Primary modeled drivers: ${worst.primaryDrivers.join(', ')}.',
+      'Model sampling inside the user-provided window does not choose a '
+          'meal time or provide dietary advice.',
     ];
 
     return MechanisticCandidateScore(
@@ -161,13 +220,21 @@ class MechanisticNextMealScorer {
       conflictOverlapScore: overlap,
       uncertaintyPenalty: uncertaintyPenalty,
       nutritionDataCompleteness: composition.compositionCompleteness,
-      confidenceBand: worse.confidenceBand,
+      confidenceBand: worst.confidenceBand,
       explanation: List.unmodifiable(explanation),
-      sourceRefs: worse.sourceRefs,
+      sourceRefs: worst.sourceRefs,
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,
-      upstreamResult: worse,
+      upstreamResult: worst,
       insufficientContext: false,
+      sampleCount: perSampleResults.length,
+      bestSampledOffsetMinutes:
+          sampleOffsets[bestIdx] - userDefinedWindow.window.startMinute,
+      worstCaseConflictOverlapScore: overlap,
+      bestCaseConflictOverlapScore: bestOverlap,
+      averageConflictOverlapScore: avgOverlap,
+      selectedConservativeScore: overlap,
+      sampledWindowSummary: List.unmodifiable(samples),
     );
   }
 
@@ -189,7 +256,7 @@ class MechanisticNextMealScorer {
       explanation: [
         'The next-meal recommender does not produce a score for this '
             'candidate because: $reason.',
-        'This is not dietary, medication, or clinical advice.',
+        'This is not dietary or clinical advice.',
       ],
       sourceRefs: const [
         'src.dailymed.sinemet.label',

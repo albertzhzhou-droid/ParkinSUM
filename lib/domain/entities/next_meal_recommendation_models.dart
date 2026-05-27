@@ -64,6 +64,12 @@ class NextMealRecommendationResult {
   /// includes a `userDefinedWindow`.
   final List<MechanisticCandidateScore>? mechanisticCandidateScores;
 
+  /// Which ranker actually produced `recommendations` order.
+  /// Values: `mechanistic_primary` (mechanistic engine had sufficient
+  /// context and re-ordered the list) or `heuristic_legacy_fallback`
+  /// (the existing distance-based heuristic was used).
+  final String? rankerUsed;
+
   const NextMealRecommendationResult({
     required this.recommendations,
     required this.aiUsed,
@@ -80,5 +86,6 @@ class NextMealRecommendationResult {
     this.benchmarkDataset = defaultRecommendationBenchmarkDataset,
     this.mechanisticTrace,
     this.mechanisticCandidateScores,
+    this.rankerUsed,
   });
 }

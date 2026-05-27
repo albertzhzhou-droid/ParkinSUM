@@ -1,3 +1,4 @@
+import 'protein_source.dart';
 import 'time_axis_events.dart' show MealPhysicalForm;
 
 /// Discrete bands used to communicate uncertainty without false precision.
@@ -84,6 +85,11 @@ class FoodComponent {
   final double? portionGrams;
   final String? sourceDocId;
 
+  /// Coarse protein source used by the LNAA-competition proxy. Defaults to
+  /// `unknown`; the model widens uncertainty when this is unknown rather
+  /// than guessing.
+  final ProteinSourceType proteinSource;
+
   const FoodComponent({
     required this.id,
     required this.name,
@@ -95,6 +101,7 @@ class FoodComponent {
     required this.calories,
     required this.portionGrams,
     required this.sourceDocId,
+    this.proteinSource = ProteinSourceType.unknown,
   });
 
   Map<String, dynamic> toJson() => {
@@ -108,5 +115,6 @@ class FoodComponent {
         'calories': calories,
         'portion_grams': portionGrams,
         'source_doc_id': sourceDocId,
+        'protein_source': proteinSource.name,
       };
 }

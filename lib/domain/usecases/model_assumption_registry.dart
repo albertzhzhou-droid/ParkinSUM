@@ -229,6 +229,43 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-05-27',
   );
 
+  static const ModelAssumption lnaaPlantVsAnimal = ModelAssumption(
+    sourceId: 'src.lnaa.plantvanimal.2023',
+    title:
+        'To restrict or not to restrict? Practical considerations for optimizing '
+        'dietary protein interactions on levodopa absorption in PD (Virmani et al.)',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'Dietary LNAA load from animal protein is generally higher per gram '
+        'than from plant protein; both can affect levodopa absorption.',
+    limitation:
+        'Population-level direction; not a per-patient predictor and not '
+        'used to claim clinical pharmacokinetics.',
+    citationText: 'Virmani T. et al. To restrict or not to restrict? Practical '
+        'considerations for optimizing dietary protein interactions on '
+        'levodopa absorption in PD. npj Parkinson\'s Disease 9:87, 2023.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-05-27',
+  );
+
+  static const ModelAssumption fdcAminoAcidFields = ModelAssumption(
+    sourceId: 'src.fdc.api.amino_acid_fields',
+    title: 'USDA FoodData Central — amino-acid nutrient fields availability',
+    sourceType: ModelSourceType.officialLabel,
+    mechanismSupported:
+        'USDA FDC exposes amino-acid nutrient numbers (505 leucine, 509 '
+        'phenylalanine, 511 valine, etc.). Documentation of upstream-data '
+        'availability for future LNAA extraction.',
+    limitation:
+        'ParkinSUM\'s FDC importer does not currently extract these fields. '
+        'Documented for future calibration only.',
+    citationText:
+        'USDA Agricultural Research Service. FDC Nutrient Data OpenAPI '
+        'Documentation. USDA FoodData Central.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-05-27',
+  );
+
   static const ModelAssumption internalPrototypeHeuristic = ModelAssumption(
     sourceId: 'src.internal.prototype.heuristic',
     title: 'ParkinSUM prototype heuristic (no patient calibration)',
@@ -255,6 +292,8 @@ class ModelAssumptionRegistry {
     gastricEmptyingHalfTime,
     foodPhysicalProperties,
     fdaCdsGuidance,
+    lnaaPlantVsAnimal,
+    fdcAminoAcidFields,
     internalPrototypeHeuristic,
   ];
 

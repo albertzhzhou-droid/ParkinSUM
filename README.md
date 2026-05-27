@@ -65,6 +65,26 @@ decide when the user eats**, does not produce medication timing or dietary
 advice, and returns `insufficient_context` whenever the window or
 medication context is missing.
 
+The mechanistic engine is now the **primary ranker** for next-meal
+recommendations whenever the request carries a user-defined time window
+and the engine has at least `medium` confidence — see
+`docs/CONFLICT_ENGINE_MODEL.md` for the promotion contract and the
+`rankerUsed` field. Candidate scoring uses **deterministic multi-point
+sampling** (5–12 samples, capped) across the user-provided window; the
+worst-case overlap drives ranking and the best/average/per-sample summary
+is surfaced for trace and UI. Gastric-emptying numerics live in a single
+`GastricEmptyingParameterSet` with per-parameter `sourceRefs`, and the
+amino-acid competition layer now applies a coarse, direction-only
+**LNAA load factor** per protein source (animal vs plant). The runtime
+food repository is augmented at app boot with foods projected from CDSS
+observations so the scorer can rank real catalog-backed candidates, not
+only synthetic replay items.
+
+Compact mechanistic-trace UI cards render alongside the existing
+recommendation and conflict-result views via an `ExpansionTile` so the
+new surface stays out of the way until a reviewer expands it. Raw trace
+JSON is never shown by default.
+
 Synthetic replay scenarios are available via the CLI:
 
 ```sh

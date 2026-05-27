@@ -1,6 +1,34 @@
 import 'gastric_emptying_profile.dart' show UncertaintyBand;
+import 'protein_source.dart';
 
 enum CompetitionBand { none, low, moderate, high, unknown }
+
+/// LNAA summary attached to the competition timeline so reviewers can see
+/// which protein-source assumptions modulated the proxy. Educational only.
+class CompetitionLnaaSummary {
+  final double effectiveLoadFactor;
+  final List<ProteinSourceType> sourcesPresent;
+  final bool isPrototypeHeuristic;
+  final bool uncertaintyWidened;
+  final List<String> sourceRefs;
+
+  const CompetitionLnaaSummary({
+    required this.effectiveLoadFactor,
+    required this.sourcesPresent,
+    required this.isPrototypeHeuristic,
+    required this.uncertaintyWidened,
+    required this.sourceRefs,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'effective_load_factor': effectiveLoadFactor,
+        'sources_present':
+            sourcesPresent.map((s) => s.name).toList(growable: false),
+        'is_prototype_heuristic': isPrototypeHeuristic,
+        'uncertainty_widened': uncertaintyWidened,
+        'source_refs': sourceRefs,
+      };
+}
 
 /// Discretized competition-pressure timeline. A single sample is the
 /// model's estimate of relative amino-acid presence at the absorption
@@ -26,6 +54,7 @@ class CompetitionPressureTimeline {
   final UncertaintyBand uncertaintyBand;
   final List<String> assumptions;
   final List<String> sourceRefs;
+  final CompetitionLnaaSummary? lnaaSummary;
 
   const CompetitionPressureTimeline({
     required this.samples,
@@ -36,6 +65,7 @@ class CompetitionPressureTimeline {
     required this.uncertaintyBand,
     required this.assumptions,
     required this.sourceRefs,
+    this.lnaaSummary,
   });
 
   Map<String, dynamic> toJson() => {
@@ -47,5 +77,6 @@ class CompetitionPressureTimeline {
         'uncertainty_band': uncertaintyBand.name,
         'assumptions': assumptions,
         'source_refs': sourceRefs,
+        'lnaa_summary': lnaaSummary?.toJson(),
       };
 }

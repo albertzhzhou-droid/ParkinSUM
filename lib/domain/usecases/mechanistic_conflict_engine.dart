@@ -5,6 +5,7 @@ import '../entities/mechanistic_conflict_result.dart';
 import '../entities/meal_composition.dart';
 import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
+import '../entities/gastric_emptying_parameters.dart';
 import 'amino_acid_competition_model.dart';
 import 'gastric_emptying_model.dart';
 import 'levodopa_absorption_opportunity_model.dart';
@@ -24,7 +25,9 @@ class MechanisticConflictEngine {
     GastricEmptyingModel? gastricEmptyingModel,
     LevodopaAbsorptionOpportunityModel? absorptionModel,
     AminoAcidCompetitionModel? competitionModel,
-  })  : gastricEmptyingModel = gastricEmptyingModel ?? GastricEmptyingModel(),
+    GastricEmptyingParameterSet? gastricEmptyingParameters,
+  })  : gastricEmptyingModel = gastricEmptyingModel ??
+            GastricEmptyingModel(parameters: gastricEmptyingParameters),
         absorptionModel =
             absorptionModel ?? LevodopaAbsorptionOpportunityModel(),
         competitionModel = competitionModel ?? AminoAcidCompetitionModel();

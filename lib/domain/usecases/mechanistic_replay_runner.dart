@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../../core/constants/mechanistic_replay_scenarios.dart';
+import '../entities/amino_acid_competition.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/meal_composition.dart';
@@ -31,6 +32,9 @@ class MechanisticReplayCaseReport {
   final String safetyBoundary;
   final List<String> bannedPhraseHits;
   final List<MechanisticCandidateScore>? nextMealRecommendationResult;
+  final CompetitionLnaaSummary? competitionLnaaSummary;
+  final String rankerUsed;
+  final List<int> sampledWindowOffsets;
   final bool pass;
   final String? failureReason;
 
@@ -54,6 +58,9 @@ class MechanisticReplayCaseReport {
     required this.nextMealRecommendationResult,
     required this.pass,
     required this.failureReason,
+    this.competitionLnaaSummary,
+    this.rankerUsed = 'mechanistic_engine_only',
+    this.sampledWindowOffsets = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -75,6 +82,9 @@ class MechanisticReplayCaseReport {
         'banned_phrase_hits': bannedPhraseHits,
         'next_meal_recommendation_result':
             nextMealRecommendationResult?.map((e) => e.toJson()).toList(),
+        'competition_lnaa_summary': competitionLnaaSummary?.toJson(),
+        'ranker_used': rankerUsed,
+        'sampled_window_offsets': sampledWindowOffsets,
         'pass': pass,
         'failure_reason': failureReason,
       };
@@ -327,6 +337,15 @@ class MechanisticReplayRunner {
       safetyBoundary: result.safetyBoundary,
       bannedPhraseHits: banned,
       nextMealRecommendationResult: recommendations,
+      competitionLnaaSummary: result.competitionTimeline?.lnaaSummary,
+      rankerUsed: recommendations == null
+          ? 'mechanistic_engine_only'
+          : 'mechanistic_primary_window_sampled',
+      sampledWindowOffsets: (recommendations == null || recommendations.isEmpty)
+          ? const []
+          : recommendations.first.sampledWindowSummary
+              .map((s) => s.offsetMinutes)
+              .toList(growable: false),
       pass: pass,
       failureReason: pass ? null : failures.join('; '),
     );
