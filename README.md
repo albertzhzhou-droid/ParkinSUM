@@ -17,6 +17,37 @@ Public demos should use synthetic or sample data only.
 - Optional Firebase-backed paths for internal operator validation and governance.
 - Public-release guardrails around disclaimers, security, contribution rules, and synthetic data.
 
+## Algorithm and Safety Boundary
+
+ParkinSUM's conflict engine is **deterministic and evidence-linked**: no LLM
+sits inside it, and every educational rule that fires carries a structured
+explanation with source references, provenance, the input fields actually
+used, any missing or uncertain inputs, an explicit limitation, and a hard
+not-advice boundary.
+
+Medication context must be **catalog-backed and unit-explicit** before any
+food-medication rule is evaluated. A bare numeric dose such as `100`, an
+unstructured string such as `"100 tablets"`, or a name without a unit such as
+`levodopa 100` is rejected outright — ParkinSUM does not infer mg, tablet
+count, schedule, formulation, or release type from such input. Entries
+without an active ingredient, drug product variant, formulation, or
+provenance are treated as insufficient context and do not produce a conflict
+result.
+
+High-value contributor work in this area includes:
+
+- Medication context validation (`lib/domain/usecases/medication_entry_validator.dart`).
+- Evidence-linked rule explanations (`lib/domain/entities/rule_explanation.dart`).
+- Importer provenance fields (basis, scope, jurisdiction, confidence, source).
+- Negative safety tests that prevent educational copy from drifting into
+  medication timing, dose, dietary, or clinical-validation claims
+  (`test/medication_entry_validator_test.dart`,
+  `test/rule_explanation_safety_test.dart`).
+
+See [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for the medication context
+gate, the structured rule-explanation template, a worked levodopa+protein
+example, and the negative-test expectations.
+
 ## Demo Media
 
 The screenshots and GIF below use synthetic local demo data only. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.

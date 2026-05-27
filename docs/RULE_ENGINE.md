@@ -76,3 +76,159 @@ deterministic rule result.
 Use only synthetic or sample data. Do not use the rule engine for real diagnosis,
 treatment, medication timing decisions, dietary decisions, patient care,
 emergency decisions, or personal health management.
+
+## Medication Context Gate
+
+ParkinSUM does not infer medication dose or pharmacokinetic meaning from
+free-text numbers. A numeric value without unit, active ingredient, product
+variant, and formulation metadata is treated as incomplete context. Incomplete
+medication context blocks food-medication rule evaluation. This design prevents
+educational rule explanations from appearing more clinically precise than the
+available input supports.
+
+The gate is implemented in
+`lib/domain/usecases/medication_entry_validator.dart`. It accepts a
+`RawMedicationEntry` and returns a `MedicationContextValidationResult` with one
+of three validity states:
+
+- `valid` — every required field is present (active ingredient, drug product
+  variant, strength, explicit unit, form, route, release type, jurisdiction,
+  and source document id). Only this state produces a
+  `NormalizedMedicationContext` and is eligible for rule evaluation.
+- `insufficient` — structurally parseable but missing required catalog fields
+  (e.g. no formulation, no route, no provenance). Returns a safe validation
+  message; does not produce a conflict result.
+- `invalid` — clearly unsupported input such as a bare number, "100 tablets",
+  "one pill", "25/100" with no unit, or "levodopa 100" with no structured
+  fields. The validator never tries to parse such inputs into structured dose
+  fields.
+
+### Rejected input examples
+
+`100`, `100 tablets`, `one pill`, `25/100`, `25-100`, `levodopa 100`,
+`Sinemet 100`, `100 mg` (no ingredient), `carbidopa/levodopa 25/100`
+(no unit normalization).
+
+### Required validation copy
+
+When the gate rejects an entry, ParkinSUM returns copy similar to:
+
+> Medication context is incomplete. ParkinSUM could not evaluate
+> food-medication education rules for this entry. Please use a synthetic
+> catalog-backed medication entry with ingredient, unit, formulation, and
+> source metadata. This prototype does not provide medication dosing or
+> timing advice.
+
+## Structured Rule Explanation Template
+
+When a rule fires, ParkinSUM emits a structured
+`RuleExplanation` (`lib/domain/entities/rule_explanation.dart`) with the
+following fields:
+
+| Field | Purpose |
+| --- | --- |
+| `ruleId` | Stable identifier for the rule that fired. |
+| `triggeredConditions` | Human-readable descriptors of which sub-conditions matched. |
+| `inputFieldsUsed` | Runtime-context paths actually consumed by the rule. |
+| `sourceRefs` | Source document references attached to the rule. |
+| `provenanceSummary` | One-line summary of where authority comes from. |
+| `evidenceStrength` | `label` / `mechanism` / `analogy` / `insufficient`. Documentation-level only; never a clinical evidence grade. |
+| `limitationText` | Why the result cannot be treated as personal medical advice. |
+| `missingOrUncertainInputs` | Inputs the rule could not evaluate (timing, formulation, etc.). |
+| `safetyBoundary` | Hard safety boundary copy. |
+| `notAdviceText` | Explicit not-advice disclaimer. |
+| `outputType` | `educational_info` / `educational_caution` / `invalid_context`. |
+
+The split between evidence/provenance fields and display copy is intentional:
+tests verify each layer independently and assert that no banned prescriptive
+phrase ever appears in any copy field.
+
+### Worked example — levodopa + protein educational caution
+
+| Field | Value |
+| --- | --- |
+| `ruleId` | `levodopa_protein_temporal_v1` |
+| `triggeredConditions` | `drug.active_ingredients contains levodopa`, `meal.protein_band == moderate`, `timing.meal_to_drug within 0-60 min` |
+| `inputFieldsUsed` | `drug.active_ingredients`, `drug.release_type`, `meal.protein_g`, `timestamps.drug_time`, `timestamps.meal_time` |
+| `sourceRefs` | `synthetic:demo_label_carbidopa_levodopa#food_effect` |
+| `evidenceStrength` | `label` |
+| `limitationText` | Individual absorption varies. This prototype does not infer the patient's pharmacokinetics from the input. |
+| `missingOrUncertainInputs` | `estimatedGastricEmptyingModifier` |
+| `outputType` | `educational_caution` |
+
+User-facing copy must remain non-prescriptive, for example:
+
+> Protein-related educational flag triggered. This prototype explains a
+> possible absorption-related mechanism using synthetic input and source-linked
+> rule metadata. Individual effects vary. Do not change medication, diet, or
+> timing based on this app.
+
+It must never read like medication timing advice, dose-change advice, dietary
+restriction advice, or a claim of clinical validation.
+
+## Negative Test Expectations
+
+The boundary is enforced in tests, not just docs. The following are required:
+
+- A unitless numeric medication dose is rejected before rule evaluation.
+- Invalid medication context produces safe validation copy, not a conflict
+  result.
+- A valid synthetic catalog-backed medication entry can still trigger an
+  educational rule.
+- Rule explanations always include `sourceRefs`, `limitationText`,
+  `safetyBoundary` / `notAdviceText`, `inputFieldsUsed`, and where applicable
+  `missingOrUncertainInputs`.
+- No output contains banned substrings such as "take your medication",
+  "change your dose", "avoid protein", "recommended timing", or any
+  unsupported claim of clinical validation. The full list lives in
+  `bannedExplanationSubstrings` in `rule_explanation.dart`.
+
+See `test/medication_entry_validator_test.dart` and
+`test/rule_explanation_safety_test.dart`.
+
+## Conflict Engine vs Recommendation Layer
+
+The deterministic conflict engine and any optional recommendation / copy-polish
+layer are kept strictly separate:
+
+- The **conflict engine** is deterministic, evidence-linked, and contains no
+  LLM. It is the source of truth for whether a rule fires and which evidence
+  is attached.
+- An **optional recommendation layer** may polish wording for readability. It
+  is non-authoritative, does not override conflict-engine output, does not
+  produce medication timing or dietary advice, and is clearly attributed.
+
+## Importer / Catalog Observation Metadata (Direction)
+
+To keep the conflict engine conservative about whether two facts are even
+comparable, importers should record more than a value. The directional target
+for food and medication observations is:
+
+- Food observation: `sourceDocId`, `attributeCode`, `value`, `unit`,
+  `basisType` (`per_100g` / `per_serving` / `per_meal` / `label_claim`),
+  `foodVariantScope` (raw/cooked/brand/generic/preparation_state),
+  `jurisdiction`, `publishedAt` / `effectiveAt`, `extractionMethod`,
+  `extractionConfidence`, `normalizationNotes`.
+- Medication observation: `drugProductVariant`, `activeIngredient`, `form`,
+  `route`, `releaseType`, `strength`, `unit`, `jurisdiction`, `sourceDocId`,
+  `labelSection`, `extractionConfidence`, `limitationText`.
+
+## Fact Conflict Engine — Conflict Categories (Direction)
+
+The goal of conflict classification is conservatism: deciding whether two
+facts are even comparable, not auto-resolving them. Documented categories:
+
+- `unit_mismatch`
+- `basis_mismatch`
+- `scope_mismatch`
+- `jurisdiction_mismatch`
+- `source_recency_conflict`
+- `authority_conflict`
+- `numeric_outlier`
+- `parsing_uncertainty`
+- `unsupported_mapping`
+- `clinical_claim_boundary_violation`
+
+Two protein values that disagree are not automatically a contradiction; they
+may differ because of raw vs cooked, per-100g vs per-serving, generic vs
+branded, dry weight vs edible portion basis, or different jurisdictions.
