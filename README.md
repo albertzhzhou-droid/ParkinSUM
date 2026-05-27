@@ -48,6 +48,40 @@ See [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for the medication context
 gate, the structured rule-explanation template, a worked levodopa+protein
 example, and the negative-test expectations.
 
+## Mechanistic Conflict and Recommendation Engine
+
+ParkinSUM now includes a deterministic, time-axis, literature-informed
+**educational conflict engine** that models meal composition, gastric
+emptying assumptions, small-intestinal arrival, a levodopa absorption
+opportunity window, an amino-acid competition proxy, overlapping-meal
+effects, and uncertainty bands. Every modeled assumption is backed by a
+local source registry (`lib/domain/usecases/model_assumption_registry.dart`)
+that cites entries in [Bibliographies.md](Bibliographies.md) (MLA format).
+
+The next-meal recommendation engine accepts a **user-defined time window**
+and a regional food library, then ranks candidate foods inside that window
+by modeled overlap with the educational simulation. **The engine does not
+decide when the user eats**, does not produce medication timing or dietary
+advice, and returns `insufficient_context` whenever the window or
+medication context is missing.
+
+Synthetic replay scenarios are available via the CLI:
+
+```sh
+dart run tool/run_mechanistic_replay.dart
+# or
+npm run mechanistic:replay
+```
+
+The runner writes `build/mechanistic_replay/latest.{json,md}` and exits
+non-zero on any expectation mismatch or banned-phrase hit.
+
+See [docs/CONFLICT_ENGINE_MODEL.md](docs/CONFLICT_ENGINE_MODEL.md) for the
+layered model description and [docs/REPLAY_RUNNER.md](docs/REPLAY_RUNNER.md)
+for the scenario format and CLI details. ParkinSUM does not overclaim
+clinical accuracy; the engine is an educational simulation, not a
+patient-care tool.
+
 ## Demo Media
 
 The screenshots and GIF below use synthetic local demo data only. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.

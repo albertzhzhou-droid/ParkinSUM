@@ -53,8 +53,7 @@ class MedicationEntryValidator {
       'formulation, and source metadata. This prototype does not provide '
       'medication dosing or timing advice.';
 
-  static final RegExp _bareNumeric =
-      RegExp(r'^\s*[0-9]+(?:[.,][0-9]+)?\s*$');
+  static final RegExp _bareNumeric = RegExp(r'^\s*[0-9]+(?:[.,][0-9]+)?\s*$');
   static final RegExp _slashedNumeric =
       RegExp(r'^\s*[0-9]+\s*[\/\-]\s*[0-9]+\s*$');
   static final RegExp _wordCountish = RegExp(
@@ -65,10 +64,21 @@ class MedicationEntryValidator {
   /// Allowed normalized unit tokens. Strength is *not* converted; rule layer
   /// already handles mg/g/mcg conversion, but the *unit must be declared*.
   static const Set<String> _allowedUnits = {
-    'mg', 'milligram', 'milligrams',
-    'g', 'gram', 'grams',
-    'mcg', 'ug', 'µg', 'μg', 'microgram', 'micrograms',
-    'ml', 'milliliter', 'milliliters',
+    'mg',
+    'milligram',
+    'milligrams',
+    'g',
+    'gram',
+    'grams',
+    'mcg',
+    'ug',
+    'µg',
+    'μg',
+    'microgram',
+    'micrograms',
+    'ml',
+    'milliliter',
+    'milliliters',
   };
 
   MedicationContextValidationResult validate(RawMedicationEntry entry) {
@@ -90,15 +100,15 @@ class MedicationEntryValidator {
         // Names like "levodopa 100" or "Sinemet 100" with no unit also fail.
         issues.add(const MedicationContextIssue(
           code: 'UNSTRUCTURED_FREE_TEXT',
-          message:
-              'Free-text medication input is not promoted into rule '
+          message: 'Free-text medication input is not promoted into rule '
               'evaluation. Use a catalog-backed entry.',
         ));
       }
     }
 
     final ingredients = <String>[
-      if (entry.activeIngredient != null && entry.activeIngredient!.trim().isNotEmpty)
+      if (entry.activeIngredient != null &&
+          entry.activeIngredient!.trim().isNotEmpty)
         entry.activeIngredient!.trim(),
       ...?entry.activeIngredients
           ?.map((e) => e.trim())
@@ -164,8 +174,7 @@ class MedicationEntryValidator {
     if (releaseType == null || releaseType.isEmpty) {
       issues.add(const MedicationContextIssue(
         code: 'MISSING_RELEASE_TYPE',
-        message:
-            'Release type (immediate / extended / controlled) is required '
+        message: 'Release type (immediate / extended / controlled) is required '
             'before pharmacokinetic-sensitive rules may be evaluated.',
       ));
     }
@@ -179,8 +188,7 @@ class MedicationEntryValidator {
     if (entry.sourceDocId == null || entry.sourceDocId!.trim().isEmpty) {
       issues.add(const MedicationContextIssue(
         code: 'MISSING_PROVENANCE',
-        message:
-            'No source document reference. Without provenance the entry '
+        message: 'No source document reference. Without provenance the entry '
             'cannot be promoted into evidence-linked rule evaluation.',
       ));
     }

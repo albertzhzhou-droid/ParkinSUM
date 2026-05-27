@@ -6,11 +6,17 @@ import '../../core/models/meal.dart';
 import '../../core/models/user_profile.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../entities/cdss_runtime.dart';
+import '../entities/meal_composition.dart';
 import '../entities/resolved_variant.dart';
 import '../entities/rule_registry_models.dart';
 import '../entities/runtime_context.dart';
+import '../entities/time_axis_events.dart';
 import 'clinical_decision_support_service.dart';
 import 'imported_label_rule_provider.dart';
+import 'meal_composition_normalizer.dart';
+import 'mechanistic_conflict_engine.dart';
+import 'medication_entry_validator.dart';
+import 'time_axis_builder.dart';
 import 'variant_resolver.dart';
 
 /// Adapts the legacy meal-entry flow to the newer database-backed CDSS pipeline.
@@ -26,14 +32,56 @@ class DatabaseBackedMealCheckUseCase {
   final List<RuleRegistryEntry> compiledRules;
   final ImportedLabelRuleProvider? importedLabelRuleProvider;
 
+  /// Deterministic mechanistic time-axis simulation layer. The hard-rule
+  /// engine (via `clinicalDecisionSupportService`) remains the source of
+  /// truth for categorical decisions; this layer adds an inspectable
+  /// time-axis trace alongside.
+  final MechanisticConflictEngine mechanisticEngine;
+  final MealCompositionNormalizer mealCompositionNormalizer;
+  final MedicationEntryValidator medicationEntryValidator;
+  final TimeAxisBuilder timeAxisBuilder;
+
   DatabaseBackedMealCheckUseCase({
     required this.variantResolver,
     required this.clinicalDecisionSupportService,
     required this.compiledRules,
     this.importedLabelRuleProvider,
-  });
+    MechanisticConflictEngine? mechanisticEngine,
+    MealCompositionNormalizer? mealCompositionNormalizer,
+    MedicationEntryValidator? medicationEntryValidator,
+    TimeAxisBuilder? timeAxisBuilder,
+  })  : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
+        mealCompositionNormalizer =
+            mealCompositionNormalizer ?? MealCompositionNormalizer(),
+        medicationEntryValidator =
+            medicationEntryValidator ?? MedicationEntryValidator(),
+        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder();
 
   Future<InteractionResult> call({
+    required Meal meal,
+    required List<DrugDefinition> activeDrugs,
+    required List<Intake> intakes,
+    required UserProfile userProfile,
+    DateTime? now,
+  }) async {
+    final base = await _callCore(
+      meal: meal,
+      activeDrugs: activeDrugs,
+      intakes: intakes,
+      userProfile: userProfile,
+      now: now,
+    );
+    final traceJson = _computeMechanisticTraceJson(
+      meal: meal,
+      activeDrugs: activeDrugs,
+      intakes: intakes,
+      referenceTime: now ?? meal.recordedAt,
+    );
+    if (traceJson == null) return base;
+    return base.copyWith(mechanisticTraceJson: traceJson);
+  }
+
+  Future<InteractionResult> _callCore({
     required Meal meal,
     required List<DrugDefinition> activeDrugs,
     required List<Intake> intakes,
@@ -697,6 +745,88 @@ class DatabaseBackedMealCheckUseCase {
       case InteractionSeverity.high:
         return 'high';
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mechanistic trace (additive, non-authoritative).
+  // ---------------------------------------------------------------------------
+
+  Map<String, dynamic>? _computeMechanisticTraceJson({
+    required Meal meal,
+    required List<DrugDefinition> activeDrugs,
+    required List<Intake> intakes,
+    required DateTime referenceTime,
+  }) {
+    if (activeDrugs.isEmpty || intakes.isEmpty) return null;
+
+    final drugsById = {for (final d in activeDrugs) d.id: d};
+    final medInputs = <MedicationTimelineInput>[];
+    for (final intake in intakes) {
+      final drug = drugsById[intake.drugId];
+      if (drug == null) continue;
+      final ingredients = <String>{
+        drug.genericName.toLowerCase(),
+        ...drug.tags.map((t) => t.name.toLowerCase()),
+      }.where((s) => s.isNotEmpty).toList(growable: false);
+      final raw = RawMedicationEntry(
+        activeIngredients: ingredients,
+        drugProductVariant: 'synthetic:${drug.id}',
+        strength: 100,
+        unit: 'mg',
+        form: drug.dosageForm,
+        route: drug.route,
+        releaseType: drug.releaseType,
+        jurisdiction: drug.jurisdiction,
+        sourceDocId: 'synthetic:${drug.sourceSystem}',
+      );
+      final validation = medicationEntryValidator.validate(raw);
+      medInputs.add(MedicationTimelineInput(
+        id: 'intake_${intake.id}',
+        takenAt: intake.takenAt,
+        medicationContext: validation,
+      ));
+    }
+
+    if (medInputs.isEmpty) return null;
+
+    final totals = meal.computeTotals();
+    final composition = mealCompositionNormalizer.normalize(
+      mealId: 'comp_${meal.id}',
+      components: [
+        FoodComponent(
+          id: 'meal_aggregate_${meal.id}',
+          name: meal.title,
+          physicalForm: MealPhysicalForm.unknown,
+          proteinGrams: totals.totalProteinG,
+          fatGrams: totals.totalFatG,
+          fiberGrams: totals.totalFiberG,
+          carbohydrateGrams: totals.totalCarbsG,
+          calories: null,
+          portionGrams: null,
+          sourceDocId: 'meal_history',
+        ),
+      ],
+    );
+
+    final context = timeAxisBuilder.build(
+      now: referenceTime,
+      medicationInputs: medInputs,
+      mealInputs: [
+        MealTimelineInput(
+          id: 'meal_${meal.id}',
+          startedAt: meal.effectiveOccurredAt,
+          compositionId: composition.id,
+          physicalForm: MealPhysicalForm.unknown,
+        ),
+      ],
+    );
+
+    final trace = mechanisticEngine.evaluate(
+      context: context,
+      mealCompositionsById: {composition.id: composition},
+      resultId: 'mealcheck_${meal.id}',
+    );
+    return trace.toJson();
   }
 }
 

@@ -47,10 +47,9 @@ void main() {
 
   group('RuleExplanation — banned substrings never appear', () {
     test('default safety/not-advice copy contains no banned phrases', () {
+      expect(findBannedSubstrings(RuleExplanation.defaultNotAdvice), isEmpty);
       expect(
-          findBannedSubstrings(RuleExplanation.defaultNotAdvice), isEmpty);
-      expect(findBannedSubstrings(RuleExplanation.defaultSafetyBoundary),
-          isEmpty);
+          findBannedSubstrings(RuleExplanation.defaultSafetyBoundary), isEmpty);
     });
 
     test('invalid-context explanation does not leak prescriptive copy', () {
@@ -64,8 +63,8 @@ void main() {
           MedicationExplanationOutputType.invalidContext);
       expect(explanation.sourceRefs, isEmpty);
       expect(explanation.triggeredConditions, isEmpty);
-      expect(explanation.missingOrUncertainInputs,
-          contains('BARE_NUMERIC_DOSE'));
+      expect(
+          explanation.missingOrUncertainInputs, contains('BARE_NUMERIC_DOSE'));
 
       final allCopy = [
         explanation.limitationText,

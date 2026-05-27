@@ -7,11 +7,20 @@ import '../../core/models/meal.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/user_profile.dart';
 import '../entities/food_recommendation.dart';
+import '../entities/mechanistic_candidate_score.dart';
+import '../entities/mechanistic_conflict_result.dart';
+import '../entities/meal_composition.dart';
 import '../entities/next_meal_recommendation_models.dart';
 import '../entities/cdss_records.dart';
+import '../entities/time_axis_events.dart';
 import 'cdss_catalog_projection_service.dart';
 import 'get_food_recommendations_usecase.dart';
 import 'local_ai_recommendation_adapter.dart';
+import 'meal_composition_normalizer.dart';
+import 'mechanistic_conflict_engine.dart';
+import 'mechanistic_next_meal_scorer.dart';
+import 'medication_entry_validator.dart';
+import 'time_axis_builder.dart';
 
 /// 双路径下一餐推荐编排器。
 ///
@@ -29,13 +38,52 @@ class NextMealRecommendationOrchestrator {
   final CdssCatalogProjectionService projectionService;
   final LocalAiRecommendationAdapter? localAiAdapter;
 
-  const NextMealRecommendationOrchestrator({
+  /// Deterministic time-axis simulation layer. Educational only; never
+  /// overrides the conservative recommender's safety output.
+  final MechanisticConflictEngine mechanisticEngine;
+  final MechanisticNextMealScorer mechanisticScorer;
+  final MealCompositionNormalizer mealCompositionNormalizer;
+  final MedicationEntryValidator medicationEntryValidator;
+  final TimeAxisBuilder timeAxisBuilder;
+
+  NextMealRecommendationOrchestrator({
     required this.conservativeRecommender,
     required this.projectionService,
     required this.localAiAdapter,
-  });
+    MechanisticConflictEngine? mechanisticEngine,
+    MechanisticNextMealScorer? mechanisticScorer,
+    MealCompositionNormalizer? mealCompositionNormalizer,
+    MedicationEntryValidator? medicationEntryValidator,
+    TimeAxisBuilder? timeAxisBuilder,
+  })  : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
+        mechanisticScorer = mechanisticScorer ?? MechanisticNextMealScorer(),
+        mealCompositionNormalizer =
+            mealCompositionNormalizer ?? MealCompositionNormalizer(),
+        medicationEntryValidator =
+            medicationEntryValidator ?? MedicationEntryValidator(),
+        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder();
 
+  /// Public entry point. Enriches the conservative result with a deterministic
+  /// mechanistic conflict trace and (when the request includes a
+  /// `userDefinedWindow`) per-candidate mechanistic scores. The mechanistic
+  /// layer is non-authoritative: it does not change the conservative
+  /// ranking or safety decisions.
   Future<NextMealRecommendationResult> recommend({
+    required NextMealRecommendationRequest request,
+    required List<FoodItem> candidateFoods,
+  }) async {
+    final base = await _recommendCore(
+      request: request,
+      candidateFoods: candidateFoods,
+    );
+    return _enrichWithMechanistic(
+      base: base,
+      request: request,
+      candidateFoods: candidateFoods,
+    );
+  }
+
+  Future<NextMealRecommendationResult> _recommendCore({
     required NextMealRecommendationRequest request,
     required List<FoodItem> candidateFoods,
   }) async {
@@ -756,6 +804,187 @@ class NextMealRecommendationOrchestrator {
       }
     }
     return result;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mechanistic enrichment layer (additive, non-authoritative).
+  //
+  // The conservative recommender remains the source of truth for safety
+  // gating and ranking. This layer attaches a deterministic time-axis
+  // simulation trace and per-candidate mechanistic scores so reviewers can
+  // inspect modeled gastric emptying, absorption opportunity, and amino-acid
+  // competition assumptions alongside the existing heuristic output.
+  // ---------------------------------------------------------------------------
+
+  Future<NextMealRecommendationResult> _enrichWithMechanistic({
+    required NextMealRecommendationResult base,
+    required NextMealRecommendationRequest request,
+    required List<FoodItem> candidateFoods,
+  }) async {
+    final medInputs = _buildMechanisticMedicationInputs(request);
+    final mealInputs = _buildMechanisticMealInputs(request);
+    final compositionsById = _buildMealCompositions(request);
+
+    final context = timeAxisBuilder.build(
+      now: request.now,
+      medicationInputs: medInputs,
+      mealInputs: mealInputs,
+      userDefinedWindow: request.userDefinedWindow,
+    );
+
+    final MechanisticConflictResult trace = mechanisticEngine.evaluate(
+      context: context,
+      mealCompositionsById: compositionsById,
+      resultId: 'orchestrator_${request.now.millisecondsSinceEpoch}',
+    );
+
+    List<MechanisticCandidateScore>? candidateScores;
+    if (request.userDefinedWindow != null && candidateFoods.isNotEmpty) {
+      final candidates =
+          candidateFoods.map(_foodItemToCandidate).toList(growable: false);
+      candidateScores = mechanisticScorer.score(
+        baseContext: context,
+        baseMealCompositionsById: compositionsById,
+        candidates: candidates,
+      );
+    }
+
+    return NextMealRecommendationResult(
+      recommendations: base.recommendations,
+      aiUsed: base.aiUsed,
+      decisionPath: base.decisionPath,
+      explanations: base.explanations,
+      gateReasons: base.gateReasons,
+      templateCountryCode: base.templateCountryCode,
+      templateMealSlot: base.templateMealSlot,
+      templateTextureLevel: base.templateTextureLevel,
+      aiProvider: base.aiProvider,
+      aiModel: base.aiModel,
+      aiEndpoint: base.aiEndpoint,
+      aiRerankUsed: base.aiRerankUsed,
+      benchmarkDataset: base.benchmarkDataset,
+      mechanisticTrace: trace,
+      mechanisticCandidateScores: candidateScores,
+    );
+  }
+
+  List<MedicationTimelineInput> _buildMechanisticMedicationInputs(
+      NextMealRecommendationRequest request) {
+    final inputs = <MedicationTimelineInput>[];
+    final drugsById = {
+      for (final d in request.activeDrugs) d.id: d,
+    };
+    for (final intake in request.intakes) {
+      final drug = drugsById[intake.drugId];
+      if (drug == null) continue;
+      final ingredients = _drugActiveIngredients(drug);
+      final raw = RawMedicationEntry(
+        activeIngredients: ingredients,
+        drugProductVariant: 'synthetic:${drug.id}',
+        strength: 100,
+        unit: 'mg',
+        form: drug.dosageForm,
+        route: drug.route,
+        releaseType: drug.releaseType,
+        jurisdiction: drug.jurisdiction,
+        sourceDocId: 'synthetic:${drug.sourceSystem}',
+      );
+      final validation = medicationEntryValidator.validate(raw);
+      inputs.add(MedicationTimelineInput(
+        id: 'intake_${intake.id}',
+        takenAt: intake.takenAt,
+        medicationContext: validation,
+      ));
+    }
+    return inputs;
+  }
+
+  /// DrugDefinition doesn't carry a structured `activeIngredients` list, so
+  /// the orchestrator inspects `tags` and `genericName` to derive the
+  /// synthetic list passed to the validator. Synthetic only; no clinical
+  /// inference.
+  List<String> _drugActiveIngredients(DrugDefinition drug) {
+    final out = <String>{};
+    out.add(drug.genericName.toLowerCase());
+    for (final t in drug.tags) {
+      out.add(t.name.toLowerCase());
+    }
+    return out.where((s) => s.isNotEmpty).toList(growable: false);
+  }
+
+  List<MealTimelineInput> _buildMechanisticMealInputs(
+      NextMealRecommendationRequest request) {
+    final inputs = <MealTimelineInput>[];
+    for (final meal in request.history) {
+      inputs.add(MealTimelineInput(
+        id: 'meal_${meal.id}',
+        startedAt: meal.effectiveOccurredAt,
+        compositionId: 'comp_${meal.id}',
+        physicalForm: MealPhysicalForm.unknown,
+      ));
+    }
+    return inputs;
+  }
+
+  Map<String, MealComposition> _buildMealCompositions(
+      NextMealRecommendationRequest request) {
+    final result = <String, MealComposition>{};
+    for (final meal in request.history) {
+      final totals = meal.computeTotals();
+      final component = FoodComponent(
+        id: 'meal_aggregate_${meal.id}',
+        name: meal.title,
+        physicalForm: MealPhysicalForm.unknown,
+        proteinGrams: totals.totalProteinG,
+        fatGrams: totals.totalFatG,
+        fiberGrams: totals.totalFiberG,
+        carbohydrateGrams: totals.totalCarbsG,
+        calories: null,
+        portionGrams: null,
+        sourceDocId: 'meal_history',
+      );
+      final composition = mealCompositionNormalizer.normalize(
+        mealId: 'comp_${meal.id}',
+        components: [component],
+      );
+      result[composition.id] = composition;
+    }
+    return result;
+  }
+
+  MealPhysicalForm _textureToPhysicalForm(String? textureClass) {
+    switch ((textureClass ?? '').toLowerCase()) {
+      case 'liquid':
+        return MealPhysicalForm.liquid;
+      case 'soft':
+      case 'solid':
+        return MealPhysicalForm.solid;
+      default:
+        return MealPhysicalForm.unknown;
+    }
+  }
+
+  CandidateFood _foodItemToCandidate(FoodItem item) {
+    return CandidateFood(
+      id: item.id,
+      name: item.name,
+      regionalFoodLibraryRef: item.sourceSystem,
+      declaredPhysicalForm: _textureToPhysicalForm(item.textureClass),
+      components: [
+        FoodComponent(
+          id: item.id,
+          name: item.name,
+          physicalForm: _textureToPhysicalForm(item.textureClass),
+          proteinGrams: item.proteinG,
+          fatGrams: item.fatG,
+          fiberGrams: item.fiberG,
+          carbohydrateGrams: item.carbsG,
+          calories: null,
+          portionGrams: null,
+          sourceDocId: item.sourceSystem,
+        ),
+      ],
+    );
   }
 }
 

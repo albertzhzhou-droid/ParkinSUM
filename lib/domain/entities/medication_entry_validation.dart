@@ -31,6 +31,7 @@ enum MedicationContextValidity {
 enum MedicationExplanationOutputType {
   educationalInfo,
   educationalCaution,
+
   /// Returned when medication context could not be validated. No rule fired.
   invalidContext,
 }

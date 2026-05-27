@@ -8,7 +8,8 @@ void main() {
 
   group('MedicationEntryValidator — invalid free-text inputs', () {
     test('rejects a bare numeric "100"', () {
-      final result = validator.validate(const RawMedicationEntry(freeText: '100'));
+      final result =
+          validator.validate(const RawMedicationEntry(freeText: '100'));
       expect(result.validity, MedicationContextValidity.invalid);
       expect(result.eligibleForRuleEvaluation, isFalse);
       expect(result.normalized, isNull);
@@ -98,9 +99,10 @@ void main() {
     });
 
     test('produces safe validation copy and no conflict result', () {
-      final result = validator.validate(const RawMedicationEntry(freeText: '100'));
-      expect(result.safeUserCopy.toLowerCase(),
-          contains('context is incomplete'));
+      final result =
+          validator.validate(const RawMedicationEntry(freeText: '100'));
+      expect(
+          result.safeUserCopy.toLowerCase(), contains('context is incomplete'));
       expect(result.safeUserCopy.toLowerCase(),
           contains('does not provide medication dosing'));
       // No banned advice copy may leak into the safe validation message.

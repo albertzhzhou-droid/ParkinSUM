@@ -77,6 +77,31 @@ Use only synthetic or sample data. Do not use the rule engine for real diagnosis
 treatment, medication timing decisions, dietary decisions, patient care,
 emergency decisions, or personal health management.
 
+## Mechanistic Conflict Engine (Adjacent Layer)
+
+A deterministic, time-axis, literature-informed *educational simulation* layer
+sits alongside the declarative rule engine. It approximates gastric emptying,
+small-intestinal arrival, levodopa absorption opportunity windows, amino-acid
+competition pressure, and overlapping-meal effects. It is non-authoritative and
+never overrides categorical rule-engine decisions.
+
+See [CONFLICT_ENGINE_MODEL.md](CONFLICT_ENGINE_MODEL.md) for the layer-by-layer
+description, gastric emptying assumptions, food-food interaction handling,
+overlapping-meal handling, levodopa absorption assumptions, amino-acid
+competition proxy, uncertainty/confidence scoring, explanation schema,
+synthetic scenario fixtures, and what the model does *not* infer.
+
+The mechanistic engine is consumed by:
+
+- `NextMealRecommendationOrchestrator.recommend(...)` — attaches a
+  `mechanisticTrace` (and per-candidate `mechanisticCandidateScores` when a
+  user-defined window is provided) to `NextMealRecommendationResult`.
+- `DatabaseBackedMealCheckUseCase.call(...)` — attaches a serialized trace to
+  `InteractionResult.mechanisticTraceJson`.
+
+See also [REPLAY_RUNNER.md](REPLAY_RUNNER.md) for the synthetic scenario suite
+and the `dart run tool/run_mechanistic_replay.dart` CLI.
+
 ## Medication Context Gate
 
 ParkinSUM does not infer medication dose or pharmacokinetic meaning from
