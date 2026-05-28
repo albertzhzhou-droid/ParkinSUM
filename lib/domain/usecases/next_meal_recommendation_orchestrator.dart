@@ -85,23 +85,31 @@ class NextMealRecommendationOrchestrator {
     required NextMealRecommendationRequest request,
     required List<FoodItem> candidateFoods,
   }) async {
+    // Project + merge once so the conservative path AND the mechanistic
+    // enrichment path score the SAME candidate list. Projected (official/CDSS)
+    // foods win id collisions, preserving their provenance + missingness
+    // metadata for both ranking surfaces.
+    final projectedFoods = await projectionService.projectFoods();
+    final mergedCandidates = _mergeCandidates(
+      projectedFoods,
+      candidateFoods.isEmpty ? buildP0FoodCatalog() : candidateFoods,
+    );
     final base = await _recommendCore(
       request: request,
-      candidateFoods: candidateFoods,
+      mergedCandidates: mergedCandidates,
     );
     return _enrichWithMechanistic(
       base: base,
       request: request,
-      candidateFoods: candidateFoods,
+      candidateFoods: mergedCandidates,
     );
   }
 
   Future<NextMealRecommendationResult> _recommendCore({
     required NextMealRecommendationRequest request,
-    required List<FoodItem> candidateFoods,
+    required List<FoodItem> mergedCandidates,
   }) async {
     final i18n = AppI18n.fromLocaleTag(request.userProfile.displayLocale);
-    final projectedFoods = await projectionService.projectFoods();
     final projectedDrugDetails =
         await _projectActiveDrugDetails(request.activeDrugs);
     final latestMeal = request.history.isEmpty
@@ -119,11 +127,6 @@ class NextMealRecommendationOrchestrator {
             meal: latestMeal,
             i18n: i18n,
           );
-    final mergedCandidates = _mergeCandidates(
-      projectedFoods,
-      candidateFoods.isEmpty ? buildP0FoodCatalog() : candidateFoods,
-    );
-
     final baseline = conservativeRecommender.call(
       history: request.history,
       drugs: request.activeDrugs,

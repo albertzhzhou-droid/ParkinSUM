@@ -71,4 +71,34 @@ class DosageNoteParser {
     if (!_allowedUnits.contains(unitRaw)) return ParsedDose.none;
     return ParsedDose(value: value, unit: unitRaw, explicit: true);
   }
+
+  /// Dose in milligrams derived ONLY from an explicit value + recognized MASS
+  /// unit. Returns null when the note is not explicit (e.g. "levodopa 100",
+  /// bare "100", "25/100", empty) or when the unit is non-mass (e.g. "5 ml").
+  /// Never infers a number from free text — this is what populates
+  /// `DrugRuntimeContext.dailyDoseMg`.
+  double? milligrams(String? dosageNote) {
+    final dose = parse(dosageNote);
+    if (!dose.explicit || dose.value == null) return null;
+    switch (dose.unit) {
+      case 'mg':
+      case 'milligram':
+      case 'milligrams':
+        return dose.value;
+      case 'g':
+      case 'gram':
+      case 'grams':
+        return dose.value! * 1000.0;
+      case 'mcg':
+      case 'ug':
+      case 'µg':
+      case 'μg':
+      case 'microgram':
+      case 'micrograms':
+        return dose.value! / 1000.0;
+      default:
+        // Non-mass units (e.g. ml) are not a mg dose → unknown.
+        return null;
+    }
+  }
 }

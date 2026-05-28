@@ -665,13 +665,62 @@ class AppState extends ChangeNotifier {
         for (final f in existing) f.id: f,
       };
       for (final p in projected) {
-        byId.putIfAbsent(p.id, () => p);
+        final current = byId[p.id];
+        // Do NOT blindly let a seed/persisted food win over a projected CDSS
+        // food with the same id. Prefer the richer official/projected entry so
+        // its provenance + missingness metadata survives into the runtime repo.
+        byId[p.id] = (current == null) ? p : _preferRicherFood(current, p);
       }
       services.foodRepository.replaceAll(byId.values.toList(growable: false));
     } catch (_) {
       // Projection unavailable on this device (e.g. CDSS DB empty);
       // existing seed/persisted catalog remains active.
     }
+  }
+
+  /// Choose between an existing (seed/persisted) food and a projected food
+  /// sharing the same id. Compares source-authority provenance first, then
+  /// metadata completeness; on a tie prefers `projected` so freshly imported
+  /// official provenance + missingness metadata is retained rather than
+  /// shadowed by a stale seed row.
+  FoodItem _preferRicherFood(FoodItem existing, FoodItem projected) {
+    final ep = _provenanceRank(existing);
+    final pp = _provenanceRank(projected);
+    if (pp != ep) return pp > ep ? projected : existing;
+    final ec = _completenessRank(existing);
+    final pc = _completenessRank(projected);
+    if (pc != ec) return pc > ec ? projected : existing;
+    return projected; // tie → keep projected provenance/missingness
+  }
+
+  /// Coarse source-authority rank (higher = more authoritative). Mirrors the
+  /// orchestrator's conservative mapping: synthetic < seed/local < cdss <
+  /// recognized official import family.
+  int _provenanceRank(FoodItem f) {
+    final s = f.sourceSystem.toLowerCase();
+    if (s.contains('synthetic')) return 0;
+    if (s.contains('seed') || s == 'local_seed') return 1;
+    if (s == 'cdss') return 2;
+    return 3;
+  }
+
+  /// Metadata completeness rank (higher = richer): present nutrient fields plus
+  /// presence of amino-acid profile, basis type, and source food code.
+  int _completenessRank(FoodItem f) {
+    const core = [
+      'proteinG',
+      'carbsG',
+      'fatG',
+      'fiberG',
+      'sodiumMg',
+      'energyKcal',
+      'waterG',
+    ];
+    var score = core.where((c) => !f.missingNutrientFields.contains(c)).length;
+    if (f.aminoAcidProfile != null) score++;
+    if ((f.basisType ?? '').isNotEmpty) score++;
+    if ((f.sourceFoodCode ?? '').isNotEmpty) score++;
+    return score;
   }
 
   /// Pull every row from the `locale_resource_bundle` table and install it

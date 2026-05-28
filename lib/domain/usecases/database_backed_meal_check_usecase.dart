@@ -721,11 +721,13 @@ class DatabaseBackedMealCheckUseCase {
     );
   }
 
-  double? _parseDoseMg(String? dosageNote) {
-    if (dosageNote == null || dosageNote.trim().isEmpty) return null;
-    final match = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(dosageNote);
-    return match == null ? null : double.tryParse(match.group(1)!);
-  }
+  /// Daily dose in mg derived ONLY from an explicit user-entered dosage note
+  /// (value + recognized mass unit) via `DosageNoteParser`. Never infers a
+  /// number from free text: "levodopa 100", bare "100", or a slashed combo
+  /// yield null so the rule engine treats the dose as unknown instead of
+  /// fabricating 100 mg.
+  double? _parseDoseMg(String? dosageNote) =>
+      _dosageNoteParser.milligrams(dosageNote);
 
   InteractionSeverity _mapSeverity(String decision) {
     switch (decision) {
