@@ -653,8 +653,11 @@ class AppState extends ChangeNotifier {
   /// Best-effort augmentation of the food repository with foods projected
   /// from CDSS observations. Educational simulation only; failures are
   /// swallowed because the persisted catalog already provides a working
-  /// baseline. The projection adds items via id-keyed merge (seed/persisted
-  /// items win for duplicate ids; projection-only items are appended).
+  /// baseline. The projection adds items via id-keyed merge; for duplicate
+  /// ids the richer entry wins (`_preferRicherFood`: source authority, then
+  /// completeness, preferring the projected entry on ties) so official
+  /// provenance + missingness metadata is not shadowed by a stale seed row.
+  /// Projection-only items are appended.
   Future<void> _augmentFoodRepoFromProjection() async {
     try {
       final projected =

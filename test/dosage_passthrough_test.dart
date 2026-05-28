@@ -7,12 +7,20 @@ import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.d
 /// chain must come ONLY from the user-entered dosage note. No private default
 /// (the old hard-coded `strength: 100, unit: 'mg'`) may ever be injected.
 ///
-/// This mirrors EXACTLY the dose-building logic in both
-/// `NextMealRecommendationOrchestrator._buildMechanisticMedicationInputs` and
-/// `DatabaseBackedMealCheckUseCase._computeMechanisticTraceJson`:
-///   final dose = parser.parse(intake.dosageNote);
-///   strength: dose.explicit ? dose.value : null,
-///   unit:     dose.explicit ? dose.unit  : null,
+/// Two distinct consumers of `DosageNoteParser` are covered here:
+///
+/// - `RawMedicationEntry` validation uses `parse()` to obtain the explicit
+///   (value, unit) pair. This mirrors the dose-building logic in both
+///   `NextMealRecommendationOrchestrator._buildMechanisticMedicationInputs`
+///   and `DatabaseBackedMealCheckUseCase._computeMechanisticTraceJson`:
+///     final dose = parser.parse(intake.dosageNote);
+///     strength: dose.explicit ? dose.value : null,
+///     unit:     dose.explicit ? dose.unit  : null,
+///
+/// - `DrugRuntimeContext.dailyDoseMg` uses `parser.milligrams()` (which builds
+///   on `parse()` and converts the explicit value to milligrams, returning
+///   null for non-explicit notes or non-mass units). This is the path in
+///   `DatabaseBackedMealCheckUseCase._parseDoseMg`.
 void main() {
   final parser = DosageNoteParser();
   final validator = MedicationEntryValidator();

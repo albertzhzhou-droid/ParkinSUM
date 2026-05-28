@@ -260,6 +260,71 @@ void main() {
     );
   });
 
+  test('primary meal selection is independent of meal-event input order', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final refMinute = dateTimeToMinute(now);
+    final medContext = validator.validate(validLevodopa).normalized!;
+    final med = MedicationTimelineEvent(
+      id: 'med',
+      minute: refMinute + 30,
+      context: medContext,
+    );
+
+    // Two meals at the SAME minute with different compositions. Selection must
+    // be deterministic (tie-broken by id) regardless of list order.
+    const lowProtein = FoodComponent(
+      id: 'lp',
+      name: 'low protein',
+      physicalForm: MealPhysicalForm.solid,
+      proteinGrams: 1,
+      fatGrams: 0,
+      fiberGrams: 0,
+      carbohydrateGrams: 30,
+      calories: 130,
+      portionGrams: 150,
+      sourceDocId: 'synthetic:demo',
+    );
+    final compA =
+        normalizer.normalize(mealId: 'cA', components: const [lowProtein]);
+    final compB =
+        normalizer.normalize(mealId: 'cB', components: const [highProtein]);
+    final mealA = MealTimelineEvent(
+      id: 'a_meal',
+      minute: refMinute,
+      compositionId: 'cA',
+      physicalForm: MealPhysicalForm.solid,
+    );
+    final mealB = MealTimelineEvent(
+      id: 'b_meal',
+      minute: refMinute,
+      compositionId: 'cB',
+      physicalForm: MealPhysicalForm.solid,
+    );
+    final compositions = {'cA': compA, 'cB': compB};
+
+    MechanisticConflictResult evalWith(List<MealTimelineEvent> meals) =>
+        engine.evaluate(
+          context: TimeAxisConflictContext(
+            referenceMinute: refMinute,
+            medicationEvents: [med],
+            mealEvents: meals,
+          ),
+          mealCompositionsById: compositions,
+        );
+
+    final ordered = evalWith([mealA, mealB]);
+    final reversed = evalWith([mealB, mealA]);
+
+    // Same primary meal → identical modeled output regardless of input order.
+    expect(reversed.interactionScore, ordered.interactionScore);
+    expect(reversed.severityBand, ordered.severityBand);
+    expect(reversed.confidenceBand, ordered.confidenceBand);
+    expect(
+      reversed.primaryEmptyingProfile?.aggregateLagMinutes,
+      ordered.primaryEmptyingProfile?.aggregateLagMinutes,
+    );
+  });
+
   test('explanation always carries source refs and safety boundary text', () {
     final now = DateTime.utc(2026, 1, 1, 8);
     final ctx = makeContext(

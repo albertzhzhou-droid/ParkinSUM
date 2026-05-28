@@ -324,16 +324,25 @@ class MechanisticConflictEngine {
 
   /// Most-recent meal at or before the dose time (within a 180-min lookahead),
   /// falling back to the earliest meal. Pure selection — no side effects.
+  ///
+  /// Deterministic and independent of input order: meal events are sorted by
+  /// minute (ties broken by id) before selection, so an unsorted
+  /// `mealEvents` list always yields the same primary meal.
   MealTimelineEvent? _primaryMealFor(
     MedicationTimelineEvent med,
     TimeAxisConflictContext context,
   ) {
     if (context.mealEvents.isEmpty) return null;
+    final sorted = [...context.mealEvents]..sort((a, b) {
+        final byMinute = a.minute.compareTo(b.minute);
+        return byMinute != 0 ? byMinute : a.id.compareTo(b.id);
+      });
     MealTimelineEvent? primaryMeal;
-    for (final m in context.mealEvents) {
+    for (final m in sorted) {
       if (m.minute <= med.minute + 180) primaryMeal = m;
     }
-    return primaryMeal ?? context.mealEvents.first;
+    // Fallback to the earliest meal (deterministic via the sort above).
+    return primaryMeal ?? sorted.first;
   }
 
   /// Evaluate a single dose against the meal timeline. Returns null when the
