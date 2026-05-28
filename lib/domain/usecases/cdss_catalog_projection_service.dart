@@ -96,11 +96,31 @@ class CdssCatalogProjectionService {
             categoryName: '${concept?['food_group'] ?? 'other'}',
           ),
         ),
+        // Missing ≠ zero: record which nutrient attributes were actually
+        // present in the projected observations. Absent attributes are carried
+        // in `missingNutrientFields` so downstream passes null (unknown) rather
+        // than a fabricated true 0 g. The non-nullable getters keep the legacy
+        // 0 only for UI display; the missing-set is the source of truth for the
+        // model layer.
         proteinG: nutrients['protein_g'] ?? 0,
         carbsG: nutrients['carbohydrate_g'] ?? 0,
         fatG: nutrients['fat_g'] ?? 0,
         fiberG: nutrients['fiber_g'] ?? 0,
         sodiumMg: nutrients['sodium_mg'] ?? 0,
+        missingNutrientFields: <String>{
+          if (!nutrients.containsKey('protein_g')) 'proteinG',
+          if (!nutrients.containsKey('carbohydrate_g')) 'carbsG',
+          if (!nutrients.containsKey('fat_g')) 'fatG',
+          if (!nutrients.containsKey('fiber_g')) 'fiberG',
+          if (!nutrients.containsKey('sodium_mg')) 'sodiumMg',
+          if (!nutrients.containsKey('energy_kcal')) 'energyKcal',
+          if (!nutrients.containsKey('water_g')) 'waterG',
+        },
+        // Carry energy/water only when actually projected (never fabricated).
+        energyKcal: nutrients['energy_kcal'],
+        waterG: nutrients['water_g'],
+        basisType: row['basis_type']?.toString(),
+        qualifierKind: QualifierKind.exact.wireValue,
       );
     }).toList(growable: false);
   }

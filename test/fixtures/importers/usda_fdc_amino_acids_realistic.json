@@ -11,12 +11,12 @@
     },
     {
       "type": "FoodNutrient",
-      "nutrient": {"id": 1232, "number": "507", "name": "Leucine", "unitName": "MG"},
+      "nutrient": {"id": 1232, "number": "504", "name": "Leucine", "unitName": "MG"},
       "amount": 2100.0
     },
     {
       "type": "FoodNutrient",
-      "nutrient": {"id": 1231, "number": "506", "name": "Isoleucine", "unitName": "MG"},
+      "nutrient": {"id": 1231, "number": "503", "name": "Isoleucine", "unitName": "MG"},
       "amount": 1200.0
     },
     {

@@ -6,18 +6,21 @@ import '../../../domain/entities/amino_acid_profile.dart';
 /// amino-acid fields are present so the LNAA layer can fall back to the
 /// protein-source proxy. No network. Educational prototype; synthetic only.
 class AminoAcidExtractor {
-  /// FDC nutrient numbers for the amino acids of interest. Some datasets use
-  /// alternate codes; this map captures the common ones plus the names as a
-  /// fallback match.
+  /// USDA FoodData Central amino-acid nutrient numbers (verified):
+  /// 501 Tryptophan, 502 Threonine, 503 Isoleucine, 504 Leucine,
+  /// 505 Lysine, 506 Methionine, 507 Cystine, 508 Phenylalanine,
+  /// 509 Tyrosine, 510 Valine, 511 Arginine, 512 Histidine.
+  /// Number mapping takes priority over name fallback.
   static const Map<String, String> _numberToField = {
-    '507': 'leucine',
-    '506': 'isoleucine',
-    '510': 'valine',
+    '501': 'tryptophan',
+    '502': 'threonine',
+    '503': 'isoleucine',
+    '504': 'leucine',
+    '506': 'methionine',
     '508': 'phenylalanine',
     '509': 'tyrosine',
-    '501': 'tryptophan',
+    '510': 'valine',
     '512': 'histidine',
-    '503': 'threonine',
   };
 
   AminoAcidProfile? extractFromFdcStyle(

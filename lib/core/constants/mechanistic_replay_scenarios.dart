@@ -232,7 +232,10 @@ const _candidateAminoAcidFood = CandidateFood(
         phenylalanine: 1.0,
         tyrosine: 0.9,
         tryptophan: 0.3,
-        nutrientIds: ['507', '506', '510', '508', '509', '501'],
+        // Verified FDC nutrient numbers, in field order:
+        // 504 leucine, 503 isoleucine, 510 valine, 508 phenylalanine,
+        // 509 tyrosine, 501 tryptophan.
+        nutrientIds: ['504', '503', '510', '508', '509', '501'],
         sourceRefs: ['src.fdc.api.amino_acid_fields'],
       ),
     ),
@@ -328,6 +331,26 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       ScenarioMeal(
         id: 'meal_overlap',
         offset: MinutesOffset(45),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_chickenSteakProtein],
+      ),
+    ],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's04b_multidose_ir',
+    title: 'Two IR levodopa doses; the dose overlapping the high-protein meal '
+        'drives the score (max-overlap, not averaged)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedSeverityFloor: SeverityBand.moderate,
+    // First dose lands on the high-protein meal (high overlap); second dose is
+    // hours later with no nearby meal (low overlap). Max-overlap aggregation
+    // must keep severity driven by the first dose.
+    medicationEntries: [_carbidopaLevodopaIr, _carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30), MinutesOffset(360)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_chicken_md',
+        offset: MinutesOffset(0),
         physicalForm: MealPhysicalForm.solid,
         components: [_chickenSteakProtein],
       ),

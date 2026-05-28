@@ -6,14 +6,14 @@
   "language": "en",
   "foodNutrients": [
     {"nutrient": {"number": "203", "name": "Protein", "unitName": "G"}, "amount": 26.0},
-    {"nutrient": {"number": "507", "name": "Leucine", "unitName": "G"}, "amount": 2.1},
-    {"nutrient": {"number": "506", "name": "Isoleucine", "unitName": "G"}, "amount": 1.2},
+    {"nutrient": {"number": "504", "name": "Leucine", "unitName": "G"}, "amount": 2.1},
+    {"nutrient": {"number": "503", "name": "Isoleucine", "unitName": "G"}, "amount": 1.2},
     {"nutrient": {"number": "510", "name": "Valine", "unitName": "G"}, "amount": 1.3},
     {"nutrient": {"number": "508", "name": "Phenylalanine", "unitName": "G"}, "amount": 1.0},
     {"nutrient": {"number": "509", "name": "Tyrosine", "unitName": "G"}, "amount": 0.9},
     {"nutrient": {"number": "501", "name": "Tryptophan", "unitName": "G"}, "amount": 0.3},
     {"nutrient": {"number": "512", "name": "Histidine", "unitName": "G"}, "amount": 0.8},
-    {"nutrient": {"number": "506m", "name": "Methionine", "unitName": "G"}, "amount": 0.7},
-    {"nutrient": {"number": "503", "name": "Threonine", "unitName": "G"}, "amount": 1.1}
+    {"nutrient": {"number": "506", "name": "Methionine", "unitName": "G"}, "amount": 0.7},
+    {"nutrient": {"number": "502", "name": "Threonine", "unitName": "G"}, "amount": 1.1}
   ]
 }

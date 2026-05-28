@@ -126,6 +126,140 @@ void main() {
     );
   });
 
+  const validIron = RawMedicationEntry(
+    activeIngredients: ['ferrous sulfate'],
+    drugProductVariant: 'synthetic:iron',
+    strength: 65,
+    unit: 'mg',
+    form: 'tablet',
+    route: 'oral',
+    releaseType: 'immediate',
+    jurisdiction: 'US',
+    sourceDocId: 'synthetic:iron',
+  );
+
+  const validLevodopaER = RawMedicationEntry(
+    activeIngredients: ['carbidopa', 'levodopa'],
+    drugProductVariant: 'synthetic:er',
+    strength: 200,
+    unit: 'mg',
+    form: 'tablet',
+    route: 'oral',
+    releaseType: 'extended',
+    jurisdiction: 'US',
+    sourceDocId: 'synthetic:er',
+  );
+
+  test('multi-dose: the high-overlap dose drives the primary score', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    // Two levodopa doses: one taken right at the high-protein meal (high
+    // overlap) and one taken 6 hours later (no nearby meal → low overlap).
+    final v = validator.validate(validLevodopa);
+    final ctx = builder.build(
+      now: now,
+      medicationInputs: [
+        MedicationTimelineInput(
+          id: 'dose_overlap',
+          takenAt: now.add(const Duration(minutes: 20)),
+          medicationContext: v,
+        ),
+        MedicationTimelineInput(
+          id: 'dose_far',
+          takenAt: now.add(const Duration(hours: 6)),
+          medicationContext: v,
+        ),
+      ],
+      mealInputs: [
+        MealTimelineInput(
+          id: 'meal',
+          startedAt: now,
+          compositionId: 'c1',
+          physicalForm: MealPhysicalForm.solid,
+        ),
+      ],
+    );
+    final composition =
+        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final r = engine.evaluate(
+      context: ctx,
+      mealCompositionsById: {'c1': composition},
+    );
+    expect(r.perEventCount, 2);
+    final primary = r.perEventTraces.firstWhere((e) => e.isPrimary);
+    expect(primary.medicationEventId, 'dose_overlap');
+    // The aggregate score equals the highest per-event score (max-overlap),
+    // not an average that would dilute the high-overlap dose.
+    final maxPerEvent = r.perEventTraces
+        .map((e) => e.interactionScore)
+        .reduce((a, b) => a > b ? a : b);
+    expect(r.interactionScore, closeTo(maxPerEvent, 1e-9));
+  });
+
+  test('multi-dose: non-levodopa events are excluded from scoring', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final levo = validator.validate(validLevodopa);
+    final iron = validator.validate(validIron);
+    final ctx = builder.build(
+      now: now,
+      medicationInputs: [
+        MedicationTimelineInput(
+          id: 'levo',
+          takenAt: now.add(const Duration(minutes: 20)),
+          medicationContext: levo,
+        ),
+        MedicationTimelineInput(
+          id: 'iron',
+          takenAt: now.add(const Duration(minutes: 25)),
+          medicationContext: iron,
+        ),
+      ],
+      mealInputs: [
+        MealTimelineInput(
+          id: 'meal',
+          startedAt: now,
+          compositionId: 'c1',
+          physicalForm: MealPhysicalForm.solid,
+        ),
+      ],
+    );
+    final composition =
+        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final r = engine.evaluate(
+      context: ctx,
+      mealCompositionsById: {'c1': composition},
+    );
+    // Only the levodopa dose is scored; the iron dose is not a per-event trace.
+    expect(r.perEventCount, 1);
+    expect(r.perEventTraces.single.medicationEventId, 'levo');
+    expect(r.perEventTraces.single.isLevodopa, isTrue);
+  });
+
+  test('ER formulation widens the absorption window vs immediate release', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    TimeAxisConflictContext ctxFor(RawMedicationEntry e) => makeContext(
+          now: now,
+          medEntry: e,
+          medTakenAt: now.add(const Duration(minutes: 20)),
+          mealStartedAt: now,
+        );
+    final composition =
+        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final ir = engine.evaluate(
+      context: ctxFor(validLevodopa),
+      mealCompositionsById: {'c1': composition},
+    );
+    final er = engine.evaluate(
+      context: ctxFor(validLevodopaER),
+      mealCompositionsById: {'c1': composition},
+    );
+    final irWin = ir.absorptionOpportunityWindow!.window;
+    final erWin = er.absorptionOpportunityWindow!.window;
+    expect(
+      erWin.endMinute - erWin.startMinute,
+      greaterThan(irWin.endMinute - irWin.startMinute),
+    );
+  });
+
   test('explanation always carries source refs and safety boundary text', () {
     final now = DateTime.utc(2026, 1, 1, 8);
     final ctx = makeContext(

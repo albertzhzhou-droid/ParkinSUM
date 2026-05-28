@@ -82,6 +82,57 @@ class MechanisticExplanation {
       };
 }
 
+/// Per-medication-event trace for the multi-dose time axis.
+///
+/// The engine evaluates EACH levodopa dose independently against the meal
+/// timeline and aggregates with deterministic max-overlap (the highest-overlap
+/// dose drives the primary score; a high-overlap dose is never averaged away).
+/// Non-levodopa events are excluded from levodopa-specific scoring. These
+/// traces keep every evaluated dose inspectable, with its own source refs and
+/// uncertainty so nothing is collapsed into an opaque single number.
+class MechanisticPerEventTrace {
+  final String medicationEventId;
+  final int medicationMinute;
+  final bool isLevodopa;
+  final String releaseType;
+
+  /// The per-event interaction score (0..1 educational proxy).
+  final double interactionScore;
+  final String competitionBand;
+  final String delayedArrivalLikelihood;
+
+  /// True for the event selected as primary (max overlap).
+  final bool isPrimary;
+  final List<String> sourceRefs;
+  final List<String> uncertaintyReasons;
+
+  const MechanisticPerEventTrace({
+    required this.medicationEventId,
+    required this.medicationMinute,
+    required this.isLevodopa,
+    required this.releaseType,
+    required this.interactionScore,
+    required this.competitionBand,
+    required this.delayedArrivalLikelihood,
+    required this.isPrimary,
+    required this.sourceRefs,
+    required this.uncertaintyReasons,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'medication_event_id': medicationEventId,
+        'medication_minute': medicationMinute,
+        'is_levodopa': isLevodopa,
+        'release_type': releaseType,
+        'interaction_score': interactionScore,
+        'competition_band': competitionBand,
+        'delayed_arrival_likelihood': delayedArrivalLikelihood,
+        'is_primary': isPrimary,
+        'source_refs': sourceRefs,
+        'uncertainty_reasons': uncertaintyReasons,
+      };
+}
+
 /// Top-level result returned by `MechanisticConflictEngine`.
 class MechanisticConflictResult {
   final String id;
@@ -101,6 +152,10 @@ class MechanisticConflictResult {
   final AbsorptionOpportunityWindow? absorptionOpportunityWindow;
   final CompetitionPressureTimeline? competitionTimeline;
 
+  /// Per-dose traces for the multi-dose time axis. Empty for insufficient
+  /// results. Additive — existing consumers are unaffected.
+  final List<MechanisticPerEventTrace> perEventTraces;
+
   const MechanisticConflictResult({
     required this.id,
     required this.interactionType,
@@ -118,7 +173,11 @@ class MechanisticConflictResult {
     this.primaryEmptyingProfile,
     this.absorptionOpportunityWindow,
     this.competitionTimeline,
+    this.perEventTraces = const [],
   });
+
+  /// Number of medication doses evaluated on the time axis.
+  int get perEventCount => perEventTraces.length;
 
   /// Convenience constructor for insufficient-context results.
   factory MechanisticConflictResult.insufficientContext({
@@ -173,5 +232,8 @@ class MechanisticConflictResult {
         'primary_emptying_profile': primaryEmptyingProfile?.toJson(),
         'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
         'competition_timeline': competitionTimeline?.toJson(),
+        'per_event_count': perEventCount,
+        'per_event_traces':
+            perEventTraces.map((e) => e.toJson()).toList(growable: false),
       };
 }

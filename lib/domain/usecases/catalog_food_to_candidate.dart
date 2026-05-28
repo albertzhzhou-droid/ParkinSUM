@@ -18,6 +18,13 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
     category: item.category.name,
   );
 
+  // Missing ≠ zero: when a nutrient field has no source data (recorded in
+  // `item.missingNutrientFields`), pass null to the component so the normalizer
+  // records it as a missing field and lowers completeness — instead of letting
+  // the FoodItem's non-nullable 0 default masquerade as a true measured 0 g.
+  double? present(String field, double value) =>
+      item.isNutrientMissing(field) ? null : value;
+
   return CandidateFood(
     id: item.id,
     name: item.name,
@@ -28,17 +35,20 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
         id: item.id,
         name: item.name,
         physicalForm: physicalForm,
-        proteinGrams: item.proteinG,
-        fatGrams: item.fatG,
-        fiberGrams: item.fiberG,
-        carbohydrateGrams: item.carbsG,
-        // Local catalog does not capture per-serving calories or portion
-        // grams today; leave null so the normalizer records them as
-        // missing fields rather than inventing values.
-        calories: null,
+        proteinGrams: present('proteinG', item.proteinG),
+        fatGrams: present('fatG', item.fatG),
+        fiberGrams: present('fiberG', item.fiberG),
+        carbohydrateGrams: present('carbsG', item.carbsG),
+        // Carry energy only when the source provides it (never fabricated).
+        // Portion grams are not captured by the local catalog → left null so
+        // the normalizer records them as missing rather than inventing values.
+        calories: item.energyKcal,
         portionGrams: null,
         sourceDocId: item.sourceSystem,
         proteinSource: proteinSource,
+        // Prefer the actual amino-acid profile when present; null → the LNAA
+        // layer falls back to the protein-source proxy.
+        aminoAcidProfile: item.aminoAcidProfile,
       ),
     ],
   );

@@ -12,6 +12,7 @@ import '../entities/rule_registry_models.dart';
 import '../entities/runtime_context.dart';
 import '../entities/time_axis_events.dart';
 import 'clinical_decision_support_service.dart';
+import 'dosage_note_parser.dart';
 import 'imported_label_rule_provider.dart';
 import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
@@ -40,6 +41,7 @@ class DatabaseBackedMealCheckUseCase {
   final MealCompositionNormalizer mealCompositionNormalizer;
   final MedicationEntryValidator medicationEntryValidator;
   final TimeAxisBuilder timeAxisBuilder;
+  final DosageNoteParser _dosageNoteParser;
 
   DatabaseBackedMealCheckUseCase({
     required this.variantResolver,
@@ -50,12 +52,14 @@ class DatabaseBackedMealCheckUseCase {
     MealCompositionNormalizer? mealCompositionNormalizer,
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
+    DosageNoteParser? dosageNoteParser,
   })  : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
         mealCompositionNormalizer =
             mealCompositionNormalizer ?? MealCompositionNormalizer(),
         medicationEntryValidator =
             medicationEntryValidator ?? MedicationEntryValidator(),
-        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder();
+        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
+        _dosageNoteParser = dosageNoteParser ?? DosageNoteParser();
 
   Future<InteractionResult> call({
     required Meal meal,
@@ -768,11 +772,15 @@ class DatabaseBackedMealCheckUseCase {
         drug.genericName.toLowerCase(),
         ...drug.tags.map((t) => t.name.toLowerCase()),
       }.where((s) => s.isNotEmpty).toList(growable: false);
+      // Dose comes ONLY from the user-entered dosage note — never a private
+      // default. Non-explicit notes leave strength/unit null → insufficient
+      // dose context (no dose-dependent PK interpretation).
+      final dose = _dosageNoteParser.parse(intake.dosageNote);
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
-        strength: 100,
-        unit: 'mg',
+        strength: dose.explicit ? dose.value : null,
+        unit: dose.explicit ? dose.unit : null,
         form: drug.dosageForm,
         route: drug.route,
         releaseType: drug.releaseType,

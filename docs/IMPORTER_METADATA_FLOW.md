@@ -71,6 +71,32 @@ basisType (per_100g vs per_serving), servingUnit, preparationState
 extraction confidence, amino-acid field presence, sourceRefs, limitationText.
 Missing basis → lower confidence (never faked completeness).
 
+### 6a. Missing ≠ zero
+
+Absent nutrient data is carried as **missing/unknown**, never coerced to a true
+`0 g`. `FoodItem` keeps its non-nullable nutrient getters for UI compatibility
+but carries the missingness in a parallel `missingNutrientFields` set (e.g.
+`proteinG`, `energyKcal`, `waterG`). The candidate adapter
+(`catalog_food_to_candidate.dart`) passes **null** to `FoodComponent` for any
+field in that set, so the `MealCompositionNormalizer` records it in
+`missingFields`, lowers `compositionCompleteness`, and the gastric-emptying
+layer widens its uncertainty band. A real measured `0` (field present, value
+zero) is preserved as a true zero. The projection service
+(`CdssCatalogProjectionService.projectFoods`) records which observation
+attributes were actually present and populates `missingNutrientFields` for the
+rest.
+
+### 6b. Actual amino-acid fields
+
+When USDA FDC amino-acid fields are available, `AminoAcidExtractor` builds an
+`AminoAcidProfile` (verified nutrient-number mapping: 501 Trp, 502 Thr, 503
+Ile, 504 Leu, 506 Met, 508 Phe, 509 Tyr, 510 Val, 512 His; number takes
+priority over name; mg→g normalized; missing-unit values marked `partial`).
+This profile is carried on `FoodItem.aminoAcidProfile` → `FoodComponent` →
+the LNAA layer, which uses the actual fields
+(`AminoAcidDataMode.actualAminoAcidFields`) in preference to the protein-source
+proxy. Payloads without any LNAA field fall back to the proxy.
+
 ## 7. Medication metadata requirements
 
 activeIngredient(s), strengthValue + unit, doseForm, route, releaseType,
@@ -99,7 +125,16 @@ gate; adds the softer downgrade/uncertainty layer.
 amino-acid competition (LNAA load by protein source) → interaction score →
 `MechanisticExplanation` (carries sourceRefs, limitation, safety boundary).
 `CandidateMetadata` (completeness, authority, jurisdiction match, provenance
-quality) flows into `MechanisticCandidateScore`.
+quality) flows into `MechanisticCandidateScore`. The orchestrator builds it
+per candidate from the imported source data on each `FoodItem`:
+`SourceAuthorityScorer` scores authority + jurisdiction match against the
+user's jurisdiction chain (`registrationRegion` + `contentJurisdictionOverride`
++ `dietProfileRegion`); `MetadataCompletenessGate` grades completeness from a
+`FoodVariantMetadata`; provenance quality rewards traceable source codes, basis
+type, explicit jurisdiction, and actual amino-acid fields. Official-in-
+jurisdiction outranks synthetic/seed; out-of-jurisdiction official is retained
+but downgraded; seed never overrides official; missing metadata → neutral
+defaults (never fake-high).
 
 ## 11. How metadata feeds next-meal scoring
 

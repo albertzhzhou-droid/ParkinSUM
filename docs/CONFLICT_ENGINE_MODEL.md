@@ -155,6 +155,43 @@ When a second meal arrives before the first is mostly emptied, the engine:
 The absorption opportunity layer also detects residual stomach load at
 the medication time and shifts/widens the window accordingly.
 
+## 10a. Multi-dose time axis
+
+The engine evaluates **each levodopa medication event** on the timeline
+independently rather than only the first dose:
+
+1. Non-levodopa events (e.g. iron, MAO-B inhibitors) are **excluded** from
+   levodopa-specific food-interaction scoring — they are handled by other
+   rule layers.
+2. For every levodopa dose, the engine finds that dose's primary meal,
+   computes residual stomach load, gastric emptying, the absorption
+   opportunity window, and the amino-acid competition overlap.
+3. Aggregation is **deterministic max-overlap**: the dose with the highest
+   modeled overlap drives the primary `interaction_score`, severity, and
+   confidence. A high-overlap dose is never averaged away by lower-overlap
+   doses. Ties break by earliest dose minute for stability.
+4. Every evaluated dose is retained in `perEventTraces` (with its own
+   `interactionScore`, competition band, delayed-arrival likelihood, source
+   refs, and uncertainty reasons), and `perEventCount` records how many doses
+   were modeled. Extended/controlled-release doses widen the absorption window
+   per Section 12.
+
+## 10b. Dose comes only from user input (hard requirement)
+
+The engine never invents, defaults, or infers a medication strength. Dose is
+parsed from the user-entered free-text dosage note (`DosageNoteParser`) and is
+treated as explicit **only** when both a numeric value and a recognized unit
+(`mg`/`g`/`mcg`/`ml`) are present:
+
+- `"100 mg"` → strength 100 mg.
+- `"levodopa 100"`, bare `"100"`, slashed `"25/100"`, empty → **not explicit**;
+  strength/unit are left null, the `MedicationEntryValidator` returns
+  `insufficient`/`invalid`, and dose-dependent interpretation is blocked. The
+  reason surfaces in `missingFields` / `fallbackReasons` / `dataNotes` and the
+  replay report's `dosageContextComplete = false`.
+
+There is no code path that substitutes a private default strength.
+
 ## 11. Food-food interaction
 
 Per-component modeling means food-food interactions surface naturally:

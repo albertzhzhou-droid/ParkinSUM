@@ -10,9 +10,11 @@ import '../entities/food_recommendation.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/ranker_eligibility.dart';
+import 'dosage_note_parser.dart';
 import '../entities/meal_composition.dart';
 import '../entities/next_meal_recommendation_models.dart';
 import '../entities/cdss_records.dart';
+import '../entities/source_metadata.dart';
 import '../entities/time_axis_events.dart';
 import 'catalog_food_to_candidate.dart';
 import 'cdss_catalog_projection_service.dart';
@@ -22,6 +24,8 @@ import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
 import 'mechanistic_next_meal_scorer.dart';
 import 'medication_entry_validator.dart';
+import 'metadata_completeness_gate.dart';
+import 'source_authority_scorer.dart';
 import 'time_axis_builder.dart';
 
 /// 双路径下一餐推荐编排器。
@@ -47,6 +51,9 @@ class NextMealRecommendationOrchestrator {
   final MealCompositionNormalizer mealCompositionNormalizer;
   final MedicationEntryValidator medicationEntryValidator;
   final TimeAxisBuilder timeAxisBuilder;
+  final DosageNoteParser _dosageNoteParser;
+  final SourceAuthorityScorer _authorityScorer;
+  final MetadataCompletenessGate _completenessGate;
 
   NextMealRecommendationOrchestrator({
     required this.conservativeRecommender,
@@ -57,13 +64,17 @@ class NextMealRecommendationOrchestrator {
     MealCompositionNormalizer? mealCompositionNormalizer,
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
+    DosageNoteParser? dosageNoteParser,
   })  : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
         mechanisticScorer = mechanisticScorer ?? MechanisticNextMealScorer(),
         mealCompositionNormalizer =
             mealCompositionNormalizer ?? MealCompositionNormalizer(),
         medicationEntryValidator =
             medicationEntryValidator ?? MedicationEntryValidator(),
-        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder();
+        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
+        _dosageNoteParser = dosageNoteParser ?? DosageNoteParser(),
+        _authorityScorer = SourceAuthorityScorer(),
+        _completenessGate = MetadataCompletenessGate();
 
   /// Public entry point. Enriches the conservative result with a deterministic
   /// mechanistic conflict trace and (when the request includes a
@@ -792,6 +803,132 @@ class NextMealRecommendationOrchestrator {
     return lines;
   }
 
+  /// Build deterministic per-candidate metadata from the imported/seed source
+  /// data carried on each `FoodItem`. Uses `SourceAuthorityScorer` (against the
+  /// user's jurisdiction chain) and `MetadataCompletenessGate`. Seed/synthetic
+  /// never outranks official-in-jurisdiction; missing fields lower scores
+  /// rather than inflating them.
+  Map<String, CandidateMetadata> _buildCandidateMetadata(
+    List<FoodItem> foods,
+    UserProfile profile,
+  ) {
+    final chain = _userJurisdictionChain(profile);
+    final result = <String, CandidateMetadata>{};
+    for (final item in foods) {
+      final tier = _authorityTierForSourceSystem(item.sourceSystem);
+      final source = SourceDocumentMetadata(
+        sourceDocId: 'src.food.${item.sourceSystem}.${item.id}',
+        sourceSystem: item.sourceSystem,
+        jurisdiction: item.jurisdiction,
+        language: 'und',
+        sourceOwner: item.sourceSystem,
+        docType: 'food_composition',
+        authorityTier: tier,
+        translationStatus: ReferenceTranslationStatus.notTranslation,
+        publishedAt: null,
+        effectiveAt: null,
+        lastUpdated: null,
+        licenseOrUseLimitations: 'educational_prototype',
+        sourceRefs: [
+          if (item.sourceFoodCode != null && item.sourceFoodCode!.isNotEmpty)
+            'src.food.${item.sourceSystem}.${item.sourceFoodCode}',
+        ],
+        limitationText: 'Educational prototype. Not medical advice.',
+      );
+      final authorityScore =
+          _authorityScorer.score(source, userJurisdictionChain: chain);
+      final jurisdictionMatch = _authorityScorer.jurisdictionMatchScore(
+        sourceJurisdiction: item.jurisdiction,
+        userJurisdictionChain: chain,
+      );
+
+      // Nutrient completeness from the missing-set (missing ≠ zero): fraction
+      // of the core macronutrient fields actually present.
+      const coreFields = ['proteinG', 'carbsG', 'fatG', 'fiberG', 'sodiumMg'];
+      final presentCount =
+          coreFields.where((f) => !item.isNutrientMissing(f)).length;
+      final nutrientCompleteness = presentCount / coreFields.length;
+
+      final foodMeta = FoodVariantMetadata(
+        foodVariantId: item.id,
+        sourceSystem: item.sourceSystem,
+        jurisdiction: item.jurisdiction,
+        language: 'und',
+        foodName: item.name,
+        basisType: item.basisType,
+        servingUnit: null,
+        preparationState: item.preparationState ?? 'unknown',
+        aminoAcidFieldsPresent: item.aminoAcidProfile != null,
+        extractionConfidence: null,
+        sourceRefs: source.sourceRefs,
+        limitationText: source.limitationText,
+      );
+      final completenessScore = _completenessGate.scoreCandidateFood(
+        foodMeta,
+        nutrientCompleteness: nutrientCompleteness,
+      );
+      final completeness = _completenessGate.toWeight(completenessScore);
+
+      // Provenance quality: rewards traceable source code, amino-acid fields,
+      // basis type and explicit jurisdiction. Synthetic/seed capped low so it
+      // cannot masquerade as high-provenance official data.
+      var provenance = 0.0;
+      if (source.sourceRefs.isNotEmpty) provenance += 0.4;
+      if (item.aminoAcidProfile != null) provenance += 0.2;
+      if ((item.basisType ?? '').isNotEmpty) provenance += 0.2;
+      if (item.jurisdiction.trim().isNotEmpty &&
+          item.jurisdiction.toUpperCase() != 'GLOBAL') {
+        provenance += 0.2;
+      }
+      if (source.isSyntheticOrSeed) provenance = provenance.clamp(0.0, 0.3);
+      provenance = provenance.clamp(0.0, 1.0);
+
+      result[item.id] = CandidateMetadata(
+        completeness: completeness,
+        authorityScore: authorityScore,
+        jurisdictionMatchScore: jurisdictionMatch,
+        provenanceQuality: provenance,
+        jurisdiction: item.jurisdiction,
+      );
+    }
+    return result;
+  }
+
+  List<String> _userJurisdictionChain(UserProfile profile) {
+    final chain = <String>[];
+    for (final j in profile.contentJurisdictionOverride) {
+      final t = j.trim().toUpperCase();
+      if (t.isNotEmpty && !chain.contains(t)) chain.add(t);
+    }
+    final reg = profile.registrationRegion.trim().toUpperCase();
+    if (reg.isNotEmpty && !chain.contains(reg)) chain.add(reg);
+    final diet = (profile.dietProfileRegion ?? '').trim().toUpperCase();
+    if (diet.isNotEmpty && !chain.contains(diet)) chain.add(diet);
+    return chain;
+  }
+
+  /// Deterministic, conservative mapping from a food source system/family to an
+  /// authority tier. Unknown families map to `unknown` (neutral), never to an
+  /// official tier. Seed/synthetic are explicitly capped.
+  SourceAuthorityTier _authorityTierForSourceSystem(String sourceSystem) {
+    final s = sourceSystem.toLowerCase();
+    if (s.contains('synthetic')) return SourceAuthorityTier.syntheticDemo;
+    if (s.contains('seed') || s == 'local_seed' || s == 'cdss') {
+      return SourceAuthorityTier.seedOrManualDemo;
+    }
+    // Recognized official food-composition tables.
+    if (s.contains('usda') ||
+        s.contains('fdc') ||
+        s.contains('cnf') || // Canadian Nutrient File
+        s.contains('mccance') ||
+        s.contains('ciqual') ||
+        s.contains('frida') ||
+        s.contains('fsanz')) {
+      return SourceAuthorityTier.foodCompositionTable;
+    }
+    return SourceAuthorityTier.unknown;
+  }
+
   List<FoodRecommendation> _rerank(
     List<FoodRecommendation> baseline,
     List<String> orderedIds,
@@ -850,10 +987,17 @@ class NextMealRecommendationOrchestrator {
     if (request.userDefinedWindow != null && candidateFoods.isNotEmpty) {
       final candidates =
           candidateFoods.map(foodItemToCandidateFood).toList(growable: false);
+      // Build real per-candidate metadata from imported source data
+      // (authority, jurisdiction match, completeness, provenance) so the
+      // scorer ranks official-in-jurisdiction above synthetic/seed. Missing
+      // metadata yields neutral defaults inside the scorer — never fake-high.
+      final candidateMetadata =
+          _buildCandidateMetadata(candidateFoods, request.userProfile);
       candidateScores = mechanisticScorer.score(
         baseContext: context,
         baseMealCompositionsById: compositionsById,
         candidates: candidates,
+        candidateMetadata: candidateMetadata,
       );
     }
 
@@ -943,11 +1087,16 @@ class NextMealRecommendationOrchestrator {
       final drug = drugsById[intake.drugId];
       if (drug == null) continue;
       final ingredients = _drugActiveIngredients(drug);
+      // Dose MUST come from the user-entered dosage note — never a private
+      // default. If the note is not an explicit value+unit, strength/unit are
+      // left null and the validator marks the context insufficient for
+      // dose-dependent interpretation.
+      final dose = _dosageNoteParser.parse(intake.dosageNote);
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
-        strength: 100,
-        unit: 'mg',
+        strength: dose.explicit ? dose.value : null,
+        unit: dose.explicit ? dose.unit : null,
         form: drug.dosageForm,
         route: drug.route,
         releaseType: drug.releaseType,

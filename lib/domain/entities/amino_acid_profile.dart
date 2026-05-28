@@ -92,4 +92,30 @@ class AminoAcidProfile {
         'partial': partial,
         'competing_lnaa_grams': competingLnaaGrams,
       };
+
+  /// Defensive deserialization. Absent numeric fields stay null (never coerced
+  /// to 0), preserving the missing≠zero invariant through round-trips.
+  static AminoAcidProfile fromJson(Map<String, dynamic> json) {
+    double? d(String k) => (json[k] as num?)?.toDouble();
+    return AminoAcidProfile(
+      leucine: d('leucine'),
+      isoleucine: d('isoleucine'),
+      valine: d('valine'),
+      phenylalanine: d('phenylalanine'),
+      tyrosine: d('tyrosine'),
+      tryptophan: d('tryptophan'),
+      histidine: d('histidine'),
+      methionine: d('methionine'),
+      threonine: d('threonine'),
+      unit: (json['unit'] as String?) ?? 'g',
+      basis: (json['basis'] as String?) ?? 'per_100g',
+      nutrientIds: (json['nutrient_ids'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList(growable: false),
+      sourceRefs: (json['source_refs'] as List<dynamic>? ?? const [])
+          .map((e) => e.toString())
+          .toList(growable: false),
+      partial: (json['partial'] as bool?) ?? false,
+    );
+  }
 }

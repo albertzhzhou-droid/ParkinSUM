@@ -4,6 +4,7 @@ import '../../core/constants/mechanistic_replay_scenarios.dart';
 import '../entities/amino_acid_competition.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
+import '../entities/medication_entry_validation.dart';
 import '../entities/meal_composition.dart';
 import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
@@ -51,6 +52,14 @@ class MechanisticReplayCaseReport {
   final String licenseReviewStatus;
   final bool canSupportMechanismEvidenceAlone;
   final String clinicalCalibrationStatus;
+  // Dosage + multi-dose transparency (Obj 6/7). `userEnteredDosage` reflects
+  // exactly what the user supplied (free-text or strength+unit); it is never a
+  // private default. `dosageContextComplete` is true only when the first
+  // medication entry validated to a complete dose context. `perEventCount` is
+  // the number of doses evaluated on the multi-dose time axis.
+  final String userEnteredDosage;
+  final bool dosageContextComplete;
+  final int perEventCount;
   final bool pass;
   final String? failureReason;
 
@@ -91,6 +100,9 @@ class MechanisticReplayCaseReport {
     this.licenseReviewStatus = 'future_work',
     this.canSupportMechanismEvidenceAlone = false,
     this.clinicalCalibrationStatus = 'not_clinically_calibrated',
+    this.userEnteredDosage = 'none',
+    this.dosageContextComplete = false,
+    this.perEventCount = 0,
   });
 
   Map<String, dynamic> toJson() => {
@@ -130,6 +142,9 @@ class MechanisticReplayCaseReport {
         'can_support_mechanism_evidence_alone':
             canSupportMechanismEvidenceAlone,
         'clinical_calibration_status': clinicalCalibrationStatus,
+        'user_entered_dosage': userEnteredDosage,
+        'dosage_context_complete': dosageContextComplete,
+        'per_event_count': perEventCount,
         'pass': pass,
         'failure_reason': failureReason,
       };
@@ -356,9 +371,29 @@ class MechanisticReplayRunner {
         ? 'no_profile'
         : 'lag=${result.primaryEmptyingProfile!.aggregateLagMinutes.toStringAsFixed(0)}min uncertainty=${result.primaryEmptyingProfile!.uncertaintyBand.name}';
 
+    // Surface exactly what the user supplied as a dose — free-text if present,
+    // otherwise the structured strength+unit. Never a private default.
+    final firstEntry = scenario.medicationEntries.isEmpty
+        ? null
+        : scenario.medicationEntries.first;
+    final userEnteredDosage = firstEntry == null
+        ? 'none'
+        : (firstEntry.freeText != null &&
+                firstEntry.freeText!.trim().isNotEmpty)
+            ? firstEntry.freeText!.trim()
+            : (firstEntry.strength != null &&
+                    (firstEntry.unit ?? '').isNotEmpty)
+                ? '${firstEntry.strength} ${firstEntry.unit}'
+                : 'none';
+    final dosageContextComplete = medValidations.isNotEmpty &&
+        medValidations.first.validity == MedicationContextValidity.valid;
+
     return MechanisticReplayCaseReport(
       scenarioId: scenario.scenarioId,
       title: scenario.title,
+      userEnteredDosage: userEnteredDosage,
+      dosageContextComplete: dosageContextComplete,
+      perEventCount: result.perEventCount,
       medicationContextValidity:
           medValidations.isEmpty ? 'none' : medValidations.first.validity.name,
       mealContextCompleteness: firstMealCompleteness,
