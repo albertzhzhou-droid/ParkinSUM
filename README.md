@@ -102,6 +102,19 @@ for the scenario format and CLI details. ParkinSUM does not overclaim
 clinical accuracy; the engine is an educational simulation, not a
 patient-care tool.
 
+## Educational Model Guardrails
+
+The mechanistic conflict engine is **not clinically calibrated**. Its
+gastric-emptying values are literature-informed prototype parameters; the
+amino-acid (LNAA) competition layer is an educational proxy. It makes **no
+patient-specific pharmacokinetic/pharmacodynamic prediction**, gives no
+medication-timing, dietary, or dose guidance, and carries no clinical-validation
+claim. All importer adapters are fixture-validated (not live production
+ingestion); the optional live-source smoke harness is opt-in, excluded from
+normal tests, fetches official metadata only, and is not used for clinical
+advice. Source-specific legal/license review remains future work — see
+[docs/SOURCE_ACCESS_AND_LICENSES.md](docs/SOURCE_ACCESS_AND_LICENSES.md).
+
 ## Multi-Jurisdiction Metadata & Protein Redistribution
 
 ParkinSUM's importer layer is multi-jurisdiction: source-adapter specs cover

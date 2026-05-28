@@ -13,6 +13,18 @@ plasma levodopa concentration. It does not recommend medication timing,
 dietary choices, or dose changes. Every output carries an explicit
 not-advice boundary.
 
+### Clinical-calibration guardrail
+
+The model is **not clinically calibrated**. Gastric-emptying values are
+literature-informed prototype parameters (see the parameter set + bibliography);
+the amino-acid (LNAA) competition layer is an educational proxy that prefers
+actual amino-acid nutrient fields when present and otherwise falls back to a
+coarse protein-source approximation. There is **no patient-specific PK/PD
+prediction**, no medication/diet/timing advice, and no clinical-validation
+claim. Replay reports carry `clinical_calibration_status:
+not_clinically_calibrated`, and the public preflight requires this guardrail
+phrase to be present in the README and this document.
+
 ## 2. Safety scope
 
 - Educational prototype only. Synthetic inputs only.

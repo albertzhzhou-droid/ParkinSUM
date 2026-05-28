@@ -685,4 +685,83 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       _candidateRiceCake
     ],
   ),
+  // --- s27–s31: production-readiness guardrail coverage ------------------
+  MechanisticReplayScenario(
+    scenarioId: 's27_amino_acid_food_far_window_actual_mode',
+    title: 'Amino-acid-profiled candidate in a far low-overlap window → actual '
+        'amino-acid mode, redistribution-compatible',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-360)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 300, endMinute: 420),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateAminoAcidFood, _candidateRiceCake],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's28_mixed_aa_and_proxy_candidates',
+    title:
+        'Mixed candidate set (amino-acid-profiled + proxy + missing nutrients) '
+        '→ each scored with its own data mode',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-360)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 300, endMinute: 420),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [
+      _candidateAminoAcidFood,
+      _candidateProteinShake,
+      _candidateMissingNutrients,
+    ],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's29_bare_numeric_invalid_with_window',
+    title: 'Bare numeric "100" with a window → invalid medication context, '
+        'candidates insufficient (no pretended optimization)',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_bareNumeric],
+    medicationMinutesOffsets: [MinutesOffset(-30)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 300, endMinute: 420),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateAminoAcidFood],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's30_no_window_fallback_visible',
+    title:
+        'No user-defined window with amino-acid candidate → mechanistic-primary '
+        'unavailable, fallback reason visible',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-30)],
+    meals: [],
+    candidateFoods: [_candidateAminoAcidFood, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's31_daytime_overlap_amino_acid_food',
+    title:
+        'Daytime high-overlap window + amino-acid-profiled candidate → overlap '
+        'penalty (not a protein-is-bad penalty)',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(0)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 0, endMinute: 90),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateAminoAcidFood, _candidateBanana],
+  ),
 ];

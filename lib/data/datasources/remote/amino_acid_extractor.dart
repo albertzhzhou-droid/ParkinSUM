@@ -37,8 +37,45 @@ class AminoAcidExtractor {
         methionine,
         threonine;
     final ids = <String>[];
-    var unit = 'g';
     const basis = 'per_100g';
+    // After normalization all values are expressed in grams.
+    const unit = 'g';
+    var partial = false;
+
+    void assign(String field, double valueG, String number) {
+      switch (field) {
+        case 'leucine':
+          leucine = valueG;
+          break;
+        case 'isoleucine':
+          isoleucine = valueG;
+          break;
+        case 'valine':
+          valine = valueG;
+          break;
+        case 'phenylalanine':
+          phenylalanine = valueG;
+          break;
+        case 'tyrosine':
+          tyrosine = valueG;
+          break;
+        case 'tryptophan':
+          tryptophan = valueG;
+          break;
+        case 'histidine':
+          histidine = valueG;
+          break;
+        case 'methionine':
+          methionine = valueG;
+          break;
+        case 'threonine':
+          threonine = valueG;
+          break;
+        default:
+          return;
+      }
+      ids.add(number.isEmpty ? 'name:$field' : number);
+    }
 
     for (final raw in nutrients) {
       if (raw is! Map) continue;
@@ -48,50 +85,18 @@ class AminoAcidExtractor {
       final name = (nutrient['name'] ?? '').toString().toLowerCase();
       final amount = raw['amount'];
       if (amount is! num) continue;
-      final value = amount.toDouble();
-      final unitName = (nutrient['unitName'] ?? '').toString();
-      if (unitName.isNotEmpty) unit = unitName.toLowerCase();
-
       final field = _numberToField[number] ?? _nameToField(name);
-      switch (field) {
-        case 'leucine':
-          leucine = value;
-          ids.add(number.isEmpty ? 'name:leucine' : number);
-          break;
-        case 'isoleucine':
-          isoleucine = value;
-          ids.add(number.isEmpty ? 'name:isoleucine' : number);
-          break;
-        case 'valine':
-          valine = value;
-          ids.add(number.isEmpty ? 'name:valine' : number);
-          break;
-        case 'phenylalanine':
-          phenylalanine = value;
-          ids.add(number.isEmpty ? 'name:phenylalanine' : number);
-          break;
-        case 'tyrosine':
-          tyrosine = value;
-          ids.add(number.isEmpty ? 'name:tyrosine' : number);
-          break;
-        case 'tryptophan':
-          tryptophan = value;
-          ids.add(number.isEmpty ? 'name:tryptophan' : number);
-          break;
-        case 'histidine':
-          histidine = value;
-          ids.add(number.isEmpty ? 'name:histidine' : number);
-          break;
-        case 'methionine':
-          methionine = value;
-          ids.add(number.isEmpty ? 'name:methionine' : number);
-          break;
-        case 'threonine':
-          threonine = value;
-          ids.add(number.isEmpty ? 'name:threonine' : number);
-          break;
-        default:
-          break;
+      if (field == null) continue;
+
+      final unitName = (nutrient['unitName'] ?? '').toString().toLowerCase();
+      final normalized = _toGrams(amount.toDouble(), unitName);
+      if (normalized == null) {
+        // No / unrecognized unit: accept the raw value provisionally but mark
+        // the whole profile partial (lower confidence; never trusted as exact).
+        partial = true;
+        assign(field, amount.toDouble(), number);
+      } else {
+        assign(field, normalized, number);
       }
     }
 
@@ -109,8 +114,26 @@ class AminoAcidExtractor {
       basis: basis,
       nutrientIds: List.unmodifiable(ids),
       sourceRefs: sourceRefs,
+      partial: partial,
     );
     return profile.competingLnaaGrams == null ? null : profile;
+  }
+
+  /// Normalize an amino-acid amount to grams. Returns null when the unit is
+  /// missing/unrecognized so the caller can mark the profile partial.
+  double? _toGrams(double amount, String unitName) {
+    switch (unitName) {
+      case 'g':
+      case 'gram':
+      case 'grams':
+        return amount;
+      case 'mg':
+      case 'milligram':
+      case 'milligrams':
+        return amount / 1000.0;
+      default:
+        return null;
+    }
   }
 
   String? _nameToField(String name) {

@@ -29,10 +29,15 @@ class AminoAcidProfile {
   final double? histidine;
   final double? methionine;
   final double? threonine;
-  final String unit; // e.g. "g"
+  final String unit; // normalized unit, e.g. "g"
   final String basis; // e.g. "per_100g" / "per_serving"
   final List<String> nutrientIds; // upstream nutrient numbers (e.g. FDC 505)
   final List<String> sourceRefs;
+
+  /// True when one or more amino-acid values lacked an explicit unit and were
+  /// accepted only provisionally. Such a profile is treated as partial and
+  /// lowers confidence rather than being trusted as precise.
+  final bool partial;
 
   const AminoAcidProfile({
     this.leucine,
@@ -48,6 +53,7 @@ class AminoAcidProfile {
     this.basis = 'per_100g',
     this.nutrientIds = const [],
     this.sourceRefs = const [],
+    this.partial = false,
   });
 
   /// The six classic LNAAs that compete with levodopa transport
@@ -83,6 +89,7 @@ class AminoAcidProfile {
         'basis': basis,
         'nutrient_ids': nutrientIds,
         'source_refs': sourceRefs,
+        'partial': partial,
         'competing_lnaa_grams': competingLnaaGrams,
       };
 }

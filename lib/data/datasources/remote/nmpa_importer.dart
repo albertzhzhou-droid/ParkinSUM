@@ -52,8 +52,11 @@ class NmpaImporter {
     }
 
     final limitation = s('limitation_text').isEmpty
-        ? 'Synthetic NMPA-style demo; Chinese-language source authoritative; '
-            'English mapping reference-only. Educational prototype, not medical advice.'
+        ? 'NMPA source is FIXTURE-VALIDATED, NOT live-verified: this parser '
+            'reads a synthetic NMPA-style payload and has not been validated '
+            'against a live NMPA schema or feed. Chinese-language source is '
+            'authoritative; English mapping is reference-only. Educational '
+            'prototype, not medical advice, not production ingestion.'
         : s('limitation_text');
 
     final doc = SourceDocumentMetadata(

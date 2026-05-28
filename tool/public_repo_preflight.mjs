@@ -206,6 +206,11 @@ function checkHighRiskClaims(files) {
     new RegExp('clinically\\s+validated', 'i'),
     new RegExp('treatment\\s+recommendation\\s+for\\s+patients', 'i'),
     new RegExp('autonomous\\s+diagnosis', 'i'),
+    // Affirmative prescriptive phrasing that must never appear in public docs.
+    // Phrased narrowly so negated/quoted documentation does not false-positive.
+    new RegExp('recommended\\s+dose\\s+for\\s+you', 'i'),
+    new RegExp('adjust\\s+your\\s+dose', 'i'),
+    new RegExp('take\\s+your\\s+medication\\s+at', 'i'),
   ];
 
   for (const file of publicClaimFiles) {
@@ -217,6 +222,27 @@ function checkHighRiskClaims(files) {
       if (pattern.test(content)) {
         add('BLOCKER', 'high_risk_public_claim', `High-risk public positioning phrase matched ${pattern}.`, file.relative);
       }
+    }
+  }
+}
+
+// Require an explicit "not clinically calibrated / not clinically validated"
+// style guardrail in the key public docs so the educational boundary cannot be
+// silently dropped. Positive-presence check (fails if ABSENT).
+function checkClinicalCalibrationGuardrail(files) {
+  const required = ['README.md', 'docs/CONFLICT_ENGINE_MODEL.md'];
+  const guardrail = /not\s+clinically\s+calibrated/i;
+  for (const rel of required) {
+    const match = files.find((f) => f.relative === rel);
+    if (!match) continue; // file absence is handled elsewhere
+    const content = fs.readFileSync(match.full, 'utf8');
+    if (!guardrail.test(content)) {
+      add(
+        'BLOCKER',
+        'missing_clinical_calibration_guardrail',
+        `Required guardrail phrase "not clinically calibrated" is missing.`,
+        rel,
+      );
     }
   }
 }
@@ -397,6 +423,7 @@ checkGitignore();
 const files = listFiles(root);
 checkPublicDocs();
 checkHighRiskClaims(files);
+checkClinicalCalibrationGuardrail(files);
 checkSensitivePaths(files);
 checkContentSecrets(files);
 addPositiveEvidence();

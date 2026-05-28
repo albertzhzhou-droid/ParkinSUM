@@ -52,10 +52,25 @@ dart run tool/run_mechanistic_replay.dart   # or: npm run mechanistic:replay
 | Source-linked explanation blocked | Missing `sourceRefs` | Completeness gate downgrades explanations without provenance |
 | dm+d / EU-national source can't supply mechanism evidence | Identity-only record (no SmPC/label text) | These are identity/coding sources; mechanism needs a label/SmPC source |
 
+## Live source smoke (opt-in)
+
+```sh
+dart run tool/run_live_source_smoke.dart            # SKIPS (no network)
+npm run live:smoke                                   # same via wrapper
+```
+Without `PARKINSUM_ENABLE_LIVE_SOURCE_SMOKE=1` it prints a skip message and
+exits 0 without contacting the network. It validates fetch shape only, fetches
+official metadata only, and never stores raw payloads. Do not enable it in CI.
+
 ## Notes
 
-- Live network fetch exists behind `SourceFetchClient` but is **not** used by
-  tests and **not** used to fetch clinical advice. All adapters are validated
-  against synthetic fixtures.
+- The mechanistic model is **not clinically calibrated** — literature-informed
+  prototype gastric-emptying parameters + an educational LNAA proxy; no
+  patient-specific PK/PD prediction.
+- Live network fetch exists behind `SourceFetchClient` / `LiveSourceFetchClient`
+  but is **not** used by tests and **not** used to fetch clinical advice. All
+  adapters are validated against synthetic fixtures.
+- Source-specific legal/license review remains future work
+  (`docs/SOURCE_ACCESS_AND_LICENSES.md`).
 - Nothing here is medical advice, a diagnosis, a dosing/timing recommendation,
   or a claim of clinical validation.

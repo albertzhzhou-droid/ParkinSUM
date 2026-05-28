@@ -1,0 +1,43 @@
+{
+  "fdcId": 123456,
+  "description": "Synthetic Foundation Food with amino-acid fields (demo, mg units)",
+  "dataType": "Foundation",
+  "publicationDate": "2025-01-01",
+  "foodNutrients": [
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1003, "number": "203", "name": "Protein", "unitName": "G"},
+      "amount": 26.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1232, "number": "507", "name": "Leucine", "unitName": "MG"},
+      "amount": 2100.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1231, "number": "506", "name": "Isoleucine", "unitName": "MG"},
+      "amount": 1200.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1235, "number": "510", "name": "Valine", "unitName": "MG"},
+      "amount": 1300.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1233, "number": "508", "name": "Phenylalanine", "unitName": "MG"},
+      "amount": 1000.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1234, "number": "509", "name": "Tyrosine", "unitName": "MG"},
+      "amount": 900.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1210, "number": "501", "name": "Tryptophan", "unitName": "MG"},
+      "amount": 300.0
+    }
+  ]
+}
