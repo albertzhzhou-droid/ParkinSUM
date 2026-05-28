@@ -1,3 +1,4 @@
+import 'amino_acid_profile.dart' show AminoAcidDataMode;
 import 'gastric_emptying_profile.dart' show UncertaintyBand;
 import 'protein_source.dart';
 
@@ -12,12 +13,20 @@ class CompetitionLnaaSummary {
   final bool uncertaintyWidened;
   final List<String> sourceRefs;
 
+  /// Which data path produced the LNAA load.
+  final AminoAcidDataMode dataMode;
+
+  /// Upstream amino-acid nutrient ids when actual fields were used.
+  final List<String> aminoAcidNutrientIds;
+
   const CompetitionLnaaSummary({
     required this.effectiveLoadFactor,
     required this.sourcesPresent,
     required this.isPrototypeHeuristic,
     required this.uncertaintyWidened,
     required this.sourceRefs,
+    this.dataMode = AminoAcidDataMode.proteinSourceProxy,
+    this.aminoAcidNutrientIds = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -27,6 +36,8 @@ class CompetitionLnaaSummary {
         'is_prototype_heuristic': isPrototypeHeuristic,
         'uncertainty_widened': uncertaintyWidened,
         'source_refs': sourceRefs,
+        'data_mode': dataMode.name,
+        'amino_acid_nutrient_ids': aminoAcidNutrientIds,
       };
 }
 

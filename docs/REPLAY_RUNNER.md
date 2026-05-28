@@ -85,10 +85,14 @@ Per-case report row (see `MechanisticReplayCaseReport`):
 | `top_candidate_source_system` | Source system of the top candidate. |
 | `pass` / `failureReason` | Bool + diagnostic message. |
 
-The suite contains **21 scenarios** (s01–s21), covering catalog-backed
+The suite contains **26 scenarios** (s01–s26), covering catalog-backed
 medication context, missing-field downgrades, invalid medication, daytime
 high-overlap vs evening low-overlap protein behavior, zero-vs-moderate
-protein in low-overlap windows, and the no-window fallback.
+protein in low-overlap windows, the no-window fallback, amino-acid
+actual-fields vs protein-source-proxy modes (s22/s23), additional invalid
+medication forms (s24/s25), and mechanistic-primary overwriting the legacy
+order (s26). Report rows additionally carry `amino_acid_data_mode`,
+`amino_acid_nutrient_ids`, and the top-candidate ranking fields.
 
 ## Banned-phrase scan
 

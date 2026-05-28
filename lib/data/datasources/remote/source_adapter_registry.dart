@@ -82,14 +82,17 @@ class SourceAdapterRegistry {
       updateCadence: 'periodic',
       licenseOrUseLimitations: 'Per-member-state terms.',
       lastChecked: '2026-05-27',
-      parserConfidence: 0.5,
+      parserConfidence: 0.55,
       translationStatus: ReferenceTranslationStatus.notTranslation,
       isMedicationSource: true,
       isFoodSource: false,
-      implemented: false,
+      implemented: true,
       knownLimitations: [
-        'Spec-only adapter; concrete per-member parser is future work.',
-        'Multilingual; language must be preserved per document.',
+        'Fixture-tested identity parser (EuNationalRegisterImporter); live '
+            'per-member fetch + real schema parsing remain future work.',
+        'Register identity is distinguished from full SmPC text; mechanism '
+            'evidence requires SmPC content.',
+        'Multilingual; language preserved per document.',
       ],
       sourceRefs: ['src.ema.national_registers'],
     ),
@@ -109,9 +112,12 @@ class SourceAdapterRegistry {
       translationStatus: ReferenceTranslationStatus.notTranslation,
       isMedicationSource: true,
       isFoodSource: false,
-      implemented: false,
+      implemented: true,
       knownLimitations: [
-        'Identity/coding strong; not a full food-effect label source.',
+        'Fixture-tested identity parser (DmdImporter); live terminology-server '
+            '/ Web API fetch + real schema parsing remain future work.',
+        'Identity/coding strong; NOT a complete food-effect label source — '
+            'mechanism evidence requires a label/SmPC source.',
       ],
       sourceRefs: ['src.nhs.dmd'],
     ),
@@ -149,13 +155,14 @@ class SourceAdapterRegistry {
       updateCadence: 'periodic',
       licenseOrUseLimitations: 'NMPA terms; Chinese-language authoritative.',
       lastChecked: '2026-05-27',
-      parserConfidence: 0.4,
+      parserConfidence: 0.3,
       translationStatus: ReferenceTranslationStatus.referenceOnlyTranslation,
       isMedicationSource: true,
       isFoodSource: false,
       implemented: true,
       knownLimitations: [
-        'Concrete parser is fixture-tested (synthetic NMPA-style payload); '
+        'FIXTURE-VALIDATED / source-structure prototype only — NOT live and '
+            'NOT verified against a real NMPA schema. Lower parser confidence. '
             'live network fetch + real schema parsing remain future work. '
             'English mapping is reference-only; Chinese source authoritative.',
       ],

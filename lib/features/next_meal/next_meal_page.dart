@@ -647,12 +647,28 @@ class _ResultBlock extends StatelessWidget {
         if (result.rankerUsed != null) ...[
           const SizedBox(height: 6),
           Text(
-            'Ranker used: ${result.rankerUsed}',
+            'Ranker used: ${result.rankerUsed}'
+            '${result.rankerEligibility != null ? ' · eligible: ${result.rankerEligibility!.mechanisticPrimaryEligible}' : ''}',
             style: const TextStyle(
                 fontSize: 11, color: LiquidGlass.onSurfaceMuted),
           ),
         ],
-        if (result.mechanisticCandidateScores == null) ...[
+        if (result.rankerEligibility != null &&
+            result.rankerEligibility!.fallbackReasons.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text(
+            result.rankerEligibility!.fallbackReasons
+                    .contains('missing_user_defined_window')
+                ? 'Mechanistic-primary ranking is unavailable because no '
+                    'user-defined meal window was provided.'
+                : 'Mechanistic-primary ranking is unavailable because context '
+                    'metadata is incomplete (${result.rankerEligibility!.fallbackReasons.join(', ')}).',
+            style: const TextStyle(
+                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+          ),
+        ],
+        if (result.mechanisticCandidateScores == null &&
+            result.rankerEligibility == null) ...[
           const SizedBox(height: 6),
           Text(
             !windowProvided

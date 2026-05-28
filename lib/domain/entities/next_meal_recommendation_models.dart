@@ -5,6 +5,7 @@ import '../../core/models/intake.dart';
 import 'food_recommendation.dart';
 import 'mechanistic_candidate_score.dart';
 import 'mechanistic_conflict_result.dart';
+import 'ranker_eligibility.dart';
 import 'recommendation_benchmark_models.dart';
 import 'time_axis_events.dart';
 
@@ -70,6 +71,9 @@ class NextMealRecommendationResult {
   /// (the existing distance-based heuristic was used).
   final String? rankerUsed;
 
+  /// Explicit eligibility record (why mechanistic-primary ran or didn't).
+  final RankerEligibility? rankerEligibility;
+
   const NextMealRecommendationResult({
     required this.recommendations,
     required this.aiUsed,
@@ -87,5 +91,6 @@ class NextMealRecommendationResult {
     this.mechanisticTrace,
     this.mechanisticCandidateScores,
     this.rankerUsed,
+    this.rankerEligibility,
   });
 }

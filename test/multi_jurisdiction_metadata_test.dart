@@ -226,17 +226,19 @@ void main() {
       expect(nmpa.language, 'zh');
     });
 
-    test('DailyMed + NMPA implemented; dm+d/EU-national remain spec-only', () {
-      expect(SourceAdapterRegistry.bySourceSystem('DailyMed')!.implemented,
-          isTrue);
-      // NMPA now has a concrete fixture-tested parser (NmpaImporter).
-      expect(SourceAdapterRegistry.bySourceSystem('NMPA')!.implemented, isTrue);
-      expect(SourceAdapterRegistry.bySourceSystem('NHS_DMD')!.implemented,
-          isFalse);
-      expect(
-          SourceAdapterRegistry.bySourceSystem('EU_National_Register')!
-              .implemented,
-          isFalse);
+    test('all named medication source families now have concrete parsers', () {
+      // DailyMed, NMPA, NHS dm+d, and EU national register all have
+      // fixture-tested concrete parsers now.
+      for (final system in [
+        'DailyMed',
+        'NMPA',
+        'NHS_DMD',
+        'EU_National_Register',
+      ]) {
+        expect(
+            SourceAdapterRegistry.bySourceSystem(system)!.implemented, isTrue,
+            reason: '$system should be implemented');
+      }
     });
 
     test('every spec serializes without error', () {

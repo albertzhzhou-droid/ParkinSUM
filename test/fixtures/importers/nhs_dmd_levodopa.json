@@ -1,0 +1,18 @@
+{
+  "source_system": "NHS_DMD",
+  "source_doc_id": "dmd:synthetic:vmp:levodopa-carbidopa:demo",
+  "jurisdiction": "GB",
+  "language": "en",
+  "source_owner": "NHSBSA / NHS England (synthetic demo)",
+  "vtm_id": "0000000000",
+  "vmp_id": "1111111111",
+  "amp_id": "2222222222",
+  "snomed_concept_id": "1111111111",
+  "display_name": "Co-careldopa 25mg/100mg tablets (synthetic demo)",
+  "generic_name": "carbidopa/levodopa",
+  "active_ingredients": ["carbidopa", "levodopa"],
+  "route": "oral",
+  "dose_form": "tablet",
+  "has_food_effect_label_section": false,
+  "extraction_confidence": 0.8
+}
