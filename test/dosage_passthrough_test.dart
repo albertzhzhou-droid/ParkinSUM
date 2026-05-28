@@ -80,6 +80,36 @@ void main() {
     });
   });
 
+  // `DosageNoteParser.milligrams` is exactly what populates
+  // `DrugRuntimeContext.dailyDoseMg` in DatabaseBackedMealCheckUseCase.
+  group('milligrams() = dailyDoseMg source (no fabricated number)', () {
+    test('"100 mg" -> dailyDoseMg 100', () {
+      expect(parser.milligrams('100 mg'), 100);
+    });
+
+    test('"levodopa 100" -> null (must NOT become 100 mg)', () {
+      expect(parser.milligrams('levodopa 100'), isNull);
+    });
+
+    test('bare "100" -> null', () {
+      expect(parser.milligrams('100'), isNull);
+    });
+
+    test('empty / null -> null', () {
+      expect(parser.milligrams(''), isNull);
+      expect(parser.milligrams(null), isNull);
+    });
+
+    test('unit conversion: "0.5 g" -> 500 mg, "200 mcg" -> 0.2 mg', () {
+      expect(parser.milligrams('0.5 g'), 500);
+      expect(parser.milligrams('200 mcg'), 0.2);
+    });
+
+    test('non-mass unit "5 ml" -> null (not a mg dose)', () {
+      expect(parser.milligrams('5 ml'), isNull);
+    });
+  });
+
   group('Dose passes through to medication context without a default', () {
     test('user enters "100 mg" -> validator receives strength 100 mg', () {
       final result = validator.validate(buildEntry('100 mg'));
