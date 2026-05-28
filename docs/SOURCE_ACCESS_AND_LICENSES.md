@@ -38,7 +38,7 @@ and is required before any production use of any source below.**
 
 | Source | Owner | Jurisdiction | Access method | Key/account/license review | Status | Data type | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| USDA FoodData Central | USDA ARS | US | REST API | **API key required** for live | `fixture_tested` + `opt_in_live_smoke` (skips without key) | Food composition incl. amino acids | Amino-acid nutrient numbers (e.g. 507 leucine) extracted when present. |
+| USDA FoodData Central | USDA ARS | US | REST API | **API key required** for live | `fixture_tested` + `opt_in_live_smoke` (skips without key) | Food composition incl. amino acids | Amino-acid nutrient numbers extracted when present, using the verified FDC mapping (501 Trp, 502 Thr, 503 Ile, 504 Leu, 506 Met, 508 Phe, 509 Tyr, 510 Val, 512 His). |
 | Ciqual | ANSES | FR | Download | Reuse-terms review | `fixture_tested` | Food composition | French-language codes. |
 | China CDC food platform | China CDC | CN | Web page | Terms review | `fixture_tested` | Food composition | No amino-acid fields captured today. |
 | app seed / synthetic demo | ParkinSUM | — | manual | n/a | `fixture_tested` | Seed/synthetic | Never authoritative. |

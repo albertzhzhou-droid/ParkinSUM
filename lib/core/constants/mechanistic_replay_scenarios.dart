@@ -232,7 +232,10 @@ const _candidateAminoAcidFood = CandidateFood(
         phenylalanine: 1.0,
         tyrosine: 0.9,
         tryptophan: 0.3,
-        nutrientIds: ['507', '506', '510', '508', '509', '501'],
+        // Verified FDC nutrient numbers, in field order:
+        // 504 leucine, 503 isoleucine, 510 valine, 508 phenylalanine,
+        // 509 tyrosine, 501 tryptophan.
+        nutrientIds: ['504', '503', '510', '508', '509', '501'],
         sourceRefs: ['src.fdc.api.amino_acid_fields'],
       ),
     ),
