@@ -322,8 +322,10 @@ class MechanisticConflictEngine {
     );
   }
 
-  /// Most-recent meal at or before the dose time (within a 180-min lookahead),
-  /// falling back to the earliest meal. Pure selection — no side effects.
+  /// Latest meal whose start falls within the model lookahead window — up to
+  /// 180 minutes AFTER the dose (`m.minute <= med.minute + 180`), not only
+  /// meals at or before the dose. Falls back to the earliest meal when none
+  /// qualify. Pure selection — no side effects.
   ///
   /// Deterministic and independent of input order: meal events are sorted by
   /// minute (ties broken by id) before selection, so an unsorted
