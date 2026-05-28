@@ -28,6 +28,12 @@ class _NextMealPageState extends State<NextMealPage> {
   NextMealRecommendationResult? _result;
   String? _error;
 
+  /// User-defined window length (minutes) starting at the target time.
+  /// Required for mechanistic-primary ranking — the engine never picks the
+  /// window; the user does. 0 = no window (mechanistic-primary inactive).
+  int _windowMinutes = 60;
+  static const List<int> _windowChoices = [0, 30, 60, 90];
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +86,9 @@ class _NextMealPageState extends State<NextMealPage> {
           await context.read<AppState>().requestNextMealRecommendation(
                 nextMealAt: _targetTime,
                 useLocalAi: _useLocalAi,
+                windowDuration: _windowMinutes > 0
+                    ? Duration(minutes: _windowMinutes)
+                    : null,
               );
       if (!mounted) return;
       setState(() => _result = result);
@@ -114,9 +123,51 @@ class _NextMealPageState extends State<NextMealPage> {
               onToggleAi: (value) => setState(() => _useLocalAi = value),
               onGenerate: _generate,
             ),
+            const SizedBox(height: 12),
+            GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Meal time window you provide (minutes)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: LiquidGlass.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'You set the window. The prototype only ranks food '
+                    'candidates inside it and does not choose your meal time. '
+                    'A window is required for mechanistic-primary ranking.',
+                    style: TextStyle(
+                        fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final m in _windowChoices)
+                        ChoiceChip(
+                          label: Text(m == 0 ? 'none' : '$m min'),
+                          selected: _windowMinutes == m,
+                          onSelected: (_) => setState(() => _windowMinutes = m),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             if (_error != null) _ErrorCard(i18n: i18n, error: _error!),
-            if (_result != null) _ResultBlock(i18n: i18n, result: _result!),
+            if (_result != null)
+              _ResultBlock(
+                i18n: i18n,
+                result: _result!,
+                windowProvided: _windowMinutes > 0,
+              ),
             if (_result == null && !_generating && _error == null)
               _EmptyCard(i18n: i18n),
           ],
@@ -342,7 +393,9 @@ class _ErrorCard extends StatelessWidget {
 class _ResultBlock extends StatelessWidget {
   final AppI18n i18n;
   final NextMealRecommendationResult result;
-  const _ResultBlock({required this.i18n, required this.result});
+  final bool windowProvided;
+  const _ResultBlock(
+      {required this.i18n, required this.result, required this.windowProvided});
 
   @override
   Widget build(BuildContext context) {
@@ -595,6 +648,20 @@ class _ResultBlock extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Ranker used: ${result.rankerUsed}',
+            style: const TextStyle(
+                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+          ),
+        ],
+        if (result.mechanisticCandidateScores == null) ...[
+          const SizedBox(height: 6),
+          Text(
+            !windowProvided
+                ? 'Mechanistic-primary ranking is unavailable because no '
+                    'meal-time window was provided. Choose a window above to '
+                    'enable it. This is not medical advice.'
+                : 'Mechanistic-primary ranking is unavailable for this request '
+                    '(insufficient context). Showing the conservative fallback. '
+                    'This is not medical advice.',
             style: const TextStyle(
                 fontSize: 11, color: LiquidGlass.onSurfaceMuted),
           ),

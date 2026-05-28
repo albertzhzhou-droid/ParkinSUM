@@ -35,6 +35,14 @@ class MechanisticReplayCaseReport {
   final CompetitionLnaaSummary? competitionLnaaSummary;
   final String rankerUsed;
   final List<int> sampledWindowOffsets;
+  // Top-candidate-derived fields (null when no candidates scored).
+  final double? topFinalCandidateScore;
+  final double? topProteinRedistributionScore;
+  final String? topProteinWindowRole;
+  final double? topNutritionAdequacyContribution;
+  final double? topSourceAuthorityScore;
+  final double? topJurisdictionMatchScore;
+  final String? topCandidateSourceSystem;
   final bool pass;
   final String? failureReason;
 
@@ -61,6 +69,13 @@ class MechanisticReplayCaseReport {
     this.competitionLnaaSummary,
     this.rankerUsed = 'mechanistic_engine_only',
     this.sampledWindowOffsets = const [],
+    this.topFinalCandidateScore,
+    this.topProteinRedistributionScore,
+    this.topProteinWindowRole,
+    this.topNutritionAdequacyContribution,
+    this.topSourceAuthorityScore,
+    this.topJurisdictionMatchScore,
+    this.topCandidateSourceSystem,
   });
 
   Map<String, dynamic> toJson() => {
@@ -85,6 +100,13 @@ class MechanisticReplayCaseReport {
         'competition_lnaa_summary': competitionLnaaSummary?.toJson(),
         'ranker_used': rankerUsed,
         'sampled_window_offsets': sampledWindowOffsets,
+        'top_final_candidate_score': topFinalCandidateScore,
+        'top_protein_redistribution_score': topProteinRedistributionScore,
+        'top_protein_window_role': topProteinWindowRole,
+        'top_nutrition_adequacy_contribution': topNutritionAdequacyContribution,
+        'top_source_authority_score': topSourceAuthorityScore,
+        'top_jurisdiction_match_score': topJurisdictionMatchScore,
+        'top_candidate_source_system': topCandidateSourceSystem,
         'pass': pass,
         'failure_reason': failureReason,
       };
@@ -346,6 +368,33 @@ class MechanisticReplayRunner {
           : recommendations.first.sampledWindowSummary
               .map((s) => s.offsetMinutes)
               .toList(growable: false),
+      topFinalCandidateScore:
+          (recommendations == null || recommendations.isEmpty)
+              ? null
+              : recommendations.first.finalCandidateScore,
+      topProteinRedistributionScore:
+          (recommendations == null || recommendations.isEmpty)
+              ? null
+              : recommendations.first.proteinRedistributionScore,
+      topProteinWindowRole: (recommendations == null || recommendations.isEmpty)
+          ? null
+          : recommendations.first.proteinDistribution?.windowRole.name,
+      topNutritionAdequacyContribution:
+          (recommendations == null || recommendations.isEmpty)
+              ? null
+              : recommendations.first.nutritionAdequacyContribution,
+      topSourceAuthorityScore:
+          (recommendations == null || recommendations.isEmpty)
+              ? null
+              : recommendations.first.sourceAuthorityScore,
+      topJurisdictionMatchScore:
+          (recommendations == null || recommendations.isEmpty)
+              ? null
+              : recommendations.first.jurisdictionMatchScore,
+      topCandidateSourceSystem:
+          (recommendations == null || recommendations.isEmpty)
+              ? null
+              : recommendations.first.sourceSystem,
       pass: pass,
       failureReason: pass ? null : failures.join('; '),
     );

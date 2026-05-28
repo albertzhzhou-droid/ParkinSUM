@@ -3,10 +3,12 @@ import 'dart:math' as math;
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/meal_composition.dart';
+import '../entities/protein_distribution.dart';
 import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
 import 'mechanistic_conflict_engine.dart';
 import 'meal_composition_normalizer.dart';
+import 'protein_distribution_model.dart';
 
 /// Description of a candidate food the recommender may evaluate. The caller
 /// (UI / orchestrator) is responsible for sourcing these from the regional
@@ -27,6 +29,25 @@ class CandidateFood {
   });
 }
 
+/// Optional provenance metadata for a candidate food, supplied by the
+/// catalog projection. All scores are 0..1; defaults are neutral (0.5) when
+/// metadata is unavailable so the scorer never fakes high confidence.
+class CandidateMetadata {
+  final double completeness;
+  final double authorityScore;
+  final double jurisdictionMatchScore;
+  final double provenanceQuality;
+  final String jurisdiction;
+
+  const CandidateMetadata({
+    required this.completeness,
+    required this.authorityScore,
+    required this.jurisdictionMatchScore,
+    required this.provenanceQuality,
+    required this.jurisdiction,
+  });
+}
+
 /// Evaluates next-meal candidates inside a user-defined time window.
 ///
 /// Critical contract: the scorer NEVER picks the window. If the window or
@@ -41,6 +62,7 @@ class CandidateFood {
 class MechanisticNextMealScorer {
   final MechanisticConflictEngine engine;
   final MealCompositionNormalizer normalizer;
+  final ProteinDistributionModel proteinDistributionModel;
 
   static const int minSampleCount = 5;
   static const int maxSampleCount = 12;
@@ -49,14 +71,18 @@ class MechanisticNextMealScorer {
   MechanisticNextMealScorer({
     MechanisticConflictEngine? engine,
     MealCompositionNormalizer? normalizer,
+    ProteinDistributionModel? proteinDistributionModel,
   })  : engine = engine ?? MechanisticConflictEngine(),
-        normalizer = normalizer ?? MealCompositionNormalizer();
+        normalizer = normalizer ?? MealCompositionNormalizer(),
+        proteinDistributionModel =
+            proteinDistributionModel ?? ProteinDistributionModel();
 
   List<MechanisticCandidateScore> score({
     required TimeAxisConflictContext baseContext,
     required Map<String, MealComposition> baseMealCompositionsById,
     required List<CandidateFood> candidates,
     UserDefinedMealWindow? userDefinedWindow,
+    Map<String, CandidateMetadata>? candidateMetadata,
   }) {
     final window = userDefinedWindow ?? baseContext.userDefinedWindow;
     if (window == null) {
@@ -87,15 +113,17 @@ class MechanisticNextMealScorer {
         baseMealCompositionsById: baseMealCompositionsById,
         userDefinedWindow: window,
         sampleOffsets: sampleOffsets,
+        candidateMetadata: candidateMetadata,
       ));
     }
 
-    // Rank ascending by worst-case overlap (conservative), then by
-    // nutrition completeness DESC, then by name for deterministic order.
+    // Rank by composite finalCandidateScore DESC (higher = better educational
+    // match), then nutrition completeness DESC, then candidate id for
+    // deterministic order. The composite already folds in conflict overlap,
+    // protein-redistribution compatibility, adequacy, and provenance.
     scores.sort((a, b) {
-      final byOverlap =
-          a.conflictOverlapScore.compareTo(b.conflictOverlapScore);
-      if (byOverlap != 0) return byOverlap;
+      final byFinal = b.finalCandidateScore.compareTo(a.finalCandidateScore);
+      if (byFinal != 0) return byFinal;
       final byCompleteness =
           b.nutritionDataCompleteness.compareTo(a.nutritionDataCompleteness);
       if (byCompleteness != 0) return byCompleteness;
@@ -125,6 +153,7 @@ class MechanisticNextMealScorer {
     required Map<String, MealComposition> baseMealCompositionsById,
     required UserDefinedMealWindow userDefinedWindow,
     required List<int> sampleOffsets,
+    Map<String, CandidateMetadata>? candidateMetadata,
   }) {
     final composition = normalizer.normalize(
       mealId: 'candidate_${candidate.id}',
@@ -194,6 +223,40 @@ class MechanisticNextMealScorer {
     final compatibility =
         (1.0 - overlap - 0.2 * uncertaintyPenalty).clamp(0.0, 1.0);
 
+    // Protein-redistribution objective (NOT global protein minimization).
+    final localHourHint =
+        minuteToDateTime(userDefinedWindow.midpointMinute).toUtc().hour;
+    final proteinScore = proteinDistributionModel.evaluate(
+      ProteinDistributionContext(
+        modeledOverlap: overlap,
+        localHourHint: localHourHint,
+        medicationContextValid: baseContext.medicationEvents.isNotEmpty,
+        candidateProteinGrams: composition.proteinGrams,
+      ),
+    );
+    final proteinTrace = proteinDistributionModel.toTrace(proteinScore);
+
+    // Provenance / authority scores from candidate metadata (best-effort;
+    // default to neutral when not provided).
+    final meta = candidateMetadata?[candidate.id];
+    final metadataCompleteness = meta?.completeness ?? 0.5;
+    final sourceAuthority = meta?.authorityScore ?? 0.5;
+    final jurisdictionMatch = meta?.jurisdictionMatchScore ?? 0.5;
+    final provenanceQuality = meta?.provenanceQuality ?? 0.5;
+
+    // Compose the final candidate score. Higher = better educational match.
+    // Conflict overlap dominates; redistribution, adequacy, and provenance
+    // refine. Deterministic.
+    final finalScore = (0.45 * (1.0 - overlap) +
+            0.20 * proteinScore.redistributionScore +
+            0.10 * proteinScore.adequacy.contribution +
+            0.10 * metadataCompleteness +
+            0.05 * sourceAuthority +
+            0.05 * jurisdictionMatch +
+            0.05 * provenanceQuality -
+            0.10 * uncertaintyPenalty)
+        .clamp(0.0, 1.0);
+
     final explanation = <String>[
       'Within the time window you provided, this candidate has a worst-case '
           'modeled overlap of ${(overlap * 100).toStringAsFixed(0)}% with '
@@ -207,6 +270,10 @@ class MechanisticNextMealScorer {
           '${(composition.compositionCompleteness * 100).toStringAsFixed(0)}%.',
       if (worst.primaryDrivers.isNotEmpty)
         'Primary modeled drivers: ${worst.primaryDrivers.join(', ')}.',
+      'Protein window role: ${proteinScore.windowRole.name} '
+          '(redistribution score ${(proteinScore.redistributionScore * 100).toStringAsFixed(0)}%). '
+          'This prototype models protein redistribution, not global protein '
+          'minimization.',
       'Model sampling inside the user-provided window does not choose a '
           'meal time or provide dietary advice.',
     ];
@@ -235,6 +302,16 @@ class MechanisticNextMealScorer {
       averageConflictOverlapScore: avgOverlap,
       selectedConservativeScore: overlap,
       sampledWindowSummary: List.unmodifiable(samples),
+      proteinDistribution: proteinTrace,
+      proteinRedistributionScore: proteinScore.redistributionScore,
+      nutritionAdequacyContribution: proteinScore.adequacy.contribution,
+      metadataCompletenessScore: metadataCompleteness,
+      sourceAuthorityScore: sourceAuthority,
+      jurisdictionMatchScore: jurisdictionMatch,
+      provenanceQualityScore: provenanceQuality,
+      finalCandidateScore: finalScore,
+      sourceSystem: candidate.regionalFoodLibraryRef,
+      jurisdiction: meta?.jurisdiction ?? 'unknown',
     );
   }
 

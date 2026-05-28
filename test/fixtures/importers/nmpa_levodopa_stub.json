@@ -1,0 +1,22 @@
+{
+  "source_system": "NMPA",
+  "source_doc_id": "nmpa:synthetic:levodopa-carbidopa:demo",
+  "jurisdiction": "CN",
+  "language": "zh",
+  "source_owner": "National Medical Products Administration (synthetic demo)",
+  "approval_number": "国药准字Hxxxxxxxx",
+  "product_name_zh": "卡比多巴左旋多巴片（合成示例）",
+  "generic_name": "carbidopa/levodopa",
+  "brand_name": null,
+  "active_ingredients": ["carbidopa", "levodopa"],
+  "strength_value": 100,
+  "strength_unit": "mg",
+  "dose_form": "tablet",
+  "route": "oral",
+  "release_type": "immediate",
+  "label_section_zh": "用法用量",
+  "published_at": "2025-01-01",
+  "translation_status": "reference_only_translation",
+  "extraction_confidence": 0.4,
+  "limitation_text": "Synthetic NMPA-style demo. Chinese-language source is authoritative; any English mapping here is reference-only. Educational prototype, not medical advice."
+}

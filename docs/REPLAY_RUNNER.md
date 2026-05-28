@@ -77,7 +77,18 @@ Per-case report row (see `MechanisticReplayCaseReport`):
 | `competitionLnaaSummary` | LNAA load summary (effective load factor, protein sources present, whether uncertainty was widened) when a meal had protein. |
 | `rankerUsed` | Which ranker the orchestrator-equivalent path would use for this scenario (`mechanistic_engine_only` or `mechanistic_primary_window_sampled`). |
 | `sampledWindowOffsets` | Deterministic list of per-sample offsets (minutes within the user window). Empty when no candidates. |
+| `top_final_candidate_score` | Composite final score of the top-ranked candidate (0..1). |
+| `top_protein_redistribution_score` | Top candidate's protein-redistribution score. |
+| `top_protein_window_role` | Top candidate's protein window role. |
+| `top_nutrition_adequacy_contribution` | Top candidate's nutrition-adequacy proxy contribution. |
+| `top_source_authority_score` / `top_jurisdiction_match_score` | Top candidate provenance scores. |
+| `top_candidate_source_system` | Source system of the top candidate. |
 | `pass` / `failureReason` | Bool + diagnostic message. |
+
+The suite contains **21 scenarios** (s01–s21), covering catalog-backed
+medication context, missing-field downgrades, invalid medication, daytime
+high-overlap vs evening low-overlap protein behavior, zero-vs-moderate
+protein in low-overlap windows, and the no-window fallback.
 
 ## Banned-phrase scan
 

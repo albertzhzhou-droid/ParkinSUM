@@ -1,4 +1,5 @@
 import 'mechanistic_conflict_result.dart';
+import 'protein_distribution.dart';
 import 'time_axis_events.dart';
 
 /// One sample point inside the user-defined window. Multiple samples per
@@ -55,6 +56,18 @@ class MechanisticCandidateScore {
   final double selectedConservativeScore;
   final List<MechanisticCandidateSampleSummary> sampledWindowSummary;
 
+  // Protein-redistribution + provenance scoring (additive).
+  final ProteinDistributionTrace? proteinDistribution;
+  final double proteinRedistributionScore;
+  final double nutritionAdequacyContribution;
+  final double metadataCompletenessScore; // 0..1
+  final double sourceAuthorityScore; // 0..1
+  final double jurisdictionMatchScore; // 0..1
+  final double provenanceQualityScore; // 0..1
+  final double finalCandidateScore; // 0..1, higher = better match
+  final String sourceSystem;
+  final String jurisdiction;
+
   const MechanisticCandidateScore({
     required this.candidateFoodId,
     required this.candidateName,
@@ -78,6 +91,16 @@ class MechanisticCandidateScore {
     this.averageConflictOverlapScore = 0,
     this.selectedConservativeScore = 0,
     this.sampledWindowSummary = const [],
+    this.proteinDistribution,
+    this.proteinRedistributionScore = 0,
+    this.nutritionAdequacyContribution = 0,
+    this.metadataCompletenessScore = 0,
+    this.sourceAuthorityScore = 0,
+    this.jurisdictionMatchScore = 0,
+    this.provenanceQualityScore = 0,
+    this.finalCandidateScore = 0,
+    this.sourceSystem = 'unknown',
+    this.jurisdiction = 'unknown',
   });
 
   Map<String, dynamic> toJson() => {
@@ -104,5 +127,15 @@ class MechanisticCandidateScore {
         'selected_conservative_score': selectedConservativeScore,
         'sampled_window_summary':
             sampledWindowSummary.map((s) => s.toJson()).toList(growable: false),
+        'protein_distribution': proteinDistribution?.toJson(),
+        'protein_redistribution_score': proteinRedistributionScore,
+        'nutrition_adequacy_contribution': nutritionAdequacyContribution,
+        'metadata_completeness_score': metadataCompletenessScore,
+        'source_authority_score': sourceAuthorityScore,
+        'jurisdiction_match_score': jurisdictionMatchScore,
+        'provenance_quality_score': provenanceQualityScore,
+        'final_candidate_score': finalCandidateScore,
+        'source_system': sourceSystem,
+        'jurisdiction': jurisdiction,
       };
 }

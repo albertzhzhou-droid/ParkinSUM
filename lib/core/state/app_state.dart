@@ -18,6 +18,8 @@ import '../services/firebase_backend.dart';
 import '../../domain/entities/food_recommendation.dart';
 import '../models/food_item.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
+import '../../domain/entities/time_axis_events.dart'
+    show UserDefinedMealWindow, TimelineWindow, dateTimeToMinute;
 import '../../domain/entities/protein_trend_point.dart';
 import '../../domain/entities/cdss_records.dart';
 import '../../domain/entities/recommendation_replay_models.dart';
@@ -708,6 +710,7 @@ class AppState extends ChangeNotifier {
   Future<NextMealRecommendationResult> requestNextMealRecommendation({
     required DateTime nextMealAt,
     required bool useLocalAi,
+    Duration? windowDuration,
   }) async {
     // We pass `nextMealAt` as the orchestrator's `now` so its window-based
     // scoring evaluates against the *target* time, not wall-clock. That
@@ -715,6 +718,20 @@ class AppState extends ChangeNotifier {
     final mode = useLocalAi
         ? RecommendationMode.hybridLocalLlm
         : RecommendationMode.conservativeOnly;
+    // When the user supplies a window duration, build a user-defined window
+    // [nextMealAt, nextMealAt + duration] so mechanistic-primary scoring can
+    // activate. The engine never picks the window; the user does.
+    UserDefinedMealWindow? window;
+    if (windowDuration != null && windowDuration.inMinutes > 0) {
+      final startMin = dateTimeToMinute(nextMealAt);
+      window = UserDefinedMealWindow(
+        window: TimelineWindow(
+          startMinute: startMin,
+          endMinute: startMin + windowDuration.inMinutes,
+        ),
+        source: 'user_input',
+      );
+    }
     return services.nextMealRecommendationOrchestrator.recommend(
       request: NextMealRecommendationRequest(
         userProfile: _userProfile,
@@ -724,6 +741,7 @@ class AppState extends ChangeNotifier {
         now: nextMealAt,
         mode: mode,
         userConsentedToAi: useLocalAi && _userProfile.localAiConsentEnabled,
+        userDefinedWindow: window,
       ),
       candidateFoods: services.foodRepository.allFoods,
     );

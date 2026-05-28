@@ -102,6 +102,31 @@ for the scenario format and CLI details. ParkinSUM does not overclaim
 clinical accuracy; the engine is an educational simulation, not a
 patient-care tool.
 
+## Multi-Jurisdiction Metadata & Protein Redistribution
+
+ParkinSUM's importer layer is multi-jurisdiction: source-adapter specs cover
+DailyMed (US), Health Canada DPD (CA), EMA + EU national registers (EU/EEA),
+NHS dm+d (GB), PMDA (JP), NMPA (CN), and food-composition sources (USDA FDC,
+Ciqual, China CDC), with a deterministic source-authority scorer
+(official-in-jurisdiction outranks others; reference translations are
+downgraded; seed/synthetic never overrides official; cross-jurisdiction
+conflicts are preserved, not merged). Canonical source/provenance metadata —
+jurisdiction, language, unit, basis, authority tier, completeness, limitation
+— is preserved from importer to runtime so the mechanistic engine and scorer
+can reason about it.
+
+The next-meal scorer models **protein redistribution, not global protein
+minimization**: protein is penalized only in modeled high-overlap windows and
+allowed in low-overlap windows, with a non-clinical nutrition-adequacy proxy
+so zero-protein does not automatically win. Window role is decided primarily
+from modeled overlap, not the clock. The next-meal page lets the user provide
+a meal-time *window*; mechanistic-primary ranking activates only with a
+user-provided window and sufficient context.
+
+See [docs/IMPORTER_METADATA_FLOW.md](docs/IMPORTER_METADATA_FLOW.md) for the
+canonical metadata model, source-authority policy, cross-jurisdiction conflict
+policy, completeness gate, and the protein-redistribution objective.
+
 ## Demo Media
 
 The screenshots and GIF below use synthetic local demo data only. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
