@@ -136,7 +136,10 @@ void main() {
     expect(scores.single.insufficientContext, isTrue);
   });
 
-  test('low-protein candidate ranks above high-protein candidate', () {
+  test(
+      'protein redistribution: high-protein candidate carries higher overlap '
+      'penalty and lower redistribution score than low-protein in the same '
+      'window (NOT global minimization)', () {
     final v = validator.validate(validLevodopa);
     final now = DateTime.utc(2026, 1, 1, 8);
     final ctx = builder.build(
@@ -161,8 +164,18 @@ void main() {
       baseMealCompositionsById: const {},
       candidates: const [proteinShake, banana],
     );
-    expect(scores.first.candidateFoodId, 'banana');
-    expect(scores.last.candidateFoodId, 'shake');
+    final bananaScore = scores.firstWhere((s) => s.candidateFoodId == 'banana');
+    final shakeScore = scores.firstWhere((s) => s.candidateFoodId == 'shake');
+    // The mechanism, not a naive "low protein always wins": the high-protein
+    // candidate models at least as much conflict overlap and gets no higher
+    // redistribution score than the low-protein candidate in this window.
+    expect(shakeScore.conflictOverlapScore,
+        greaterThanOrEqualTo(bananaScore.conflictOverlapScore));
+    expect(bananaScore.proteinRedistributionScore,
+        greaterThanOrEqualTo(shakeScore.proteinRedistributionScore));
+    // Both candidates carry a protein-distribution trace and a final score.
+    expect(bananaScore.proteinDistribution, isNotNull);
+    expect(shakeScore.proteinDistribution, isNotNull);
   });
 
   test('candidate with missing nutrients has lower confidence', () {

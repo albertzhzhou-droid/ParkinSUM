@@ -87,15 +87,18 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
             Text(view.firstExplanationLine,
                 style: const TextStyle(color: LiquidGlass.onSurfaceMuted))
           else ...[
-            Row(
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
                 _BandChip(label: 'worst ${view.worstPctText}'),
-                const SizedBox(width: 6),
                 _BandChip(label: 'best ${view.bestPctText}'),
-                const SizedBox(width: 6),
                 _BandChip(label: 'avg ${view.avgPctText}'),
-                const SizedBox(width: 6),
                 _BandChip(label: 'samples ${view.sampleCount}'),
+                _BandChip(label: 'protein-window ${view.proteinWindowRole}'),
+                _BandChip(
+                    label: 'redistribution ${view.redistributionPctText}'),
+                _BandChip(label: 'src ${view.sourceSystem}'),
               ],
             ),
             const SizedBox(height: 6),
@@ -276,6 +279,9 @@ class MechanisticCandidateScoreViewModel {
   final String bestPctText;
   final String avgPctText;
   final int sampleCount;
+  final String proteinWindowRole;
+  final String redistributionPctText;
+  final String sourceSystem;
   final String firstExplanationLine;
   final bool insufficientContext;
 
@@ -285,6 +291,9 @@ class MechanisticCandidateScoreViewModel {
     required this.bestPctText,
     required this.avgPctText,
     required this.sampleCount,
+    required this.proteinWindowRole,
+    required this.redistributionPctText,
+    required this.sourceSystem,
     required this.firstExplanationLine,
     required this.insufficientContext,
   });
@@ -299,6 +308,10 @@ class MechanisticCandidateScoreViewModel {
       bestPctText: pct(score.bestCaseConflictOverlapScore),
       avgPctText: pct(score.averageConflictOverlapScore),
       sampleCount: score.sampleCount,
+      proteinWindowRole:
+          score.proteinDistribution?.windowRole.name ?? 'unknown',
+      redistributionPctText: pct(score.proteinRedistributionScore),
+      sourceSystem: score.sourceSystem,
       firstExplanationLine: firstLine,
       insufficientContext: score.insufficientContext,
     );

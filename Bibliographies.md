@@ -109,6 +109,67 @@ source is cited only for *mechanism direction*.
 | `ge.params.parameter_set_centralized` | Gastric-emptying numeric values are now consolidated in `GastricEmptyingParameterSet.literatureInformedDefault()` with per-parameter `sourceRefs`, `confidence`, and `limitation`. | [9], [10] | `internal_safety_boundary` | Centralization is implementation-only; no clinical claim. |
 | `catalog.projection_wiring` | The runtime food repository is augmented at app boot with foods projected from CDSS observations (`CdssCatalogProjectionService.projectFoods()`) so the mechanistic next-meal scorer can rank catalog-backed candidates, not only synthetic replay scenarios. | (implementation note) | `internal_safety_boundary` | Best-effort: failures fall back gracefully to the seed/persisted catalog. |
 | `fdc.amino_acid_field_availability` | USDA FoodData Central exposes amino-acid nutrient numbers (e.g. 505 leucine, 509 phenylalanine, 511 valine). ParkinSUM's FDC importer does not extract these today; the LNAA layer is structured to consume them when added. | [12] | `mechanism` | Documentation of upstream-data availability only; no clinical inference. |
+| `protein.redistribution.not_global_minimization` | The next-meal scorer models protein *redistribution* (penalize protein only during modeled high-overlap windows; allow it in low-overlap windows; preserve a nutrition-adequacy proxy) instead of globally minimizing protein. | [6], [7], [13], [20], [21] | `peer_reviewed_review` (direction); `prototype_heuristic` (magnitudes) | Educational objective; protein-redistribution diets are not nutritionally complete and require professional supervision. Implemented: `protein_distribution_model.dart`. |
+| `source.authority.cross_jurisdiction_policy` | Deterministic source-authority scoring: official-in-jurisdiction highest; dictionaries strong for identity not food-effect; reference translations downgraded; seed/synthetic never overrides official; cross-jurisdiction conflicts preserved. | [14]–[19] | `official_database` (direction); `prototype_heuristic` (weights) | Educational heuristic, not a regulatory ranking. Implemented: `source_authority_scorer.dart`. |
+| `metadata.completeness_gate` | No unit → no dose; no ingredient → no drug context; no dose-form/release → limited PK; no provenance → no evidence-linked explanation; no jurisdiction → unknown-jurisdiction behavior; incomplete → widen uncertainty. | [11], [14]–[19] | `regulatory_guidance` (direction) | Implemented: `metadata_completeness_gate.dart`. |
+
+## Multi-jurisdiction importer sources
+
+Educational architecture only. Source families ParkinSUM is designed to
+support, with provenance/authority metadata. Source rows marked
+*spec-only* have no concrete parser yet; the adapter registry
+(`lib/data/datasources/remote/source_adapter_registry.dart`) carries their
+metadata so the architecture covers all families without hard-coding
+DailyMed as the only medication source.
+
+| Jurisdiction | Source system | Owner | Data type | Access | Language | Authority tier | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| US | DailyMed | U.S. NLM | Official SPL label | download | en | official label | implemented |
+| US | RxNorm (concept normalization) | U.S. NLM | drug concept normalization | API | en | drug dictionary | future |
+| CA | Health Canada DPD | Health Canada | Official DB + product monograph | API | en/fr | official database | implemented |
+| EU | EMA EPAR / ePI (FHIR) | European Medicines Agency | EPAR / SmPC / ePI | download | en | official label | implemented |
+| EU/EEA | National registers of authorised medicines | National competent authorities (EMA index) | SmPC / package leaflet | web page | multi | official database | spec-only |
+| GB | NHS dm+d | NHSBSA / NHS England | drug dictionary (SNOMED CT) | download | en | drug dictionary | spec-only |
+| JP | PMDA | PMDA | package insert / review report | web page | ja (en reference-only) | official label | implemented |
+| CN | NMPA | National Medical Products Administration | drug approval / label | web page | zh | official label | spec-only |
+| US | USDA FoodData Central | USDA ARS | food composition | API | en | food composition table | implemented |
+| FR | Ciqual | ANSES | food composition | download | fr | food composition table | implemented |
+| CN | China CDC food platform | China CDC | food composition | web page | zh | food composition table | implemented |
+| — | app seed / synthetic demo | ParkinSUM | seed/synthetic | manual | en | seed/synthetic | implemented |
+
+### Multi-jurisdiction source references (MLA)
+
+14. NHS England Digital. *Dictionary of Medicines and Devices (dm+d).*
+    NHS England, https://digital.nhs.uk/services/terminology-and-classifications/dm-d.
+    Accessed 27 May 2026.
+
+15. European Medicines Agency. *Electronic Product Information (ePI).* EMA,
+    https://www.ema.europa.eu/en/human-regulatory-overview/marketing-authorisation/product-information-requirements/electronic-product-information-epi.
+    Accessed 27 May 2026.
+
+16. European Medicines Agency. *National Registers of Authorised Medicines.*
+    EMA, https://www.ema.europa.eu/en/medicines/national-registers-authorised-medicines.
+    Accessed 27 May 2026.
+
+17. Health Canada. *Drug Product Database (DPD).* Government of Canada,
+    https://www.canada.ca/en/health-canada/services/drugs-health-products/drug-products/drug-product-database.html.
+    Accessed 27 May 2026.
+
+18. Pharmaceuticals and Medical Devices Agency. *PMDA — Reviews / Package
+    Inserts.* PMDA, https://www.pmda.go.jp/english/. Accessed 27 May 2026.
+
+19. National Medical Products Administration. *NMPA Database.* NMPA,
+    https://english.nmpa.gov.cn/database.html. Accessed 27 May 2026.
+
+20. Karstaedt, Patricia J., and Joseph H. Pincus. "Protein Redistribution Diet
+    Remains Effective in Patients with Fluctuating Parkinsonism." *Archives of
+    Neurology*, vol. 49, no. 2, 1992, pp. 149–51.
+    https://pubmed.ncbi.nlm.nih.gov/1736847/. Accessed 27 May 2026.
+
+21. Cereda, Emanuele, et al. "Low-Protein and Protein-Redistribution Diets for
+    Parkinson's Disease Patients with Motor Fluctuations: A Systematic Review."
+    *Movement Disorders*, vol. 25, no. 13, 2010, pp. 2021–34.
+    https://pubmed.ncbi.nlm.nih.gov/20669318/. Accessed 27 May 2026.
 
 ## Notes on usage
 

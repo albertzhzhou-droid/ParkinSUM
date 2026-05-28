@@ -266,6 +266,46 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-05-27',
   );
 
+  static const ModelAssumption pareProteinRedistribution = ModelAssumption(
+    sourceId: 'src.pare.protein.redistribution.1992',
+    title:
+        'Protein redistribution diet in the control of motor fluctuations in '
+        'Parkinson\'s disease',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'Redistributing dietary protein away from daytime toward the evening '
+        'meal can ameliorate the levodopa motor response in some patients; '
+        'protein is restricted (~7 g) before the evening meal in classic '
+        'protein-redistribution diets.',
+    limitation:
+        'Protein-redistribution diets are not nutritionally complete and '
+        'require professional supervision; population-level finding, not a '
+        'per-patient plan. ParkinSUM uses direction only.',
+    citationText:
+        'Paré S. et al. Proposal for a protein redistribution diet in the '
+        'control of motor fluctuations in Parkinson\'s disease. (See also '
+        'systematic review, Cereda et al. 2010/2017.)',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-05-27',
+  );
+
+  static const ModelAssumption virmaniProtein = ModelAssumption(
+    sourceId: 'src.virmani.protein.2023',
+    title:
+        'Practical considerations for optimizing dietary protein interactions '
+        'on levodopa absorption in PD',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'Reviews protein-restriction vs protein-redistribution tradeoffs and '
+        'nutrition-adequacy concerns for levodopa-treated patients.',
+    limitation: 'Review; not clinical decision support; direction only.',
+    citationText:
+        'Virmani T. et al. To restrict or not to restrict? npj Parkinson\'s '
+        'Disease 9:87, 2023.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-05-27',
+  );
+
   static const ModelAssumption internalPrototypeHeuristic = ModelAssumption(
     sourceId: 'src.internal.prototype.heuristic',
     title: 'ParkinSUM prototype heuristic (no patient calibration)',
@@ -294,6 +334,8 @@ class ModelAssumptionRegistry {
     fdaCdsGuidance,
     lnaaPlantVsAnimal,
     fdcAminoAcidFields,
+    pareProteinRedistribution,
+    virmaniProtein,
     internalPrototypeHeuristic,
   ];
 

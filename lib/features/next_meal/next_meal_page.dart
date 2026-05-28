@@ -28,6 +28,12 @@ class _NextMealPageState extends State<NextMealPage> {
   NextMealRecommendationResult? _result;
   String? _error;
 
+  /// User-defined window length (minutes) starting at the target time.
+  /// Required for mechanistic-primary ranking — the engine never picks the
+  /// window; the user does. 0 = no window (mechanistic-primary inactive).
+  int _windowMinutes = 60;
+  static const List<int> _windowChoices = [0, 30, 60, 90];
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +86,9 @@ class _NextMealPageState extends State<NextMealPage> {
           await context.read<AppState>().requestNextMealRecommendation(
                 nextMealAt: _targetTime,
                 useLocalAi: _useLocalAi,
+                windowDuration: _windowMinutes > 0
+                    ? Duration(minutes: _windowMinutes)
+                    : null,
               );
       if (!mounted) return;
       setState(() => _result = result);
@@ -113,6 +122,43 @@ class _NextMealPageState extends State<NextMealPage> {
               onPickTime: _pickTargetTime,
               onToggleAi: (value) => setState(() => _useLocalAi = value),
               onGenerate: _generate,
+            ),
+            const SizedBox(height: 12),
+            GlassCard(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Meal time window you provide (minutes)',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: LiquidGlass.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'You set the window. The prototype only ranks food '
+                    'candidates inside it and does not choose your meal time. '
+                    'A window is required for mechanistic-primary ranking.',
+                    style: TextStyle(
+                        fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      for (final m in _windowChoices)
+                        ChoiceChip(
+                          label: Text(m == 0 ? 'none' : '$m min'),
+                          selected: _windowMinutes == m,
+                          onSelected: (_) => setState(() => _windowMinutes = m),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             if (_error != null) _ErrorCard(i18n: i18n, error: _error!),
