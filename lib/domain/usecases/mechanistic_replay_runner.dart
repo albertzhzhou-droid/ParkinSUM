@@ -45,6 +45,12 @@ class MechanisticReplayCaseReport {
   final String? topCandidateSourceSystem;
   final String? aminoAcidDataMode;
   final List<String> aminoAcidNutrientIds;
+  // Production-readiness guardrail fields (constant for this educational build).
+  final String sourceImplementationStatus;
+  final bool liveFetchEnabled;
+  final String licenseReviewStatus;
+  final bool canSupportMechanismEvidenceAlone;
+  final String clinicalCalibrationStatus;
   final bool pass;
   final String? failureReason;
 
@@ -80,6 +86,11 @@ class MechanisticReplayCaseReport {
     this.topCandidateSourceSystem,
     this.aminoAcidDataMode,
     this.aminoAcidNutrientIds = const [],
+    this.sourceImplementationStatus = 'fixture_tested',
+    this.liveFetchEnabled = false,
+    this.licenseReviewStatus = 'future_work',
+    this.canSupportMechanismEvidenceAlone = false,
+    this.clinicalCalibrationStatus = 'not_clinically_calibrated',
   });
 
   Map<String, dynamic> toJson() => {
@@ -113,6 +124,12 @@ class MechanisticReplayCaseReport {
         'top_candidate_source_system': topCandidateSourceSystem,
         'amino_acid_data_mode': aminoAcidDataMode,
         'amino_acid_nutrient_ids': aminoAcidNutrientIds,
+        'source_implementation_status': sourceImplementationStatus,
+        'live_fetch_enabled': liveFetchEnabled,
+        'license_review_status': licenseReviewStatus,
+        'can_support_mechanism_evidence_alone':
+            canSupportMechanismEvidenceAlone,
+        'clinical_calibration_status': clinicalCalibrationStatus,
         'pass': pass,
         'failure_reason': failureReason,
       };

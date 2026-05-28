@@ -22,7 +22,8 @@
     "operator:hosting-smoke": "node tool/hosting_smoke.mjs",
     "operator:clinical-review": "node tool/clinical_review_report.mjs",
     "operator:gate": "node tool/operator_gate.mjs",
-    "mechanistic:replay": "node tool/run_mechanistic_replay.mjs"
+    "mechanistic:replay": "node tool/run_mechanistic_replay.mjs",
+    "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {
     "firebase-admin": "^13.10.0"

@@ -223,3 +223,88 @@ class FixtureSourceFetchClient {
     );
   }
 }
+
+/// Optional live fetch client. DISABLED by default. It does NOT perform any
+/// network I/O unless `enabled` is true, and it is never enabled in unit
+/// tests. It returns a [SourceFetchResult] and only retrieves official
+/// metadata payloads — never clinical advice. Non-200 responses and network
+/// errors become explicit failure results; they never synthesize a fact.
+///
+/// The actual transport is injected as `fetcher` so tests can exercise the
+/// success/failure/skip paths with a fake (no real network). In production a
+/// caller may pass a function that delegates to `HttpSourceFetchClient`.
+class LiveSourceFetchClient {
+  final String sourceSystem;
+  final bool enabled;
+  final Duration timeout;
+
+  /// Returns a `(status, contentType, payload)` tuple for [url], or throws to
+  /// signal a transport error. Injected so tests never touch the network.
+  final Future<({int status, String? contentType, String? payload})> Function(
+    String url, {
+    Duration timeout,
+  }) fetcher;
+
+  final DateTime Function() clock;
+
+  LiveSourceFetchClient({
+    required this.sourceSystem,
+    required this.enabled,
+    required this.fetcher,
+    this.timeout = const Duration(seconds: 15),
+    DateTime Function()? clock,
+  }) : clock = clock ?? DateTime.now;
+
+  /// Whether the opt-in env var is set. Used by the smoke tool; the client
+  /// itself takes `enabled` explicitly so tests stay deterministic.
+  static bool envEnabled(Map<String, String> environment) =>
+      environment['PARKINSUM_ENABLE_LIVE_SOURCE_SMOKE'] == '1';
+
+  Future<SourceFetchResult> fetch(String url) async {
+    final now = clock();
+    if (!enabled) {
+      return SourceFetchResult(
+        sourceSystem: sourceSystem,
+        requestedId: url,
+        fetchedAt: now,
+        status: 0, // 0 = not attempted (live fetch disabled)
+        contentType: null,
+        rawPayload: null,
+        error: 'live_fetch_disabled',
+      );
+    }
+    try {
+      final r = await fetcher(url, timeout: timeout);
+      if (r.status != 200 || r.payload == null) {
+        return SourceFetchResult(
+          sourceSystem: sourceSystem,
+          requestedId: url,
+          fetchedAt: clock(),
+          status: r.status,
+          contentType: r.contentType,
+          rawPayload: null,
+          error: 'non_success_status:${r.status}',
+        );
+      }
+      return SourceFetchResult(
+        sourceSystem: sourceSystem,
+        requestedId: url,
+        fetchedAt: clock(),
+        status: 200,
+        contentType: r.contentType,
+        rawPayload: r.payload,
+        error: null,
+      );
+    } catch (e) {
+      return SourceFetchResult(
+        sourceSystem: sourceSystem,
+        requestedId: url,
+        fetchedAt: clock(),
+        status: -1,
+        contentType: null,
+        rawPayload: null,
+        error: 'transport_error',
+      );
+    }
+  }
+}

@@ -55,6 +55,46 @@ void main() {
     expect(p.sourceRefs, contains('src.fdc.api.amino_acid_fields'));
   });
 
+  test('realistic FDC fixture with mg units normalizes to grams', () {
+    final payload = jsonDecode(
+        File('test/fixtures/importers/usda_fdc_amino_acids_realistic.json')
+            .readAsStringSync()) as Map<String, dynamic>;
+    final p = extractor.extractFromFdcStyle(payload);
+    expect(p, isNotNull);
+    // 2100 mg leucine → 2.1 g.
+    expect(p!.leucine, closeTo(2.1, 1e-9));
+    expect(p.valine, closeTo(1.3, 1e-9));
+    expect(p.unit, 'g');
+    expect(p.partial, isFalse);
+  });
+
+  test('missing unit marks the profile partial (not silently trusted)', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '507', 'name': 'Leucine'},
+          'amount': 2.1
+        }
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.partial, isTrue);
+  });
+
+  test('extract by name fallback when number is absent', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'name': 'Valine', 'unitName': 'G'},
+          'amount': 1.3
+        }
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.valine, 1.3);
+    expect(p.nutrientIds, contains('name:valine'));
+  });
+
   test('payload without amino-acid fields returns null (→ proxy fallback)', () {
     final p = extractor.extractFromFdcStyle({
       'foodNutrients': [

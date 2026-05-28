@@ -18,5 +18,5 @@
   "published_at": "2025-01-01",
   "translation_status": "reference_only_translation",
   "extraction_confidence": 0.4,
-  "limitation_text": "Synthetic NMPA-style demo. Chinese-language source is authoritative; any English mapping here is reference-only. Educational prototype, not medical advice."
+  "limitation_text": "NMPA source is fixture-validated, NOT live-verified. Synthetic NMPA-style demo. Chinese-language source is authoritative; any English mapping here is reference-only. Educational prototype, not medical advice, not production ingestion."
 }
