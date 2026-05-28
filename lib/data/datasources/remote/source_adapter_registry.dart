@@ -153,10 +153,11 @@ class SourceAdapterRegistry {
       translationStatus: ReferenceTranslationStatus.referenceOnlyTranslation,
       isMedicationSource: true,
       isFoodSource: false,
-      implemented: false,
+      implemented: true,
       knownLimitations: [
-        'Spec-only adapter; English sources limited; provenance/language '
-            'handling required before any authoritative use.',
+        'Concrete parser is fixture-tested (synthetic NMPA-style payload); '
+            'live network fetch + real schema parsing remain future work. '
+            'English mapping is reference-only; Chinese source authoritative.',
       ],
       sourceRefs: ['src.nmpa.database'],
     ),

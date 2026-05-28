@@ -162,7 +162,12 @@ class _NextMealPageState extends State<NextMealPage> {
             ),
             const SizedBox(height: 16),
             if (_error != null) _ErrorCard(i18n: i18n, error: _error!),
-            if (_result != null) _ResultBlock(i18n: i18n, result: _result!),
+            if (_result != null)
+              _ResultBlock(
+                i18n: i18n,
+                result: _result!,
+                windowProvided: _windowMinutes > 0,
+              ),
             if (_result == null && !_generating && _error == null)
               _EmptyCard(i18n: i18n),
           ],
@@ -388,7 +393,9 @@ class _ErrorCard extends StatelessWidget {
 class _ResultBlock extends StatelessWidget {
   final AppI18n i18n;
   final NextMealRecommendationResult result;
-  const _ResultBlock({required this.i18n, required this.result});
+  final bool windowProvided;
+  const _ResultBlock(
+      {required this.i18n, required this.result, required this.windowProvided});
 
   @override
   Widget build(BuildContext context) {
@@ -641,6 +648,20 @@ class _ResultBlock extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Ranker used: ${result.rankerUsed}',
+            style: const TextStyle(
+                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+          ),
+        ],
+        if (result.mechanisticCandidateScores == null) ...[
+          const SizedBox(height: 6),
+          Text(
+            !windowProvided
+                ? 'Mechanistic-primary ranking is unavailable because no '
+                    'meal-time window was provided. Choose a window above to '
+                    'enable it. This is not medical advice.'
+                : 'Mechanistic-primary ranking is unavailable for this request '
+                    '(insufficient context). Showing the conservative fallback. '
+                    'This is not medical advice.',
             style: const TextStyle(
                 fontSize: 11, color: LiquidGlass.onSurfaceMuted),
           ),

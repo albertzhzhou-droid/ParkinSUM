@@ -226,13 +226,13 @@ void main() {
       expect(nmpa.language, 'zh');
     });
 
-    test('DailyMed is implemented; dm+d/NMPA/EU-national are spec-only', () {
+    test('DailyMed + NMPA implemented; dm+d/EU-national remain spec-only', () {
       expect(SourceAdapterRegistry.bySourceSystem('DailyMed')!.implemented,
           isTrue);
+      // NMPA now has a concrete fixture-tested parser (NmpaImporter).
+      expect(SourceAdapterRegistry.bySourceSystem('NMPA')!.implemented, isTrue);
       expect(SourceAdapterRegistry.bySourceSystem('NHS_DMD')!.implemented,
           isFalse);
-      expect(
-          SourceAdapterRegistry.bySourceSystem('NMPA')!.implemented, isFalse);
       expect(
           SourceAdapterRegistry.bySourceSystem('EU_National_Register')!
               .implemented,

@@ -211,4 +211,42 @@ void main() {
       contains(unknownScore.confidenceBand),
     );
   });
+
+  test('final candidate score drives ordering (composite, not raw overlap)',
+      () {
+    final v = validator.validate(validLevodopa);
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final ctx = builder.build(
+      now: now,
+      medicationInputs: [
+        MedicationTimelineInput(
+            id: 'm',
+            takenAt: now.add(const Duration(minutes: 30)),
+            medicationContext: v),
+      ],
+      mealInputs: const [],
+      userDefinedWindow: UserDefinedMealWindow(
+        window: TimelineWindow(
+          startMinute: dateTimeToMinute(now) + 60,
+          endMinute: dateTimeToMinute(now) + 120,
+        ),
+        source: 'test',
+      ),
+    );
+    final scores = scorer.score(
+      baseContext: ctx,
+      baseMealCompositionsById: const {},
+      candidates: const [proteinShake, banana],
+    );
+    // Order must be non-increasing in finalCandidateScore.
+    for (var i = 1; i < scores.length; i++) {
+      expect(scores[i - 1].finalCandidateScore,
+          greaterThanOrEqualTo(scores[i].finalCandidateScore));
+    }
+    // Every scored candidate exposes the composite fields.
+    for (final s in scores) {
+      expect(s.proteinDistribution, isNotNull);
+      expect(s.finalCandidateScore, inInclusiveRange(0.0, 1.0));
+    }
+  });
 }

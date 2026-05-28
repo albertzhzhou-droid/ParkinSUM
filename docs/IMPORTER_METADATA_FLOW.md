@@ -136,13 +136,35 @@ windows rather than eliminating it; global minimization risks nutrition
 inadequacy. ParkinSUM models the *direction* educationally and does not
 prescribe a diet.
 
+## 14b. Implemented vs future work (status)
+
+**Implemented (fixture-tested, deterministic):**
+- Concrete importers: DailyMed, Health Canada DPD, EMA, PMDA, USDA FDC,
+  Ciqual, China CDC (existing) **plus a new `NmpaImporter`** that parses a
+  synthetic NMPA-style payload into canonical `DrugProductVariantMetadata` +
+  `SourceDocumentMetadata` (Chinese-language, reference-only translation) —
+  see `test/nmpa_importer_test.dart` + `test/fixtures/importers/nmpa_levodopa_stub.json`.
+- Canonical metadata fields (`source_metadata.dart`).
+- `SourceAuthorityScorer` + cross-jurisdiction conflict policy.
+- `MetadataCompletenessGate`.
+- Protein-redistribution scoring drives the mechanistic-primary ranker
+  (`finalCandidateScore`), with the legacy heuristic reordered/overridden when
+  mechanistic-primary is eligible.
+- Replay: **21 scenarios** with per-candidate protein/source/authority fields
+  in the report.
+
+**Spec-only (registry metadata, no concrete parser yet):**
+- NHS dm+d (GB), EU national registers (EU member states).
+
 ## 15. Future work
 
-- Live network ingestion + real schema parsers for dm+d / NMPA / EU national
-  registers (specs exist today; concrete fixture parsers / live fetch are
-  future work).
+- Live network ingestion + real schema parsers for **dm+d** and **EU national
+  registers** (specs exist today; concrete fixture parsers / live fetch are
+  future work). NMPA now has a fixture-tested parser; live NMPA fetch + real
+  schema remain future work.
 - Per-food amino-acid array extraction from FDC/Ciqual into the LNAA layer.
 - Patient-population calibration of gastric-emptying / PK parameters.
+- Source-specific legal/license review before any production ingestion.
 
 ## 16. Educational-only rationale
 

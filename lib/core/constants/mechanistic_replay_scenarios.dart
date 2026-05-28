@@ -486,4 +486,92 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       _candidateRiceCake,
     ],
   ),
+  // --- Protein-redistribution + multi-source coverage (s16–s21) ---------
+  MechanisticReplayScenario(
+    scenarioId: 's16_daytime_high_overlap_high_protein',
+    title: 'Daytime high-overlap window + high-protein candidate → overlap '
+        'penalty (NOT a "protein is bad" penalty)',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(0)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 0, endMinute: 90),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateProteinShake, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's17_evening_low_overlap_high_protein',
+    title: 'Evening low-overlap window + high-protein candidate → not globally '
+        'penalized',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-300)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 240, endMinute: 360),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateProteinShake, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's18_zero_vs_moderate_protein_low_overlap',
+    title: 'Zero-protein vs moderate-protein in a low-overlap window → '
+        'zero-protein does not automatically win',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-300)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 240, endMinute: 360),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateRiceCake, _candidateProteinShake],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's19_missing_protein_unknown_competition',
+    title: 'Candidate missing protein → unknown amino-acid competition',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-240)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 60, endMinute: 120),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateMissingNutrients, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's20_invalid_medication_no_window_scoring',
+    title:
+        'Invalid medication context → candidate scoring returns insufficient '
+        'context (no pretended optimization)',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_bareNumeric],
+    medicationMinutesOffsets: [MinutesOffset(-30)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 60, endMinute: 120),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateBanana, _candidateProteinShake],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's21_no_user_window_mechanistic_primary_unavailable',
+    title:
+        'No user-defined window → mechanistic-primary unavailable; candidates '
+        'return insufficient context with a visible reason',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-30)],
+    meals: [],
+    candidateFoods: [_candidateBanana, _candidateProteinShake],
+  ),
 ];
