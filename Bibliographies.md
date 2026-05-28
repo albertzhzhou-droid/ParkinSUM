@@ -141,7 +141,10 @@ DailyMed as the only medication source.
 
 14. NHS England Digital. *Dictionary of Medicines and Devices (dm+d).*
     NHS England, https://digital.nhs.uk/services/terminology-and-classifications/dm-d.
-    Accessed 27 May 2026.
+    Accessed 27 May 2026. (Access: NHS Terminology Server FHIR API,
+    https://ontology.nhs.uk/production1/fhir/, and TRUD XML download. dm+d is
+    identity/coding-strong via SNOMED CT; it is not a complete food-effect
+    label source.)
 
 15. European Medicines Agency. *Electronic Product Information (ePI).* EMA,
     https://www.ema.europa.eu/en/human-regulatory-overview/marketing-authorisation/product-information-requirements/electronic-product-information-epi.

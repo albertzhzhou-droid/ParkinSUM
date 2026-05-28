@@ -1,0 +1,17 @@
+{
+  "source_system": "EU_National_Register",
+  "source_doc_id": "eu-nat:synthetic:de:levodopa-carbidopa:demo",
+  "member_state": "DE",
+  "language": "de",
+  "source_owner": "National competent authority register (synthetic demo, via EMA index)",
+  "product_name": "Levodopa/Carbidopa 100 mg/25 mg Tabletten (synthetisches Demo)",
+  "generic_name": "carbidopa/levodopa",
+  "active_ingredients": ["carbidopa", "levodopa"],
+  "register_id": "DE-REG-000000",
+  "marketing_authorization_holder": "Demo Pharma GmbH (synthetic)",
+  "product_information_url": "https://example.invalid/synthetic/smpc",
+  "has_smpc_text": false,
+  "route": "oral",
+  "dose_form": "tablet",
+  "extraction_confidence": 0.65
+}

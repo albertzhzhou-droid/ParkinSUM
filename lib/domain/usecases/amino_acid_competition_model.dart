@@ -1,5 +1,6 @@
 import '../entities/absorption_opportunity.dart';
 import '../entities/amino_acid_competition.dart';
+import '../entities/amino_acid_profile.dart' show AminoAcidDataMode;
 import '../entities/gastric_emptying_profile.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
@@ -58,6 +59,7 @@ class AminoAcidCompetitionModel {
           isPrototypeHeuristic: true,
           uncertaintyWidened: true,
           sourceRefs: _baseSourceRefs,
+          dataMode: AminoAcidDataMode.unknown,
         ),
       );
     }
@@ -130,9 +132,10 @@ class AminoAcidCompetitionModel {
     );
   }
 
-  /// Returns a `CompetitionLnaaSummary` describing the weighted-average
-  /// LNAA load factor across the meal's components. If components are not
-  /// available, falls back to `unknown` with widened uncertainty.
+  /// Returns a `CompetitionLnaaSummary`. Prefers ACTUAL per-food amino-acid
+  /// fields (narrower uncertainty) when any component carries an
+  /// `AminoAcidProfile`; otherwise falls back to the protein-source proxy;
+  /// otherwise `unknown` with widened uncertainty.
   CompetitionLnaaSummary _computeLnaaLoad(MealComposition composition) {
     final components = composition.foodComponents;
     if (components.isEmpty) {
@@ -144,6 +147,47 @@ class AminoAcidCompetitionModel {
         isPrototypeHeuristic: true,
         uncertaintyWidened: true,
         sourceRefs: unknown.sourceRefs,
+        dataMode: AminoAcidDataMode.unknown,
+      );
+    }
+
+    // Preferred path: actual amino-acid fields. Compute a protein-weighted
+    // LNAA *fraction* (competing LNAA grams / protein grams) and scale it
+    // against a reference fraction (~0.45 of protein for a balanced animal
+    // protein) to get a load factor comparable to the proxy. Prototype
+    // magnitude; direction supported by the cited literature.
+    final aaComponents = components
+        .where((c) =>
+            c.aminoAcidProfile != null &&
+            c.aminoAcidProfile!.competingLnaaGrams != null &&
+            (c.proteinGrams ?? 0) > 0)
+        .toList(growable: false);
+    if (aaComponents.isNotEmpty) {
+      const referenceLnaaFractionOfProtein = 0.45;
+      var totalProtein = 0.0;
+      var weighted = 0.0;
+      final ids = <String>{};
+      final refs = <String>{'src.fdc.api.amino_acid_fields'};
+      for (final c in aaComponents) {
+        final p = c.proteinGrams!;
+        final lnaa = c.aminoAcidProfile!.competingLnaaGrams!;
+        final fraction = (lnaa / p).clamp(0.0, 1.0);
+        final factor =
+            (fraction / referenceLnaaFractionOfProtein).clamp(0.5, 1.5);
+        totalProtein += p;
+        weighted += p * factor;
+        ids.addAll(c.aminoAcidProfile!.nutrientIds);
+        refs.addAll(c.aminoAcidProfile!.sourceRefs);
+      }
+      final effective = totalProtein > 0 ? weighted / totalProtein : 1.0;
+      return CompetitionLnaaSummary(
+        effectiveLoadFactor: effective,
+        sourcesPresent: const [],
+        isPrototypeHeuristic: true,
+        uncertaintyWidened: false,
+        sourceRefs: refs.toList(growable: false),
+        dataMode: AminoAcidDataMode.actualAminoAcidFields,
+        aminoAcidNutrientIds: ids.toList(growable: false),
       );
     }
 
@@ -175,6 +219,7 @@ class AminoAcidCompetitionModel {
         isPrototypeHeuristic: true,
         uncertaintyWidened: true,
         sourceRefs: unknown.sourceRefs,
+        dataMode: AminoAcidDataMode.unknown,
       );
     }
 
@@ -185,6 +230,7 @@ class AminoAcidCompetitionModel {
       isPrototypeHeuristic: true,
       uncertaintyWidened: unknownProteinSeen,
       sourceRefs: refs.toList(growable: false),
+      dataMode: AminoAcidDataMode.proteinSourceProxy,
     );
   }
 

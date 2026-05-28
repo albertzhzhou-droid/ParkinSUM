@@ -98,6 +98,7 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
                 _BandChip(label: 'protein-window ${view.proteinWindowRole}'),
                 _BandChip(
                     label: 'redistribution ${view.redistributionPctText}'),
+                _BandChip(label: 'aa-mode ${view.aminoAcidDataMode}'),
                 _BandChip(label: 'src ${view.sourceSystem}'),
               ],
             ),
@@ -281,6 +282,7 @@ class MechanisticCandidateScoreViewModel {
   final int sampleCount;
   final String proteinWindowRole;
   final String redistributionPctText;
+  final String aminoAcidDataMode;
   final String sourceSystem;
   final String firstExplanationLine;
   final bool insufficientContext;
@@ -293,6 +295,7 @@ class MechanisticCandidateScoreViewModel {
     required this.sampleCount,
     required this.proteinWindowRole,
     required this.redistributionPctText,
+    required this.aminoAcidDataMode,
     required this.sourceSystem,
     required this.firstExplanationLine,
     required this.insufficientContext,
@@ -311,6 +314,9 @@ class MechanisticCandidateScoreViewModel {
       proteinWindowRole:
           score.proteinDistribution?.windowRole.name ?? 'unknown',
       redistributionPctText: pct(score.proteinRedistributionScore),
+      aminoAcidDataMode: score.upstreamResult?.competitionTimeline?.lnaaSummary
+              ?.dataMode.name ??
+          'unknown',
       sourceSystem: score.sourceSystem,
       firstExplanationLine: firstLine,
       insufficientContext: score.insufficientContext,

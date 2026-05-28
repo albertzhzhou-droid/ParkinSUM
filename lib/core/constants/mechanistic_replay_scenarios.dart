@@ -1,3 +1,4 @@
+import '../../domain/entities/amino_acid_profile.dart';
 import '../../domain/entities/mechanistic_conflict_result.dart';
 import '../../domain/entities/meal_composition.dart';
 import '../../domain/entities/time_axis_events.dart';
@@ -200,6 +201,40 @@ const _candidateRiceCake = CandidateFood(
       calories: 35,
       portionGrams: 12,
       sourceDocId: 'synthetic:demo_food',
+    ),
+  ],
+);
+
+/// Candidate carrying actual amino-acid fields (FDC-style), so the LNAA
+/// layer uses `actualAminoAcidFields` mode rather than the protein-source
+/// proxy.
+const _candidateAminoAcidFood = CandidateFood(
+  id: 'cand.amino_acid_food',
+  name: 'amino-acid-profiled food (synthetic demo)',
+  regionalFoodLibraryRef: 'synthetic:usda_fdc_demo',
+  declaredPhysicalForm: MealPhysicalForm.solid,
+  components: [
+    FoodComponent(
+      id: 'food.aa.synth',
+      name: 'high-protein food with amino-acid fields',
+      physicalForm: MealPhysicalForm.solid,
+      proteinGrams: 26,
+      fatGrams: 5,
+      fiberGrams: 0,
+      carbohydrateGrams: 0,
+      calories: 200,
+      portionGrams: 150,
+      sourceDocId: 'synthetic:usda_fdc_demo',
+      aminoAcidProfile: AminoAcidProfile(
+        leucine: 2.1,
+        isoleucine: 1.2,
+        valine: 1.3,
+        phenylalanine: 1.0,
+        tyrosine: 0.9,
+        tryptophan: 0.3,
+        nutrientIds: ['507', '506', '510', '508', '509', '501'],
+        sourceRefs: ['src.fdc.api.amino_acid_fields'],
+      ),
     ),
   ],
 );
@@ -573,5 +608,81 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     medicationMinutesOffsets: [MinutesOffset(-30)],
     meals: [],
     candidateFoods: [_candidateBanana, _candidateProteinShake],
+  ),
+  // --- s22–s26: external-adapter + amino-acid + fallback coverage --------
+  MechanisticReplayScenario(
+    scenarioId: 's22_amino_acid_actual_fields_mode',
+    title: 'Candidate with actual amino-acid fields → LNAA uses actual-fields '
+        'mode (preferred over protein-source proxy)',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-300)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 240, endMinute: 360),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateAminoAcidFood, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's23_amino_acid_proxy_mode',
+    title: 'Candidate without amino-acid fields → LNAA falls back to '
+        'protein-source proxy mode',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-300)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 240, endMinute: 360),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateProteinShake, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's24_levodopa_no_unit_invalid',
+    title:
+        '"levodopa 100" without unit → invalid medication context, candidates '
+        'insufficient',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_levodopa100NoUnit],
+    medicationMinutesOffsets: [MinutesOffset(-30)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 60, endMinute: 120),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's25_slashed_no_unit_invalid',
+    title: '"25/100" without catalog normalization → invalid context',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
+    medicationEntries: [_slashedNoUnit],
+    medicationMinutesOffsets: [MinutesOffset(-30)],
+    meals: [],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's26_eligible_overwrites_legacy_order',
+    title: 'Mechanistic-primary eligible (window + scored candidates) → '
+        'mechanistic ordering, not legacy heuristic',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-300)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 240, endMinute: 360),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [
+      _candidateProteinShake,
+      _candidateBanana,
+      _candidateRiceCake
+    ],
   ),
 ];

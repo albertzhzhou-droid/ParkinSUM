@@ -9,6 +9,7 @@ import '../../core/models/user_profile.dart';
 import '../entities/food_recommendation.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
+import '../entities/ranker_eligibility.dart';
 import '../entities/meal_composition.dart';
 import '../entities/next_meal_recommendation_models.dart';
 import '../entities/cdss_records.dart';
@@ -861,17 +862,37 @@ class NextMealRecommendationOrchestrator {
     // sufficient context (user window + medium/high confidence + every
     // candidate scored). Otherwise the existing heuristic ranking stays
     // untouched and we record `rankerUsed = "heuristic_legacy_fallback"`.
+    // Build an explicit eligibility record. The legacy heuristic can only
+    // determine final order when `mechanisticPrimaryEligible == false`, and in
+    // that case `fallbackReasons` is always populated and surfaced.
+    final fallbackReasons = <String>[];
+    final eligibilityReasons = <String>[];
+    if (request.userDefinedWindow == null) {
+      fallbackReasons.add('missing_user_defined_window');
+    } else {
+      eligibilityReasons.add('user_defined_window_present');
+    }
+    if (candidateScores == null || candidateScores.isEmpty) {
+      fallbackReasons.add('no_candidate_scores');
+    } else if (!candidateScores.every((s) => !s.insufficientContext)) {
+      fallbackReasons.add('insufficient_candidate_context');
+    } else {
+      eligibilityReasons.add('all_candidates_scored');
+    }
+    if (trace.confidenceBand == ConfidenceBand.high ||
+        trace.confidenceBand == ConfidenceBand.medium) {
+      eligibilityReasons.add('confidence_${trace.confidenceBand.name}');
+    } else {
+      fallbackReasons
+          .add('insufficient_confidence_${trace.confidenceBand.name}');
+    }
+
+    final canPromoteMechanistic = fallbackReasons.isEmpty;
     var rankerUsed = 'heuristic_legacy_fallback';
     var recommendations = base.recommendations;
-    final canPromoteMechanistic = request.userDefinedWindow != null &&
-        candidateScores != null &&
-        candidateScores.isNotEmpty &&
-        candidateScores.every((s) => !s.insufficientContext) &&
-        (trace.confidenceBand == ConfidenceBand.high ||
-            trace.confidenceBand == ConfidenceBand.medium);
     if (canPromoteMechanistic) {
       final orderById = <String, int>{};
-      for (var i = 0; i < candidateScores.length; i++) {
+      for (var i = 0; i < candidateScores!.length; i++) {
         orderById[candidateScores[i].candidateFoodId] = i;
       }
       final reordered = [...base.recommendations];
@@ -883,6 +904,13 @@ class NextMealRecommendationOrchestrator {
       recommendations = List.unmodifiable(reordered);
       rankerUsed = 'mechanistic_primary';
     }
+
+    final rankerEligibility = RankerEligibility(
+      mechanisticPrimaryEligible: canPromoteMechanistic,
+      rankerUsed: rankerUsed,
+      rankerEligibilityReasons: List.unmodifiable(eligibilityReasons),
+      fallbackReasons: List.unmodifiable(fallbackReasons),
+    );
 
     return NextMealRecommendationResult(
       recommendations: recommendations,
@@ -901,6 +929,7 @@ class NextMealRecommendationOrchestrator {
       mechanisticTrace: trace,
       mechanisticCandidateScores: candidateScores,
       rankerUsed: rankerUsed,
+      rankerEligibility: rankerEligibility,
     );
   }
 

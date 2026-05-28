@@ -1,3 +1,4 @@
+import 'amino_acid_profile.dart';
 import 'protein_source.dart';
 import 'time_axis_events.dart' show MealPhysicalForm;
 
@@ -90,6 +91,10 @@ class FoodComponent {
   /// than guessing.
   final ProteinSourceType proteinSource;
 
+  /// Actual per-food amino-acid profile when available (preferred over the
+  /// protein-source proxy). Null when not extracted.
+  final AminoAcidProfile? aminoAcidProfile;
+
   const FoodComponent({
     required this.id,
     required this.name,
@@ -102,6 +107,7 @@ class FoodComponent {
     required this.portionGrams,
     required this.sourceDocId,
     this.proteinSource = ProteinSourceType.unknown,
+    this.aminoAcidProfile,
   });
 
   Map<String, dynamic> toJson() => {
@@ -116,5 +122,6 @@ class FoodComponent {
         'portion_grams': portionGrams,
         'source_doc_id': sourceDocId,
         'protein_source': proteinSource.name,
+        'amino_acid_profile': aminoAcidProfile?.toJson(),
       };
 }

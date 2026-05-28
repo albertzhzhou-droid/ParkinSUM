@@ -43,6 +43,8 @@ class MechanisticReplayCaseReport {
   final double? topSourceAuthorityScore;
   final double? topJurisdictionMatchScore;
   final String? topCandidateSourceSystem;
+  final String? aminoAcidDataMode;
+  final List<String> aminoAcidNutrientIds;
   final bool pass;
   final String? failureReason;
 
@@ -76,6 +78,8 @@ class MechanisticReplayCaseReport {
     this.topSourceAuthorityScore,
     this.topJurisdictionMatchScore,
     this.topCandidateSourceSystem,
+    this.aminoAcidDataMode,
+    this.aminoAcidNutrientIds = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -107,6 +111,8 @@ class MechanisticReplayCaseReport {
         'top_source_authority_score': topSourceAuthorityScore,
         'top_jurisdiction_match_score': topJurisdictionMatchScore,
         'top_candidate_source_system': topCandidateSourceSystem,
+        'amino_acid_data_mode': aminoAcidDataMode,
+        'amino_acid_nutrient_ids': aminoAcidNutrientIds,
         'pass': pass,
         'failure_reason': failureReason,
       };
@@ -395,6 +401,10 @@ class MechanisticReplayRunner {
           (recommendations == null || recommendations.isEmpty)
               ? null
               : recommendations.first.sourceSystem,
+      aminoAcidDataMode: result.competitionTimeline?.lnaaSummary?.dataMode.name,
+      aminoAcidNutrientIds:
+          result.competitionTimeline?.lnaaSummary?.aminoAcidNutrientIds ??
+              const [],
       pass: pass,
       failureReason: pass ? null : failures.join('; '),
     );

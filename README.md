@@ -125,7 +125,21 @@ user-provided window and sufficient context.
 
 See [docs/IMPORTER_METADATA_FLOW.md](docs/IMPORTER_METADATA_FLOW.md) for the
 canonical metadata model, source-authority policy, cross-jurisdiction conflict
-policy, completeness gate, and the protein-redistribution objective.
+policy, completeness gate, and the protein-redistribution objective, and
+[docs/MANUAL_VALIDATION.md](docs/MANUAL_VALIDATION.md) for a hands-on
+walkthrough.
+
+Fixture-tested medication source parsers now cover DailyMed, Health Canada
+DPD, EMA, PMDA, **NHS dm+d** (identity/coding — not a complete food-effect
+source), **EU national registers** (member-state identity vs full SmPC), and
+**NMPA** (fixture-validated / prototype, honestly downgraded). A
+`SourceFetchClient` abstraction (with an offline `FixtureSourceFetchClient`
+returning structured `SourceFetchResult`s) keeps all tests deterministic;
+live fetch is optional and never used for clinical advice. Per-food
+amino-acid fields, when present, drive the LNAA competition layer in
+preference to the protein-source proxy. The legacy heuristic can only order
+results when `rankerEligibility.mechanisticPrimaryEligible == false`, with the
+reason surfaced in UI + replay.
 
 ## Demo Media
 

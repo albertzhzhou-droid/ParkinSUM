@@ -153,8 +153,26 @@ prescribe a diet.
 - Replay: **21 scenarios** with per-candidate protein/source/authority fields
   in the report.
 
+**Now fixture-tested (concrete parsers added):**
+- **NHS dm+d** (`DmdImporter`) — identity/coding parser; explicitly cannot
+  supply food-effect mechanism evidence alone.
+- **EU national register** (`EuNationalRegisterImporter`) — member-state
+  identity parser; distinguishes register identity from full SmPC text.
+
 **Spec-only (registry metadata, no concrete parser yet):**
-- NHS dm+d (GB), EU national registers (EU member states).
+- (none of the named medication families remain spec-only; remaining
+  spec-only entries are future additional sources.)
+
+**Fetch abstraction:** `SourceFetchClient` (interface) +
+`HttpSourceFetchClient` (live) + `FakeSourceFetchClient` +
+`FixtureSourceFetchClient` (offline, returns a structured `SourceFetchResult`
+with explicit failure metadata; no fake fact on failure). Tests never touch
+the network.
+
+**Amino-acid extraction:** `AminoAcidExtractor.extractFromFdcStyle(...)` builds
+an `AminoAcidProfile`; the competition model prefers actual amino-acid fields
+(`actualAminoAcidFields` mode) over the protein-source proxy
+(`proteinSourceProxy`), falling back to `unknown` when neither is present.
 
 ## 15. Future work
 
