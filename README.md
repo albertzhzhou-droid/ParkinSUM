@@ -80,6 +80,20 @@ food repository is augmented at app boot with foods projected from CDSS
 observations so the scorer can rank real catalog-backed candidates, not
 only synthetic replay items.
 
+The data chain preserves fidelity end-to-end: missing nutrient data is
+carried as **unknown, never coerced to a fake `0 g`** (`missingNutrientFields`
+→ null components → lowered composition completeness → widened uncertainty);
+actual USDA FDC **amino-acid fields** (verified nutrient-number mapping) feed
+the LNAA layer in preference to the protein-source proxy; per-candidate
+`CandidateMetadata` (authority, jurisdiction match, completeness, provenance)
+is built from imported source data so official-in-jurisdiction outranks
+synthetic/seed. The medication **dose is taken only from the user's entered
+dosage note** (value + unit must both be explicit) — there is no private
+default; a missing/ambiguous dose yields insufficient context and blocks
+dose-dependent interpretation. The conflict engine evaluates **each levodopa
+dose** on a multi-dose time axis and aggregates with deterministic
+max-overlap, keeping per-dose traces.
+
 Compact mechanistic-trace UI cards render alongside the existing
 recommendation and conflict-result views via an `ExpansionTile` so the
 new surface stays out of the way until a reviewer expands it. Raw trace

@@ -171,4 +171,32 @@ void main() {
     final encoded = encodeReplayReport(report);
     expect(findBannedSubstrings(encoded), isEmpty);
   });
+
+  test('dosage/insufficient-context user copy stays non-prescriptive', () {
+    final validator = MedicationEntryValidator();
+    // Non-explicit dosage notes (no value+unit) must produce safe,
+    // non-prescriptive copy that never tells the user a dose to take.
+    for (final raw in <RawMedicationEntry>[
+      const RawMedicationEntry(freeText: '100'), // bare number
+      const RawMedicationEntry(freeText: 'levodopa 100'), // name + number
+      const RawMedicationEntry(
+        activeIngredients: ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        // strength/unit omitted → insufficient dose context
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    ]) {
+      final result = validator.validate(raw);
+      final copy = [
+        result.safeUserCopy,
+        ...result.issues.map((i) => i.message),
+      ].join(' ');
+      expect(findBannedSubstrings(copy), isEmpty,
+          reason: 'dosage copy leaked a banned phrase: $copy');
+    }
+  });
 }

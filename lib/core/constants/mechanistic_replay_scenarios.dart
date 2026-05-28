@@ -334,6 +334,26 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     ],
   ),
   MechanisticReplayScenario(
+    scenarioId: 's04b_multidose_ir',
+    title: 'Two IR levodopa doses; the dose overlapping the high-protein meal '
+        'drives the score (max-overlap, not averaged)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedSeverityFloor: SeverityBand.moderate,
+    // First dose lands on the high-protein meal (high overlap); second dose is
+    // hours later with no nearby meal (low overlap). Max-overlap aggregation
+    // must keep severity driven by the first dose.
+    medicationEntries: [_carbidopaLevodopaIr, _carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30), MinutesOffset(360)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_chicken_md',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_chickenSteakProtein],
+      ),
+    ],
+  ),
+  MechanisticReplayScenario(
     scenarioId: 's05_liquid_meal',
     title: 'Liquid-only meal scenario',
     // Pure water (no protein, no fat) yields no modeled interaction —

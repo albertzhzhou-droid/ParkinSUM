@@ -81,6 +81,56 @@ void main() {
     expect(p!.partial, isTrue);
   });
 
+  test('correct FDC numbers map to the right amino acids', () {
+    // 504 Leucine, 503 Isoleucine, 510 Valine, 502 Threonine, 506 Methionine.
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0
+        },
+        {
+          'nutrient': {'number': '503', 'unitName': 'G'},
+          'amount': 1.0
+        },
+        {
+          'nutrient': {'number': '510', 'unitName': 'G'},
+          'amount': 1.5
+        },
+        {
+          'nutrient': {'number': '502', 'unitName': 'G'},
+          'amount': 0.9
+        },
+        {
+          'nutrient': {'number': '506', 'unitName': 'G'},
+          'amount': 0.6
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.leucine, 2.0);
+    expect(p.isoleucine, 1.0);
+    expect(p.valine, 1.5);
+    expect(p.threonine, 0.9);
+    expect(p.methionine, 0.6);
+  });
+
+  test('number mapping beats a conflicting name', () {
+    // Number 504 = Leucine; the (deliberately wrong) name says Valine.
+    // The verified number must win.
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'name': 'Valine', 'unitName': 'G'},
+          'amount': 2.0
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.leucine, 2.0);
+    expect(p.valine, isNull);
+  });
+
   test('extract by name fallback when number is absent', () {
     final p = extractor.extractFromFdcStyle({
       'foodNutrients': [

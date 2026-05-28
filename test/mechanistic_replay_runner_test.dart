@@ -42,6 +42,29 @@ void main() {
     expect(s13.nextMealRecommendationResult!, isNotEmpty);
   });
 
+  test('multi-dose scenario reports per-event count and user-entered dosage',
+      () {
+    final report = runner.run();
+    final md =
+        report.cases.firstWhere((c) => c.scenarioId == 's04b_multidose_ir');
+    expect(md.perEventCount, 2);
+    // The user-entered dose is surfaced exactly (100 mg), never a default.
+    expect(md.userEnteredDosage, '100 mg');
+    expect(md.dosageContextComplete, isTrue);
+  });
+
+  test('ambiguous/empty dosage scenarios report incomplete dose context', () {
+    final report = runner.run();
+    for (final c in report.cases.where((c) =>
+        c.scenarioId.startsWith('s08') ||
+        c.scenarioId.startsWith('s09') ||
+        c.scenarioId.startsWith('s10'))) {
+      // No private default dose may be injected: these stay incomplete.
+      expect(c.dosageContextComplete, isFalse,
+          reason: '${c.scenarioId} must not claim a complete dose context');
+    }
+  });
+
   test('serialized report is valid JSON and contains no banned phrases', () {
     final report = runner.run();
     final encoded = encodeReplayReport(report);

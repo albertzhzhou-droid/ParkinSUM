@@ -50,7 +50,19 @@ class MechanisticConflictEngine {
       );
     }
 
-    final med = context.medicationEvents.first;
+    // Levodopa-specific scoring: ONLY levodopa events drive the food-levodopa
+    // interaction score. Non-levodopa events (e.g. iron, MAO-B inhibitors) are
+    // excluded here — they are handled by other rule layers, not this PK proxy.
+    final levodopaEvents = context.medicationEvents
+        .where((e) => e.isLevodopaContext)
+        .toList(growable: false);
+    final scoringEvents = levodopaEvents.isNotEmpty
+        ? levodopaEvents
+        : <MedicationTimelineEvent>[context.medicationEvents.first];
+
+    // The primary single-dose window for the no-meal path uses the first
+    // scoring event (deterministic order is preserved by the time-axis builder).
+    final med = scoringEvents.first;
 
     // No meal event = no food-medication interaction modeled.
     if (context.mealEvents.isEmpty) {
@@ -95,67 +107,83 @@ class MechanisticConflictEngine {
       );
     }
 
-    // Find the most-recent meal at or before the medication time.
-    MealTimelineEvent? primaryMeal;
-    for (final m in context.mealEvents) {
-      if (m.minute <= med.minute + 180) {
-        primaryMeal = m;
+    // Multi-dose time axis: evaluate EACH levodopa dose independently against
+    // the meal timeline, then aggregate with deterministic MAX-OVERLAP — the
+    // highest-overlap dose drives the primary score (a high-overlap dose is
+    // never averaged away by lower-overlap doses).
+    final evaluations = <_MedEventEvaluation>[];
+    final missingCompositionIds = <String>{};
+    for (final event in scoringEvents) {
+      final eval = _evaluateMedicationEvent(
+        med: event,
+        context: context,
+        mealCompositionsById: mealCompositionsById,
+      );
+      if (eval == null) {
+        // Record which meal composition was unavailable for this dose.
+        final mealForEvent = _primaryMealFor(event, context);
+        if (mealForEvent != null) {
+          missingCompositionIds.add(mealForEvent.compositionId);
+        }
+        continue;
       }
+      evaluations.add(eval);
     }
-    primaryMeal ??= context.mealEvents.first;
 
-    final composition = mealCompositionsById[primaryMeal.compositionId];
-    if (composition == null) {
+    if (evaluations.isEmpty) {
       return MechanisticConflictResult.insufficientContext(
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
-        missingInputs: ['meal_composition(${primaryMeal.compositionId})'],
+        missingInputs: missingCompositionIds
+            .map((id) => 'meal_composition($id)')
+            .toList(growable: false),
         sourceRefs: const ['src.hens.foodphysical.2024'],
       );
     }
 
-    // Cumulative overlap from earlier meals.
-    var residual = 0.0;
-    for (final earlier in context.mealEvents) {
-      if (earlier.id == primaryMeal.id) continue;
-      if (earlier.minute >= primaryMeal.minute) continue;
-      final earlierComp = mealCompositionsById[earlier.compositionId];
-      if (earlierComp == null) continue;
-      final earlierProfile = gastricEmptyingModel.build(
-        mealId: earlier.id,
-        mealStartMinute: earlier.minute,
-        composition: earlierComp,
-      );
-      final tSinceEarlier = primaryMeal.minute - earlier.minute;
-      residual +=
-          earlierProfile.remainingFractionAt(tSinceEarlier).clamp(0.0, 1.0);
-    }
-    if (residual > 1.0) residual = 1.0;
+    // Deterministic max-overlap selection. Ties broken by earliest dose minute
+    // so the result is stable.
+    evaluations.sort((a, b) {
+      final byScore = b.interactionScore.compareTo(a.interactionScore);
+      if (byScore != 0) return byScore;
+      return a.med.minute.compareTo(b.med.minute);
+    });
+    final primary = evaluations.first;
 
-    final emptyingProfile = gastricEmptyingModel.build(
-      mealId: primaryMeal.id,
-      mealStartMinute: primaryMeal.minute,
-      composition: composition,
-      overlappingResidualLoad: residual,
-    );
+    // Build per-event traces (kept in deterministic dose-time order).
+    final perEventOrdered = [...evaluations]
+      ..sort((a, b) => a.med.minute.compareTo(b.med.minute));
+    final perEventTraces = perEventOrdered
+        .map((e) => MechanisticPerEventTrace(
+              medicationEventId: e.med.id,
+              medicationMinute: e.med.minute,
+              isLevodopa: e.med.isLevodopaContext,
+              releaseType: e.med.context.releaseType,
+              interactionScore: e.interactionScore,
+              competitionBand: e.competition.competitionBand.name,
+              delayedArrivalLikelihood:
+                  e.absorption.delayedArrivalLikelihood.name,
+              isPrimary: identical(e, primary),
+              sourceRefs: <String>{
+                ...e.emptyingProfile.sourceRefs,
+                ...e.absorption.sourceRefs,
+                ...e.competition.sourceRefs,
+              }.toList(growable: false),
+              uncertaintyReasons: <String>[
+                if (e.emptyingProfile.uncertaintyBand != UncertaintyBand.narrow)
+                  'gastric_emptying_${e.emptyingProfile.uncertaintyBand.name}',
+                ...e.absorption.missingInputs
+                    .map((m) => 'absorption_missing:$m'),
+              ],
+            ))
+        .toList(growable: false);
 
-    final absorption = absorptionModel.build(
-      medication: med,
-      overlappingMealProfile: emptyingProfile,
-    );
-
-    final competition = competitionModel.build(
-      mealComposition: composition,
-      mealEmptyingProfile: emptyingProfile,
-      absorptionWindow: absorption,
-      mealStartMinute: primaryMeal.minute,
-    );
-
-    final interactionScore = _composeInteractionScore(
-      absorption: absorption,
-      competition: competition,
-      emptyingProfile: emptyingProfile,
-    );
+    final composition = primary.composition;
+    final residual = primary.residual;
+    final emptyingProfile = primary.emptyingProfile;
+    final absorption = primary.absorption;
+    final competition = primary.competition;
+    final interactionScore = primary.interactionScore;
 
     final severity = _severity(interactionScore, competition.competitionBand,
         absorption.delayedArrivalLikelihood);
@@ -290,6 +318,85 @@ class MechanisticConflictEngine {
       primaryEmptyingProfile: emptyingProfile,
       absorptionOpportunityWindow: absorption,
       competitionTimeline: competition,
+      perEventTraces: perEventTraces,
+    );
+  }
+
+  /// Most-recent meal at or before the dose time (within a 180-min lookahead),
+  /// falling back to the earliest meal. Pure selection — no side effects.
+  MealTimelineEvent? _primaryMealFor(
+    MedicationTimelineEvent med,
+    TimeAxisConflictContext context,
+  ) {
+    if (context.mealEvents.isEmpty) return null;
+    MealTimelineEvent? primaryMeal;
+    for (final m in context.mealEvents) {
+      if (m.minute <= med.minute + 180) primaryMeal = m;
+    }
+    return primaryMeal ?? context.mealEvents.first;
+  }
+
+  /// Evaluate a single dose against the meal timeline. Returns null when the
+  /// dose's primary meal composition is unavailable (recorded as missing by the
+  /// caller rather than fabricated).
+  _MedEventEvaluation? _evaluateMedicationEvent({
+    required MedicationTimelineEvent med,
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+  }) {
+    final primaryMeal = _primaryMealFor(med, context);
+    if (primaryMeal == null) return null;
+    final composition = mealCompositionsById[primaryMeal.compositionId];
+    if (composition == null) return null;
+
+    // Cumulative overlap from earlier meals (residual stomach load).
+    var residual = 0.0;
+    for (final earlier in context.mealEvents) {
+      if (earlier.id == primaryMeal.id) continue;
+      if (earlier.minute >= primaryMeal.minute) continue;
+      final earlierComp = mealCompositionsById[earlier.compositionId];
+      if (earlierComp == null) continue;
+      final earlierProfile = gastricEmptyingModel.build(
+        mealId: earlier.id,
+        mealStartMinute: earlier.minute,
+        composition: earlierComp,
+      );
+      final tSinceEarlier = primaryMeal.minute - earlier.minute;
+      residual +=
+          earlierProfile.remainingFractionAt(tSinceEarlier).clamp(0.0, 1.0);
+    }
+    if (residual > 1.0) residual = 1.0;
+
+    final emptyingProfile = gastricEmptyingModel.build(
+      mealId: primaryMeal.id,
+      mealStartMinute: primaryMeal.minute,
+      composition: composition,
+      overlappingResidualLoad: residual,
+    );
+    final absorption = absorptionModel.build(
+      medication: med,
+      overlappingMealProfile: emptyingProfile,
+    );
+    final competition = competitionModel.build(
+      mealComposition: composition,
+      mealEmptyingProfile: emptyingProfile,
+      absorptionWindow: absorption,
+      mealStartMinute: primaryMeal.minute,
+    );
+    final interactionScore = _composeInteractionScore(
+      absorption: absorption,
+      competition: competition,
+      emptyingProfile: emptyingProfile,
+    );
+    return _MedEventEvaluation(
+      med: med,
+      primaryMeal: primaryMeal,
+      composition: composition,
+      residual: residual,
+      emptyingProfile: emptyingProfile,
+      absorption: absorption,
+      competition: competition,
+      interactionScore: interactionScore,
     );
   }
 
@@ -382,4 +489,27 @@ class MechanisticConflictEngine {
       notAdviceText: RuleExplanation.defaultNotAdvice,
     );
   }
+}
+
+/// Internal per-dose evaluation bundle for the multi-dose time axis.
+class _MedEventEvaluation {
+  final MedicationTimelineEvent med;
+  final MealTimelineEvent primaryMeal;
+  final MealComposition composition;
+  final double residual;
+  final GastricEmptyingProfile emptyingProfile;
+  final AbsorptionOpportunityWindow absorption;
+  final CompetitionPressureTimeline competition;
+  final double interactionScore;
+
+  const _MedEventEvaluation({
+    required this.med,
+    required this.primaryMeal,
+    required this.composition,
+    required this.residual,
+    required this.emptyingProfile,
+    required this.absorption,
+    required this.competition,
+    required this.interactionScore,
+  });
 }
