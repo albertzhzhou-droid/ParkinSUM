@@ -223,10 +223,15 @@ citation/implementation candidates; none enable live ingestion today.
     https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4792175/. Accessed 28 May 2026.
 
 30. U.S. Food and Drug Administration. *Clinical Decision Support Software —
-    Guidance for Industry and FDA Staff.* FDA (final guidance, 2022; updated
-    final guidance issued 29 Jan 2026),
+    Guidance for Industry and FDA Staff.* FDA, final guidance issued 28 Sep
+    2022 (the verifiable, stable reference used here for the four non-device-CDS
+    criteria). A 2026 revision is reported by secondary legal summaries, but the
+    exact final date is inconsistently stated across them (variously Jan and Mar
+    2026) and the authoritative FDA page could not be independently fetched in
+    this environment; the 2026 revision is therefore noted but **not** asserted
+    here as a verified date.
     https://www.fda.gov/regulatory-information/search-fda-guidance-documents/clinical-decision-support-software.
-    Accessed 28 May 2026.
+    Accessed 29 May 2026.
 
 31. Leta, Valentina, et al. "Gastrointestinal Barriers to Levodopa Transport and
     Absorption in Parkinson's Disease." *European Journal of Neurology*, vol. 30,
@@ -254,7 +259,7 @@ No source enables live ingestion without per-source license review.
 | `src.hl7.fhir.r5` | FHIR R5 MedicationKnowledge / NutritionIntake / Observation | HL7 International | R5 (2023) | hl7.org/fhir | open access (spec) | implementation candidate | mappings would be "inspired", not conformant | Representation only; synthetic data. |
 | `src.ohdsi.omop.cdm` | OMOP Common Data Model | OHDSI | current | ohdsi.github.io/CommonDataModel | open access (spec) | citation only | concept mapping demo only | No patient data; identity mapping only. |
 | `src.fair.principles.2016` | FAIR Guiding Principles | Wilkinson et al. | 2016 | doi:10.1038/sdata.2016.18 | open access | citation only | governance guidance | Documentation/governance only. |
-| `src.fda.cds.guidance` | FDA Clinical Decision Support Software guidance | U.S. FDA | 2022; updated 2026 | fda.gov/.../clinical-decision-support-software | open access | citation only (boundary) | regulatory guidance, not code | Defines the non-device boundary to preserve. |
+| `src.fda.cds.guidance` | FDA Clinical Decision Support Software guidance | U.S. FDA | final 2022 (2026 revision reported, date not independently verified here) | fda.gov/.../clinical-decision-support-software | open access | citation only (boundary) | regulatory guidance, not code; cite the verifiable 2022 final | Defines the non-device boundary to preserve. |
 | `src.leta.gi_barriers.2023` | GI barriers to levodopa transport/absorption | Leta et al., *Eur. J. Neurol.* | 2023 | doi:10.1111/ene.15734 | open access (institutional copies) | citation only | mechanism direction only | Educational direction; not dosing/diet advice. |
 | `src.daphnet.fog` | Daphnet Freezing of Gait dataset | Bächlin et al. (UCI) | 2010 | archive.ics.uci.edu/dataset/245 | open access (CC BY 4.0) | implementation candidate (synthetic-shape only) | demo architecture only | No PD detection/monitoring; synthetic signals only. |
 | `src.weargait.pd` | WearGait-PD wearables dataset | open-access dataset | 2024+ | (open-access; review terms) | open access (review) | citation only | additional gait reference | Architecture demo only; non-diagnostic. |
@@ -269,3 +274,17 @@ No source enables live ingestion without per-source license review.
   the bibliography entry.
 - This file is updated whenever a new mechanism citation is added. It is not a
   clinical evidence registry.
+- **Traceability is now test-enforced:** `test/source_ref_traceability_test.dart`
+  asserts every mechanism-layer `sourceRef` resolves in
+  `ModelAssumptionRegistry` (FAIR Reusable/Interoperable). Adding a mechanism
+  `sourceRef` without a registry entry fails CI.
+- HL7 FHIR R5 **NutritionIntake** (verified against hl7.org) is patient-centric
+  (`subject` → Patient/Group, with `consumedItem.type`/`amount`/`rate` and
+  `ingredientLabel`). Any ParkinSUM mapping is **FHIR-inspired, non-conformant,
+  and deliberately omits `subject`** (no PHI).
+- Planning artifacts derived from this bibliography:
+  `docs/BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md`,
+  `docs/BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md`,
+  `docs/BIOMEDICAL_TRACEABILITY_MATRIX.md`,
+  `docs/design/SPIKE_FDC_FOUNDATION_PROVENANCE.md`,
+  `docs/BIOMEDICAL_ENGINEERING_BACKLOG.md`.
