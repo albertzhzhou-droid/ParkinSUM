@@ -166,8 +166,12 @@ boundary.
   `aminoAcidConfidenceTier` and **widens uncertainty for any
   weaker-than-analytical tier** (mirrors partial handling); the replay report
   surfaces it. Missing derivation stays null (never raises confidence).
-- **Remaining delta (follow-up):** fold the tier into `FoodVariantMetadata` +
-  `MetadataCompletenessGate` for the candidate-food completeness grade.
+- **Follow-up shipped:** the tier is now folded into
+  `MetadataCompletenessGate.scoreCandidateFood` (a calculated/imputed/unknown
+  tier downgrades the candidate-food completeness grade and blocks the top
+  `complete` grade), and the FDC amino-acid block is captured more fully
+  (lysine/cystine/arginine added for representation completeness; competing-LNAA
+  math unchanged).
 - **Safety:** provenance only; never fabricate a sample count or method; missing
   → never higher confidence.
 
