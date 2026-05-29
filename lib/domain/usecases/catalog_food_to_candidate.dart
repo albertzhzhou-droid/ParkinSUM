@@ -1,4 +1,5 @@
 import '../../core/models/food_item.dart';
+import '../../core/models/meal.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
 import '../entities/time_axis_events.dart';
@@ -12,7 +13,7 @@ import 'mechanistic_next_meal_scorer.dart';
 /// catalog actually populates. Inferred `ProteinSourceType` widens
 /// uncertainty when unknown rather than guessing.
 CandidateFood foodItemToCandidateFood(FoodItem item) {
-  final physicalForm = _textureToPhysicalForm(item.textureClass);
+  final physicalForm = textureClassToPhysicalForm(item.textureClass);
   final proteinSource = inferProteinSourceFromNameAndCategory(
     name: item.name,
     category: item.category.name,
@@ -54,7 +55,59 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
   );
 }
 
-MealPhysicalForm _textureToPhysicalForm(String? textureClass) {
+/// Map a single logged `MealItem` to a `FoodComponent` for mechanistic
+/// meal-history composition. Macros + portion come from the user-logged item
+/// (`quantityFactor × per-100g`); the optional [catalogMatch] enriches physical
+/// form, energy (calories), protein source, and the amino-acid profile (scaled
+/// to the logged serving). Nothing is fabricated: when the catalog lacks
+/// energy/texture/amino-acid data those stay null/unknown, and the LNAA layer
+/// falls back to the protein-source proxy.
+FoodComponent mealItemToFoodComponent(
+  MealItem item, {
+  required String componentId,
+  FoodItem? catalogMatch,
+}) {
+  final portionGrams = item.grams; // quantityFactor * 100 (user-entered)
+
+  final physicalForm = catalogMatch == null
+      ? MealPhysicalForm.unknown
+      : textureClassToPhysicalForm(catalogMatch.textureClass);
+
+  // Energy only when the catalog provides per-100g energy; scale to serving.
+  final calories = (catalogMatch?.energyKcal != null)
+      ? catalogMatch!.energyKcal! * (portionGrams / 100.0)
+      : null;
+
+  // Actual amino-acid profile (per_100g) scaled to the logged serving so
+  // absolute competing LNAA grams reflect what was eaten. Null → proxy.
+  final aminoAcidProfile =
+      catalogMatch?.aminoAcidProfile?.scaledToGrams(portionGrams);
+
+  final proteinSource = inferProteinSourceFromNameAndCategory(
+    name: item.foodName,
+    category: item.foodCategory.name,
+  );
+
+  return FoodComponent(
+    id: componentId,
+    name: item.foodName,
+    physicalForm: physicalForm,
+    proteinGrams: item.proteinG,
+    fatGrams: item.fatG,
+    fiberGrams: item.fiberG,
+    carbohydrateGrams: item.carbsG,
+    calories: calories,
+    portionGrams: portionGrams,
+    sourceDocId: catalogMatch?.sourceSystem ?? 'meal_history',
+    proteinSource: proteinSource,
+    aminoAcidProfile: aminoAcidProfile,
+  );
+}
+
+/// Map a catalog `textureClass` string to a `MealPhysicalForm`. Public so the
+/// meal-history componentizer can reuse the same mapping. Unknown/absent
+/// texture → `unknown` (never guessed).
+MealPhysicalForm textureClassToPhysicalForm(String? textureClass) {
   switch ((textureClass ?? '').toLowerCase()) {
     case 'liquid':
       return MealPhysicalForm.liquid;

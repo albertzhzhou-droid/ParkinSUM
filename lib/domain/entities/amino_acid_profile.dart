@@ -75,6 +75,52 @@ class AminoAcidProfile {
 
   bool get hasAnyLnaaField => competingLnaaGrams != null;
 
+  /// Count of the six competing LNAA fields that are present. Used to detect a
+  /// partial LNAA profile (some but not all of the six present).
+  int get presentLnaaFieldCount => [
+        leucine,
+        isoleucine,
+        valine,
+        phenylalanine,
+        tyrosine,
+        tryptophan,
+      ].where((v) => v != null).length;
+
+  /// True when at least one but not all six competing LNAA fields are present.
+  /// Such a profile is treated as partial (uncertainty widened), distinct from
+  /// the `partial` flag which marks unit-ambiguous values.
+  bool get hasPartialLnaaFields {
+    final n = presentLnaaFieldCount;
+    return n > 0 && n < 6;
+  }
+
+  /// Return a copy scaled to a serving of [grams], assuming this profile is on
+  /// a `per_100g` basis. Each present amino-acid value is multiplied by
+  /// `grams / 100`; absent values stay null (missing ≠ zero). When the basis is
+  /// not `per_100g`, the profile is returned unchanged to avoid wrong math.
+  /// Used to express absolute competing LNAA grams for a logged serving.
+  AminoAcidProfile scaledToGrams(double grams) {
+    if (basis != 'per_100g' || grams <= 0) return this;
+    final f = grams / 100.0;
+    double? s(double? v) => v == null ? null : v * f;
+    return AminoAcidProfile(
+      leucine: s(leucine),
+      isoleucine: s(isoleucine),
+      valine: s(valine),
+      phenylalanine: s(phenylalanine),
+      tyrosine: s(tyrosine),
+      tryptophan: s(tryptophan),
+      histidine: s(histidine),
+      methionine: s(methionine),
+      threonine: s(threonine),
+      unit: unit,
+      basis: 'per_serving',
+      nutrientIds: nutrientIds,
+      sourceRefs: sourceRefs,
+      partial: partial,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'leucine': leucine,
         'isoleucine': isoleucine,

@@ -119,6 +119,19 @@ fallback). Provenance metadata is carried alongside as
 food, and rule explanation. Composes with the hard `MedicationEntryValidator`
 gate; adds the softer downgrade/uncertainty layer.
 
+### 9a. Componentized meal-history join
+
+Historical meals are modeled as one `FoodComponent` per logged `MealItem`
+(`next_meal_recommendation_orchestrator._buildMealCompositions` →
+`mealItemToFoodComponent`), not a single `unknown` aggregate. Each item is
+joined by `foodId` to the merged catalog `FoodItem` to recover physical form
+(`textureClass → MealPhysicalForm`), energy (`energyKcal`, scaled to the logged
+serving), protein source, and the amino-acid profile (scaled to the serving via
+`AminoAcidProfile.scaledToGrams`). Logged macros come from the item itself;
+catalog data only enriches. When the catalog lacks a field it stays null and is
+recorded as missing — never coerced to 0. This preserves component structure,
+liquid fraction, and amino-acid provenance for the gastric/LNAA layers.
+
 ## 10. How metadata feeds the mechanistic engine
 
 `TimeAxisConflictContext` → gastric emptying → absorption opportunity →

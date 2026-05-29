@@ -68,6 +68,10 @@ class MechanisticCandidateScore {
   final String sourceSystem;
   final String jurisdiction;
 
+  /// Id of the scoring weight set that produced `finalCandidateScore`.
+  /// Additive; enables replay reports to record which weights were active.
+  final String scoringParameterSetId;
+
   const MechanisticCandidateScore({
     required this.candidateFoodId,
     required this.candidateName,
@@ -101,6 +105,7 @@ class MechanisticCandidateScore {
     this.finalCandidateScore = 0,
     this.sourceSystem = 'unknown',
     this.jurisdiction = 'unknown',
+    this.scoringParameterSetId = 'none',
   });
 
   Map<String, dynamic> toJson() => {
@@ -137,5 +142,6 @@ class MechanisticCandidateScore {
         'final_candidate_score': finalCandidateScore,
         'source_system': sourceSystem,
         'jurisdiction': jurisdiction,
+        'scoring_parameter_set_id': scoringParameterSetId,
       };
 }

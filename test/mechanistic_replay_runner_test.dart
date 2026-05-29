@@ -65,10 +65,53 @@ void main() {
     }
   });
 
+  test('actual amino-acid scenario surfaces absolute competing LNAA grams', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's22_amino_acid_actual_fields_mode');
+    expect(c.aminoAcidDataMode, 'actualAminoAcidFields');
+    expect(c.competingLnaaGrams, isNotNull);
+    expect(c.partialAminoAcidData, isFalse);
+    // Candidate scoring ran → the active scoring weight set is recorded.
+    expect(c.scoringParameterSetId, 'next_meal_scoring.v1');
+  });
+
+  test('partial amino-acid scenario flags partial data', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's32_partial_amino_acid_profile');
+    expect(c.partialAminoAcidData, isTrue);
+  });
+
+  test('high-calorie meal scenario widens gastric uncertainty', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's33_high_calorie_high_fat_meal');
+    expect(
+      c.gastricEmptyingAssumptions
+          .any((a) => a.contains('ge.highcal.uncertainty_boost')),
+      isTrue,
+    );
+    expect(c.mealComponentCount, greaterThanOrEqualTo(1));
+    // Absorption openness profile was produced for the dose.
+    expect(c.absorptionOpennessSampleCount, greaterThan(0));
+    expect(c.absorptionPeakOpenness, isNotNull);
+  });
+
+  test('explicit-dose + actual-AA meal exposes dose-relative LNAA proxy', () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa');
+    expect(c.doseRelativeLnaaAvailable, isTrue);
+    expect(c.doseRelativeLnaaRatio, isNotNull);
+  });
+
   test('serialized report is valid JSON and contains no banned phrases', () {
     final report = runner.run();
     final encoded = encodeReplayReport(report);
     expect(encoded, contains('"scenario_id"'));
+    expect(encoded, contains('"competing_lnaa_grams"'));
+    expect(encoded, contains('"scoring_parameter_set_id"'));
     expect(findBannedSubstrings(encoded), isEmpty);
   });
 }

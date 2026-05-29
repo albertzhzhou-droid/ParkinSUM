@@ -39,8 +39,19 @@ class AminoAcidCompetitionModel {
     required GastricEmptyingProfile mealEmptyingProfile,
     required AbsorptionOpportunityWindow absorptionWindow,
     required int mealStartMinute,
+
+    /// Explicit user-entered levodopa dose in mg, when available. Used ONLY to
+    /// compute the dose-relative LNAA ratio; never invented or defaulted. Null
+    /// (or non-positive) leaves the dose-relative proxy unavailable.
+    double? levodopaDoseMg,
   }) {
-    final assumptions = <String>['ldopa.protein.lnaa_competition'];
+    final assumptions = <String>[
+      // The modeled overlap is an intestinal-absorption competition proxy.
+      // Broader blood–brain-barrier LNAA transport competition is a cited
+      // mechanism but is NOT quantified here.
+      'ldopa.protein.lnaa_competition_intestinal_absorption',
+      'ldopa.protein.lnaa_bbb_transport_competition_not_quantified',
+    ];
 
     if (mealComposition.proteinGrams == null) {
       return CompetitionPressureTimeline(
@@ -64,11 +75,21 @@ class AminoAcidCompetitionModel {
       );
     }
 
-    final lnaa = _computeLnaaLoad(mealComposition);
+    final lnaa = _computeLnaaLoad(mealComposition, levodopaDoseMg);
     assumptions.add(
         'aa.lnaa.source_type_load_factor (effective ${lnaa.effectiveLoadFactor.toStringAsFixed(2)})');
     if (lnaa.uncertaintyWidened) {
       assumptions.add('aa.lnaa.unknown_source_widened_uncertainty');
+    }
+    if (lnaa.partialAminoAcidData) {
+      assumptions.add('aa.lnaa.partial_amino_acid_fields_widened_uncertainty');
+    }
+    if (lnaa.dataMode == AminoAcidDataMode.actualAminoAcidFields) {
+      if (lnaa.doseRelativeAvailable) {
+        assumptions.add('aa.lnaa.dose_relative_ratio_from_user_entered_dose');
+      } else {
+        assumptions.add('lnaa.dose_relative_unavailable_no_explicit_dose');
+      }
     }
 
     final proteinAmplitudeBase =
@@ -96,17 +117,35 @@ class AminoAcidCompetitionModel {
       }
     }
 
-    // Overlap integral: average competition pressure within the absorption
-    // opportunity window. Result is in [0, 1].
-    var insideCount = 0;
-    var insideSum = 0.0;
-    for (final s in samples) {
-      if (absorptionWindow.window.contains(s.minute)) {
-        insideCount += 1;
-        insideSum += s.pressure;
+    // Overlap integral: competition pressure weighted by the absorption
+    // opportunity OPENNESS curve (Σ pressure·openness / Σ openness), so
+    // pressure arriving near the peak opportunity counts more than pressure at
+    // the window edges. Falls back to a flat in-window average when no openness
+    // profile is available (compatibility). Result is in [0, 1].
+    final hasProfile = absorptionWindow.opennessProfile.isNotEmpty;
+    double overlap;
+    if (hasProfile) {
+      var weightedSum = 0.0;
+      var weightTotal = 0.0;
+      for (final s in samples) {
+        final w = absorptionWindow.opennessAt(s.minute);
+        if (w <= 0) continue;
+        weightedSum += s.pressure * w;
+        weightTotal += w;
       }
+      overlap = weightTotal == 0 ? 0.0 : weightedSum / weightTotal;
+      assumptions.add('ldopa.absorption.openness_weighted_overlap');
+    } else {
+      var insideCount = 0;
+      var insideSum = 0.0;
+      for (final s in samples) {
+        if (absorptionWindow.window.contains(s.minute)) {
+          insideCount += 1;
+          insideSum += s.pressure;
+        }
+      }
+      overlap = insideCount == 0 ? 0.0 : insideSum / insideCount;
     }
-    final overlap = insideCount == 0 ? 0.0 : insideSum / insideCount;
 
     final band = _toBand(overlap);
     final uncertainty = _toUncertainty(
@@ -136,7 +175,8 @@ class AminoAcidCompetitionModel {
   /// fields (narrower uncertainty) when any component carries an
   /// `AminoAcidProfile`; otherwise falls back to the protein-source proxy;
   /// otherwise `unknown` with widened uncertainty.
-  CompetitionLnaaSummary _computeLnaaLoad(MealComposition composition) {
+  CompetitionLnaaSummary _computeLnaaLoad(
+      MealComposition composition, double? levodopaDoseMg) {
     final components = composition.foodComponents;
     if (components.isEmpty) {
       final unknown =
@@ -166,28 +206,57 @@ class AminoAcidCompetitionModel {
       const referenceLnaaFractionOfProtein = 0.45;
       var totalProtein = 0.0;
       var weighted = 0.0;
+      var totalCompetingLnaaGrams = 0.0;
+      var totalServingGrams = 0.0;
+      var allHavePortion = true;
+      var partial = false;
       final ids = <String>{};
       final refs = <String>{'src.fdc.api.amino_acid_fields'};
       for (final c in aaComponents) {
         final p = c.proteinGrams!;
-        final lnaa = c.aminoAcidProfile!.competingLnaaGrams!;
+        final profile = c.aminoAcidProfile!;
+        final lnaa = profile.competingLnaaGrams!;
         final fraction = (lnaa / p).clamp(0.0, 1.0);
         final factor =
             (fraction / referenceLnaaFractionOfProtein).clamp(0.5, 1.5);
         totalProtein += p;
         weighted += p * factor;
-        ids.addAll(c.aminoAcidProfile!.nutrientIds);
-        refs.addAll(c.aminoAcidProfile!.sourceRefs);
+        totalCompetingLnaaGrams += lnaa;
+        if (c.portionGrams != null) {
+          totalServingGrams += c.portionGrams!;
+        } else {
+          allHavePortion = false;
+        }
+        // Partial when unit-ambiguous or only some of the six LNAA present.
+        if (profile.partial || profile.hasPartialLnaaFields) partial = true;
+        ids.addAll(profile.nutrientIds);
+        refs.addAll(profile.sourceRefs);
       }
       final effective = totalProtein > 0 ? weighted / totalProtein : 1.0;
+
+      // Dose-relative ratio (g competing LNAA per 100 mg levodopa) ONLY when an
+      // explicit user-entered dose is available — never invented.
+      final doseAvailable = levodopaDoseMg != null && levodopaDoseMg > 0;
+      final doseRelative = doseAvailable
+          ? totalCompetingLnaaGrams / (levodopaDoseMg / 100.0)
+          : null;
+
       return CompetitionLnaaSummary(
         effectiveLoadFactor: effective,
         sourcesPresent: const [],
         isPrototypeHeuristic: true,
-        uncertaintyWidened: false,
+        // Partial actual data is NOT treated as fully narrow uncertainty.
+        uncertaintyWidened: partial,
         sourceRefs: refs.toList(growable: false),
         dataMode: AminoAcidDataMode.actualAminoAcidFields,
         aminoAcidNutrientIds: ids.toList(growable: false),
+        competingLnaaGrams: totalCompetingLnaaGrams,
+        competingLnaaGramsPerServing: (allHavePortion && totalServingGrams > 0)
+            ? totalCompetingLnaaGrams
+            : null,
+        doseRelativeLnaaRatio: doseRelative,
+        doseRelativeAvailable: doseAvailable,
+        partialAminoAcidData: partial,
       );
     }
 

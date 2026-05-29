@@ -46,6 +46,9 @@ void main() {
       fiberSlowdownMultiplier: defaultPs.fiberSlowdownMultiplier,
       mixedMealUncertaintyBoost: defaultPs.mixedMealUncertaintyBoost,
       overlapUncertaintyBoost: defaultPs.overlapUncertaintyBoost,
+      fatUncertaintyBoost: defaultPs.fatUncertaintyBoost,
+      highCalorieUncertaintyBoost: defaultPs.highCalorieUncertaintyBoost,
+      highCalorieFractionThreshold: defaultPs.highCalorieFractionThreshold,
     );
 
     final normalizer = MealCompositionNormalizer();

@@ -50,6 +50,9 @@ class GastricEmptyingParameterSet {
   final GastricEmptyingParameter<double> fiberSlowdownMultiplier;
   final GastricEmptyingParameter<int> mixedMealUncertaintyBoost;
   final GastricEmptyingParameter<int> overlapUncertaintyBoost;
+  final GastricEmptyingParameter<int> fatUncertaintyBoost;
+  final GastricEmptyingParameter<int> highCalorieUncertaintyBoost;
+  final GastricEmptyingParameter<double> highCalorieFractionThreshold;
 
   const GastricEmptyingParameterSet({
     required this.solidLagMinutes,
@@ -62,6 +65,9 @@ class GastricEmptyingParameterSet {
     required this.fiberSlowdownMultiplier,
     required this.mixedMealUncertaintyBoost,
     required this.overlapUncertaintyBoost,
+    required this.fatUncertaintyBoost,
+    required this.highCalorieUncertaintyBoost,
+    required this.highCalorieFractionThreshold,
   });
 
   /// Default literature-informed parameter set. Magnitudes follow the
@@ -187,6 +193,45 @@ class GastricEmptyingParameterSet {
             'Cumulative stomach load adds a deterministic integer step to '
             'uncertainty; magnitude is illustrative.',
       ),
+      fatUncertaintyBoost: GastricEmptyingParameter<int>(
+        id: 'ge.fat.uncertainty_boost',
+        label:
+            'Integer increment added to the uncertainty score when fat ≥ threshold',
+        value: 1,
+        sourceRefs: [
+          'src.hens.foodphysical.2024',
+          'src.internal.prototype.heuristic',
+        ],
+        confidence: ModelEvidenceLevel.prototypeHeuristic,
+        limitation:
+            'High-fat meals slow and disperse emptying with wide inter-subject '
+            'variance; the model widens uncertainty by a deterministic integer '
+            'step. Magnitude is illustrative.',
+      ),
+      highCalorieUncertaintyBoost: GastricEmptyingParameter<int>(
+        id: 'ge.highcal.uncertainty_boost',
+        label:
+            'Integer increment added to the uncertainty score for high-calorie meals',
+        value: 1,
+        sourceRefs: [
+          'src.hens.foodphysical.2024',
+          'src.internal.prototype.heuristic',
+        ],
+        confidence: ModelEvidenceLevel.prototypeHeuristic,
+        limitation:
+            'Large caloric loads slow emptying non-linearly with substantial '
+            'variance; the model widens uncertainty by a deterministic integer '
+            'step. Magnitude is illustrative.',
+      ),
+      highCalorieFractionThreshold: GastricEmptyingParameter<double>(
+        id: 'ge.highcal.fraction_threshold',
+        label:
+            'Multiple of the reference meal calories above which a meal is "high calorie"',
+        value: 1.5,
+        sourceRefs: ['src.internal.prototype.heuristic'],
+        confidence: ModelEvidenceLevel.prototypeHeuristic,
+        limitation: 'Threshold (×reference kcal) is illustrative.',
+      ),
     );
   }
 
@@ -201,6 +246,9 @@ class GastricEmptyingParameterSet {
         fiberSlowdownMultiplier,
         mixedMealUncertaintyBoost,
         overlapUncertaintyBoost,
+        fatUncertaintyBoost,
+        highCalorieUncertaintyBoost,
+        highCalorieFractionThreshold,
       ];
 
   /// Union of every parameter's `sourceRefs`. Used by

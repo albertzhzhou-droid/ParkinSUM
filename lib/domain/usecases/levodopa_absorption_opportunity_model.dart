@@ -16,6 +16,22 @@ class LevodopaAbsorptionOpportunityModel {
   static const int referenceErLagMinutes = 30;
   static const int referenceErDurationMinutes = 240;
 
+  /// Openness-curve shape constants (prototype heuristic; unitless 0..1
+  /// educational weights, NOT an absorbed fraction or blood concentration).
+  /// IR rises sharply to a full-openness peak then decays to a low tail; ER /
+  /// controlled release is flatter and longer (lower peak, higher sustained
+  /// tail), reflecting the prolonged release profile.
+  static const int _opennessSampleStrideMinutes = 10;
+  static const double _irPeakOpenness = 1.0;
+  static const double _irTailOpenness = 0.15;
+  static const double _erPeakOpenness = 0.85;
+  static const double _erTailOpenness = 0.5;
+
+  /// Multiplier applied to the whole curve when the meal context is incomplete
+  /// (no overlapping meal profile) — the opportunity shape is less certain, so
+  /// it is flattened rather than asserted sharply.
+  static const double _incompleteContextOpennessScale = 0.85;
+
   static const List<String> _baseSourceRefs = [
     'src.dailymed.sinemet.label',
     'src.dailymed.sinemet.extended.label',
@@ -99,6 +115,22 @@ class LevodopaAbsorptionOpportunityModel {
       assumptions.add('ldopa.absorption.no_overlapping_meal_profile');
     }
 
+    final incompleteContext = overlappingMealProfile == null;
+    final opennessProfile = _buildOpennessProfile(
+      startMinute: startMinute,
+      endMinute: endMinute,
+      peakMinute: peakMinute,
+      extended: isExtended || isControlled,
+      incompleteContext: incompleteContext,
+    );
+    assumptions.add(isExtended || isControlled
+        ? 'ldopa.absorption.openness_profile_extended_flatter_longer'
+        : 'ldopa.absorption.openness_profile_immediate_sharper');
+    if (incompleteContext) {
+      assumptions
+          .add('ldopa.absorption.openness_flattened_incomplete_meal_context');
+    }
+
     return AbsorptionOpportunityWindow(
       medicationEventId: medication.id,
       window: TimelineWindow(startMinute: startMinute, endMinute: endMinute),
@@ -110,7 +142,53 @@ class LevodopaAbsorptionOpportunityModel {
           ? const ['overlapping_meal_profile']
           : const [],
       sourceRefs: _baseSourceRefs,
+      opennessProfile: opennessProfile,
     );
+  }
+
+  /// Deterministic sampled openness curve over [startMinute, endMinute] with a
+  /// rise to [peakMinute] then a decay to a release-type-specific tail.
+  /// Educational shape only — not blood concentration, not PK/PD calibration.
+  List<AbsorptionOpennessSample> _buildOpennessProfile({
+    required int startMinute,
+    required int endMinute,
+    required int peakMinute,
+    required bool extended,
+    required bool incompleteContext,
+  }) {
+    if (endMinute <= startMinute) return const [];
+    final peakOpenness = extended ? _erPeakOpenness : _irPeakOpenness;
+    final tailOpenness = extended ? _erTailOpenness : _irTailOpenness;
+    final scale = incompleteContext ? _incompleteContextOpennessScale : 1.0;
+    final peak = peakMinute.clamp(startMinute, endMinute);
+
+    final samples = <AbsorptionOpennessSample>[];
+    for (var t = startMinute;
+        t <= endMinute;
+        t += _opennessSampleStrideMinutes) {
+      double o;
+      if (t <= peak) {
+        final rise = peak == startMinute
+            ? 1.0
+            : (t - startMinute) / (peak - startMinute);
+        o = rise * peakOpenness;
+      } else {
+        final decay = endMinute == peak ? 0.0 : (t - peak) / (endMinute - peak);
+        o = peakOpenness - decay * (peakOpenness - tailOpenness);
+      }
+      samples.add(AbsorptionOpennessSample(
+        minute: t,
+        openness: (o * scale).clamp(0.0, 1.0),
+      ));
+    }
+    // Ensure the window end is represented as a sample.
+    if (samples.isEmpty || samples.last.minute != endMinute) {
+      samples.add(AbsorptionOpennessSample(
+        minute: endMinute,
+        openness: (tailOpenness * scale).clamp(0.0, 1.0),
+      ));
+    }
+    return List.unmodifiable(samples);
   }
 
   UncertaintyBand _combineUncertainty(UncertaintyBand a, UncertaintyBand b) {
