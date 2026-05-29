@@ -222,6 +222,23 @@ an `AminoAcidProfile`; the competition model prefers actual amino-acid fields
 (`actualAminoAcidFields` mode) over the protein-source proxy
 (`proteinSourceProxy`), falling back to `unknown` when neither is present.
 
+## 14c. FHIR-inspired NutritionIntake view (local, PHI-free)
+
+`FhirInspiredNutritionIntakeMapper.fromMealComposition(...)` serializes a
+`MealComposition` into a local **FHIR-inspired** view
+(`FhirInspiredNutritionIntakeView`) for educational traceability and
+reviewability — food components, nutrient summary, amino-acid provenance,
+missingness, and sourceRefs in a NutritionIntake-shaped structure.
+
+It is **inspired, not FHIR-conformant**: `conformance_status =
+inspired_not_conformant`. HL7 FHIR `NutritionIntake` is patient-centric
+(`subject` → Patient); this view **omits `subject` and all patient-linkage /
+clinical fields** (no patient, encounter, practitioner, care team, diagnosis, or
+treatment) and never constructs a Patient/Reference/Encounter
+(`phi_policy = subject_omitted_no_phi`). It carries `not_clinically_calibrated =
+true` and the shared non-prescriptive safety copy. It implies **no clinical
+interoperability** and supports no diagnosis, treatment, or patient monitoring.
+
 ## 15. Future work
 
 - Live network ingestion + real schema parsers for **dm+d** and **EU national
