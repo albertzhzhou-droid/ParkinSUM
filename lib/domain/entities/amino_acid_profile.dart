@@ -34,6 +34,13 @@ class AminoAcidProfile {
   final double? histidine;
   final double? methionine;
   final double? threonine;
+  // Additional indispensable / conditionally-indispensable amino acids FDC
+  // publishes alongside the competing LNAAs. Captured for representation
+  // completeness (B2); NOT part of the levodopa-competing LNAA set, so they do
+  // not affect `competingLnaaGrams`.
+  final double? lysine;
+  final double? cystine;
+  final double? arginine;
   final String unit; // normalized unit, e.g. "g"
   final String basis; // e.g. "per_100g" / "per_serving"
   final List<String> nutrientIds; // upstream nutrient numbers (e.g. FDC 505)
@@ -62,6 +69,9 @@ class AminoAcidProfile {
     this.histidine,
     this.methionine,
     this.threonine,
+    this.lysine,
+    this.cystine,
+    this.arginine,
     this.unit = 'g',
     this.basis = 'per_100g',
     this.nutrientIds = const [],
@@ -134,6 +144,9 @@ class AminoAcidProfile {
       histidine: s(histidine),
       methionine: s(methionine),
       threonine: s(threonine),
+      lysine: s(lysine),
+      cystine: s(cystine),
+      arginine: s(arginine),
       unit: unit,
       basis: 'per_serving',
       nutrientIds: nutrientIds,
@@ -154,6 +167,9 @@ class AminoAcidProfile {
         'histidine': histidine,
         'methionine': methionine,
         'threonine': threonine,
+        'lysine': lysine,
+        'cystine': cystine,
+        'arginine': arginine,
         'unit': unit,
         'basis': basis,
         'nutrient_ids': nutrientIds,
@@ -179,6 +195,9 @@ class AminoAcidProfile {
       histidine: d('histidine'),
       methionine: d('methionine'),
       threonine: d('threonine'),
+      lysine: d('lysine'),
+      cystine: d('cystine'),
+      arginine: d('arginine'),
       unit: (json['unit'] as String?) ?? 'g',
       basis: (json['basis'] as String?) ?? 'per_100g',
       nutrientIds: (json['nutrient_ids'] as List<dynamic>? ?? const [])

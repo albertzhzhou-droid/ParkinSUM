@@ -869,6 +869,10 @@ class NextMealRecommendationOrchestrator {
       final completenessScore = _completenessGate.scoreCandidateFood(
         foodMeta,
         nutrientCompleteness: nutrientCompleteness,
+        // FDC nutrient provenance (B1 follow-up): a calculated/imputed/unknown
+        // amino-acid derivation tier downgrades the candidate-food completeness
+        // grade, not just the LNAA-layer uncertainty.
+        nutrientConfidenceTier: item.aminoAcidProfile?.aggregateConfidenceTier,
       );
       final completeness = _completenessGate.toWeight(completenessScore);
 

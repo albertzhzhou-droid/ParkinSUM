@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/data/datasources/remote/source_adapter_registry.dart';
+import 'package:parkinsum_companion/domain/entities/nutrient_derivation.dart';
 import 'package:parkinsum_companion/domain/entities/source_metadata.dart';
 import 'package:parkinsum_companion/domain/usecases/metadata_completeness_gate.dart';
 import 'package:parkinsum_companion/domain/usecases/source_authority_scorer.dart';
@@ -185,6 +186,56 @@ void main() {
       expect(gate.toWeight(MetadataCompletenessScore.complete),
           greaterThan(gate.toWeight(MetadataCompletenessScore.partial)));
       expect(gate.toWeight(MetadataCompletenessScore.invalid), 0.0);
+    });
+
+    FoodVariantMetadata foodMeta() => const FoodVariantMetadata(
+          foodVariantId: 'f',
+          sourceSystem: 'USDA_FDC',
+          jurisdiction: 'US',
+          language: 'und',
+          foodName: 'food',
+          basisType: 'per_100g',
+          servingUnit: null,
+          preparationState: 'unknown',
+          aminoAcidFieldsPresent: true,
+          extractionConfidence: null,
+          sourceRefs: ['src.usda.fdc.foundation_docs'],
+          limitationText: 'educational',
+        );
+
+    test('candidate food: full metadata + analytical tier → complete (B1)', () {
+      expect(
+        gate.scoreCandidateFood(foodMeta(),
+            nutrientCompleteness: 1.0,
+            nutrientConfidenceTier: NutrientConfidenceTier.analytical),
+        MetadataCompletenessScore.complete,
+      );
+    });
+
+    test('candidate food: imputed tier blocks complete (B1)', () {
+      final score = gate.scoreCandidateFood(foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed);
+      expect(score, isNot(MetadataCompletenessScore.complete));
+    });
+
+    test('candidate food: calculated tier downgrades vs analytical (B1)', () {
+      final analytical = gate.toWeight(gate.scoreCandidateFood(foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: NutrientConfidenceTier.analytical));
+      final calculated = gate.toWeight(gate.scoreCandidateFood(foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: NutrientConfidenceTier.calculated));
+      expect(calculated, lessThan(analytical));
+    });
+
+    test('candidate food: null tier is inert (backward compatible)', () {
+      // No FDC provenance supplied → unchanged from the pre-B1 grade.
+      expect(
+        gate.scoreCandidateFood(foodMeta(), nutrientCompleteness: 1.0),
+        gate.scoreCandidateFood(foodMeta(),
+            nutrientCompleteness: 1.0, nutrientConfidenceTier: null),
+      );
     });
   });
 

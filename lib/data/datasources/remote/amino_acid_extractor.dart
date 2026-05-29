@@ -16,10 +16,13 @@ class AminoAcidExtractor {
     '502': 'threonine',
     '503': 'isoleucine',
     '504': 'leucine',
+    '505': 'lysine',
     '506': 'methionine',
+    '507': 'cystine',
     '508': 'phenylalanine',
     '509': 'tyrosine',
     '510': 'valine',
+    '511': 'arginine',
     '512': 'histidine',
   };
 
@@ -38,7 +41,10 @@ class AminoAcidExtractor {
         tryptophan,
         histidine,
         methionine,
-        threonine;
+        threonine,
+        lysine,
+        cystine,
+        arginine;
     final ids = <String>[];
     // Basis follows the payload when present (FDC Foundation/SR are per_100g);
     // defaults to per_100g only when the payload does not declare one.
@@ -85,6 +91,15 @@ class AminoAcidExtractor {
         case 'threonine':
           threonine = valueG;
           break;
+        case 'lysine':
+          lysine = valueG;
+          break;
+        case 'cystine':
+          cystine = valueG;
+          break;
+        case 'arginine':
+          arginine = valueG;
+          break;
         default:
           return;
       }
@@ -129,6 +144,9 @@ class AminoAcidExtractor {
       histidine: histidine,
       methionine: methionine,
       threonine: threonine,
+      lysine: lysine,
+      cystine: cystine,
+      arginine: arginine,
       unit: unit,
       basis: basis,
       nutrientIds: List.unmodifiable(ids),
@@ -205,6 +223,10 @@ class AminoAcidExtractor {
     if (name.contains('histidine')) return 'histidine';
     if (name.contains('methionine')) return 'methionine';
     if (name.contains('threonine')) return 'threonine';
+    if (name.contains('lysine')) return 'lysine';
+    // Match cystine (the 507 dimer); avoid matching "cysteine".
+    if (name.contains('cystine')) return 'cystine';
+    if (name.contains('arginine')) return 'arginine';
     return null;
   }
 }

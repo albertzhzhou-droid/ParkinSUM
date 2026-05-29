@@ -1,3 +1,4 @@
+import '../entities/nutrient_derivation.dart';
 import '../entities/source_metadata.dart';
 
 /// Deterministic metadata-completeness scoring. Composes with the existing
@@ -38,11 +39,26 @@ class MetadataCompletenessGate {
   MetadataCompletenessScore scoreCandidateFood(
     FoodVariantMetadata? meta, {
     required double nutrientCompleteness, // 0..1 from composition normalizer
+    NutrientConfidenceTier? nutrientConfidenceTier, // optional FDC provenance
   }) {
+    // FDC nutrient provenance (B1): a weaker-than-analytical tier
+    // (calculated/imputed/unknown) counts as one missing-equivalent, and an
+    // imputed/unknown tier blocks the top `complete` grade — values derived
+    // rather than measured are not treated as fully complete. A null tier
+    // (no FDC provenance) is inert: existing behavior is unchanged.
+    final weakProvenance = nutrientConfidenceTier != null &&
+        tierWidensUncertainty(nutrientConfidenceTier);
+    final blocksComplete =
+        nutrientConfidenceTier == NutrientConfidenceTier.imputedOrAssumed ||
+            nutrientConfidenceTier == NutrientConfidenceTier.unknown;
+
     if (meta == null) {
       // No provenance metadata; fall back to nutrient completeness only.
       if (nutrientCompleteness >= 0.99) {
-        return MetadataCompletenessScore.partial;
+        // A weak FDC tier still downgrades the no-meta best case.
+        return weakProvenance
+            ? MetadataCompletenessScore.insufficient
+            : MetadataCompletenessScore.partial;
       }
       if (nutrientCompleteness >= 0.5) {
         return MetadataCompletenessScore.insufficient;
@@ -54,8 +70,9 @@ class MetadataCompletenessGate {
       meta.sourceRefs.isEmpty,
       meta.jurisdiction.isEmpty,
       nutrientCompleteness < 0.5,
+      weakProvenance,
     ].where((m) => m).length;
-    if (missing == 0 && nutrientCompleteness >= 0.99) {
+    if (missing == 0 && nutrientCompleteness >= 0.99 && !blocksComplete) {
       return MetadataCompletenessScore.complete;
     }
     if (missing <= 1) return MetadataCompletenessScore.sufficient;
