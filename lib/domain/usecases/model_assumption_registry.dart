@@ -253,17 +253,21 @@ class ModelAssumptionRegistry {
     title: 'USDA FoodData Central — amino-acid nutrient fields availability',
     sourceType: ModelSourceType.officialLabel,
     mechanismSupported:
-        'USDA FDC exposes amino-acid nutrient numbers (505 leucine, 509 '
-        'phenylalanine, 511 valine, etc.). Documentation of upstream-data '
-        'availability for future LNAA extraction.',
+        'USDA FDC exposes amino-acid nutrient numbers using the verified '
+        'mapping 501 tryptophan, 502 threonine, 503 isoleucine, 504 leucine, '
+        '506 methionine, 508 phenylalanine, 509 tyrosine, 510 valine, '
+        '512 histidine. ParkinSUM\'s AminoAcidExtractor extracts this LNAA set '
+        '(number-priority, name fallback, mg->g normalization, partial flag) '
+        'and feeds the LNAA competition layer.',
     limitation:
-        'ParkinSUM\'s FDC importer does not currently extract these fields. '
-        'Documented for future calibration only.',
+        'Documents upstream-data availability + extraction only; not patient '
+        'calibration. Per-nutrient FDC derivation/sample-count provenance is '
+        'not yet captured (see docs/design/SPIKE_FDC_FOUNDATION_PROVENANCE.md).',
     citationText:
         'USDA Agricultural Research Service. FDC Nutrient Data OpenAPI '
         'Documentation. USDA FoodData Central.',
     evidenceLevel: ModelEvidenceLevel.mechanism,
-    lastReviewed: '2026-05-27',
+    lastReviewed: '2026-05-29',
   );
 
   static const ModelAssumption pareProteinRedistribution = ModelAssumption(
