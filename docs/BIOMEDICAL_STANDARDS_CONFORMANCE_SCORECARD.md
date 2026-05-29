@@ -52,7 +52,7 @@ of this scorecard is 🟢 *Inspired-Aligned*.
 | # | Standard / construct | Current | Target (safe ceiling) | Opportunity | Backlog |
 | --- | --- | --- | --- | --- | --- |
 | S1 | HL7 FHIR R5 **MedicationKnowledge** | 🟡 | 🟢 | OPP-F1 | #8 |
-| S2 | HL7 FHIR R5 **NutritionIntake** | 🟡 | 🟢 | OPP-F2 | #9 |
+| S2 | HL7 FHIR R5 **NutritionIntake** | 🟢 | 🟢 | OPP-F2 ✅ | #9 (**shipped**) |
 | S3 | HL7 FHIR R5 **Observation** (nutrient) | ⬜ | 🟡 | OPP-F2 | #9 |
 | S4 | **FDA SPL** + LOINC section identity | 🟡 | 🟢 | OPP-A1 | #1 |
 | S5 | **USDA FDC** FoodNutrient provenance (derivation/dataPoints/dataType) | 🟢 | 🟢 | OPP-B1 ✅ / OPP-B2 | #2 + spike (**B1 shipped**) |
@@ -92,7 +92,7 @@ boundary.
   only.
 - **Safety:** representation only; omit any patient linkage.
 
-### S2 — HL7 FHIR R5 NutritionIntake — 🟡 Inspired-Partial
+### S2 — HL7 FHIR R5 NutritionIntake — 🟢 Inspired-Aligned (F2 shipped)
 
 - **Standard (verified from hl7.org):** `NutritionIntake` top-level includes
   `status`, `code`, **`subject` (Patient/Group)**, `occurrence[x]`,
@@ -105,13 +105,22 @@ boundary.
   `amount`, per-nutrient grams ≈ `ingredientLabel`, and the DB-backed usecase's
   enteral-feed context ≈ `consumedItem.rate`. Componentized meal history (one
   `FoodComponent` per logged item) already exists.
-- **Delta to 🟢:** add a `toFhirInspiredNutritionIntake()` view mapping to the
-  verified element names — **deliberately omitting `subject`/Patient** (no PHI).
-  Map `physicalForm`→`consumedItem.type`, `portionGrams`→`amount`, enteral
-  context→`rate`, amino-acid/macros→`ingredientLabel`.
-- **Safety (critical):** NutritionIntake is patient-centric in FHIR; the
-  ParkinSUM mapping must drop `subject` and stay synthetic, or it would imply a
-  patient record. Label the view "FHIR-inspired, non-conformant, no subject".
+- **Shipped (F2):** `FhirInspiredNutritionIntakeView` +
+  `FhirInspiredNutritionIntakeMapper`
+  (`lib/domain/entities/fhir_inspired_nutrition_intake_view.dart`,
+  `lib/domain/usecases/fhir_inspired_nutrition_intake_mapper.dart`) serialize a
+  `MealComposition` to a local, deterministic, **FHIR-inspired** view:
+  `food_components` (≈ consumedItem), `nutrient_summary` (≈ ingredientLabel),
+  `amino_acid_summary` + provenance, missingness, and sourceRefs. It is marked
+  `conformance_status = inspired_not_conformant` and
+  `phi_policy = subject_omitted_no_phi`, reuses the shared non-prescriptive
+  safety copy, and carries `not_clinically_calibrated = true`.
+- **Safety (critical, enforced):** the view **deliberately omits** `subject`,
+  patient/encounter/practitioner/care-team/diagnosis/treatment, and any
+  patient-record semantics — it never constructs a Patient/Reference/Encounter.
+  A recursive key-level test asserts no patient-linkage keys are emitted. This
+  is FHIR-*inspired*, **not** FHIR-conformant, and implies no clinical
+  interoperability.
 
 ### S3 — HL7 FHIR R5 Observation (nutrient) — ⬜ Absent
 
