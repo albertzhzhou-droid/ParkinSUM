@@ -395,7 +395,9 @@ carrying `sourceRefs`, an evidence level, and a limitation. The set is
 injectable and surfaced per candidate via `scoringParameterSetId`. The
 invariant `conflictRemainsDominant` guarantees modeled conflict overlap (and
 the uncertainty penalty) stay dominant, so provenance/metadata can never
-outrank a high modeled conflict overlap.
+outrank a high modeled conflict overlap. It is **enforced at construction**:
+`MechanisticNextMealScorer` throws `ArgumentError` if injected with a
+non-dominant weight set, so an unsafe set cannot enter the scorer.
 
 ### Mechanistic-primary ranking promotion
 
