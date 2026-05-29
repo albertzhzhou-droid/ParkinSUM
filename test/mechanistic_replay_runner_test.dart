@@ -127,6 +127,40 @@ void main() {
     expect(findBannedSubstrings(encoded), isEmpty);
   });
 
+  // D2 — missingness stress suite. Proves missing ≠ zero end-to-end: missing
+  // nutrient inputs lower composition completeness and confidence rather than
+  // being silently treated as 0.
+  test('missing calories/portion lowers completeness, never fabricated (D2)',
+      () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's35_missing_calories_and_portion');
+    expect(c.mealContextCompleteness, lessThan(1.0));
+    expect(c.confidenceBand, isNot('high'));
+  });
+
+  test('all-macros-missing → unknown competition + insufficient/low (D2)', () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's36_missing_all_macros_unknown_competition');
+    expect(c.aminoAcidCompetitionBand, 'unknown');
+    expect(['insufficient', 'low'], contains(c.confidenceBand));
+  });
+
+  // C1 — enteral feeding educational scenarios stay non-prescriptive.
+  test('enteral scenarios run and stay non-prescriptive (C1)', () {
+    final report = runner.run();
+    final enteral = report.cases
+        .where((c) =>
+            c.scenarioId.startsWith('s37') || c.scenarioId.startsWith('s38'))
+        .toList();
+    expect(enteral.length, 2);
+    for (final c in enteral) {
+      expect(c.pass, isTrue, reason: '${c.scenarioId}: ${c.failureReason}');
+      expect(c.bannedPhraseHits, isEmpty);
+    }
+  });
+
   // Clinical-calibration guardrail regression (OPP-D4 / backlog #12). Locks in
   // the non-device educational boundary: every replay case must report it is
   // not clinically calibrated, must not enable live fetch by default, and must
