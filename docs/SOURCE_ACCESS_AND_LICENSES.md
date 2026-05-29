@@ -41,7 +41,35 @@ and is required before any production use of any source below.**
 | USDA FoodData Central | USDA ARS | US | REST API | **API key required** for live | `fixture_tested` + `opt_in_live_smoke` (skips without key) | Food composition incl. amino acids | Amino-acid nutrient numbers extracted when present, using the verified FDC mapping (501 Trp, 502 Thr, 503 Ile, 504 Leu, 506 Met, 508 Phe, 509 Tyr, 510 Val, 512 His). |
 | Ciqual | ANSES | FR | Download | Reuse-terms review | `fixture_tested` | Food composition | French-language codes. |
 | China CDC food platform | China CDC | CN | Web page | Terms review | `fixture_tested` | Food composition | No amino-acid fields captured today. |
+| FAO/INFOODS (standard) | FAO | Global | Download | Open-access guidelines | `spec_only` | Component identifiers (tagnames) + matching/conversion guidelines | Standardizes nutrient basis + missingness; citation candidate, no parser today. |
+| Canadian Nutrient File | Health Canada | CA | Download | Open-data terms review | `spec_only` | Food composition | Citation/fixture candidate; not yet wired. |
 | app seed / synthetic demo | ParkinSUM | — | manual | n/a | `fixture_tested` | Seed/synthetic | Never authoritative. |
+
+## API / license review checklist (required before any production ingestion)
+
+FAIR-aligned (Wilkinson et al. 2016) governance gate. **No source may move from
+`fixture_tested` / `spec_only` to `production_parser` until every box is
+checked and recorded here.** This is documentation only; it does not enable any
+live ingestion.
+
+- [ ] License / terms-of-use reviewed and recorded (owner, license, attribution
+      requirements, redistribution limits).
+- [ ] Access method confirmed (public domain / public API / API key /
+      account / download) — secrets are **never** committed.
+- [ ] Rate limits + caching policy documented; no bulk scraping.
+- [ ] Provenance fields captured (source id, version, effective/publication
+      date, retrieval date) — FAIR Findable/Reusable.
+- [ ] Identifiers + schema mapped to internal metadata (FAIR Interoperable);
+      missing fields preserved as missing (never 0).
+- [ ] No PHI / patient data / credentials in fixtures or payloads.
+- [ ] Mechanism evidence vs identity/coding role recorded (a coding source is
+      not a food-effect source).
+- [ ] Opt-in flag + skip-without-network behavior verified (see live smoke).
+- [ ] Safety note recorded (educational; non-prescriptive; not calibrated).
+
+See `docs/BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md` and
+`docs/BIOMEDICAL_ENGINEERING_BACKLOG.md` for the surveyed future sources and the
+issue-ready tasks that would exercise this checklist.
 
 ## Optional live smoke harness
 
