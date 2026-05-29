@@ -114,4 +114,28 @@ void main() {
     expect(encoded, contains('"scoring_parameter_set_id"'));
     expect(findBannedSubstrings(encoded), isEmpty);
   });
+
+  // Clinical-calibration guardrail regression (OPP-D4 / backlog #12). Locks in
+  // the non-device educational boundary: every replay case must report it is
+  // not clinically calibrated, must not enable live fetch by default, and must
+  // not claim mechanism evidence it cannot support. If any case regresses this,
+  // the boundary has been crossed and this test fails.
+  test('every replay case preserves the clinical-calibration guardrail', () {
+    final report = runner.run();
+    expect(report.cases, isNotEmpty);
+    for (final c in report.cases) {
+      expect(c.clinicalCalibrationStatus, 'not_clinically_calibrated',
+          reason: '${c.scenarioId} must not claim clinical calibration');
+      expect(c.liveFetchEnabled, isFalse,
+          reason: '${c.scenarioId} must not enable live fetch by default');
+      expect(c.canSupportMechanismEvidenceAlone, isFalse,
+          reason: '${c.scenarioId} must not assert standalone mechanism '
+              'evidence in the educational build');
+      expect(c.licenseReviewStatus, 'future_work',
+          reason: '${c.scenarioId} source license review remains future work');
+      expect(c.sourceImplementationStatus, 'fixture_tested',
+          reason: '${c.scenarioId} must remain fixture-tested (no production '
+              'ingestion)');
+    }
+  });
 }
