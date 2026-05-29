@@ -83,7 +83,22 @@ class MechanisticNextMealScorer {
         proteinDistributionModel =
             proteinDistributionModel ?? ProteinDistributionModel(),
         scoringParameters = scoringParameters ??
-            NextMealScoringParameterSet.literatureInformedDefault();
+            NextMealScoringParameterSet.literatureInformedDefault() {
+    // Enforce the safety invariant: modeled conflict overlap must remain the
+    // dominant scoring term so provenance/metadata can never overpower a high
+    // modeled conflict overlap. A non-dominant weight set is rejected outright
+    // rather than silently degrading ranking safety.
+    if (!this.scoringParameters.conflictRemainsDominant) {
+      throw ArgumentError.value(
+        this.scoringParameters.id,
+        'scoringParameters',
+        'Modeled conflict overlap must remain the dominant scoring term '
+            '(NextMealScoringParameterSet.conflictRemainsDominant). The '
+            'conflict-overlap weight must be >= the protein-redistribution '
+            'weight and >= the combined provenance/metadata weight.',
+      );
+    }
+  }
 
   List<MechanisticCandidateScore> score({
     required TimeAxisConflictContext baseContext,

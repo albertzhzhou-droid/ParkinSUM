@@ -287,29 +287,32 @@ void main() {
     );
     expect(defaultScores.first.scoringParameterSetId, 'next_meal_scoring.v1');
 
-    // A scorer whose weights ignore conflict overlap entirely produces a
+    // An alternative — but still conflict-dominant — weight set produces a
     // different composite ordering metric → proves the weights are wired in.
+    // (We zero the metadata-completeness weight, which defaults to a non-zero
+    // neutral 0.5 contribution; conflict overlap stays the dominant term, so
+    // the safety invariant still holds.)
     final base = NextMealScoringParameterSet.literatureInformedDefault();
-    final altScorer = MechanisticNextMealScorer(
-      scoringParameters: NextMealScoringParameterSet(
-        id: 'alt.v0',
-        conflictOverlap: ScoringWeight(
-          id: base.conflictOverlap.id,
-          label: base.conflictOverlap.label,
-          value: 0.0, // ignore conflict overlap
-          sourceRefs: base.conflictOverlap.sourceRefs,
-          evidenceLevel: base.conflictOverlap.evidenceLevel,
-          limitation: base.conflictOverlap.limitation,
-        ),
-        proteinRedistribution: base.proteinRedistribution,
-        nutritionAdequacy: base.nutritionAdequacy,
-        metadataCompleteness: base.metadataCompleteness,
-        sourceAuthority: base.sourceAuthority,
-        jurisdictionMatch: base.jurisdictionMatch,
-        provenanceQuality: base.provenanceQuality,
-        uncertaintyPenalty: base.uncertaintyPenalty,
+    final altParams = NextMealScoringParameterSet(
+      id: 'alt.v0',
+      conflictOverlap: base.conflictOverlap,
+      proteinRedistribution: base.proteinRedistribution,
+      nutritionAdequacy: base.nutritionAdequacy,
+      metadataCompleteness: ScoringWeight(
+        id: base.metadataCompleteness.id,
+        label: base.metadataCompleteness.label,
+        value: 0.0, // drop the metadata-completeness term
+        sourceRefs: base.metadataCompleteness.sourceRefs,
+        evidenceLevel: base.metadataCompleteness.evidenceLevel,
+        limitation: base.metadataCompleteness.limitation,
       ),
+      sourceAuthority: base.sourceAuthority,
+      jurisdictionMatch: base.jurisdictionMatch,
+      provenanceQuality: base.provenanceQuality,
+      uncertaintyPenalty: base.uncertaintyPenalty,
     );
+    expect(altParams.conflictRemainsDominant, isTrue);
+    final altScorer = MechanisticNextMealScorer(scoringParameters: altParams);
     final altScores = altScorer.score(
       baseContext: ctx,
       baseMealCompositionsById: const {},
@@ -321,5 +324,34 @@ void main() {
     expect(altShake.finalCandidateScore,
         isNot(closeTo(defShake.finalCandidateScore, 1e-9)));
     expect(altShake.scoringParameterSetId, 'alt.v0');
+  });
+
+  test('scorer REJECTS a non-conflict-dominant weight set (ArgumentError)', () {
+    final base = NextMealScoringParameterSet.literatureInformedDefault();
+    // Conflict overlap weight dropped below the combined provenance weight →
+    // provenance/metadata could overpower modeled conflict. Must be rejected.
+    final nonDominant = NextMealScoringParameterSet(
+      id: 'bad.v0',
+      conflictOverlap: ScoringWeight(
+        id: base.conflictOverlap.id,
+        label: base.conflictOverlap.label,
+        value: 0.0,
+        sourceRefs: base.conflictOverlap.sourceRefs,
+        evidenceLevel: base.conflictOverlap.evidenceLevel,
+        limitation: base.conflictOverlap.limitation,
+      ),
+      proteinRedistribution: base.proteinRedistribution,
+      nutritionAdequacy: base.nutritionAdequacy,
+      metadataCompleteness: base.metadataCompleteness,
+      sourceAuthority: base.sourceAuthority,
+      jurisdictionMatch: base.jurisdictionMatch,
+      provenanceQuality: base.provenanceQuality,
+      uncertaintyPenalty: base.uncertaintyPenalty,
+    );
+    expect(nonDominant.conflictRemainsDominant, isFalse);
+    expect(
+      () => MechanisticNextMealScorer(scoringParameters: nonDominant),
+      throwsArgumentError,
+    );
   });
 }
