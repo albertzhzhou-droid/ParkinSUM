@@ -242,6 +242,79 @@ const _candidateAminoAcidFood = CandidateFood(
   ],
 );
 
+/// Candidate carrying a PARTIAL amino-acid profile (only some of the six
+/// competing LNAA present). The LNAA layer must mark it partial and widen
+/// uncertainty rather than treating it as fully narrow.
+const _candidatePartialAminoAcidFood = CandidateFood(
+  id: 'cand.partial_amino_acid_food',
+  name: 'partial amino-acid food (synthetic demo)',
+  regionalFoodLibraryRef: 'synthetic:usda_fdc_demo',
+  declaredPhysicalForm: MealPhysicalForm.solid,
+  components: [
+    FoodComponent(
+      id: 'food.partial_aa.synth',
+      name: 'food with partial amino-acid fields',
+      physicalForm: MealPhysicalForm.solid,
+      proteinGrams: 24,
+      fatGrams: 4,
+      fiberGrams: 0,
+      carbohydrateGrams: 0,
+      calories: 190,
+      portionGrams: 150,
+      sourceDocId: 'synthetic:usda_fdc_demo',
+      aminoAcidProfile: AminoAcidProfile(
+        // Only 3 of the 6 competing LNAA present → partial.
+        leucine: 2.0,
+        valine: 1.2,
+        tryptophan: 0.3,
+        nutrientIds: ['504', '510', '501'],
+        sourceRefs: ['src.fdc.api.amino_acid_fields'],
+      ),
+    ),
+  ],
+);
+
+/// High-calorie, high-fat solid meal component for the gastric-uncertainty
+/// scenario (≥ 1.5× the reference meal calories → high-calorie widening).
+const _bigHighCalorieMeal = FoodComponent(
+  id: 'food.big_meal.synth',
+  name: 'large mixed plate (synthetic demo)',
+  physicalForm: MealPhysicalForm.solid,
+  proteinGrams: 30,
+  fatGrams: 35,
+  fiberGrams: 4,
+  carbohydrateGrams: 90,
+  calories: 800,
+  portionGrams: 600,
+  sourceDocId: 'synthetic:demo_food',
+);
+
+/// Meal component carrying actual amino-acid fields, for the dose-relative
+/// LNAA scenario (meal history path, not a candidate).
+const _aminoAcidMealComponent = FoodComponent(
+  id: 'food.aa_meal.synth',
+  name: 'amino-acid-profiled meal (synthetic demo)',
+  physicalForm: MealPhysicalForm.solid,
+  proteinGrams: 26,
+  fatGrams: 5,
+  fiberGrams: 0,
+  carbohydrateGrams: 0,
+  calories: 200,
+  portionGrams: 150,
+  sourceDocId: 'synthetic:usda_fdc_demo',
+  aminoAcidProfile: AminoAcidProfile(
+    leucine: 2.1,
+    isoleucine: 1.2,
+    valine: 1.3,
+    phenylalanine: 1.0,
+    tyrosine: 0.9,
+    tryptophan: 0.3,
+    basis: 'per_serving',
+    nutrientIds: ['504', '503', '510', '508', '509', '501'],
+    sourceRefs: ['src.fdc.api.amino_acid_fields'],
+  ),
+);
+
 const _candidateMissingNutrients = CandidateFood(
   id: 'cand.unknown_nutrients',
   name: 'unknown nutrient candidate (synthetic demo)',
@@ -786,5 +859,53 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       source: 'synthetic_demo_fixture',
     ),
     candidateFoods: [_candidateAminoAcidFood, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's32_partial_amino_acid_profile',
+    title: 'Candidate with a PARTIAL amino-acid profile → partial data flag + '
+        'widened uncertainty (not treated as fully narrow)',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(-300)],
+    meals: [],
+    userDefinedWindow: UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 240, endMinute: 360),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [_candidatePartialAminoAcidFood, _candidateBanana],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's33_high_calorie_high_fat_meal',
+    title: 'Large high-calorie/high-fat meal close to a dose → gastric '
+        'uncertainty widened (educational simulation; magnitudes heuristic)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_big_plate',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_bigHighCalorieMeal],
+      ),
+    ],
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's34_explicit_dose_dose_relative_lnaa',
+    title:
+        'Explicit user-entered dose + actual amino-acid meal → dose-relative '
+        'LNAA proxy available in the trace (never an invented dose)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_aa_dose_relative',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_aminoAcidMealComponent],
+      ),
+    ],
   ),
 ];

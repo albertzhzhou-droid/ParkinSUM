@@ -347,6 +347,33 @@ class MechanisticConflictEngine {
     return primaryMeal ?? sorted.first;
   }
 
+  /// Explicit levodopa dose in mg from a validated medication context. The
+  /// validator only normalizes a context when strength + unit are explicit, so
+  /// no dose is invented here. Non-mass units (e.g. ml) yield null.
+  double? _explicitDoseMg(MedicationTimelineEvent med) {
+    final value = med.context.strength;
+    if (value <= 0) return null;
+    switch (med.context.unit.toLowerCase()) {
+      case 'mg':
+      case 'milligram':
+      case 'milligrams':
+        return value;
+      case 'g':
+      case 'gram':
+      case 'grams':
+        return value * 1000.0;
+      case 'mcg':
+      case 'ug':
+      case 'µg':
+      case 'μg':
+      case 'microgram':
+      case 'micrograms':
+        return value / 1000.0;
+      default:
+        return null;
+    }
+  }
+
   /// Evaluate a single dose against the meal timeline. Returns null when the
   /// dose's primary meal composition is unavailable (recorded as missing by the
   /// caller rather than fabricated).
@@ -393,6 +420,8 @@ class MechanisticConflictEngine {
       mealEmptyingProfile: emptyingProfile,
       absorptionWindow: absorption,
       mealStartMinute: primaryMeal.minute,
+      // Explicit dose from the validated medication context (never invented).
+      levodopaDoseMg: _explicitDoseMg(med),
     );
     final interactionScore = _composeInteractionScore(
       absorption: absorption,

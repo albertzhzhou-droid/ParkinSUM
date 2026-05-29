@@ -59,13 +59,28 @@ class GastricEmptyingModel {
     }
 
     double fatMultiplier;
-    if (fatFraction != null &&
-        fatFraction >= parameters.fatFractionThreshold.value) {
+    final highFat = fatFraction != null &&
+        fatFraction >= parameters.fatFractionThreshold.value;
+    if (highFat) {
       fatMultiplier = parameters.fatSlowdownMultiplier.value;
       modifiers.add('fat_slowdown_${fatMultiplier.toStringAsFixed(2)}x');
       assumptions.add(parameters.fatSlowdownMultiplier.id);
+      assumptions.add(
+          '${parameters.fatUncertaintyBoost.id} (high fat, uncertainty widened)');
     } else {
       fatMultiplier = 1.0;
+    }
+
+    // High-calorie load: meals well above the reference size empty more slowly
+    // and with greater inter-subject variance → widen uncertainty (in addition
+    // to the size multiplier already applied to the emptying curve).
+    final highCalorie = sizeAvailable &&
+        composition.totalCalories! >=
+            parameters.referenceMealCalories.value *
+                parameters.highCalorieFractionThreshold.value;
+    if (highCalorie) {
+      assumptions.add(
+          '${parameters.highCalorieUncertaintyBoost.id} (high calorie load, uncertainty widened)');
     }
 
     // Fiber contribution: small slowdown if high, but mainly widens uncertainty.
@@ -128,6 +143,8 @@ class GastricEmptyingModel {
       compositionCompleteness: composition.compositionCompleteness,
       overlappingResidualLoad: overlappingResidualLoad,
       highFiber: highFiber,
+      highFat: highFat,
+      highCalorie: highCalorie,
     );
 
     // Aggregate lag = mass-weighted lag across components.
@@ -193,6 +210,8 @@ class GastricEmptyingModel {
     required double compositionCompleteness,
     required double overlappingResidualLoad,
     required bool highFiber,
+    required bool highFat,
+    required bool highCalorie,
   }) {
     var score = 0;
     if (compositionCompleteness < 0.99) score += 1;
@@ -205,6 +224,8 @@ class GastricEmptyingModel {
       score += parameters.overlapUncertaintyBoost.value;
     }
     if (highFiber) score += parameters.mixedMealUncertaintyBoost.value;
+    if (highFat) score += parameters.fatUncertaintyBoost.value;
+    if (highCalorie) score += parameters.highCalorieUncertaintyBoost.value;
     switch (score) {
       case 0:
         return UncertaintyBand.narrow;

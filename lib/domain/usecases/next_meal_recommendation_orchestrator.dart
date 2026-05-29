@@ -969,9 +969,15 @@ class NextMealRecommendationOrchestrator {
     required NextMealRecommendationRequest request,
     required List<FoodItem> candidateFoods,
   }) async {
+    // Componentize meal history against the merged catalog so per-item
+    // physical form, calories, and amino-acid provenance survive into the
+    // gastric/LNAA layers (instead of one `unknown` aggregate component).
+    final catalogById = <String, FoodItem>{
+      for (final f in candidateFoods) f.id: f,
+    };
     final medInputs = _buildMechanisticMedicationInputs(request);
-    final mealInputs = _buildMechanisticMealInputs(request);
-    final compositionsById = _buildMealCompositions(request);
+    final compositionsById = _buildMealCompositions(request, catalogById);
+    final mealInputs = _buildMechanisticMealInputs(request, compositionsById);
 
     final context = timeAxisBuilder.build(
       now: request.now,
@@ -1130,39 +1136,65 @@ class NextMealRecommendationOrchestrator {
   }
 
   List<MealTimelineInput> _buildMechanisticMealInputs(
-      NextMealRecommendationRequest request) {
+    NextMealRecommendationRequest request,
+    Map<String, MealComposition> compositionsById,
+  ) {
     final inputs = <MealTimelineInput>[];
     for (final meal in request.history) {
+      // Use the composition's inferred physical form (single/mixed/liquid)
+      // when available, instead of always declaring `unknown`.
+      final comp = compositionsById['comp_${meal.id}'];
       inputs.add(MealTimelineInput(
         id: 'meal_${meal.id}',
         startedAt: meal.effectiveOccurredAt,
         compositionId: 'comp_${meal.id}',
-        physicalForm: MealPhysicalForm.unknown,
+        physicalForm: comp?.mealPhysicalForm ?? MealPhysicalForm.unknown,
       ));
     }
     return inputs;
   }
 
+  /// Build a `MealComposition` per historical meal. Componentized: one
+  /// `FoodComponent` per `MealItem`, joined back to catalog `FoodItem` data
+  /// (`catalogById`) to recover physical form, energy (calories), and
+  /// amino-acid provenance. Logged macros come from the meal item itself;
+  /// catalog data only ENRICHES. Missing source data stays null (never 0).
+  /// Falls back to a single aggregate component only when the meal has no items.
   Map<String, MealComposition> _buildMealCompositions(
-      NextMealRecommendationRequest request) {
+    NextMealRecommendationRequest request,
+    Map<String, FoodItem> catalogById,
+  ) {
     final result = <String, MealComposition>{};
     for (final meal in request.history) {
-      final totals = meal.computeTotals();
-      final component = FoodComponent(
-        id: 'meal_aggregate_${meal.id}',
-        name: meal.title,
-        physicalForm: MealPhysicalForm.unknown,
-        proteinGrams: totals.totalProteinG,
-        fatGrams: totals.totalFatG,
-        fiberGrams: totals.totalFiberG,
-        carbohydrateGrams: totals.totalCarbsG,
-        calories: null,
-        portionGrams: null,
-        sourceDocId: 'meal_history',
-      );
+      final components = <FoodComponent>[];
+      if (meal.items.isEmpty) {
+        // No item structure available → keep the legacy aggregate (macros from
+        // totals; calories/portion unknown rather than fabricated).
+        final totals = meal.computeTotals();
+        components.add(FoodComponent(
+          id: 'meal_aggregate_${meal.id}',
+          name: meal.title,
+          physicalForm: MealPhysicalForm.unknown,
+          proteinGrams: totals.totalProteinG,
+          fatGrams: totals.totalFatG,
+          fiberGrams: totals.totalFiberG,
+          carbohydrateGrams: totals.totalCarbsG,
+          calories: null,
+          portionGrams: null,
+          sourceDocId: 'meal_history',
+        ));
+      } else {
+        for (var i = 0; i < meal.items.length; i++) {
+          components.add(mealItemToFoodComponent(
+            meal.items[i],
+            componentId: 'mealitem_${meal.id}_$i',
+            catalogMatch: catalogById[meal.items[i].foodId],
+          ));
+        }
+      }
       final composition = mealCompositionNormalizer.normalize(
         mealId: 'comp_${meal.id}',
-        components: [component],
+        components: components,
       );
       result[composition.id] = composition;
     }

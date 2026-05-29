@@ -60,6 +60,18 @@ class MechanisticReplayCaseReport {
   final String userEnteredDosage;
   final bool dosageContextComplete;
   final int perEventCount;
+  // Upgraded-chain transparency (#7): componentized meal composition, gastric
+  // phase assumptions, absorption openness-profile summary, LNAA actual-vs-proxy
+  // detail, and the active scoring parameter set.
+  final int mealComponentCount;
+  final List<String> gastricEmptyingAssumptions;
+  final int absorptionOpennessSampleCount;
+  final double? absorptionPeakOpenness;
+  final bool partialAminoAcidData;
+  final double? competingLnaaGrams;
+  final bool doseRelativeLnaaAvailable;
+  final double? doseRelativeLnaaRatio;
+  final String scoringParameterSetId;
   final bool pass;
   final String? failureReason;
 
@@ -103,6 +115,15 @@ class MechanisticReplayCaseReport {
     this.userEnteredDosage = 'none',
     this.dosageContextComplete = false,
     this.perEventCount = 0,
+    this.mealComponentCount = 0,
+    this.gastricEmptyingAssumptions = const [],
+    this.absorptionOpennessSampleCount = 0,
+    this.absorptionPeakOpenness,
+    this.partialAminoAcidData = false,
+    this.competingLnaaGrams,
+    this.doseRelativeLnaaAvailable = false,
+    this.doseRelativeLnaaRatio,
+    this.scoringParameterSetId = 'none',
   });
 
   Map<String, dynamic> toJson() => {
@@ -145,6 +166,15 @@ class MechanisticReplayCaseReport {
         'user_entered_dosage': userEnteredDosage,
         'dosage_context_complete': dosageContextComplete,
         'per_event_count': perEventCount,
+        'meal_component_count': mealComponentCount,
+        'gastric_emptying_assumptions': gastricEmptyingAssumptions,
+        'absorption_openness_sample_count': absorptionOpennessSampleCount,
+        'absorption_peak_openness': absorptionPeakOpenness,
+        'partial_amino_acid_data': partialAminoAcidData,
+        'competing_lnaa_grams': competingLnaaGrams,
+        'dose_relative_lnaa_available': doseRelativeLnaaAvailable,
+        'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
+        'scoring_parameter_set_id': scoringParameterSetId,
         'pass': pass,
         'failure_reason': failureReason,
       };
@@ -388,12 +418,36 @@ class MechanisticReplayRunner {
     final dosageContextComplete = medValidations.isNotEmpty &&
         medValidations.first.validity == MedicationContextValidity.valid;
 
+    // Upgraded-chain transparency (#7). LNAA detail comes from the meal-level
+    // competition when a meal is present, otherwise from the top scored
+    // candidate's upstream competition (candidate-only scenarios have no meal).
+    final emptying = result.primaryEmptyingProfile;
+    final absorptionWindow = result.absorptionOpportunityWindow;
+    final lnaa = result.competitionTimeline?.lnaaSummary ??
+        ((recommendations != null && recommendations.isNotEmpty)
+            ? recommendations
+                .first.upstreamResult?.competitionTimeline?.lnaaSummary
+            : null);
+    final scoringParamId = (recommendations == null || recommendations.isEmpty)
+        ? 'none'
+        : recommendations.first.scoringParameterSetId;
+
     return MechanisticReplayCaseReport(
       scenarioId: scenario.scenarioId,
       title: scenario.title,
       userEnteredDosage: userEnteredDosage,
       dosageContextComplete: dosageContextComplete,
       perEventCount: result.perEventCount,
+      mealComponentCount: emptying?.componentProfiles.length ?? 0,
+      gastricEmptyingAssumptions: emptying?.assumptions ?? const [],
+      absorptionOpennessSampleCount:
+          absorptionWindow?.opennessProfile.length ?? 0,
+      absorptionPeakOpenness: absorptionWindow?.peakOpenness,
+      partialAminoAcidData: lnaa?.partialAminoAcidData ?? false,
+      competingLnaaGrams: lnaa?.competingLnaaGrams,
+      doseRelativeLnaaAvailable: lnaa?.doseRelativeAvailable ?? false,
+      doseRelativeLnaaRatio: lnaa?.doseRelativeLnaaRatio,
+      scoringParameterSetId: scoringParamId,
       medicationContextValidity:
           medValidations.isEmpty ? 'none' : medValidations.first.validity.name,
       mealContextCompleteness: firstMealCompleteness,
@@ -417,7 +471,7 @@ class MechanisticReplayRunner {
       safetyBoundary: result.safetyBoundary,
       bannedPhraseHits: banned,
       nextMealRecommendationResult: recommendations,
-      competitionLnaaSummary: result.competitionTimeline?.lnaaSummary,
+      competitionLnaaSummary: lnaa,
       rankerUsed: recommendations == null
           ? 'mechanistic_engine_only'
           : 'mechanistic_primary_window_sampled',
@@ -453,10 +507,8 @@ class MechanisticReplayRunner {
           (recommendations == null || recommendations.isEmpty)
               ? null
               : recommendations.first.sourceSystem,
-      aminoAcidDataMode: result.competitionTimeline?.lnaaSummary?.dataMode.name,
-      aminoAcidNutrientIds:
-          result.competitionTimeline?.lnaaSummary?.aminoAcidNutrientIds ??
-              const [],
+      aminoAcidDataMode: lnaa?.dataMode.name,
+      aminoAcidNutrientIds: lnaa?.aminoAcidNutrientIds ?? const [],
       pass: pass,
       failureReason: pass ? null : failures.join('; '),
     );
