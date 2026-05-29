@@ -284,6 +284,16 @@ proxy and additionally exposes, in `CompetitionLnaaSummary`:
 - `partialAminoAcidData` — true when only some of the six competing LNAA are
   present (or a value was unit-ambiguous). Partial actual data widens
   uncertainty rather than being trusted as fully narrow.
+- `aminoAcidConfidenceTier` — when the FDC payload carries per-nutrient
+  provenance (`foodNutrientDerivation` / `dataPoints` / food `dataType`), the
+  extractor maps it to an ordinal `NutrientConfidenceTier`
+  (analytical / calculated / imputedOrAssumed / unknown). The competition layer
+  reports the conservative **weakest-wins** aggregate and **widens uncertainty
+  for any weaker-than-analytical tier** (calculated/imputed/unknown), exactly
+  like partial handling. This is a provenance signal, **not** a
+  measurement-uncertainty or clinical-accuracy estimate; a missing derivation
+  stays missing and never raises confidence
+  (`src.usda.fdc.foundation_docs`).
 
 The modeled overlap represents **intestinal-absorption** competition; broader
 blood–brain-barrier LNAA transport competition is named as a cited mechanism in

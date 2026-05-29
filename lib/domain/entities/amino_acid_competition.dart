@@ -43,6 +43,13 @@ class CompetitionLnaaSummary {
   /// data widens uncertainty rather than being trusted as fully narrow.
   final bool partialAminoAcidData;
 
+  /// Conservative "weakest-wins" FDC provenance tier across the contributing
+  /// amino-acid profiles (analytical / calculated / imputedOrAssumed / unknown),
+  /// or null when no FDC derivation provenance is available. A weaker-than-
+  /// analytical tier widens uncertainty. Educational provenance signal only —
+  /// NOT a measurement-uncertainty or clinical-accuracy estimate.
+  final String? aminoAcidConfidenceTier;
+
   const CompetitionLnaaSummary({
     required this.effectiveLoadFactor,
     required this.sourcesPresent,
@@ -56,6 +63,7 @@ class CompetitionLnaaSummary {
     this.doseRelativeLnaaRatio,
     this.doseRelativeAvailable = false,
     this.partialAminoAcidData = false,
+    this.aminoAcidConfidenceTier,
   });
 
   Map<String, dynamic> toJson() => {
@@ -72,6 +80,7 @@ class CompetitionLnaaSummary {
         'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
         'dose_relative_available': doseRelativeAvailable,
         'partial_amino_acid_data': partialAminoAcidData,
+        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
       };
 }
 

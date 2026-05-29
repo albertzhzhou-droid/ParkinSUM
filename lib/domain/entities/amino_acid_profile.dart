@@ -5,6 +5,11 @@
 /// Educational prototype only — not a clinical pharmacokinetic prediction.
 library;
 
+import 'nutrient_derivation.dart';
+
+export 'nutrient_derivation.dart'
+    show NutrientConfidenceTier, NutrientDerivation;
+
 /// Which data path produced the competition LNAA load.
 enum AminoAcidDataMode {
   /// Actual per-food amino-acid nutrient fields were used.
@@ -39,6 +44,14 @@ class AminoAcidProfile {
   /// lowers confidence rather than being trusted as precise.
   final bool partial;
 
+  /// Optional per-nutrient FDC provenance keyed by amino-acid field name
+  /// (e.g. `"leucine"`). Additive and default-empty; absent → no provenance
+  /// reported (missing ≠ a confident value).
+  final Map<String, NutrientDerivation> derivations;
+
+  /// Optional FDC food data type (Foundation / SR Legacy / Survey / Branded).
+  final String? fdcDataType;
+
   const AminoAcidProfile({
     this.leucine,
     this.isoleucine,
@@ -54,7 +67,15 @@ class AminoAcidProfile {
     this.nutrientIds = const [],
     this.sourceRefs = const [],
     this.partial = false,
+    this.derivations = const {},
+    this.fdcDataType,
   });
+
+  /// Conservative "weakest-wins" provenance tier across present per-nutrient
+  /// derivations. Null when no derivation provenance is available — a missing
+  /// derivation never raises confidence.
+  NutrientConfidenceTier? get aggregateConfidenceTier =>
+      derivations.isEmpty ? null : weakestConfidenceTier(derivations.values);
 
   /// The six classic LNAAs that compete with levodopa transport
   /// (branched-chain + aromatic): leucine, isoleucine, valine, phenylalanine,
@@ -118,6 +139,8 @@ class AminoAcidProfile {
       nutrientIds: nutrientIds,
       sourceRefs: sourceRefs,
       partial: partial,
+      derivations: derivations,
+      fdcDataType: fdcDataType,
     );
   }
 
@@ -137,6 +160,9 @@ class AminoAcidProfile {
         'source_refs': sourceRefs,
         'partial': partial,
         'competing_lnaa_grams': competingLnaaGrams,
+        'fdc_data_type': fdcDataType,
+        'aggregate_confidence_tier': aggregateConfidenceTier?.name,
+        'derivations': derivations.map((k, v) => MapEntry(k, v.toJson())),
       };
 
   /// Defensive deserialization. Absent numeric fields stay null (never coerced
@@ -162,6 +188,10 @@ class AminoAcidProfile {
           .map((e) => e.toString())
           .toList(growable: false),
       partial: (json['partial'] as bool?) ?? false,
+      fdcDataType: json['fdc_data_type'] as String?,
+      derivations: (json['derivations'] as Map<String, dynamic>? ?? const {})
+          .map((k, v) => MapEntry(
+              k, NutrientDerivation.fromJson(v as Map<String, dynamic>))),
     );
   }
 }

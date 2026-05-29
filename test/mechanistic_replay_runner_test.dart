@@ -106,6 +106,18 @@ void main() {
     expect(c.doseRelativeLnaaRatio, isNotNull);
   });
 
+  test('FDC analytical provenance surfaces confidence tier in the report (B1)',
+      () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa');
+    // The amino-acid meal carries FDC analytical derivations → tier surfaced,
+    // and analytical provenance does not widen uncertainty.
+    expect(c.aminoAcidConfidenceTier, 'analytical');
+    final encoded = encodeReplayReport(report);
+    expect(encoded, contains('"amino_acid_confidence_tier"'));
+  });
+
   test('serialized report is valid JSON and contains no banned phrases', () {
     final report = runner.run();
     final encoded = encodeReplayReport(report);

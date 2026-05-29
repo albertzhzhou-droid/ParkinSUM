@@ -55,7 +55,7 @@ of this scorecard is 🟢 *Inspired-Aligned*.
 | S2 | HL7 FHIR R5 **NutritionIntake** | 🟡 | 🟢 | OPP-F2 | #9 |
 | S3 | HL7 FHIR R5 **Observation** (nutrient) | ⬜ | 🟡 | OPP-F2 | #9 |
 | S4 | **FDA SPL** + LOINC section identity | 🟡 | 🟢 | OPP-A1 | #1 |
-| S5 | **USDA FDC** FoodNutrient provenance (derivation/dataPoints/dataType) | 🟡 | 🟢 | OPP-B1 / OPP-B2 | #2 + spike |
+| S5 | **USDA FDC** FoodNutrient provenance (derivation/dataPoints/dataType) | 🟢 | 🟢 | OPP-B1 ✅ / OPP-B2 | #2 + spike (**B1 shipped**) |
 | S6 | **FAO/INFOODS** component identifiers (tagnames) | ⬜ | 🟡 | OPP-B3 | (map) |
 | S7 | **RxNorm / ATC** identity coding | ⬜ | 🟡 | OPP-A3 | (map) |
 | S8 | **OMOP CDM** concept identity (non-patient) | ⬜ | 🟡 | OPP-F1/F2 adjunct | (map) |
@@ -142,7 +142,7 @@ boundary.
 - **Safety:** metadata/provenance only; mechanism evidence still requires
   explicit label text.
 
-### S5 — USDA FDC FoodNutrient provenance — 🟡 Inspired-Partial
+### S5 — USDA FDC FoodNutrient provenance — 🟢 Inspired-Aligned (B1 shipped)
 
 - **Standard:** the FDC OpenAPI `FoodNutrient` (non-abridged) family carries, per
   nutrient value, a derivation (`foodNutrientDerivation` with `code`/`description`
@@ -156,12 +156,20 @@ boundary.
   name fallback, mg→g normalization, and a `partial` flag for unit-ambiguous
   values. But `basis` is **hard-coded `per_100g`**, and it captures **no**
   derivation code, sample count, analytical method, or `dataType`.
-- **Delta to 🟢:** capture derivation + dataPoints + dataType into
-  `FoodVariantMetadata` and a per-nutrient confidence flag consumed by
-  `MetadataCompletenessGate`; let `basis` be data-driven, not assumed. This is
-  the fully-specified spike.
+- **Shipped (B1):** `AminoAcidExtractor` now captures per-nutrient
+  `foodNutrientDerivation` / `dataPoints` / `foodNutrientSource` and food
+  `dataType`, and `basis` follows the payload when present.
+  `NutrientDerivation` (new entity) maps the derivation to an ordinal
+  `NutrientConfidenceTier` (analytical / calculated / imputedOrAssumed /
+  unknown); `AminoAcidProfile.aggregateConfidenceTier` is a conservative
+  weakest-wins aggregate. The LNAA competition layer surfaces
+  `aminoAcidConfidenceTier` and **widens uncertainty for any
+  weaker-than-analytical tier** (mirrors partial handling); the replay report
+  surfaces it. Missing derivation stays null (never raises confidence).
+- **Remaining delta (follow-up):** fold the tier into `FoodVariantMetadata` +
+  `MetadataCompletenessGate` for the candidate-food completeness grade.
 - **Safety:** provenance only; never fabricate a sample count or method; missing
-  → lower completeness, not higher confidence.
+  → never higher confidence.
 
 ### S6 — FAO/INFOODS component identifiers (tagnames) — ⬜ Absent
 

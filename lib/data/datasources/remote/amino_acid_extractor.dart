@@ -40,10 +40,21 @@ class AminoAcidExtractor {
         methionine,
         threonine;
     final ids = <String>[];
-    const basis = 'per_100g';
+    // Basis follows the payload when present (FDC Foundation/SR are per_100g);
+    // defaults to per_100g only when the payload does not declare one.
+    final basis = (payload['basisType'] is String &&
+            (payload['basisType'] as String).trim().isNotEmpty)
+        ? payload['basisType'] as String
+        : 'per_100g';
+    // Optional FDC food data type (Foundation / SR Legacy / Survey / Branded).
+    final fdcDataType = (payload['dataType'] is String &&
+            (payload['dataType'] as String).trim().isNotEmpty)
+        ? payload['dataType'] as String
+        : null;
     // After normalization all values are expressed in grams.
     const unit = 'g';
     var partial = false;
+    final derivations = <String, NutrientDerivation>{};
 
     void assign(String field, double valueG, String number) {
       switch (field) {
@@ -101,6 +112,11 @@ class AminoAcidExtractor {
       } else {
         assign(field, normalized, number);
       }
+
+      // Capture FDC per-nutrient provenance when present (additive; missing
+      // stays missing — never fabricated). Keyed by amino-acid field name.
+      final derivation = _extractDerivation(raw);
+      if (derivation != null) derivations[field] = derivation;
     }
 
     final profile = AminoAcidProfile(
@@ -118,8 +134,48 @@ class AminoAcidExtractor {
       nutrientIds: List.unmodifiable(ids),
       sourceRefs: sourceRefs,
       partial: partial,
+      derivations: Map.unmodifiable(derivations),
+      fdcDataType: fdcDataType,
     );
     return profile.competingLnaaGrams == null ? null : profile;
+  }
+
+  /// Extract an FDC `foodNutrientDerivation` / `dataPoints` / `foodNutrientSource`
+  /// block from a single `foodNutrients` entry. Returns null when no provenance
+  /// fields are present (missing ≠ fabricated). Field names follow the FDC
+  /// OpenAPI `FoodNutrient` family.
+  NutrientDerivation? _extractDerivation(Map raw) {
+    final derivation = raw['foodNutrientDerivation'];
+    final dataPoints = raw['dataPoints'];
+    final min = raw['min'];
+    final max = raw['max'];
+    final median = raw['median'];
+    String? code;
+    String? description;
+    String? sourceCode;
+    if (derivation is Map) {
+      code = derivation['code']?.toString();
+      description = derivation['description']?.toString();
+      final source = derivation['foodNutrientSource'];
+      if (source is Map) sourceCode = source['code']?.toString();
+    }
+    final hasAny = code != null ||
+        description != null ||
+        sourceCode != null ||
+        dataPoints is num ||
+        min is num ||
+        max is num ||
+        median is num;
+    if (!hasAny) return null;
+    return NutrientDerivation(
+      derivationCode: code,
+      derivationDescription: description,
+      sourceCode: sourceCode,
+      dataPoints: dataPoints is num ? dataPoints.toInt() : null,
+      min: min is num ? min.toDouble() : null,
+      max: max is num ? max.toDouble() : null,
+      median: median is num ? median.toDouble() : null,
+    );
   }
 
   /// Normalize an amino-acid amount to grams. Returns null when the unit is

@@ -126,6 +126,61 @@ void main() {
     expect(s.doseRelativeLnaaRatio, closeTo(6.0, 1e-9));
   });
 
+  test('non-analytical FDC provenance widens uncertainty + surfaces tier (B1)',
+      () {
+    // Full LNAA set, all imputed → aggregate tier imputedOrAssumed → widen.
+    const imputed = NutrientDerivation(derivationDescription: 'Imputed');
+    final s = summaryFor(withProfile(
+      const AminoAcidProfile(
+        leucine: 2.0,
+        isoleucine: 1.0,
+        valine: 1.0,
+        phenylalanine: 1.0,
+        tyrosine: 0.5,
+        tryptophan: 0.5,
+        basis: 'per_serving',
+        derivations: {
+          'leucine': imputed,
+          'isoleucine': imputed,
+          'valine': imputed,
+          'phenylalanine': imputed,
+          'tyrosine': imputed,
+          'tryptophan': imputed,
+        },
+      ),
+    ));
+    expect(s.dataMode, AminoAcidDataMode.actualAminoAcidFields);
+    expect(s.aminoAcidConfidenceTier, 'imputedOrAssumed');
+    expect(s.uncertaintyWidened, isTrue);
+    // The FDC provenance source ref is attached when a tier is present.
+    expect(s.sourceRefs, contains('src.usda.fdc.foundation_docs'));
+  });
+
+  test('analytical FDC provenance does NOT widen uncertainty (B1)', () {
+    const analytical = NutrientDerivation(derivationCode: 'A');
+    final s = summaryFor(withProfile(
+      const AminoAcidProfile(
+        leucine: 2.0,
+        isoleucine: 1.0,
+        valine: 1.0,
+        phenylalanine: 1.0,
+        tyrosine: 0.5,
+        tryptophan: 0.5,
+        basis: 'per_serving',
+        derivations: {
+          'leucine': analytical,
+          'isoleucine': analytical,
+          'valine': analytical,
+          'phenylalanine': analytical,
+          'tyrosine': analytical,
+          'tryptophan': analytical,
+        },
+      ),
+    ));
+    expect(s.aminoAcidConfidenceTier, 'analytical');
+    expect(s.uncertaintyWidened, isFalse);
+  });
+
   test('missing/non-explicit dose → dose-relative ratio unavailable', () {
     final s = summaryFor(
       withProfile(const AminoAcidProfile(
