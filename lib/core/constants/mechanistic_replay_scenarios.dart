@@ -312,6 +312,19 @@ const _aminoAcidMealComponent = FoodComponent(
     basis: 'per_serving',
     nutrientIds: ['504', '503', '510', '508', '509', '501'],
     sourceRefs: ['src.fdc.api.amino_acid_fields'],
+    // FDC Foundation-food provenance (analytical) — surfaces the confidence
+    // tier in the replay report without widening uncertainty (B1).
+    fdcDataType: 'Foundation',
+    derivations: {
+      'leucine': NutrientDerivation(
+          derivationCode: 'A',
+          derivationDescription: 'Analytical',
+          dataPoints: 12),
+      'valine': NutrientDerivation(
+          derivationCode: 'A',
+          derivationDescription: 'Analytical',
+          dataPoints: 12),
+    },
   ),
 );
 

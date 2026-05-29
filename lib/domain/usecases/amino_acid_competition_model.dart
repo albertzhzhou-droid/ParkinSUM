@@ -1,6 +1,7 @@
 import '../entities/absorption_opportunity.dart';
 import '../entities/amino_acid_competition.dart';
 import '../entities/amino_acid_profile.dart' show AminoAcidDataMode;
+import '../entities/nutrient_derivation.dart';
 import '../entities/gastric_emptying_profile.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
@@ -83,6 +84,14 @@ class AminoAcidCompetitionModel {
     }
     if (lnaa.partialAminoAcidData) {
       assumptions.add('aa.lnaa.partial_amino_acid_fields_widened_uncertainty');
+    }
+    final tier = lnaa.aminoAcidConfidenceTier;
+    if (tier != null) {
+      assumptions.add('aa.lnaa.fdc_nutrient_confidence_tier ($tier)');
+      if (tier != 'analytical') {
+        assumptions
+            .add('aa.lnaa.non_analytical_provenance_widened_uncertainty');
+      }
     }
     if (lnaa.dataMode == AminoAcidDataMode.actualAminoAcidFields) {
       if (lnaa.doseRelativeAvailable) {
@@ -234,6 +243,25 @@ class AminoAcidCompetitionModel {
       }
       final effective = totalProtein > 0 ? weighted / totalProtein : 1.0;
 
+      // FDC nutrient provenance: weakest-wins confidence tier across the
+      // contributing profiles. A weaker-than-analytical tier (calculated /
+      // imputed / unknown) widens uncertainty — exactly like partial data — so
+      // calculated/imputed nutrient values are never treated as fully narrow.
+      NutrientConfidenceTier? aggregateTier;
+      for (final c in aaComponents) {
+        final t = c.aminoAcidProfile!.aggregateConfidenceTier;
+        if (t == null) continue;
+        if (aggregateTier == null ||
+            nutrientConfidenceRank(t) > nutrientConfidenceRank(aggregateTier)) {
+          aggregateTier = t; // weakest-wins
+        }
+      }
+      final tierWidens =
+          aggregateTier != null && tierWidensUncertainty(aggregateTier);
+      if (aggregateTier != null) {
+        refs.add('src.usda.fdc.foundation_docs');
+      }
+
       // Dose-relative ratio (g competing LNAA per 100 mg levodopa) ONLY when an
       // explicit user-entered dose is available — never invented.
       final doseAvailable = levodopaDoseMg != null && levodopaDoseMg > 0;
@@ -245,8 +273,9 @@ class AminoAcidCompetitionModel {
         effectiveLoadFactor: effective,
         sourcesPresent: const [],
         isPrototypeHeuristic: true,
-        // Partial actual data is NOT treated as fully narrow uncertainty.
-        uncertaintyWidened: partial,
+        // Partial actual data OR a weaker-than-analytical FDC provenance tier is
+        // NOT treated as fully narrow uncertainty.
+        uncertaintyWidened: partial || tierWidens,
         sourceRefs: refs.toList(growable: false),
         dataMode: AminoAcidDataMode.actualAminoAcidFields,
         aminoAcidNutrientIds: ids.toList(growable: false),
@@ -257,6 +286,7 @@ class AminoAcidCompetitionModel {
         doseRelativeLnaaRatio: doseRelative,
         doseRelativeAvailable: doseAvailable,
         partialAminoAcidData: partial,
+        aminoAcidConfidenceTier: aggregateTier?.name,
       );
     }
 

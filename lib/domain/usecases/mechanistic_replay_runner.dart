@@ -71,6 +71,7 @@ class MechanisticReplayCaseReport {
   final double? competingLnaaGrams;
   final bool doseRelativeLnaaAvailable;
   final double? doseRelativeLnaaRatio;
+  final String? aminoAcidConfidenceTier;
   final String scoringParameterSetId;
   final bool pass;
   final String? failureReason;
@@ -123,6 +124,7 @@ class MechanisticReplayCaseReport {
     this.competingLnaaGrams,
     this.doseRelativeLnaaAvailable = false,
     this.doseRelativeLnaaRatio,
+    this.aminoAcidConfidenceTier,
     this.scoringParameterSetId = 'none',
   });
 
@@ -174,6 +176,7 @@ class MechanisticReplayCaseReport {
         'competing_lnaa_grams': competingLnaaGrams,
         'dose_relative_lnaa_available': doseRelativeLnaaAvailable,
         'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
+        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
         'scoring_parameter_set_id': scoringParameterSetId,
         'pass': pass,
         'failure_reason': failureReason,
@@ -444,6 +447,7 @@ class MechanisticReplayRunner {
           absorptionWindow?.opennessProfile.length ?? 0,
       absorptionPeakOpenness: absorptionWindow?.peakOpenness,
       partialAminoAcidData: lnaa?.partialAminoAcidData ?? false,
+      aminoAcidConfidenceTier: lnaa?.aminoAcidConfidenceTier,
       competingLnaaGrams: lnaa?.competingLnaaGrams,
       doseRelativeLnaaAvailable: lnaa?.doseRelativeAvailable ?? false,
       doseRelativeLnaaRatio: lnaa?.doseRelativeLnaaRatio,

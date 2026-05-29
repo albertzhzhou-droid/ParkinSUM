@@ -115,6 +115,64 @@ void main() {
     expect(p.methionine, 0.6);
   });
 
+  test('captures FDC per-nutrient derivation + dataPoints + dataType (B1)', () {
+    final p = extractor.extractFromFdcStyle({
+      'dataType': 'Foundation',
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0,
+          'dataPoints': 12,
+          'foodNutrientDerivation': {
+            'code': 'A',
+            'description': 'Analytical',
+            'foodNutrientSource': {'code': '1'}
+          }
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.fdcDataType, 'Foundation');
+    expect(p.derivations.containsKey('leucine'), isTrue);
+    expect(p.derivations['leucine']!.dataPoints, 12);
+    expect(p.aggregateConfidenceTier, NutrientConfidenceTier.analytical);
+  });
+
+  test('imputed derivation lowers the aggregate tier (weakest-wins)', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0,
+          'foodNutrientDerivation': {'code': 'A', 'description': 'Analytical'}
+        },
+        {
+          'nutrient': {'number': '510', 'unitName': 'G'},
+          'amount': 1.3,
+          'foodNutrientDerivation': {'description': 'Imputed from similar food'}
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.aggregateConfidenceTier,
+        NutrientConfidenceTier.imputedOrAssumed); // weakest wins
+  });
+
+  test('absent derivation → no provenance (missing, never fabricated)', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.derivations, isEmpty);
+    expect(p.aggregateConfidenceTier, isNull); // missing ≠ confident
+    expect(p.fdcDataType, isNull);
+  });
+
   test('number mapping beats a conflicting name', () {
     // Number 504 = Leucine; the (deliberately wrong) name says Valine.
     // The verified number must win.
