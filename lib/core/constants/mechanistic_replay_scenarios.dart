@@ -921,4 +921,126 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       ),
     ],
   ),
+
+  // --- D2: missingness stress suite (missing ≠ zero) ---------------------
+  MechanisticReplayScenario(
+    scenarioId: 's35_missing_calories_and_portion',
+    title: 'Protein present but calories + portion missing → lower composition '
+        'completeness + capped confidence (missing ≠ zero)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedConfidenceCeiling: ConfidenceBand.medium,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_missing_cal_portion',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [
+          FoodComponent(
+            id: 'food.missing_cal_portion',
+            name: 'high-protein item, calories+portion unknown (synthetic)',
+            physicalForm: MealPhysicalForm.solid,
+            proteinGrams: 30,
+            fatGrams: 6,
+            fiberGrams: 0,
+            carbohydrateGrams: 0,
+            calories: null, // missing — never treated as 0
+            portionGrams: null, // missing — never treated as 0
+            sourceDocId: 'synthetic:demo_food',
+          ),
+        ],
+      ),
+    ],
+    notes: 'Asserts missing calories/portion lower completeness + cap '
+        'confidence rather than fabricating 0.',
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's36_missing_all_macros_unknown_competition',
+    title:
+        'All macronutrients missing → unknown competition + insufficient/low '
+        'confidence (never fabricated)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalInfo,
+    expectedConfidenceCeiling: ConfidenceBand.low,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_all_missing',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.unknown,
+        components: [
+          FoodComponent(
+            id: 'food.all_missing',
+            name: 'unknown food, no macros (synthetic)',
+            physicalForm: MealPhysicalForm.unknown,
+            proteinGrams: null,
+            fatGrams: null,
+            fiberGrams: null,
+            carbohydrateGrams: null,
+            calories: null,
+            portionGrams: null,
+            sourceDocId: 'synthetic:demo_food',
+          ),
+        ],
+      ),
+    ],
+    notes: 'Proves missing macros stay missing (unknown competition, lowered '
+        'confidence), never silently 0.',
+  ),
+
+  // --- C1: enteral feeding educational scenarios (non-prescriptive) ------
+  MechanisticReplayScenario(
+    scenarioId: 's37_enteral_continuous_low_protein',
+    title: 'Continuous enteral-style feed (low-protein liquid, sustained) — '
+        'educational context only, no schedule or timing advice',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_enteral_continuous',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.liquid,
+        components: [
+          FoodComponent(
+            id: 'food.enteral_continuous.synth',
+            name: 'continuous enteral feed, low protein (synthetic demo)',
+            physicalForm: MealPhysicalForm.liquid,
+            proteinGrams: 2,
+            fatGrams: 2,
+            fiberGrams: 0,
+            carbohydrateGrams: 12,
+            calories: 80,
+            portionGrams: 250,
+            sourceDocId: 'synthetic:demo_food',
+          ),
+        ],
+      ),
+    ],
+    notes: 'Enteral feeding changes protein delivery + gastric context. '
+        'Educational simulation only; not a feeding schedule or timing '
+        'recommendation. Review with a qualified professional.',
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's38_enteral_bolus_protein',
+    title: 'Bolus enteral-style feed (protein-containing liquid) near a dose — '
+        'educational context only, no schedule or timing advice',
+    // A liquid bolus empties quickly, so in this configuration the model finds
+    // no modeled interaction by the time the absorption window opens.
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(20)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_enteral_bolus',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.liquid,
+        components: [_smoothieLiquidProtein],
+      ),
+    ],
+    notes: 'Bolus enteral feed modeled as a protein-containing liquid meal. '
+        'Educational simulation only; not a feeding schedule or timing '
+        'recommendation. Review with a qualified professional.',
+  ),
 ];
