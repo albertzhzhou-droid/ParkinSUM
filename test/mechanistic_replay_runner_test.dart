@@ -65,10 +65,77 @@ void main() {
     }
   });
 
+  test('actual amino-acid scenario surfaces absolute competing LNAA grams', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's22_amino_acid_actual_fields_mode');
+    expect(c.aminoAcidDataMode, 'actualAminoAcidFields');
+    expect(c.competingLnaaGrams, isNotNull);
+    expect(c.partialAminoAcidData, isFalse);
+    // Candidate scoring ran → the active scoring weight set is recorded.
+    expect(c.scoringParameterSetId, 'next_meal_scoring.v1');
+  });
+
+  test('partial amino-acid scenario flags partial data', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's32_partial_amino_acid_profile');
+    expect(c.partialAminoAcidData, isTrue);
+  });
+
+  test('high-calorie meal scenario widens gastric uncertainty', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's33_high_calorie_high_fat_meal');
+    expect(
+      c.gastricEmptyingAssumptions
+          .any((a) => a.contains('ge.highcal.uncertainty_boost')),
+      isTrue,
+    );
+    expect(c.mealComponentCount, greaterThanOrEqualTo(1));
+    // Absorption openness profile was produced for the dose.
+    expect(c.absorptionOpennessSampleCount, greaterThan(0));
+    expect(c.absorptionPeakOpenness, isNotNull);
+  });
+
+  test('explicit-dose + actual-AA meal exposes dose-relative LNAA proxy', () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa');
+    expect(c.doseRelativeLnaaAvailable, isTrue);
+    expect(c.doseRelativeLnaaRatio, isNotNull);
+  });
+
   test('serialized report is valid JSON and contains no banned phrases', () {
     final report = runner.run();
     final encoded = encodeReplayReport(report);
     expect(encoded, contains('"scenario_id"'));
+    expect(encoded, contains('"competing_lnaa_grams"'));
+    expect(encoded, contains('"scoring_parameter_set_id"'));
     expect(findBannedSubstrings(encoded), isEmpty);
+  });
+
+  // Clinical-calibration guardrail regression (OPP-D4 / backlog #12). Locks in
+  // the non-device educational boundary: every replay case must report it is
+  // not clinically calibrated, must not enable live fetch by default, and must
+  // not claim mechanism evidence it cannot support. If any case regresses this,
+  // the boundary has been crossed and this test fails.
+  test('every replay case preserves the clinical-calibration guardrail', () {
+    final report = runner.run();
+    expect(report.cases, isNotEmpty);
+    for (final c in report.cases) {
+      expect(c.clinicalCalibrationStatus, 'not_clinically_calibrated',
+          reason: '${c.scenarioId} must not claim clinical calibration');
+      expect(c.liveFetchEnabled, isFalse,
+          reason: '${c.scenarioId} must not enable live fetch by default');
+      expect(c.canSupportMechanismEvidenceAlone, isFalse,
+          reason: '${c.scenarioId} must not assert standalone mechanism '
+              'evidence in the educational build');
+      expect(c.licenseReviewStatus, 'future_work',
+          reason: '${c.scenarioId} source license review remains future work');
+      expect(c.sourceImplementationStatus, 'fixture_tested',
+          reason: '${c.scenarioId} must remain fixture-tested (no production '
+              'ingestion)');
+    }
   });
 }

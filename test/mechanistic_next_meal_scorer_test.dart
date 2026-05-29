@@ -3,6 +3,7 @@ import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.
 import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 import 'package:parkinsum_companion/domain/usecases/mechanistic_next_meal_scorer.dart';
+import 'package:parkinsum_companion/domain/usecases/next_meal_scoring_parameters.dart';
 import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.dart';
 import 'package:parkinsum_companion/domain/usecases/time_axis_builder.dart';
 
@@ -248,5 +249,109 @@ void main() {
       expect(s.proteinDistribution, isNotNull);
       expect(s.finalCandidateScore, inInclusiveRange(0.0, 1.0));
     }
+  });
+
+  test('default scoring parameter set keeps conflict overlap dominant', () {
+    final params = NextMealScoringParameterSet.literatureInformedDefault();
+    expect(params.conflictRemainsDominant, isTrue);
+    // Conflict weight must not be smaller than the combined provenance weight.
+    expect(params.conflictOverlap.value,
+        greaterThanOrEqualTo(params.provenanceWeightSum));
+    // Each candidate score records which weight set was active.
+  });
+
+  test('scoring parameter set is injectable and changes ordering', () {
+    final v = validator.validate(validLevodopa);
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final ctx = builder.build(
+      now: now,
+      medicationInputs: [
+        MedicationTimelineInput(
+            id: 'm',
+            takenAt: now.add(const Duration(minutes: 30)),
+            medicationContext: v),
+      ],
+      mealInputs: const [],
+      userDefinedWindow: UserDefinedMealWindow(
+        window: TimelineWindow(
+          startMinute: dateTimeToMinute(now) + 60,
+          endMinute: dateTimeToMinute(now) + 120,
+        ),
+        source: 'test',
+      ),
+    );
+    final defaultScores = scorer.score(
+      baseContext: ctx,
+      baseMealCompositionsById: const {},
+      candidates: const [proteinShake, banana],
+    );
+    expect(defaultScores.first.scoringParameterSetId, 'next_meal_scoring.v1');
+
+    // An alternative — but still conflict-dominant — weight set produces a
+    // different composite ordering metric → proves the weights are wired in.
+    // (We zero the metadata-completeness weight, which defaults to a non-zero
+    // neutral 0.5 contribution; conflict overlap stays the dominant term, so
+    // the safety invariant still holds.)
+    final base = NextMealScoringParameterSet.literatureInformedDefault();
+    final altParams = NextMealScoringParameterSet(
+      id: 'alt.v0',
+      conflictOverlap: base.conflictOverlap,
+      proteinRedistribution: base.proteinRedistribution,
+      nutritionAdequacy: base.nutritionAdequacy,
+      metadataCompleteness: ScoringWeight(
+        id: base.metadataCompleteness.id,
+        label: base.metadataCompleteness.label,
+        value: 0.0, // drop the metadata-completeness term
+        sourceRefs: base.metadataCompleteness.sourceRefs,
+        evidenceLevel: base.metadataCompleteness.evidenceLevel,
+        limitation: base.metadataCompleteness.limitation,
+      ),
+      sourceAuthority: base.sourceAuthority,
+      jurisdictionMatch: base.jurisdictionMatch,
+      provenanceQuality: base.provenanceQuality,
+      uncertaintyPenalty: base.uncertaintyPenalty,
+    );
+    expect(altParams.conflictRemainsDominant, isTrue);
+    final altScorer = MechanisticNextMealScorer(scoringParameters: altParams);
+    final altScores = altScorer.score(
+      baseContext: ctx,
+      baseMealCompositionsById: const {},
+      candidates: const [proteinShake, banana],
+    );
+    final defShake =
+        defaultScores.firstWhere((s) => s.candidateFoodId == 'shake');
+    final altShake = altScores.firstWhere((s) => s.candidateFoodId == 'shake');
+    expect(altShake.finalCandidateScore,
+        isNot(closeTo(defShake.finalCandidateScore, 1e-9)));
+    expect(altShake.scoringParameterSetId, 'alt.v0');
+  });
+
+  test('scorer REJECTS a non-conflict-dominant weight set (ArgumentError)', () {
+    final base = NextMealScoringParameterSet.literatureInformedDefault();
+    // Conflict overlap weight dropped below the combined provenance weight →
+    // provenance/metadata could overpower modeled conflict. Must be rejected.
+    final nonDominant = NextMealScoringParameterSet(
+      id: 'bad.v0',
+      conflictOverlap: ScoringWeight(
+        id: base.conflictOverlap.id,
+        label: base.conflictOverlap.label,
+        value: 0.0,
+        sourceRefs: base.conflictOverlap.sourceRefs,
+        evidenceLevel: base.conflictOverlap.evidenceLevel,
+        limitation: base.conflictOverlap.limitation,
+      ),
+      proteinRedistribution: base.proteinRedistribution,
+      nutritionAdequacy: base.nutritionAdequacy,
+      metadataCompleteness: base.metadataCompleteness,
+      sourceAuthority: base.sourceAuthority,
+      jurisdictionMatch: base.jurisdictionMatch,
+      provenanceQuality: base.provenanceQuality,
+      uncertaintyPenalty: base.uncertaintyPenalty,
+    );
+    expect(nonDominant.conflictRemainsDominant, isFalse);
+    expect(
+      () => MechanisticNextMealScorer(scoringParameters: nonDominant),
+      throwsArgumentError,
+    );
   });
 }

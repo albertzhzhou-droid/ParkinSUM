@@ -19,6 +19,30 @@ class CompetitionLnaaSummary {
   /// Upstream amino-acid nutrient ids when actual fields were used.
   final List<String> aminoAcidNutrientIds;
 
+  /// Absolute competing LNAA grams summed across the meal's components, when
+  /// actual amino-acid fields are present. Null in proxy/unknown mode
+  /// (missing ≠ zero — the proxy does not measure grams).
+  final double? competingLnaaGrams;
+
+  /// Competing LNAA grams expressed per gram of the meal serving, when both
+  /// the actual grams and total portion mass are known. Null otherwise.
+  final double? competingLnaaGramsPerServing;
+
+  /// Competing LNAA grams relative to the user-entered levodopa dose
+  /// (g LNAA per 100 mg levodopa). Populated ONLY when actual LNAA grams AND
+  /// an explicit user-entered dose are both available — never with an invented
+  /// dose. Null when [doseRelativeAvailable] is false.
+  final double? doseRelativeLnaaRatio;
+
+  /// True only when an explicit levodopa dose was supplied AND actual LNAA
+  /// grams were computed, so the dose-relative ratio is meaningful.
+  final bool doseRelativeAvailable;
+
+  /// True when some — but not all — of the six competing LNAA fields are
+  /// present (or a contributing profile was unit-ambiguous). Partial actual
+  /// data widens uncertainty rather than being trusted as fully narrow.
+  final bool partialAminoAcidData;
+
   const CompetitionLnaaSummary({
     required this.effectiveLoadFactor,
     required this.sourcesPresent,
@@ -27,6 +51,11 @@ class CompetitionLnaaSummary {
     required this.sourceRefs,
     this.dataMode = AminoAcidDataMode.proteinSourceProxy,
     this.aminoAcidNutrientIds = const [],
+    this.competingLnaaGrams,
+    this.competingLnaaGramsPerServing,
+    this.doseRelativeLnaaRatio,
+    this.doseRelativeAvailable = false,
+    this.partialAminoAcidData = false,
   });
 
   Map<String, dynamic> toJson() => {
@@ -38,6 +67,11 @@ class CompetitionLnaaSummary {
         'source_refs': sourceRefs,
         'data_mode': dataMode.name,
         'amino_acid_nutrient_ids': aminoAcidNutrientIds,
+        'competing_lnaa_grams': competingLnaaGrams,
+        'competing_lnaa_grams_per_serving': competingLnaaGramsPerServing,
+        'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
+        'dose_relative_available': doseRelativeAvailable,
+        'partial_amino_acid_data': partialAminoAcidData,
       };
 }
 

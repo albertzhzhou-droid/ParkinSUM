@@ -219,6 +219,26 @@ Per the cited DailyMed labeling and PK reviews:
 
 This is an educational simulation, not a PK prediction.
 
+### 12a. Absorption opportunity openness profile
+
+In addition to the flat window (kept for compatibility), the model emits a
+deterministic **sampled openness curve** (`opennessProfile`: a list of
+`(minute, openness 0..1)` samples on `AbsorptionOpportunityWindow`):
+
+- Immediate-release rises sharply to a full-openness peak then decays to a low
+  tail (sharp, short).
+- Extended/controlled-release is flatter and longer (lower peak, higher
+  sustained tail).
+- When the meal context is incomplete (no overlapping meal profile) the whole
+  curve is flattened (scaled down) to reflect lower confidence.
+
+`openness` is a unitless educational weight — NOT an absorbed fraction and NOT
+a blood concentration. The amino-acid competition overlap (Layer 5) is
+**openness-weighted** (`Σ pressure·openness / Σ openness`) so competition
+pressure arriving near the peak opportunity counts more than pressure at the
+window edges; it falls back to the flat in-window average when no profile is
+present. Not PK/PD calibration, not dose-response advice.
+
 ## 13. Amino-acid competition assumptions
 
 The competition pressure proxy is the product of (a) the meal's
@@ -233,8 +253,9 @@ al. 1989; Cereda et al. 2017; Boelens Keun et al. 2021; Virmani et al.
 2023). When the component's protein source is `unknown`, the uncertainty
 band widens by one step rather than the model faking precision.
 
-The competition score is the *average pressure inside the absorption
-opportunity window*. Discretized bands:
+The competition score is the *openness-weighted* competition pressure across
+the absorption opportunity profile (see §12a; falls back to the flat in-window
+average when no openness profile is present). Discretized bands:
 
 | Overlap (avg pressure × overlap fraction) | Competition band |
 | --- | --- |
@@ -244,6 +265,29 @@ opportunity window*. Discretized bands:
 | ≥ 0.25 | `high` |
 
 Missing protein → `unknown` band and `veryWide` uncertainty.
+
+### 13a. Actual amino-acid fields, absolute grams, and dose-relative proxy
+
+When a food component carries actual amino-acid fields
+(`FoodComponent.aminoAcidProfile`), the LNAA layer uses
+`AminoAcidDataMode.actualAminoAcidFields` in preference to the protein-source
+proxy and additionally exposes, in `CompetitionLnaaSummary`:
+
+- `competingLnaaGrams` — absolute competing LNAA grams summed across components
+  (null in proxy/unknown mode; missing ≠ zero).
+- `competingLnaaGramsPerServing` — present only when a real serving mass is
+  known.
+- `doseRelativeLnaaRatio` (g LNAA per 100 mg levodopa) and
+  `doseRelativeAvailable` — populated **only** when an explicit user-entered
+  dose is available. The dose is taken from the validated medication context;
+  no dose is ever invented. Missing/non-explicit dose → ratio unavailable.
+- `partialAminoAcidData` — true when only some of the six competing LNAA are
+  present (or a value was unit-ambiguous). Partial actual data widens
+  uncertainty rather than being trusted as fully narrow.
+
+The modeled overlap represents **intestinal-absorption** competition; broader
+blood–brain-barrier LNAA transport competition is named as a cited mechanism in
+the trace but is not quantified here (no overclaiming).
 
 ## 14. Uncertainty / confidence scoring
 
@@ -294,8 +338,8 @@ The trace is JSON-serializable for the replay runner.
 
 ## 17. Synthetic scenario fixtures
 
-14 scenarios in `lib/core/constants/mechanistic_replay_scenarios.dart`
-cover:
+The scenarios in `lib/core/constants/mechanistic_replay_scenarios.dart`
+(35+ and growing) cover at least:
 
 1. Valid context + small low-protein meal far from medication.
 2. Valid context + high-protein solid meal close to medication.
@@ -311,6 +355,18 @@ cover:
 12. High-fat + protein in the same meal.
 13. User-defined next-meal window with multiple candidates.
 14. User-defined next-meal window with missing-nutrient candidate.
+15. Multi-dose immediate-release day (max-overlap aggregation).
+16. Actual amino-acid profile (actual-fields mode) vs protein-source proxy.
+17. Partial amino-acid profile (partial flag + widened uncertainty).
+18. High-calorie/high-fat meal (gastric uncertainty widened).
+19. Explicit user dose enabling the dose-relative LNAA proxy.
+
+The replay report (`MechanisticReplayCaseReport`) additionally surfaces, per
+scenario: `mealComponentCount`, `gastricEmptyingAssumptions`,
+`absorptionOpennessSampleCount` / `absorptionPeakOpenness`, `aminoAcidDataMode`,
+`partialAminoAcidData`, `competingLnaaGrams`,
+`doseRelativeLnaaAvailable` / `doseRelativeLnaaRatio`, `scoringParameterSetId`,
+`userEnteredDosage` / `dosageContextComplete`, and `perEventCount`.
 
 ## 18. Next-meal recommendation boundary
 
@@ -332,6 +388,16 @@ cover:
 - Returns `insufficient_context` for *every* candidate when the
   medication context is invalid — never pretends to optimize against a
   bare numeric dose.
+
+The composite `finalCandidateScore` weights are centralized in
+`NextMealScoringParameterSet` (`next_meal_scoring_parameters.dart`), each weight
+carrying `sourceRefs`, an evidence level, and a limitation. The set is
+injectable and surfaced per candidate via `scoringParameterSetId`. The
+invariant `conflictRemainsDominant` guarantees modeled conflict overlap (and
+the uncertainty penalty) stay dominant, so provenance/metadata can never
+outrank a high modeled conflict overlap. It is **enforced at construction**:
+`MechanisticNextMealScorer` throws `ArgumentError` if injected with a
+non-dominant weight set, so an unsafe set cannot enter the scorer.
 
 ### Mechanistic-primary ranking promotion
 
@@ -357,8 +423,10 @@ audit ranking decisions without reading code.
 - Personalized medication timing, dose, or dietary recommendations.
 - Clinical evidence grading. The `evidence_level` field in the assumption
   registry is documentation-level only.
-- Stoichiometric LNAA composition (the competition proxy operates on
-  total protein grams).
+- Patient-specific stoichiometric LNAA transport kinetics. When actual
+  amino-acid fields are present the model uses absolute competing LNAA grams
+  and (with an explicit dose) a dose-relative ratio; otherwise it falls back to
+  a total-protein-grams proxy. Neither is a calibrated transport model.
 
 ## 20. Implementation status
 

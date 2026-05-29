@@ -8,6 +8,7 @@ import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
 import 'mechanistic_conflict_engine.dart';
 import 'meal_composition_normalizer.dart';
+import 'next_meal_scoring_parameters.dart';
 import 'protein_distribution_model.dart';
 
 /// Description of a candidate food the recommender may evaluate. The caller
@@ -64,6 +65,10 @@ class MechanisticNextMealScorer {
   final MealCompositionNormalizer normalizer;
   final ProteinDistributionModel proteinDistributionModel;
 
+  /// Provenance-tagged scoring weights (injectable; defaults to the
+  /// literature-informed set). Surfaced in the candidate score for reporting.
+  final NextMealScoringParameterSet scoringParameters;
+
   static const int minSampleCount = 5;
   static const int maxSampleCount = 12;
   static const int sampleStrideMinutes = 15;
@@ -72,10 +77,28 @@ class MechanisticNextMealScorer {
     MechanisticConflictEngine? engine,
     MealCompositionNormalizer? normalizer,
     ProteinDistributionModel? proteinDistributionModel,
+    NextMealScoringParameterSet? scoringParameters,
   })  : engine = engine ?? MechanisticConflictEngine(),
         normalizer = normalizer ?? MealCompositionNormalizer(),
         proteinDistributionModel =
-            proteinDistributionModel ?? ProteinDistributionModel();
+            proteinDistributionModel ?? ProteinDistributionModel(),
+        scoringParameters = scoringParameters ??
+            NextMealScoringParameterSet.literatureInformedDefault() {
+    // Enforce the safety invariant: modeled conflict overlap must remain the
+    // dominant scoring term so provenance/metadata can never overpower a high
+    // modeled conflict overlap. A non-dominant weight set is rejected outright
+    // rather than silently degrading ranking safety.
+    if (!this.scoringParameters.conflictRemainsDominant) {
+      throw ArgumentError.value(
+        this.scoringParameters.id,
+        'scoringParameters',
+        'Modeled conflict overlap must remain the dominant scoring term '
+            '(NextMealScoringParameterSet.conflictRemainsDominant). The '
+            'conflict-overlap weight must be >= the protein-redistribution '
+            'weight and >= the combined provenance/metadata weight.',
+      );
+    }
+  }
 
   List<MechanisticCandidateScore> score({
     required TimeAxisConflictContext baseContext,
@@ -244,17 +267,19 @@ class MechanisticNextMealScorer {
     final jurisdictionMatch = meta?.jurisdictionMatchScore ?? 0.5;
     final provenanceQuality = meta?.provenanceQuality ?? 0.5;
 
-    // Compose the final candidate score. Higher = better educational match.
-    // Conflict overlap dominates; redistribution, adequacy, and provenance
-    // refine. Deterministic.
-    final finalScore = (0.45 * (1.0 - overlap) +
-            0.20 * proteinScore.redistributionScore +
-            0.10 * proteinScore.adequacy.contribution +
-            0.10 * metadataCompleteness +
-            0.05 * sourceAuthority +
-            0.05 * jurisdictionMatch +
-            0.05 * provenanceQuality -
-            0.10 * uncertaintyPenalty)
+    // Compose the final candidate score from the provenance-tagged weight set.
+    // Conflict overlap dominates by design (see
+    // `NextMealScoringParameterSet.conflictRemainsDominant`); redistribution,
+    // adequacy, and provenance refine. Deterministic.
+    final w = scoringParameters;
+    final finalScore = (w.conflictOverlap.value * (1.0 - overlap) +
+            w.proteinRedistribution.value * proteinScore.redistributionScore +
+            w.nutritionAdequacy.value * proteinScore.adequacy.contribution +
+            w.metadataCompleteness.value * metadataCompleteness +
+            w.sourceAuthority.value * sourceAuthority +
+            w.jurisdictionMatch.value * jurisdictionMatch +
+            w.provenanceQuality.value * provenanceQuality -
+            w.uncertaintyPenalty.value * uncertaintyPenalty)
         .clamp(0.0, 1.0);
 
     final explanation = <String>[
@@ -312,6 +337,7 @@ class MechanisticNextMealScorer {
       finalCandidateScore: finalScore,
       sourceSystem: candidate.regionalFoodLibraryRef,
       jurisdiction: meta?.jurisdiction ?? 'unknown',
+      scoringParameterSetId: scoringParameters.id,
     );
   }
 

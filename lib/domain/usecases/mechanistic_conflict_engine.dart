@@ -322,18 +322,56 @@ class MechanisticConflictEngine {
     );
   }
 
-  /// Most-recent meal at or before the dose time (within a 180-min lookahead),
-  /// falling back to the earliest meal. Pure selection — no side effects.
+  /// Latest meal whose start falls within the model lookahead window — up to
+  /// 180 minutes AFTER the dose (`m.minute <= med.minute + 180`), not only
+  /// meals at or before the dose. Falls back to the earliest meal when none
+  /// qualify. Pure selection — no side effects.
+  ///
+  /// Deterministic and independent of input order: meal events are sorted by
+  /// minute (ties broken by id) before selection, so an unsorted
+  /// `mealEvents` list always yields the same primary meal.
   MealTimelineEvent? _primaryMealFor(
     MedicationTimelineEvent med,
     TimeAxisConflictContext context,
   ) {
     if (context.mealEvents.isEmpty) return null;
+    final sorted = [...context.mealEvents]..sort((a, b) {
+        final byMinute = a.minute.compareTo(b.minute);
+        return byMinute != 0 ? byMinute : a.id.compareTo(b.id);
+      });
     MealTimelineEvent? primaryMeal;
-    for (final m in context.mealEvents) {
+    for (final m in sorted) {
       if (m.minute <= med.minute + 180) primaryMeal = m;
     }
-    return primaryMeal ?? context.mealEvents.first;
+    // Fallback to the earliest meal (deterministic via the sort above).
+    return primaryMeal ?? sorted.first;
+  }
+
+  /// Explicit levodopa dose in mg from a validated medication context. The
+  /// validator only normalizes a context when strength + unit are explicit, so
+  /// no dose is invented here. Non-mass units (e.g. ml) yield null.
+  double? _explicitDoseMg(MedicationTimelineEvent med) {
+    final value = med.context.strength;
+    if (value <= 0) return null;
+    switch (med.context.unit.toLowerCase()) {
+      case 'mg':
+      case 'milligram':
+      case 'milligrams':
+        return value;
+      case 'g':
+      case 'gram':
+      case 'grams':
+        return value * 1000.0;
+      case 'mcg':
+      case 'ug':
+      case 'µg':
+      case 'μg':
+      case 'microgram':
+      case 'micrograms':
+        return value / 1000.0;
+      default:
+        return null;
+    }
   }
 
   /// Evaluate a single dose against the meal timeline. Returns null when the
@@ -382,6 +420,8 @@ class MechanisticConflictEngine {
       mealEmptyingProfile: emptyingProfile,
       absorptionWindow: absorption,
       mealStartMinute: primaryMeal.minute,
+      // Explicit dose from the validated medication context (never invented).
+      levodopaDoseMg: _explicitDoseMg(med),
     );
     final interactionScore = _composeInteractionScore(
       absorption: absorption,

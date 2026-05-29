@@ -112,6 +112,11 @@ source is cited only for *mechanism direction*.
 | `protein.redistribution.not_global_minimization` | The next-meal scorer models protein *redistribution* (penalize protein only during modeled high-overlap windows; allow it in low-overlap windows; preserve a nutrition-adequacy proxy) instead of globally minimizing protein. | [6], [7], [13], [20], [21] | `peer_reviewed_review` (direction); `prototype_heuristic` (magnitudes) | Educational objective; protein-redistribution diets are not nutritionally complete and require professional supervision. Implemented: `protein_distribution_model.dart`. |
 | `source.authority.cross_jurisdiction_policy` | Deterministic source-authority scoring: official-in-jurisdiction highest; dictionaries strong for identity not food-effect; reference translations downgraded; seed/synthetic never overrides official; cross-jurisdiction conflicts preserved. | [14]–[19] | `official_database` (direction); `prototype_heuristic` (weights) | Educational heuristic, not a regulatory ranking. Implemented: `source_authority_scorer.dart`. |
 | `metadata.completeness_gate` | No unit → no dose; no ingredient → no drug context; no dose-form/release → limited PK; no provenance → no evidence-linked explanation; no jurisdiction → unknown-jurisdiction behavior; incomplete → widen uncertainty. | [11], [14]–[19] | `regulatory_guidance` (direction) | Implemented: `metadata_completeness_gate.dart`. |
+| `meal_history.componentized_composition` | Historical meals are modeled as one `FoodComponent` per logged item (joined to catalog `FoodItem` for physical form, energy, and amino-acid provenance) instead of a single `unknown` aggregate. Missing catalog data stays null (never 0). | (implementation note) | `internal_safety_boundary` | Improves gastric/LNAA fidelity; no clinical claim. Implemented: `next_meal_recommendation_orchestrator.dart`, `catalog_food_to_candidate.dart`. |
+| `ge.highfat_highcal.uncertainty_widening` | High-fat (fat ≥ threshold fraction of kcal) and high-calorie (≥ `highcal.fraction_threshold` × reference kcal) meals widen the gastric-emptying uncertainty band, mirroring the fiber/overlap boosts. | [9], [10] | `prototype_heuristic` | Direction (fat + caloric load slow and disperse emptying) is supported; integer-step magnitudes are illustrative. Implemented: `gastric_emptying_parameters.dart`, `gastric_emptying_model.dart`. |
+| `ldopa.absorption.openness_profile` | The levodopa absorption opportunity is sampled as a deterministic openness curve (0..1) over the window: IR rises sharply to a full-openness peak then decays; ER/controlled is flatter and longer. Incomplete meal context flattens the curve. Candidate competition overlap is openness-weighted. | [1], [2], [8] | `prototype_heuristic` | Educational shape only — NOT blood concentration, NOT PK/PD calibration. Implemented: `levodopa_absorption_opportunity_model.dart`, `absorption_opportunity.dart`. |
+| `lnaa.absolute_grams_and_dose_relative` | When actual amino-acid fields are present the model exposes absolute competing LNAA grams (and per-serving), and a dose-relative ratio (g LNAA per 100 mg levodopa) **only** when an explicit user-entered dose is available — never an invented dose. Partial amino-acid data (some of the six LNAA, or unit-ambiguous values) is flagged and widens uncertainty. Intestinal-absorption competition is distinguished from broader BBB transport competition (cited, not quantified). | [1], [3], [4], [5], [6], [7] | `mechanism` (direction); `prototype_heuristic` (magnitude) | No dose is fabricated; dose-relative ratio is unavailable when dose is missing/non-explicit. Implemented: `amino_acid_competition_model.dart`, `amino_acid_competition.dart`. |
+| `score.weights.parameter_set` | Next-meal candidate scoring weights are centralized in `NextMealScoringParameterSet` with per-weight `sourceRefs`, evidence level, and limitation. The invariant `conflictRemainsDominant` keeps modeled conflict overlap (and uncertainty) dominant so provenance/metadata can never outrank a high modeled conflict overlap; it is **enforced** — the `MechanisticNextMealScorer` constructor throws `ArgumentError` for a non-dominant weight set rather than silently degrading ranking safety. | [1], [3], [4], [5], [6], [7] | `mechanism` (conflict/redistribution direction); `prototype_heuristic` (weight magnitudes) | Weights are illustrative, not fitted coefficients. Surfaced in replay via `scoring_parameter_set_id`. Implemented: `next_meal_scoring_parameters.dart`, `mechanistic_next_meal_scorer.dart`. |
 
 ## Multi-jurisdiction importer sources
 
@@ -174,6 +179,91 @@ DailyMed as the only medication source.
     *Movement Disorders*, vol. 25, no. 13, 2010, pp. 2021–34.
     https://pubmed.ncbi.nlm.nih.gov/20669318/. Accessed 27 May 2026.
 
+### Future-source references (MLA)
+
+These sources were surveyed during the biomedical-engineering opportunity
+mapping pass (see `docs/BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md`). They are
+citation/implementation candidates; none enable live ingestion today.
+
+22. U.S. National Library of Medicine. *DailyMed RESTful Web Services, Version
+    2.* National Institutes of Health,
+    https://dailymed.nlm.nih.gov/dailymed/webservices-help/v2/spls_api.cfm.
+    Accessed 28 May 2026.
+
+23. U.S. Food and Drug Administration. *Structured Product Labeling (SPL)
+    Resources — Prescription Drug Labeling.* FDA,
+    https://www.fda.gov/industry/structured-product-labeling-resources.
+    Accessed 28 May 2026.
+
+24. U.S. National Library of Medicine. *RxNorm and RxNav / RxClass APIs.*
+    National Institutes of Health, https://lhncbc.nlm.nih.gov/RxNav/.
+    Accessed 28 May 2026.
+
+25. U.S. Department of Agriculture, Agricultural Research Service. *FoodData
+    Central — Foundation Foods Documentation (April 2024).* USDA,
+    https://fdc.nal.usda.gov/docs/Foundation_Foods_Documentation_Apr2024.pdf.
+    Accessed 28 May 2026.
+
+26. Food and Agriculture Organization of the United Nations. *FAO/INFOODS
+    Component Identifiers (Tagnames) and Guidelines (Conversions, Data
+    Evaluation, Food Matching).* FAO,
+    https://www.fao.org/infoods/infoods/standards-guidelines/en/.
+    Accessed 28 May 2026.
+
+27. HL7 International. *FHIR Release 5 — MedicationKnowledge, NutritionIntake,
+    and Observation Resources.* HL7, https://www.hl7.org/fhir/. Accessed
+    28 May 2026.
+
+28. Observational Health Data Sciences and Informatics. *OMOP Common Data Model.*
+    OHDSI, https://ohdsi.github.io/CommonDataModel/. Accessed 28 May 2026.
+
+29. Wilkinson, Mark D., et al. "The FAIR Guiding Principles for Scientific Data
+    Management and Stewardship." *Scientific Data*, vol. 3, 2016, article 160018.
+    doi:10.1038/sdata.2016.18.
+    https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4792175/. Accessed 28 May 2026.
+
+30. U.S. Food and Drug Administration. *Clinical Decision Support Software —
+    Guidance for Industry and FDA Staff.* FDA, final guidance issued 28 Sep
+    2022 (the verifiable, stable reference used here for the four non-device-CDS
+    criteria). A 2026 revision is reported by secondary legal summaries, but the
+    exact final date is inconsistently stated across them (variously Jan and Mar
+    2026) and the authoritative FDA page could not be independently fetched in
+    this environment; the 2026 revision is therefore noted but **not** asserted
+    here as a verified date.
+    https://www.fda.gov/regulatory-information/search-fda-guidance-documents/clinical-decision-support-software.
+    Accessed 29 May 2026.
+
+31. Leta, Valentina, et al. "Gastrointestinal Barriers to Levodopa Transport and
+    Absorption in Parkinson's Disease." *European Journal of Neurology*, vol. 30,
+    no. 5, 2023, pp. 1465–80.
+    https://onlinelibrary.wiley.com/doi/10.1111/ene.15734. Accessed 28 May 2026.
+
+32. Bächlin, Marc, et al. *Daphnet Freezing of Gait Dataset.* UCI Machine
+    Learning Repository, 2010 (CC BY 4.0),
+    https://archive.ics.uci.edu/dataset/245/daphnet+freezing+of+gait.
+    Accessed 28 May 2026.
+
+## Potential future model/data-flow sources
+
+Registry of surveyed sources for future, *non-clinical* model/data-flow work.
+Status ∈ {already used, implementation candidate, citation only, not usable}.
+No source enables live ingestion without per-source license review.
+
+| sourceId | Title | Owner / publisher | Year | URL/DOI | Access | Status | Limitation | Safety note |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `src.dailymed.spl.webservices.v2` | DailyMed SPL Web Services v2 | U.S. NLM | 2024+ | dailymed.nlm.nih.gov/dailymed/webservices-help/v2 | public API, no key (public domain; review terms) | already used (fixture + opt-in smoke) | section/version extraction not yet wired | Metadata only; mechanism needs explicit label text. |
+| `src.fda.spl.standard` | FDA SPL / labeling resources (LOINC sections) | U.S. FDA | current | fda.gov/industry/structured-product-labeling-resources | citation / downloadable spec | citation only | spec, not a parser | Section identity only; no dose inference. |
+| `src.rxnorm.rxnav.api` | RxNorm + RxNav/RxClass (RxCUI, ATC) | U.S. NLM | current | lhncbc.nlm.nih.gov/RxNav | public API (review terms) | implementation candidate | identity/coding only | Not a food-effect / mechanism source. |
+| `src.usda.fdc.foundation_docs` | FDC Foundation Foods Documentation | USDA ARS | 2024 | fdc.nal.usda.gov/docs/Foundation_Foods_Documentation_Apr2024.pdf | open access (download) | implementation candidate | live values need API key | Provenance metadata only; never fabricate samples/methods. |
+| `src.fao.infoods` | FAO/INFOODS tagnames + guidelines | FAO | 2011–2015 | fao.org/infoods | open access (download) | citation only | spec; mapping effort needed | Standardizes basis/missingness; no advice. |
+| `src.hl7.fhir.r5` | FHIR R5 MedicationKnowledge / NutritionIntake / Observation | HL7 International | R5 (2023) | hl7.org/fhir | open access (spec) | implementation candidate | mappings would be "inspired", not conformant | Representation only; synthetic data. |
+| `src.ohdsi.omop.cdm` | OMOP Common Data Model | OHDSI | current | ohdsi.github.io/CommonDataModel | open access (spec) | citation only | concept mapping demo only | No patient data; identity mapping only. |
+| `src.fair.principles.2016` | FAIR Guiding Principles | Wilkinson et al. | 2016 | doi:10.1038/sdata.2016.18 | open access | citation only | governance guidance | Documentation/governance only. |
+| `src.fda.cds.guidance` | FDA Clinical Decision Support Software guidance | U.S. FDA | final 2022 (2026 revision reported, date not independently verified here) | fda.gov/.../clinical-decision-support-software | open access | citation only (boundary) | regulatory guidance, not code; cite the verifiable 2022 final | Defines the non-device boundary to preserve. |
+| `src.leta.gi_barriers.2023` | GI barriers to levodopa transport/absorption | Leta et al., *Eur. J. Neurol.* | 2023 | doi:10.1111/ene.15734 | open access (institutional copies) | citation only | mechanism direction only | Educational direction; not dosing/diet advice. |
+| `src.daphnet.fog` | Daphnet Freezing of Gait dataset | Bächlin et al. (UCI) | 2010 | archive.ics.uci.edu/dataset/245 | open access (CC BY 4.0) | implementation candidate (synthetic-shape only) | demo architecture only | No PD detection/monitoring; synthetic signals only. |
+| `src.weargait.pd` | WearGait-PD wearables dataset | open-access dataset | 2024+ | (open-access; review terms) | open access (review) | citation only | additional gait reference | Architecture demo only; non-diagnostic. |
+
 ## Notes on usage
 
 - Every `MechanisticConflictResult.sourceRefs[]` value is a `sourceId` from
@@ -184,3 +274,17 @@ DailyMed as the only medication source.
   the bibliography entry.
 - This file is updated whenever a new mechanism citation is added. It is not a
   clinical evidence registry.
+- **Traceability is now test-enforced:** `test/source_ref_traceability_test.dart`
+  asserts every mechanism-layer `sourceRef` resolves in
+  `ModelAssumptionRegistry` (FAIR Reusable/Interoperable). Adding a mechanism
+  `sourceRef` without a registry entry fails CI.
+- HL7 FHIR R5 **NutritionIntake** (verified against hl7.org) is patient-centric
+  (`subject` → Patient/Group, with `consumedItem.type`/`amount`/`rate` and
+  `ingredientLabel`). Any ParkinSUM mapping is **FHIR-inspired, non-conformant,
+  and deliberately omits `subject`** (no PHI).
+- Planning artifacts derived from this bibliography:
+  `docs/BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md`,
+  `docs/BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md`,
+  `docs/BIOMEDICAL_TRACEABILITY_MATRIX.md`,
+  `docs/design/SPIKE_FDC_FOUNDATION_PROVENANCE.md`,
+  `docs/BIOMEDICAL_ENGINEERING_BACKLOG.md`.
