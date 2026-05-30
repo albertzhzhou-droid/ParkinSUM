@@ -93,6 +93,7 @@ dart run tool/run_source_quality_perturbation_report.dart   # or: npm run source
 dart run tool/run_release_snapshot.dart                     # or: npm run release:snapshot
 dart run tool/generate_public_demo_walkthrough.dart         # or: npm run demo:walkthrough
 dart run tool/generate_evidence_graph.dart                  # or: npm run evidence:graph
+dart run tool/run_synthetic_scenario_fuzzer.dart            # or: npm run scenario:fuzz
 ```
 
 The last three **compose** the artifacts above into reviewer summaries:

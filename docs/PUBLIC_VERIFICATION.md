@@ -110,6 +110,18 @@ results.
   Provenance resource, not W3C PROV, not a patient record.** See
   `docs/EVIDENCE_GRAPH.md`.
 
+### `dart run tool/run_synthetic_scenario_fuzzer.dart`  (or `npm run scenario:fuzz`)
+- **Checks:** deterministic synthetic boundary cases (dosage, nutrient
+  missingness, release-type, source-quality, window/ranking, safety-copy/no-PHI)
+  evaluated against the existing gates with real code.
+- **Expected:** `build/synthetic_scenario_fuzzer/latest.{json,md}` and
+  `N/N cases passed`. Supports `--seed`, `--case-count`, `--family`.
+- **Failure means:** a boundary regression — e.g. a unitless dose validates,
+  missing nutrient treated as zero, tier ordering broken, or banned/advice copy
+  leaked. **Exits non-zero** on a must-pass invariant failure.
+- **Network:** no. **Data:** synthetic only. **Stress testing, not clinical
+  validation or patient simulation.** See `docs/SYNTHETIC_SCENARIO_FUZZER.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,
