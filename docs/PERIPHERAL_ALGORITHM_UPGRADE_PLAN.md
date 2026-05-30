@@ -445,6 +445,13 @@ medical rules; no real patient data or schedules.
 
 ## 15. First implementation batch proposal (P12 + P10)
 
+> **Status: shipped.** P12 + P10 are implemented on
+> `release-snapshot-and-demo-walkthrough` (lib generators +
+> `tool/run_release_snapshot.dart` / `tool/generate_public_demo_walkthrough.dart`
+> + `.mjs` wrappers + npm `release:snapshot` / `demo:walkthrough` + tests +
+> docs). Both compose existing artifacts, report `missing_artifact` rather than
+> fabricating, and stay banned-phrase + PHI-clean. See `docs/CAPABILITY_MATRIX.md`.
+
 Chosen because they are **high-showcase, low-clinical-risk**, and mostly
 **compose existing outputs** rather than changing core logic.
 
