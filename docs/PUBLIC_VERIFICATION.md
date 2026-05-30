@@ -122,6 +122,19 @@ results.
 - **Network:** no. **Data:** synthetic only. **Stress testing, not clinical
   validation or patient simulation.** See `docs/SYNTHETIC_SCENARIO_FUZZER.md`.
 
+### `dart run tool/run_localization_safety_lint.dart`  (or `npm run localization:lint`)
+- **Checks:** user-visible copy + localization surfaces for missing safety
+  boundaries, missing evidence/limitation wording, placeholder problems, and
+  unsafe prescriptive/overconfident phrases (en/zh/fr/ja). Lints the safe-copy
+  template registry; supports `--strict`.
+- **Expected:** `build/localization_safety_lint/latest.{json,md}` with
+  info/warn/blocker counts and `pass=true` (0 blockers) for the safe registry.
+- **Failure means:** unsafe localized copy (or, in strict mode, missing required
+  coverage/placeholder). **Exits non-zero** on a blocker.
+- **Network:** no. **Data:** synthetic/template only. **Copy-safety lint — not a
+  translation-quality or clinical-safety guarantee; no LLM.** See
+  `docs/LOCALIZATION_SAFETY_LINT.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,
