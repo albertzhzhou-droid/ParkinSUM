@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../entities/amino_acid_profile.dart';
 import '../entities/meal_composition.dart';
+import '../entities/nutrient_derivation.dart';
 import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
 import 'mechanistic_next_meal_scorer.dart';
@@ -22,6 +23,22 @@ class SourceQualityPerturbationRow {
   final double sourceAuthorityScore;
   final double metadataCompleteness;
   final String aminoAcidConfidenceTier;
+
+  /// FDC nutrient confidence tier name (in this prototype usually equal to the
+  /// amino-acid tier). Surfaced explicitly per P5.
+  final String nutrientConfidenceTier;
+
+  /// Deterministic 0..1 source-quality signal for the nutrient tier (analytical
+  /// 1.0 / calculated 0.7 / imputed 0.4 / unknown 0.2). Source-quality only, not
+  /// clinical accuracy.
+  final double nutrientProvenanceQuality;
+
+  /// Candidate provenance-quality ranking term (`score.provenanceQualityScore`).
+  final double provenanceQualityScore;
+
+  /// Modeled confidence band name for the candidate.
+  final String confidenceBand;
+
   final double nutrientCompleteness;
   final double finalCandidateScore;
   final double conflictOverlapScore;
@@ -48,6 +65,10 @@ class SourceQualityPerturbationRow {
     required this.sourceAuthorityScore,
     required this.metadataCompleteness,
     required this.aminoAcidConfidenceTier,
+    required this.nutrientConfidenceTier,
+    required this.nutrientProvenanceQuality,
+    required this.provenanceQualityScore,
+    required this.confidenceBand,
     required this.nutrientCompleteness,
     required this.finalCandidateScore,
     required this.conflictOverlapScore,
@@ -67,7 +88,12 @@ class SourceQualityPerturbationRow {
         'jurisdiction_match': jurisdictionMatch,
         'source_authority_score': sourceAuthorityScore,
         'metadata_completeness': metadataCompleteness,
+        'metadata_completeness_score': metadataCompleteness,
         'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+        'nutrient_confidence_tier': nutrientConfidenceTier,
+        'nutrient_provenance_quality': nutrientProvenanceQuality,
+        'provenance_quality_score': provenanceQualityScore,
+        'confidence_band': confidenceBand,
         'nutrient_completeness': nutrientCompleteness,
         'final_candidate_score': finalCandidateScore,
         'conflict_overlap_score': conflictOverlapScore,
@@ -117,16 +143,19 @@ class SourceQualityPerturbationReportResult {
           'construction.')
       ..writeln()
       ..writeln('| case | input changed | source | juris | authority | '
-          'meta cmpl | aa tier | nutrient cmpl | final | overlap | uncert | '
-          'comp band | widened |')
-      ..writeln('| --- | --- | --- | --- | --- | --- | --- | --- | --- | '
-          '--- | --- | --- | --- |');
+          'meta cmpl | aa tier | nutrient prov q | prov q | conf band | '
+          'nutrient cmpl | final | overlap | uncert | comp band | widened |')
+      ..writeln('| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | '
+          '--- | --- | --- | --- | --- | --- |');
     for (final r in rows) {
       b.writeln('| ${r.caseId} | ${r.inputChanged} | ${r.sourceSystem} | '
           '${r.jurisdictionMatch.toStringAsFixed(2)} | '
           '${r.sourceAuthorityScore.toStringAsFixed(2)} | '
           '${r.metadataCompleteness.toStringAsFixed(2)} | '
           '${r.aminoAcidConfidenceTier} | '
+          '${r.nutrientProvenanceQuality.toStringAsFixed(2)} | '
+          '${r.provenanceQualityScore.toStringAsFixed(2)} | '
+          '${r.confidenceBand} | '
           '${r.nutrientCompleteness.toStringAsFixed(2)} | '
           '${r.finalCandidateScore.toStringAsFixed(4)} | '
           '${r.conflictOverlapScore.toStringAsFixed(4)} | '
@@ -284,6 +313,10 @@ class SourceQualityPerturbationReportRunner {
       sourceAuthorityScore: s.sourceAuthorityScore,
       metadataCompleteness: s.metadataCompletenessScore,
       aminoAcidConfidenceTier: aaTier.name,
+      nutrientConfidenceTier: aaTier.name,
+      nutrientProvenanceQuality: nutrientProvenanceQualityFor(aaTier),
+      provenanceQualityScore: s.provenanceQualityScore,
+      confidenceBand: s.confidenceBand.name,
       nutrientCompleteness: s.nutritionDataCompleteness,
       finalCandidateScore: s.finalCandidateScore,
       conflictOverlapScore: s.conflictOverlapScore,
@@ -413,6 +446,40 @@ class SourceQualityPerturbationReportRunner {
           protein: 12, aa: null, portionGrams: null, calories: null),
       metadata: neutralMeta,
       aaTier: NutrientConfidenceTier.unknown,
+    ));
+
+    // --- Family 3: source authority × provenance tier move independently -----
+    // A synthetic source with analytical nutrient provenance vs an official
+    // source with imputed provenance: authority and nutrient-provenance tier are
+    // distinct axes (one is who published it; the other is how the value was
+    // derived). Neither collapses into the other.
+    rows.add(_row(
+      caseId: 'mix_synthetic_source_analytical_provenance',
+      inputChanged: 'synthetic_source_analytical_provenance',
+      candidate: _candidate('mix_synth_analytical',
+          protein: 8,
+          aa: _aaProfile(NutrientConfidenceTier.analytical),
+          sourceSystem: 'synthetic_demo'),
+      metadata: _meta(
+          authority: 0.1,
+          jurisdictionMatch: 0.1,
+          provenance: 0.1,
+          completeness: 0.3),
+      aaTier: NutrientConfidenceTier.analytical,
+    ));
+    rows.add(_row(
+      caseId: 'mix_official_source_imputed_provenance',
+      inputChanged: 'official_source_imputed_provenance',
+      candidate: _candidate('mix_official_imputed',
+          protein: 8,
+          aa: _aaProfile(NutrientConfidenceTier.imputedOrAssumed),
+          sourceSystem: 'official_in_jurisdiction'),
+      metadata: _meta(
+          authority: 1.0,
+          jurisdictionMatch: 1.0,
+          provenance: 1.0,
+          completeness: 1.0),
+      aaTier: NutrientConfidenceTier.imputedOrAssumed,
     ));
 
     return SourceQualityPerturbationReportResult(List.unmodifiable(rows));

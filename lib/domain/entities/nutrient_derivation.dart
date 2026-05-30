@@ -54,6 +54,32 @@ int nutrientConfidenceRank(NutrientConfidenceTier t) {
 bool tierWidensUncertainty(NutrientConfidenceTier t) =>
     t != NutrientConfidenceTier.analytical;
 
+/// Deterministic 0..1 **source-quality** signal for a nutrient confidence tier.
+/// This describes how the value was *derived*, NOT clinical/biological accuracy.
+/// Used for reporting/visibility (e.g. `FoodVariantMetadata.nutrientProvenanceQuality`);
+/// it does not, by itself, change candidate ranking.
+double nutrientProvenanceQualityFor(NutrientConfidenceTier t) {
+  switch (t) {
+    case NutrientConfidenceTier.analytical:
+      return 1.0;
+    case NutrientConfidenceTier.calculated:
+      return 0.7;
+    case NutrientConfidenceTier.imputedOrAssumed:
+      return 0.4;
+    case NutrientConfidenceTier.unknown:
+      return 0.2;
+  }
+}
+
+/// Non-prescriptive source-quality caution for a weaker-than-analytical tier, or
+/// null for analytical (no caution needed). Never a clinical claim.
+String? nutrientProvenanceLimitationFor(NutrientConfidenceTier t) {
+  if (t == NutrientConfidenceTier.analytical) return null;
+  return 'Amino-acid/nutrient values are ${t.name}-derived (a source-quality '
+      'signal, not clinical accuracy); modeled confidence is lowered, not the '
+      'value itself.';
+}
+
 class NutrientDerivation {
   /// FDC `foodNutrientDerivation.code` (e.g. analytical / calculated codes).
   final String? derivationCode;

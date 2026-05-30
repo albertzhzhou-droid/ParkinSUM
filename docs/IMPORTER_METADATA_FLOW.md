@@ -119,6 +119,24 @@ fallback). Provenance metadata is carried alongside as
 food, and rule explanation. Composes with the hard `MedicationEntryValidator`
 gate; adds the softer downgrade/uncertainty layer.
 
+**FDC nutrient provenance tier (P5).** `scoreCandidateFood(...,
+nutrientConfidenceTier:)` factors the USDA FDC amino-acid derivation tier
+(analytical > calculated > imputed/assumed > unknown) into the candidate-food
+grade: a weaker-than-analytical tier counts as one missing-equivalent, and an
+imputed/unknown tier blocks the top `complete` grade. This tier is now also
+**stored explicitly on `FoodVariantMetadata`** (`nutrientConfidenceTier`,
+`aminoAcidConfidenceTier`, `nutrientDataType`, `nutrientDataPoints`,
+`nutrientDerivationSource`, `nutrientProvenanceQuality`,
+`usesAnalytical/Calculated/ImputedOrAssumedNutrientValues`,
+`nutrientProvenanceLimitationText`) so it is serializable and visible, not just a
+transient gate argument. It was previously wired only into LNAA uncertainty.
+The graded completeness flows into `CandidateMetadata.completeness` →
+`MechanisticCandidateScore`, so source quality affects ranking **confidence and
+tie-breaking** — never advice. These tiers are **source-quality signals, not
+clinical/biological accuracy**; a missing derivation yields a null tier and never
+raises confidence; the tier never overrides source-authority or jurisdiction
+policy, and conflict overlap stays dominant.
+
 ### 9a. Componentized meal-history join
 
 Historical meals are modeled as one `FoodComponent` per logged `MealItem`
