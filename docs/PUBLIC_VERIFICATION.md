@@ -67,6 +67,37 @@ data** and, except where noted, require **no network**.
 - **Note:** this is a deterministic educational analysis artifact, **not a
   clinical dashboard** and not user-facing advice.
 
+## Release snapshot + demo walkthrough (optional, composed)
+
+These compose the artifacts above into reviewable summaries. They are pure
+generators — they parse existing reports (and accept injected counts) rather than
+re-running slow commands — and report `missing_artifact` instead of fabricating
+results.
+
+### `dart run tool/run_release_snapshot.dart`  (or `npm run release:snapshot`)
+- **Checks:** composes one release-evidence snapshot from
+  `build/mechanistic_replay/latest.json`,
+  `build/source_quality_perturbation/latest.json`, and
+  `build/public_release_preflight/latest.json`; analyze/test/firestore results may
+  be injected via flags (e.g. `--analyze=clean --test-count=460 --firestore=13/13`).
+- **Expected:** `build/release_snapshot/latest.{json,md}` with a per-check table;
+  any absent input shows `missing_artifact`.
+- **Failure means:** an underlying artifact is missing/malformed (recorded
+  in-band, not fabricated). The tool itself exits 0 — it is an evidence summary,
+  not a gate.
+- **Network:** no. **Data:** synthetic only. **Not clinical validation.**
+
+### `dart run tool/generate_public_demo_walkthrough.dart`  (or `npm run demo:walkthrough`)
+- **Checks:** composes a reviewer walkthrough from the replay, source-quality,
+  release-snapshot, and a synthetic EvidenceTraceBundle sample.
+- **Expected:** `build/public_demo_walkthrough/latest.{md,json}` with synthetic
+  input / source-quality / missingness / replay / evidence-bundle summaries plus
+  the safety boundary and a "what this does not prove" section; absent inputs show
+  `missing_artifact`.
+- **Failure means:** a consumed artifact is missing (recorded, not fabricated).
+- **Network:** no. **Data:** synthetic only. **No advice; not a clinical
+  dashboard.**
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

@@ -90,7 +90,15 @@ dart run tool/run_mechanistic_replay.dart      # or: npm run mechanistic:replay
 npm run public:preflight
 node tool/firestore_rules_contract_check.mjs
 dart run tool/run_source_quality_perturbation_report.dart   # or: npm run source:quality
+dart run tool/run_release_snapshot.dart                     # or: npm run release:snapshot
+dart run tool/generate_public_demo_walkthrough.dart         # or: npm run demo:walkthrough
 ```
+
+The last two **compose** the artifacts above into reviewer summaries:
+`build/release_snapshot/latest.{json,md}` (a per-check evidence table) and
+`build/public_demo_walkthrough/latest.{md,json}` (a synthetic end-to-end
+walkthrough). Both report `missing_artifact` rather than fabricating results, and
+neither emits advice or PHI. See `docs/PUBLIC_VERIFICATION.md`.
 
 ## 8. Expected outputs
 
