@@ -211,8 +211,21 @@ boundary.
   `complete` grade), and the FDC amino-acid block is captured more fully
   (lysine/cystine/arginine added for representation completeness; competing-LNAA
   math unchanged).
-- **Safety:** provenance only; never fabricate a sample count or method; missing
-  → never higher confidence.
+- **P5 shipped (full metadata integration):** the tier is now stored explicitly
+  on `FoodVariantMetadata` (`nutrientConfidenceTier`, `aminoAcidConfidenceTier`,
+  `nutrientDataType`, `nutrientDataPoints`, `nutrientDerivationSource`,
+  `nutrientProvenanceQuality`, `usesAnalytical/Calculated/ImputedOrAssumedNutrientValues`,
+  `nutrientProvenanceLimitationText`) and populated by
+  `NextMealRecommendationOrchestrator._buildCandidateMetadata`, so it is
+  serializable and flows through `CandidateMetadata.completeness` →
+  `MechanisticCandidateScore` (was previously LNAA-uncertainty-only). The
+  source-quality perturbation report surfaces `nutrient_confidence_tier` /
+  `nutrient_provenance_quality` / `provenance_quality_score` / `confidence_band`
+  and a case showing authority and provenance tier move **independently**.
+- **Safety:** provenance/**source-quality** signals only — not clinical/biological
+  accuracy; never fabricate a sample count or method; missing → never higher
+  confidence; tier never overrides source-authority/jurisdiction policy or
+  conflict-overlap dominance.
 
 ### S6 — FAO/INFOODS component identifiers (tagnames) — ⬜ Absent
 

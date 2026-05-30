@@ -38,15 +38,27 @@ the source/provenance perturbation variables, recording the resulting scores.
 2. **Amino-acid confidence tier** (metadata held neutral): analytical /
    calculated / imputed-or-assumed / unknown, plus a missing-nutrient-basis
    case. Only the candidate's amino-acid provenance tier changes.
+3. **Source authority × nutrient provenance tier** (P5): a synthetic source with
+   analytical nutrient provenance vs an official source with imputed provenance —
+   demonstrating that *who published the value* (authority) and *how the value
+   was derived* (FDC tier) are distinct axes that do not collapse into each
+   other.
 
 ## Row fields
 
 `case_id`, `input_changed`, `source_system`, `jurisdiction_match`,
-`source_authority_score`, `metadata_completeness`, `amino_acid_confidence_tier`,
-`nutrient_completeness`, `final_candidate_score`, `conflict_overlap_score`,
-`uncertainty_penalty`, `competition_uncertainty_band`,
+`source_authority_score`, `metadata_completeness` (+ `metadata_completeness_score`),
+`amino_acid_confidence_tier`, `nutrient_confidence_tier` (P5),
+`nutrient_provenance_quality` (P5), `provenance_quality_score` (P5),
+`confidence_band` (P5), `nutrient_completeness`, `final_candidate_score`,
+`conflict_overlap_score`, `uncertainty_penalty`, `competition_uncertainty_band`,
 `lnaa_uncertainty_widened`, `ranker_used`, `explanation`, `safety_boundary`,
 `not_clinically_calibrated`.
+
+`nutrient_provenance_quality` is a deterministic 0..1 **source-quality** signal
+mapped from the FDC tier (analytical 1.0 / calculated 0.7 / imputed 0.4 /
+unknown 0.2) — it describes how the value was derived, **not** clinical or
+biological accuracy.
 
 ## Invariants (enforced by tests)
 

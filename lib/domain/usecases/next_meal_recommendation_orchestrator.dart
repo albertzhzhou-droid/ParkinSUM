@@ -14,6 +14,8 @@ import 'dosage_note_parser.dart';
 import '../entities/meal_composition.dart';
 import '../entities/next_meal_recommendation_models.dart';
 import '../entities/cdss_records.dart';
+import '../entities/amino_acid_profile.dart';
+import '../entities/nutrient_derivation.dart';
 import '../entities/source_metadata.dart';
 import '../entities/time_axis_events.dart';
 import 'catalog_food_to_candidate.dart';
@@ -852,6 +854,13 @@ class NextMealRecommendationOrchestrator {
           coreFields.where((f) => !item.isNutrientMissing(f)).length;
       final nutrientCompleteness = presentCount / coreFields.length;
 
+      // FDC nutrient provenance (P5): make the amino-acid derivation tier
+      // explicit + serializable on the food metadata (it was previously only a
+      // transient argument to the gate). These are source-quality signals, not
+      // clinical/biological accuracy; a null tier (no derivation) stays inert.
+      final aaProfile = item.aminoAcidProfile;
+      final nutrientTier = aaProfile?.aggregateConfidenceTier;
+      final representativeDerivation = _representativeDerivation(aaProfile);
       final foodMeta = FoodVariantMetadata(
         foodVariantId: item.id,
         sourceSystem: item.sourceSystem,
@@ -861,18 +870,36 @@ class NextMealRecommendationOrchestrator {
         basisType: item.basisType,
         servingUnit: null,
         preparationState: item.preparationState ?? 'unknown',
-        aminoAcidFieldsPresent: item.aminoAcidProfile != null,
+        aminoAcidFieldsPresent: aaProfile != null,
         extractionConfidence: null,
         sourceRefs: source.sourceRefs,
         limitationText: source.limitationText,
+        nutrientConfidenceTier: nutrientTier?.name,
+        aminoAcidConfidenceTier: nutrientTier?.name,
+        nutrientDataType: aaProfile?.fdcDataType,
+        nutrientDataPoints: representativeDerivation?.dataPoints,
+        nutrientDerivationSource: representativeDerivation?.sourceCode ??
+            representativeDerivation?.derivationCode,
+        nutrientProvenanceQuality: nutrientTier == null
+            ? null
+            : nutrientProvenanceQualityFor(nutrientTier),
+        usesAnalyticalNutrientValues:
+            nutrientTier == NutrientConfidenceTier.analytical,
+        usesCalculatedNutrientValues:
+            nutrientTier == NutrientConfidenceTier.calculated,
+        usesImputedOrAssumedNutrientValues:
+            nutrientTier == NutrientConfidenceTier.imputedOrAssumed,
+        nutrientProvenanceLimitationText: nutrientTier == null
+            ? null
+            : nutrientProvenanceLimitationFor(nutrientTier),
       );
       final completenessScore = _completenessGate.scoreCandidateFood(
         foodMeta,
         nutrientCompleteness: nutrientCompleteness,
-        // FDC nutrient provenance (B1 follow-up): a calculated/imputed/unknown
-        // amino-acid derivation tier downgrades the candidate-food completeness
-        // grade, not just the LNAA-layer uncertainty.
-        nutrientConfidenceTier: item.aminoAcidProfile?.aggregateConfidenceTier,
+        // FDC nutrient provenance: a calculated/imputed/unknown amino-acid
+        // derivation tier downgrades the candidate-food completeness grade, not
+        // just the LNAA-layer uncertainty.
+        nutrientConfidenceTier: nutrientTier,
       );
       final completeness = _completenessGate.toWeight(completenessScore);
 
@@ -899,6 +926,19 @@ class NextMealRecommendationOrchestrator {
       );
     }
     return result;
+  }
+
+  /// Picks a representative FDC derivation for provenance display: the one whose
+  /// tier matches the profile's weakest-wins aggregate tier (so the surfaced
+  /// dataPoints/source align with the reported tier), else the first available.
+  /// Returns null when no derivation provenance is carried.
+  NutrientDerivation? _representativeDerivation(AminoAcidProfile? profile) {
+    if (profile == null || profile.derivations.isEmpty) return null;
+    final aggregate = profile.aggregateConfidenceTier;
+    for (final d in profile.derivations.values) {
+      if (d.tier == aggregate) return d;
+    }
+    return profile.derivations.values.first;
   }
 
   List<String> _userJurisdictionChain(UserProfile profile) {

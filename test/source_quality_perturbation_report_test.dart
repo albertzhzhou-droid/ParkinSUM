@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
 import 'package:parkinsum_companion/domain/usecases/next_meal_scoring_parameters.dart';
@@ -91,5 +93,45 @@ void main() {
     for (final row in runner.run().rows) {
       expect(row.rankerUsed, 'mechanistic_primary_window_sampled');
     }
+  });
+
+  // P5 — FDC provenance tier fields exposed in the report rows + JSON.
+  test('rows expose nutrient-provenance + confidence fields (P5)', () {
+    final report = runner.run();
+    final json = jsonDecode(encodeSourceQualityReport(report)) as Map;
+    final firstRow = (json['rows'] as List).first as Map;
+    for (final key in const [
+      'nutrient_confidence_tier',
+      'nutrient_provenance_quality',
+      'provenance_quality_score',
+      'confidence_band',
+      'metadata_completeness_score',
+    ]) {
+      expect(firstRow.containsKey(key), isTrue, reason: 'missing $key');
+    }
+    // Nutrient provenance quality is ordered by tier (analytical > imputed).
+    final analytical = report.byCase('aa_analytical').nutrientProvenanceQuality;
+    final imputed =
+        report.byCase('aa_imputedOrAssumed').nutrientProvenanceQuality;
+    final unknown = report.byCase('aa_unknown').nutrientProvenanceQuality;
+    expect(analytical, greaterThan(imputed));
+    expect(imputed, greaterThan(unknown));
+  });
+
+  test('source authority and nutrient-provenance tier move independently (P5)',
+      () {
+    final report = runner.run();
+    final synthAnalytical =
+        report.byCase('mix_synthetic_source_analytical_provenance');
+    final officialImputed =
+        report.byCase('mix_official_source_imputed_provenance');
+    // Synthetic source but analytical nutrient provenance: low authority, high
+    // nutrient provenance quality.
+    expect(synthAnalytical.sourceAuthorityScore, lessThan(0.5));
+    expect(synthAnalytical.nutrientProvenanceQuality, 1.0);
+    // Official source but imputed nutrient provenance: high authority, low
+    // nutrient provenance quality. The two axes do not collapse into each other.
+    expect(officialImputed.sourceAuthorityScore, greaterThan(0.5));
+    expect(officialImputed.nutrientProvenanceQuality, lessThan(0.5));
   });
 }
