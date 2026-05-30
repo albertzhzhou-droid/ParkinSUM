@@ -161,6 +161,32 @@ void main() {
     }
   });
 
+  // A1/A2 — medication section provenance reaches the replay report.
+  test('SPL IR scenario exposes section provenance + components (A1/A2)', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's39_spl_ir_section_provenance');
+    expect(c.medicationSourceSystem, 'DailyMed');
+    expect(c.medicationLabelSectionRefCount, greaterThan(0));
+    expect(c.medicationReleaseType, 'immediate');
+    expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
+    expect(c.medicationCombinationComponents,
+        containsAll(['carbidopa', 'levodopa']));
+    // Dose still came from the user/variant strength, never fabricated.
+    expect(c.dosageSource, 'user_or_variant_strength');
+    expect(c.dosageContextComplete, isTrue);
+  });
+
+  test('SPL ER scenario records extended release from source metadata (A1/A2)',
+      () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's40_spl_er_section_provenance');
+    expect(c.medicationReleaseType, 'extended');
+    expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
+    expect(c.medicationLabelSectionRefCount, greaterThan(0));
+  });
+
   // Clinical-calibration guardrail regression (OPP-D4 / backlog #12). Locks in
   // the non-device educational boundary: every replay case must report it is
   // not clinically calibrated, must not enable live fetch by default, and must

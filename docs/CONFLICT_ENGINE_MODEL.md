@@ -209,7 +209,14 @@ Per the cited DailyMed labeling and PK reviews:
 
 - Absorption opportunity starts after a short post-dose lag.
 - Immediate-release: lag ≈ 5 min, duration ≈ 90 min.
-- Extended/controlled-release: lag ≈ 30 min, duration ≈ 240 min.
+- Extended / controlled / **delayed** release: wider window (lag ≈ 30 min,
+  duration ≈ 240 min).
+- **Unknown / unspecified release type**: the window defaults to the
+  immediate-release shape but the **uncertainty band is widened one step** and
+  the assumption `ldopa.absorption.release_type_unknown_limited` is recorded —
+  release-specific interpretation is treated as limited. Release type is taken
+  from the (source-backed) medication context and is **never inferred from
+  dose**.
 - A high residual stomach load at the medication time shifts the window
   forward and widens it. Delay likelihood band reflects this:
   - `low` (residual ≤ 0.4)
@@ -218,6 +225,18 @@ Per the cited DailyMed labeling and PK reviews:
   - `unknown` (no overlapping meal profile available)
 
 This is an educational simulation, not a PK prediction.
+
+### 12b. Medication section provenance in the per-event trace
+
+When a `NormalizedMedicationContext` carries `metadata`
+(`MechanisticMedicationMetadata`, bridged from CDSS records — see
+`docs/IMPORTER_METADATA_FLOW.md` §14d), each `MechanisticPerEventTrace`
+additionally surfaces the medication provenance: `releaseTypeSource`,
+`doseForm`, `route`, `levodopaComponentPresent`, `combinationComponentCount`,
+`labelSectionRefCount`, `medicationSourceSystem`, `medicationSourceDocId`, and
+`medicationMetadataCompleteness`. This is **provenance/traceability only** — it
+never contributes to the dose, and the intake dose still comes solely from the
+user-facing dosage path (product/component strength never fabricates a dose).
 
 ### 12a. Absorption opportunity openness profile
 
