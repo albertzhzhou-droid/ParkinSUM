@@ -251,6 +251,11 @@ place. P11 scales with contributors.
 - **Acceptance:** seeded reproducibility; invariant violations surfaced.
 
 ### P6 — ExplanationCopyCompiler / SafeCopyTemplateRegistry
+- **Status: skeleton shipped** (Operation 4; branch `localization-safety-and-copy-registry`):
+  `lib/domain/entities/safe_copy_template.dart` +
+  `lib/domain/usecases/safe_copy_template_registry.dart` (6 representative
+  templates) + `docs/SAFE_COPY_TEMPLATE_REGISTRY.md` + tests. Not wired into UI/
+  scoring; full copy migration + a compiler remain future work.
 - **Problem:** user-facing explanation/safety copy is spread across the codebase.
 - **Why it matters:** centralizing it prevents drift into advice and enables P7.
 - **Inputs:** templateId, outputType, allowed placeholders, required `sourceRefs`,
@@ -273,6 +278,13 @@ place. P11 scales with contributors.
 - **Acceptance:** unsafe templates blocked deterministically.
 
 ### P7 — LocalizationSafetyLint
+- **Status: shipped** (Operation 4; branch `localization-safety-and-copy-registry`):
+  `lib/domain/entities/localization_safety_lint.dart` +
+  `lib/domain/usecases/localization_safety_lint.dart` (rules A–G, multilingual
+  en/zh/fr/ja) + `tool/run_localization_safety_lint.dart` (`npm run
+  localization:lint`) + tests + `docs/LOCALIZATION_SAFETY_LINT.md`. v1 lints the
+  safe-copy registry; full app-dictionary coverage is future work (recorded as
+  `no_locale_dictionary_discovered`, never fabricated).
 - **Problem:** multilingual dictionaries can drift in safety meaning.
 - **Why it matters:** translations must not become more clinically assertive.
 - **Inputs:** `lib/core/i18n/app_i18n.dart` + `app_i18n_full_translations.dart`
