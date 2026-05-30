@@ -12,6 +12,8 @@
 /// runtime context.
 library;
 
+import 'medication_source_metadata.dart';
+
 /// Status of a medication-entry validation pass.
 enum MedicationContextValidity {
   /// All required catalog-backed fields are present and units are explicit.
@@ -66,6 +68,12 @@ class NormalizedMedicationContext {
   final double? extractionConfidence;
   final String limitationText;
 
+  /// Engine-facing medication provenance bridged from the CDSS layer (label
+  /// section refs, combination components, release-type source, source-doc
+  /// trace). PROVENANCE ONLY — never read as an intake dose. Null when no
+  /// CDSS metadata was attached.
+  final MechanisticMedicationMetadata? metadata;
+
   const NormalizedMedicationContext({
     required this.drugProductVariant,
     required this.activeIngredients,
@@ -79,6 +87,7 @@ class NormalizedMedicationContext {
     required this.labelSection,
     required this.extractionConfidence,
     required this.limitationText,
+    this.metadata,
   });
 
   Map<String, dynamic> toJson() => {
@@ -94,6 +103,7 @@ class NormalizedMedicationContext {
         'label_section': labelSection,
         'extraction_confidence': extractionConfidence,
         'limitation_text': limitationText,
+        'metadata': metadata?.toJson(),
       };
 }
 

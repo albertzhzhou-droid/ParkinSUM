@@ -68,11 +68,54 @@ void main() {
     expect(p.partial, isFalse);
   });
 
+  test('full FDC amino-acid block: captures lysine/cystine/arginine too (B2)',
+      () {
+    final payload = jsonDecode(
+        File('test/fixtures/importers/usda_fdc_amino_acids_full.json')
+            .readAsStringSync()) as Map<String, dynamic>;
+    final p = extractor.extractFromFdcStyle(payload);
+    expect(p, isNotNull);
+    // Fuller coverage: the non-competing indispensable AAs are now captured
+    // (mg → g), in addition to the six competing LNAAs.
+    expect(p!.lysine, closeTo(2.2, 1e-9)); // 2200 mg
+    expect(p.cystine, closeTo(0.35, 1e-9)); // 350 mg
+    expect(p.arginine, closeTo(1.6, 1e-9)); // 1600 mg
+    expect(p.histidine, closeTo(0.8, 1e-9));
+    // Competing-LNAA math is unchanged: only the six BCAA+aromatic AAs count.
+    const expectedCompeting =
+        2.1 + 1.2 + 1.3 + 1.0 + 0.9 + 0.3; // leu+ile+val+phe+tyr+trp
+    expect(p.competingLnaaGrams, closeTo(expectedCompeting, 1e-9));
+    // Lysine/cystine/arginine are NOT folded into the competing total.
+    expect(p.competingLnaaGrams, isNot(closeTo(expectedCompeting + 2.2, 1e-9)));
+    // Provenance from the full fixture (analytical) flows through.
+    expect(p.fdcDataType, 'Foundation');
+    expect(p.aggregateConfidenceTier, NutrientConfidenceTier.analytical);
+  });
+
+  test('only non-competing AAs present → null (proxy fallback) (B2)', () {
+    // Lysine/arginine present but no competing LNAA → no competition to model.
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '505', 'unitName': 'G'},
+          'amount': 2.0
+        },
+        {
+          'nutrient': {'number': '511', 'unitName': 'G'},
+          'amount': 1.5
+        },
+      ]
+    });
+    expect(p, isNull); // no competing LNAA → caller uses protein-source proxy
+  });
+
   test('missing unit marks the profile partial (not silently trusted)', () {
     final p = extractor.extractFromFdcStyle({
       'foodNutrients': [
         {
-          'nutrient': {'number': '507', 'name': 'Leucine'},
+          // 504 = leucine (a competing LNAA) with NO unitName → accepted
+          // provisionally and the profile is flagged partial.
+          'nutrient': {'number': '504', 'name': 'Leucine'},
           'amount': 2.1
         }
       ]
@@ -113,6 +156,64 @@ void main() {
     expect(p.valine, 1.5);
     expect(p.threonine, 0.9);
     expect(p.methionine, 0.6);
+  });
+
+  test('captures FDC per-nutrient derivation + dataPoints + dataType (B1)', () {
+    final p = extractor.extractFromFdcStyle({
+      'dataType': 'Foundation',
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0,
+          'dataPoints': 12,
+          'foodNutrientDerivation': {
+            'code': 'A',
+            'description': 'Analytical',
+            'foodNutrientSource': {'code': '1'}
+          }
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.fdcDataType, 'Foundation');
+    expect(p.derivations.containsKey('leucine'), isTrue);
+    expect(p.derivations['leucine']!.dataPoints, 12);
+    expect(p.aggregateConfidenceTier, NutrientConfidenceTier.analytical);
+  });
+
+  test('imputed derivation lowers the aggregate tier (weakest-wins)', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0,
+          'foodNutrientDerivation': {'code': 'A', 'description': 'Analytical'}
+        },
+        {
+          'nutrient': {'number': '510', 'unitName': 'G'},
+          'amount': 1.3,
+          'foodNutrientDerivation': {'description': 'Imputed from similar food'}
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.aggregateConfidenceTier,
+        NutrientConfidenceTier.imputedOrAssumed); // weakest wins
+  });
+
+  test('absent derivation → no provenance (missing, never fabricated)', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'G'},
+          'amount': 2.0
+        },
+      ]
+    });
+    expect(p, isNotNull);
+    expect(p!.derivations, isEmpty);
+    expect(p.aggregateConfidenceTier, isNull); // missing ≠ confident
+    expect(p.fdcDataType, isNull);
   });
 
   test('number mapping beats a conflicting name', () {

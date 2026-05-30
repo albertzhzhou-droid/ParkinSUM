@@ -83,17 +83,27 @@ Per-case report row (see `MechanisticReplayCaseReport`):
 | `top_nutrition_adequacy_contribution` | Top candidate's nutrition-adequacy proxy contribution. |
 | `top_source_authority_score` / `top_jurisdiction_match_score` | Top candidate provenance scores. |
 | `top_candidate_source_system` | Source system of the top candidate. |
+| `medication_source_system` / `medication_source_doc_id` / `medication_source_version` | Medication provenance bridged from CDSS metadata (fixture-tested), when attached. |
+| `medication_label_section_ref_count` | Number of label-section refs backing the product (0 when none → lower completeness, not a fake trace). |
+| `medication_release_type` / `medication_release_type_source` | Release type + where it came from (`structured_variant_metadata` / `unknown`; never inferred from dose). |
+| `medication_dose_form` / `medication_route` | Source-backed dose form + route. |
+| `medication_combination_components` | Component ingredient names (e.g. carbidopa + levodopa) — combination products preserve all components. |
+| `dosage_source` | Where the analyzable dose came from (`user_or_variant_strength` / `insufficient` / `none`). Product metadata never fabricates a dose. |
+| `medication_metadata_completeness` / `medication_missing_fields` | Medication-context completeness grade + recorded missing provenance fields. |
 | `pass` / `failureReason` | Bool + diagnostic message. |
 
-The suite contains **31 scenarios** (s01–s31), covering catalog-backed
-medication context, missing-field downgrades, invalid medication, daytime
-high-overlap vs evening low-overlap protein behavior, zero-vs-moderate
+The suite contains **41 scenarios** (s01–s40, including s04b), covering
+catalog-backed medication context, missing-field downgrades, invalid medication,
+daytime high-overlap vs evening low-overlap protein behavior, zero-vs-moderate
 protein in low-overlap windows, the no-window fallback, amino-acid
 actual-fields vs protein-source-proxy modes (s22/s23), additional invalid
 medication forms (s24/s25), mechanistic-primary overwriting the legacy
-order (s26), and production-readiness coverage (s27–s31: amino-acid food in a
+order (s26), production-readiness coverage (s27–s31: amino-acid food in a
 far window, mixed-mode candidate sets, invalid-with-window, no-window
-fallback visibility, daytime-overlap amino-acid food). Report rows
+fallback visibility, daytime-overlap amino-acid food), missingness/uncertainty
+and enteral coverage (s32–s38), and **medication section-provenance bridging**
+(s39 SPL IR carbidopa/levodopa with label-section refs; s40 SPL ER) where CDSS
+drug metadata reaches the mechanistic context without fabricating a dose. Report rows
 additionally carry `amino_acid_data_mode`, `amino_acid_nutrient_ids`,
 `source_implementation_status`, `live_fetch_enabled`, `license_review_status`,
 `can_support_mechanism_evidence_alone`, and `clinical_calibration_status`

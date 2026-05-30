@@ -51,11 +51,11 @@ of this scorecard is 🟢 *Inspired-Aligned*.
 
 | # | Standard / construct | Current | Target (safe ceiling) | Opportunity | Backlog |
 | --- | --- | --- | --- | --- | --- |
-| S1 | HL7 FHIR R5 **MedicationKnowledge** | 🟡 | 🟢 | OPP-F1 | #8 |
-| S2 | HL7 FHIR R5 **NutritionIntake** | 🟡 | 🟢 | OPP-F2 | #9 |
+| S1 | HL7 FHIR R5 **MedicationKnowledge** | 🟢 | 🟢 | OPP-F1 ✅ | #8 (**view shipped**) |
+| S2 | HL7 FHIR R5 **NutritionIntake** | 🟢 | 🟢 | OPP-F2 ✅ | #9 (**shipped**) |
 | S3 | HL7 FHIR R5 **Observation** (nutrient) | ⬜ | 🟡 | OPP-F2 | #9 |
-| S4 | **FDA SPL** + LOINC section identity | 🟡 | 🟢 | OPP-A1 | #1 |
-| S5 | **USDA FDC** FoodNutrient provenance (derivation/dataPoints/dataType) | 🟡 | 🟢 | OPP-B1 / OPP-B2 | #2 + spike |
+| S4 | **FDA SPL** + LOINC section identity | 🟢 | 🟢 | OPP-A1/A2 ✅ | #1 (**bridge shipped**) |
+| S5 | **USDA FDC** FoodNutrient provenance (derivation/dataPoints/dataType) | 🟢 | 🟢 | OPP-B1 ✅ / OPP-B2 | #2 + spike (**B1 shipped**) |
 | S6 | **FAO/INFOODS** component identifiers (tagnames) | ⬜ | 🟡 | OPP-B3 | (map) |
 | S7 | **RxNorm / ATC** identity coding | ⬜ | 🟡 | OPP-A3 | (map) |
 | S8 | **OMOP CDM** concept identity (non-patient) | ⬜ | 🟡 | OPP-F1/F2 adjunct | (map) |
@@ -72,27 +72,37 @@ boundary.
 
 ## 4. Per-standard detail (with code evidence)
 
-### S1 — HL7 FHIR R5 MedicationKnowledge — 🟡 Inspired-Partial
+### S1 — HL7 FHIR R5 MedicationKnowledge — 🟢 Inspired-Aligned (MK view shipped)
 
 - **Standard:** `MedicationKnowledge` = "Information about a medication that is
   used to support knowledge" (HL7 FHIR R5). Key elements: `code`,
   `doseForm`, `ingredient` (item + strength), `definitional`, `monograph`,
   `relatedMedicationKnowledge`, `regulatory`.
-- **Current state (evidence):** `DrugProductVariantMetadata`
-  (`lib/domain/entities/source_metadata.dart`) carries `genericName`,
-  `activeIngredients`, `strengthValue`+`strengthUnit`, `doseForm`, `route`,
-  `releaseType`, `productIdentifier` (NDC/DIN/EMA#/dm+d/PMDA/NMPA), `labelSection`,
-  `sourceRefs`, `limitationText`. This captures most MedicationKnowledge *intent*
-  (form, ingredient+strength, identifier) but exposes only a flat
-  `toJson()` — no FHIR-shaped element names, and **no coded `code`** (no
-  RxCUI/ATC).
-- **Delta to 🟢:** add a `toFhirInspiredMedicationKnowledge()` view (explicitly
-  "inspired, non-conformant") mapping fields → FHIR element names, plus a coded
-  `code` once RxCUI/ATC identity (S7) exists. No behavior change; serialization
-  only.
-- **Safety:** representation only; omit any patient linkage.
+- **Current state (evidence):** a local **FHIR-inspired, PHI-free**
+  `FhirInspiredMedicationKnowledgeView`
+  (`lib/domain/entities/fhir_inspired_medication_knowledge_view.dart`) +
+  `FhirInspiredMedicationKnowledgeMapper`
+  (`lib/domain/usecases/fhir_inspired_medication_knowledge_mapper.dart`) maps the
+  engine-facing `MechanisticMedicationMetadata` (PR #33 bridge) into a clearly
+  labeled serialization view: product id, active ingredients, combination
+  components (carbidopa + levodopa preserved), product strengths, dose form,
+  route, release type + source, source-document id/version/effective date, label
+  section refs, sourceRefs, metadata completeness, limitation text. Marked
+  `inspired_not_conformant` + `no_patient_no_administration_no_phi`. Tested in
+  `test/fhir_inspired_medication_knowledge_view_test.dart` (recursive key-level
+  no-PHI/clinical-key scan; banned-phrase scan; determinism).
+- **Residual (not blocking 🟢):** no coded `code` — RxCUI/ATC identity (S7) is
+  still future work, so the view carries names/keys, not a discrete drug code;
+  the `section_code` slot currently carries the CDSS section key, not a discrete
+  LOINC code (S4 residual). Mapping reflects FHIR *intent*, not conformance.
+- **Safety:** representation only; **omits** patient/subject/encounter/
+  practitioner/careTeam/MedicationRequest/MedicationAdministration/
+  dosageInstruction/timing/prescription. **Product strength is product
+  metadata, never a user intake dose** (tagged `product_label_metadata`); the
+  view has no field for a user-taken dose, frequency, or timing. Not clinically
+  calibrated; no clinical interoperability.
 
-### S2 — HL7 FHIR R5 NutritionIntake — 🟡 Inspired-Partial
+### S2 — HL7 FHIR R5 NutritionIntake — 🟢 Inspired-Aligned (F2 shipped)
 
 - **Standard (verified from hl7.org):** `NutritionIntake` top-level includes
   `status`, `code`, **`subject` (Patient/Group)**, `occurrence[x]`,
@@ -105,13 +115,22 @@ boundary.
   `amount`, per-nutrient grams ≈ `ingredientLabel`, and the DB-backed usecase's
   enteral-feed context ≈ `consumedItem.rate`. Componentized meal history (one
   `FoodComponent` per logged item) already exists.
-- **Delta to 🟢:** add a `toFhirInspiredNutritionIntake()` view mapping to the
-  verified element names — **deliberately omitting `subject`/Patient** (no PHI).
-  Map `physicalForm`→`consumedItem.type`, `portionGrams`→`amount`, enteral
-  context→`rate`, amino-acid/macros→`ingredientLabel`.
-- **Safety (critical):** NutritionIntake is patient-centric in FHIR; the
-  ParkinSUM mapping must drop `subject` and stay synthetic, or it would imply a
-  patient record. Label the view "FHIR-inspired, non-conformant, no subject".
+- **Shipped (F2):** `FhirInspiredNutritionIntakeView` +
+  `FhirInspiredNutritionIntakeMapper`
+  (`lib/domain/entities/fhir_inspired_nutrition_intake_view.dart`,
+  `lib/domain/usecases/fhir_inspired_nutrition_intake_mapper.dart`) serialize a
+  `MealComposition` to a local, deterministic, **FHIR-inspired** view:
+  `food_components` (≈ consumedItem), `nutrient_summary` (≈ ingredientLabel),
+  `amino_acid_summary` + provenance, missingness, and sourceRefs. It is marked
+  `conformance_status = inspired_not_conformant` and
+  `phi_policy = subject_omitted_no_phi`, reuses the shared non-prescriptive
+  safety copy, and carries `not_clinically_calibrated = true`.
+- **Safety (critical, enforced):** the view **deliberately omits** `subject`,
+  patient/encounter/practitioner/care-team/diagnosis/treatment, and any
+  patient-record semantics — it never constructs a Patient/Reference/Encounter.
+  A recursive key-level test asserts no patient-linkage keys are emitted. This
+  is FHIR-*inspired*, **not** FHIR-conformant, and implies no clinical
+  interoperability.
 
 ### S3 — HL7 FHIR R5 Observation (nutrient) — ⬜ Absent
 
@@ -126,23 +145,34 @@ boundary.
   S5). Lower priority than S2.
 - **Safety:** representation only.
 
-### S4 — FDA SPL + LOINC section identity — 🟡 Inspired-Partial
+### S4 — FDA SPL + LOINC section identity — 🟢 Inspired-Aligned (A1/A2 shipped)
 
 - **Standard:** SPL documents and their sections are identified by **LOINC
   document/section codes**; DailyMed SPL Web Services v2 expose `/spls/{SETID}`
   and `/spls/{SETID}/history` (set id, version, effective date).
-- **Current state (evidence):** `DrugProductVariantMetadata.labelSection` is a
-  single free-text string; there is no LOINC section code, no `setId`, no
-  `labelVersion`, no `effectiveDate`. Adapters are `fixture_tested` (see
+- **Current state (evidence):** the CDSS record layer
+  (`DrugLabelSectionRecord`: `sectionId`/`sectionKey`/`sectionTitle`/
+  `sourceDocId`; `DrugProductVariantRecord`: `releaseType`/`route`/`dosageForm`/
+  `labelVersion`) is now **bridged into the mechanistic context** via
+  `MedicationContextMetadataAdapter` →
+  `MechanisticMedicationMetadata.labelSectionRefs` →
+  `NormalizedMedicationContext.metadata`. The per-event trace and replay report
+  surface `medication_source_system`, `medication_source_doc_id`,
+  `medication_source_version`, `medication_label_section_ref_count`,
+  `medication_release_type` + `medication_release_type_source`, and combination
+  components (carbidopa + levodopa). The engine can therefore cite the exact
+  source section/version backing a product. Adapters remain `fixture_tested`
+  (synthetic CDSS-style fixtures, not live ingestion; see
   `docs/SOURCE_ACCESS_AND_LICENSES.md`).
-- **Delta to 🟢:** capture `sectionLoincCode`, `setId`, `labelVersion`,
-  `effectiveDate` from the SPL fixture parser; surface in the medication-context
-  trace so the engine can cite the exact section. Missing → recorded missing,
-  never guessed.
-- **Safety:** metadata/provenance only; mechanism evidence still requires
-  explicit label text.
+- **Residual (not blocking 🟢):** the bridge carries section *key/title/id* and
+  source-doc version, not a discrete LOINC section **code** field; populating a
+  `sectionLoincCode` from a live SPL parser remains future work. Missing
+  provenance → recorded missing (lower completeness), never guessed.
+- **Safety:** metadata/provenance only; product strength never becomes an intake
+  dose (the analyzable dose still comes solely from the user-facing dosage
+  path); mechanism evidence still requires explicit label text.
 
-### S5 — USDA FDC FoodNutrient provenance — 🟡 Inspired-Partial
+### S5 — USDA FDC FoodNutrient provenance — 🟢 Inspired-Aligned (B1 shipped)
 
 - **Standard:** the FDC OpenAPI `FoodNutrient` (non-abridged) family carries, per
   nutrient value, a derivation (`foodNutrientDerivation` with `code`/`description`
@@ -156,12 +186,24 @@ boundary.
   name fallback, mg→g normalization, and a `partial` flag for unit-ambiguous
   values. But `basis` is **hard-coded `per_100g`**, and it captures **no**
   derivation code, sample count, analytical method, or `dataType`.
-- **Delta to 🟢:** capture derivation + dataPoints + dataType into
-  `FoodVariantMetadata` and a per-nutrient confidence flag consumed by
-  `MetadataCompletenessGate`; let `basis` be data-driven, not assumed. This is
-  the fully-specified spike.
+- **Shipped (B1):** `AminoAcidExtractor` now captures per-nutrient
+  `foodNutrientDerivation` / `dataPoints` / `foodNutrientSource` and food
+  `dataType`, and `basis` follows the payload when present.
+  `NutrientDerivation` (new entity) maps the derivation to an ordinal
+  `NutrientConfidenceTier` (analytical / calculated / imputedOrAssumed /
+  unknown); `AminoAcidProfile.aggregateConfidenceTier` is a conservative
+  weakest-wins aggregate. The LNAA competition layer surfaces
+  `aminoAcidConfidenceTier` and **widens uncertainty for any
+  weaker-than-analytical tier** (mirrors partial handling); the replay report
+  surfaces it. Missing derivation stays null (never raises confidence).
+- **Follow-up shipped:** the tier is now folded into
+  `MetadataCompletenessGate.scoreCandidateFood` (a calculated/imputed/unknown
+  tier downgrades the candidate-food completeness grade and blocks the top
+  `complete` grade), and the FDC amino-acid block is captured more fully
+  (lysine/cystine/arginine added for representation completeness; competing-LNAA
+  math unchanged).
 - **Safety:** provenance only; never fabricate a sample count or method; missing
-  → lower completeness, not higher confidence.
+  → never higher confidence.
 
 ### S6 — FAO/INFOODS component identifiers (tagnames) — ⬜ Absent
 

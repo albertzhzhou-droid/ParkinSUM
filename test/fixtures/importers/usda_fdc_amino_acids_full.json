@@ -1,0 +1,89 @@
+{
+  "fdcId": 234567,
+  "description": "Synthetic Foundation Food with full amino-acid block + derivation provenance (demo, mg units)",
+  "dataType": "Foundation",
+  "publicationDate": "2025-01-01",
+  "foodNutrients": [
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1003, "number": "203", "name": "Protein", "unitName": "G"},
+      "amount": 26.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1210, "number": "501", "name": "Tryptophan", "unitName": "MG"},
+      "amount": 300.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical", "foodNutrientSource": {"code": "1"}}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1211, "number": "502", "name": "Threonine", "unitName": "MG"},
+      "amount": 1100.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1212, "number": "503", "name": "Isoleucine", "unitName": "MG"},
+      "amount": 1200.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1213, "number": "504", "name": "Leucine", "unitName": "MG"},
+      "amount": 2100.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1214, "number": "505", "name": "Lysine", "unitName": "MG"},
+      "amount": 2200.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1215, "number": "506", "name": "Methionine", "unitName": "MG"},
+      "amount": 700.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1216, "number": "507", "name": "Cystine", "unitName": "MG"},
+      "amount": 350.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1217, "number": "508", "name": "Phenylalanine", "unitName": "MG"},
+      "amount": 1000.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1218, "number": "509", "name": "Tyrosine", "unitName": "MG"},
+      "amount": 900.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1219, "number": "510", "name": "Valine", "unitName": "MG"},
+      "amount": 1300.0,
+      "dataPoints": 10,
+      "foodNutrientDerivation": {"code": "A", "description": "Analytical"}
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1220, "number": "511", "name": "Arginine", "unitName": "MG"},
+      "amount": 1600.0
+    },
+    {
+      "type": "FoodNutrient",
+      "nutrient": {"id": 1221, "number": "512", "name": "Histidine", "unitName": "MG"},
+      "amount": 800.0
+    }
+  ]
+}

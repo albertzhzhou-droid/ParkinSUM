@@ -310,6 +310,30 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-05-27',
   );
 
+  static const ModelAssumption fdcFoundationDocs = ModelAssumption(
+    sourceId: 'src.usda.fdc.foundation_docs',
+    title: 'USDA FoodData Central — Foundation Foods documentation + '
+        'FoodNutrient derivation/provenance schema',
+    sourceType: ModelSourceType.officialLabel,
+    mechanismSupported:
+        'FDC publishes per-nutrient provenance (foodNutrientDerivation '
+        'code/description, foodNutrientSource, dataPoints sample count) and a '
+        'food dataType (Foundation/SR Legacy/Survey/Branded). ParkinSUM maps '
+        'derivation provenance to an ordinal confidence tier; a '
+        'weaker-than-analytical tier widens modeled uncertainty.',
+    limitation:
+        'Provenance/ordinal signal only — NOT a measurement-uncertainty or '
+        'clinical-accuracy estimate. Missing derivation stays missing (never '
+        'raises confidence). Exact field names follow the FDC OpenAPI; '
+        're-verify before any live ingestion (none today).',
+    citationText:
+        'USDA Agricultural Research Service. FoodData Central — Foundation '
+        'Foods Documentation and FDC Nutrient Data OpenAPI (FoodNutrient '
+        'derivation/source/dataPoints, food dataType).',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-05-29',
+  );
+
   static const ModelAssumption internalPrototypeHeuristic = ModelAssumption(
     sourceId: 'src.internal.prototype.heuristic',
     title: 'ParkinSUM prototype heuristic (no patient calibration)',
@@ -340,6 +364,7 @@ class ModelAssumptionRegistry {
     fdcAminoAcidFields,
     pareProteinRedistribution,
     virmaniProtein,
+    fdcFoundationDocs,
     internalPrototypeHeuristic,
   ];
 

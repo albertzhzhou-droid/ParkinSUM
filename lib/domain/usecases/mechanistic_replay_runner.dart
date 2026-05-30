@@ -71,7 +71,23 @@ class MechanisticReplayCaseReport {
   final double? competingLnaaGrams;
   final bool doseRelativeLnaaAvailable;
   final double? doseRelativeLnaaRatio;
+  final String? aminoAcidConfidenceTier;
   final String scoringParameterSetId;
+  // Medication section provenance + release extraction (CDSS→context bridge).
+  // Sourced from the first validated medication context's metadata; null/empty
+  // when no CDSS metadata was attached. Provenance only — never a dose.
+  final String? medicationSourceSystem;
+  final String? medicationSourceDocId;
+  final String? medicationSourceVersion;
+  final int medicationLabelSectionRefCount;
+  final String? medicationReleaseType;
+  final String? medicationReleaseTypeSource;
+  final String? medicationDoseForm;
+  final String? medicationRoute;
+  final List<String> medicationCombinationComponents;
+  final String dosageSource;
+  final String? medicationMetadataCompleteness;
+  final List<String> medicationMissingFields;
   final bool pass;
   final String? failureReason;
 
@@ -123,7 +139,20 @@ class MechanisticReplayCaseReport {
     this.competingLnaaGrams,
     this.doseRelativeLnaaAvailable = false,
     this.doseRelativeLnaaRatio,
+    this.aminoAcidConfidenceTier,
     this.scoringParameterSetId = 'none',
+    this.medicationSourceSystem,
+    this.medicationSourceDocId,
+    this.medicationSourceVersion,
+    this.medicationLabelSectionRefCount = 0,
+    this.medicationReleaseType,
+    this.medicationReleaseTypeSource,
+    this.medicationDoseForm,
+    this.medicationRoute,
+    this.medicationCombinationComponents = const [],
+    this.dosageSource = 'none',
+    this.medicationMetadataCompleteness,
+    this.medicationMissingFields = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -174,7 +203,20 @@ class MechanisticReplayCaseReport {
         'competing_lnaa_grams': competingLnaaGrams,
         'dose_relative_lnaa_available': doseRelativeLnaaAvailable,
         'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
+        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
         'scoring_parameter_set_id': scoringParameterSetId,
+        'medication_source_system': medicationSourceSystem,
+        'medication_source_doc_id': medicationSourceDocId,
+        'medication_source_version': medicationSourceVersion,
+        'medication_label_section_ref_count': medicationLabelSectionRefCount,
+        'medication_release_type': medicationReleaseType,
+        'medication_release_type_source': medicationReleaseTypeSource,
+        'medication_dose_form': medicationDoseForm,
+        'medication_route': medicationRoute,
+        'medication_combination_components': medicationCombinationComponents,
+        'dosage_source': dosageSource,
+        'medication_metadata_completeness': medicationMetadataCompleteness,
+        'medication_missing_fields': medicationMissingFields,
         'pass': pass,
         'failure_reason': failureReason,
       };
@@ -432,18 +474,49 @@ class MechanisticReplayRunner {
         ? 'none'
         : recommendations.first.scoringParameterSetId;
 
+    // Medication section provenance + release extraction, bridged from the
+    // first validated medication context's CDSS metadata (when attached).
+    final medMeta = medValidations.isEmpty
+        ? null
+        : medValidations.first.normalized?.metadata;
+    final firstReleaseType = medValidations.isEmpty
+        ? null
+        : medValidations.first.normalized?.releaseType;
+    // dosageSource records WHERE the analyzable dose came from — never a
+    // fabricated default. 'user_or_variant_strength' only when dose context is
+    // complete; otherwise 'insufficient'/'none'. Product metadata never fills it.
+    final dosageSource = firstEntry == null
+        ? 'none'
+        : (dosageContextComplete ? 'user_or_variant_strength' : 'insufficient');
+
     return MechanisticReplayCaseReport(
       scenarioId: scenario.scenarioId,
       title: scenario.title,
       userEnteredDosage: userEnteredDosage,
       dosageContextComplete: dosageContextComplete,
       perEventCount: result.perEventCount,
+      medicationSourceSystem: medMeta?.sourceSystem,
+      medicationSourceDocId: medMeta?.sourceDocId,
+      medicationSourceVersion: medMeta?.sourceDocVersion,
+      medicationLabelSectionRefCount: medMeta?.labelSectionRefs.length ?? 0,
+      medicationReleaseType: medMeta?.releaseType ?? firstReleaseType,
+      medicationReleaseTypeSource: medMeta?.releaseTypeSource,
+      medicationDoseForm: medMeta?.doseForm,
+      medicationRoute: medMeta?.route,
+      medicationCombinationComponents: medMeta?.components
+              .map((c) => c.ingredientName)
+              .toList(growable: false) ??
+          const [],
+      dosageSource: dosageSource,
+      medicationMetadataCompleteness: medMeta?.metadataCompleteness,
+      medicationMissingFields: medMeta?.missingFields ?? const [],
       mealComponentCount: emptying?.componentProfiles.length ?? 0,
       gastricEmptyingAssumptions: emptying?.assumptions ?? const [],
       absorptionOpennessSampleCount:
           absorptionWindow?.opennessProfile.length ?? 0,
       absorptionPeakOpenness: absorptionWindow?.peakOpenness,
       partialAminoAcidData: lnaa?.partialAminoAcidData ?? false,
+      aminoAcidConfidenceTier: lnaa?.aminoAcidConfidenceTier,
       competingLnaaGrams: lnaa?.competingLnaaGrams,
       doseRelativeLnaaAvailable: lnaa?.doseRelativeAvailable ?? false,
       doseRelativeLnaaRatio: lnaa?.doseRelativeLnaaRatio,

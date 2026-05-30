@@ -5,6 +5,11 @@
 /// Educational prototype only — not a clinical pharmacokinetic prediction.
 library;
 
+import 'nutrient_derivation.dart';
+
+export 'nutrient_derivation.dart'
+    show NutrientConfidenceTier, NutrientDerivation;
+
 /// Which data path produced the competition LNAA load.
 enum AminoAcidDataMode {
   /// Actual per-food amino-acid nutrient fields were used.
@@ -29,6 +34,13 @@ class AminoAcidProfile {
   final double? histidine;
   final double? methionine;
   final double? threonine;
+  // Additional indispensable / conditionally-indispensable amino acids FDC
+  // publishes alongside the competing LNAAs. Captured for representation
+  // completeness (B2); NOT part of the levodopa-competing LNAA set, so they do
+  // not affect `competingLnaaGrams`.
+  final double? lysine;
+  final double? cystine;
+  final double? arginine;
   final String unit; // normalized unit, e.g. "g"
   final String basis; // e.g. "per_100g" / "per_serving"
   final List<String> nutrientIds; // upstream nutrient numbers (e.g. FDC 505)
@@ -38,6 +50,14 @@ class AminoAcidProfile {
   /// accepted only provisionally. Such a profile is treated as partial and
   /// lowers confidence rather than being trusted as precise.
   final bool partial;
+
+  /// Optional per-nutrient FDC provenance keyed by amino-acid field name
+  /// (e.g. `"leucine"`). Additive and default-empty; absent → no provenance
+  /// reported (missing ≠ a confident value).
+  final Map<String, NutrientDerivation> derivations;
+
+  /// Optional FDC food data type (Foundation / SR Legacy / Survey / Branded).
+  final String? fdcDataType;
 
   const AminoAcidProfile({
     this.leucine,
@@ -49,12 +69,23 @@ class AminoAcidProfile {
     this.histidine,
     this.methionine,
     this.threonine,
+    this.lysine,
+    this.cystine,
+    this.arginine,
     this.unit = 'g',
     this.basis = 'per_100g',
     this.nutrientIds = const [],
     this.sourceRefs = const [],
     this.partial = false,
+    this.derivations = const {},
+    this.fdcDataType,
   });
+
+  /// Conservative "weakest-wins" provenance tier across present per-nutrient
+  /// derivations. Null when no derivation provenance is available — a missing
+  /// derivation never raises confidence.
+  NutrientConfidenceTier? get aggregateConfidenceTier =>
+      derivations.isEmpty ? null : weakestConfidenceTier(derivations.values);
 
   /// The six classic LNAAs that compete with levodopa transport
   /// (branched-chain + aromatic): leucine, isoleucine, valine, phenylalanine,
@@ -113,11 +144,16 @@ class AminoAcidProfile {
       histidine: s(histidine),
       methionine: s(methionine),
       threonine: s(threonine),
+      lysine: s(lysine),
+      cystine: s(cystine),
+      arginine: s(arginine),
       unit: unit,
       basis: 'per_serving',
       nutrientIds: nutrientIds,
       sourceRefs: sourceRefs,
       partial: partial,
+      derivations: derivations,
+      fdcDataType: fdcDataType,
     );
   }
 
@@ -131,12 +167,18 @@ class AminoAcidProfile {
         'histidine': histidine,
         'methionine': methionine,
         'threonine': threonine,
+        'lysine': lysine,
+        'cystine': cystine,
+        'arginine': arginine,
         'unit': unit,
         'basis': basis,
         'nutrient_ids': nutrientIds,
         'source_refs': sourceRefs,
         'partial': partial,
         'competing_lnaa_grams': competingLnaaGrams,
+        'fdc_data_type': fdcDataType,
+        'aggregate_confidence_tier': aggregateConfidenceTier?.name,
+        'derivations': derivations.map((k, v) => MapEntry(k, v.toJson())),
       };
 
   /// Defensive deserialization. Absent numeric fields stay null (never coerced
@@ -153,6 +195,9 @@ class AminoAcidProfile {
       histidine: d('histidine'),
       methionine: d('methionine'),
       threonine: d('threonine'),
+      lysine: d('lysine'),
+      cystine: d('cystine'),
+      arginine: d('arginine'),
       unit: (json['unit'] as String?) ?? 'g',
       basis: (json['basis'] as String?) ?? 'per_100g',
       nutrientIds: (json['nutrient_ids'] as List<dynamic>? ?? const [])
@@ -162,6 +207,10 @@ class AminoAcidProfile {
           .map((e) => e.toString())
           .toList(growable: false),
       partial: (json['partial'] as bool?) ?? false,
+      fdcDataType: json['fdc_data_type'] as String?,
+      derivations: (json['derivations'] as Map<String, dynamic>? ?? const {})
+          .map((k, v) => MapEntry(
+              k, NutrientDerivation.fromJson(v as Map<String, dynamic>))),
     );
   }
 }

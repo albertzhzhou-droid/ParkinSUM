@@ -1,4 +1,5 @@
 import '../entities/medication_entry_validation.dart';
+import '../entities/medication_source_metadata.dart';
 
 /// Raw structured medication-entry input as it would arrive from a form,
 /// importer row, or test fixture.
@@ -21,6 +22,11 @@ class RawMedicationEntry {
   final String? labelSection;
   final double? extractionConfidence;
 
+  /// Optional engine-facing medication provenance bridged from the CDSS layer.
+  /// PROVENANCE ONLY — passed through to the normalized context untouched and
+  /// NEVER read as a dose source. Does not affect validity or the dose path.
+  final MechanisticMedicationMetadata? medicationMetadata;
+
   const RawMedicationEntry({
     this.freeText,
     this.activeIngredient,
@@ -35,6 +41,7 @@ class RawMedicationEntry {
     this.sourceDocId,
     this.labelSection,
     this.extractionConfidence,
+    this.medicationMetadata,
   });
 }
 
@@ -229,6 +236,8 @@ class MedicationEntryValidator {
       labelSection: entry.labelSection?.trim(),
       extractionConfidence: entry.extractionConfidence,
       limitationText: defaultLimitationText,
+      // Pass CDSS provenance through untouched — it is never read for dose.
+      metadata: entry.medicationMetadata,
     );
 
     return MedicationContextValidationResult(

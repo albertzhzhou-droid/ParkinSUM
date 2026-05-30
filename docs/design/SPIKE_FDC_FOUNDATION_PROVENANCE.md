@@ -1,10 +1,17 @@
 # Design Spike — USDA FDC Foundation-Foods nutrient provenance
 
-> **Status:** design-ready (not yet implemented). Implementation-ready
-> specification for opportunity **OPP-B1** / backlog **#2**, grounded in the
-> shipped code. This spike turns "capture FDC provenance" into a buildable,
-> testable task with a data contract, parser changes, integration points, a test
-> matrix, acceptance criteria, rollout, and a safety analysis.
+> **Status: IMPLEMENTED** (core slice shipped). The fixture-side data contract,
+> extractor capture, confidence-tier mapping, competition-uncertainty
+> integration, replay-report surfacing, and tests below are now in the codebase
+> (`nutrient_derivation.dart`, `amino_acid_profile.dart`,
+> `amino_acid_extractor.dart`, `amino_acid_competition_model.dart`,
+> `mechanistic_replay_runner.dart`; tests `nutrient_derivation_test.dart`,
+> extended `amino_acid_extraction_test.dart` / `lnaa_competition_test.dart` /
+> `mechanistic_replay_runner_test.dart`). **Deferred to a follow-up:** folding
+> the tier into `FoodVariantMetadata`/`MetadataCompletenessGate` for the
+> candidate-food completeness grade (the uncertainty widening is wired through
+> the LNAA competition layer today), and live FDC ingestion (still opt-in only).
+> Original implementation-ready specification follows.
 >
 > Educational / research prototype only. **Not a medical device.** Provenance
 > metadata only — no dose/timing/diet inference, no clinical calibration,

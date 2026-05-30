@@ -209,7 +209,14 @@ Per the cited DailyMed labeling and PK reviews:
 
 - Absorption opportunity starts after a short post-dose lag.
 - Immediate-release: lag ≈ 5 min, duration ≈ 90 min.
-- Extended/controlled-release: lag ≈ 30 min, duration ≈ 240 min.
+- Extended / controlled / **delayed** release: wider window (lag ≈ 30 min,
+  duration ≈ 240 min).
+- **Unknown / unspecified release type**: the window defaults to the
+  immediate-release shape but the **uncertainty band is widened one step** and
+  the assumption `ldopa.absorption.release_type_unknown_limited` is recorded —
+  release-specific interpretation is treated as limited. Release type is taken
+  from the (source-backed) medication context and is **never inferred from
+  dose**.
 - A high residual stomach load at the medication time shifts the window
   forward and widens it. Delay likelihood band reflects this:
   - `low` (residual ≤ 0.4)
@@ -218,6 +225,26 @@ Per the cited DailyMed labeling and PK reviews:
   - `unknown` (no overlapping meal profile available)
 
 This is an educational simulation, not a PK prediction.
+
+### 12b. Medication section provenance in the per-event trace
+
+When a `NormalizedMedicationContext` carries `metadata`
+(`MechanisticMedicationMetadata`, bridged from CDSS records — see
+`docs/IMPORTER_METADATA_FLOW.md` §14d), each `MechanisticPerEventTrace`
+additionally surfaces the medication provenance: `releaseTypeSource`,
+`doseForm`, `route`, `levodopaComponentPresent`, `combinationComponentCount`,
+`labelSectionRefCount`, `medicationSourceSystem`, `medicationSourceDocId`, and
+`medicationMetadataCompleteness`. This is **provenance/traceability only** — it
+never contributes to the dose, and the intake dose still comes solely from the
+user-facing dosage path (product/component strength never fabricates a dose).
+
+The same `MechanisticMedicationMetadata` is also exportable as a local,
+**FHIR-inspired, PHI-free MedicationKnowledge view**
+(`FhirInspiredMedicationKnowledgeMapper` → `FhirInspiredMedicationKnowledgeView`;
+see `docs/IMPORTER_METADATA_FLOW.md` §14e). That view is **serialization only** —
+it does not affect scoring or the dose path, is `inspired_not_conformant`, omits
+all patient-care semantics, and serializes product strength strictly as product
+metadata (`product_label_metadata`), never as a user intake dose.
 
 ### 12a. Absorption opportunity openness profile
 
@@ -284,6 +311,16 @@ proxy and additionally exposes, in `CompetitionLnaaSummary`:
 - `partialAminoAcidData` — true when only some of the six competing LNAA are
   present (or a value was unit-ambiguous). Partial actual data widens
   uncertainty rather than being trusted as fully narrow.
+- `aminoAcidConfidenceTier` — when the FDC payload carries per-nutrient
+  provenance (`foodNutrientDerivation` / `dataPoints` / food `dataType`), the
+  extractor maps it to an ordinal `NutrientConfidenceTier`
+  (analytical / calculated / imputedOrAssumed / unknown). The competition layer
+  reports the conservative **weakest-wins** aggregate and **widens uncertainty
+  for any weaker-than-analytical tier** (calculated/imputed/unknown), exactly
+  like partial handling. This is a provenance signal, **not** a
+  measurement-uncertainty or clinical-accuracy estimate; a missing derivation
+  stays missing and never raises confidence
+  (`src.usda.fdc.foundation_docs`).
 
 The modeled overlap represents **intestinal-absorption** competition; broader
 blood–brain-barrier LNAA transport competition is named as a cited mechanism in

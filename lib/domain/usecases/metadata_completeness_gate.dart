@@ -1,3 +1,4 @@
+import '../entities/nutrient_derivation.dart';
 import '../entities/source_metadata.dart';
 
 /// Deterministic metadata-completeness scoring. Composes with the existing
@@ -14,7 +15,13 @@ import '../entities/source_metadata.dart';
 /// - incomplete → widen uncertainty rather than assert precision
 class MetadataCompletenessGate {
   MetadataCompletenessScore scoreMedicationContext(
-      DrugProductVariantMetadata? meta) {
+    DrugProductVariantMetadata? meta, {
+    // When false, the product has no backing label-section provenance and the
+    // grade is lowered by one missing-equivalent — a product without a cited
+    // section is not treated as a fully complete official trace. Defaults true
+    // so existing callers are unaffected (additive).
+    bool hasLabelSectionProvenance = true,
+  }) {
     if (meta == null) return MetadataCompletenessScore.invalid;
     if (meta.activeIngredients.isEmpty) {
       return MetadataCompletenessScore.invalid; // no ingredient → no context
@@ -28,6 +35,7 @@ class MetadataCompletenessGate {
       meta.route.isEmpty,
       meta.sourceRefs.isEmpty,
       meta.jurisdiction.isEmpty,
+      !hasLabelSectionProvenance,
     ].where((m) => m).length;
     if (missing == 0) return MetadataCompletenessScore.complete;
     if (missing <= 1) return MetadataCompletenessScore.sufficient;
@@ -38,11 +46,26 @@ class MetadataCompletenessGate {
   MetadataCompletenessScore scoreCandidateFood(
     FoodVariantMetadata? meta, {
     required double nutrientCompleteness, // 0..1 from composition normalizer
+    NutrientConfidenceTier? nutrientConfidenceTier, // optional FDC provenance
   }) {
+    // FDC nutrient provenance (B1): a weaker-than-analytical tier
+    // (calculated/imputed/unknown) counts as one missing-equivalent, and an
+    // imputed/unknown tier blocks the top `complete` grade — values derived
+    // rather than measured are not treated as fully complete. A null tier
+    // (no FDC provenance) is inert: existing behavior is unchanged.
+    final weakProvenance = nutrientConfidenceTier != null &&
+        tierWidensUncertainty(nutrientConfidenceTier);
+    final blocksComplete =
+        nutrientConfidenceTier == NutrientConfidenceTier.imputedOrAssumed ||
+            nutrientConfidenceTier == NutrientConfidenceTier.unknown;
+
     if (meta == null) {
       // No provenance metadata; fall back to nutrient completeness only.
       if (nutrientCompleteness >= 0.99) {
-        return MetadataCompletenessScore.partial;
+        // A weak FDC tier still downgrades the no-meta best case.
+        return weakProvenance
+            ? MetadataCompletenessScore.insufficient
+            : MetadataCompletenessScore.partial;
       }
       if (nutrientCompleteness >= 0.5) {
         return MetadataCompletenessScore.insufficient;
@@ -54,8 +77,9 @@ class MetadataCompletenessGate {
       meta.sourceRefs.isEmpty,
       meta.jurisdiction.isEmpty,
       nutrientCompleteness < 0.5,
+      weakProvenance,
     ].where((m) => m).length;
-    if (missing == 0 && nutrientCompleteness >= 0.99) {
+    if (missing == 0 && nutrientCompleteness >= 0.99 && !blocksComplete) {
       return MetadataCompletenessScore.complete;
     }
     if (missing <= 1) return MetadataCompletenessScore.sufficient;

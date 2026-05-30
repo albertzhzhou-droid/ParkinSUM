@@ -106,6 +106,18 @@ void main() {
     expect(c.doseRelativeLnaaRatio, isNotNull);
   });
 
+  test('FDC analytical provenance surfaces confidence tier in the report (B1)',
+      () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa');
+    // The amino-acid meal carries FDC analytical derivations → tier surfaced,
+    // and analytical provenance does not widen uncertainty.
+    expect(c.aminoAcidConfidenceTier, 'analytical');
+    final encoded = encodeReplayReport(report);
+    expect(encoded, contains('"amino_acid_confidence_tier"'));
+  });
+
   test('serialized report is valid JSON and contains no banned phrases', () {
     final report = runner.run();
     final encoded = encodeReplayReport(report);
@@ -113,6 +125,66 @@ void main() {
     expect(encoded, contains('"competing_lnaa_grams"'));
     expect(encoded, contains('"scoring_parameter_set_id"'));
     expect(findBannedSubstrings(encoded), isEmpty);
+  });
+
+  // D2 — missingness stress suite. Proves missing ≠ zero end-to-end: missing
+  // nutrient inputs lower composition completeness and confidence rather than
+  // being silently treated as 0.
+  test('missing calories/portion lowers completeness, never fabricated (D2)',
+      () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's35_missing_calories_and_portion');
+    expect(c.mealContextCompleteness, lessThan(1.0));
+    expect(c.confidenceBand, isNot('high'));
+  });
+
+  test('all-macros-missing → unknown competition + insufficient/low (D2)', () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's36_missing_all_macros_unknown_competition');
+    expect(c.aminoAcidCompetitionBand, 'unknown');
+    expect(['insufficient', 'low'], contains(c.confidenceBand));
+  });
+
+  // C1 — enteral feeding educational scenarios stay non-prescriptive.
+  test('enteral scenarios run and stay non-prescriptive (C1)', () {
+    final report = runner.run();
+    final enteral = report.cases
+        .where((c) =>
+            c.scenarioId.startsWith('s37') || c.scenarioId.startsWith('s38'))
+        .toList();
+    expect(enteral.length, 2);
+    for (final c in enteral) {
+      expect(c.pass, isTrue, reason: '${c.scenarioId}: ${c.failureReason}');
+      expect(c.bannedPhraseHits, isEmpty);
+    }
+  });
+
+  // A1/A2 — medication section provenance reaches the replay report.
+  test('SPL IR scenario exposes section provenance + components (A1/A2)', () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's39_spl_ir_section_provenance');
+    expect(c.medicationSourceSystem, 'DailyMed');
+    expect(c.medicationLabelSectionRefCount, greaterThan(0));
+    expect(c.medicationReleaseType, 'immediate');
+    expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
+    expect(c.medicationCombinationComponents,
+        containsAll(['carbidopa', 'levodopa']));
+    // Dose still came from the user/variant strength, never fabricated.
+    expect(c.dosageSource, 'user_or_variant_strength');
+    expect(c.dosageContextComplete, isTrue);
+  });
+
+  test('SPL ER scenario records extended release from source metadata (A1/A2)',
+      () {
+    final report = runner.run();
+    final c = report.cases
+        .firstWhere((c) => c.scenarioId == 's40_spl_er_section_provenance');
+    expect(c.medicationReleaseType, 'extended');
+    expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
+    expect(c.medicationLabelSectionRefCount, greaterThan(0));
   });
 
   // Clinical-calibration guardrail regression (OPP-D4 / backlog #12). Locks in

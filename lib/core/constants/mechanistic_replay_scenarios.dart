@@ -1,6 +1,7 @@
 import '../../domain/entities/amino_acid_profile.dart';
 import '../../domain/entities/mechanistic_conflict_result.dart';
 import '../../domain/entities/meal_composition.dart';
+import '../../domain/entities/medication_source_metadata.dart';
 import '../../domain/entities/time_axis_events.dart';
 import '../../domain/usecases/medication_entry_validator.dart';
 import '../../domain/usecases/mechanistic_next_meal_scorer.dart';
@@ -88,6 +89,121 @@ const _carbidopaLevodopaIr = RawMedicationEntry(
 const _bareNumeric = RawMedicationEntry(freeText: '100');
 const _levodopa100NoUnit = RawMedicationEntry(freeText: 'levodopa 100');
 const _slashedNoUnit = RawMedicationEntry(freeText: '25/100');
+
+// --- CDSS→mechanistic-context bridge demo metadata (synthetic) -------------
+// Section-backed carbidopa/levodopa product provenance bridged into the
+// mechanistic context. Provenance only — never a dose. Per-component strength
+// is left null for the combination (single product strength only).
+const _carbidopaLevodopaComponents = [
+  MedicationComponent(
+    ingredientName: 'carbidopa',
+    role: 'decarboxylase_inhibitor',
+    sourceRefs: ['src.dailymed.sinemet.label'],
+  ),
+  MedicationComponent(
+    ingredientName: 'levodopa',
+    role: 'active',
+    sourceRefs: ['src.dailymed.sinemet.label'],
+  ),
+];
+
+const _splIrMetadata = MechanisticMedicationMetadata(
+  sourceSystem: 'DailyMed',
+  sourceDocId: 'synthetic:spl:carbidopa-levodopa-ir',
+  sourceDocVersion: 'spl_demo_v1',
+  effectiveDate: '2025-01-01',
+  jurisdiction: 'US',
+  language: 'en',
+  drugProductVariantId: 'synthetic:cl-ir',
+  doseForm: 'tablet',
+  route: 'oral',
+  releaseType: 'immediate',
+  releaseTypeSource: 'structured_variant_metadata',
+  components: _carbidopaLevodopaComponents,
+  labelSectionRefs: [
+    LabelSectionRef(
+      sourceSystem: 'DailyMed',
+      sourceDocId: 'synthetic:spl:carbidopa-levodopa-ir',
+      sourceDocVersion: 'spl_demo_v1',
+      jurisdiction: 'US',
+      language: 'en',
+      sectionId: 'sec-dosage',
+      sectionKey: 'dosage_and_administration',
+      sectionTitle: 'Dosage and Administration',
+      effectiveDate: '2025-01-01',
+      parserName: 'cdss_drug_label_section_record',
+      sourceRefs: ['src.dailymed.sinemet.label'],
+    ),
+  ],
+  sourceRefs: ['src.dailymed.sinemet.label'],
+  limitationText: 'Synthetic SPL-style demo metadata. Educational only.',
+  metadataCompleteness: 'complete',
+);
+
+const _splErMetadata = MechanisticMedicationMetadata(
+  sourceSystem: 'DailyMed',
+  sourceDocId: 'synthetic:spl:carbidopa-levodopa-er',
+  sourceDocVersion: 'spl_demo_v1',
+  effectiveDate: '2025-01-01',
+  jurisdiction: 'US',
+  language: 'en',
+  drugProductVariantId: 'synthetic:cl-er',
+  doseForm: 'extended-release tablet',
+  route: 'oral',
+  releaseType: 'extended',
+  releaseTypeSource: 'structured_variant_metadata',
+  components: _carbidopaLevodopaComponents,
+  labelSectionRefs: [
+    LabelSectionRef(
+      sourceSystem: 'DailyMed',
+      sourceDocId: 'synthetic:spl:carbidopa-levodopa-er',
+      sourceDocVersion: 'spl_demo_v1',
+      jurisdiction: 'US',
+      language: 'en',
+      sectionId: 'sec-dosage-er',
+      sectionKey: 'dosage_and_administration',
+      sectionTitle: 'Dosage and Administration (Extended Release)',
+      effectiveDate: '2025-01-01',
+      parserName: 'cdss_drug_label_section_record',
+      sourceRefs: ['src.dailymed.sinemet.extended.label'],
+    ),
+  ],
+  sourceRefs: ['src.dailymed.sinemet.extended.label'],
+  limitationText: 'Synthetic SPL-style demo metadata. Educational only.',
+  metadataCompleteness: 'complete',
+);
+
+/// IR carbidopa/levodopa with structured product metadata + section refs.
+/// User-entered dose (strength+unit) stays the only dose source.
+const _carbidopaLevodopaIrWithMetadata = RawMedicationEntry(
+  activeIngredients: ['carbidopa', 'levodopa'],
+  drugProductVariant: 'synthetic:carbidopa-levodopa-25-100-ir-tablet',
+  strength: 100,
+  unit: 'mg',
+  form: 'tablet',
+  route: 'oral',
+  releaseType: 'immediate',
+  jurisdiction: 'US',
+  sourceDocId: 'synthetic:spl:carbidopa-levodopa-ir',
+  labelSection: 'dosage_and_administration',
+  extractionConfidence: 0.95,
+  medicationMetadata: _splIrMetadata,
+);
+
+const _carbidopaLevodopaErWithMetadata = RawMedicationEntry(
+  activeIngredients: ['carbidopa', 'levodopa'],
+  drugProductVariant: 'synthetic:carbidopa-levodopa-50-200-er-tablet',
+  strength: 200,
+  unit: 'mg',
+  form: 'extended-release tablet',
+  route: 'oral',
+  releaseType: 'extended',
+  jurisdiction: 'US',
+  sourceDocId: 'synthetic:spl:carbidopa-levodopa-er',
+  labelSection: 'dosage_and_administration',
+  extractionConfidence: 0.95,
+  medicationMetadata: _splErMetadata,
+);
 
 const FoodComponent _oatmealSolidSmall = FoodComponent(
   id: 'food.oatmeal.synth',
@@ -312,6 +428,19 @@ const _aminoAcidMealComponent = FoodComponent(
     basis: 'per_serving',
     nutrientIds: ['504', '503', '510', '508', '509', '501'],
     sourceRefs: ['src.fdc.api.amino_acid_fields'],
+    // FDC Foundation-food provenance (analytical) — surfaces the confidence
+    // tier in the replay report without widening uncertainty (B1).
+    fdcDataType: 'Foundation',
+    derivations: {
+      'leucine': NutrientDerivation(
+          derivationCode: 'A',
+          derivationDescription: 'Analytical',
+          dataPoints: 12),
+      'valine': NutrientDerivation(
+          derivationCode: 'A',
+          derivationDescription: 'Analytical',
+          dataPoints: 12),
+    },
   ),
 );
 
@@ -907,5 +1036,167 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         components: [_aminoAcidMealComponent],
       ),
     ],
+  ),
+
+  // --- D2: missingness stress suite (missing ≠ zero) ---------------------
+  MechanisticReplayScenario(
+    scenarioId: 's35_missing_calories_and_portion',
+    title: 'Protein present but calories + portion missing → lower composition '
+        'completeness + capped confidence (missing ≠ zero)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedConfidenceCeiling: ConfidenceBand.medium,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_missing_cal_portion',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [
+          FoodComponent(
+            id: 'food.missing_cal_portion',
+            name: 'high-protein item, calories+portion unknown (synthetic)',
+            physicalForm: MealPhysicalForm.solid,
+            proteinGrams: 30,
+            fatGrams: 6,
+            fiberGrams: 0,
+            carbohydrateGrams: 0,
+            calories: null, // missing — never treated as 0
+            portionGrams: null, // missing — never treated as 0
+            sourceDocId: 'synthetic:demo_food',
+          ),
+        ],
+      ),
+    ],
+    notes: 'Asserts missing calories/portion lower completeness + cap '
+        'confidence rather than fabricating 0.',
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's36_missing_all_macros_unknown_competition',
+    title:
+        'All macronutrients missing → unknown competition + insufficient/low '
+        'confidence (never fabricated)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalInfo,
+    expectedConfidenceCeiling: ConfidenceBand.low,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_all_missing',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.unknown,
+        components: [
+          FoodComponent(
+            id: 'food.all_missing',
+            name: 'unknown food, no macros (synthetic)',
+            physicalForm: MealPhysicalForm.unknown,
+            proteinGrams: null,
+            fatGrams: null,
+            fiberGrams: null,
+            carbohydrateGrams: null,
+            calories: null,
+            portionGrams: null,
+            sourceDocId: 'synthetic:demo_food',
+          ),
+        ],
+      ),
+    ],
+    notes: 'Proves missing macros stay missing (unknown competition, lowered '
+        'confidence), never silently 0.',
+  ),
+
+  // --- C1: enteral feeding educational scenarios (non-prescriptive) ------
+  MechanisticReplayScenario(
+    scenarioId: 's37_enteral_continuous_low_protein',
+    title: 'Continuous enteral-style feed (low-protein liquid, sustained) — '
+        'educational context only, no schedule or timing advice',
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_enteral_continuous',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.liquid,
+        components: [
+          FoodComponent(
+            id: 'food.enteral_continuous.synth',
+            name: 'continuous enteral feed, low protein (synthetic demo)',
+            physicalForm: MealPhysicalForm.liquid,
+            proteinGrams: 2,
+            fatGrams: 2,
+            fiberGrams: 0,
+            carbohydrateGrams: 12,
+            calories: 80,
+            portionGrams: 250,
+            sourceDocId: 'synthetic:demo_food',
+          ),
+        ],
+      ),
+    ],
+    notes: 'Enteral feeding changes protein delivery + gastric context. '
+        'Educational simulation only; not a feeding schedule or timing '
+        'recommendation. Review with a qualified professional.',
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's38_enteral_bolus_protein',
+    title: 'Bolus enteral-style feed (protein-containing liquid) near a dose — '
+        'educational context only, no schedule or timing advice',
+    // A liquid bolus empties quickly, so in this configuration the model finds
+    // no modeled interaction by the time the absorption window opens.
+    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    medicationEntries: [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: [MinutesOffset(20)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_enteral_bolus',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.liquid,
+        components: [_smoothieLiquidProtein],
+      ),
+    ],
+    notes: 'Bolus enteral feed modeled as a protein-containing liquid meal. '
+        'Educational simulation only; not a feeding schedule or timing '
+        'recommendation. Review with a qualified professional.',
+  ),
+
+  // --- A1/A2: CDSS→mechanistic medication section-provenance bridge -------
+  MechanisticReplayScenario(
+    scenarioId: 's39_spl_ir_section_provenance',
+    title: 'SPL-style IR carbidopa/levodopa with section provenance + 2 '
+        'components bridged into the mechanistic context (educational)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedSeverityFloor: SeverityBand.moderate,
+    medicationEntries: [_carbidopaLevodopaIrWithMetadata],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_chicken_spl_ir',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_chickenSteakProtein],
+      ),
+    ],
+    notes: 'Label section refs + combination components + release-type source '
+        'reach the per-event trace + report. Dose still from user/variant '
+        'strength; product metadata never fabricates a dose.',
+  ),
+  MechanisticReplayScenario(
+    scenarioId: 's40_spl_er_section_provenance',
+    title: 'SPL-style ER carbidopa/levodopa with section provenance → wider '
+        'absorption window from source-backed release type (educational)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    medicationEntries: [_carbidopaLevodopaErWithMetadata],
+    medicationMinutesOffsets: [MinutesOffset(30)],
+    meals: [
+      ScenarioMeal(
+        id: 'meal_chicken_spl_er',
+        offset: MinutesOffset(0),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_chickenSteakProtein],
+      ),
+    ],
+    notes: 'Extended-release product metadata widens the modeled absorption '
+        'window; release-type source recorded as structured_variant_metadata.',
   ),
 ];

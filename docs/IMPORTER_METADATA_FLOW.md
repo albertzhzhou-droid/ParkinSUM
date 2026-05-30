@@ -222,6 +222,84 @@ an `AminoAcidProfile`; the competition model prefers actual amino-acid fields
 (`actualAminoAcidFields` mode) over the protein-source proxy
 (`proteinSourceProxy`), falling back to `unknown` when neither is present.
 
+## 14c. FHIR-inspired NutritionIntake view (local, PHI-free)
+
+`FhirInspiredNutritionIntakeMapper.fromMealComposition(...)` serializes a
+`MealComposition` into a local **FHIR-inspired** view
+(`FhirInspiredNutritionIntakeView`) for educational traceability and
+reviewability — food components, nutrient summary, amino-acid provenance,
+missingness, and sourceRefs in a NutritionIntake-shaped structure.
+
+It is **inspired, not FHIR-conformant**: `conformance_status =
+inspired_not_conformant`. HL7 FHIR `NutritionIntake` is patient-centric
+(`subject` → Patient); this view **omits `subject` and all patient-linkage /
+clinical fields** (no patient, encounter, practitioner, care team, diagnosis, or
+treatment) and never constructs a Patient/Reference/Encounter
+(`phi_policy = subject_omitted_no_phi`). It carries `not_clinically_calibrated =
+true` and the shared non-prescriptive safety copy. It implies **no clinical
+interoperability** and supports no diagnosis, treatment, or patient monitoring.
+
+## 14d. CDSS → mechanistic medication-context bridge (section provenance)
+
+The live importers already extract label sections, release type, dose form,
+route, and combination components into the CDSS-record layer
+(`DrugProductVariantRecord` + `DrugLabelSectionRecord`). The mechanistic path
+previously collapsed that into a thin context and lost the provenance.
+`MedicationContextMetadataAdapter.fromCdssMetadata(...)` now **bridges** the
+canonical `DrugProductVariantMetadata` (+ any `DrugLabelSectionRecord`s) into a
+`MechanisticMedicationMetadata` object that is attached to
+`NormalizedMedicationContext.metadata`. It carries:
+
+- combination **components** (e.g. carbidopa + levodopa) with role; per-component
+  strength is left **null when a product reports only a single product
+  strength** (recorded missing, never fabricated);
+- **label section refs** (`LabelSectionRef`: sourceSystem/sourceDocId/version/
+  sectionId/key/title/effectiveDate/sourceRefs) — multiple per product;
+- **release type + releaseTypeSource** (`structured_variant_metadata` when
+  known, `unknown` otherwise — never inferred from dose);
+- dose form, route, source-doc id/version, jurisdiction, language, sourceRefs,
+  and a metadata-completeness grade (lowered when section provenance is absent —
+  not a fake official trace).
+
+This is **fixture-tested, not live ingestion**, and **provenance only**: it is
+never read as an intake dose. The intake dose still comes solely from the
+user-facing dosage path; a unitless user dosage stays insufficient even when
+rich product-strength metadata is attached. Levodopa-specific scoring uses the
+levodopa component identity while preserving the other components. Section
+provenance improves traceability, **not clinical validity**.
+
+## 14e. FHIR-inspired MedicationKnowledge view (local, PHI-free)
+
+`FhirInspiredMedicationKnowledgeMapper.fromMechanisticMetadata(...)` serializes
+the engine-facing `MechanisticMedicationMetadata` (the §14d bridge output) into a
+local **FHIR-inspired** view (`FhirInspiredMedicationKnowledgeView`) for
+educational traceability and reviewability — demo product id, active
+ingredients, combination components, product strengths, dose form, route,
+release type + source, source-document id/version/effective date, label section
+refs, sourceRefs, and metadata completeness in a MedicationKnowledge-shaped
+structure. A `fromNormalizedContext(...)` convenience reads
+`NormalizedMedicationContext.metadata` (returns null when no metadata was
+bridged).
+
+It is **inspired, not FHIR-conformant**: `conformance_status =
+inspired_not_conformant`. HL7 FHIR `MedicationKnowledge` is a clinical knowledge
+resource embedded in medication-request / administration / dispensing workflows;
+this view **omits every patient-care semantic** — no patient, subject, encounter,
+practitioner, care team, `MedicationRequest`, `MedicationAdministration`,
+`dosageInstruction`, timing, prescription, or recommendation
+(`phi_policy = no_patient_no_administration_no_phi`). It carries
+`not_clinically_calibrated = true` and the shared non-prescriptive safety copy.
+
+**Dose boundary:** product strength is serialized as *product label metadata*
+(each strength entry is tagged `product_label_metadata`); it is **never a user
+intake dose**, and the view has no field for a user-taken dose, frequency, or
+timing. Per-component strength stays null when only a product-level strength
+exists (recorded missing, not fabricated). This is **fixture-tested, not live
+ingestion**, implies **no clinical interoperability**, and supports no diagnosis,
+treatment, medication timing, or dose guidance. There is no coded drug `code`
+(RxCUI/ATC, S7) and the `section_code` slot carries the CDSS section key, not a
+discrete LOINC code (S4 residual) — both remain future work.
+
 ## 15. Future work
 
 - Live network ingestion + real schema parsers for **dm+d** and **EU national
