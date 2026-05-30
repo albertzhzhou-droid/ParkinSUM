@@ -26,6 +26,9 @@
     "source:quality": "node tool/run_source_quality_perturbation_report.mjs",
     "release:snapshot": "node tool/run_release_snapshot.mjs",
     "demo:walkthrough": "node tool/generate_public_demo_walkthrough.mjs",
+    "evidence:graph": "node tool/generate_evidence_graph.mjs",
+    "scenario:fuzz": "node tool/run_synthetic_scenario_fuzzer.mjs",
+    "localization:lint": "node tool/run_localization_safety_lint.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {

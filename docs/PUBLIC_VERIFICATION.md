@@ -98,6 +98,43 @@ results.
 - **Network:** no. **Data:** synthetic only. **No advice; not a clinical
   dashboard.**
 
+### `dart run tool/generate_evidence_graph.dart`  (or `npm run evidence:graph`)
+- **Checks:** composes a local evidence/provenance **graph** (nodes + edges) from
+  the replay, source-quality, release-snapshot artifacts and a synthetic
+  EvidenceTraceBundle sample.
+- **Expected:** `build/evidence_graph/latest.{json,mmd,md}`; absent inputs show
+  nodes with `status: missing_artifact`.
+- **Failure means:** a consumed artifact is missing (recorded as a
+  `missing_artifact` node, not fabricated).
+- **Network:** no. **Data:** synthetic only. **Local graph — not a FHIR
+  Provenance resource, not W3C PROV, not a patient record.** See
+  `docs/EVIDENCE_GRAPH.md`.
+
+### `dart run tool/run_synthetic_scenario_fuzzer.dart`  (or `npm run scenario:fuzz`)
+- **Checks:** deterministic synthetic boundary cases (dosage, nutrient
+  missingness, release-type, source-quality, window/ranking, safety-copy/no-PHI)
+  evaluated against the existing gates with real code.
+- **Expected:** `build/synthetic_scenario_fuzzer/latest.{json,md}` and
+  `N/N cases passed`. Supports `--seed`, `--case-count`, `--family`.
+- **Failure means:** a boundary regression — e.g. a unitless dose validates,
+  missing nutrient treated as zero, tier ordering broken, or banned/advice copy
+  leaked. **Exits non-zero** on a must-pass invariant failure.
+- **Network:** no. **Data:** synthetic only. **Stress testing, not clinical
+  validation or patient simulation.** See `docs/SYNTHETIC_SCENARIO_FUZZER.md`.
+
+### `dart run tool/run_localization_safety_lint.dart`  (or `npm run localization:lint`)
+- **Checks:** user-visible copy + localization surfaces for missing safety
+  boundaries, missing evidence/limitation wording, placeholder problems, and
+  unsafe prescriptive/overconfident phrases (en/zh/fr/ja). Lints the safe-copy
+  template registry; supports `--strict`.
+- **Expected:** `build/localization_safety_lint/latest.{json,md}` with
+  info/warn/blocker counts and `pass=true` (0 blockers) for the safe registry.
+- **Failure means:** unsafe localized copy (or, in strict mode, missing required
+  coverage/placeholder). **Exits non-zero** on a blocker.
+- **Network:** no. **Data:** synthetic/template only. **Copy-safety lint — not a
+  translation-quality or clinical-safety guarantee; no LLM.** See
+  `docs/LOCALIZATION_SAFETY_LINT.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

@@ -194,6 +194,12 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic drift report; missing → recorded, not hidden.
 
 ### P4 — EvidenceGraphBuilder
+- **Status: shipped** (Operation 2; branch `evidence-graph-builder`):
+  `lib/domain/entities/evidence_graph.dart` +
+  `lib/domain/usecases/evidence_graph_builder.dart` + mermaid renderer +
+  `tool/generate_evidence_graph.dart` (`npm run evidence:graph`) + tests +
+  `docs/EVIDENCE_GRAPH.md`. Local graph only; not FHIR Provenance / W3C PROV;
+  missing inputs → `missing_artifact` nodes.
 - **Problem:** provenance is serialized as views/bundles but not as a navigable graph.
 - **Why it matters:** reviewers can trace fact → source visually/programmatically.
 - **Inputs:** replay report JSON and/or `EvidenceTraceBundle`.
@@ -216,6 +222,13 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic graph; PHI-free; missing input → `missing_artifact`.
 
 ### P5 — SyntheticScenarioFuzzer
+- **Status: shipped** (Operation 3; branch `synthetic-scenario-fuzzer`):
+  `lib/domain/entities/synthetic_scenario_fuzzer.dart` +
+  `lib/domain/usecases/synthetic_scenario_fuzzer.dart` (deterministic generator +
+  real-code evaluator across families A–F) + `tool/run_synthetic_scenario_fuzzer.dart`
+  (`npm run scenario:fuzz`) + tests + `docs/SYNTHETIC_SCENARIO_FUZZER.md`. Every
+  case is evaluated with existing code; missing/unevaluated → recorded, never
+  fabricated.
 - **Problem:** boundary cases are covered by hand-written scenarios only.
 - **Why it matters:** broadens regression protection for gates + replay.
 - **Inputs:** a seed + generators for unitless/missing dose, true-0/missing
@@ -238,6 +251,11 @@ place. P11 scales with contributors.
 - **Acceptance:** seeded reproducibility; invariant violations surfaced.
 
 ### P6 — ExplanationCopyCompiler / SafeCopyTemplateRegistry
+- **Status: skeleton shipped** (Operation 4; branch `localization-safety-and-copy-registry`):
+  `lib/domain/entities/safe_copy_template.dart` +
+  `lib/domain/usecases/safe_copy_template_registry.dart` (6 representative
+  templates) + `docs/SAFE_COPY_TEMPLATE_REGISTRY.md` + tests. Not wired into UI/
+  scoring; full copy migration + a compiler remain future work.
 - **Problem:** user-facing explanation/safety copy is spread across the codebase.
 - **Why it matters:** centralizing it prevents drift into advice and enables P7.
 - **Inputs:** templateId, outputType, allowed placeholders, required `sourceRefs`,
@@ -260,6 +278,13 @@ place. P11 scales with contributors.
 - **Acceptance:** unsafe templates blocked deterministically.
 
 ### P7 — LocalizationSafetyLint
+- **Status: shipped** (Operation 4; branch `localization-safety-and-copy-registry`):
+  `lib/domain/entities/localization_safety_lint.dart` +
+  `lib/domain/usecases/localization_safety_lint.dart` (rules A–G, multilingual
+  en/zh/fr/ja) + `tool/run_localization_safety_lint.dart` (`npm run
+  localization:lint`) + tests + `docs/LOCALIZATION_SAFETY_LINT.md`. v1 lints the
+  safe-copy registry; full app-dictionary coverage is future work (recorded as
+  `no_locale_dictionary_discovered`, never fabricated).
 - **Problem:** multilingual dictionaries can drift in safety meaning.
 - **Why it matters:** translations must not become more clinically assertive.
 - **Inputs:** `lib/core/i18n/app_i18n.dart` + `app_i18n_full_translations.dart`
