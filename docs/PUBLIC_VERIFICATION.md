@@ -98,6 +98,18 @@ results.
 - **Network:** no. **Data:** synthetic only. **No advice; not a clinical
   dashboard.**
 
+### `dart run tool/generate_evidence_graph.dart`  (or `npm run evidence:graph`)
+- **Checks:** composes a local evidence/provenance **graph** (nodes + edges) from
+  the replay, source-quality, release-snapshot artifacts and a synthetic
+  EvidenceTraceBundle sample.
+- **Expected:** `build/evidence_graph/latest.{json,mmd,md}`; absent inputs show
+  nodes with `status: missing_artifact`.
+- **Failure means:** a consumed artifact is missing (recorded as a
+  `missing_artifact` node, not fabricated).
+- **Network:** no. **Data:** synthetic only. **Local graph — not a FHIR
+  Provenance resource, not W3C PROV, not a patient record.** See
+  `docs/EVIDENCE_GRAPH.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

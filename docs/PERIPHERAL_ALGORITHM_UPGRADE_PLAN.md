@@ -194,6 +194,12 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic drift report; missing → recorded, not hidden.
 
 ### P4 — EvidenceGraphBuilder
+- **Status: shipped** (Operation 2; branch `evidence-graph-builder`):
+  `lib/domain/entities/evidence_graph.dart` +
+  `lib/domain/usecases/evidence_graph_builder.dart` + mermaid renderer +
+  `tool/generate_evidence_graph.dart` (`npm run evidence:graph`) + tests +
+  `docs/EVIDENCE_GRAPH.md`. Local graph only; not FHIR Provenance / W3C PROV;
+  missing inputs → `missing_artifact` nodes.
 - **Problem:** provenance is serialized as views/bundles but not as a navigable graph.
 - **Why it matters:** reviewers can trace fact → source visually/programmatically.
 - **Inputs:** replay report JSON and/or `EvidenceTraceBundle`.
