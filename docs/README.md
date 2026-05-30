@@ -39,6 +39,10 @@ exact commands use the public verification guide.
 - [Known Risks](known_risks.md) — recorded risk register.
 - [Release Evidence Index](RELEASE_EVIDENCE_INDEX.md) — release-evidence pointers.
 
+## Roadmap (peripheral support algorithms)
+
+- [Peripheral Algorithm Upgrade Plan](PERIPHERAL_ALGORITHM_UPGRADE_PLAN.md) — prioritized roadmap (P1–P12) for input-quality, source-governance, evidence, testing, privacy, localization, contribution-safety, and release-automation algorithms. Branch base: `peripheral-algorithm-integration`.
+
 ## Biomedical standards / roadmap
 
 - [Biomedical Standards Conformance Scorecard](BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md) — code-grounded posture vs FHIR/LOINC/FDC/FAIR (inspired, never conformant).
