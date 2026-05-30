@@ -168,6 +168,42 @@ preference to the protein-source proxy. The legacy heuristic can only order
 results when `rankerEligibility.mechanisticPrimaryEligible == false`, with the
 reason surfaced in UI + replay.
 
+## Evidence & Traceability Architecture
+
+ParkinSUM's most reviewable surface is its **evidence and provenance layer**.
+Every educational output is deterministic, source-linked, and serializable for
+review — without any patient data.
+
+- **Deterministic mechanistic replay** — 41 synthetic scenarios, banned-phrase
+  scanned (`docs/REPLAY_RUNNER.md`).
+- **CDSS-style source/provenance metadata** with **source-authority** and
+  **metadata-completeness** gates (`docs/IMPORTER_METADATA_FLOW.md`).
+- **FDC nutrient provenance tiers** (analytical / calculated / imputed / unknown)
+  as **source-quality signals** that affect modeled confidence, not advice.
+- **Multi-dose medication traces** with per-dose modeled overlap.
+- **Local EvidenceTraceBundle** — a ParkinSUM-local artifact (explicitly **not** a
+  FHIR Bundle) pairing the two inspired views (`docs/EVIDENCE_TRACE_BUNDLE.md`).
+- **FHIR-inspired, non-conformant** NutritionIntake / MedicationKnowledge views
+  (PHI-free; `inspired_not_conformant`) with a conservative **LOINC section-code**
+  trace.
+- **Source-quality perturbation report** — shows how scoring moves when only
+  source/provenance quality changes (`docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`).
+- **Public preflight + Firestore rules contract** release guardrails.
+
+```text
+source/importer metadata → normalized facts (missing ≠ zero)
+  → metadata completeness + source authority
+  → mechanistic engine (per-dose) → replay / source-quality report
+  → FHIR-inspired views + local EvidenceTraceBundle
+```
+
+Reviewer entry points: **[docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md](docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md)**
+(guided walkthrough), **[docs/CAPABILITY_MATRIX.md](docs/CAPABILITY_MATRIX.md)**
+(implemented vs future work), **[docs/PUBLIC_VERIFICATION.md](docs/PUBLIC_VERIFICATION.md)**
+(exact commands), and the **[docs index](docs/README.md)**. These artifacts are
+deterministic synthetic-data demonstrations — they are **not** clinical
+validation, and the source-quality report is **not** a clinical dashboard.
+
 ## Demo Media
 
 The screenshots and GIF below use synthetic local demo data only. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
@@ -203,6 +239,17 @@ npm ci
 npm run public:preflight
 npm run rules:contract
 ```
+
+Run the deterministic evidence artifacts (synthetic data; not clinical
+validation):
+
+```sh
+dart run tool/run_mechanistic_replay.dart            # or: npm run mechanistic:replay
+dart run tool/run_source_quality_perturbation_report.dart  # or: npm run source:quality
+```
+
+See [docs/PUBLIC_VERIFICATION.md](docs/PUBLIC_VERIFICATION.md) for what each
+command checks, its expected output, and what failure means.
 
 The default public-demo path is local mode. Firebase-backed commands are retained for internal operator validation and require project access.
 
@@ -306,6 +353,18 @@ If you discuss the project academically, include the safety boundary: educationa
 
 ## Documentation
 
+- [Documentation index](docs/README.md)
+- [Evidence & traceability demo guide](docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md)
+- [Capability matrix](docs/CAPABILITY_MATRIX.md)
+- [Public verification guide](docs/PUBLIC_VERIFICATION.md)
+- [Evidence trace bundle](docs/EVIDENCE_TRACE_BUNDLE.md)
+- [Source-quality perturbation report](docs/SOURCE_QUALITY_PERTURBATION_REPORT.md)
+- [Conflict engine model](docs/CONFLICT_ENGINE_MODEL.md)
+- [Importer & metadata flow](docs/IMPORTER_METADATA_FLOW.md)
+- [Replay runner](docs/REPLAY_RUNNER.md)
+- [Biomedical standards conformance scorecard](docs/BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md)
+- [Source access & licenses](docs/SOURCE_ACCESS_AND_LICENSES.md)
+- [Manual validation](docs/MANUAL_VALIDATION.md)
 - [Disclaimer](DISCLAIMER.md)
 - [Security policy](SECURITY.md)
 - [Roadmap](ROADMAP.md)
