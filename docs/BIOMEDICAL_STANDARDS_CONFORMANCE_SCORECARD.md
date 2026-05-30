@@ -253,6 +253,14 @@ boundary.
   the mechanism layer emits resolves in the registry (shipped this pass — see
   §6); (b) machine-readable license/access tags per source; (c) the
   clinical-calibration guardrail regression (backlog #12).
+- **Reusability artifact (shipped):** a deterministic **source-quality
+  perturbation report** (`SourceQualityPerturbationReportRunner`;
+  `tool/run_source_quality_perturbation_report.dart` / `npm run source:quality`;
+  see `docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`) makes the engine's
+  provenance-sensitivity auditable: it shows how candidate scoring moves when
+  only source/provenance quality changes, and proves (test-backed) that conflict
+  overlap stays the dominant term while weaker amino-acid provenance widens
+  uncertainty. Educational analysis only; no advice, not clinically calibrated.
 - **Safety:** governance/provenance; gates live ingestion behind review.
 
 ## 5. Aggregate deltas, sequenced
