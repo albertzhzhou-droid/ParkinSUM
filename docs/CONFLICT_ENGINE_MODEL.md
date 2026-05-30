@@ -238,6 +238,14 @@ additionally surfaces the medication provenance: `releaseTypeSource`,
 never contributes to the dose, and the intake dose still comes solely from the
 user-facing dosage path (product/component strength never fabricates a dose).
 
+The same `MechanisticMedicationMetadata` is also exportable as a local,
+**FHIR-inspired, PHI-free MedicationKnowledge view**
+(`FhirInspiredMedicationKnowledgeMapper` → `FhirInspiredMedicationKnowledgeView`;
+see `docs/IMPORTER_METADATA_FLOW.md` §14e). That view is **serialization only** —
+it does not affect scoring or the dose path, is `inspired_not_conformant`, omits
+all patient-care semantics, and serializes product strength strictly as product
+metadata (`product_label_metadata`), never as a user intake dose.
+
 ### 12a. Absorption opportunity openness profile
 
 In addition to the flat window (kept for compatibility), the model emits a
