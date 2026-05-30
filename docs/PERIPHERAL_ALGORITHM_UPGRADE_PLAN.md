@@ -222,6 +222,13 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic graph; PHI-free; missing input → `missing_artifact`.
 
 ### P5 — SyntheticScenarioFuzzer
+- **Status: shipped** (Operation 3; branch `synthetic-scenario-fuzzer`):
+  `lib/domain/entities/synthetic_scenario_fuzzer.dart` +
+  `lib/domain/usecases/synthetic_scenario_fuzzer.dart` (deterministic generator +
+  real-code evaluator across families A–F) + `tool/run_synthetic_scenario_fuzzer.dart`
+  (`npm run scenario:fuzz`) + tests + `docs/SYNTHETIC_SCENARIO_FUZZER.md`. Every
+  case is evaluated with existing code; missing/unevaluated → recorded, never
+  fabricated.
 - **Problem:** boundary cases are covered by hand-written scenarios only.
 - **Why it matters:** broadens regression protection for gates + replay.
 - **Inputs:** a seed + generators for unitless/missing dose, true-0/missing
