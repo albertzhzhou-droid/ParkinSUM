@@ -51,7 +51,7 @@ of this scorecard is 🟢 *Inspired-Aligned*.
 
 | # | Standard / construct | Current | Target (safe ceiling) | Opportunity | Backlog |
 | --- | --- | --- | --- | --- | --- |
-| S1 | HL7 FHIR R5 **MedicationKnowledge** | 🟡 | 🟢 | OPP-F1 | #8 |
+| S1 | HL7 FHIR R5 **MedicationKnowledge** | 🟢 | 🟢 | OPP-F1 ✅ | #8 (**view shipped**) |
 | S2 | HL7 FHIR R5 **NutritionIntake** | 🟢 | 🟢 | OPP-F2 ✅ | #9 (**shipped**) |
 | S3 | HL7 FHIR R5 **Observation** (nutrient) | ⬜ | 🟡 | OPP-F2 | #9 |
 | S4 | **FDA SPL** + LOINC section identity | 🟢 | 🟢 | OPP-A1/A2 ✅ | #1 (**bridge shipped**) |
@@ -72,25 +72,35 @@ boundary.
 
 ## 4. Per-standard detail (with code evidence)
 
-### S1 — HL7 FHIR R5 MedicationKnowledge — 🟡 Inspired-Partial
+### S1 — HL7 FHIR R5 MedicationKnowledge — 🟢 Inspired-Aligned (MK view shipped)
 
 - **Standard:** `MedicationKnowledge` = "Information about a medication that is
   used to support knowledge" (HL7 FHIR R5). Key elements: `code`,
   `doseForm`, `ingredient` (item + strength), `definitional`, `monograph`,
   `relatedMedicationKnowledge`, `regulatory`.
-- **Current state (evidence):** `DrugProductVariantMetadata`
-  (`lib/domain/entities/source_metadata.dart`) carries `genericName`,
-  `activeIngredients`, `strengthValue`+`strengthUnit`, `doseForm`, `route`,
-  `releaseType`, `productIdentifier` (NDC/DIN/EMA#/dm+d/PMDA/NMPA), `labelSection`,
-  `sourceRefs`, `limitationText`. This captures most MedicationKnowledge *intent*
-  (form, ingredient+strength, identifier) but exposes only a flat
-  `toJson()` — no FHIR-shaped element names, and **no coded `code`** (no
-  RxCUI/ATC).
-- **Delta to 🟢:** add a `toFhirInspiredMedicationKnowledge()` view (explicitly
-  "inspired, non-conformant") mapping fields → FHIR element names, plus a coded
-  `code` once RxCUI/ATC identity (S7) exists. No behavior change; serialization
-  only.
-- **Safety:** representation only; omit any patient linkage.
+- **Current state (evidence):** a local **FHIR-inspired, PHI-free**
+  `FhirInspiredMedicationKnowledgeView`
+  (`lib/domain/entities/fhir_inspired_medication_knowledge_view.dart`) +
+  `FhirInspiredMedicationKnowledgeMapper`
+  (`lib/domain/usecases/fhir_inspired_medication_knowledge_mapper.dart`) maps the
+  engine-facing `MechanisticMedicationMetadata` (PR #33 bridge) into a clearly
+  labeled serialization view: product id, active ingredients, combination
+  components (carbidopa + levodopa preserved), product strengths, dose form,
+  route, release type + source, source-document id/version/effective date, label
+  section refs, sourceRefs, metadata completeness, limitation text. Marked
+  `inspired_not_conformant` + `no_patient_no_administration_no_phi`. Tested in
+  `test/fhir_inspired_medication_knowledge_view_test.dart` (recursive key-level
+  no-PHI/clinical-key scan; banned-phrase scan; determinism).
+- **Residual (not blocking 🟢):** no coded `code` — RxCUI/ATC identity (S7) is
+  still future work, so the view carries names/keys, not a discrete drug code;
+  the `section_code` slot currently carries the CDSS section key, not a discrete
+  LOINC code (S4 residual). Mapping reflects FHIR *intent*, not conformance.
+- **Safety:** representation only; **omits** patient/subject/encounter/
+  practitioner/careTeam/MedicationRequest/MedicationAdministration/
+  dosageInstruction/timing/prescription. **Product strength is product
+  metadata, never a user intake dose** (tagged `product_label_metadata`); the
+  view has no field for a user-taken dose, frequency, or timing. Not clinically
+  calibrated; no clinical interoperability.
 
 ### S2 — HL7 FHIR R5 NutritionIntake — 🟢 Inspired-Aligned (F2 shipped)
 

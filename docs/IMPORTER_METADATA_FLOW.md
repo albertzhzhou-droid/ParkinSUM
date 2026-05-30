@@ -268,6 +268,38 @@ rich product-strength metadata is attached. Levodopa-specific scoring uses the
 levodopa component identity while preserving the other components. Section
 provenance improves traceability, **not clinical validity**.
 
+## 14e. FHIR-inspired MedicationKnowledge view (local, PHI-free)
+
+`FhirInspiredMedicationKnowledgeMapper.fromMechanisticMetadata(...)` serializes
+the engine-facing `MechanisticMedicationMetadata` (the §14d bridge output) into a
+local **FHIR-inspired** view (`FhirInspiredMedicationKnowledgeView`) for
+educational traceability and reviewability — demo product id, active
+ingredients, combination components, product strengths, dose form, route,
+release type + source, source-document id/version/effective date, label section
+refs, sourceRefs, and metadata completeness in a MedicationKnowledge-shaped
+structure. A `fromNormalizedContext(...)` convenience reads
+`NormalizedMedicationContext.metadata` (returns null when no metadata was
+bridged).
+
+It is **inspired, not FHIR-conformant**: `conformance_status =
+inspired_not_conformant`. HL7 FHIR `MedicationKnowledge` is a clinical knowledge
+resource embedded in medication-request / administration / dispensing workflows;
+this view **omits every patient-care semantic** — no patient, subject, encounter,
+practitioner, care team, `MedicationRequest`, `MedicationAdministration`,
+`dosageInstruction`, timing, prescription, or recommendation
+(`phi_policy = no_patient_no_administration_no_phi`). It carries
+`not_clinically_calibrated = true` and the shared non-prescriptive safety copy.
+
+**Dose boundary:** product strength is serialized as *product label metadata*
+(each strength entry is tagged `product_label_metadata`); it is **never a user
+intake dose**, and the view has no field for a user-taken dose, frequency, or
+timing. Per-component strength stays null when only a product-level strength
+exists (recorded missing, not fabricated). This is **fixture-tested, not live
+ingestion**, implies **no clinical interoperability**, and supports no diagnosis,
+treatment, medication timing, or dose guidance. There is no coded drug `code`
+(RxCUI/ATC, S7) and the `section_code` slot carries the CDSS section key, not a
+discrete LOINC code (S4 residual) — both remain future work.
+
 ## 15. Future work
 
 - Live network ingestion + real schema parsers for **dm+d** and **EU national
