@@ -13,6 +13,17 @@ or professional approval.
 - Contribution policy: `CONTRIBUTING.md`
 - Public preflight report: `build/public_release_preflight/latest.md`
 
+## Evidence & Traceability (synthetic; not clinical validation)
+
+- Documentation index: `docs/README.md`
+- Demo guide: `docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md`
+- Capability matrix: `docs/CAPABILITY_MATRIX.md`
+- Public verification guide: `docs/PUBLIC_VERIFICATION.md`
+- Mechanistic replay: `docs/REPLAY_RUNNER.md`, `build/mechanistic_replay/latest.md`
+- Source-quality perturbation report: `docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`, `build/source_quality_perturbation/latest.md`
+- Evidence trace bundle: `docs/EVIDENCE_TRACE_BUNDLE.md`
+- Standards posture: `docs/BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md`
+
 ## Architecture Evidence
 
 - Architecture overview: `docs/ARCHITECTURE.md`

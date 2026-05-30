@@ -31,6 +31,17 @@ the public repository preflight reports zero blockers.
   personal health information or credentials.
 - `npm run public:preflight` passes with zero `BLOCKER` findings.
 
+## Evidence & Traceability Showcase Entry Points
+
+The evidence/traceability layer is the primary review surface. It is a set of
+deterministic, synthetic-data artifacts — not clinical calibration and not
+medical advice:
+
+- Guided walkthrough: `docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md`
+- Implemented vs future work: `docs/CAPABILITY_MATRIX.md`
+- Exact reviewer commands: `docs/PUBLIC_VERIFICATION.md`
+- Documentation index: `docs/README.md`
+
 ## Future Real-World Use Gate
 
 If this project is ever repositioned as a real health, clinical, or personal

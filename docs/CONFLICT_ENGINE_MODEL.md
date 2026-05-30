@@ -244,7 +244,11 @@ The same `MechanisticMedicationMetadata` is also exportable as a local,
 see `docs/IMPORTER_METADATA_FLOW.md` §14e). That view is **serialization only** —
 it does not affect scoring or the dose path, is `inspired_not_conformant`, omits
 all patient-care semantics, and serializes product strength strictly as product
-metadata (`product_label_metadata`), never as a user intake dose.
+metadata (`product_label_metadata`), never as a user intake dose. That view's
+label section refs additionally carry an optional, conservative **LOINC
+document-section code** (`LabelSectionCodeMapper`; known FDA SPL headings only,
+`unknown` otherwise — never guessed). LOINC presence is traceability only; it
+does not affect the conflict model, scoring, or the dose path.
 
 ### 12a. Absorption opportunity openness profile
 
@@ -320,7 +324,14 @@ proxy and additionally exposes, in `CompetitionLnaaSummary`:
   like partial handling. This is a provenance signal, **not** a
   measurement-uncertainty or clinical-accuracy estimate; a missing derivation
   stays missing and never raises confidence
-  (`src.usda.fdc.foundation_docs`).
+  (`src.usda.fdc.foundation_docs`). Beyond LNAA uncertainty, the tier now also
+  feeds **candidate metadata completeness** (`MetadataCompletenessGate
+  .scoreCandidateFood` → `CandidateMetadata.completeness` →
+  `MechanisticCandidateScore`) and is stored explicitly on `FoodVariantMetadata`,
+  so source quality affects ranking confidence/tie-breaking — never advice, and
+  never overriding source-authority/jurisdiction policy or conflict dominance
+  (see `docs/IMPORTER_METADATA_FLOW.md` §9 and
+  `docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`).
 
 The modeled overlap represents **intestinal-absorption** competition; broader
 blood–brain-barrier LNAA transport competition is named as a cited mechanism in

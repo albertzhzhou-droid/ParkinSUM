@@ -119,6 +119,24 @@ fallback). Provenance metadata is carried alongside as
 food, and rule explanation. Composes with the hard `MedicationEntryValidator`
 gate; adds the softer downgrade/uncertainty layer.
 
+**FDC nutrient provenance tier (P5).** `scoreCandidateFood(...,
+nutrientConfidenceTier:)` factors the USDA FDC amino-acid derivation tier
+(analytical > calculated > imputed/assumed > unknown) into the candidate-food
+grade: a weaker-than-analytical tier counts as one missing-equivalent, and an
+imputed/unknown tier blocks the top `complete` grade. This tier is now also
+**stored explicitly on `FoodVariantMetadata`** (`nutrientConfidenceTier`,
+`aminoAcidConfidenceTier`, `nutrientDataType`, `nutrientDataPoints`,
+`nutrientDerivationSource`, `nutrientProvenanceQuality`,
+`usesAnalytical/Calculated/ImputedOrAssumedNutrientValues`,
+`nutrientProvenanceLimitationText`) so it is serializable and visible, not just a
+transient gate argument. It was previously wired only into LNAA uncertainty.
+The graded completeness flows into `CandidateMetadata.completeness` →
+`MechanisticCandidateScore`, so source quality affects ranking **confidence and
+tie-breaking** — never advice. These tiers are **source-quality signals, not
+clinical/biological accuracy**; a missing derivation yields a null tier and never
+raises confidence; the tier never overrides source-authority or jurisdiction
+policy, and conflict overlap stays dominant.
+
 ### 9a. Componentized meal-history join
 
 Historical meals are modeled as one `FoodComponent` per logged `MealItem`
@@ -297,8 +315,33 @@ timing. Per-component strength stays null when only a product-level strength
 exists (recorded missing, not fabricated). This is **fixture-tested, not live
 ingestion**, implies **no clinical interoperability**, and supports no diagnosis,
 treatment, medication timing, or dose guidance. There is no coded drug `code`
-(RxCUI/ATC, S7) and the `section_code` slot carries the CDSS section key, not a
-discrete LOINC code (S4 residual) — both remain future work.
+(RxCUI/ATC, S7) — that remains future work.
+
+**LOINC section codes (conservative, partial).** Each label section ref now also
+carries an optional discrete **LOINC document-section code**, mapped from the
+CDSS section key/title by `LabelSectionCodeMapper`
+(`lib/domain/usecases/label_section_code_mapper.dart`) against a const table of
+well-known, verified FDA SPL section headings (indications and usage `34067-9`,
+dosage and administration `34068-7`, contraindications `34070-3`, warnings and
+precautions `43685-7`, drug interactions `34073-7`, clinical pharmacology
+`34090-1`, description `34089-3`, how supplied/storage and handling `34069-5`,
+adverse reactions `34084-4`; source `src.fda.spl.standard`). The view exposes
+`section_code` (the original CDSS key — source identity, never overwritten) plus
+optional `loinc_code` / `loinc_display` / `loinc_mapping_confidence`
+(`mapped` / `unknown`). The mapping is **partial and conservative**: an
+unrecognized or ambiguous section stays `unknown` (LOINC code null — never
+guessed). **A missing LOINC code does not invalidate the section provenance**;
+LOINC presence improves traceability only, not clinical validity.
+
+## 14f. Local evidence-trace bundle (pairs both inspired views)
+
+`EvidenceTraceBundleBuilder` pairs the §14c NutritionIntake-inspired view and the
+§14e MedicationKnowledge-inspired view into a single **ParkinSUM-local**
+`EvidenceTraceBundle` for demo/review traceability (unioned source refs +
+missingness from both sides). It is **not a FHIR Bundle** (`bundle_type =
+parkinsum_local_evidence_trace_bundle`, `conformance_status =
+local_not_fhir_bundle`, no `resourceType`/`Bundle`, no patient/subject/encounter)
+and not clinically calibrated. See `docs/EVIDENCE_TRACE_BUNDLE.md`.
 
 ## 15. Future work
 

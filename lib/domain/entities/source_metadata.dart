@@ -184,6 +184,43 @@ class FoodVariantMetadata {
   final List<String> sourceRefs;
   final String limitationText;
 
+  // --- FDC nutrient provenance (P5) -----------------------------------------
+  // All optional/additive: null/false when no derivation provenance is carried
+  // (missing never raises confidence). These are **source-quality signals**,
+  // not clinical/biological accuracy estimates.
+
+  /// Aggregate FDC nutrient confidence tier name (analytical / calculated /
+  /// imputedOrAssumed / unknown), or null when no derivation provenance.
+  final String? nutrientConfidenceTier;
+
+  /// Amino-acid-specific confidence tier name (usually equal to
+  /// `nutrientConfidenceTier` in this prototype), or null.
+  final String? aminoAcidConfidenceTier;
+
+  /// FDC `dataType` (e.g. Foundation / SR Legacy / Branded), when known.
+  final String? nutrientDataType;
+
+  /// A representative FDC `dataPoints` count (number of observations), or null
+  /// (unknown never raises confidence — it is not treated as zero).
+  final int? nutrientDataPoints;
+
+  /// A representative FDC derivation source/code, when known.
+  final String? nutrientDerivationSource;
+
+  /// Deterministic 0..1 source-quality signal derived from the tier
+  /// (analytical 1.0 / calculated 0.7 / imputed 0.4 / unknown 0.2). Null when no
+  /// tier. **Reporting/visibility only** — not a clinical accuracy estimate.
+  final double? nutrientProvenanceQuality;
+
+  final bool usesAnalyticalNutrientValues;
+  final bool usesCalculatedNutrientValues;
+  final bool usesImputedOrAssumedNutrientValues;
+
+  /// Human-readable note when nutrient values are weaker-than-analytical
+  /// (source-quality caution, never a clinical claim). Null when analytical or
+  /// no provenance.
+  final String? nutrientProvenanceLimitationText;
+
   const FoodVariantMetadata({
     required this.foodVariantId,
     required this.sourceSystem,
@@ -197,6 +234,16 @@ class FoodVariantMetadata {
     required this.extractionConfidence,
     required this.sourceRefs,
     required this.limitationText,
+    this.nutrientConfidenceTier,
+    this.aminoAcidConfidenceTier,
+    this.nutrientDataType,
+    this.nutrientDataPoints,
+    this.nutrientDerivationSource,
+    this.nutrientProvenanceQuality,
+    this.usesAnalyticalNutrientValues = false,
+    this.usesCalculatedNutrientValues = false,
+    this.usesImputedOrAssumedNutrientValues = false,
+    this.nutrientProvenanceLimitationText,
   });
 
   Map<String, dynamic> toJson() => {
@@ -212,5 +259,16 @@ class FoodVariantMetadata {
         'extraction_confidence': extractionConfidence,
         'source_refs': sourceRefs,
         'limitation_text': limitationText,
+        'nutrient_confidence_tier': nutrientConfidenceTier,
+        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+        'nutrient_data_type': nutrientDataType,
+        'nutrient_data_points': nutrientDataPoints,
+        'nutrient_derivation_source': nutrientDerivationSource,
+        'nutrient_provenance_quality': nutrientProvenanceQuality,
+        'uses_analytical_nutrient_values': usesAnalyticalNutrientValues,
+        'uses_calculated_nutrient_values': usesCalculatedNutrientValues,
+        'uses_imputed_or_assumed_nutrient_values':
+            usesImputedOrAssumedNutrientValues,
+        'nutrient_provenance_limitation_text': nutrientProvenanceLimitationText,
       };
 }

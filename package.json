@@ -23,6 +23,7 @@
     "operator:clinical-review": "node tool/clinical_review_report.mjs",
     "operator:gate": "node tool/operator_gate.mjs",
     "mechanistic:replay": "node tool/run_mechanistic_replay.mjs",
+    "source:quality": "node tool/run_source_quality_perturbation_report.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {

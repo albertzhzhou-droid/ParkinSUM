@@ -8,6 +8,8 @@ import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
 import 'package:parkinsum_companion/domain/usecases/fhir_inspired_medication_knowledge_mapper.dart';
 import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.dart';
 
+import 'helpers/no_phi_json_assertions.dart';
+
 /// Phase γ / S1: the FHIR-inspired, PHI-free MedicationKnowledge view. Verifies
 /// the mapping preserves product metadata + provenance, deterministically
 /// serializes, separates product strength from user intake dose, and — critically
@@ -16,75 +18,10 @@ import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.d
 void main() {
   const mapper = FhirInspiredMedicationKnowledgeMapper();
 
-  // Forbidden FHIR patient-care / clinical-workflow KEYS (key-level, recursive).
-  const forbiddenKeys = {
-    'patient',
-    'subject',
-    'encounter',
-    'practitioner',
-    'careteam',
-    'care_team',
-    'diagnosis',
-    'treatment',
-    'medicationrequest',
-    'medication_request',
-    'medicationadministration',
-    'medication_administration',
-    'dosageinstruction',
-    'dosage_instruction',
-    'timing',
-    'recommendation',
-    'prescription',
-  };
-
-  // String values allowed to carry safety/policy wording without being scanned
-  // for banned medical-advice phrases.
-  const safetyCopyKeys = {
-    'phi_policy',
-    'safety_boundary',
-    'not_advice_text',
-    'conformance_status',
-    'view_type',
-    'limitation_text',
-    'provenance_summary',
-  };
-
-  void scanKeys(Object? node) {
-    if (node is Map) {
-      for (final entry in node.entries) {
-        final key = entry.key.toString().toLowerCase();
-        expect(forbiddenKeys.contains(key), isFalse,
-            reason:
-                'forbidden patient-care/clinical-workflow key present: ${entry.key}');
-        scanKeys(entry.value);
-      }
-    } else if (node is List) {
-      for (final e in node) {
-        scanKeys(e);
-      }
-    }
-  }
-
-  List<String> freeTextValues(Object? node) {
-    final out = <String>[];
-    void walk(Object? n) {
-      if (n is Map) {
-        for (final e in n.entries) {
-          if (safetyCopyKeys.contains(e.key.toString())) continue;
-          walk(e.value);
-        }
-      } else if (n is List) {
-        for (final e in n) {
-          walk(e);
-        }
-      } else if (n is String) {
-        out.add(n);
-      }
-    }
-
-    walk(node);
-    return out;
-  }
+  // Recursive key-level no-PHI scan + free-text collection live in the shared
+  // helper (test/helpers/no_phi_json_assertions.dart).
+  void scanKeys(Object? node) => scanNoPhiKeys(node);
+  List<String> freeTextValues(Object? node) => collectFreeTextValues(node);
 
   // --- Synthetic fixtures (no real product, no PHI) -------------------------
 

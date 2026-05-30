@@ -8,6 +8,8 @@ import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 import 'package:parkinsum_companion/domain/usecases/fhir_inspired_nutrition_intake_mapper.dart';
 import 'package:parkinsum_companion/domain/usecases/meal_composition_normalizer.dart';
 
+import 'helpers/no_phi_json_assertions.dart';
+
 /// Phase γ / F2: the FHIR-inspired, PHI-free NutritionIntake view. Verifies the
 /// mapping preserves missingness/provenance, deterministically serializes, and
 /// — critically — emits NO patient-linkage keys (key-level scan, since the
@@ -16,72 +18,11 @@ void main() {
   final normalizer = MealCompositionNormalizer();
   const mapper = FhirInspiredNutritionIntakeMapper();
 
-  // Forbidden FHIR patient-linkage / clinical KEYS (key-level, recursive).
-  const forbiddenKeys = {
-    'subject',
-    'patient',
-    'patient_id',
-    'patientidentifier',
-    'patient_identifier',
-    'encounter',
-    'practitioner',
-    'careteam',
-    'care_team',
-    'diagnosis',
-    'treatment',
-    'recommendation',
-    'clinicaldecisionsupport',
-    'clinical_decision_support',
-  };
-
-  // String values that are allowed to contain safety/policy wording without
-  // being scanned for "banned medical-advice phrases".
-  const safetyCopyKeys = {
-    'phi_policy',
-    'safety_boundary',
-    'not_advice_text',
-    'conformance_status',
-    'view_type',
-  };
-
-  void scanKeys(Object? node) {
-    if (node is Map) {
-      for (final entry in node.entries) {
-        final key = entry.key.toString().toLowerCase();
-        expect(forbiddenKeys.contains(key), isFalse,
-            reason:
-                'forbidden patient-linkage/clinical key present: ${entry.key}');
-        scanKeys(entry.value);
-      }
-    } else if (node is List) {
-      for (final e in node) {
-        scanKeys(e);
-      }
-    }
-  }
-
-  // Collect free-text string values, skipping known safety/policy fields, for
-  // a banned-medical-advice-phrase scan.
-  List<String> freeTextValues(Object? node) {
-    final out = <String>[];
-    void walk(Object? n) {
-      if (n is Map) {
-        for (final e in n.entries) {
-          if (safetyCopyKeys.contains(e.key.toString())) continue;
-          walk(e.value);
-        }
-      } else if (n is List) {
-        for (final e in n) {
-          walk(e);
-        }
-      } else if (n is String) {
-        out.add(n);
-      }
-    }
-
-    walk(node);
-    return out;
-  }
+  // Recursive key-level no-PHI scan + free-text collection live in the shared
+  // helper (test/helpers/no_phi_json_assertions.dart) so both inspired views and
+  // the evidence bundle assert identical, key-level (not naive substring) rules.
+  void scanKeys(Object? node) => scanNoPhiKeys(node);
+  List<String> freeTextValues(Object? node) => collectFreeTextValues(node);
 
   MealComposition buildComposition({
     AminoAcidProfile? aa,
