@@ -92,13 +92,17 @@ node tool/firestore_rules_contract_check.mjs
 dart run tool/run_source_quality_perturbation_report.dart   # or: npm run source:quality
 dart run tool/run_release_snapshot.dart                     # or: npm run release:snapshot
 dart run tool/generate_public_demo_walkthrough.dart         # or: npm run demo:walkthrough
+dart run tool/generate_evidence_graph.dart                  # or: npm run evidence:graph
 ```
 
-The last two **compose** the artifacts above into reviewer summaries:
-`build/release_snapshot/latest.{json,md}` (a per-check evidence table) and
+The last three **compose** the artifacts above into reviewer summaries:
+`build/release_snapshot/latest.{json,md}` (a per-check evidence table),
 `build/public_demo_walkthrough/latest.{md,json}` (a synthetic end-to-end
-walkthrough). Both report `missing_artifact` rather than fabricating results, and
-neither emits advice or PHI. See `docs/PUBLIC_VERIFICATION.md`.
+walkthrough), and `build/evidence_graph/latest.{json,mmd,md}` (a local
+evidence/provenance graph — nodes + edges + Mermaid; see `docs/EVIDENCE_GRAPH.md`,
+explicitly NOT a FHIR Provenance resource or W3C PROV export). All report
+`missing_artifact` rather than fabricating results, and none emits advice or PHI.
+See `docs/PUBLIC_VERIFICATION.md`.
 
 ## 8. Expected outputs
 
