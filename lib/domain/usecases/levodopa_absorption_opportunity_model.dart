@@ -59,20 +59,26 @@ class LevodopaAbsorptionOpportunityModel {
       );
     }
 
-    final isExtended = medication.releaseType.toLowerCase().contains('extend');
-    final isControlled =
-        medication.releaseType.toLowerCase().contains('control');
-    final lag = (isExtended || isControlled)
-        ? referenceErLagMinutes
-        : referenceIrLagMinutes;
-    final duration = (isExtended || isControlled)
-        ? referenceErDurationMinutes
-        : referenceIrDurationMinutes;
+    final releaseTypeRaw = medication.releaseType.toLowerCase().trim();
+    final isExtended = releaseTypeRaw.contains('extend');
+    final isControlled = releaseTypeRaw.contains('control');
+    final isDelayed = releaseTypeRaw.contains('delay');
+    // Extended / controlled / delayed release all widen the opportunity window.
+    final isWideRelease = isExtended || isControlled || isDelayed;
+    // Unknown/unspecified/empty → release-specific interpretation is limited;
+    // we keep a default (IR-shaped) window but widen uncertainty and never
+    // assert ER/IR specifics. Release type is NEVER inferred from dose.
+    final releaseTypeUnknown = releaseTypeRaw.isEmpty ||
+        releaseTypeRaw == 'unknown' ||
+        releaseTypeRaw == 'unspecified';
+    final lag = isWideRelease ? referenceErLagMinutes : referenceIrLagMinutes;
+    final duration =
+        isWideRelease ? referenceErDurationMinutes : referenceIrDurationMinutes;
 
     final assumptions = <String>[
       'ldopa.absorption.small_intestine',
-      if (isExtended || isControlled)
-        'ldopa.release_type.extended_widens_window',
+      if (isWideRelease) 'ldopa.release_type.extended_widens_window',
+      if (releaseTypeUnknown) 'ldopa.absorption.release_type_unknown_limited',
     ];
 
     var startMinute = medication.minute + lag;
@@ -115,15 +121,21 @@ class LevodopaAbsorptionOpportunityModel {
       assumptions.add('ldopa.absorption.no_overlapping_meal_profile');
     }
 
+    // Unknown release type widens uncertainty by one step (release-specific
+    // interpretation is limited).
+    if (releaseTypeUnknown) {
+      uncertainty = _combineUncertainty(uncertainty, UncertaintyBand.wide);
+    }
+
     final incompleteContext = overlappingMealProfile == null;
     final opennessProfile = _buildOpennessProfile(
       startMinute: startMinute,
       endMinute: endMinute,
       peakMinute: peakMinute,
-      extended: isExtended || isControlled,
+      extended: isWideRelease,
       incompleteContext: incompleteContext,
     );
-    assumptions.add(isExtended || isControlled
+    assumptions.add(isWideRelease
         ? 'ldopa.absorption.openness_profile_extended_flatter_longer'
         : 'ldopa.absorption.openness_profile_immediate_sharper');
     if (incompleteContext) {

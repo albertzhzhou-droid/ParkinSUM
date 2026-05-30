@@ -106,6 +106,18 @@ class MechanisticPerEventTrace {
   final List<String> sourceRefs;
   final List<String> uncertaintyReasons;
 
+  // Per-event medication provenance bridged from CDSS metadata (additive;
+  // null/0 when no metadata was attached). Provenance only — never a dose.
+  final String? releaseTypeSource;
+  final String? doseForm;
+  final String? route;
+  final bool levodopaComponentPresent;
+  final int combinationComponentCount;
+  final int labelSectionRefCount;
+  final String? medicationSourceSystem;
+  final String? medicationSourceDocId;
+  final String? medicationMetadataCompleteness;
+
   const MechanisticPerEventTrace({
     required this.medicationEventId,
     required this.medicationMinute,
@@ -117,6 +129,15 @@ class MechanisticPerEventTrace {
     required this.isPrimary,
     required this.sourceRefs,
     required this.uncertaintyReasons,
+    this.releaseTypeSource,
+    this.doseForm,
+    this.route,
+    this.levodopaComponentPresent = false,
+    this.combinationComponentCount = 0,
+    this.labelSectionRefCount = 0,
+    this.medicationSourceSystem,
+    this.medicationSourceDocId,
+    this.medicationMetadataCompleteness,
   });
 
   Map<String, dynamic> toJson() => {
@@ -130,6 +151,15 @@ class MechanisticPerEventTrace {
         'is_primary': isPrimary,
         'source_refs': sourceRefs,
         'uncertainty_reasons': uncertaintyReasons,
+        'release_type_source': releaseTypeSource,
+        'dose_form': doseForm,
+        'route': route,
+        'levodopa_component_present': levodopaComponentPresent,
+        'combination_component_count': combinationComponentCount,
+        'label_section_ref_count': labelSectionRefCount,
+        'medication_source_system': medicationSourceSystem,
+        'medication_source_doc_id': medicationSourceDocId,
+        'medication_metadata_completeness': medicationMetadataCompleteness,
       };
 }
 

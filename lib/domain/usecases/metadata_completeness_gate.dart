@@ -15,7 +15,13 @@ import '../entities/source_metadata.dart';
 /// - incomplete → widen uncertainty rather than assert precision
 class MetadataCompletenessGate {
   MetadataCompletenessScore scoreMedicationContext(
-      DrugProductVariantMetadata? meta) {
+    DrugProductVariantMetadata? meta, {
+    // When false, the product has no backing label-section provenance and the
+    // grade is lowered by one missing-equivalent — a product without a cited
+    // section is not treated as a fully complete official trace. Defaults true
+    // so existing callers are unaffected (additive).
+    bool hasLabelSectionProvenance = true,
+  }) {
     if (meta == null) return MetadataCompletenessScore.invalid;
     if (meta.activeIngredients.isEmpty) {
       return MetadataCompletenessScore.invalid; // no ingredient → no context
@@ -29,6 +35,7 @@ class MetadataCompletenessGate {
       meta.route.isEmpty,
       meta.sourceRefs.isEmpty,
       meta.jurisdiction.isEmpty,
+      !hasLabelSectionProvenance,
     ].where((m) => m).length;
     if (missing == 0) return MetadataCompletenessScore.complete;
     if (missing <= 1) return MetadataCompletenessScore.sufficient;

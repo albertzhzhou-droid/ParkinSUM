@@ -239,6 +239,35 @@ treatment) and never constructs a Patient/Reference/Encounter
 true` and the shared non-prescriptive safety copy. It implies **no clinical
 interoperability** and supports no diagnosis, treatment, or patient monitoring.
 
+## 14d. CDSS → mechanistic medication-context bridge (section provenance)
+
+The live importers already extract label sections, release type, dose form,
+route, and combination components into the CDSS-record layer
+(`DrugProductVariantRecord` + `DrugLabelSectionRecord`). The mechanistic path
+previously collapsed that into a thin context and lost the provenance.
+`MedicationContextMetadataAdapter.fromCdssMetadata(...)` now **bridges** the
+canonical `DrugProductVariantMetadata` (+ any `DrugLabelSectionRecord`s) into a
+`MechanisticMedicationMetadata` object that is attached to
+`NormalizedMedicationContext.metadata`. It carries:
+
+- combination **components** (e.g. carbidopa + levodopa) with role; per-component
+  strength is left **null when a product reports only a single product
+  strength** (recorded missing, never fabricated);
+- **label section refs** (`LabelSectionRef`: sourceSystem/sourceDocId/version/
+  sectionId/key/title/effectiveDate/sourceRefs) — multiple per product;
+- **release type + releaseTypeSource** (`structured_variant_metadata` when
+  known, `unknown` otherwise — never inferred from dose);
+- dose form, route, source-doc id/version, jurisdiction, language, sourceRefs,
+  and a metadata-completeness grade (lowered when section provenance is absent —
+  not a fake official trace).
+
+This is **fixture-tested, not live ingestion**, and **provenance only**: it is
+never read as an intake dose. The intake dose still comes solely from the
+user-facing dosage path; a unitless user dosage stays insufficient even when
+rich product-strength metadata is attached. Levodopa-specific scoring uses the
+levodopa component identity while preserving the other components. Section
+provenance improves traceability, **not clinical validity**.
+
 ## 15. Future work
 
 - Live network ingestion + real schema parsers for **dm+d** and **EU national

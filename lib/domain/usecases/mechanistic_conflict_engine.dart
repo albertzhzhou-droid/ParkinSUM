@@ -175,6 +175,21 @@ class MechanisticConflictEngine {
                 ...e.absorption.missingInputs
                     .map((m) => 'absorption_missing:$m'),
               ],
+              // Medication provenance bridged from CDSS metadata (when present;
+              // null/0/false otherwise). Provenance only — never a dose.
+              releaseTypeSource: e.med.context.metadata?.releaseTypeSource,
+              doseForm: e.med.context.metadata?.doseForm,
+              route: e.med.context.metadata?.route,
+              levodopaComponentPresent:
+                  e.med.context.metadata?.levodopaComponent != null,
+              combinationComponentCount:
+                  e.med.context.metadata?.combinationComponents.length ?? 0,
+              labelSectionRefCount:
+                  e.med.context.metadata?.labelSectionRefs.length ?? 0,
+              medicationSourceSystem: e.med.context.metadata?.sourceSystem,
+              medicationSourceDocId: e.med.context.metadata?.sourceDocId,
+              medicationMetadataCompleteness:
+                  e.med.context.metadata?.metadataCompleteness,
             ))
         .toList(growable: false);
 

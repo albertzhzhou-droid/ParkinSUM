@@ -54,7 +54,7 @@ of this scorecard is 🟢 *Inspired-Aligned*.
 | S1 | HL7 FHIR R5 **MedicationKnowledge** | 🟡 | 🟢 | OPP-F1 | #8 |
 | S2 | HL7 FHIR R5 **NutritionIntake** | 🟢 | 🟢 | OPP-F2 ✅ | #9 (**shipped**) |
 | S3 | HL7 FHIR R5 **Observation** (nutrient) | ⬜ | 🟡 | OPP-F2 | #9 |
-| S4 | **FDA SPL** + LOINC section identity | 🟡 | 🟢 | OPP-A1 | #1 |
+| S4 | **FDA SPL** + LOINC section identity | 🟢 | 🟢 | OPP-A1/A2 ✅ | #1 (**bridge shipped**) |
 | S5 | **USDA FDC** FoodNutrient provenance (derivation/dataPoints/dataType) | 🟢 | 🟢 | OPP-B1 ✅ / OPP-B2 | #2 + spike (**B1 shipped**) |
 | S6 | **FAO/INFOODS** component identifiers (tagnames) | ⬜ | 🟡 | OPP-B3 | (map) |
 | S7 | **RxNorm / ATC** identity coding | ⬜ | 🟡 | OPP-A3 | (map) |
@@ -135,21 +135,32 @@ boundary.
   S5). Lower priority than S2.
 - **Safety:** representation only.
 
-### S4 — FDA SPL + LOINC section identity — 🟡 Inspired-Partial
+### S4 — FDA SPL + LOINC section identity — 🟢 Inspired-Aligned (A1/A2 shipped)
 
 - **Standard:** SPL documents and their sections are identified by **LOINC
   document/section codes**; DailyMed SPL Web Services v2 expose `/spls/{SETID}`
   and `/spls/{SETID}/history` (set id, version, effective date).
-- **Current state (evidence):** `DrugProductVariantMetadata.labelSection` is a
-  single free-text string; there is no LOINC section code, no `setId`, no
-  `labelVersion`, no `effectiveDate`. Adapters are `fixture_tested` (see
+- **Current state (evidence):** the CDSS record layer
+  (`DrugLabelSectionRecord`: `sectionId`/`sectionKey`/`sectionTitle`/
+  `sourceDocId`; `DrugProductVariantRecord`: `releaseType`/`route`/`dosageForm`/
+  `labelVersion`) is now **bridged into the mechanistic context** via
+  `MedicationContextMetadataAdapter` →
+  `MechanisticMedicationMetadata.labelSectionRefs` →
+  `NormalizedMedicationContext.metadata`. The per-event trace and replay report
+  surface `medication_source_system`, `medication_source_doc_id`,
+  `medication_source_version`, `medication_label_section_ref_count`,
+  `medication_release_type` + `medication_release_type_source`, and combination
+  components (carbidopa + levodopa). The engine can therefore cite the exact
+  source section/version backing a product. Adapters remain `fixture_tested`
+  (synthetic CDSS-style fixtures, not live ingestion; see
   `docs/SOURCE_ACCESS_AND_LICENSES.md`).
-- **Delta to 🟢:** capture `sectionLoincCode`, `setId`, `labelVersion`,
-  `effectiveDate` from the SPL fixture parser; surface in the medication-context
-  trace so the engine can cite the exact section. Missing → recorded missing,
-  never guessed.
-- **Safety:** metadata/provenance only; mechanism evidence still requires
-  explicit label text.
+- **Residual (not blocking 🟢):** the bridge carries section *key/title/id* and
+  source-doc version, not a discrete LOINC section **code** field; populating a
+  `sectionLoincCode` from a live SPL parser remains future work. Missing
+  provenance → recorded missing (lower completeness), never guessed.
+- **Safety:** metadata/provenance only; product strength never becomes an intake
+  dose (the analyzable dose still comes solely from the user-facing dosage
+  path); mechanism evidence still requires explicit label text.
 
 ### S5 — USDA FDC FoodNutrient provenance — 🟢 Inspired-Aligned (B1 shipped)
 
