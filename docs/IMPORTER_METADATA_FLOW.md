@@ -315,6 +315,16 @@ unrecognized or ambiguous section stays `unknown` (LOINC code null — never
 guessed). **A missing LOINC code does not invalidate the section provenance**;
 LOINC presence improves traceability only, not clinical validity.
 
+## 14f. Local evidence-trace bundle (pairs both inspired views)
+
+`EvidenceTraceBundleBuilder` pairs the §14c NutritionIntake-inspired view and the
+§14e MedicationKnowledge-inspired view into a single **ParkinSUM-local**
+`EvidenceTraceBundle` for demo/review traceability (unioned source refs +
+missingness from both sides). It is **not a FHIR Bundle** (`bundle_type =
+parkinsum_local_evidence_trace_bundle`, `conformance_status =
+local_not_fhir_bundle`, no `resourceType`/`Bundle`, no patient/subject/encounter)
+and not clinically calibrated. See `docs/EVIDENCE_TRACE_BUNDLE.md`.
+
 ## 15. Future work
 
 - Live network ingestion + real schema parsers for **dm+d** and **EU national

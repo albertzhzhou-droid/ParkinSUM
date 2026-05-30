@@ -66,11 +66,14 @@ class FhirInspiredMedicationKnowledgeMapper {
     final labelSectionRefs =
         meta.labelSectionRefs.map(_labelSectionRef).toList(growable: false);
 
-    // Union of metadata + component source refs (no new ref is minted).
+    // Union of metadata + component + section source refs. The mapped section
+    // refs already fold in the LOINC terminology citation (P2) when a section
+    // mapped, so the view's top-level sourceRefs reflect it too. No fabricated
+    // ref is minted beyond the verified LOINC source.
     final sourceRefs = <String>{
       ...meta.sourceRefs,
       for (final c in meta.components) ...c.sourceRefs,
-      for (final s in meta.labelSectionRefs) ...s.sourceRefs,
+      for (final s in labelSectionRefs) ...s.sourceRefs,
     }.toList(growable: false)
       ..sort();
 
