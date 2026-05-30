@@ -75,9 +75,21 @@ class FhirInspiredLabelSectionRef {
   final String sourceDocId;
   final String sectionId;
 
-  /// Section *code* slot. Currently carries the CDSS section key; a discrete
-  /// LOINC section code is future work and is never invented here.
+  /// Section *code* slot — the original CDSS section key (source identity,
+  /// never overwritten).
   final String? sectionCode;
+
+  /// Discrete **LOINC** document-section code, when the section key/title maps
+  /// to a known, stable FDA SPL heading; null otherwise (never guessed). A
+  /// missing LOINC code does not invalidate the section provenance above.
+  final String? loincCode;
+
+  /// LOINC display name, when [loincCode] is present.
+  final String? loincDisplay;
+
+  /// `mapped` / `unknown` — the confidence of the LOINC mapping.
+  final String loincMappingConfidence;
+
   final String sectionTitle;
   final String? sectionPath;
   final String jurisdiction;
@@ -90,6 +102,9 @@ class FhirInspiredLabelSectionRef {
     required this.sourceDocId,
     required this.sectionId,
     required this.sectionCode,
+    this.loincCode,
+    this.loincDisplay,
+    this.loincMappingConfidence = 'unknown',
     required this.sectionTitle,
     required this.sectionPath,
     required this.jurisdiction,
@@ -103,6 +118,9 @@ class FhirInspiredLabelSectionRef {
         'source_doc_id': sourceDocId,
         'section_id': sectionId,
         'section_code': sectionCode,
+        'loinc_code': loincCode,
+        'loinc_display': loincDisplay,
+        'loinc_mapping_confidence': loincMappingConfidence,
         'section_title': sectionTitle,
         'section_path': sectionPath,
         'jurisdiction': jurisdiction,

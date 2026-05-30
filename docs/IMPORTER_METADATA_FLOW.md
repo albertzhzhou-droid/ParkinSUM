@@ -297,8 +297,23 @@ timing. Per-component strength stays null when only a product-level strength
 exists (recorded missing, not fabricated). This is **fixture-tested, not live
 ingestion**, implies **no clinical interoperability**, and supports no diagnosis,
 treatment, medication timing, or dose guidance. There is no coded drug `code`
-(RxCUI/ATC, S7) and the `section_code` slot carries the CDSS section key, not a
-discrete LOINC code (S4 residual) — both remain future work.
+(RxCUI/ATC, S7) — that remains future work.
+
+**LOINC section codes (conservative, partial).** Each label section ref now also
+carries an optional discrete **LOINC document-section code**, mapped from the
+CDSS section key/title by `LabelSectionCodeMapper`
+(`lib/domain/usecases/label_section_code_mapper.dart`) against a const table of
+well-known, verified FDA SPL section headings (indications and usage `34067-9`,
+dosage and administration `34068-7`, contraindications `34070-3`, warnings and
+precautions `43685-7`, drug interactions `34073-7`, clinical pharmacology
+`34090-1`, description `34089-3`, how supplied/storage and handling `34069-5`,
+adverse reactions `34084-4`; source `src.fda.spl.standard`). The view exposes
+`section_code` (the original CDSS key — source identity, never overwritten) plus
+optional `loinc_code` / `loinc_display` / `loinc_mapping_confidence`
+(`mapped` / `unknown`). The mapping is **partial and conservative**: an
+unrecognized or ambiguous section stays `unknown` (LOINC code null — never
+guessed). **A missing LOINC code does not invalidate the section provenance**;
+LOINC presence improves traceability only, not clinical validity.
 
 ## 15. Future work
 

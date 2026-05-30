@@ -2,6 +2,7 @@ import '../entities/fhir_inspired_medication_knowledge_view.dart';
 import '../entities/medication_entry_validation.dart';
 import '../entities/medication_source_metadata.dart';
 import '../entities/rule_explanation.dart';
+import 'label_section_code_mapper.dart';
 
 /// Maps ParkinSUM's engine-facing `MechanisticMedicationMetadata` (the
 /// provenance bridged from the CDSS importer layer in PR #33) into a local,
@@ -27,6 +28,9 @@ import '../entities/rule_explanation.dart';
 /// when a caller supplies it (the metadata itself does not carry one).
 class FhirInspiredMedicationKnowledgeMapper {
   const FhirInspiredMedicationKnowledgeMapper();
+
+  static const LabelSectionCodeMapper _sectionCodeMapper =
+      LabelSectionCodeMapper();
 
   FhirInspiredMedicationKnowledgeView fromMechanisticMetadata(
     MechanisticMedicationMetadata meta, {
@@ -152,18 +156,31 @@ class FhirInspiredMedicationKnowledgeMapper {
   }
 
   FhirInspiredLabelSectionRef _labelSectionRef(LabelSectionRef s) {
+    // Conservative LOINC mapping from the CDSS section key/title. Unknown stays
+    // unknown (never guessed); the original section key is preserved as
+    // section_code. When a LOINC code is found, its source citation is unioned
+    // into the ref's sourceRefs (sorted, deduped).
+    final code = _sectionCodeMapper.map(
+      sectionKey: s.sectionKey,
+      sectionTitle: s.sectionTitle.isEmpty ? null : s.sectionTitle,
+    );
+    final refs = <String>{...s.sourceRefs, ...code.sourceRefs}
+        .toList(growable: false)
+      ..sort();
     return FhirInspiredLabelSectionRef(
       sourceSystem: s.sourceSystem,
       sourceDocId: s.sourceDocId,
       sectionId: s.sectionId,
-      // CDSS section key occupies the section-code slot; a discrete LOINC code
-      // is future work and is never invented.
+      // CDSS section key occupies the section-code slot (source identity).
       sectionCode: s.sectionKey.isEmpty ? null : s.sectionKey,
+      loincCode: code.loincCode,
+      loincDisplay: code.loincDisplay,
+      loincMappingConfidence: code.mappingConfidence.name,
       sectionTitle: s.sectionTitle,
       sectionPath: s.sectionPath,
       jurisdiction: s.jurisdiction,
       language: s.language,
-      sourceRefs: s.sourceRefs,
+      sourceRefs: refs,
       limitationText: s.limitationText,
     );
   }

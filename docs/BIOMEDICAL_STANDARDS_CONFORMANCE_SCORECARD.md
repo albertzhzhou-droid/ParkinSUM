@@ -164,10 +164,19 @@ boundary.
   source section/version backing a product. Adapters remain `fixture_tested`
   (synthetic CDSS-style fixtures, not live ingestion; see
   `docs/SOURCE_ACCESS_AND_LICENSES.md`).
-- **Residual (not blocking 🟢):** the bridge carries section *key/title/id* and
-  source-doc version, not a discrete LOINC section **code** field; populating a
-  `sectionLoincCode` from a live SPL parser remains future work. Missing
-  provenance → recorded missing (lower completeness), never guessed.
+- **LOINC section codes (conservative, partial):** the FHIR-inspired
+  MedicationKnowledge view now also maps the CDSS section key/title to a discrete
+  **LOINC document-section code** via `LabelSectionCodeMapper`
+  (`lib/domain/usecases/label_section_code_mapper.dart`) — a const table of nine
+  well-known, verified FDA SPL headings (e.g. dosage and administration
+  `34068-7`, warnings and precautions `43685-7`; source `src.fda.spl.standard`).
+  Section refs expose `loinc_code` / `loinc_display` / `loinc_mapping_confidence`
+  alongside the preserved `section_code` (original key).
+- **Residual (not blocking 🟢):** mapping is conservative — sections outside the
+  known table stay `unknown` (LOINC null, never guessed); deriving codes directly
+  from a live SPL `<code>` element remains future work. Missing LOINC/provenance
+  → recorded missing, never fabricated, and does **not** invalidate section
+  provenance.
 - **Safety:** metadata/provenance only; product strength never becomes an intake
   dose (the analyzable dose still comes solely from the user-facing dosage
   path); mechanism evidence still requires explicit label text.

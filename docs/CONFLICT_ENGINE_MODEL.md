@@ -244,7 +244,11 @@ The same `MechanisticMedicationMetadata` is also exportable as a local,
 see `docs/IMPORTER_METADATA_FLOW.md` §14e). That view is **serialization only** —
 it does not affect scoring or the dose path, is `inspired_not_conformant`, omits
 all patient-care semantics, and serializes product strength strictly as product
-metadata (`product_label_metadata`), never as a user intake dose.
+metadata (`product_label_metadata`), never as a user intake dose. That view's
+label section refs additionally carry an optional, conservative **LOINC
+document-section code** (`LabelSectionCodeMapper`; known FDA SPL headings only,
+`unknown` otherwise — never guessed). LOINC presence is traceability only; it
+does not affect the conflict model, scoring, or the dose path.
 
 ### 12a. Absorption opportunity openness profile
 
