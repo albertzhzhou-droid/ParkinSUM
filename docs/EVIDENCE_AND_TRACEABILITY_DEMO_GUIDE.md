@@ -99,7 +99,16 @@ dart run tool/run_local_privacy_preflight.dart              # or: npm run privac
 dart run tool/run_source_access_contract_check.dart         # or: npm run source:access
 dart run tool/run_input_quality_demo.dart                   # or: npm run input:quality
 dart run tool/run_catalog_resolution_demo.dart              # or: npm run catalog:resolve
+dart run tool/run_source_version_drift_check.dart           # or: npm run source:drift
 ```
+
+`source:drift` (P3) is a provenance / release-hygiene check: it collects
+source/version metadata from the registry, model assumptions, bibliography,
+source adapters, and build artifacts and flags missing version/date metadata,
+stale artifacts, registry/bibliography mismatches, and fixture-vs-production
+conflicts. It does **not** fetch or update live sources, is **not**
+legal/license clearance or clinical validation, and does **not** prove medical
+correctness. See `docs/SOURCE_VERSION_DRIFT_CHECK.md`.
 
 `catalog:resolve` runs the CatalogResolutionEngine (P2) over fixed synthetic
 queries — it resolves food/drug names into ranked, source-backed **candidates +
