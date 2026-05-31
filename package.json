@@ -33,6 +33,8 @@
     "source:access": "node tool/run_source_access_contract_check.mjs",
     "input:quality": "node tool/run_input_quality_demo.mjs",
     "catalog:resolve": "node tool/run_catalog_resolution_demo.mjs",
+    "source:drift": "node tool/run_source_version_drift_check.mjs",
+    "contribution:route": "node tool/run_contribution_safety_router.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {

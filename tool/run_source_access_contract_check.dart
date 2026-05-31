@@ -19,6 +19,9 @@ const _artifactPaths = [
 ];
 const _collectorFixtureFiles = {
   'test/source_access_contract_checker_test.dart',
+  // Sibling detector tests whose synthetic `src.*` fixtures are not real
+  // observed source references (they exercise other checkers' logic).
+  'test/source_version_drift_checker_test.dart',
 };
 
 final _quotedSourceId =

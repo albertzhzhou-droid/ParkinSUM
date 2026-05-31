@@ -192,6 +192,39 @@ results.
   — not a recommendation, not medical advice, infers no user dose, and is not
   clinically calibrated.** See `docs/CATALOG_RESOLUTION_ENGINE.md`.
 
+### `dart run tool/run_source_version_drift_check.dart`  (or `npm run source:drift`)
+- **Checks:** collects source/version metadata records from the source-access
+  registry, model-assumption registry, bibliography, source adapters, and build
+  artifacts, then flags missing version/date metadata, stale/undated artifacts,
+  registry/bibliography mismatches, fixture-vs-production status conflicts,
+  deprecated-source usage, and assumption-registry drift. Supports `--strict`,
+  `--now=ISO`, `--staleness-days=N`.
+- **Expected:** `build/source_version_drift/latest.{json,md}` with record count
+  and info/warn/blocker counts; `pass=true` (0 blocker) for the repo.
+- **Failure means:** a provenance/version drift that should fail release hygiene
+  (e.g. a fixture-only source claimed production-ready). **Exits non-zero** on a
+  blocker.
+- **Network:** no. **Data:** local files only. **Provenance / release-hygiene
+  only — does not fetch or update live sources, is not legal/license clearance,
+  not clinical validation, and does not prove medical correctness.** See
+  `docs/SOURCE_VERSION_DRIFT_CHECK.md`.
+
+### `dart run tool/run_contribution_safety_router.dart`  (or `npm run contribution:route`)
+- **Checks:** classifies the working-tree diff (or a `--base`/`--head` range)
+  into review-risk categories, suggests labels, and generates a change-aware
+  reviewer checklist with the commands to run; flags possible medical-claim,
+  clinical-advice, secret, PHI, and source-access risks (allowlisting detector
+  files so it does not flag its own rules).
+- **Expected:** `build/contribution_safety_router/latest.{json,md}` with the
+  risk level, categories, labels, findings, and checklist; `pass=true` (0
+  blocker) for a clean diff.
+- **Failure means:** a non-allowlisted change matched a clinical-advice /
+  medical-claim / secret / PHI keyword group. **Exits non-zero** on a blocker.
+- **Network:** no. **Data:** local diff only. **Deterministic
+  repository-governance routing — not AI code review, not a medical/legal
+  reviewer, and does not replace human review.** See
+  `docs/CONTRIBUTION_SAFETY_ROUTER.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

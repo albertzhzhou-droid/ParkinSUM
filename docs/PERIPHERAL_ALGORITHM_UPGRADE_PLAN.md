@@ -198,6 +198,20 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic candidates + uncertainty; no silent guess.
 
 ### P3 — SourceVersionDriftChecker
+- **Status: shipped** (Operation 9; branch `source-version-drift-checker`):
+  `lib/domain/entities/source_version_drift.dart` +
+  `lib/domain/usecases/source_version_drift_checker.dart` (rule families A–J) +
+  `tool/run_source_version_drift_check.dart` (`npm run source:drift`, with
+  `--strict` / `--now=ISO` / `--staleness-days=N`) +
+  `test/source_version_drift_checker_test.dart` (18 in-memory tests) +
+  `docs/SOURCE_VERSION_DRIFT_CHECK.md`. Collects records from the source-access
+  registry, model-assumption registry, bibliography, source adapters, and build
+  artifacts; flags missing version/date metadata, stale/undated artifacts,
+  registry/bibliography mismatch, fixture-vs-production status conflicts,
+  deprecated-source usage, and assumption-registry drift. Deterministic
+  (staleness only when `--now` supplied); no live fetch; not legal/license
+  clearance, not clinical validation/calibration; does not prove medical
+  correctness. No core engine/importer/Firebase/UI change.
 - **Problem:** stale/inconsistent source/catalog/model versions can go unnoticed.
 - **Why it matters:** keeps provenance claims honest over time.
 - **Inputs:** `sourceDocument` version/effectiveDate/lastChecked, importer
@@ -408,6 +422,19 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic walkthrough; missing → recorded.
 
 ### P11 — ContributionSafetyRouter
+- **Status: shipped** (Operation 10; branch `contribution-safety-router`):
+  `lib/domain/entities/contribution_safety_router.dart` +
+  `lib/domain/usecases/contribution_safety_router.dart` (path + keyword routing,
+  risk scoring, label + checklist generation) +
+  `tool/run_contribution_safety_router.dart` (`npm run contribution:route`, with
+  `--base`/`--head`/`--strict`) + `test/contribution_safety_router_test.dart`
+  (20 in-memory tests) + `docs/CONTRIBUTION_SAFETY_ROUTER.md` + a concise
+  `.github/PULL_REQUEST_TEMPLATE.md` note. Classifies diffs into review-risk
+  categories, suggests labels, and generates a change-aware reviewer checklist
+  with commands; flags medical-claim/clinical-advice/secret/PHI/source-access
+  risks (allowlisting detector files). Deterministic; not AI code review, not a
+  medical/legal reviewer, does not replace human review. No core
+  engine/importer/Firebase/UI/preflight change.
 - **Problem:** no automated risk classification of incoming diffs.
 - **Why it matters:** routes review effort and catches risky changes early.
 - **Inputs:** changed file paths + diff keywords.
