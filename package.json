@@ -32,6 +32,7 @@
     "privacy:preflight": "node tool/run_local_privacy_preflight.mjs",
     "source:access": "node tool/run_source_access_contract_check.mjs",
     "input:quality": "node tool/run_input_quality_demo.mjs",
+    "catalog:resolve": "node tool/run_catalog_resolution_demo.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {
