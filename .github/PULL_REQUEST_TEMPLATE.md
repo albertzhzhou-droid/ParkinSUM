@@ -26,6 +26,9 @@ Describe the change and why it is needed.
 - [ ] `flutter analyze`
 - [ ] `flutter test --concurrency=1`
 - [ ] Documentation-only/manual review: explain below if local tooling was not run.
+- [ ] Optional: `npm run contribution:route` for a change-aware reviewer
+      checklist + suggested labels (deterministic routing helper — not a code
+      review, not a medical/legal reviewer, does not replace human review).
 
 ## Notes For Reviewers
 
