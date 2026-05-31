@@ -151,6 +151,18 @@ results.
   clinical validation, and does not prove the app is secure.** See
   `docs/LOCAL_PRIVACY_PREFLIGHT.md`.
 
+### `dart run tool/run_source_access_contract_check.dart`  (or `npm run source:access`)
+- **Checks:** tracked source references against the machine-readable source
+  access contract: fixture/live/production status, API-key/account constraints,
+  license/legal-review flags, and mechanism-evidence vs identity/coding roles.
+- **Expected:** `build/source_access_contract/latest.{json,md}` with
+  `pass=true` and zero blockers.
+- **Failure means:** a source ID or usage role needs explicit governance
+  metadata. **This is release hygiene, not legal advice, license clearance,
+  production-readiness certification, or clinical validation.**
+- **Network:** no. **Data:** metadata only. See
+  `docs/SOURCE_ACCESS_CONTRACT.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

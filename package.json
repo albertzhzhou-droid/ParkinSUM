@@ -30,6 +30,7 @@
     "scenario:fuzz": "node tool/run_synthetic_scenario_fuzzer.mjs",
     "localization:lint": "node tool/run_localization_safety_lint.mjs",
     "privacy:preflight": "node tool/run_local_privacy_preflight.mjs",
+    "source:access": "node tool/run_source_access_contract_check.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {

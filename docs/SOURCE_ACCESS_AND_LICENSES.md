@@ -1,5 +1,9 @@
 # Source Access & Licensing
 
+Machine-readable companion and deterministic checker:
+[`SOURCE_ACCESS_CONTRACT.md`](SOURCE_ACCESS_CONTRACT.md) and
+`config/source_access_registry.json`.
+
 Educational prototype documentation. ParkinSUM is **not** a clinical product
 and does **not** perform production ingestion of any external source. All
 adapters listed here are **fixture-validated** (deterministic parsers over
