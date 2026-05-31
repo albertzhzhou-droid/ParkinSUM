@@ -95,7 +95,14 @@ dart run tool/generate_public_demo_walkthrough.dart         # or: npm run demo:w
 dart run tool/generate_evidence_graph.dart                  # or: npm run evidence:graph
 dart run tool/run_synthetic_scenario_fuzzer.dart            # or: npm run scenario:fuzz
 dart run tool/run_localization_safety_lint.dart             # or: npm run localization:lint
+dart run tool/run_local_privacy_preflight.dart              # or: npm run privacy:preflight
 ```
+
+`privacy:preflight` is a stricter repo-hygiene / privacy-risk scan over
+git-tracked files that **complements** `public:preflight` (it does not replace
+it). It is **not** HIPAA/GDPR/PIPEDA compliance, not a legal certification, not
+clinical validation, and does not prove the app is secure. See
+`docs/LOCAL_PRIVACY_PREFLIGHT.md`.
 
 The last three **compose** the artifacts above into reviewer summaries:
 `build/release_snapshot/latest.{json,md}` (a per-check evidence table),

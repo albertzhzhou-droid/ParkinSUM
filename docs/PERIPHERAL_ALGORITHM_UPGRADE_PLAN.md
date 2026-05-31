@@ -305,6 +305,16 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic lint; safety drift flagged.
 
 ### P8 — LocalPrivacyPreflight
+- **Status: shipped** (Operation 5; branch `local-privacy-preflight`):
+  `lib/domain/entities/local_privacy_preflight.dart` +
+  `lib/domain/usecases/local_privacy_preflight.dart` (rule families A–H) +
+  `tool/run_local_privacy_preflight.dart` (`npm run privacy:preflight`, with
+  `--strict`) + `test/local_privacy_preflight_test.dart` (in-memory fixtures) +
+  `docs/LOCAL_PRIVACY_PREFLIGHT.md`. Scans git-tracked files; complements
+  `public:preflight` (does not replace it). NOT HIPAA/GDPR/PIPEDA compliance,
+  not a legal certification, not clinical validation, and does not prove the app
+  is secure. Implemented in Dart (not `.mjs`) for parity with the other P-series
+  tools; an `.mjs` wrapper runs the npm script.
 - **Problem:** public preflight checks positioning, not local data-leak risk.
 - **Why it matters:** stops PHI-like/secret content reaching the public repo.
 - **Inputs:** repo tree (fixtures, configs).
