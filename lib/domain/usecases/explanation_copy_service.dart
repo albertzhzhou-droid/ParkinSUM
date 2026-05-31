@@ -49,6 +49,23 @@ class ExplanationCopyService {
     return fallback;
   }
 
+  /// Locale-strict resolve: returns the compiler-validated text **only** when
+  /// the template actually carries [locale] (so a non-localized template never
+  /// substitutes English for a localized string); otherwise returns [fallback].
+  /// This is the safe seam for migrating localized i18n boundary keys: pass the
+  /// current locale and the existing localized `tr()` value as the fallback.
+  String resolveForLocale(
+    String templateId, {
+    required String locale,
+    required String fallback,
+  }) {
+    final template = _registry.byId(templateId);
+    if (template == null || !template.localizedText.containsKey(locale)) {
+      return fallback;
+    }
+    return resolve(templateId, locale: locale, fallback: fallback);
+  }
+
   /// Shared not-advice boundary copy (compiler-validated; falls back to the
   /// canonical default text).
   String notAdvice({String locale = ''}) => resolve(
