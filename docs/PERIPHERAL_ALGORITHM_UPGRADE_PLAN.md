@@ -153,6 +153,18 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic grade + reasons; no advice; regression-safe.
 
 ### P2 — CatalogResolutionEngine
+- **Status: shipped** (Operation 8; branch `catalog-resolution-engine`):
+  `lib/domain/entities/catalog_resolution.dart` +
+  `lib/domain/usecases/catalog_query_normalizer.dart` +
+  `lib/domain/usecases/catalog_resolution_engine.dart` (pure, in-memory catalog
+  matching with deterministic non-ML scoring) +
+  `tool/run_catalog_resolution_demo.dart` (`npm run catalog:resolve`) +
+  `test/catalog_resolution_engine_test.dart` (24 tests) +
+  `docs/CATALOG_RESOLUTION_ENGINE.md`. Resolves food/drug names into ranked,
+  source-backed candidates with confidence/ambiguity/unresolved reasons. No
+  advice, no dose inference (dose-like text is query evidence), no silent
+  guessing; synthetic≠official; no core engine/importer/Firebase/UI change. UI
+  integration is future work.
 - **Problem:** user-facing food/drug names aren't resolved into source-backed
   catalog candidates with explicit uncertainty.
 - **Why it matters:** prevents silent guessing; surfaces candidate ambiguity.
