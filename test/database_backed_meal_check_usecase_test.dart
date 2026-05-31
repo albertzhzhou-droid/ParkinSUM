@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
+import 'package:parkinsum_companion/core/analysis/food_repository.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
@@ -8,15 +9,20 @@ import 'package:parkinsum_companion/core/models/interaction_result.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/entities/cdss_records.dart';
+import 'package:parkinsum_companion/domain/entities/amino_acid_profile.dart';
+import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/rule_registry_models.dart';
 import 'package:parkinsum_companion/domain/entities/runtime_context.dart';
 import 'package:parkinsum_companion/domain/usecases/clinical_decision_support_service.dart';
 import 'package:parkinsum_companion/domain/usecases/database_backed_meal_check_usecase.dart';
 import 'package:parkinsum_companion/domain/usecases/fact_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/imported_label_rule_provider.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/rule_registry_compiler.dart';
 import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/variant_resolver.dart';
+import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 
 class QueryBackedCdssDatabase implements CdssDatabase {
   QueryBackedCdssDatabase(this.tables);
@@ -111,6 +117,28 @@ class QueryBackedCdssDatabase implements CdssDatabase {
   @override
   Future<List<Map<String, Object?>>> queryTable(String table) async =>
       tables[table] ?? const <Map<String, Object?>>[];
+}
+
+class RecordingMechanisticConflictEngine extends MechanisticConflictEngine {
+  MealComposition? composition;
+  TimeAxisConflictContext? context;
+
+  @override
+  MechanisticConflictResult evaluate({
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+    String resultId = 'mechanistic_result',
+    String? preferredMealId,
+  }) {
+    this.context = context;
+    composition = mealCompositionsById.values.single;
+    return super.evaluate(
+      context: context,
+      mealCompositionsById: mealCompositionsById,
+      resultId: resultId,
+      preferredMealId: preferredMealId,
+    );
+  }
 }
 
 void main() {
@@ -1130,5 +1158,110 @@ void main() {
     expect(result.issues, isEmpty);
     expect(result.summary, contains('outside'));
     expect(result.analysisText, contains('historical meal'));
+  });
+
+  test('meal check trace componentizes history with catalog enrichment',
+      () async {
+    final db = QueryBackedCdssDatabase(const {});
+    final service = ClinicalDecisionSupportService(
+      database: db,
+      factConflictEngine: FactConflictEngine(),
+      runtimeRuleEngine: RuntimeRuleEngine(),
+    );
+    final foodRepository = FoodRepository.createDefault()
+      ..replaceAll([
+        FoodItem(
+          id: 'food_enriched',
+          name: 'Enriched tofu',
+          category: FoodCategory.protein,
+          textureClass: 'solid',
+          proteinG: 10,
+          carbsG: 3,
+          fatG: 4,
+          fiberG: 2,
+          sodiumMg: 15,
+          energyKcal: 120,
+          aminoAcidProfile: const AminoAcidProfile(
+            leucine: 2,
+            valine: 1,
+            basis: 'per_100g',
+          ),
+        ),
+      ]);
+    final engine = RecordingMechanisticConflictEngine();
+    final useCase = DatabaseBackedMealCheckUseCase(
+      variantResolver: VariantResolver(database: db),
+      clinicalDecisionSupportService: service,
+      compiledRules: const [],
+      foodRepository: foodRepository,
+      mechanisticEngine: engine,
+    );
+    final mealTime = DateTime.utc(2026, 1, 1, 8, 30);
+
+    final result = await useCase(
+      meal: Meal(
+        id: 'meal_componentized',
+        eatenAt: mealTime,
+        title: 'Mixed history meal',
+        items: [
+          MealItem(
+            foodId: 'food_enriched',
+            foodName: 'Enriched tofu',
+            foodCategory: FoodCategory.protein,
+            quantityFactor: 1.5,
+            foodTags: const [],
+            proteinPer100g: 10,
+            carbsPer100g: 3,
+            fatPer100g: 4,
+            fiberPer100g: 2,
+            sodiumPer100g: 15,
+          ),
+          MealItem(
+            foodId: 'food_uncatalogued',
+            foodName: 'Uncatalogued side',
+            foodCategory: FoodCategory.other,
+            quantityFactor: 0.5,
+            foodTags: const [],
+            proteinPer100g: 2,
+            carbsPer100g: 8,
+            fatPer100g: 1,
+            fiberPer100g: 1,
+            sodiumPer100g: 10,
+          ),
+        ],
+      ),
+      activeDrugs: [
+        DrugDefinition(
+          id: 'drug_levodopa_carbidopa',
+          genericName: 'carbidopa/levodopa',
+          brandNames: const ['Sinemet'],
+          tags: const [DrugTag.levodopaLike],
+          notes: '',
+        ),
+      ],
+      intakes: [
+        Intake(
+          id: 'intake_componentized',
+          drugId: 'drug_levodopa_carbidopa',
+          takenAt: DateTime.utc(2026, 1, 1, 8),
+          dosageNote: '100 mg',
+        ),
+      ],
+      userProfile: UserProfile.defaults(),
+    );
+
+    final components = engine.composition!.foodComponents;
+    expect(result.mechanisticTraceJson, isNotNull);
+    expect(components, hasLength(2));
+    expect(components.first.portionGrams, 150);
+    expect(components.first.calories, 180);
+    expect(components.first.physicalForm, MealPhysicalForm.solid);
+    expect(components.first.aminoAcidProfile!.leucine, 3);
+    expect(components.last.portionGrams, 50);
+    expect(components.last.calories, isNull);
+    expect(components.last.physicalForm, MealPhysicalForm.unknown);
+    expect(components.last.aminoAcidProfile, isNull);
+    expect(
+        engine.context!.mealEvents.single.physicalForm, MealPhysicalForm.solid);
   });
 }

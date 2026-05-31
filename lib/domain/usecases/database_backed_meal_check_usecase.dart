@@ -1,4 +1,5 @@
 import '../../core/analysis/nutrition_rules.dart';
+import '../../core/analysis/food_repository.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/interaction_result.dart';
@@ -10,8 +11,8 @@ import '../entities/meal_composition.dart';
 import '../entities/resolved_variant.dart';
 import '../entities/rule_registry_models.dart';
 import '../entities/runtime_context.dart';
-import '../entities/time_axis_events.dart';
 import 'clinical_decision_support_service.dart';
+import 'catalog_food_to_candidate.dart';
 import 'dosage_note_parser.dart';
 import 'imported_label_rule_provider.dart';
 import 'meal_composition_normalizer.dart';
@@ -32,6 +33,7 @@ class DatabaseBackedMealCheckUseCase {
   final ClinicalDecisionSupportService clinicalDecisionSupportService;
   final List<RuleRegistryEntry> compiledRules;
   final ImportedLabelRuleProvider? importedLabelRuleProvider;
+  final FoodRepository foodRepository;
 
   /// Deterministic mechanistic time-axis simulation layer. The hard-rule
   /// engine (via `clinicalDecisionSupportService`) remains the source of
@@ -48,12 +50,14 @@ class DatabaseBackedMealCheckUseCase {
     required this.clinicalDecisionSupportService,
     required this.compiledRules,
     this.importedLabelRuleProvider,
+    FoodRepository? foodRepository,
     MechanisticConflictEngine? mechanisticEngine,
     MealCompositionNormalizer? mealCompositionNormalizer,
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
     DosageNoteParser? dosageNoteParser,
-  })  : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
+  })  : foodRepository = foodRepository ?? FoodRepository.createDefault(),
+        mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
         mealCompositionNormalizer =
             mealCompositionNormalizer ?? MealCompositionNormalizer(),
         medicationEntryValidator =
@@ -799,23 +803,20 @@ class DatabaseBackedMealCheckUseCase {
 
     if (medInputs.isEmpty) return null;
 
-    final totals = meal.computeTotals();
+    final components = <FoodComponent>[];
+    for (var index = 0; index < meal.items.length; index++) {
+      final item = meal.items[index];
+      components.add(
+        mealItemToFoodComponent(
+          item,
+          componentId: 'meal_${meal.id}_${index}_${item.foodId}',
+          catalogMatch: foodRepository.getById(item.foodId),
+        ),
+      );
+    }
     final composition = mealCompositionNormalizer.normalize(
       mealId: 'comp_${meal.id}',
-      components: [
-        FoodComponent(
-          id: 'meal_aggregate_${meal.id}',
-          name: meal.title,
-          physicalForm: MealPhysicalForm.unknown,
-          proteinGrams: totals.totalProteinG,
-          fatGrams: totals.totalFatG,
-          fiberGrams: totals.totalFiberG,
-          carbohydrateGrams: totals.totalCarbsG,
-          calories: null,
-          portionGrams: null,
-          sourceDocId: 'meal_history',
-        ),
-      ],
+      components: components,
     );
 
     final context = timeAxisBuilder.build(
@@ -826,7 +827,7 @@ class DatabaseBackedMealCheckUseCase {
           id: 'meal_${meal.id}',
           startedAt: meal.effectiveOccurredAt,
           compositionId: composition.id,
-          physicalForm: MealPhysicalForm.unknown,
+          physicalForm: composition.mealPhysicalForm,
         ),
       ],
     );
