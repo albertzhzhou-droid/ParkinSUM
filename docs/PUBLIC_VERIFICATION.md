@@ -163,6 +163,35 @@ results.
 - **Network:** no. **Data:** metadata only. See
   `docs/SOURCE_ACCESS_CONTRACT.md`.
 
+### `dart run tool/run_input_quality_demo.dart`  (or `npm run input:quality`)
+- **Checks:** runs the InputQualityGate over eight deterministic synthetic
+  cases (complete context, unitless dose, missing protein, true 0 g protein,
+  missing window, unknown release type, synthetic vs official source, imputed
+  provenance) and reports per-dimension context-completeness status.
+- **Expected:** `build/input_quality/latest.{json,md}` with one row per case
+  (overall status, mechanistic-primary eligibility, blocker count).
+- **Failure means:** a context-completeness invariant changed — e.g. a unitless
+  dose validated, missing nutrient treated as zero, product strength rescued a
+  missing dose, or synthetic source reached official confidence.
+- **Network:** no. **Data:** synthetic only. **Input/context-completeness
+  assessment only — not medical advice, not a recommendation engine, and not
+  clinically calibrated.** See `docs/INPUT_QUALITY_GATE.md`.
+
+### `dart run tool/run_catalog_resolution_demo.dart`  (or `npm run catalog:resolve`)
+- **Checks:** runs the CatalogResolutionEngine over fixed synthetic queries
+  (milk tea, 奶茶, levodopa, Sinemet, carbidopa levodopa 25/100, levodopa CR,
+  unknown food, unknown drug) against a small synthetic catalog and reports the
+  ranked candidates, confidence band, match type, and status per query.
+- **Expected:** `build/catalog_resolution/latest.{json,md}` with one row per
+  query; exact/brand/localized matches resolve high, ambiguous queries are
+  `ambiguous`, and unknown queries are `unresolved`.
+- **Failure means:** a resolution invariant changed — e.g. an ambiguous query
+  became overconfident `resolved`, a dose-like token was converted into a
+  candidate strength, or a synthetic source was treated as official.
+- **Network:** no. **Data:** synthetic only. **Returns candidates + uncertainty
+  — not a recommendation, not medical advice, infers no user dose, and is not
+  clinically calibrated.** See `docs/CATALOG_RESOLUTION_ENGINE.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,
