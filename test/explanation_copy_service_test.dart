@@ -60,4 +60,36 @@ void main() {
     expect(service.notAdvice(), service.notAdvice());
     expect(service.safetyBoundary(), service.safetyBoundary());
   });
+
+  // 7 — locale-strict resolve returns compiled text for a locale the template
+  // carries (en), and equals the migrated i18n boundary string.
+  test('resolveForLocale returns compiled text for en', () {
+    final text = service.resolveForLocale(
+      'legacy_no_conflict',
+      locale: 'en',
+      fallback: 'FALLBACK',
+    );
+    expect(text, isNot('FALLBACK'));
+    expect(text.toLowerCase(), contains('not medical advice'));
+  });
+
+  // 8 — locale-strict resolve does NOT substitute English for a locale the
+  // template lacks; it returns the (localized) fallback instead.
+  test('resolveForLocale keeps the localized fallback for missing locale', () {
+    const localized = '未检测到显著的规则冲突（仅基于内置规则；并非医疗建议）。';
+    final text = service.resolveForLocale(
+      'legacy_no_conflict',
+      locale: 'zh',
+      fallback: localized,
+    );
+    expect(text, localized);
+  });
+
+  // 9 — unknown template id in resolveForLocale falls back too.
+  test('resolveForLocale falls back for unknown template', () {
+    expect(
+      service.resolveForLocale('nope', locale: 'en', fallback: 'FB'),
+      'FB',
+    );
+  });
 }
