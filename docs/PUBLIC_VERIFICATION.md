@@ -209,6 +209,22 @@ results.
   not clinical validation, and does not prove medical correctness.** See
   `docs/SOURCE_VERSION_DRIFT_CHECK.md`.
 
+### `dart run tool/run_contribution_safety_router.dart`  (or `npm run contribution:route`)
+- **Checks:** classifies the working-tree diff (or a `--base`/`--head` range)
+  into review-risk categories, suggests labels, and generates a change-aware
+  reviewer checklist with the commands to run; flags possible medical-claim,
+  clinical-advice, secret, PHI, and source-access risks (allowlisting detector
+  files so it does not flag its own rules).
+- **Expected:** `build/contribution_safety_router/latest.{json,md}` with the
+  risk level, categories, labels, findings, and checklist; `pass=true` (0
+  blocker) for a clean diff.
+- **Failure means:** a non-allowlisted change matched a clinical-advice /
+  medical-claim / secret / PHI keyword group. **Exits non-zero** on a blocker.
+- **Network:** no. **Data:** local diff only. **Deterministic
+  repository-governance routing — not AI code review, not a medical/legal
+  reviewer, and does not replace human review.** See
+  `docs/CONTRIBUTION_SAFETY_ROUTER.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,
