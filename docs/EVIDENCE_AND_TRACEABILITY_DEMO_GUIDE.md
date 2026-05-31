@@ -96,6 +96,8 @@ dart run tool/generate_evidence_graph.dart                  # or: npm run eviden
 dart run tool/run_synthetic_scenario_fuzzer.dart            # or: npm run scenario:fuzz
 dart run tool/run_localization_safety_lint.dart             # or: npm run localization:lint
 dart run tool/run_local_privacy_preflight.dart              # or: npm run privacy:preflight
+dart run tool/run_source_access_contract_check.dart         # or: npm run source:access
+dart run tool/run_input_quality_demo.dart                   # or: npm run input:quality
 ```
 
 `privacy:preflight` is a stricter repo-hygiene / privacy-risk scan over
@@ -103,6 +105,12 @@ git-tracked files that **complements** `public:preflight` (it does not replace
 it). It is **not** HIPAA/GDPR/PIPEDA compliance, not a legal certification, not
 clinical validation, and does not prove the app is secure. See
 `docs/LOCAL_PRIVACY_PREFLIGHT.md`.
+
+`input:quality` runs the InputQualityGate (P1) over deterministic synthetic
+cases — a pre-engine **input/context-completeness** assessment that explains why
+a context is incomplete in non-prescriptive language. It is **not** medical
+advice, **not** a recommendation engine, and **not** clinically calibrated;
+missing values are never fabricated. See `docs/INPUT_QUALITY_GATE.md`.
 
 The last three **compose** the artifacts above into reviewer summaries:
 `build/release_snapshot/latest.{json,md}` (a per-check evidence table),

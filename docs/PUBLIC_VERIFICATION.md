@@ -163,6 +163,20 @@ results.
 - **Network:** no. **Data:** metadata only. See
   `docs/SOURCE_ACCESS_CONTRACT.md`.
 
+### `dart run tool/run_input_quality_demo.dart`  (or `npm run input:quality`)
+- **Checks:** runs the InputQualityGate over eight deterministic synthetic
+  cases (complete context, unitless dose, missing protein, true 0 g protein,
+  missing window, unknown release type, synthetic vs official source, imputed
+  provenance) and reports per-dimension context-completeness status.
+- **Expected:** `build/input_quality/latest.{json,md}` with one row per case
+  (overall status, mechanistic-primary eligibility, blocker count).
+- **Failure means:** a context-completeness invariant changed — e.g. a unitless
+  dose validated, missing nutrient treated as zero, product strength rescued a
+  missing dose, or synthetic source reached official confidence.
+- **Network:** no. **Data:** synthetic only. **Input/context-completeness
+  assessment only — not medical advice, not a recommendation engine, and not
+  clinically calibrated.** See `docs/INPUT_QUALITY_GATE.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

@@ -126,6 +126,18 @@ place. P11 scales with contributors.
 > dependencies · acceptance criteria.
 
 ### P1 — InputQualityGate / MealMedicationEntryQualityScorer
+- **Status: shipped** (Operation 7; branch `input-quality-gate`):
+  `lib/domain/entities/input_quality.dart` +
+  `lib/domain/usecases/input_quality_gate.dart` (pure aggregator over the
+  existing `MedicationEntryValidator`, `MetadataCompletenessGate`,
+  `MealCompositionNormalizer`, provenance tiers, source authority, and timing
+  window) + `tool/run_input_quality_demo.dart` (`npm run input:quality`) +
+  `test/input_quality_gate_test.dart` (22 in-memory tests) +
+  `docs/INPUT_QUALITY_GATE.md`. Dimensions: dosage / identity / metadata / meal
+  composition / timing window / food source quality / nutrient provenance /
+  localization readiness / overall. Input/context-completeness only; no advice;
+  missing≠zero; product strength≠intake dose; not clinically calibrated. No core
+  engine, importer, Firebase, or UI change. UI surfacing is future work.
 - **Problem:** dirty meal/medication input can reach mechanistic scoring without
   a single, inspectable pre-engine quality verdict.
 - **Why it matters:** protects the core engine and makes "why was this
