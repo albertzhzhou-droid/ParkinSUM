@@ -5,6 +5,7 @@ import '../../core/i18n/app_i18n.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/liquid_glass_theme.dart';
+import '../../domain/usecases/explanation_copy_service.dart';
 import 'onboarding_flow.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -171,7 +172,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
           children: [
             _IconLine(
               icon: Icons.health_and_safety_outlined,
-              title: i18n.tr('onboarding.safety_education_title'),
+              title: const ExplanationCopyService().resolveForLocale(
+                'onboarding_safety_education_title',
+                locale: i18n.languageFamily,
+                fallback: i18n.tr('onboarding.safety_education_title'),
+              ),
               body: i18n.tr('onboarding.safety_education_body'),
             ),
             const SizedBox(height: 12),

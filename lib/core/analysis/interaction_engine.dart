@@ -1,3 +1,4 @@
+import '../../domain/usecases/explanation_copy_service.dart';
 import '../i18n/app_i18n.dart';
 import '../models/drug_definition.dart';
 import '../models/interaction_result.dart';
@@ -107,7 +108,14 @@ class InteractionEngine {
     // 如果没有任何问题，给一个“通过”提示
     if (issues.isEmpty) {
       return InteractionResult.ok(
-        message: i18n.tr('legacy.no_conflict'),
+        // Boundary copy sourced through the compiler-validated registry; the
+        // localized i18n string is the fallback (locale-strict — non-en users
+        // keep their translation).
+        message: const ExplanationCopyService().resolveForLocale(
+          'legacy_no_conflict',
+          locale: i18n.languageFamily,
+          fallback: i18n.tr('legacy.no_conflict'),
+        ),
         mealId: meal.id,
       );
     }

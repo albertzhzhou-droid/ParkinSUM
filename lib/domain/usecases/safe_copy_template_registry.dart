@@ -108,6 +108,30 @@ class SafeCopyTemplateRegistry {
           notes: 'Shared default safety-boundary text (consumed at runtime by '
               'ExplanationCopyService).',
         ),
+        // --- Migrated i18n boundary surfaces (en text mirrors app_i18n) -------
+        SafeCopyTemplate(
+          templateId: 'onboarding_safety_education_title',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {'en': 'Rule guidance is not medical advice'},
+          requiredSafetyTerms: ['not medical advice'],
+          requiresNotAdviceText: true,
+          notes: 'Onboarding safety-education title; mirrors i18n key '
+              '`onboarding.safety_education_title` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_no_conflict',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'No significant rule conflicts were detected (based only on '
+                'built-in rules; not medical advice).',
+          },
+          requiredSafetyTerms: ['not medical advice'],
+          requiresNotAdviceText: true,
+          notes: 'Legacy "no conflict" educational result; mirrors i18n key '
+              '`legacy.no_conflict` (en).',
+        ),
       ];
 
   SafeCopyTemplate? byId(String id) {
