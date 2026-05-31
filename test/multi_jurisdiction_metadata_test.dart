@@ -26,7 +26,7 @@ SourceDocumentMetadata _doc({
     effectiveAt: null,
     lastUpdated: null,
     licenseOrUseLimitations: '',
-    sourceRefs: const ['src.x'],
+    sourceRefs: const ['src.demo'],
     limitationText: 'educational',
   );
 }
@@ -124,7 +124,7 @@ void main() {
       String form = 'tablet',
       String release = 'immediate',
       String route = 'oral',
-      List<String> refs = const ['src.x'],
+      List<String> refs = const ['src.demo'],
       String jurisdiction = 'US',
     }) {
       return DrugProductVariantMetadata(

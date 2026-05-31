@@ -335,9 +335,12 @@ place. P11 scales with contributors.
 - **Acceptance:** planted risks flagged; deterministic; no false "clean" on hits.
 
 ### P9 — SourceAccessContractChecker
+- **Status:** implemented in Operation 6 with
+  `config/source_access_registry.json`, the pure Dart checker, deterministic
+  JSON/Markdown reports, and `npm run source:access`.
 - **Problem:** `SOURCE_ACCESS_AND_LICENSES.md` is prose, not machine-checkable.
 - **Why it matters:** keeps fixture-vs-production + license status honest.
-- **Inputs:** new `tool/source_access_registry.json`
+- **Inputs:** `config/source_access_registry.json`
   (sourceId, owner, jurisdiction, accessMethod, requiresApiKey, requiresAccount,
   licenseReviewNeeded, implementationStatus, allowedForFixture,
   allowedForLiveSmoke, allowedForProduction, canSupportMechanismEvidenceAlone).
@@ -345,8 +348,9 @@ place. P11 scales with contributors.
   aren't described as production; live-smoke sources are opt-in;
   license-review-needed flagged; unsupported sources don't silently enter
   mechanism evidence.
-- **Files likely affected:** registry JSON + `tool/source_access_contract_check.mjs`;
-  npm `source:contract`.
+- **Implemented files:** registry JSON, pure checker entities/usecase,
+  `tool/run_source_access_contract_check.dart` + `.mjs`, docs, and npm
+  `source:access`.
 - **Implementation approach:** deterministic JSON contract check; mirrors the
   Firestore-rules-contract pattern.
 - **Tests:** unresolved sourceRef flagged; production-mislabel flagged; clean

@@ -1,0 +1,1422 @@
+{
+  "registry_type": "source_access_registry",
+  "version": "1.0.0",
+  "not_clinically_calibrated": true,
+  "not_legal_advice": true,
+  "not_license_clearance": true,
+  "no_production_ingestion_today": true,
+  "last_policy_reviewed": "2026-05-30",
+  "safety_boundary": "Educational/research prototype. This registry is source governance / release hygiene metadata only. It is not legal advice, not license clearance, not clinical validation, performs no live ingestion, and does not make any fixture-tested source production-ready.",
+  "companion_doc": "docs/SOURCE_ACCESS_AND_LICENSES.md",
+  "sources": [
+    {
+      "source_id": "src.dailymed.sinemet.label",
+      "display_name": "DailyMed SPL \u2014 carbidopa/levodopa label",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": true,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Fixture-validated parser; no production ingestion.",
+        "Terms-of-use review required before production."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "No API key; public-domain SPL (review terms). Live smoke hits a metadata listing endpoint only."
+    },
+    {
+      "source_id": "src.dailymed.sinemet.extended.label",
+      "display_name": "DailyMed SPL \u2014 extended-release label",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": true,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Fixture-validated parser; no production ingestion."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Extended-release variant of the SPL label fixture."
+    },
+    {
+      "source_id": "src.dailymed.spl.webservices.v2",
+      "display_name": "DailyMed SPL Web Services v2",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "open_rest_api",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_live_smoke_opt_in",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": true,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Live smoke validates fetch shape on a metadata query only; not production ingestion."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md",
+        "docs/IMPORTER_METADATA_FLOW.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Public web service; no key. Opt-in smoke only."
+    },
+    {
+      "source_id": "src.healthcanada.dpd",
+      "display_name": "Health Canada Drug Product Database",
+      "owner": "Health Canada",
+      "jurisdiction": "CA",
+      "source_family": "official_product_information",
+      "data_domain": "drug",
+      "access_method": "open_rest_api",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Food-effect text often only in monograph PDFs (partial mechanism coverage).",
+        "Open-data terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "DPD API + monograph; partial mechanism evidence from monograph text."
+    },
+    {
+      "source_id": "src.ema.epi.fhir",
+      "display_name": "EMA ePI / SmPC (EU ePI FHIR)",
+      "owner": "European Medicines Agency",
+      "jurisdiction": "EU",
+      "source_family": "official_product_information",
+      "data_domain": "drug",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Reuse-terms review required.",
+        "Centralized products only."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [
+        "src.hl7.fhir.r5"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "EPAR / SmPC / ePI (FHIR) text carries food-effect statements."
+    },
+    {
+      "source_id": "src.ema.national_registers",
+      "display_name": "EU national medicines registers (via EMA index)",
+      "owner": "National competent authorities (via EMA register index)",
+      "jurisdiction": "EU",
+      "source_family": "drug_identity",
+      "data_domain": "drug",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Register/identity source; NOT mechanism evidence unless SmPC/ePI text present.",
+        "Per-member-state terms review."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Identity/register index; distinguish from full SmPC text."
+    },
+    {
+      "source_id": "src.pmda.package_insert",
+      "display_name": "PMDA package insert",
+      "owner": "Pharmaceuticals and Medical Devices Agency",
+      "jurisdiction": "JP",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "English index is reference-only; Japanese insert is authoritative.",
+        "PMDA terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Japanese package insert is the authoritative text."
+    },
+    {
+      "source_id": "src.nmpa.database",
+      "display_name": "NMPA drug approval / label database",
+      "owner": "National Medical Products Administration",
+      "jurisdiction": "CN",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Reference-only English mapping; Chinese text authoritative.",
+        "NOT live-verified; fixture/prototype only.",
+        "NMPA terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Reference-only; not mechanism evidence alone."
+    },
+    {
+      "source_id": "src.nmpa.label",
+      "display_name": "NMPA product label (reference)",
+      "owner": "National Medical Products Administration",
+      "jurisdiction": "CN",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Reference-only; Chinese text authoritative; fixture/prototype only."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Reference-only label variant."
+    },
+    {
+      "source_id": "src.nhs.dmd",
+      "display_name": "NHS dm+d (Dictionary of medicines and devices)",
+      "owner": "NHSBSA / NHS England",
+      "jurisdiction": "GB",
+      "source_family": "drug_identity",
+      "data_domain": "terminology",
+      "access_method": "account_required_download",
+      "requires_api_key": false,
+      "requires_account": true,
+      "license_review_needed": true,
+      "legal_review_needed": true,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Identity/coding-strong; NOT a complete food-effect label source.",
+        "dm+d licence + SNOMED CT licensing review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "TRUD download / NHS Terminology Server; identity/coding only."
+    },
+    {
+      "source_id": "src.nhs.dmd.trud",
+      "display_name": "NHS dm+d via TRUD release",
+      "owner": "NHSBSA / NHS England",
+      "jurisdiction": "GB",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "account_required_download",
+      "requires_api_key": false,
+      "requires_account": true,
+      "license_review_needed": true,
+      "legal_review_needed": true,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "TRUD account + licence acceptance required.",
+        "Identity/coding only; not mechanism evidence."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "TRUD XML release channel for dm+d."
+    },
+    {
+      "source_id": "src.rxnorm.rxnav.api",
+      "display_name": "RxNorm (RxNav API)",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "open_rest_api",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "spec_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Concept normalization only; not mechanism evidence.",
+        "No concrete parser today (spec only)."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Identity normalization only."
+    },
+    {
+      "source_id": "src.usda.fdc.api",
+      "display_name": "USDA FoodData Central API",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "api_key_required",
+      "requires_api_key": true,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_live_smoke_opt_in",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": true,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "API key required for live access; live smoke skips without a key and never embeds a secret.",
+        "Food composition is an input, not levodopa-food mechanism evidence."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md",
+        "docs/IMPORTER_METADATA_FLOW.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Amino-acid nutrient numbers extracted when present (verified FDC mapping)."
+    },
+    {
+      "source_id": "src.fdc.api.amino_acid_fields",
+      "display_name": "USDA FDC amino-acid nutrient fields",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "api_key_required",
+      "requires_api_key": true,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": true,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Amino-acid fields are sparse; missing values preserved as missing (never 0).",
+        "Composition input, not mechanism evidence alone."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "FDC nutrient numbers 501/502/503/504/506/508/509/510/512."
+    },
+    {
+      "source_id": "src.usda.fdc.foundation_docs",
+      "display_name": "USDA FDC Foundation Foods documentation",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Documentation of data types / derivation; not a live feed."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs nutrient-derivation tier mapping."
+    },
+    {
+      "source_id": "src.ciqual",
+      "display_name": "ANSES Ciqual food composition table",
+      "owner": "ANSES Ciqual",
+      "jurisdiction": "FR",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "French-language codes.",
+        "Reuse-terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Food composition table."
+    },
+    {
+      "source_id": "src.ciqual.anses",
+      "display_name": "ANSES Ciqual (ANSES portal)",
+      "owner": "ANSES Ciqual",
+      "jurisdiction": "FR",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Reuse-terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Portal alias for the Ciqual table."
+    },
+    {
+      "source_id": "src.chinacdc.food",
+      "display_name": "China CDC food composition platform",
+      "owner": "China CDC",
+      "jurisdiction": "CN",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "No amino-acid fields captured today.",
+        "Terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Web-page food composition."
+    },
+    {
+      "source_id": "src.cnf.hc",
+      "display_name": "Canadian Nutrient File",
+      "owner": "Health Canada",
+      "jurisdiction": "CA",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "spec_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Citation/fixture candidate; not yet wired.",
+        "Open-data terms review required."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Future-work food source."
+    },
+    {
+      "source_id": "src.fao.infoods",
+      "display_name": "FAO/INFOODS standards & tagnames",
+      "owner": "FAO",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "spec_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Component identifiers + conversion guidelines; no parser today."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Standardizes nutrient basis + missingness; citation candidate."
+    },
+    {
+      "source_id": "src.fda.spl.standard",
+      "display_name": "HL7/FDA Structured Product Labeling standard",
+      "owner": "HL7 / U.S. FDA",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.spl.composition",
+      "display_name": "SPL composition section model",
+      "owner": "HL7 / U.S. FDA",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [
+        "src.fda.spl.standard"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.spl.identity",
+      "display_name": "SPL identity section model",
+      "owner": "HL7 / U.S. FDA",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [
+        "src.fda.spl.standard"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.spl.section",
+      "display_name": "SPL section-code model",
+      "owner": "HL7 / U.S. FDA",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [
+        "src.fda.spl.standard"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.hl7.fhir.r5",
+      "display_name": "HL7 FHIR R5 (Provenance / MedicationKnowledge inspiration)",
+      "owner": "HL7 International",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.ohdsi.omop.cdm",
+      "display_name": "OHDSI OMOP Common Data Model",
+      "owner": "OHDSI",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.fair.principles.2016",
+      "display_name": "FAIR data principles (Wilkinson et al. 2016)",
+      "owner": "Wilkinson et al.",
+      "jurisdiction": "Global",
+      "source_family": "terminology",
+      "data_domain": "terminology",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Standard/specification reference; not a live data feed.",
+        "Inspiration only; no conformance claim."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Used for structure/inspiration; ParkinSUM claims no conformance."
+    },
+    {
+      "source_id": "src.fda.cds.guidance",
+      "display_name": "FDA Clinical Decision Support software guidance",
+      "owner": "U.S. FDA",
+      "jurisdiction": "US",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Policy/boundary citation; not mechanism evidence."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Informs the non-prescriptive, intended-use boundary."
+    },
+    {
+      "source_id": "src.fda.cds.guidance.2022",
+      "display_name": "FDA CDS software guidance (2022)",
+      "owner": "U.S. FDA",
+      "jurisdiction": "US",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Policy/boundary citation; not mechanism evidence."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Informs the non-prescriptive, intended-use boundary."
+    },
+    {
+      "source_id": "src.camilleri.ge.halftime.2009",
+      "display_name": "Camilleri et al. \u2014 gastric emptying half-time (2009)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.camilleri.ge.halftime.2009"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.contin.levodopa.pk.2010",
+      "display_name": "Contin & Martinelli \u2014 levodopa pharmacokinetics (2010)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.contin.levodopa.pk.2010"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.nutt.lnaa.1989",
+      "display_name": "Nutt et al. \u2014 LNAA competition (1989)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.nutt.lnaa.1989"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.pare.protein.redistribution.1992",
+      "display_name": "Pare et al. \u2014 protein redistribution diet (1992)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.pare.protein.redistribution.1992"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.cereda.protein.2017",
+      "display_name": "Cereda et al. \u2014 protein and PD (2017)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.cereda.protein.2017"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.apda.levodopa.food",
+      "display_name": "APDA \u2014 levodopa and food guidance (educational)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.apda.levodopa.food"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.lnaa.plantvanimal.2023",
+      "display_name": "LNAA plant-vs-animal protein review (2023)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.lnaa.plantvanimal.2023"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.npj.peripheral.resistance.2022",
+      "display_name": "npj Parkinson's \u2014 peripheral resistance (2022)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.npj.peripheral.resistance.2022"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.npj.protein_restrict.2023",
+      "display_name": "npj Parkinson's \u2014 protein restriction (2023)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.npj.protein_restrict.2023"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.hens.foodphysical.2024",
+      "display_name": "Hens et al. \u2014 food physical properties (2024)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.hens.foodphysical.2024"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.virmani.protein.2023",
+      "display_name": "Virmani et al. \u2014 protein and motor response (2023)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.virmani.protein.2023"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.advances.nutrition.2021",
+      "display_name": "Advances in Nutrition \u2014 amino acids review (2021)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.advances.nutrition.2021"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.leta.gi_barriers.2023",
+      "display_name": "Leta et al. \u2014 GI barriers in PD (2023)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Literature citation backing a model assumption; the engine is not clinically calibrated."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.leta.gi_barriers.2023"
+      ],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.daphnet.fog",
+      "display_name": "Daphnet freezing-of-gait dataset",
+      "owner": "Bachlin et al. (research dataset)",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Gait/wearable research dataset; out of scope for levodopa-food mechanism.",
+        "Citation/future-work only."
+      ],
+      "documentation_refs": [
+        "docs/BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Future-work; not wired into the engine."
+    },
+    {
+      "source_id": "src.weargait.pd",
+      "display_name": "Wearable gait dataset (PD)",
+      "owner": "Research dataset",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Gait/wearable research dataset; out of scope for levodopa-food mechanism.",
+        "Citation/future-work only."
+      ],
+      "documentation_refs": [
+        "docs/BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Future-work; not wired into the engine."
+    },
+    {
+      "source_id": "src.demo",
+      "display_name": "Synthetic demo source",
+      "owner": "ParkinSUM synthetic demo",
+      "jurisdiction": "-",
+      "source_family": "synthetic_demo",
+      "data_domain": "synthetic",
+      "access_method": "manual_fixture",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Synthetic only; never authoritative; cannot support mechanism evidence alone."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "Demo/sample data for walkthroughs and tests."
+    },
+    {
+      "source_id": "src.internal.prototype.heuristic",
+      "display_name": "ParkinSUM internal prototype heuristic / app seed",
+      "owner": "ParkinSUM seed catalog",
+      "jurisdiction": "-",
+      "source_family": "app_seed",
+      "data_domain": "synthetic",
+      "access_method": "manual_fixture",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Internal heuristic / seed; never authoritative; cannot support mechanism evidence alone."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-05-30",
+      "notes": "App seed catalog + prototype heuristic placeholder."
+    }
+  ]
+}
