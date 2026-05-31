@@ -99,6 +99,15 @@ class SafeCopyTemplateRegistry {
           requiredSafetyTerms: ['not clinically calibrated'],
           notes: 'Shared default not-clinically-calibrated text.',
         ),
+        SafeCopyTemplate(
+          templateId: 'safety_boundary_default',
+          outputType: 'policy',
+          defaultLocale: 'en',
+          localizedText: {'en': RuleExplanation.defaultSafetyBoundary},
+          requiredSafetyTerms: ['qualified clinician'],
+          notes: 'Shared default safety-boundary text (consumed at runtime by '
+              'ExplanationCopyService).',
+        ),
       ];
 
   SafeCopyTemplate? byId(String id) {
