@@ -49,6 +49,12 @@ const List<String> _allowlistedPaths = [
   'test/source_version_drift_checker_test.dart',
   'tool/run_source_version_drift_check.dart',
   'test/helpers/no_phi_json_assertions.dart',
+  'lib/domain/entities/explanation_copy.dart',
+  'lib/domain/usecases/explanation_copy_compiler.dart',
+  'lib/domain/usecases/explanation_copy_service.dart',
+  'test/explanation_copy_compiler_test.dart',
+  'test/explanation_copy_service_test.dart',
+  'docs/EXPLANATION_COPY_COMPILER.md',
   '.github/PULL_REQUEST_TEMPLATE.md',
   '.github/pull_request_template.md',
 ];

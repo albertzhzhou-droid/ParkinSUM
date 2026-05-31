@@ -99,6 +99,72 @@ class SafeCopyTemplateRegistry {
           requiredSafetyTerms: ['not clinically calibrated'],
           notes: 'Shared default not-clinically-calibrated text.',
         ),
+        SafeCopyTemplate(
+          templateId: 'safety_boundary_default',
+          outputType: 'policy',
+          defaultLocale: 'en',
+          localizedText: {'en': RuleExplanation.defaultSafetyBoundary},
+          requiredSafetyTerms: ['qualified clinician'],
+          notes: 'Shared default safety-boundary text (consumed at runtime by '
+              'ExplanationCopyService).',
+        ),
+        // --- Migrated i18n boundary surfaces (en text mirrors app_i18n) -------
+        SafeCopyTemplate(
+          templateId: 'onboarding_safety_education_title',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {'en': 'Rule guidance is not medical advice'},
+          requiredSafetyTerms: ['not medical advice'],
+          requiresNotAdviceText: true,
+          notes: 'Onboarding safety-education title; mirrors i18n key '
+              '`onboarding.safety_education_title` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_no_conflict',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'No significant rule conflicts were detected (based only on '
+                'built-in rules; not medical advice).',
+          },
+          requiredSafetyTerms: ['not medical advice'],
+          requiresNotAdviceText: true,
+          notes: 'Legacy "no conflict" educational result; mirrors i18n key '
+              '`legacy.no_conflict` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'onboarding_safety_education_body',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'ParkinSUM gives conservative prompts from medication, meal, '
+                'and regional rules. Medication changes, stopping therapy, or '
+                'clinical diet decisions still need a physician or pharmacist.',
+          },
+          requiredSafetyTerms: ['physician or pharmacist'],
+          notes: 'Onboarding safety-education body; mirrors i18n key '
+              '`onboarding.safety_education_body` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'onboarding_account_scope_title',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {'en': 'Account data stays user-scoped'},
+          notes: 'Onboarding account-scope title; mirrors i18n key '
+              '`onboarding.account_scope_title` (en). Data-scope disclaimer; no '
+              'medical safety term required.',
+        ),
+        SafeCopyTemplate(
+          templateId: 'onboarding_account_scope_body',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'After onboarding, profile, medications, intakes, and later '
+                'audit records are saved under the current account user space.',
+          },
+          notes: 'Onboarding account-scope body; mirrors i18n key '
+              '`onboarding.account_scope_body` (en). Data-scope disclaimer.',
+        ),
       ];
 
   SafeCopyTemplate? byId(String id) {

@@ -1,7 +1,8 @@
 /// Compact, presentational widgets for rendering deterministic mechanistic
 /// engine output in the UI. These widgets never construct prescriptive
 /// copy — every string field comes directly from the model or from the
-/// banned-phrase-safe defaults in `RuleExplanation`.
+/// compiler-validated boundary copy resolved by `ExplanationCopyService`
+/// (which falls back to the banned-phrase-safe `RuleExplanation` defaults).
 ///
 /// Layout philosophy:
 /// - Use one `GlassCard` per trace section.
@@ -16,7 +17,7 @@ import '../../core/models/interaction_result.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../domain/entities/mechanistic_candidate_score.dart';
 import '../../domain/entities/mechanistic_conflict_result.dart';
-import '../../domain/entities/rule_explanation.dart';
+import '../../domain/usecases/explanation_copy_service.dart';
 
 /// Renders a single `InteractionResult`'s mechanistic trace as a compact
 /// card. Pass the result; the card no-ops when `mechanisticTraceJson` is
@@ -249,10 +250,14 @@ class MechanisticTraceViewModel {
         .where((s) => s.isNotEmpty)
         .toList(growable: false);
     final limitation = (json['limitation_text'] as String?) ?? '';
-    final safety = (json['safety_boundary'] as String?) ??
-        RuleExplanation.defaultSafetyBoundary;
-    final notAdvice = (json['not_advice_text'] as String?) ??
-        RuleExplanation.defaultNotAdvice;
+    // Boundary copy: prefer the model's emitted text; otherwise source the
+    // default boundary/not-advice copy through the compiler-validated
+    // SafeCopyTemplate registry (ExplanationCopyService), which itself falls
+    // back to the canonical `RuleExplanation` defaults if a template is absent.
+    const copy = ExplanationCopyService();
+    final safety =
+        (json['safety_boundary'] as String?) ?? copy.safetyBoundary();
+    final notAdvice = (json['not_advice_text'] as String?) ?? copy.notAdvice();
     final refs = (json['source_refs'] as List<dynamic>? ?? const [])
         .map((e) => e.toString())
         .toList(growable: false);

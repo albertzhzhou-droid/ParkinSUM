@@ -58,6 +58,10 @@ const List<String> _detectorDefinitionFiles = [
   // detector patterns (e.g. `PRIVATE KEY-----`) as rule definitions.
   'tool/public_repo_preflight.mjs',
   'tool/backend_security_gate.mjs',
+  // Sibling detector/governance tests whose fixtures deliberately contain
+  // PHI-like / secret patterns to exercise other checkers' rules.
+  'test/contribution_safety_router_test.dart',
+  'lib/domain/usecases/contribution_safety_router.dart',
 ];
 
 final RegExp _textFile = RegExp(
