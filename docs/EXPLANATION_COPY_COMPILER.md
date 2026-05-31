@@ -105,9 +105,23 @@ copy plus findings, limitations, and the safety boundary.
 - `ExplanationCopyCompiler` renders + validates them at compile time.
 - `localization:lint` (P7) independently validates per-locale copy surfaces.
 
-Together they form the P6/P7 copy-safety layer. Routing the **app's actual UI
-strings** through this compiler (the full copy migration) remains future work and
-is intentionally out of scope here to preserve the "no UI changes" boundary.
+Together they form the P6/P7 copy-safety layer.
+
+### Runtime integration (ExplanationCopyService)
+
+`ExplanationCopyService` (`lib/domain/usecases/explanation_copy_service.dart`) is
+the runtime accessor that resolves boundary/safety copy **through** the compiler
+at app runtime, always degrading to the canonical `RuleExplanation` defaults if a
+template is absent or fails validation (so it can never surface unvalidated or
+empty text). The first migrated UI surface is the mechanistic trace card
+(`lib/features/shared/mechanistic_trace_view.dart`), whose default not-advice and
+safety-boundary lines are now sourced from the service. Because the matching
+registry templates carry byte-identical text, this changes the **source** of the
+copy (now compiler-validated) without changing what the user sees.
+
+Migrating the remaining UI strings is incremental, additive future work: add a
+registry template (compiler-validated) and switch the consumer to
+`ExplanationCopyService.resolve(...)` with the existing string as the fallback.
 
 ## 12. Limitations
 
