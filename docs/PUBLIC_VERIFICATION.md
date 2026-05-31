@@ -225,6 +225,20 @@ results.
   reviewer, and does not replace human review.** See
   `docs/CONTRIBUTION_SAFETY_ROUTER.md`.
 
+### `dart run tool/run_explanation_copy_compile.dart`  (or `npm run copy:compile`)
+- **Checks:** renders + validates every `SafeCopyTemplate` in the registry —
+  placeholder binding, required safety/evidence terms, banned prescriptive
+  phrases (reusing the localization:lint families), and source/limitation/
+  not-advice requirements.
+- **Expected:** `build/explanation_copy/latest.{json,md}` with the compiled copy
+  and `pass=true` (0 blocker) for the shipped registry.
+- **Failure means:** a template would render unsafe/incomplete copy (banned
+  phrase, missing safety term, unresolved placeholder, or unmet requirement).
+  **Exits non-zero** on a blocker.
+- **Network:** no. **Data:** synthetic/template only. **Copy compilation +
+  validation only — no medical advice, no clinical-calibration claim, and not
+  wired into the UI or scoring.** See `docs/EXPLANATION_COPY_COMPILER.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,

@@ -35,6 +35,7 @@
     "catalog:resolve": "node tool/run_catalog_resolution_demo.mjs",
     "source:drift": "node tool/run_source_version_drift_check.mjs",
     "contribution:route": "node tool/run_contribution_safety_router.mjs",
+    "copy:compile": "node tool/run_explanation_copy_compile.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {

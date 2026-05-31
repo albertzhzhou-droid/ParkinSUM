@@ -289,6 +289,16 @@ place. P11 scales with contributors.
 - **Acceptance:** seeded reproducibility; invariant violations surfaced.
 
 ### P6 — ExplanationCopyCompiler / SafeCopyTemplateRegistry
+- **Status: compiler shipped** (Operation 11; branch `explanation-copy-compiler`):
+  `lib/domain/entities/explanation_copy.dart` +
+  `lib/domain/usecases/explanation_copy_compiler.dart` (renders + validates copy
+  from the registry: placeholders, required safety/evidence terms, banned-phrase
+  families reused from localization:lint, source/limitation/not-advice
+  requirements) + `tool/run_explanation_copy_compile.dart` (`npm run
+  copy:compile`) + `test/explanation_copy_compiler_test.dart` (18 tests) +
+  `docs/EXPLANATION_COPY_COMPILER.md`. Pure + deterministic; **not wired into the
+  UI or scoring** — routing the app's actual UI strings through the compiler (the
+  full copy migration) remains explicitly future work.
 - **Status: skeleton shipped** (Operation 4; branch `localization-safety-and-copy-registry`):
   `lib/domain/entities/safe_copy_template.dart` +
   `lib/domain/usecases/safe_copy_template_registry.dart` (6 representative
