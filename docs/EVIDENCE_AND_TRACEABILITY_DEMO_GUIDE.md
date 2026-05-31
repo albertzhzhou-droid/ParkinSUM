@@ -101,7 +101,14 @@ dart run tool/run_input_quality_demo.dart                   # or: npm run input:
 dart run tool/run_catalog_resolution_demo.dart              # or: npm run catalog:resolve
 dart run tool/run_source_version_drift_check.dart           # or: npm run source:drift
 dart run tool/run_contribution_safety_router.dart           # or: npm run contribution:route
+dart run tool/run_explanation_copy_compile.dart             # or: npm run copy:compile
 ```
+
+`copy:compile` (P6) renders + validates non-prescriptive copy from the
+`SafeCopyTemplateRegistry` (placeholders, required safety terms, banned-phrase
+families, source/limitation/not-advice requirements). It is **not** medical
+advice, carries **no** clinical-calibration claim, and is **not** wired into the
+UI or scoring. See `docs/EXPLANATION_COPY_COMPILER.md`.
 
 `contribution:route` (P11) is a deterministic repository-governance helper: it
 classifies a PR/diff into review-risk categories, suggests labels, and generates
