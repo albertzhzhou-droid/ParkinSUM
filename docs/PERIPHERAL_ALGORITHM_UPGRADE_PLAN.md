@@ -198,6 +198,20 @@ place. P11 scales with contributors.
 - **Acceptance:** deterministic candidates + uncertainty; no silent guess.
 
 ### P3 — SourceVersionDriftChecker
+- **Status: shipped** (Operation 9; branch `source-version-drift-checker`):
+  `lib/domain/entities/source_version_drift.dart` +
+  `lib/domain/usecases/source_version_drift_checker.dart` (rule families A–J) +
+  `tool/run_source_version_drift_check.dart` (`npm run source:drift`, with
+  `--strict` / `--now=ISO` / `--staleness-days=N`) +
+  `test/source_version_drift_checker_test.dart` (18 in-memory tests) +
+  `docs/SOURCE_VERSION_DRIFT_CHECK.md`. Collects records from the source-access
+  registry, model-assumption registry, bibliography, source adapters, and build
+  artifacts; flags missing version/date metadata, stale/undated artifacts,
+  registry/bibliography mismatch, fixture-vs-production status conflicts,
+  deprecated-source usage, and assumption-registry drift. Deterministic
+  (staleness only when `--now` supplied); no live fetch; not legal/license
+  clearance, not clinical validation/calibration; does not prove medical
+  correctness. No core engine/importer/Firebase/UI change.
 - **Problem:** stale/inconsistent source/catalog/model versions can go unnoticed.
 - **Why it matters:** keeps provenance claims honest over time.
 - **Inputs:** `sourceDocument` version/effectiveDate/lastChecked, importer
