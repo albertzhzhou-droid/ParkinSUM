@@ -177,13 +177,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 locale: i18n.languageFamily,
                 fallback: i18n.tr('onboarding.safety_education_title'),
               ),
-              body: i18n.tr('onboarding.safety_education_body'),
+              body: const ExplanationCopyService().resolveForLocale(
+                'onboarding_safety_education_body',
+                locale: i18n.languageFamily,
+                fallback: i18n.tr('onboarding.safety_education_body'),
+              ),
             ),
             const SizedBox(height: 12),
             _IconLine(
               icon: Icons.privacy_tip_outlined,
-              title: i18n.tr('onboarding.account_scope_title'),
-              body: i18n.tr('onboarding.account_scope_body'),
+              title: const ExplanationCopyService().resolveForLocale(
+                'onboarding_account_scope_title',
+                locale: i18n.languageFamily,
+                fallback: i18n.tr('onboarding.account_scope_title'),
+              ),
+              body: const ExplanationCopyService().resolveForLocale(
+                'onboarding_account_scope_body',
+                locale: i18n.languageFamily,
+                fallback: i18n.tr('onboarding.account_scope_body'),
+              ),
             ),
           ],
         ),
