@@ -96,7 +96,14 @@ dart run tool/generate_evidence_graph.dart                  # or: npm run eviden
 dart run tool/run_synthetic_scenario_fuzzer.dart            # or: npm run scenario:fuzz
 dart run tool/run_localization_safety_lint.dart             # or: npm run localization:lint
 dart run tool/run_local_privacy_preflight.dart              # or: npm run privacy:preflight
+dart run tool/run_catalog_resolution_demo.dart              # or: npm run catalog:resolve
 ```
+
+`catalog:resolve` runs the CatalogResolutionEngine (P2) over fixed synthetic
+queries — it resolves food/drug names into ranked, source-backed **candidates +
+uncertainty** (confidence, ambiguity, unresolved reasons). It is **not** a
+recommendation engine, infers no user dose (dose-like text is query evidence),
+and does not silently guess. See `docs/CATALOG_RESOLUTION_ENGINE.md`.
 
 `privacy:preflight` is a stricter repo-hygiene / privacy-risk scan over
 git-tracked files that **complements** `public:preflight` (it does not replace

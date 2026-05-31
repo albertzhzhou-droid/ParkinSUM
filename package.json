@@ -31,6 +31,7 @@
     "localization:lint": "node tool/run_localization_safety_lint.mjs",
     "privacy:preflight": "node tool/run_local_privacy_preflight.mjs",
     "source:access": "node tool/run_source_access_contract_check.mjs",
+    "catalog:resolve": "node tool/run_catalog_resolution_demo.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs"
   },
   "dependencies": {
