@@ -135,6 +135,22 @@ results.
   translation-quality or clinical-safety guarantee; no LLM.** See
   `docs/LOCALIZATION_SAFETY_LINT.md`.
 
+### `dart run tool/run_local_privacy_preflight.dart`  (or `npm run privacy:preflight`)
+- **Checks:** git-tracked files for secrets (private keys, service accounts,
+  tokens, api-key/password assignments, DB-URL credentials), PHI-like fields,
+  absolute local machine paths, raw private export filenames, real-health
+  narratives, and generated/local directories. Complements `public:preflight`;
+  honors the Firebase-client-config and safety-policy allowlists; supports
+  `--strict`.
+- **Expected:** `build/local_privacy_preflight/latest.{json,md}` with
+  info/warn/blocker counts and `pass=true` (0 blockers) for the repo.
+- **Failure means:** a likely secret/PHI/raw-export leak (or, in strict mode, a
+  warn). **Exits non-zero** on a blocker.
+- **Network:** no. **Data:** synthetic/demo only. **Repo-hygiene / privacy-risk
+  preflight — NOT HIPAA/GDPR/PIPEDA compliance, not a legal certification, not
+  clinical validation, and does not prove the app is secure.** See
+  `docs/LOCAL_PRIVACY_PREFLIGHT.md`.
+
 ## What these checks do and do not establish
 
 - **They establish:** deterministic behavior, preserved provenance/missingness,
