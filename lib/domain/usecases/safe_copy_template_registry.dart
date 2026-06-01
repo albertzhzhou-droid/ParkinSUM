@@ -192,6 +192,154 @@ class SafeCopyTemplateRegistry {
           notes: 'Legacy analysis follow-up disclaimer; mirrors i18n key '
               '`legacy.analysis_followup` (en).',
         ),
+        // --- Migrated legacy rule-finding lines (informational outputs) -------
+        // These are the rule engine's finding/summary lines (not safety-boundary
+        // disclaimers), so outputType is `informational` with no required safety
+        // terms; placeholder + banned-phrase validation still applies. en text
+        // mirrors app_i18n byte-identical (locale-strict; non-en keeps tr()).
+        // Excluded by design: `legacy.severity.{high,moderate,low}` (one/two-word
+        // enum labels — no governance value).
+        SafeCopyTemplate(
+          templateId: 'legacy_high_protein_strong',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'High protein timing may strongly affect levodopa absorption',
+          },
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding title; mirrors i18n key '
+              '`legacy.high_protein_strong` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_high_protein_strong_detail',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'This meal contains about {protein} g of protein, which is '
+                'in a higher-risk range. Taking it close to {drug} may compete '
+                'more strongly for absorption.',
+          },
+          requiredPlaceholders: ['protein', 'drug'],
+          allowedPlaceholders: ['protein', 'drug'],
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding detail; mirrors i18n key '
+              '`legacy.high_protein_strong_detail` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_high_protein',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'Protein may affect medication absorption',
+          },
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding title; mirrors i18n key '
+              '`legacy.high_protein` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_high_protein_detail',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'This meal contains about {protein} g of protein and may '
+                'compete with {drug} during absorption. Consider scheduling '
+                'higher-protein meals away from dosing time.',
+          },
+          requiredPlaceholders: ['protein', 'drug'],
+          allowedPlaceholders: ['protein', 'drug'],
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding detail; mirrors i18n key '
+              '`legacy.high_protein_detail` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_tyramine',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'Possible high-tyramine food risk',
+          },
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding title; mirrors i18n key '
+              '`legacy.tyramine` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_tyramine_detail',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'This meal includes foods marked as high tyramine. Combined '
+                'with {drug}, it may increase adverse-effect risk.',
+          },
+          requiredPlaceholders: ['drug'],
+          allowedPlaceholders: ['drug'],
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding detail; mirrors i18n key '
+              '`legacy.tyramine_detail` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_mineral',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'Meal timing note for mineral supplements',
+          },
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding title; mirrors i18n key '
+              '`legacy.mineral` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_mineral_detail',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'This meal includes dairy and may suggest higher calcium '
+                'content. Some mineral supplements can have different '
+                'absorption or GI tolerance when taken with food.',
+          },
+          requiredSafetyTerms: [],
+          notes: 'Legacy rule finding detail; mirrors i18n key '
+              '`legacy.mineral_detail` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_summary',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'Overall score {score}/100 ({severity}), with {count} '
+                'possible food-drug or nutrition-related alerts.',
+          },
+          requiredPlaceholders: ['score', 'severity', 'count'],
+          allowedPlaceholders: ['score', 'severity', 'count'],
+          requiredSafetyTerms: [],
+          notes: 'Legacy result summary line; mirrors i18n key '
+              '`legacy.summary` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_analysis_protein',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'The current meal estimate contains about {protein} g of '
+                'protein.',
+          },
+          requiredPlaceholders: ['protein'],
+          allowedPlaceholders: ['protein'],
+          requiredSafetyTerms: [],
+          notes: 'Legacy analysis protein segment; mirrors i18n key '
+              '`legacy.analysis_protein` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_analysis_tyramine',
+          outputType: 'informational',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'This meal also contains foods tagged as higher tyramine '
+                'risk in the built-in catalog.',
+          },
+          requiredSafetyTerms: [],
+          notes: 'Legacy analysis tyramine segment; mirrors i18n key '
+              '`legacy.analysis_tyramine` (en).',
+        ),
       ];
 
   SafeCopyTemplate? byId(String id) {
