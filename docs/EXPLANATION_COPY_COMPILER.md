@@ -113,20 +113,53 @@ Together they form the P6/P7 copy-safety layer.
 the runtime accessor that resolves boundary/safety copy **through** the compiler
 at app runtime, always degrading to the canonical `RuleExplanation` defaults if a
 template is absent or fails validation (so it can never surface unvalidated or
-empty text). The first migrated UI surface is the mechanistic trace card
-(`lib/features/shared/mechanistic_trace_view.dart`), whose default not-advice and
-safety-boundary lines are now sourced from the service. Because the matching
-registry templates carry byte-identical text, this changes the **source** of the
-copy (now compiler-validated) without changing what the user sees.
+empty text).
 
-Migrating the remaining UI strings is incremental, additive future work: add a
-registry template (compiler-validated) and switch the consumer to
-`ExplanationCopyService.resolve(...)` with the existing string as the fallback.
+`resolveForLocale(id, {required locale, required fallback, bindings})` is the
+**locale-strict** seam used to migrate localized `app_i18n` keys: it returns the
+compiler-validated text **only** when the template actually carries that exact
+locale, and otherwise returns the localized `tr()` fallback — so a non-localized
+template never substitutes English for a translated string. Because each migrated
+template's `en` `localizedText` mirrors its `app_i18n` source byte-identical, this
+changes the **source** of the copy (now compiler-validated) without changing what
+any user sees.
+
+**Migrated surfaces** (compiler-validated at runtime, en byte-identical, non-en
+preserved via fallback):
+
+- Mechanistic trace card (`lib/features/shared/mechanistic_trace_view.dart`) —
+  default not-advice and safety-boundary lines.
+- Onboarding safety-education + account-scope titles/bodies
+  (`onboarding.safety_education_*`, `onboarding.account_scope_*`).
+- The legacy rule engine's result surface
+  (`lib/core/analysis/interaction_engine.dart`): the "no conflict" message, the
+  analysis framing/follow-up lines, and the rule-finding/summary lines
+  (`legacy.high_protein*`, `legacy.tyramine*`, `legacy.mineral*`,
+  `legacy.summary`, `legacy.analysis_protein`, `legacy.analysis_tyramine`). Rule
+  findings use the `informational` output type (no required safety terms) while
+  boundary/disclaimer lines keep their required safety terms.
+
+**Drift guard.** `test/explanation_copy_i18n_parity_test.dart` pins every migrated
+template's compiled **en** output to its live `app_i18n` key (with identical
+bindings), so editing one side without the other fails CI. A coverage assertion
+ensures any newly added `legacy_*` / `onboarding_*` template is also pinned.
+
+**Out of scope by design.** Ordinary feature copy (`recommend.*`, `mealcheck.*`,
+dashboard labels) is **not** force-migrated — it is functional UI text, not
+safety/boundary/disclaimer copy, and remains governed by `localization:lint`.
+"Finishing the structure" means the safety/boundary + legacy result surfaces are
+compiler-governed and drift-guarded; routine feature strings are not in scope.
+
+Migrating any further string stays incremental and additive: add a
+compiler-validated registry template (en mirroring the source), switch the
+consumer to `resolveForLocale(...)` with the existing `tr()` value as the
+fallback, and add a parity-table row.
 
 ## 12. Limitations
 
-- Compiles + validates copy templates; it does not migrate UI strings or change
-  scoring.
+- Compiles + validates copy templates and governs the migrated boundary/legacy
+  result surfaces above; it does not change scoring, and ordinary feature copy is
+  intentionally left to `localization:lint`.
 - Banned-phrase matching is the conservative LocalizationSafetyLint families; not
   a clinical-safety guarantee.
 - Required safety/evidence terms are enforced on the default-locale render.
@@ -141,4 +174,6 @@ registry template (compiler-validated) and switch the consumer to
       real context, never fabricated.
 - [ ] The report JSON is deterministic and emits no patient/subject/encounter
       keys.
-- [ ] No UI string was migrated/changed in this PR (migration stays future work).
+- [ ] Any migrated string is byte-identical to its `app_i18n` en source, routed
+      via `resolveForLocale` (locale-strict, localized fallback preserved), and
+      pinned by the i18n parity guard.
