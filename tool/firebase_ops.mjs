@@ -171,6 +171,7 @@ async function runUserWriteProbe() {
   const uid = required(args.uid, '--uid');
   const runId = args['run-id'] ?? `user_rights_${Date.now()}`;
   requireUidConfirmation(uid);
+  requireSafeSegment(runId, '--run-id');
   requireProjectConfirmation();
 
   const summary = {
@@ -315,9 +316,16 @@ function countExportedDocuments(node) {
 }
 
 function requireUidConfirmation(uid) {
+  requireSafeSegment(uid, '--uid');
   if (dryRun) return;
   if (args.confirm !== uid) {
     throw new Error(`Execute mode requires --confirm ${uid}`);
+  }
+}
+
+function requireSafeSegment(value, flag) {
+  if (!/^[A-Za-z0-9._:-]+$/.test(String(value))) {
+    throw new Error(`${flag} must be one safe path segment.`);
   }
 }
 

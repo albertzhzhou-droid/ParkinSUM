@@ -340,4 +340,38 @@ void main() {
     expect(r.blockerCount, 0);
     expect(r.pass, isTrue);
   });
+
+  test('production claim without registry record is BLOCKER', () {
+    final r = run([
+      const SourceVersionRecord(
+        recordId: 'use1',
+        sourceId: 'src.missing',
+        recordType: SourceVersionRecordType.sourceAdapter,
+        implementationStatus: 'implemented_production_ready',
+        bibliographyRefs: ['src.missing'],
+      ),
+    ]);
+    expect(hasType(r, SourceVersionDriftFindingType.fixtureStatusMismatch),
+        isTrue);
+    expect(r.pass, isFalse);
+  });
+
+  test('duplicate registry source id is BLOCKER', () {
+    final r = run([reg('src.dup'), reg('src.dup')]);
+    expect(hasType(r, SourceVersionDriftFindingType.duplicateSourceRegistryId),
+        isTrue);
+    expect(r.pass, isFalse);
+  });
+
+  test('malformed generated artifact timestamp is reported', () {
+    final r = run([
+      const SourceVersionRecord(
+        recordId: 'art:bad-date',
+        recordType: SourceVersionRecordType.generatedArtifact,
+        generatedAt: 'not-a-date',
+        metadata: {'exists': 'true'},
+      ),
+    ]);
+    expect(hasType(r, SourceVersionDriftFindingType.invalidTimestamp), isTrue);
+  });
 }

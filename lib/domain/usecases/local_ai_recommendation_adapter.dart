@@ -105,6 +105,18 @@ class LocalAiRecommendationPolishResult {
 /// - 这是“受限增强器”，不是事实来源，也不能覆盖硬规则；
 /// - 任意网络/JSON/契约失败都必须回退到 deterministic 结果。
 class LocalAiRecommendationAdapter implements LocalResponsePolisher {
+  static const _unsafeGeneratedCopyPhrases = <String>[
+    'adjust your dose',
+    'recommended dose',
+    'recommended timing',
+    'take your medication at',
+    'avoid protein',
+    'safe for you',
+    'confirmed safe',
+    'clinically validated',
+    'patient-calibrated',
+  ];
+
   final http.Client _client;
 
   LocalAiRecommendationAdapter({
@@ -180,7 +192,11 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       timeout: const Duration(milliseconds: 12000),
     );
     final polished = payload?['polished_text']?.toString().trim();
-    if (polished == null || polished.isEmpty) return null;
+    if (polished == null ||
+        polished.isEmpty ||
+        _containsUnsafeGeneratedCopy(polished)) {
+      return null;
+    }
     return polished;
   }
 
@@ -253,7 +269,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       schemaName: 'meal_conflict_polish',
       timeout: _timeout(userProfile),
     );
-    if (payload == null) return result;
+    if (payload == null || _containsUnsafeGeneratedCopy(payload)) return result;
     final issueDetails =
         (payload['issue_details'] as List<dynamic>? ?? const <dynamic>[])
             .map((item) => item.toString().trim())
@@ -385,7 +401,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       schemaName: 'safe_rerank',
       timeout: _timeout(userProfile),
     );
-    if (payload == null) return null;
+    if (payload == null || _containsUnsafeGeneratedCopy(payload)) return null;
 
     return _safeResult(
       payload: payload,
@@ -599,10 +615,11 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Duration timeout,
   }) async {
     if (provider == LocalAiProviders.ollama) {
-      final response = await _client.get(
+      final response = await _getNoRedirect(
         _ollamaTagsUri(endpoint),
         headers: {'Accept': 'application/json'},
-      ).timeout(timeout);
+        timeout: timeout,
+      );
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return false;
       }
@@ -633,51 +650,47 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
   }) {
     final uri = Uri.parse(endpoint);
     return switch (provider) {
-      LocalAiProviders.ollama => _client
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'model': model,
-              'stream': false,
-              'messages': const [
-                {'role': 'user', 'content': 'reply with {"ok":true}'}
-              ],
-              'format': {
-                'type': 'object',
-                'properties': {
-                  'ok': {'type': 'boolean'}
-                },
-                'required': ['ok']
+      LocalAiProviders.ollama => _postJsonNoRedirect(
+          uri,
+          {
+            'model': model,
+            'stream': false,
+            'messages': const [
+              {'role': 'user', 'content': 'reply with {"ok":true}'}
+            ],
+            'format': {
+              'type': 'object',
+              'properties': {
+                'ok': {'type': 'boolean'}
               },
-            }),
-          )
-          .timeout(timeout),
-      LocalAiProviders.openAiCompat => _client
-          .post(
-            uri,
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'model': model,
-              'messages': const [
-                {'role': 'user', 'content': 'reply with {"ok":true}'}
-              ],
-              'response_format': {
-                'type': 'json_schema',
-                'json_schema': {
-                  'name': 'availability_probe',
-                  'schema': {
-                    'type': 'object',
-                    'properties': {
-                      'ok': {'type': 'boolean'}
-                    },
-                    'required': ['ok']
-                  }
+              'required': ['ok']
+            },
+          },
+          timeout,
+        ),
+      LocalAiProviders.openAiCompat => _postJsonNoRedirect(
+          uri,
+          {
+            'model': model,
+            'messages': const [
+              {'role': 'user', 'content': 'reply with {"ok":true}'}
+            ],
+            'response_format': {
+              'type': 'json_schema',
+              'json_schema': {
+                'name': 'availability_probe',
+                'schema': {
+                  'type': 'object',
+                  'properties': {
+                    'ok': {'type': 'boolean'}
+                  },
+                  'required': ['ok']
                 }
               }
-            }),
-          )
-          .timeout(timeout),
+            }
+          },
+          timeout,
+        ),
       _ => throw UnsupportedError('Unsupported provider'),
     };
   }
@@ -727,20 +740,18 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Duration timeout,
   }) async {
     try {
-      final response = await _client
-          .post(
-            Uri.parse(endpoint),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'model': model,
-              'stream': false,
-              'messages': [
-                {'role': 'user', 'content': prompt}
-              ],
-              'format': schema,
-            }),
-          )
-          .timeout(timeout);
+      final response = await _postJsonNoRedirect(
+        Uri.parse(endpoint),
+        {
+          'model': model,
+          'stream': false,
+          'messages': [
+            {'role': 'user', 'content': prompt}
+          ],
+          'format': schema,
+        },
+        timeout,
+      );
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final content =
@@ -789,25 +800,23 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Duration timeout,
   }) async {
     try {
-      final response = await _client
-          .post(
-            Uri.parse(endpoint),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'model': model,
-              'messages': [
-                {'role': 'user', 'content': prompt}
-              ],
-              'response_format': {
-                'type': 'json_schema',
-                'json_schema': {
-                  'name': schemaName,
-                  'schema': schema,
-                }
-              }
-            }),
-          )
-          .timeout(timeout);
+      final response = await _postJsonNoRedirect(
+        Uri.parse(endpoint),
+        {
+          'model': model,
+          'messages': [
+            {'role': 'user', 'content': prompt}
+          ],
+          'response_format': {
+            'type': 'json_schema',
+            'json_schema': {
+              'name': schemaName,
+              'schema': schema,
+            }
+          }
+        },
+        timeout,
+      );
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final choices = json['choices'] as List<dynamic>? ?? const [];
@@ -827,6 +836,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required List<FoodRecommendation> candidates,
     required LocalAiAvailability availability,
   }) {
+    if (_containsUnsafeGeneratedCopy(payload)) return null;
     final requestedIds =
         (payload['candidate_ids'] as List<dynamic>? ?? const [])
             .map((value) => value.toString())
@@ -898,6 +908,53 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         .where((item) => item.isNotEmpty)
         .toList(growable: false);
     return values.isEmpty ? fallback : values;
+  }
+
+  Future<http.Response> _getNoRedirect(
+    Uri uri, {
+    required Map<String, String> headers,
+    required Duration timeout,
+  }) {
+    final request = http.Request('GET', uri)
+      ..headers.addAll(headers)
+      ..followRedirects = false
+      ..maxRedirects = 0;
+    return _sendNoRedirect(request, timeout);
+  }
+
+  Future<http.Response> _postJsonNoRedirect(
+    Uri uri,
+    Map<String, dynamic> body,
+    Duration timeout,
+  ) {
+    final request = http.Request('POST', uri)
+      ..headers['Content-Type'] = 'application/json'
+      ..body = jsonEncode(body)
+      ..followRedirects = false
+      ..maxRedirects = 0;
+    return _sendNoRedirect(request, timeout);
+  }
+
+  Future<http.Response> _sendNoRedirect(
+    http.BaseRequest request,
+    Duration timeout,
+  ) async {
+    final streamed = await _client.send(request).timeout(timeout);
+    return http.Response.fromStream(streamed);
+  }
+
+  bool _containsUnsafeGeneratedCopy(Object? value) {
+    if (value is Map) {
+      return value.values.any(_containsUnsafeGeneratedCopy);
+    }
+    if (value is Iterable) {
+      return value.any(_containsUnsafeGeneratedCopy);
+    }
+    if (value is! String) return false;
+    final normalized = value
+        .toLowerCase()
+        .replaceAll(RegExp(r'[\u200B-\u200D\u2060\uFEFF]'), '');
+    return _unsafeGeneratedCopyPhrases.any(normalized.contains);
   }
 }
 

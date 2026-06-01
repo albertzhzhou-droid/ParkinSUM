@@ -269,12 +269,90 @@ service cloud.firestore {
     }
 
     function validAppCatalogWrite(table, rowId) {
-      return safeId(rowId) &&
-      (
-        table in ['foods', 'medications', 'interaction_rules'] ||
-        table.matches('^live_probe.*$')
-      ) &&
-      request.resource.data.keys().size() <= 48;
+      return safeId(rowId) && (
+        (table == 'foods' && validFoodCatalogRow(rowId)) ||
+        (table == 'medications' && validMedicationCatalogRow(rowId)) ||
+        (table == 'interaction_rules' && validInteractionRuleCatalogRow(rowId)) ||
+        (table.matches('^live_probe.*$') && validLiveProbeCatalogRow())
+      );
+    }
+
+    function validFoodCatalogRow(rowId) {
+      return request.resource.data.keys().hasOnly([
+        'id', 'name', 'category', 'aliases', 'description', 'sourceSystem',
+        'sourceFoodCode', 'jurisdiction', 'textureClass', 'iddsiLevel',
+        'proteinG', 'carbsG', 'fatG', 'fiberG', 'sodiumMg',
+        'missingNutrientFields', 'energyKcal', 'waterG', 'aminoAcidProfile',
+        'basisType', 'preparationState', 'qualifierKind', '_synced_at_ms'
+      ]) &&
+      validString('id', 160) &&
+      request.resource.data.id == rowId &&
+      validString('name', 240) &&
+      validString('category', 64) &&
+      optionalStringList('aliases', 64) &&
+      optionalString('description', 1200) &&
+      optionalString('sourceSystem', 120) &&
+      optionalString('sourceFoodCode', 160) &&
+      optionalString('jurisdiction', 32) &&
+      optionalString('textureClass', 64) &&
+      optionalNumber('iddsiLevel') &&
+      optionalNumber('proteinG') &&
+      optionalNumber('carbsG') &&
+      optionalNumber('fatG') &&
+      optionalNumber('fiberG') &&
+      optionalNumber('sodiumMg') &&
+      optionalStringList('missingNutrientFields', 32) &&
+      optionalNumber('energyKcal') &&
+      optionalNumber('waterG') &&
+      optionalMap('aminoAcidProfile', 48) &&
+      optionalString('basisType', 80) &&
+      optionalString('preparationState', 120) &&
+      optionalString('qualifierKind', 80) &&
+      optionalNumber('_synced_at_ms');
+    }
+
+    function validMedicationCatalogRow(rowId) {
+      return request.resource.data.keys().hasOnly([
+        'id', 'genericName', 'brandNames', 'aliases', 'tags', 'notes',
+        'interactionSummary', 'sourceSystem', 'sourceProductCode',
+        'jurisdiction', 'route', 'dosageForm', 'releaseType', '_synced_at_ms'
+      ]) &&
+      validString('id', 160) &&
+      request.resource.data.id == rowId &&
+      validString('genericName', 240) &&
+      optionalStringList('brandNames', 64) &&
+      optionalStringList('aliases', 64) &&
+      optionalStringList('tags', 32) &&
+      optionalString('notes', 1200) &&
+      optionalString('interactionSummary', 1200) &&
+      optionalString('sourceSystem', 120) &&
+      optionalString('sourceProductCode', 160) &&
+      optionalString('jurisdiction', 32) &&
+      optionalString('route', 80) &&
+      optionalString('dosageForm', 120) &&
+      optionalString('releaseType', 80) &&
+      optionalNumber('_synced_at_ms');
+    }
+
+    function validInteractionRuleCatalogRow(rowId) {
+      return request.resource.data.keys().hasOnly([
+        'id', 'drugId', 'ruleType', 'target', 'severity', 'weight',
+        'description', '_synced_at_ms'
+      ]) &&
+      validString('id', 160) &&
+      request.resource.data.id == rowId &&
+      validString('drugId', 160) &&
+      validString('ruleType', 120) &&
+      validString('target', 240) &&
+      request.resource.data.severity is int &&
+      optionalNumber('weight') &&
+      optionalString('description', 1200) &&
+      optionalNumber('_synced_at_ms');
+    }
+
+    function validLiveProbeCatalogRow() {
+      return request.resource.data.keys().hasOnly(['probe']) &&
+      validString('probe', 160);
     }
 
     match /users/{uid} {

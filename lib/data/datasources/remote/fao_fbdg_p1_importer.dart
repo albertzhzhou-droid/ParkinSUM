@@ -19,6 +19,12 @@ class FaoFbdgP1Importer {
     required String countryCode,
     required String url,
   }) async {
+    final uri = Uri.parse(url);
+    if (uri.scheme != 'https' ||
+        (uri.host != 'fao.org' && !uri.host.endsWith('.fao.org'))) {
+      throw ArgumentError.value(
+          url, 'url', 'Expected an official FAO HTTPS URL.');
+    }
     final html = await fetchClient.getText(url);
     return importCountryPage(
       countryCode: countryCode,

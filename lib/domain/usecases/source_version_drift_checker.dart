@@ -42,6 +42,7 @@ class SourceVersionDriftChecker {
     SourceVersionDriftFindingType.sourceRegistryMismatch,
     SourceVersionDriftFindingType.generatedArtifactStale,
     SourceVersionDriftFindingType.assumptionRegistryUnreferenced,
+    SourceVersionDriftFindingType.invalidTimestamp,
   };
 
   SourceVersionDriftReport check(
@@ -89,6 +90,21 @@ class SourceVersionDriftChecker {
         suggestedFix: fix,
         safetyBoundary: _safetyBoundary,
       );
+    }
+
+    final registryIds = <String>{};
+    for (final r in records.where((record) =>
+        record.recordType == SourceVersionRecordType.sourceAccessRegistry &&
+        record.sourceId.isNotEmpty)) {
+      if (!registryIds.add(r.sourceId)) {
+        findings.add(f(
+          SourceVersionDriftSeverity.blocker,
+          SourceVersionDriftFindingType.duplicateSourceRegistryId,
+          r,
+          'Duplicate source-access registry id can overwrite authority state.',
+          fix: 'Keep exactly one reviewed registry record per source id.',
+        ));
+      }
     }
 
     for (final r in records) {
@@ -177,7 +193,14 @@ class SourceVersionDriftChecker {
               fix: 'Emit a deterministic generated_at in the artifact.'));
         } else if (refTime != null) {
           final gen = _parseDate(r.generatedAt);
-          if (gen != null) {
+          if (gen == null) {
+            findings.add(f(
+                SourceVersionDriftSeverity.warn,
+                SourceVersionDriftFindingType.invalidTimestamp,
+                r,
+                'Generated artifact has an invalid generated_at timestamp.',
+                fix: 'Emit a valid ISO-8601 generated_at timestamp.'));
+          } else {
             final ageDays = refTime.difference(gen).inDays;
             if (ageDays > config.stalenessThresholdDays) {
               findings.add(f(
@@ -249,7 +272,7 @@ class SourceVersionDriftChecker {
               'source fixture-only.',
               fix: 'Do not claim production readiness for a fixture-only '
                   'source.'));
-        } else if (reg == null && registryLoaded) {
+        } else if (reg == null) {
           findings.add(f(
               SourceVersionDriftSeverity.blocker,
               SourceVersionDriftFindingType.fixtureStatusMismatch,

@@ -23,6 +23,7 @@ import 'source_fetch_client.dart';
 /// - 同时把可解析到的 SPL section 全量落成 `drug_label_section`，让药品详情页和后续正文索引
 ///   可以直接消费更完整的官方标签文本。
 class DailyMedP0Importer {
+  static const int maxSplXmlCharacters = 16 * 1024 * 1024;
   final SourceFetchClient fetchClient;
 
   const DailyMedP0Importer({required this.fetchClient});
@@ -72,6 +73,7 @@ class DailyMedP0Importer {
     List<Map<String, dynamic>> packaging = const <Map<String, dynamic>>[],
     List<Map<String, dynamic>> media = const <Map<String, dynamic>>[],
   }) {
+    validateSplXmlLength(xml.length);
     final document = XmlDocument.parse(xml);
     final setId = _firstAttr(document, 'setId', 'root') ??
         _firstAttr(document, 'id', 'root') ??
@@ -389,6 +391,17 @@ class DailyMedP0Importer {
       conceptVariantCrosswalks: crosswalks,
       projectedDrugs: [projectedDrug],
     );
+  }
+
+  static void validateSplXmlLength(
+    int length, {
+    int maxCharacters = maxSplXmlCharacters,
+  }) {
+    if (length > maxCharacters) {
+      throw FormatException(
+        'DailyMed SPL XML exceeds the $maxCharacters character limit.',
+      );
+    }
   }
 
   Future<List<dynamic>> _safeFetchJsonList(String url) async {

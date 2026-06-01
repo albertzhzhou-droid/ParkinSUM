@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
@@ -27,27 +28,74 @@ abstract class SourceFetchClient {
 }
 
 class HttpSourceFetchClient implements SourceFetchClient {
+  static const int maxResponseBytes = 16 * 1024 * 1024;
+
   final http.Client _client;
+  final int responseByteLimit;
   final Map<String, Map<String, String>> _lastMetadata =
       <String, Map<String, String>>{};
 
-  HttpSourceFetchClient({http.Client? client})
-      : _client = client ?? http.Client();
+  HttpSourceFetchClient({
+    http.Client? client,
+    this.responseByteLimit = maxResponseBytes,
+  }) : _client = client ?? http.Client();
 
   @override
   Future<String> getText(String url, {Map<String, String>? headers}) async {
-    final response = await _client.get(Uri.parse(url), headers: headers);
-    _ensureSuccess(response, url);
+    final response = await _getBounded(url, headers: headers);
     _captureMetadata(url, response);
     return response.body;
   }
 
   @override
   Future<List<int>> getBytes(String url, {Map<String, String>? headers}) async {
-    final response = await _client.get(Uri.parse(url), headers: headers);
-    _ensureSuccess(response, url);
+    final response = await _getBounded(url, headers: headers);
     _captureMetadata(url, response);
     return response.bodyBytes;
+  }
+
+  Future<http.Response> _getBounded(
+    String url, {
+    Map<String, String>? headers,
+  }) async {
+    final uri = Uri.parse(url);
+    if (uri.scheme != 'https' || uri.host.isEmpty || uri.userInfo.isNotEmpty) {
+      throw StateError('Refusing non-HTTPS or malformed source URL: $url');
+    }
+    final request = http.Request('GET', uri)
+      ..followRedirects = false
+      ..maxRedirects = 0;
+    if (headers != null) request.headers.addAll(headers);
+    final streamed = await _client.send(request);
+    if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
+      await streamed.stream.drain<void>();
+      throw StateError(
+        'Failed to fetch $url: HTTP ${streamed.statusCode}',
+      );
+    }
+    final declaredLength = streamed.contentLength;
+    if (declaredLength != null && declaredLength > responseByteLimit) {
+      await streamed.stream.drain<void>();
+      throw StateError(
+        'Failed to fetch $url: response exceeds $responseByteLimit bytes.',
+      );
+    }
+    final bytes = BytesBuilder(copy: false);
+    await for (final chunk in streamed.stream) {
+      if (bytes.length + chunk.length > responseByteLimit) {
+        throw StateError(
+          'Failed to fetch $url: response exceeds $responseByteLimit bytes.',
+        );
+      }
+      bytes.add(chunk);
+    }
+    return http.Response.bytes(
+      bytes.takeBytes(),
+      streamed.statusCode,
+      headers: streamed.headers,
+      reasonPhrase: streamed.reasonPhrase,
+      request: streamed.request,
+    );
   }
 
   void _captureMetadata(String url, http.Response response) {
@@ -83,14 +131,6 @@ class HttpSourceFetchClient implements SourceFetchClient {
   }) async {
     final text = await getText(url, headers: headers);
     return jsonDecode(text) as List<dynamic>;
-  }
-
-  void _ensureSuccess(http.Response response, String url) {
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw StateError(
-        'Failed to fetch $url: HTTP ${response.statusCode}',
-      );
-    }
   }
 }
 
