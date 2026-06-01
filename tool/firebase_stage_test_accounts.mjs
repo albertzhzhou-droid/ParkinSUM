@@ -23,6 +23,7 @@ if (args.help) {
 }
 
 try {
+  requireStageEnvironment();
   requireProjectConfirmation();
   const runId = args['run-id'] ?? `stage_${Date.now()}`;
   const password = args.password ?? `ParkinSUM-${runId}-T3st!`;
@@ -205,6 +206,17 @@ function requireProjectConfirmation() {
   if (dryRun) return;
   if (args['confirm-project'] !== projectId) {
     throw new Error(`Execute mode requires --confirm-project ${projectId}`);
+  }
+}
+
+function requireStageEnvironment() {
+  if (environment !== 'stage') {
+    throw new Error('Stage test accounts may only be created in --env stage.');
+  }
+  if (projectId !== defaultProjectForEnvironment('stage')) {
+    throw new Error(
+      `Stage test accounts require project ${defaultProjectForEnvironment('stage')}.`,
+    );
   }
 }
 

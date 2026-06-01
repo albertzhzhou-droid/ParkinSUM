@@ -26,6 +26,11 @@ if (args.help) {
 }
 
 const payload = JSON.parse(fs.readFileSync(input, 'utf8'));
+if (payload.environment !== environment || payload.projectId !== projectId) {
+  throw new Error(
+    `Token file environment/project mismatch: expected ${environment}/${projectId}.`,
+  );
+}
 const account = payload.accounts?.find((entry) => entry.role === role);
 if (!account) {
   throw new Error(`Role not found in token file: ${role}`);
@@ -33,6 +38,7 @@ if (!account) {
 if (!args['reset-password'] && !account.refreshToken) {
   throw new Error(`Role ${role} has no refreshToken in token file.`);
 }
+requireSafeSegment(account.uid, 'token file uid');
 
 const refreshed = args['reset-password']
   ? await resetPasswordAndSignIn(account)
@@ -74,6 +80,9 @@ returns a cached pre-removal ID token.
 }
 
 async function resetPasswordAndSignIn(account) {
+  if (args['confirm-project'] !== projectId) {
+    throw new Error(`--reset-password requires --confirm-project ${projectId}`);
+  }
   if (!account.email) {
     throw new Error(`Role ${role} has no email in token file.`);
   }
@@ -171,6 +180,12 @@ function normalizeEnvironment(value) {
     throw new Error(`Invalid environment: ${value}. Use dev, stage, or prod.`);
   }
   return normalized;
+}
+
+function requireSafeSegment(value, label) {
+  if (!/^[A-Za-z0-9._:-]+$/.test(String(value))) {
+    throw new Error(`${label} must be one safe path segment.`);
+  }
 }
 
 function defaultProjectForEnvironment(env) {

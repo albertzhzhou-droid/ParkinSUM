@@ -156,6 +156,23 @@ void main() {
     expect(result.provider, LocalAiProviders.ollama);
   });
 
+  test('local AI requests disable automatic redirects', () async {
+    final client = MockClient((request) async {
+      expect(request.followRedirects, isFalse);
+      expect(request.maxRedirects, 0);
+      return http.Response('redirect blocked', 307, headers: {
+        'location': 'https://example.com/capture',
+      });
+    });
+    final adapter = LocalAiRecommendationAdapter(client: client);
+
+    final result = await adapter.probe(
+      userProfile: buildProfile(provider: LocalAiProviders.ollama),
+    );
+
+    expect(result.available, isFalse);
+  });
+
   test('rerank rejects ids outside the safe whitelist', () async {
     final client = MockClient((request) async {
       if (request.url.path == '/api/tags') {
@@ -305,5 +322,62 @@ void main() {
     expect(polished.scoreFactors.single.code, 'protein_timing_penalty');
     expect(polished.summary, contains('levodopa'));
     expect(polished.issues.single.detail, contains('plain language'));
+  });
+
+  test('meal conflict polish rejects unsafe generated actions', () async {
+    final client = MockClient((request) async {
+      if (request.url.path == '/api/tags') {
+        return http.Response(
+          jsonEncode({
+            'models': [
+              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
+            ]
+          }),
+          200,
+        );
+      }
+      return http.Response(
+        jsonEncode({
+          'message': {
+            'content': jsonEncode({
+              'summary': 'unsafe',
+              'analysis_text': 'unsafe',
+              'key_findings': ['unsafe'],
+              'next_actions': ['Adjust your dose now.'],
+              'data_notes': ['unsafe'],
+              'issue_details': ['unsafe'],
+              'safety_alignment': 'unsafe',
+            }),
+          }
+        }),
+        200,
+      );
+    });
+    final adapter = LocalAiRecommendationAdapter(client: client);
+    final original = InteractionResult(
+      mealId: 'meal_1',
+      status: InteractionStatus.warning,
+      summary: 'deterministic summary',
+      analysisText: 'deterministic analysis',
+      issues: const [],
+      generatedAt: DateTime(2026, 5, 12),
+      score: 81,
+    );
+
+    final polished = await adapter.polishInteractionResult(
+      userProfile: buildProfile(provider: LocalAiProviders.ollama),
+      meal: Meal(
+        id: 'meal_1',
+        title: 'Dinner',
+        eatenAt: DateTime(2026, 5, 12, 18),
+        items: const [],
+      ),
+      result: original,
+      activeDrugs: const [],
+      intakes: const [],
+    );
+
+    expect(polished.summary, original.summary);
+    expect(polished.nextActions, original.nextActions);
   });
 }

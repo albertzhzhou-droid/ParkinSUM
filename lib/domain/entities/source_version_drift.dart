@@ -51,6 +51,9 @@ class SourceVersionDriftFindingType {
       'assumption_registry_unreferenced';
   static const String documentationClaimMismatch =
       'documentation_claim_mismatch';
+  static const String duplicateSourceRegistryId =
+      'duplicate_source_registry_id';
+  static const String invalidTimestamp = 'invalid_timestamp';
 }
 
 /// One source/version metadata record (supplied by the CLI collector or tests).

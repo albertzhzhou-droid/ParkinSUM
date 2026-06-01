@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:archive/archive.dart';
 
+import '../../data/datasources/remote/archive_import_support.dart';
 import 'local_p0_import_locator.dart';
 
 class _IoLocalP0ImportLocator implements LocalP0ImportLocator {
@@ -53,7 +54,7 @@ class _IoLocalP0ImportLocator implements LocalP0ImportLocator {
     if (entity == FileSystemEntityType.file &&
         path.toLowerCase().endsWith('.zip')) {
       resolvedPaths['ciqual'] = path;
-      return File(path).readAsBytes();
+      return _readArchiveBytes(File(path));
     }
     final directory = entity == FileSystemEntityType.directory
         ? Directory(path)
@@ -76,8 +77,16 @@ class _IoLocalP0ImportLocator implements LocalP0ImportLocator {
       );
     }
     final archive = Archive();
+    var totalBytes = 0;
     for (final file in requiredFiles.cast<File>()) {
-      final bytes = await file.readAsBytes();
+      final bytes = await _readExpandedEntryBytes(file);
+      totalBytes += bytes.length;
+      if (totalBytes >
+          ArchiveImportSupport.defaultLimits.maxTotalUncompressedBytes) {
+        throw const FormatException(
+          'Ciqual XML files exceed total expanded-size limit.',
+        );
+      }
       archive.addFile(
           ArchiveFile(file.uri.pathSegments.last, bytes.length, bytes));
     }
@@ -98,7 +107,7 @@ class _IoLocalP0ImportLocator implements LocalP0ImportLocator {
     }
     if (entity == FileSystemEntityType.file) {
       resolvedPaths[key] = path;
-      return File(path).readAsBytes();
+      return _readArchiveBytes(File(path));
     }
     final directory = Directory(path);
     final candidate = _findFirst(
@@ -116,7 +125,22 @@ class _IoLocalP0ImportLocator implements LocalP0ImportLocator {
       );
     }
     resolvedPaths[key] = candidate.path;
-    return candidate.readAsBytes();
+    return _readArchiveBytes(candidate);
+  }
+
+  Future<List<int>> _readArchiveBytes(File file) async {
+    ArchiveImportSupport.validateCompressedInputLength(await file.length());
+    return file.readAsBytes();
+  }
+
+  Future<List<int>> _readExpandedEntryBytes(File file) async {
+    final length = await file.length();
+    if (length > ArchiveImportSupport.defaultLimits.maxEntryUncompressedBytes) {
+      throw FormatException(
+        'Import file exceeds expanded-size limit: ${file.path}',
+      );
+    }
+    return file.readAsBytes();
   }
 
   File? _findFirst(List<File> files, List<String> patterns) {

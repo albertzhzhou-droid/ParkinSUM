@@ -165,25 +165,21 @@ class LocalizationSafetyLint {
     // Per-surface rules B–G.
     for (final s in surfaces) {
       final role = s.expectedSafetyRole;
-      final lower = s.text.toLowerCase();
+      final normalizedText = _normalizedForScan(s.text);
+      final lower = normalizedText.toLowerCase();
 
-      // Rule G allowlist: policy values are exempt from banned/overconfidence.
-      final isPolicyValue =
-          role == 'policy_value' || _safeAllowlist.contains(s.text.trim());
+      // Rule G allowlist: only exact, reviewed policy values are exempt.
+      // A role label alone must never disable scanning of arbitrary text.
+      final isPolicyValue = _safeAllowlist.contains(s.text.trim());
 
       // Rule B — safety boundary for boundary/explanation surfaces.
       if (role == 'boundary' || role == 'explanation') {
-        final hasBoundary = lower.contains('educational') ||
-            lower.contains('not medical advice') ||
+        final hasBoundary = lower.contains('not medical advice') ||
             lower.contains('not clinically calibrated') ||
             lower.contains('not clinical validation') ||
-            lower.contains('modeled') ||
-            lower.contains('simulated') ||
-            lower.contains('source-linked') ||
             // CJK / FR equivalents used in project copy.
-            s.text.contains('教育') ||
-            s.text.contains('未经临床校准') ||
-            s.text.contains('不是医疗建议');
+            normalizedText.contains('未经临床校准') ||
+            normalizedText.contains('不是医疗建议');
         if (!hasBoundary) {
           findings.add(LocalizationSafetyFinding(
             severity: 'warn',
@@ -229,7 +225,7 @@ class LocalizationSafetyLint {
       if (!isPolicyValue) {
         for (final entry in bannedFamilies.entries) {
           for (final pattern in entry.value) {
-            if (_isBannedHit(s.text, lower, pattern, entry.key)) {
+            if (_isBannedHit(normalizedText, lower, pattern, entry.key)) {
               findings.add(LocalizationSafetyFinding(
                 severity: 'blocker',
                 findingType: bannedPhrase,
@@ -338,21 +334,34 @@ class LocalizationSafetyLint {
     final isLatin = family == 'en' || family == 'fr';
     final hay = isLatin ? lower : raw;
     final needle = isLatin ? pattern.toLowerCase() : pattern;
-    if (!hay.contains(needle)) return false;
-    // Allow safe negated/allowlist phrases (e.g. "not clinically validated").
-    for (final safe in _safeAllowlist) {
-      if (hay.contains(safe.toLowerCase()) &&
-          safe.toLowerCase().contains(needle)) {
-        return false;
+    var start = 0;
+    while (true) {
+      final index = hay.indexOf(needle, start);
+      if (index < 0) break;
+      if (!isLatin || !_negatedAt(hay, index)) return true;
+      start = index + needle.length;
+    }
+    if (isLatin) {
+      final compactHay = hay.replaceAll(RegExp(r'\s+'), '');
+      final compactNeedle = needle.replaceAll(RegExp(r'\s+'), '');
+      var compactStart = 0;
+      while (true) {
+        final index = compactHay.indexOf(compactNeedle, compactStart);
+        if (index < 0) return false;
+        if (!_negatedAtCompact(compactHay, index)) return true;
+        compactStart = index + compactNeedle.length;
       }
     }
-    if (isLatin && _negatedNearby(hay, needle)) return false;
-    return true;
+    return false;
   }
 
   bool _negatedNearby(String hay, String needle) {
     final idx = hay.indexOf(needle);
     if (idx < 0) return false;
+    return _negatedAt(hay, idx);
+  }
+
+  bool _negatedAt(String hay, int idx) {
     final start = (idx - 8).clamp(0, hay.length);
     final prefix = hay.substring(start, idx);
     return prefix.contains('not ') ||
@@ -361,6 +370,21 @@ class LocalizationSafetyLint {
         prefix.contains('pas ') ||
         prefix.contains('no ');
   }
+
+  bool _negatedAtCompact(String hay, int idx) {
+    final start = (idx - 8).clamp(0, hay.length);
+    final prefix = hay.substring(start, idx);
+    return prefix.endsWith('not') ||
+        prefix.endsWith('never') ||
+        prefix.endsWith('non') ||
+        prefix.endsWith('pas') ||
+        prefix.endsWith('no');
+  }
+
+  String _normalizedForScan(String text) => text.replaceAll(
+        RegExp(r'[\u200B-\u200D\u2060\uFEFF]'),
+        ' ',
+      );
 
   Set<String> _placeholders(String text) {
     final out = <String>{};
