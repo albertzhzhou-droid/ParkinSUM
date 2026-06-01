@@ -162,13 +162,19 @@ class InteractionEngine {
     required int score,
     required MealTotals totals,
   }) {
+    // Boundary/result-framing copy sourced through the compiler-validated
+    // registry; the localized i18n string is the locale-strict fallback.
+    const copy = ExplanationCopyService();
+    final analysisBindings = {
+      'drugCount': '${drugs.length}',
+      'score': '$score',
+    };
     final segments = <String>[
-      i18n.tr(
-        'legacy.analysis',
-        {
-          'drugCount': '${drugs.length}',
-          'score': '$score',
-        },
+      copy.resolveForLocale(
+        'legacy_analysis',
+        locale: i18n.languageFamily,
+        bindings: analysisBindings,
+        fallback: i18n.tr('legacy.analysis', analysisBindings),
       ),
       i18n.tr(
         'legacy.analysis_protein',
@@ -179,7 +185,11 @@ class InteractionEngine {
     if (meal.items.any((it) => it.foodTags.contains('high_tyramine'))) {
       segments.add(i18n.tr('legacy.analysis_tyramine'));
     }
-    segments.add(i18n.tr('legacy.analysis_followup'));
+    segments.add(copy.resolveForLocale(
+      'legacy_analysis_followup',
+      locale: i18n.languageFamily,
+      fallback: i18n.tr('legacy.analysis_followup'),
+    ));
     return segments.join(' ');
   }
 }
