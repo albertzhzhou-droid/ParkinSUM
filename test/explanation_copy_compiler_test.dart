@@ -208,6 +208,7 @@ void main() {
       registry,
       bindingsByTemplate: const {
         'mechanistic_explanation_boundary': {'overlap_percent': '42'},
+        'legacy_analysis': {'drugCount': '1', 'score': '42'},
       },
       contextByTemplate: {
         for (final t in registry.templates)
@@ -228,6 +229,7 @@ void main() {
           registry,
           bindingsByTemplate: const {
             'mechanistic_explanation_boundary': {'overlap_percent': '42'},
+            'legacy_analysis': {'drugCount': '1', 'score': '42'},
           },
           contextByTemplate: {
             for (final t in registry.templates)
@@ -254,6 +256,7 @@ void main() {
       registry,
       bindingsByTemplate: const {
         'mechanistic_explanation_boundary': {'overlap_percent': '42'},
+        'legacy_analysis': {'drugCount': '1', 'score': '42'},
       },
       contextByTemplate: {
         for (final t in registry.templates)

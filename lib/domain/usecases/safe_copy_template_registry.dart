@@ -165,6 +165,33 @@ class SafeCopyTemplateRegistry {
           notes: 'Onboarding account-scope body; mirrors i18n key '
               '`onboarding.account_scope_body` (en). Data-scope disclaimer.',
         ),
+        SafeCopyTemplate(
+          templateId: 'legacy_analysis',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'Built-in rules checked this meal against {drugCount} '
+                'medication(s), producing a heuristic screening score of '
+                '{score}/100.',
+          },
+          requiredPlaceholders: ['drugCount', 'score'],
+          allowedPlaceholders: ['drugCount', 'score'],
+          requiredSafetyTerms: ['built-in rules', 'heuristic'],
+          notes: 'Legacy analysis framing; mirrors i18n key `legacy.analysis` '
+              '(en). Frames the result as a built-in heuristic screen.',
+        ),
+        SafeCopyTemplate(
+          templateId: 'legacy_analysis_followup',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'Treat this as a lightweight screening result and confirm '
+                'exact medication timing when you need more specific guidance.',
+          },
+          requiredSafetyTerms: ['screening result'],
+          notes: 'Legacy analysis follow-up disclaimer; mirrors i18n key '
+              '`legacy.analysis_followup` (en).',
+        ),
       ];
 
   SafeCopyTemplate? byId(String id) {
