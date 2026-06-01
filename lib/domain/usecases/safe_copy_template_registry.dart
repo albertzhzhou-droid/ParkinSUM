@@ -132,6 +132,39 @@ class SafeCopyTemplateRegistry {
           notes: 'Legacy "no conflict" educational result; mirrors i18n key '
               '`legacy.no_conflict` (en).',
         ),
+        SafeCopyTemplate(
+          templateId: 'onboarding_safety_education_body',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'ParkinSUM gives conservative prompts from medication, meal, '
+                'and regional rules. Medication changes, stopping therapy, or '
+                'clinical diet decisions still need a physician or pharmacist.',
+          },
+          requiredSafetyTerms: ['physician or pharmacist'],
+          notes: 'Onboarding safety-education body; mirrors i18n key '
+              '`onboarding.safety_education_body` (en).',
+        ),
+        SafeCopyTemplate(
+          templateId: 'onboarding_account_scope_title',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {'en': 'Account data stays user-scoped'},
+          notes: 'Onboarding account-scope title; mirrors i18n key '
+              '`onboarding.account_scope_title` (en). Data-scope disclaimer; no '
+              'medical safety term required.',
+        ),
+        SafeCopyTemplate(
+          templateId: 'onboarding_account_scope_body',
+          outputType: 'boundary',
+          defaultLocale: 'en',
+          localizedText: {
+            'en': 'After onboarding, profile, medications, intakes, and later '
+                'audit records are saved under the current account user space.',
+          },
+          notes: 'Onboarding account-scope body; mirrors i18n key '
+              '`onboarding.account_scope_body` (en). Data-scope disclaimer.',
+        ),
       ];
 
   SafeCopyTemplate? byId(String id) {
