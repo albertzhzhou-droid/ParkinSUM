@@ -192,16 +192,19 @@ class MechanisticNextMealScorer {
     final samples = <MechanisticCandidateSampleSummary>[];
     final perSampleResults = <MechanisticConflictResult>[];
     for (final offset in sampleOffsets) {
+      final candidateMealId = 'hypothetical_${candidate.id}_$offset';
       final ctx = _hypotheticalContext(
         baseContext: baseContext,
         candidate: candidate,
         compositionId: composition.id,
         candidateMinute: offset,
+        candidateMealId: candidateMealId,
       );
       final result = engine.evaluate(
         context: ctx,
         mealCompositionsById: mergedCompositions,
         resultId: 'cand_${candidate.id}_$offset',
+        preferredMealId: candidateMealId,
       );
       perSampleResults.add(result);
       samples.add(MechanisticCandidateSampleSummary(
@@ -381,11 +384,12 @@ class MechanisticNextMealScorer {
     required CandidateFood candidate,
     required String compositionId,
     required int candidateMinute,
+    required String candidateMealId,
   }) {
     final mealEvents = [
       ...baseContext.mealEvents,
       MealTimelineEvent(
-        id: 'hypothetical_${candidate.id}_$candidateMinute',
+        id: candidateMealId,
         minute: candidateMinute,
         compositionId: compositionId,
         physicalForm: candidate.declaredPhysicalForm,

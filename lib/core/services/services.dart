@@ -249,6 +249,7 @@ class Services {
       clinicalDecisionSupportService: cdssService,
       compiledRules: compiledCdssRules,
       importedLabelRuleProvider: importedLabelRuleProvider,
+      foodRepository: foodRepo,
     );
     final cdssCatalogProjectionService =
         CdssCatalogProjectionService(database: cdssDatabase);

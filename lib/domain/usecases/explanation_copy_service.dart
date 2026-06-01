@@ -13,8 +13,10 @@
 library;
 
 import '../entities/explanation_copy.dart';
+import '../entities/localization_safety_lint.dart';
 import '../entities/rule_explanation.dart';
 import 'explanation_copy_compiler.dart';
+import 'localization_safety_lint.dart';
 import 'safe_copy_template_registry.dart';
 
 class ExplanationCopyService {
@@ -37,7 +39,7 @@ class ExplanationCopyService {
     CopyCompileContext context = const CopyCompileContext(),
   }) {
     final template = _registry.byId(templateId);
-    if (template == null) return fallback;
+    if (template == null) return _validatedFallback(fallback);
     final result = _compiler.compile(
       template,
       bindings: bindings,
@@ -46,7 +48,7 @@ class ExplanationCopyService {
     );
     final text = result.compiled?.text;
     if (result.valid && text != null && text.trim().isNotEmpty) return text;
-    return fallback;
+    return _validatedFallback(fallback);
   }
 
   /// Locale-strict resolve: returns the compiler-validated text **only** when
@@ -62,7 +64,7 @@ class ExplanationCopyService {
   }) {
     final template = _registry.byId(templateId);
     if (template == null || !template.localizedText.containsKey(locale)) {
-      return fallback;
+      return _validatedFallback(fallback);
     }
     return resolve(
       templateId,
@@ -87,4 +89,23 @@ class ExplanationCopyService {
         locale: locale,
         fallback: RuleExplanation.defaultSafetyBoundary,
       );
+
+  String _validatedFallback(String fallback) {
+    final report = const LocalizationSafetyLint().lint(
+      [
+        LocalizationSurface(
+          surfaceId: 'runtime_fallback',
+          locale: '-',
+          key: 'runtime_fallback',
+          text: fallback,
+          source: 'runtime_fallback',
+          expectedSafetyRole: 'plain',
+        ),
+      ],
+      const LocalizationSafetyLintConfig(),
+    );
+    return report.blockerCount == 0
+        ? fallback
+        : RuleExplanation.defaultSafetyBoundary;
+  }
 }

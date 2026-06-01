@@ -4,24 +4,31 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const payloadPath = process.argv[2] ?? 'build/firebase_seed/official_core_seed.json';
-const dryRun = process.argv.includes('--dry-run');
+const args = parseArgs(process.argv.slice(2));
+const payloadPath = args._[0] ?? 'build/firebase_seed/official_core_seed.json';
+const execute = Boolean(args.execute);
 const payload = JSON.parse(fs.readFileSync(payloadPath, 'utf8'));
 const projectId = payload.projectId ?? 'parkinsum-companion';
 const databaseId = payload.databaseId ?? '(default)';
-const token = loadFirebaseAccessToken();
 
 if (!payload.documents || !Array.isArray(payload.documents)) {
   throw new Error(`Invalid payload: ${payloadPath}`);
 }
 
 console.log(`project=${projectId} database=${databaseId} documents=${payload.documents.length}`);
-console.log(`snapshot=${payload.snapshotId} dryRun=${dryRun}`);
+console.log(`snapshot=${payload.snapshotId} execute=${execute}`);
 console.log(`counts=${JSON.stringify(payload.counts ?? {})}`);
 
-if (dryRun) {
+if (!execute) {
   process.exit(0);
 }
+if (args['confirm-project'] !== projectId) {
+  throw new Error(`Execute mode requires --confirm-project ${projectId}`);
+}
+requireSafeProjectId(projectId);
+requireSafeDatabaseId(databaseId);
+for (const doc of payload.documents) requireSafeDocumentPath(doc.path);
+const token = loadFirebaseAccessToken();
 
 const baseName = `projects/${projectId}/databases/${databaseId}/documents`;
 const endpoint =
@@ -71,6 +78,29 @@ function loadFirebaseAccessToken() {
   return tokenInfo.access_token;
 }
 
+function requireSafeProjectId(value) {
+  if (!/^[a-z][a-z0-9-]{4,61}[a-z0-9]$/.test(String(value))) {
+    throw new Error('Invalid Firestore projectId.');
+  }
+}
+
+function requireSafeDatabaseId(value) {
+  if (value !== '(default)' && !/^[A-Za-z0-9._-]{1,160}$/.test(String(value))) {
+    throw new Error('Invalid Firestore databaseId.');
+  }
+}
+
+function requireSafeDocumentPath(value) {
+  const segments = String(value ?? '').split('/');
+  if (
+    segments.length < 2 ||
+    segments.length % 2 !== 0 ||
+    segments.some((segment) => !/^[A-Za-z0-9._:-]{1,160}$/.test(segment))
+  ) {
+    throw new Error(`Invalid Firestore document path: ${value}`);
+  }
+}
+
 function toFirestoreFields(input) {
   const fields = {};
   for (const [key, value] of Object.entries(input)) {
@@ -95,4 +125,24 @@ function toFirestoreValue(value) {
     return { mapValue: { fields: toFirestoreFields(value) } };
   }
   return { stringValue: String(value) };
+}
+
+function parseArgs(argv) {
+  const parsed = { _: [] };
+  for (let i = 0; i < argv.length; i += 1) {
+    const token = argv[i];
+    if (!token.startsWith('--')) {
+      parsed._.push(token);
+      continue;
+    }
+    const key = token.slice(2);
+    const next = argv[i + 1];
+    if (next == null || next.startsWith('--')) {
+      parsed[key] = true;
+    } else {
+      parsed[key] = next;
+      i += 1;
+    }
+  }
+  return parsed;
 }

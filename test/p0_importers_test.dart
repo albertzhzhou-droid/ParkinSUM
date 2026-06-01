@@ -2,12 +2,15 @@ import 'dart:convert';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/data/datasources/remote/ciqual_p0_importer.dart';
+import 'package:parkinsum_companion/data/datasources/remote/archive_import_support.dart';
 import 'package:parkinsum_companion/data/datasources/remote/dailymed_p0_importer.dart';
 import 'package:parkinsum_companion/data/datasources/remote/ema_p1_importer.dart';
 import 'package:parkinsum_companion/data/datasources/remote/fdc_p0_importer.dart';
@@ -42,6 +45,95 @@ import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
 //   - group('Resumable orchestrator'): retry / resume / metadata persistence
 //     for both local-bytes and remote-fetch import paths.
 void main() {
+  group('Official source HTTP safety', () {
+    test('disables redirects for official source fetches', () async {
+      late http.Request seen;
+      final client = HttpSourceFetchClient(
+        client: MockClient((request) async {
+          seen = request;
+          return http.Response('ok', 200);
+        }),
+      );
+
+      expect(await client.getText('https://example.org/source'), 'ok');
+      expect(seen.followRedirects, isFalse);
+      expect(seen.maxRedirects, 0);
+    });
+
+    test('rejects non-HTTPS source URLs before transport', () async {
+      final client = HttpSourceFetchClient(
+        client: MockClient((_) async => http.Response('unexpected', 200)),
+      );
+
+      await expectLater(
+        client.getText('http://127.0.0.1/internal'),
+        throwsStateError,
+      );
+    });
+
+    test('rejects responses above the streaming limit', () async {
+      final client = HttpSourceFetchClient(
+        client: MockClient(
+          (_) async => http.Response.bytes(const [1, 2], 200),
+        ),
+        responseByteLimit: 1,
+      );
+
+      await expectLater(
+        client.getBytes('https://example.org/oversized'),
+        throwsStateError,
+      );
+    });
+  });
+
+  group('Archive import safety limits', () {
+    const smallLimits = ArchiveImportLimits(
+      maxCompressedArchiveBytes: 1024,
+      maxFileCount: 2,
+      maxEntryUncompressedBytes: 32,
+      maxTotalUncompressedBytes: 48,
+    );
+
+    test('rejects compressed archives above the configured limit', () {
+      expect(
+        () => ArchiveImportSupport.validateCompressedInputLength(
+          1025,
+          limits: smallLimits,
+        ),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects archive entries above the expanded-size limit', () {
+      final archive = Archive()
+        ..addFile(ArchiveFile('large.txt', 33, List<int>.filled(33, 65)));
+      final zipBytes = ZipEncoder().encode(archive)!;
+
+      expect(
+        () => ArchiveImportSupport.unzipFiles(zipBytes, limits: smallLimits),
+        throwsFormatException,
+      );
+    });
+
+    test('rejects unsafe archive entry paths', () {
+      final archive = Archive()
+        ..addFile(ArchiveFile('../outside.txt', 1, const [65]));
+      final zipBytes = ZipEncoder().encode(archive)!;
+
+      expect(
+        () => ArchiveImportSupport.unzipFiles(zipBytes, limits: smallLimits),
+        throwsFormatException,
+      );
+    });
+  });
+
+  test('DailyMed direct XML parser rejects oversized payload lengths', () {
+    expect(
+      () => DailyMedP0Importer.validateSplXmlLength(11, maxCharacters: 10),
+      throwsFormatException,
+    );
+  });
+
   test('Ciqual importer parses xml rows into foods and observations', () {
     const importer = CiqualP0Importer(
       fetchClient: FakeSourceFetchClient(textByUrl: {}),
@@ -393,6 +485,20 @@ void main() {
     expect(
       bundle.countryDietProfiles.single.avoidanceNotesJson,
       allOf(contains('reduce_salt'), contains('adequate_water')),
+    );
+  });
+
+  test('FAO remote fetch rejects non-official hosts', () async {
+    const importer = FaoFbdgP1Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+
+    await expectLater(
+      importer.fetchCountryPage(
+        countryCode: 'CN',
+        url: 'https://127.0.0.1/internal',
+      ),
+      throwsArgumentError,
     );
   });
 

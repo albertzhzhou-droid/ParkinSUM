@@ -36,6 +36,7 @@ class MechanisticConflictEngine {
     required TimeAxisConflictContext context,
     required Map<String, MealComposition> mealCompositionsById,
     String resultId = 'mechanistic_result',
+    String? preferredMealId,
   }) {
     // No valid medication event = insufficient medication context.
     if (context.medicationEvents.isEmpty) {
@@ -63,6 +64,19 @@ class MechanisticConflictEngine {
     // The primary single-dose window for the no-meal path uses the first
     // scoring event (deterministic order is preserved by the time-axis builder).
     final med = scoringEvents.first;
+
+    // An explicitly requested meal must exist. Candidate scoring uses this to
+    // bind each hypothetical meal to its evaluation rather than silently
+    // falling back to a historical meal outside the ordinary lookahead window.
+    if (preferredMealId != null &&
+        !context.mealEvents.any((meal) => meal.id == preferredMealId)) {
+      return MechanisticConflictResult.insufficientContext(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        missingInputs: ['meal_event($preferredMealId)'],
+        sourceRefs: const ['src.hens.foodphysical.2024'],
+      );
+    }
 
     // No meal event = no food-medication interaction modeled.
     if (context.mealEvents.isEmpty) {
@@ -118,10 +132,15 @@ class MechanisticConflictEngine {
         med: event,
         context: context,
         mealCompositionsById: mealCompositionsById,
+        preferredMealId: preferredMealId,
       );
       if (eval == null) {
         // Record which meal composition was unavailable for this dose.
-        final mealForEvent = _primaryMealFor(event, context);
+        final mealForEvent = _primaryMealFor(
+          event,
+          context,
+          preferredMealId: preferredMealId,
+        );
         if (mealForEvent != null) {
           missingCompositionIds.add(mealForEvent.compositionId);
         }
@@ -347,9 +366,16 @@ class MechanisticConflictEngine {
   /// `mealEvents` list always yields the same primary meal.
   MealTimelineEvent? _primaryMealFor(
     MedicationTimelineEvent med,
-    TimeAxisConflictContext context,
-  ) {
+    TimeAxisConflictContext context, {
+    String? preferredMealId,
+  }) {
     if (context.mealEvents.isEmpty) return null;
+    if (preferredMealId != null) {
+      for (final meal in context.mealEvents) {
+        if (meal.id == preferredMealId) return meal;
+      }
+      return null;
+    }
     final sorted = [...context.mealEvents]..sort((a, b) {
         final byMinute = a.minute.compareTo(b.minute);
         return byMinute != 0 ? byMinute : a.id.compareTo(b.id);
@@ -396,8 +422,13 @@ class MechanisticConflictEngine {
     required MedicationTimelineEvent med,
     required TimeAxisConflictContext context,
     required Map<String, MealComposition> mealCompositionsById,
+    String? preferredMealId,
   }) {
-    final primaryMeal = _primaryMealFor(med, context);
+    final primaryMeal = _primaryMealFor(
+      med,
+      context,
+      preferredMealId: preferredMealId,
+    );
     if (primaryMeal == null) return null;
     final composition = mealCompositionsById[primaryMeal.compositionId];
     if (composition == null) return null;

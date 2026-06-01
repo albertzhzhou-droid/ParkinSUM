@@ -117,5 +117,14 @@ void main() {
       fallback: localized,
     );
     expect(text, localized);
+  test('unsafe runtime fallback degrades to canonical safety boundary', () {
+    expect(
+      service.resolveForLocale(
+        'nope',
+        locale: 'en',
+        fallback: 'adjust your dose now',
+      ),
+      RuleExplanation.defaultSafetyBoundary,
+    );
   });
 }

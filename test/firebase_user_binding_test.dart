@@ -114,6 +114,10 @@ void main() {
     expect(rules, contains('match /cdss_tables/{table}/rows/{rowId}'));
     expect(rules, contains('match /app_catalog/{table}/rows/{rowId}'));
     expect(rules, contains('validAppCatalogWrite(table, rowId)'));
+    expect(rules, contains('validFoodCatalogRow(rowId)'));
+    expect(rules, contains('validMedicationCatalogRow(rowId)'));
+    expect(rules, contains('validInteractionRuleCatalogRow(rowId)'));
+    expect(rules, contains("keys().hasOnly(['probe'])"));
     expect(rules, contains('allow read, write: if false;'));
     expect(rules, isNot(contains('allow read, write: if true')));
     expect(

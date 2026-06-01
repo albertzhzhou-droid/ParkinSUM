@@ -325,6 +325,92 @@ void main() {
     );
   });
 
+  test('preferred meal overrides ordinary lookahead selection', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final refMinute = dateTimeToMinute(now);
+    final med = MedicationTimelineEvent(
+      id: 'med',
+      minute: refMinute,
+      context: validator.validate(validLevodopa).normalized!,
+    );
+    const lowProtein = FoodComponent(
+      id: 'lp',
+      name: 'low protein',
+      physicalForm: MealPhysicalForm.solid,
+      proteinGrams: 1,
+      fatGrams: 0,
+      fiberGrams: 0,
+      carbohydrateGrams: 30,
+      calories: 130,
+      portionGrams: 150,
+      sourceDocId: 'synthetic:demo',
+    );
+    final historical = normalizer
+        .normalize(mealId: 'historical', components: const [lowProtein]);
+    final hypothetical = normalizer
+        .normalize(mealId: 'hypothetical', components: const [highProtein]);
+    final ctx = TimeAxisConflictContext(
+      referenceMinute: refMinute,
+      medicationEvents: [med],
+      mealEvents: [
+        MealTimelineEvent(
+          id: 'historical_meal',
+          minute: refMinute - 30,
+          compositionId: historical.id,
+          physicalForm: MealPhysicalForm.solid,
+        ),
+        MealTimelineEvent(
+          id: 'hypothetical_meal',
+          minute: refMinute + 300,
+          compositionId: hypothetical.id,
+          physicalForm: MealPhysicalForm.solid,
+        ),
+      ],
+    );
+    final compositions = {
+      historical.id: historical,
+      hypothetical.id: hypothetical,
+    };
+
+    final ordinary =
+        engine.evaluate(context: ctx, mealCompositionsById: compositions);
+    final preferred = engine.evaluate(
+      context: ctx,
+      mealCompositionsById: compositions,
+      preferredMealId: 'hypothetical_meal',
+    );
+
+    expect(ordinary.primaryEmptyingProfile?.mealId, 'historical_meal');
+    expect(preferred.primaryEmptyingProfile?.mealId, 'hypothetical_meal');
+  });
+
+  test('missing preferred meal returns insufficient meal context', () {
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final ctx = makeContext(
+      now: now,
+      medEntry: validLevodopa,
+      medTakenAt: now,
+      mealStartedAt: now,
+    );
+    final composition =
+        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+
+    final result = engine.evaluate(
+      context: ctx,
+      mealCompositionsById: {'c1': composition},
+      preferredMealId: 'missing_meal',
+    );
+
+    expect(
+      result.interactionType,
+      MechanisticInteractionType.insufficientMealContext,
+    );
+    expect(
+      result.explanation.missingOrUncertainInputs,
+      contains('meal_event(missing_meal)'),
+    );
+  });
+
   test('explanation always carries source refs and safety boundary text', () {
     final now = DateTime.utc(2026, 1, 1, 8);
     final ctx = makeContext(

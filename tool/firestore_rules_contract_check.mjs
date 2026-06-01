@@ -60,6 +60,14 @@ const checks = [
       /match\s+\/app_catalog\/\{table\}\/rows\/\{rowId\}[\s\S]*allow\s+write:\s*if\s+isAdminOrImporter\(\)\s*&&\s*validAppCatalogWrite\(table,\s*rowId\);/s.test(rules),
   },
   {
+    name: 'app_catalog schema gate uses per-table allowlists',
+    pass:
+      /table\s*==\s*'foods'\s*&&\s*validFoodCatalogRow\(rowId\)/.test(rules) &&
+      /table\s*==\s*'medications'\s*&&\s*validMedicationCatalogRow\(rowId\)/.test(rules) &&
+      /table\s*==\s*'interaction_rules'\s*&&\s*validInteractionRuleCatalogRow\(rowId\)/.test(rules) &&
+      /function\s+validLiveProbeCatalogRow\(\)[\s\S]*keys\(\)\.hasOnly\(\['probe'\]\)/s.test(rules),
+  },
+  {
     name: 'top-level cdss_tables are closed',
     pass:
       /match\s+\/cdss_tables\/\{table\}\/rows\/\{rowId\}\s*\{\s*allow\s+read,\s*write:\s*if\s+false;/s.test(rules),

@@ -193,4 +193,21 @@ void main() {
     expect(hasType(r, LocalizationSafetyLint.noLocaleDictionaryDiscovered),
         isTrue);
   });
+
+  test('19. safe negation does not hide a later affirmative claim', () {
+    final r = lintOne(s('x', 'en', 'k',
+        'This is not clinically validated. This is clinically validated.'));
+    expect(hasType(r, LocalizationSafetyLint.bannedPhrase), isTrue);
+  });
+
+  test('20. zero-width characters do not bypass banned phrase scan', () {
+    final r = lintOne(s('x', 'en', 'k', 'Use the recommended\u200Bdose now.'));
+    expect(hasType(r, LocalizationSafetyLint.bannedPhrase), isTrue);
+  });
+
+  test('21. arbitrary policy values are still scanned', () {
+    final r =
+        lintOne(s('x', 'en', 'k', 'adjust your dose', role: 'policy_value'));
+    expect(hasType(r, LocalizationSafetyLint.bannedPhrase), isTrue);
+  });
 }
