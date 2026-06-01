@@ -92,4 +92,30 @@ void main() {
       'FB',
     );
   });
+
+  // 10 — a placeholder-bearing legacy finding resolves to compiled en text with
+  // its bindings substituted (rule-finding/informational migration).
+  test('resolveForLocale renders bindings for a legacy finding (en)', () {
+    final text = service.resolveForLocale(
+      'legacy_high_protein_strong_detail',
+      locale: 'en',
+      bindings: const {'protein': '40.0', 'drug': 'Levodopa'},
+      fallback: 'FALLBACK',
+    );
+    expect(text, isNot('FALLBACK'));
+    expect(text, contains('40.0'));
+    expect(text, contains('Levodopa'));
+  });
+
+  // 11 — a non-en locale keeps the localized fallback for a legacy finding
+  // (locale-strict; no English substitution).
+  test('resolveForLocale keeps localized fallback for a legacy finding', () {
+    const localized = '可能存在高酪胺食物风险';
+    final text = service.resolveForLocale(
+      'legacy_tyramine',
+      locale: 'zh',
+      fallback: localized,
+    );
+    expect(text, localized);
+  });
 }
