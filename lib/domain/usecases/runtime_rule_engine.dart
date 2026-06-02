@@ -121,6 +121,26 @@ class RuntimeRuleEngine {
             evidence: {
               'jurisdiction_chain': jurisdictionChain,
               'source_refs': rule.provenance.sourceRefs,
+
+              // 扩展evidence字段，提供更多上下文信息以帮助审查和解释。这个字段不影响规则匹配或优先级排序，但可以在审查过程中提供有价值的线索。
+
+              // Runtime fields inspected by this rule, used to connect the trigger condition
+              // to the explanation and evidence boundary.
+              'input_fields_used':
+                  _collectConditionPaths(rule.conditions).toList()..sort(),
+
+              // Limitation copy prevents this deterministic match from being interpreted
+              // as individualized diagnosis, treatment, medication timing, or diet advice.
+              'limitation_text':
+                  'This rule is an educational prototype explanation only and does not infer individual pharmacokinetics, diagnosis, treatment, medication timing, or diet decisions.',
+
+              // Safety copy keeps the output inside an educational awareness boundary.
+              'safety_boundary':
+                  'Do not change medication, diet, or timing based on this app. Consult a qualified healthcare professional for personal medical guidance.',
+
+              // Short reusable disclaimer for UI, tests, and trace artifacts.
+              'not_advice_text':
+                  'Educational architecture prototype only. Not medical advice or a clinical decision tool.',
             },
           ),
         );
@@ -268,6 +288,84 @@ class RuntimeRuleEngine {
           : _compare(normalizedValue, threshold, op);
     }
     return false;
+  }
+
+  /// This helper is for collecting runtime-context paths referenced by a rule condition tree.
+
+  /// This is used for explanation traceability only. It does not affect rule
+  /// matching or priority. The collected paths help reviewers see which
+  /// synthetic input fields were used to trigger a rule explanation.
+  Set<String> _collectConditionPaths(Map<String, dynamic> node) {
+    final paths = <String>{};
+
+    void visit(Map<String, dynamic> current) {
+      // `all` means every child condition must match. For traceability, collect paths
+      //from every child because each one contributes to the rule trigger.
+      if (current.containsKey('all')) {
+        for (final child in current['all'] as List<dynamic>) {
+          visit(Map<String, dynamic>.from(child as Map));
+        }
+      }
+
+      // `any` means at least one child condition can match. We still collect all
+      // declared paths so the evidence payload shows the full set of inputs that
+      // this rule may inspect.
+      if (current.containsKey('any')) {
+        for (final child in current['any'] as List<dynamic>) {
+          visit(Map<String, dynamic>.from(child as Map));
+        }
+      }
+
+      // `not` wraps another condition. The nested condition still reads runtime
+      // input, so its paths should be included in the trace.
+      if (current.containsKey('not')) {
+        visit(Map<String, dynamic>.from(current['not'] as Map));
+      }
+
+      // Comparison nodes read one runtime path, such as `meal.total_protein_g`.
+      if (current.containsKey('cmp')) {
+        final cmp = Map<String, dynamic>.from(current['cmp'] as Map);
+        final path = cmp['path'];
+        if (path is String) paths.add(path);
+      }
+
+      // Membership nodes read one runtime path and compare it against allowed
+      // values, such as checking whether `drug.substance_tags` contains `levodopa`.
+      if (current.containsKey('in')) {
+        final config = Map<String, dynamic>.from(current['in'] as Map);
+        final path = config['path'];
+        if (path is String) paths.add(path);
+      }
+
+      // Exists nodes only check whether a runtime field is present, but the
+      // field is still part of the trigger explanation.
+      if (current.containsKey('exists')) {
+        final config = Map<String, dynamic>.from(current['exists'] as Map);
+        final path = config['path'];
+        if (path is String) paths.add(path);
+      }
+
+      // Between nodes compare two runtime time fields. Both sides are collected
+      // so the explanation can show the timing inputs used by the rule.
+      if (current.containsKey('between')) {
+        final config = Map<String, dynamic>.from(current['between'] as Map);
+        final leftPath = config['left_path'];
+        final rightPath = config['right_path'];
+        if (leftPath is String) paths.add(leftPath);
+        if (rightPath is String) paths.add(rightPath);
+      }
+
+      // Dose-band nodes read a dose field but do not infer missing units or
+      // clinical meaning. This only records which field was inspected.
+      if (current.containsKey('dose_band')) {
+        final config = Map<String, dynamic>.from(current['dose_band'] as Map);
+        final path = config['path'];
+        if (path is String) paths.add(path);
+      }
+    }
+
+    visit(node);
+    return paths;
   }
 
   bool _compare(dynamic left, dynamic right, String op) {
