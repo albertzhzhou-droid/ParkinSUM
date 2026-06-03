@@ -36,9 +36,11 @@ Use this checklist before adding screenshots, GIFs, or videos to the public READ
 | Conflict explanation | `docs/assets/screenshots/conflict-explanation.png` | Rule weights, conservative explanation, model trace, and safety-boundary wording. | Must not read as diagnosis, treatment, medication timing advice, or dietary guidance. |
 | Analytics and local AI | `docs/assets/screenshots/analytics-local-ai.png` | Localization status, local model configuration, endpoint fields, and conservative recommendation path. | Do not expose private endpoints beyond localhost demo values. |
 
-## Suggested Demo GIF
+## Suggested Demo Video
 
-Target path: `docs/assets/demo/parkinsum-demo.gif`
+Prefer an external YouTube/Loom link documented in `README.md`. If a local GIF
+or video is added later, verify it renders correctly on GitHub before linking
+it from the public README.
 
 Recommended 30-60 second flow:
 

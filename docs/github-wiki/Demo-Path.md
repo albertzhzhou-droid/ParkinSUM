@@ -35,9 +35,10 @@ Recommended public media slots:
 | Medication context | `docs/assets/screenshots/medication-context.png` |
 | Conflict explanation | `docs/assets/screenshots/conflict-result.png` |
 | Search/catalog showcase | `docs/assets/screenshots/catalog-search.png` |
-| Short demo GIF | `docs/assets/demo/parkinsum-demo.gif` |
+| Short demo video | External link or future verified local asset |
 
-Only embed screenshots after the real files exist and have been checked for demo safety.
+Only embed screenshots or videos after the real files exist, render correctly on
+GitHub, and have been checked for demo safety.
 
 ## Verification Commands
 

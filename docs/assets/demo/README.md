@@ -1,6 +1,6 @@
 # Demo Media Checklist
 
-Add a 1-2 minute demo video or GIF before a public showcase release. Use only
+Add a 1-2 minute demo video before a public showcase release. Use only
 synthetic or sample data.
 
 This directory also contains the synthetic demo scenario pack:
@@ -10,8 +10,9 @@ do not mix it with real patient data or real accounts.
 
 ## Target Asset
 
-- `parkinsum-demo.gif` for a local README asset, or
-- an external YouTube/Loom link documented in `README.md`.
+- Prefer an external YouTube/Loom link documented in `README.md`.
+- If a local animated asset is added later, verify it renders correctly on
+  GitHub before linking it from the public README.
 
 ## Suggested Demo Flow
 
