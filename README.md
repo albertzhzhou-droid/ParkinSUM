@@ -220,13 +220,19 @@ validation, and the source-quality report is **not** a clinical dashboard.
 
 ## Demo Media
 
-The screenshots and GIF below use synthetic local demo data only. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
+The screenshots and GIF below use synthetic local demo data only. Real account identifiers are redacted or replaced with a synthetic demo address. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
 
-![ParkinSUM dashboard with synthetic meals, medication context, and local-first recommendation summaries](docs/assets/screenshots/dashboard.png)
-
-![Synthetic meal-entry screen showing editable meal context and deterministic rule-check controls](docs/assets/screenshots/meal-entry.png)
-
-![Synthetic conflict-result dialog showing evidence-oriented educational explanation boundaries](docs/assets/screenshots/conflict-result.png)
+| Feature shown | Demo screenshot | What it demonstrates |
+| --- | --- | --- |
+| Account entry | ![ParkinSUM sign-in screen with synthetic local demo styling](docs/assets/screenshots/auth-sign-in.png) | Authentication shell and privacy/disclaimer entry point. |
+| Next-meal setup | ![Next-meal setup screen with time-window controls and local AI toggle](docs/assets/screenshots/next-meal-setup.png) | User-provided meal timing window, conservative path, and optional local-AI wording polish. |
+| Next-meal results | ![Next-meal recommendation results with ranked synthetic food candidates](docs/assets/screenshots/next-meal-results.png) | Ranked food candidates, allow labels, and explanation bullets from the deterministic recommendation flow. |
+| Timeline overview | ![Meal and medication timeline showing synthetic medication and meal events](docs/assets/screenshots/timeline-overview.png) | Meal-medication chronology, nearest-event context, and editing controls. |
+| Timeline action state | ![Timeline action state with add-meal and log-medication controls](docs/assets/screenshots/timeline-action-state.png) | Floating meal and medication logging actions in the timeline workflow. |
+| Medication catalog | ![Medication list with selected synthetic levodopa-combination context](docs/assets/screenshots/medications-catalog.png) | Medication catalog entries, jurisdiction source labels, and selected medication context. |
+| Search/catalog showcase | ![Catalog page with ParkinSUM branded showcase module and searchable foods](docs/assets/screenshots/catalog-showcase.png) | GitHub-style branded repository module integrated into catalog search. |
+| Conflict explanation | ![Meal check conflict explanation dialog with conservative high-risk educational copy](docs/assets/screenshots/conflict-explanation.png) | Evidence-oriented safety explanation, rule weights, model trace, and non-clinical boundary copy. |
+| Analytics and local AI | ![Analytics screen with localization status and local AI configuration fields](docs/assets/screenshots/analytics-local-ai.png) | Localization status, local AI provider settings, model names, endpoints, and conservative recommendation path. |
 
 ![Short synthetic ParkinSUM demo flow showing dashboard, meal entry, and conflict explanation](docs/assets/demo/parkinsum-demo.gif)
 
