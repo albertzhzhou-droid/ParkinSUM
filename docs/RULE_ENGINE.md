@@ -172,7 +172,7 @@ phrase ever appears in any copy field.
 
 | Field | Value |
 | --- | --- |
-| `ruleId` | `levodopa_protein_temporal_v1` |
+| `ruleId` | `pd.ldopa.protein.window.v1` |
 | `triggeredConditions` | `drug.active_ingredients contains levodopa`, `meal.protein_band == moderate`, `timing.meal_to_drug within 0-60 min` |
 | `inputFieldsUsed` | `drug.active_ingredients`, `drug.release_type`, `meal.protein_g`, `timestamps.drug_time`, `timestamps.meal_time` |
 | `sourceRefs` | `synthetic:demo_label_carbidopa_levodopa#food_effect` |
