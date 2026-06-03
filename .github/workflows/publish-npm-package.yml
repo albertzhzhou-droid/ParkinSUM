@@ -1,0 +1,47 @@
+name: Publish release-metadata package
+
+# Publishes the scoped release-metadata package
+# (@albertzhzhou-droid/parkinsum-companion) to GitHub Packages (npm registry).
+#
+# This package ships release metadata only — it is not the app runtime and
+# contains no medical logic or patient data. Educational prototype; synthetic
+# data only; not a medical device; no medical advice.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+  push:
+    branches:
+      - 'publish-package-**'
+    paths:
+      - 'packages/npm/**'
+      - '.github/workflows/publish-npm-package.yml'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: packages/npm
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@albertzhzhou-droid'
+
+      - name: Smoke-check the package manifest
+        run: node -e "const r=require('./index.js'); if(!r.release||r.safetyBoundary.isMedicalDevice!==false){process.exit(1)} console.log('manifest ok:', r.release)"
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
