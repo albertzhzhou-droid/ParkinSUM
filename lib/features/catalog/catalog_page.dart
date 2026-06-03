@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../../core/models/food_item.dart';
 import '../../core/state/app_state.dart';
+import '../../core/theme/liquid_glass_theme.dart';
 import 'catalog_detail_pages.dart';
 
 class CatalogPage extends StatefulWidget {
@@ -49,6 +50,14 @@ class _CatalogPageState extends State<CatalogPage> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: _CatalogShowcaseCard(
+              foodCount: foods.length,
+              drugCount: drugs.length,
+              showingFoods: _showFoods,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
@@ -149,6 +158,246 @@ class _CatalogPageState extends State<CatalogPage> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CatalogShowcaseCard extends StatelessWidget {
+  final int foodCount;
+  final int drugCount;
+  final bool showingFoods;
+
+  const _CatalogShowcaseCard({
+    required this.foodCount,
+    required this.drugCount,
+    required this.showingFoods,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final visibleCount = showingFoods ? foodCount : drugCount;
+    final visibleLabel = showingFoods ? 'Foods indexed' : 'Medication records';
+
+    return GlassSurface(
+      borderRadius: 8,
+      blurSigma: LiquidGlass.blurSm,
+      padding: EdgeInsets.zero,
+      border: Border.all(color: LiquidGlass.stroke),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 148,
+            color: Colors.white.withValues(alpha: 0.74),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            child: Image.asset(
+              'assets/brand/parkinsum-wordmark.png',
+              fit: BoxFit.contain,
+              semanticLabel: 'ParkinSUM food medication interaction logo',
+            ),
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: LiquidGlass.stroke),
+              ),
+            ),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/brand/parkinsum-icon.png',
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'ParkinSUM / Companion',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: LiquidGlass.onSurface,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Search synthetic food and medication catalogs',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: LiquidGlass.onSurfaceMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        color:
+                            theme.colorScheme.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color:
+                              theme.colorScheme.primary.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              showingFoods
+                                  ? Icons.restaurant_menu_rounded
+                                  : Icons.medication_rounded,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '$visibleCount',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Local-first educational prototype for deterministic food-medication interaction review.',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: LiquidGlass.onSurfaceMuted,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _CatalogShowcaseChip(
+                      label: 'flutter',
+                      color: Color(0xFF0EA5E9),
+                    ),
+                    _CatalogShowcaseChip(
+                      label: 'food-medication',
+                      color: Color(0xFF14B8A6),
+                    ),
+                    _CatalogShowcaseChip(
+                      label: 'local-first',
+                      color: Color(0xFF2563EB),
+                    ),
+                    _CatalogShowcaseChip(
+                      label: 'synthetic-data',
+                      color: Color(0xFF64748B),
+                    ),
+                    _CatalogShowcaseChip(
+                      label: 'evidence-linked',
+                      color: Color(0xFF0891B2),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.update_rounded,
+                      size: 18,
+                      color: LiquidGlass.onSurfaceMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '$visibleLabel: $visibleCount',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: LiquidGlass.onSurfaceMuted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF14B8A6),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Dart',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: LiquidGlass.onSurfaceMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CatalogShowcaseChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _CatalogShowcaseChip({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }

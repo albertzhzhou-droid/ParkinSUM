@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="ParkinSUM Companion Wiki: an animated, liquid-glass style guide to the educational prototype, architecture, safety boundary, and demo paths."
+    />
+    <title>ParkinSUM Wiki | Liquid Glass Showcase</title>
+    <link rel="icon" href="../assets/brand/parkinsum-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    <header class="topbar">
+      <a class="brand-lockup" href="#overview" aria-label="ParkinSUM Wiki home">
+        <img src="../assets/brand/parkinsum-icon.png" alt="" />
+        <span>ParkinSUM Wiki</span>
+      </a>
+      <nav aria-label="Wiki sections">
+        <a href="#overview">Overview</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#demo">Demo</a>
+        <a href="#safety">Safety</a>
+        <a href="#contribute">Contribute</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="overview">
+        <div class="hero-copy">
+          <p class="eyebrow">Animated public wiki</p>
+          <h1>Explore the ParkinSUM Companion prototype.</h1>
+          <p>
+            A visual guide to the local-first Flutter app, deterministic
+            food-medication interaction checks, evidence traceability layer, and
+            the boundaries that keep public demos synthetic and educational.
+          </p>
+          <div class="actions" aria-label="Primary wiki actions">
+            <a class="button primary" href="https://github.com/albertzhzhou-droid/ParkinSUM#readme">Read README</a>
+            <a class="button" href="../site/">Open landing page</a>
+            <a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md">
+              Verify locally
+            </a>
+          </div>
+        </div>
+        <div class="hero-orbit" aria-label="ParkinSUM feature map">
+          <img src="../assets/brand/parkinsum-wordmark.png" alt="ParkinSUM" />
+          <div class="orbit-ring ring-a"></div>
+          <div class="orbit-ring ring-b"></div>
+          <div class="orbit-node meal">Meal context</div>
+          <div class="orbit-node medication">Medication context</div>
+          <div class="orbit-node evidence">Evidence trace</div>
+          <div class="orbit-node boundary">Safety boundary</div>
+        </div>
+      </section>
+
+      <section class="glass-panel summary">
+        <article>
+          <span class="metric">Local-first</span>
+          <p>Default public path keeps demo data on device-local storage.</p>
+        </article>
+        <article>
+          <span class="metric">Deterministic</span>
+          <p>Rule checks are inspectable and replayable, not black-box advice.</p>
+        </article>
+        <article>
+          <span class="metric">Synthetic only</span>
+          <p>Public screenshots, examples, and walkthroughs avoid real PHI.</p>
+        </article>
+      </section>
+
+      <section class="section" id="architecture">
+        <div class="section-heading">
+          <p class="eyebrow">Architecture map</p>
+          <h2>Readable layers from UI to educational output.</h2>
+        </div>
+        <div class="flow-grid">
+          <article class="flow-card">
+            <span>01</span>
+            <h3>Flutter UI</h3>
+            <p>Liquid Glass screens for dashboard, search, meals, and timeline.</p>
+          </article>
+          <article class="flow-card">
+            <span>02</span>
+            <h3>App state</h3>
+            <p>Provider-backed state coordinates catalog, meals, intakes, and copy.</p>
+          </article>
+          <article class="flow-card">
+            <span>03</span>
+            <h3>Local data</h3>
+            <p>Seeded catalogs and SharedPreferences or local database adapters.</p>
+          </article>
+          <article class="flow-card">
+            <span>04</span>
+            <h3>Rule engine</h3>
+            <p>Deterministic checks, mechanistic replay, and source-aware scoring.</p>
+          </article>
+          <article class="flow-card">
+            <span>05</span>
+            <h3>Evidence copy</h3>
+            <p>Explanations carry limitations, provenance, and not-advice language.</p>
+          </article>
+          <article class="flow-card">
+            <span>06</span>
+            <h3>Review output</h3>
+            <p>Educational summaries, trace bundles, and public verification docs.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section split" id="demo">
+        <div class="glass-panel demo-card">
+          <p class="eyebrow">Demo path</p>
+          <h2>What a reviewer should open first.</h2>
+          <ol class="timeline">
+            <li>
+              <strong>Run the Flutter app locally.</strong>
+              <span>Use synthetic/demo data only.</span>
+            </li>
+            <li>
+              <strong>Open the search catalog.</strong>
+              <span>Review food and medication metadata surfaces.</span>
+            </li>
+            <li>
+              <strong>Enter a synthetic meal.</strong>
+              <span>Trigger deterministic educational checks.</span>
+            </li>
+            <li>
+              <strong>Expand trace explanations.</strong>
+              <span>Inspect evidence-linked limitations and assumptions.</span>
+            </li>
+          </ol>
+        </div>
+        <div class="glass-panel media-card">
+          <img src="../assets/brand/parkinsum-wordmark.png" alt="ParkinSUM" />
+          <div>
+            <h3>Media status</h3>
+            <p>
+              Screenshots and GIFs must follow the public media checklist. Do not
+              add real account details, medication schedules, UIDs, credentials,
+              logs, or machine paths.
+            </p>
+            <a href="../media-capture-checklist.md">Open media checklist</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section safety" id="safety">
+        <div class="section-heading">
+          <p class="eyebrow">Safety boundary</p>
+          <h2>The wiki keeps the same claims as the app.</h2>
+        </div>
+        <div class="boundary-grid">
+          <article>
+            <h3>Allowed public framing</h3>
+            <p>Educational prototype, architecture review, synthetic-data demo.</p>
+          </article>
+          <article>
+            <h3>Disallowed framing</h3>
+            <p>No diagnosis, treatment, medication timing, diet advice, or care use.</p>
+          </article>
+          <article>
+            <h3>Validation wording</h3>
+            <p>No clinical validation or patient-outcome claims.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="contribute">
+        <div class="section-heading">
+          <p class="eyebrow">Contribution route</p>
+          <h2>Good changes improve clarity without weakening boundaries.</h2>
+        </div>
+        <div class="link-grid">
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/CONTRIBUTING.md">Contribution guide</a>
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/contribution-backlog.md">Public backlog</a>
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/RULE_ENGINE.md">Rule engine overview</a>
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md">
+            Evidence demo guide
+          </a>
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/DISCLAIMER.md">Safety disclaimer</a>
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/SECURITY.md">Security policy</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        ParkinSUM Companion is a production-architecture prototype for
+        educational demonstrations. Synthetic/demo data only.
+      </p>
+      <a href="https://github.com/albertzhzhou-droid/ParkinSUM">
+        GitHub repository
+      </a>
+    </footer>
+  </body>
+</html>
