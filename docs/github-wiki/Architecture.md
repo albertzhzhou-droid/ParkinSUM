@@ -37,3 +37,4 @@ Flutter UI
 - Conflict engine model: https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CONFLICT_ENGINE_MODEL.md
 - Importer metadata flow: https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/IMPORTER_METADATA_FLOW.md
 - Evidence trace bundle: https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/EVIDENCE_TRACE_BUNDLE.md
+

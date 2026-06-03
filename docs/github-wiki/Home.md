@@ -68,3 +68,4 @@ It is not appropriate for:
 - Medication timing, dose, diet, or clinical decision-making guidance.
 - Real patient records, real medication schedules, or public PHI demos.
 - Claims of clinical validation, medical-device approval, or patient-outcome evidence.
+
