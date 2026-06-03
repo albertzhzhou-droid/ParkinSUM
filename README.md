@@ -6,7 +6,17 @@
 
 [![CI](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml)
 
-ParkinSUM Companion is a local-first Flutter prototype for Parkinson's disease diet-medication education, combining meal logging, medication context, deterministic food-drug interaction rules, and evidence-oriented explanations without sending sensitive data to the cloud.
+A provenance-first Parkinson medication-food interaction prototype for explainable CDSS architecture, Firebase governance, and synthetic-data demos.
+
+**Educational architecture prototype only. Not medical advice or a clinical decision tool.**
+
+![Flutter](https://img.shields.io/badge/Flutter-Prototype-blue)
+![Firebase](https://img.shields.io/badge/Firebase-Governance-orange)
+![Educational Prototype](https://img.shields.io/badge/Scope-Educational%20Prototype-lightgrey)
+![Synthetic Data Only](https://img.shields.io/badge/Data-Synthetic%20Only-green)
+![Public Showcase](https://img.shields.io/badge/Mode-Public%20Showcase-purple)
+
+ParkinSUM Companion is a local-first Flutter prototype that demonstrates how a health-adjacent app can combine synthetic meal logging, medication context, deterministic rule checks, evidence-oriented explanations, and release safety guardrails without making clinical claims.
 
 It is a production-architecture prototype designed for educational demonstrations, software architecture review, and academic discussion of local-first digital health prototypes. It is not a medical device and must not be used for diagnosis, treatment, medication timing, dietary guidance, clinical decision-making, patient care, or emergency support.
 
@@ -224,6 +234,20 @@ Capture requirements are tracked in [docs/media-capture-checklist.md](docs/media
 
 ## Quick Start
 
+## High-Impact Contribution Request
+
+The current priority is [Issue #8](https://github.com/albertzhzhou-droid/ParkinSUM/issues/8): mapping one educational rule explanation to explicit evidence fields.
+
+The most valuable contribution right now is not adding new medical rules. Instead, contributors should help make existing rule explanations more traceable and reviewable by improving:
+
+- source references
+- provenance clarity
+- limitation text
+- safety-boundary wording
+- negative tests that prevent unsupported clinical claims
+
+See [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for the contributor-facing rule explanation template and worked example.
+
 Install Flutter, Node.js, and npm first. Then run these commands from the repository root:
 
 ```sh
@@ -359,18 +383,22 @@ If you discuss the project academically, include the safety boundary: educationa
 
 ## Documentation
 
+### Start here
 - [Documentation index](docs/README.md)
-- [Evidence & traceability demo guide](docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md)
-- [Capability matrix](docs/CAPABILITY_MATRIX.md)
 - [Public verification guide](docs/PUBLIC_VERIFICATION.md)
-- [Evidence trace bundle](docs/EVIDENCE_TRACE_BUNDLE.md)
-- [Source-quality perturbation report](docs/SOURCE_QUALITY_PERTURBATION_REPORT.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Rule engine overview](docs/RULE_ENGINE.md)
+- [Project website](docs/site/index.html)
+- [Animated showcase wiki](docs/wiki/index.html)
+- [GitHub Wiki source pages](docs/github-wiki/Home.md)
+
+### Architecture
+- [Architecture overview](docs/ARCHITECTURE.md)
 - [Conflict engine model](docs/CONFLICT_ENGINE_MODEL.md)
 - [Importer & metadata flow](docs/IMPORTER_METADATA_FLOW.md)
-- [Replay runner](docs/REPLAY_RUNNER.md)
-- [Biomedical standards conformance scorecard](docs/BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md)
-- [Source access & licenses](docs/SOURCE_ACCESS_AND_LICENSES.md)
-- [Manual validation](docs/MANUAL_VALIDATION.md)
+- [Evidence trace bundle](docs/EVIDENCE_TRACE_BUNDLE.md)
+
+### Safety and release
 - [Disclaimer](DISCLAIMER.md)
 - [Security policy](SECURITY.md)
 - [Roadmap](ROADMAP.md)
@@ -398,12 +426,13 @@ If you discuss the project academically, include the safety boundary: educationa
 - [GitHub Pages setup](docs/site/README.md)
 - [Public showcase readiness](PUBLIC_SHOWCASE_READINESS.md)
 - [Public demo boundary](docs/PUBLIC_DEMO_BOUNDARY.md)
-- [Architecture overview](docs/ARCHITECTURE.md)
-- [Rule engine overview](docs/RULE_ENGINE.md)
-- [Media capture checklist](docs/media-capture-checklist.md)
-- [Release evidence index](docs/RELEASE_EVIDENCE_INDEX.md)
+- [Release checklist](docs/release/release-checklist.md)
 - [Known risks](docs/known_risks.md)
 
+### Demo and impact
+- [Synthetic demo scenarios](docs/demo-scenarios.md)
+- [Media capture checklist](docs/media-capture-checklist.md)
+- [Impact one-page summary](docs/impact/one-page-summary.md)
 ## Contributing
 
 Contributions are welcome when they keep the public prototype boundary intact. Good first areas include documentation, UI strings, accessibility notes, synthetic sample interactions, and focused tests. Start with [CONTRIBUTING.md](CONTRIBUTING.md).

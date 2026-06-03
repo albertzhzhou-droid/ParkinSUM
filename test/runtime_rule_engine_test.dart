@@ -501,6 +501,79 @@ void main() {
     expect(sameDecisionSorted.first.rule.sourceAuthority,
         greaterThan(sameDecisionSorted.last.rule.sourceAuthority));
   });
+
+  // added test
+  // 验证 levodopa + protein 这个 rule 触发后，返回的 explanation 不是单纯一句提示，不是真实医疗建议，
+  //而是包含清楚的 source、input trace、limitation 和 safety boundary 的教育性解释。
+  test('levodopa protein rule explanation includes evidence boundary fields',
+      () {
+    final context = buildContext(
+      drug: const DrugRuntimeContext(
+        id: 'drug_1',
+        genericName: 'carbidopa/levodopa',
+        brandName: 'Sinemet',
+        activeIngredients: ['carbidopa', 'levodopa'],
+        substanceTags: ['levodopa'],
+        formulation: 'tablet',
+        dosageForm: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        dailyDoseMg: 300,
+        jurisdiction: 'US',
+      ),
+      meal: const MealRuntimeContext(
+        id: 'meal_1',
+        totalProteinG: 25,
+        tyramineMgEstimate: 1,
+        highFatHighCalorie: false,
+        itemIds: ['food_1'],
+      ),
+      timestamps: TimestampRuntimeContext(
+        drugTime: DateTime.parse('2026-01-01T08:00:00Z'),
+        mealTime: DateTime.parse('2026-01-01T09:00:00Z'),
+        coeventTime: null,
+      ),
+    );
+
+    final matches = engine.evaluateCandidates(context: context, rules: rules);
+    final match = matches.firstWhere(
+      (match) => match.rule.ruleId == 'pd.ldopa.protein.window.v1',
+    );
+
+    final sourceRefs = List<String>.from(match.evidence['source_refs'] as List);
+    final inputFieldsUsed =
+        List<String>.from(match.evidence['input_fields_used'] as List);
+
+    expect(sourceRefs, isNotEmpty);
+    expect(inputFieldsUsed, isNotEmpty);
+
+    final evidenceBoundaryText = [
+      match.explanation,
+      match.evidence['limitation_text'],
+      match.evidence['safety_boundary'],
+      match.evidence['not_advice_text'],
+    ].whereType<String>().join(' ').toLowerCase();
+
+    expect(evidenceBoundaryText, contains('educational'));
+    expect(evidenceBoundaryText, contains('not medical advice'));
+    expect(evidenceBoundaryText, contains('clinical decision tool'));
+    expect(evidenceBoundaryText,
+        contains('consult a qualified healthcare professional'));
+
+    const bannedPhrases = [
+      'take your medication',
+      'change your dose',
+      'avoid protein',
+      'recommended timing',
+      'clinically validated',
+      'diagnose',
+      'treat this condition',
+    ];
+
+    for (final phrase in bannedPhrases) {
+      expect(evidenceBoundaryText, isNot(contains(phrase)));
+    }
+  });
 }
 
 Map<String, dynamic> _testRuleJson({
