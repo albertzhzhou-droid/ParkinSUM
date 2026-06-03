@@ -1,5 +1,9 @@
 # ParkinSUM Companion
 
+<p align="center">
+  <img src="assets/brand/parkinsum-wordmark.png" alt="ParkinSUM food medication interaction logo" width="720">
+</p>
+
 [![CI](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml)
 
 ParkinSUM Companion is a local-first Flutter prototype for Parkinson's disease diet-medication education, combining meal logging, medication context, deterministic food-drug interaction rules, and evidence-oriented explanations without sending sensitive data to the cloud.
@@ -263,6 +267,8 @@ Any Android APK generated for this alpha must be labeled as an alpha/demo/debug 
 
 A lightweight GitHub Pages landing page is available in [docs/site/index.html](docs/site/index.html). Setup instructions are in [docs/site/README.md](docs/site/README.md).
 
+An animated Liquid Glass-style showcase wiki is available in [docs/wiki/index.html](docs/wiki/index.html). GitHub Wiki-compatible Markdown pages are staged in [docs/github-wiki/](docs/github-wiki/) so they can be published to the repository Wiki interface.
+
 ## Contribute
 
 Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. A small real contributor PR request is drafted in [docs/mentor-pr-request.md](docs/mentor-pr-request.md) for classmates or mentors who want to test the project without making medical claims. Public examples must use synthetic or sample data only.
@@ -387,6 +393,8 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Synthetic demo scenarios](docs/demo-scenarios.md)
 - [Release checklist](docs/release/release-checklist.md)
 - [Project website](docs/site/index.html)
+- [Animated showcase wiki](docs/wiki/index.html)
+- [GitHub Wiki source pages](docs/github-wiki/Home.md)
 - [GitHub Pages setup](docs/site/README.md)
 - [Public showcase readiness](PUBLIC_SHOWCASE_READINESS.md)
 - [Public demo boundary](docs/PUBLIC_DEMO_BOUNDARY.md)
