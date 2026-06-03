@@ -1,0 +1,38 @@
+{
+  "name": "@albertzhzhou-droid/parkinsum-companion",
+  "version": "0.2.0-beta",
+  "description": "Release-metadata package for the ParkinSUM Companion educational prototype showcase. Not a clinical product; synthetic/demo data only; no medical advice.",
+  "keywords": [
+    "parkinsum",
+    "educational",
+    "prototype",
+    "showcase",
+    "release-metadata"
+  ],
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "author": "albertzhzhou-droid",
+  "homepage": "https://github.com/albertzhzhou-droid/ParkinSUM#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/albertzhzhou-droid/ParkinSUM.git",
+    "directory": "packages/npm"
+  },
+  "bugs": {
+    "url": "https://github.com/albertzhzhou-droid/ParkinSUM/issues"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "manifest.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com",
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
