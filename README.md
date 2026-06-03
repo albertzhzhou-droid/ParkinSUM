@@ -281,11 +281,13 @@ command checks, its expected output, and what failure means.
 
 The default public-demo path is local mode. Firebase-backed commands are retained for internal operator validation and require project access.
 
-## Alpha Release
+## Release
 
-The current public showcase target is `v0.1.0-alpha`. Release materials are tracked in [CHANGELOG.md](CHANGELOG.md), [docs/release/v0.1.0-alpha-notes.md](docs/release/v0.1.0-alpha-notes.md), [docs/release/synthetic-demo-data.md](docs/release/synthetic-demo-data.md), and [docs/release/release-checklist.md](docs/release/release-checklist.md).
+The current public showcase target is `v0.2.0-beta`. Release materials are tracked in [CHANGELOG.md](CHANGELOG.md), [docs/release/v0.2.0-beta-notes.md](docs/release/v0.2.0-beta-notes.md), [docs/release/synthetic-demo-data.md](docs/release/synthetic-demo-data.md), and [docs/release/release-checklist.md](docs/release/release-checklist.md). The earlier alpha materials remain at [docs/release/v0.1.0-alpha-notes.md](docs/release/v0.1.0-alpha-notes.md).
 
-Any Android APK generated for this alpha must be labeled as an alpha/demo/debug artifact unless production signing is handled in a separate release process.
+A scoped release-metadata package is published to GitHub Packages (npm registry) as `@albertzhzhou-droid/parkinsum-companion` on each tagged release; see [packages/npm/README.md](packages/npm/README.md).
+
+Any Android APK generated for this beta must be labeled as a beta/demo/debug artifact unless production signing is handled in a separate release process.
 
 ## Project Website
 
@@ -349,9 +351,9 @@ Read [DISCLAIMER.md](DISCLAIMER.md) and [docs/PUBLIC_DEMO_BOUNDARY.md](docs/PUBL
 ## Current Status
 
 - Public release type: prototype showcase.
-- Current public release target: `v0.1.0-alpha`.
+- Current public release target: `v0.2.0-beta`.
 - Package name: `parkinsum_companion`.
-- Current app version: `0.1.0+1`.
+- Current app version: `0.2.0+2`.
 - Default public-demo backend: local mode.
 - Firebase backend mode: internal operator validation only.
 - Public contact: `parkinsumservice@gmail.com`.
@@ -416,6 +418,7 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Impact project pitch](docs/impact/project-pitch.md)
 - [Impact FAQ](docs/impact/faq.md)
 - [Impact safety and ethics](docs/impact/safety-and-ethics.md)
+- [v0.2.0-beta release notes](docs/release/v0.2.0-beta-notes.md)
 - [v0.1.0-alpha release notes](docs/release/v0.1.0-alpha-notes.md)
 - [Synthetic demo data](docs/release/synthetic-demo-data.md)
 - [Synthetic demo scenarios](docs/demo-scenarios.md)

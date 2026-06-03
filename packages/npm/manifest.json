@@ -1,0 +1,19 @@
+{
+  "name": "@albertzhzhou-droid/parkinsum-companion",
+  "release": "v0.2.0-beta",
+  "appPackage": "parkinsum_companion",
+  "appVersion": "0.2.0+2",
+  "releaseType": "public-beta-showcase",
+  "prerelease": true,
+  "repository": "https://github.com/albertzhzhou-droid/ParkinSUM",
+  "releaseNotes": "docs/release/v0.2.0-beta-notes.md",
+  "changelog": "CHANGELOG.md",
+  "capabilityMatrix": "docs/CAPABILITY_MATRIX.md",
+  "safetyBoundary": {
+    "isMedicalDevice": false,
+    "isClinicallyValidated": false,
+    "providesMedicalAdvice": false,
+    "dataPolicy": "synthetic-or-sample-only",
+    "summary": "Educational/research prototype. Not a clinical product. Must not be used for diagnosis, treatment, medication timing, dietary decisions, patient care, or emergency support."
+  }
+}
