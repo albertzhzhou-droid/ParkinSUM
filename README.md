@@ -220,7 +220,7 @@ validation, and the source-quality report is **not** a clinical dashboard.
 
 ## Demo Media
 
-The screenshots and GIF below use synthetic local demo data only. Real account identifiers are redacted or replaced with a synthetic demo address. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
+The screenshots below use synthetic local demo data only. Real account identifiers are redacted or replaced with a synthetic demo address. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
 
 | Feature shown | Demo screenshot | What it demonstrates |
 | --- | --- | --- |
@@ -233,8 +233,6 @@ The screenshots and GIF below use synthetic local demo data only. Real account i
 | Search/catalog showcase | ![Catalog page with ParkinSUM branded showcase module and searchable foods](docs/assets/screenshots/catalog-showcase.png) | GitHub-style branded repository module integrated into catalog search. |
 | Conflict explanation | ![Meal check conflict explanation dialog with conservative high-risk educational copy](docs/assets/screenshots/conflict-explanation.png) | Evidence-oriented safety explanation, rule weights, model trace, and non-clinical boundary copy. |
 | Analytics and local AI | ![Analytics screen with localization status and local AI configuration fields](docs/assets/screenshots/analytics-local-ai.png) | Localization status, local AI provider settings, model names, endpoints, and conservative recommendation path. |
-
-![Short synthetic ParkinSUM demo flow showing dashboard, meal entry, and conflict explanation](docs/assets/demo/parkinsum-demo.gif)
 
 Capture requirements are tracked in [docs/media-capture-checklist.md](docs/media-capture-checklist.md), with asset-folder notes in [docs/assets/screenshots/README.md](docs/assets/screenshots/README.md) and [docs/assets/demo/README.md](docs/assets/demo/README.md).
 
