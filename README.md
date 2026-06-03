@@ -1,5 +1,9 @@
 # ParkinSUM Companion
 
+<p align="center">
+  <img src="assets/brand/parkinsum-wordmark.png" alt="ParkinSUM food medication interaction logo" width="720">
+</p>
+
 [![CI](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml)
 
 A provenance-first Parkinson medication-food interaction prototype for explainable CDSS architecture, Firebase governance, and synthetic-data demos.
@@ -13,8 +17,6 @@ A provenance-first Parkinson medication-food interaction prototype for explainab
 ![Public Showcase](https://img.shields.io/badge/Mode-Public%20Showcase-purple)
 
 ParkinSUM Companion is a local-first Flutter prototype that demonstrates how a health-adjacent app can combine synthetic meal logging, medication context, deterministic rule checks, evidence-oriented explanations, and release safety guardrails without making clinical claims.
-
-ParkinSUM Companion is a local-first Flutter prototype for Parkinson's disease diet-medication education, combining meal logging, medication context, deterministic food-drug interaction rules, and evidence-oriented explanations without sending sensitive data to the cloud.
 
 It is a production-architecture prototype designed for educational demonstrations, software architecture review, and academic discussion of local-first digital health prototypes. It is not a medical device and must not be used for diagnosis, treatment, medication timing, dietary guidance, clinical decision-making, patient care, or emergency support.
 
@@ -289,6 +291,8 @@ Any Android APK generated for this alpha must be labeled as an alpha/demo/debug 
 
 A lightweight GitHub Pages landing page is available in [docs/site/index.html](docs/site/index.html). Setup instructions are in [docs/site/README.md](docs/site/README.md).
 
+An animated Liquid Glass-style showcase wiki is available in [docs/wiki/index.html](docs/wiki/index.html). GitHub Wiki-compatible Markdown pages are staged in [docs/github-wiki/](docs/github-wiki/) so they can be published to the repository Wiki interface.
+
 ## Contribute
 
 Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. A small real contributor PR request is drafted in [docs/mentor-pr-request.md](docs/mentor-pr-request.md) for classmates or mentors who want to test the project without making medical claims. Public examples must use synthetic or sample data only.
@@ -384,6 +388,9 @@ If you discuss the project academically, include the safety boundary: educationa
 - [Public verification guide](docs/PUBLIC_VERIFICATION.md)
 - [Contribution guide](CONTRIBUTING.md)
 - [Rule engine overview](docs/RULE_ENGINE.md)
+- [Project website](docs/site/index.html)
+- [Animated showcase wiki](docs/wiki/index.html)
+- [GitHub Wiki source pages](docs/github-wiki/Home.md)
 
 ### Architecture
 - [Architecture overview](docs/ARCHITECTURE.md)
