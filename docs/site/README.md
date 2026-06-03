@@ -34,6 +34,16 @@ will be available at:
 https://albertzhzhou-droid.github.io/ParkinSUM/site/
 ```
 
+The animated Liquid Glass-style showcase wiki will be available at:
+
+```text
+https://albertzhzhou-droid.github.io/ParkinSUM/wiki/
+```
+
+GitHub's repository Wiki interface does not execute custom CSS animations. Use
+the Markdown pages in `docs/github-wiki/` for the GitHub Wiki itself, and link
+from that Wiki to the animated Pages version for the richer visual experience.
+
 If you later want the landing page at the Pages root instead of `/site/`, move
 `docs/site/index.html` and `docs/site/styles.css` to the top level of `docs/`
 after checking that existing documentation links still work.
