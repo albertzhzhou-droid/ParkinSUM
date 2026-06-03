@@ -1,0 +1,47 @@
+# GitHub Sponsors / funding configuration.
+#
+# This enables the "Sponsor" button on the repository. Every entry is left
+# EMPTY on purpose — uncomment the platform(s) you use and fill in your own
+# username / handle / URL, then commit. The button stays inactive until at
+# least one line below has a real value.
+#
+# Docs: https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+
+# GitHub Sponsors — up to 4 usernames/orgs (string or list), e.g. [your-username]
+github:
+
+# Patreon username, e.g. your-username
+patreon:
+
+# Open Collective slug, e.g. your-project
+open_collective:
+
+# Ko-fi username, e.g. your-username
+ko_fi:
+
+# Tidelift entry, e.g. npm/your-package
+tidelift:
+
+# CommunityBridge / LFX project name
+community_bridge:
+
+# Liberapay username
+liberapay:
+
+# IssueHunt username
+issuehunt:
+
+# LFX Crowdfunding project name
+lfx_crowdfunding:
+
+# Polar username
+polar:
+
+# Buy Me a Coffee username
+buy_me_a_coffee:
+
+# thanks.dev username
+thanks_dev:
+
+# Custom URLs — up to 4, e.g. ["https://example.com/donate"]
+custom:
