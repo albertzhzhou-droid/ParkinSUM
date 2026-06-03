@@ -208,6 +208,15 @@ void main() {
       registry,
       bindingsByTemplate: const {
         'mechanistic_explanation_boundary': {'overlap_percent': '42'},
+        'legacy_analysis': {'drugCount': '1', 'score': '42'},
+        'legacy_high_protein_strong_detail': {
+          'protein': '40.0',
+          'drug': 'Sample'
+        },
+        'legacy_high_protein_detail': {'protein': '25.0', 'drug': 'Sample'},
+        'legacy_tyramine_detail': {'drug': 'Sample'},
+        'legacy_summary': {'score': '42', 'severity': 'Moderate', 'count': '2'},
+        'legacy_analysis_protein': {'protein': '25.0'},
       },
       contextByTemplate: {
         for (final t in registry.templates)
@@ -228,6 +237,19 @@ void main() {
           registry,
           bindingsByTemplate: const {
             'mechanistic_explanation_boundary': {'overlap_percent': '42'},
+            'legacy_analysis': {'drugCount': '1', 'score': '42'},
+            'legacy_high_protein_strong_detail': {
+              'protein': '40.0',
+              'drug': 'Sample'
+            },
+            'legacy_high_protein_detail': {'protein': '25.0', 'drug': 'Sample'},
+            'legacy_tyramine_detail': {'drug': 'Sample'},
+            'legacy_summary': {
+              'score': '42',
+              'severity': 'Moderate',
+              'count': '2'
+            },
+            'legacy_analysis_protein': {'protein': '25.0'},
           },
           contextByTemplate: {
             for (final t in registry.templates)
@@ -254,6 +276,15 @@ void main() {
       registry,
       bindingsByTemplate: const {
         'mechanistic_explanation_boundary': {'overlap_percent': '42'},
+        'legacy_analysis': {'drugCount': '1', 'score': '42'},
+        'legacy_high_protein_strong_detail': {
+          'protein': '40.0',
+          'drug': 'Sample'
+        },
+        'legacy_high_protein_detail': {'protein': '25.0', 'drug': 'Sample'},
+        'legacy_tyramine_detail': {'drug': 'Sample'},
+        'legacy_summary': {'score': '42', 'severity': 'Moderate', 'count': '2'},
+        'legacy_analysis_protein': {'protein': '25.0'},
       },
       contextByTemplate: {
         for (final t in registry.templates)

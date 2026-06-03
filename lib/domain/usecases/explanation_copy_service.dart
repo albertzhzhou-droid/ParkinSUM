@@ -60,12 +60,18 @@ class ExplanationCopyService {
     String templateId, {
     required String locale,
     required String fallback,
+    Map<String, String> bindings = const {},
   }) {
     final template = _registry.byId(templateId);
     if (template == null || !template.localizedText.containsKey(locale)) {
       return _validatedFallback(fallback);
     }
-    return resolve(templateId, locale: locale, fallback: fallback);
+    return resolve(
+      templateId,
+      locale: locale,
+      fallback: fallback,
+      bindings: bindings,
+    );
   }
 
   /// Shared not-advice boundary copy (compiler-validated; falls back to the

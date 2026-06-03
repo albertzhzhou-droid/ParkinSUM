@@ -20,6 +20,11 @@ class InteractionEngine {
     String localeTag = 'en-US',
   }) {
     final i18n = AppI18n.fromLocaleTag(localeTag);
+    // Rule-finding/summary copy sourced through the compiler-validated registry;
+    // the localized i18n string is the locale-strict fallback (non-en users keep
+    // their translation). en output is byte-identical to app_i18n.
+    const copy = ExplanationCopyService();
+    final locale = i18n.languageFamily;
     final issues = <InteractionIssue>[];
     var score = 0;
 
@@ -36,14 +41,24 @@ class InteractionEngine {
           issues.add(
             InteractionIssue(
               severity: InteractionSeverity.high,
-              title: i18n.tr('legacy.high_protein_strong'),
-              detail: i18n.tr(
-                'legacy.high_protein_strong_detail',
-                {
+              title: copy.resolveForLocale(
+                'legacy_high_protein_strong',
+                locale: locale,
+                fallback: i18n.tr('legacy.high_protein_strong'),
+              ),
+              detail: () {
+                final bindings = {
                   'protein': totals.totalProteinG.toStringAsFixed(1),
                   'drug': localizedDrugName,
-                },
-              ),
+                };
+                return copy.resolveForLocale(
+                  'legacy_high_protein_strong_detail',
+                  locale: locale,
+                  bindings: bindings,
+                  fallback:
+                      i18n.tr('legacy.high_protein_strong_detail', bindings),
+                );
+              }(),
               relatedDrugId: d.id,
             ),
           );
@@ -53,14 +68,23 @@ class InteractionEngine {
           issues.add(
             InteractionIssue(
               severity: InteractionSeverity.moderate,
-              title: i18n.tr('legacy.high_protein'),
-              detail: i18n.tr(
-                'legacy.high_protein_detail',
-                {
+              title: copy.resolveForLocale(
+                'legacy_high_protein',
+                locale: locale,
+                fallback: i18n.tr('legacy.high_protein'),
+              ),
+              detail: () {
+                final bindings = {
                   'protein': totals.totalProteinG.toStringAsFixed(1),
                   'drug': localizedDrugName,
-                },
-              ),
+                };
+                return copy.resolveForLocale(
+                  'legacy_high_protein_detail',
+                  locale: locale,
+                  bindings: bindings,
+                  fallback: i18n.tr('legacy.high_protein_detail', bindings),
+                );
+              }(),
               relatedDrugId: d.id,
             ),
           );
@@ -76,11 +100,20 @@ class InteractionEngine {
           issues.add(
             InteractionIssue(
               severity: InteractionSeverity.high,
-              title: i18n.tr('legacy.tyramine'),
-              detail: i18n.tr(
-                'legacy.tyramine_detail',
-                {'drug': localizedDrugName},
+              title: copy.resolveForLocale(
+                'legacy_tyramine',
+                locale: locale,
+                fallback: i18n.tr('legacy.tyramine'),
               ),
+              detail: () {
+                final bindings = {'drug': localizedDrugName};
+                return copy.resolveForLocale(
+                  'legacy_tyramine_detail',
+                  locale: locale,
+                  bindings: bindings,
+                  fallback: i18n.tr('legacy.tyramine_detail', bindings),
+                );
+              }(),
               relatedDrugId: d.id,
             ),
           );
@@ -96,8 +129,16 @@ class InteractionEngine {
           issues.add(
             InteractionIssue(
               severity: InteractionSeverity.low,
-              title: i18n.tr('legacy.mineral'),
-              detail: i18n.tr('legacy.mineral_detail'),
+              title: copy.resolveForLocale(
+                'legacy_mineral',
+                locale: locale,
+                fallback: i18n.tr('legacy.mineral'),
+              ),
+              detail: copy.resolveForLocale(
+                'legacy_mineral_detail',
+                locale: locale,
+                fallback: i18n.tr('legacy.mineral_detail'),
+              ),
               relatedDrugId: d.id,
             ),
           );
@@ -111,9 +152,9 @@ class InteractionEngine {
         // Boundary copy sourced through the compiler-validated registry; the
         // localized i18n string is the fallback (locale-strict — non-en users
         // keep their translation).
-        message: const ExplanationCopyService().resolveForLocale(
+        message: copy.resolveForLocale(
           'legacy_no_conflict',
-          locale: i18n.languageFamily,
+          locale: locale,
           fallback: i18n.tr('legacy.no_conflict'),
         ),
         mealId: meal.id,
@@ -131,14 +172,19 @@ class InteractionEngine {
     return InteractionResult(
       mealId: meal.id,
       status: InteractionStatus.warning,
-      summary: i18n.tr(
-        'legacy.summary',
-        {
+      summary: () {
+        final bindings = {
           'score': '$boundedScore',
           'severity': severityLabel,
           'count': '${issues.length}',
-        },
-      ),
+        };
+        return copy.resolveForLocale(
+          'legacy_summary',
+          locale: locale,
+          bindings: bindings,
+          fallback: i18n.tr('legacy.summary', bindings),
+        );
+      }(),
       analysisText: _buildLegacyAnalysisText(
         i18n: i18n,
         meal: meal,
@@ -162,24 +208,44 @@ class InteractionEngine {
     required int score,
     required MealTotals totals,
   }) {
+    // Boundary/result-framing copy sourced through the compiler-validated
+    // registry; the localized i18n string is the locale-strict fallback.
+    const copy = ExplanationCopyService();
+    final locale = i18n.languageFamily;
+    final analysisBindings = {
+      'drugCount': '${drugs.length}',
+      'score': '$score',
+    };
+    final proteinBindings = {
+      'protein': totals.totalProteinG.toStringAsFixed(1),
+    };
     final segments = <String>[
-      i18n.tr(
-        'legacy.analysis',
-        {
-          'drugCount': '${drugs.length}',
-          'score': '$score',
-        },
+      copy.resolveForLocale(
+        'legacy_analysis',
+        locale: locale,
+        bindings: analysisBindings,
+        fallback: i18n.tr('legacy.analysis', analysisBindings),
       ),
-      i18n.tr(
-        'legacy.analysis_protein',
-        {'protein': totals.totalProteinG.toStringAsFixed(1)},
+      copy.resolveForLocale(
+        'legacy_analysis_protein',
+        locale: locale,
+        bindings: proteinBindings,
+        fallback: i18n.tr('legacy.analysis_protein', proteinBindings),
       ),
     ];
 
     if (meal.items.any((it) => it.foodTags.contains('high_tyramine'))) {
-      segments.add(i18n.tr('legacy.analysis_tyramine'));
+      segments.add(copy.resolveForLocale(
+        'legacy_analysis_tyramine',
+        locale: locale,
+        fallback: i18n.tr('legacy.analysis_tyramine'),
+      ));
     }
-    segments.add(i18n.tr('legacy.analysis_followup'));
+    segments.add(copy.resolveForLocale(
+      'legacy_analysis_followup',
+      locale: locale,
+      fallback: i18n.tr('legacy.analysis_followup'),
+    ));
     return segments.join(' ');
   }
 }
