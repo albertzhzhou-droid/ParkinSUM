@@ -117,6 +117,10 @@ void main() {
       fallback: localized,
     );
     expect(text, localized);
+  });
+
+  // 12 — a runtime fallback that itself contains a banned prescriptive phrase is
+  // never surfaced; the service degrades to the canonical safety boundary.
   test('unsafe runtime fallback degrades to canonical safety boundary', () {
     expect(
       service.resolveForLocale(
