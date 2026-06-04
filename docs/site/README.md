@@ -1,7 +1,13 @@
-# ParkinSUM GitHub Pages Site
+# ParkinSUM Demo Website
 
-This folder contains a lightweight static landing page for ParkinSUM Companion.
-It uses plain HTML and CSS only; no build system is required.
+This folder contains a lightweight static demo website for ParkinSUM Companion.
+It is designed to help a reviewer understand the project in about 30 seconds:
+what the app does, what the core flow looks like, how the rule/explanation path
+works, and which demo/release formats are appropriate.
+
+It uses plain HTML and CSS only; no build system is required. The site reuses
+the app logo, wordmark, and redacted real-device screenshots from
+`docs/assets/`.
 
 ## Local Preview
 
@@ -55,6 +61,7 @@ after checking that existing documentation links still work.
   raw operator logs, Firebase tokens, service-account files, or signing keys.
 - Keep all claims conservative: educational prototype, not medical advice, not a
   medical device, and no clinical validation is claimed.
-- Demo media placeholders point to `docs/assets/screenshots/` and
-  `docs/assets/demo/`; add real media only after following
-  `docs/media-capture-checklist.md`.
+- Screenshot media should come from `docs/assets/screenshots/`.
+- Short GIF or video links should be added only after following
+  `docs/media-capture-checklist.md` and verifying that the media renders
+  correctly on GitHub.
