@@ -3,6 +3,9 @@
 Contributions are welcome when they respect the public prototype boundary.
 ParkinSUM is an educational and research prototype, not clinical software.
 
+All contributors must follow the project
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Data Rules
 
 - Use only synthetic or sample data.
