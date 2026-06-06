@@ -42,6 +42,39 @@ class RecommendationReplayCaseReport {
     }
     return lines.join('\n');
   }
+
+  /// Deterministic, no-PHI structured snapshot for replay/drift comparison.
+  /// Excludes any wall-clock timestamp so two runs of the same scenario set
+  /// produce byte-identical JSON.
+  Map<String, dynamic> toJson() => {
+        'case_id': benchmarkCase.caseId,
+        'title': benchmarkCase.title,
+        'focus_tags': benchmarkCase.focusTags,
+        'deterministic_ranking': deterministicRanking,
+        'ai_ranking': aiRanking,
+        'ai_used': aiUsed,
+        'decision_path': decisionPath,
+        'gate_reasons': gateReasons,
+        'ranking_diffs': rankingDiffs,
+        'matched_expected_top_food_ids': matchedExpectedTopFoodIds,
+        'missing_expected_top_food_ids': missingExpectedTopFoodIds,
+        // Safety invariant: the AI path may only reorder the deterministic
+        // candidate set; it must never add or drop a candidate.
+        'ai_preserved_candidate_set': _sortedEquals(
+          deterministicRanking,
+          aiRanking,
+        ),
+      };
+
+  static bool _sortedEquals(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    final sa = [...a]..sort();
+    final sb = [...b]..sort();
+    for (var i = 0; i < sa.length; i++) {
+      if (sa[i] != sb[i]) return false;
+    }
+    return true;
+  }
 }
 
 class RecommendationReplayRunReport {
@@ -62,4 +95,19 @@ class RecommendationReplayRunReport {
         '',
         ...cases.map((item) => item.toMarkdown()),
       ].join('\n\n');
+
+  /// Whether every case preserved the deterministic candidate set under the AI
+  /// path (a coarse, scenario-level Local-AI safety invariant).
+  bool get allPreservedCandidateSet =>
+      cases.every((c) => c.toJson()['ai_preserved_candidate_set'] == true);
+
+  /// Deterministic structured snapshot. `generated_at` is intentionally
+  /// excluded from [cases] so the case array is stable across runs; callers
+  /// that need provenance can read [datasetVersion].
+  Map<String, dynamic> toJson() => {
+        'report_type': 'recommendation_scenario_replay',
+        'dataset_version': datasetVersion,
+        'no_medical_advice': true,
+        'cases': cases.map((c) => c.toJson()).toList(growable: false),
+      };
 }
