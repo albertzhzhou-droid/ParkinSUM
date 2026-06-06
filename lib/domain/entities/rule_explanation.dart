@@ -60,6 +60,27 @@ class RuleExplanation {
 
   final MedicationExplanationOutputType outputType;
 
+  /// Whether the rule actually fired. Defaults to inferring from
+  /// [triggeredConditions] when not explicitly provided, so existing call
+  /// sites keep their behaviour while new ones can be explicit.
+  final bool? _triggered;
+
+  /// Plain-language, non-prescriptive decision/severity label shown to the
+  /// user (e.g. "educational caution", "no modeled interaction"). This is a
+  /// display descriptor, NOT a clinical severity grade.
+  final String userFacingDecision;
+
+  /// Confidence / safety-boundary descriptor for the explanation (e.g.
+  /// "low — educational only"). Documentation-level only; never a clinical
+  /// confidence interval.
+  final String confidenceNote;
+
+  /// Where the user-facing copy comes from: a localization/copy key (e.g.
+  /// `legacy.high_protein_detail`) or a generated-copy source marker (e.g.
+  /// `local_ai_polish:gemma`). Lets audits tie displayed wording back to its
+  /// origin. Empty when not applicable.
+  final String copySource;
+
   const RuleExplanation({
     required this.ruleId,
     required this.triggeredConditions,
@@ -72,7 +93,15 @@ class RuleExplanation {
     required this.safetyBoundary,
     required this.notAdviceText,
     required this.outputType,
-  });
+    bool? triggered,
+    this.userFacingDecision = '',
+    this.confidenceNote = '',
+    this.copySource = '',
+  }) : _triggered = triggered;
+
+  /// True when the rule fired. Falls back to "any triggered condition present"
+  /// when [triggered] was not supplied at construction.
+  bool get triggered => _triggered ?? triggeredConditions.isNotEmpty;
 
   /// Default not-advice and safety-boundary copy. Centralized so tests can
   /// detect drift if the boundary language is weakened.
@@ -107,12 +136,17 @@ class RuleExplanation {
       safetyBoundary: defaultSafetyBoundary,
       notAdviceText: defaultNotAdvice,
       outputType: MedicationExplanationOutputType.invalidContext,
+      triggered: false,
+      userFacingDecision: 'no rule fired (invalid medication context)',
+      confidenceNote: 'insufficient — educational traceability only',
     );
   }
 
   Map<String, dynamic> toJson() => {
         'rule_id': ruleId,
+        'triggered': triggered,
         'triggered_conditions': triggeredConditions,
+        'user_facing_decision': userFacingDecision,
         'input_fields_used': inputFieldsUsed,
         'source_refs': sourceRefs,
         'provenance_summary': provenanceSummary,
@@ -120,7 +154,9 @@ class RuleExplanation {
         'limitation_text': limitationText,
         'missing_or_uncertain_inputs': missingOrUncertainInputs,
         'safety_boundary': safetyBoundary,
+        'confidence_note': confidenceNote,
         'not_advice_text': notAdviceText,
+        'copy_source': copySource,
         'output_type': outputType.name,
       };
 }
