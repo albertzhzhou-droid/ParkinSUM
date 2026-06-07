@@ -61,7 +61,7 @@ class RecommendationReplayRunner {
     final hybrid = await hybridOrchestrator.recommend(
       request: request.copyWith(
         mode: RecommendationMode.hybridLocalLlm,
-        userConsentedToAi: benchmarkCase.expectAiGateOpen,
+        userConsentedToAi: benchmarkCase.userConsentedToAi,
       ),
       candidateFoods: candidates,
     );
@@ -164,14 +164,14 @@ class RecommendationReplayRunner {
         registrationRegion: benchmarkCase.registrationRegion,
         displayLocale: benchmarkCase.displayLocale,
         dietProfileRegion: benchmarkCase.dietProfileRegion,
-        localAiConsentEnabled: benchmarkCase.expectAiGateOpen,
+        localAiConsentEnabled: benchmarkCase.userConsentedToAi,
       ),
       history: [meal],
       activeDrugs: drugs,
       intakes: intakes,
       now: now,
       mode: RecommendationMode.hybridLocalLlm,
-      userConsentedToAi: benchmarkCase.expectAiGateOpen,
+      userConsentedToAi: benchmarkCase.userConsentedToAi,
     );
   }
 

@@ -41,13 +41,14 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
       ],
       expectedTopFoodIds: <String>['food_banana', 'food_apple'],
       expectedRiskTags: <String>[],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
           'No next-meal window and no parsable dose: a gate reason must fire and '
           'Local AI must not rerank.',
     ),
-    // 2 — Low-risk next-meal: no drugs, low-protein fruit, clear window. The
-    // gate is open, so Local AI may reorder the safe whitelist.
+    // 2 — Low-risk next-meal: no drugs, low-protein fruit, clear window. User
+    // consent is enabled and the safety checks permit Local AI to reorder the
+    // safe whitelist.
     RecommendationBenchmarkCase(
       caseId: 'replay_low_risk_next_meal',
       title: 'Low-risk next meal allows safe Local AI reranking',
@@ -61,10 +62,10 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
       intakeSpecs: <RecommendationBenchmarkIntakeSpec>[],
       expectedTopFoodIds: <String>['food_banana', 'food_apple'],
       expectedRiskTags: <String>[],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
-          'No medications and a clear window: the safety gate is open and Local '
-          'AI may only reorder the deterministic whitelist.',
+          'No medications and a clear window: with consent enabled, the safety '
+          'checks permit Local AI to reorder only the deterministic whitelist.',
     ),
     // 3 — Source fallback / partial provenance: a CN diet profile over US seed
     // foods exercises jurisdiction fallback + capped synthetic provenance. AI
@@ -82,7 +83,7 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
       intakeSpecs: <RecommendationBenchmarkIntakeSpec>[],
       expectedTopFoodIds: <String>['food_banana'],
       expectedRiskTags: <String>[],
-      expectAiGateOpen: false,
+      userConsentedToAi: false,
       notes:
           'US-seed foods under a CN diet profile rely on jurisdiction fallback '
           'with capped synthetic provenance; AI disabled for this case.',
@@ -113,14 +114,14 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
       ],
       expectedTopFoodIds: <String>['food_banana'],
       expectedRiskTags: <String>[],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
           'A legacy-migrated meal time is too low-quality to rerank against; the '
           'conservative ranking is kept and Local AI cannot rerank.',
     ),
     // 5 — Medication catalog selection context: an active levodopa selection
-    // with low-protein candidates. The gate is open (no penalty), so the
-    // medication context flows into a safe AI-assisted path.
+    // with low-protein candidates. Consent is enabled and deterministic safety
+    // checks permit the medication context to flow into a safe AI-assisted path.
     RecommendationBenchmarkCase(
       caseId: 'replay_medication_catalog_selection_context',
       title: 'Medication catalog selection flows into a safe AI path',
@@ -142,10 +143,10 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
       ],
       expectedTopFoodIds: <String>['food_banana', 'food_apple'],
       expectedRiskTags: <String>[],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
-          'A levodopa catalog selection with low-protein candidates keeps the '
-          'gate open; the medication context flows into the safe AI path.',
+          'A levodopa catalog selection with low-protein candidates and consent '
+          'enabled can flow into the safe AI path.',
     ),
   ],
 );

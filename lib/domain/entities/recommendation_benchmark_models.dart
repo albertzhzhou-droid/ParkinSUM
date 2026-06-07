@@ -25,7 +25,12 @@ class RecommendationBenchmarkCase {
   final List<RecommendationBenchmarkIntakeSpec> intakeSpecs;
   final List<String> expectedTopFoodIds;
   final List<String> expectedRiskTags;
-  final bool expectAiGateOpen;
+
+  /// Whether the synthetic user profile grants Local AI consent for this
+  /// replay case. This is not the same as the final safety gate outcome; the
+  /// orchestrator may still block Local AI when deterministic inputs are
+  /// incomplete or unsafe to rerank.
+  final bool userConsentedToAi;
   final String notes;
 
   const RecommendationBenchmarkCase({
@@ -47,7 +52,7 @@ class RecommendationBenchmarkCase {
     this.intakeSpecs = const <RecommendationBenchmarkIntakeSpec>[],
     required this.expectedTopFoodIds,
     required this.expectedRiskTags,
-    required this.expectAiGateOpen,
+    required this.userConsentedToAi,
     required this.notes,
   });
 }
@@ -110,7 +115,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       nextMealWindowEndMinutesAfterMeal: 390,
       expectedTopFoodIds: <String>['food_banana', 'food_apple'],
       expectedRiskTags: <String>['levodopa_sensitive'],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
           'High-protein tofu/oats should not outrank lower-protein fruit near a sensitive levodopa window.',
     ),
@@ -144,7 +149,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       nextMealWindowEndMinutesAfterMeal: 360,
       expectedTopFoodIds: <String>['food_banana'],
       expectedRiskTags: <String>['timing_window_unclear'],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
           'The benchmark checks that rerank stays within conservative ordering instead of making aggressive changes under interaction pressure.',
     ),
@@ -165,7 +170,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       nextMealWindowEndMinutesAfterMeal: 300,
       expectedTopFoodIds: <String>['food_tofu', 'food_banana'],
       expectedRiskTags: <String>[],
-      expectAiGateOpen: true,
+      userConsentedToAi: true,
       notes:
           'Until a full CN authoritative nutrient export is integrated, tofu/banana stay useful replay candidates for China-facing food ranking.',
     ),
@@ -185,7 +190,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       activeDrugIds: <String>['drug_levodopa_carbidopa'],
       expectedTopFoodIds: <String>['food_banana', 'food_apple'],
       expectedRiskTags: <String>['missing_next_meal_window'],
-      expectAiGateOpen: false,
+      userConsentedToAi: false,
       notes:
           'If the timing window is missing, AI should stay gated off and deterministic ranking should be used directly.',
     ),
