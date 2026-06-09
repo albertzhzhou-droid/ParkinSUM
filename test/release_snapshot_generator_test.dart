@@ -82,6 +82,15 @@ void main() {
     expect(json['complete'], isTrue);
   });
 
+  test('reviewer-facing Markdown uses real-care calibration wording', () {
+    final md = gen.build(fullInputs()).toMarkdown();
+    expect(md, contains('not calibrated for real care'));
+    expect(md.toLowerCase(), isNot(contains('not clinically calibrated')));
+    // The machine-readable compatibility key remains in JSON.
+    expect(
+        gen.build(fullInputs()).toJson()['not_clinically_calibrated'], isTrue);
+  });
+
   test('missing artifacts produce missing_artifact, not fabricated success',
       () {
     const empty = ReleaseSnapshotInputs();

@@ -1,7 +1,8 @@
 /// P12 — ReleaseSnapshotGenerator.
 ///
 /// Educational/research prototype only. Synthetic/demo data only. Not medical
-/// advice, not clinically calibrated, and carries no clinical-validation claim.
+/// advice, not calibrated for real care, and carries no clinical-validation
+/// claim.
 ///
 /// Composes **existing** verification artifacts into one reproducible release
 /// evidence snapshot. It is a **pure** transform: it parses already-produced
@@ -111,7 +112,7 @@ class ReleaseSnapshot {
 
   static const List<String> knownLimitations = [
     'Deterministic synthetic-data regression + governance evidence only.',
-    'Not clinical validation; the model is not clinically calibrated.',
+    'Not clinical validation; the model is not calibrated for real care.',
     'Importer adapters are fixture-validated, not live production ingestion.',
     'Counts are composed from existing artifacts; missing inputs are recorded '
         'as missing_artifact, never fabricated.',
@@ -146,7 +147,7 @@ class ReleaseSnapshot {
       ..writeln('# ParkinSUM Release Snapshot')
       ..writeln()
       ..writeln('Educational/research prototype. Synthetic/demo data only. '
-          '**Not medical advice, not clinically calibrated, and carries no '
+          '**Not medical advice, not calibrated for real care, and carries no '
           'clinical-validation claim.**')
       ..writeln()
       ..writeln('Composed from existing verification artifacts. Missing inputs '
