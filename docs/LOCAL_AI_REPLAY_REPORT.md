@@ -1,8 +1,8 @@
 # Local AI Scenario Replay — Reviewer Report
 
-Educational/research prototype. Synthetic/demo fixtures only. The replay is
-engineering review material — **not medical advice, not clinically calibrated,
-and it carries no clinical-validation claim.**
+Educational/research prototype. Synthetic/demo data only. The replay is
+engineering review material — **not medical advice, not calibrated for real
+care, and it carries no clinical-validation claim.**
 
 ## What it is
 
@@ -13,7 +13,7 @@ scripted Local AI stand-in (no network, no real model):
 | Archetype | Expected behaviour |
 | --- | --- |
 | `missing_medication_time_or_dose` | Data-quality gate keeps the conservative ranking |
-| `low_risk_next_meal` | Gate open; Local AI may reorder the safe whitelist only |
+| `low_risk_next_meal` | Safety checks permit Local AI reranking of the safe whitelist only |
 | `source_fallback_partial_provenance` | AI consent off; deterministic path recorded |
 | `safety_gate_blocks_local_ai` | Low-quality meal time blocks AI reranking |
 | `medication_catalog_selection_context` | Medication context flows into the safe AI path |
@@ -40,6 +40,12 @@ Both artifacts are **timestamp-free and deterministic**: regenerating them on
 unchanged code produces byte-identical files. If a regenerated report differs
 from a previously reviewed one, engine/gate/scenario behaviour actually changed
 — review the diff rather than regenerating it away.
+
+Once generated, the artifact is also surfaced downstream: `npm run
+release:snapshot` adds a `recommendation_scenario_replay` row (dataset version,
+case count, invariant status, gate-reason visibility, synthetic scope) and
+`npm run evidence:graph` adds a `recommendation_scenario_replay` node linked to
+the release snapshot and the safety boundary.
 
 The broader scenario assertions (decision paths, candidate-set invariant, JSON
 byte-stability) live in:

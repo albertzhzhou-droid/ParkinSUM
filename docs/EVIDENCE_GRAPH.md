@@ -122,3 +122,15 @@ traceability, not clinical accuracy.
 - [ ] replay → mechanistic layer edge exists; release snapshot → safety boundary
       edge exists.
 - [ ] Mermaid output is deterministic and free of advice phrasing.
+
+## Local AI scenario replay node
+
+The graph also carries a `recommendation_scenario_replay` node sourced from
+`build/recommendation_scenario_replay/latest.json` (generate it with
+`flutter test test/local_ai_replay_report_test.dart`). Its metadata records the
+dataset version, case count, whether every case preserved the Local-AI
+candidate-set invariant, and the `synthetic_local_ai_replay` scope. Edges:
+the release snapshot `summarizes` it, it `links_to` the mechanistic layer
+(supporting release-evidence review of AI boundary behaviour), and the safety
+boundary `limits` it. A missing artifact becomes a `missing_artifact` node —
+never fabricated. Synthetic replay evidence only; not calibrated for real care.

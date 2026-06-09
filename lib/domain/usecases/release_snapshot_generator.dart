@@ -45,6 +45,11 @@ class ReleaseSnapshotInputs {
   /// Optional capability-matrix one-line summary (e.g. row counts by status).
   final String? capabilityMatrixSummary;
 
+  /// Parsed `build/recommendation_scenario_replay/latest.json` (the Local-AI
+  /// scenario replay reviewer artifact: `dataset_version`, `cases`,
+  /// `no_medical_advice`).
+  final Map<String, dynamic>? recommendationScenarioReport;
+
   const ReleaseSnapshotInputs({
     this.analyzeStatus,
     this.testCount,
@@ -55,6 +60,7 @@ class ReleaseSnapshotInputs {
     this.firestoreStatus,
     this.liveSmokeStatus,
     this.capabilityMatrixSummary,
+    this.recommendationScenarioReport,
   });
 }
 
@@ -71,6 +77,13 @@ class ReleaseSnapshot {
   final String firestoreStatus;
   final String liveSmokeStatus;
   final String capabilityMatrixSummary;
+  final String recommendationScenarioStatus;
+
+  /// Structured detail for the Local-AI scenario replay artifact (null when
+  /// the artifact is missing/malformed). Keys: `artifact_path`,
+  /// `dataset_version`, `case_count`, `all_preserved_candidate_set`,
+  /// `blocked_cases_have_gate_reasons`, `declares_synthetic_scope`.
+  final Map<String, dynamic>? recommendationScenarioDetail;
 
   const ReleaseSnapshot({
     required this.analyzeStatus,
@@ -81,6 +94,8 @@ class ReleaseSnapshot {
     required this.firestoreStatus,
     required this.liveSmokeStatus,
     required this.capabilityMatrixSummary,
+    required this.recommendationScenarioStatus,
+    this.recommendationScenarioDetail,
   });
 
   /// True when every required section resolved (no `missing_artifact`).
@@ -91,6 +106,7 @@ class ReleaseSnapshot {
         sourceQualityStatus,
         preflightStatus,
         firestoreStatus,
+        recommendationScenarioStatus,
       ].any((s) => s.contains(kMissingArtifact));
 
   static const List<String> knownLimitations = [
@@ -115,7 +131,10 @@ class ReleaseSnapshot {
           'public_preflight': preflightStatus,
           'firestore_rules_contract': firestoreStatus,
           'live_source_smoke': liveSmokeStatus,
+          'recommendation_scenario_replay': recommendationScenarioStatus,
         },
+        if (recommendationScenarioDetail != null)
+          'recommendation_scenario_replay_detail': recommendationScenarioDetail,
         'capability_matrix_summary': capabilityMatrixSummary,
         'known_limitations': knownLimitations,
         'safety_boundary': RuleExplanation.defaultSafetyBoundary,
@@ -142,6 +161,7 @@ class ReleaseSnapshot {
       ..writeln('| public preflight | $preflightStatus |')
       ..writeln('| firestore rules contract | $firestoreStatus |')
       ..writeln('| live source smoke | $liveSmokeStatus |')
+      ..writeln('| local AI scenario replay | $recommendationScenarioStatus |')
       ..writeln()
       ..writeln('Capability matrix: $capabilityMatrixSummary')
       ..writeln()
@@ -179,7 +199,57 @@ class ReleaseSnapshotGenerator {
       liveSmokeStatus: inputs.liveSmokeStatus ?? 'skipped_opt_in',
       capabilityMatrixSummary:
           inputs.capabilityMatrixSummary ?? kMissingArtifact,
+      recommendationScenarioStatus:
+          _recommendationScenarioStatus(inputs.recommendationScenarioReport),
+      recommendationScenarioDetail:
+          _recommendationScenarioDetail(inputs.recommendationScenarioReport),
     );
+  }
+
+  /// Validates the Local-AI scenario replay artifact shape. Returns null for a
+  /// missing or malformed artifact (never fabricated success).
+  Map<String, dynamic>? _recommendationScenarioDetail(
+      Map<String, dynamic>? report) {
+    if (report == null) return null;
+    final datasetVersion = report['dataset_version'];
+    final cases = report['cases'];
+    final noMedicalAdvice = report['no_medical_advice'];
+    if (datasetVersion is! String ||
+        cases is! List ||
+        noMedicalAdvice is! bool) {
+      return null;
+    }
+    var allPreserved = true;
+    var blockedCasesHaveGateReasons = true;
+    for (final raw in cases) {
+      if (raw is! Map) return null;
+      if (raw['ai_preserved_candidate_set'] != true) allPreserved = false;
+      // A case on a conservative (non-AI-rerank) decision path must expose at
+      // least one gate reason so reviewers can see WHY reranking was withheld.
+      final decisionPath = raw['decision_path']?.toString() ?? '';
+      final gateReasons = raw['gate_reasons'];
+      final isBlockedPath = decisionPath.startsWith('conservative_');
+      if (isBlockedPath && (gateReasons is! List || gateReasons.isEmpty)) {
+        blockedCasesHaveGateReasons = false;
+      }
+    }
+    return {
+      'artifact_path': 'build/recommendation_scenario_replay/latest.json',
+      'dataset_version': datasetVersion,
+      'case_count': cases.length,
+      'all_preserved_candidate_set': allPreserved,
+      'blocked_cases_have_gate_reasons': blockedCasesHaveGateReasons,
+      'declares_synthetic_scope': noMedicalAdvice,
+    };
+  }
+
+  String _recommendationScenarioStatus(Map<String, dynamic>? report) {
+    final detail = _recommendationScenarioDetail(report);
+    if (detail == null) return kMissingArtifact;
+    final held = detail['all_preserved_candidate_set'] == true;
+    return held
+        ? 'passed (${detail['case_count']} cases, candidate-set invariant held)'
+        : 'FAILED (${detail['case_count']} cases, candidate-set invariant violated)';
   }
 
   String _testStatus(ReleaseSnapshotInputs i) {

@@ -23,6 +23,26 @@ void main() {
     'counts': {'BLOCKER': 0, 'WARN': 23, 'INFO': 4},
     'pass': true,
   };
+  // Mirrors build/recommendation_scenario_replay/latest.json (synthetic only).
+  final recommendationScenarioFixture = {
+    'report_type': 'recommendation_scenario_replay',
+    'dataset_version': 'local-ai-replay.2026-06.v1',
+    'no_medical_advice': true,
+    'cases': [
+      {
+        'case_id': 'replay_low_risk_next_meal',
+        'decision_path': 'hybrid_local_ai',
+        'gate_reasons': <String>[],
+        'ai_preserved_candidate_set': true,
+      },
+      {
+        'case_id': 'replay_safety_gate_blocks_local_ai',
+        'decision_path': 'conservative_safety_gate',
+        'gate_reasons': ['low-quality meal time'],
+        'ai_preserved_candidate_set': true,
+      },
+    ],
+  };
 
   ReleaseSnapshotInputs fullInputs() => ReleaseSnapshotInputs(
         analyzeStatus: 'clean',
@@ -33,6 +53,7 @@ void main() {
         preflightReport: preflightFixture,
         firestoreStatus: '13/13',
         capabilityMatrixSummary: 'see docs/CAPABILITY_MATRIX.md',
+        recommendationScenarioReport: recommendationScenarioFixture,
       );
 
   test('JSON is deterministic for identical inputs', () {
@@ -73,9 +94,82 @@ void main() {
     expect(checks['source_quality_perturbation'], kMissingArtifact);
     expect(checks['public_preflight'], kMissingArtifact);
     expect(checks['firestore_rules_contract'], kMissingArtifact);
+    expect(checks['recommendation_scenario_replay'], kMissingArtifact);
+    expect(snap.toJson().containsKey('recommendation_scenario_replay_detail'),
+        isFalse);
     // Live smoke is opt-in, not a missing failure.
     expect(checks['live_source_smoke'], 'skipped_opt_in');
     expect(snap.complete, isFalse);
+  });
+
+  test('local AI scenario replay artifact is surfaced with invariant detail',
+      () {
+    final json = gen.build(fullInputs()).toJson();
+    final checks = json['checks'] as Map;
+    expect(checks['recommendation_scenario_replay'],
+        'passed (2 cases, candidate-set invariant held)');
+    final detail = json['recommendation_scenario_replay_detail'] as Map;
+    expect(detail['artifact_path'],
+        'build/recommendation_scenario_replay/latest.json');
+    expect(detail['dataset_version'], 'local-ai-replay.2026-06.v1');
+    expect(detail['case_count'], 2);
+    expect(detail['all_preserved_candidate_set'], isTrue);
+    expect(detail['blocked_cases_have_gate_reasons'], isTrue);
+    expect(detail['declares_synthetic_scope'], isTrue);
+  });
+
+  test('scenario replay invariant violation is reported as FAILED', () {
+    final violated = {
+      'dataset_version': 'v',
+      'no_medical_advice': true,
+      'cases': [
+        {
+          'case_id': 'c1',
+          'decision_path': 'hybrid_local_ai',
+          'gate_reasons': <String>[],
+          'ai_preserved_candidate_set': false,
+        },
+      ],
+    };
+    final snap = gen
+        .build(ReleaseSnapshotInputs(recommendationScenarioReport: violated));
+    final json = snap.toJson();
+    expect((json['checks'] as Map)['recommendation_scenario_replay'],
+        contains('FAILED'));
+    expect(
+        (json['recommendation_scenario_replay_detail']
+            as Map)['all_preserved_candidate_set'],
+        isFalse);
+  });
+
+  test('blocked scenario without gate reasons is flagged in the detail', () {
+    final silentBlock = {
+      'dataset_version': 'v',
+      'no_medical_advice': true,
+      'cases': [
+        {
+          'case_id': 'c1',
+          'decision_path': 'conservative_safety_gate',
+          'gate_reasons': <String>[],
+          'ai_preserved_candidate_set': true,
+        },
+      ],
+    };
+    final json = gen
+        .build(ReleaseSnapshotInputs(recommendationScenarioReport: silentBlock))
+        .toJson();
+    expect(
+        (json['recommendation_scenario_replay_detail']
+            as Map)['blocked_cases_have_gate_reasons'],
+        isFalse);
+  });
+
+  test('malformed scenario replay artifact does not fabricate success', () {
+    final snap = gen.build(const ReleaseSnapshotInputs(
+      recommendationScenarioReport: {'dataset_version': 7, 'cases': 'x'},
+    ));
+    expect((snap.toJson()['checks'] as Map)['recommendation_scenario_replay'],
+        kMissingArtifact);
   });
 
   test('malformed artifact (missing counts) does not fabricate success', () {

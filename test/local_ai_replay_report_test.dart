@@ -104,9 +104,14 @@ void main() {
         reason: 'Replay report contains banned prescriptive copy.');
     for (final phrase in const [
       'clinically validated',
+      'clinically calibrated',
       'medical device',
       'patient-calibrated',
       'safe for you',
+      // Casual gate phrasing is also banned in the reviewer artifact; the
+      // preferred wording is "safety checks permit Local AI reranking".
+      'gate open',
+      'gate is open',
     ]) {
       expect(blob.toLowerCase(), isNot(contains(phrase)),
           reason: 'Replay report contains public-claim phrase "$phrase".');

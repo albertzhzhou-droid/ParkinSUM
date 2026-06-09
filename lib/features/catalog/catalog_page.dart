@@ -109,7 +109,8 @@ class _CatalogPageState extends State<CatalogPage> {
                           )}\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}${textureLine == null ? '' : '\n$textureLine'}\n${food.description}',
                         ),
                         isThreeLine: true,
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Icon(Icons.chevron_right,
+                            semanticLabel: i18n.tr('catalog.view_detail')),
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => FoodDetailPage(
@@ -140,8 +141,11 @@ class _CatalogPageState extends State<CatalogPage> {
                           )}\n${i18n.sourceSystemLabel(drug.sourceSystem)} · ${i18n.regionLabel(drug.jurisdiction)} · ${i18n.routeLabel(drug.route)} · ${i18n.dosageFormLabel(drug.dosageForm)}\n${i18n.medicationNote(drug.id, drug.notes)}',
                         ),
                         trailing: active
-                            ? const Icon(Icons.check_circle)
-                            : const Icon(Icons.chevron_right),
+                            ? Icon(Icons.check_circle,
+                                semanticLabel:
+                                    i18n.tr('catalog.selected_active'))
+                            : Icon(Icons.chevron_right,
+                                semanticLabel: i18n.tr('catalog.view_detail')),
                         isThreeLine: true,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
@@ -221,6 +225,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                         width: 44,
                         height: 44,
                         fit: BoxFit.cover,
+                        semanticLabel: 'ParkinSUM app icon',
                       ),
                     ),
                     const SizedBox(width: 12),

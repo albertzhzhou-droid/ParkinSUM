@@ -45,6 +45,10 @@ const _sourceSystemRefs = {
 };
 
 String _usageType(String path) {
+  if (path.startsWith('docs/PUBLIC_DEMO') ||
+      path.contains('public_demo_walkthrough')) {
+    return SourceUsageType.publicDemo;
+  }
   if (path.startsWith('docs/') || path == 'Bibliographies.md') {
     return SourceUsageType.documentation;
   }

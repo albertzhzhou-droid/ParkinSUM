@@ -99,6 +99,8 @@ Future<void> main(List<String> args) async {
     releaseSnapshot: _readJson('build/release_snapshot/latest.json'),
     publicDemoWalkthrough:
         _readJson('build/public_demo_walkthrough/latest.json'),
+    recommendationScenarioReport:
+        _readJson('build/recommendation_scenario_replay/latest.json'),
     evidenceBundle: _sampleEvidenceBundle(),
   );
 

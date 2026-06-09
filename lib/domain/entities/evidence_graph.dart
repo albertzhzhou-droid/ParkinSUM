@@ -29,6 +29,7 @@ const Set<String> kEvidenceGraphNodeTypes = {
   'replay_report',
   'source_quality_report',
   'release_snapshot',
+  'recommendation_scenario_replay',
   'evidence_trace_bundle',
   'public_demo_walkthrough',
   'safety_boundary',

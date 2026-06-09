@@ -11,7 +11,7 @@ void main() {
         ruleId: 'rule.levodopa_protein_timing',
         triggeredConditions: ['meal.protein_g >= moderate'],
         inputFieldsUsed: ['meal.protein_g', 'drug.release_type'],
-        sourceRefs: ['src.label.levodopa.food_effect'],
+        sourceRefs: ['src.dailymed.sinemet.label'],
         provenanceSummary: 'Backed by official label food-effect section.',
         evidenceStrength: RuleEvidenceStrength.label,
         limitationText: 'Educational only; not personal medical advice.',
@@ -31,7 +31,7 @@ void main() {
     expect(json['rule_id'], 'rule.levodopa_protein_timing');
     expect(json['triggered'], isTrue);
     expect(json['user_facing_decision'], 'educational caution');
-    expect(json['source_refs'], contains('src.label.levodopa.food_effect'));
+    expect(json['source_refs'], contains('src.dailymed.sinemet.label'));
     expect(json['missing_or_uncertain_inputs'], contains('intake.exact_time'));
     expect(json['provenance_summary'], isNotEmpty);
     expect(json['confidence_note'], contains('moderate'));
