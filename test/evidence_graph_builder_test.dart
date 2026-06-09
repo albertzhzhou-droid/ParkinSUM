@@ -173,6 +173,18 @@ void main() {
     expect(g.limitations, isNotEmpty);
   });
 
+  test('human-facing summaries use real-care calibration wording', () {
+    final g = builder.build(fullInputs());
+    final humanText = [
+      for (final node in g.nodes) node.summary,
+      ...g.limitations,
+    ].join('\n').toLowerCase();
+    expect(humanText, contains('not calibrated for real care'));
+    expect(humanText, isNot(contains('not clinically calibrated')));
+    // The machine-readable compatibility field remains in JSON.
+    expect(g.toJson()['not_clinically_calibrated'], isTrue);
+  });
+
   test('7. no patient / subject / encounter / clinical-workflow KEYS', () {
     // Recursive key-level scan (phi_policy VALUE may name what is omitted).
     scanNoPhiKeys(builder.build(fullInputs()).toJson());

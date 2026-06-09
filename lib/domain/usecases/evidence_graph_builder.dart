@@ -3,7 +3,7 @@
 /// Educational/research prototype only. Synthetic/demo artifacts only. Builds a
 /// deterministic **local** evidence/provenance graph from already-produced
 /// ParkinSUM artifacts. It is NOT a FHIR Provenance resource, NOT a W3C PROV
-/// export, NOT a patient record, not clinically calibrated, and not medical
+/// export, NOT a patient record, not calibrated for real care, and not medical
 /// advice. Inputs are parsed artifact maps (file I/O stays in the tool wrapper);
 /// a missing input becomes a `missing_artifact` node, never a fabricated success.
 library;
@@ -50,7 +50,7 @@ class EvidenceGraphBuilder {
     'Local educational traceability artifact composed from synthetic/demo artifacts only.',
     'Not a FHIR Provenance resource and not a W3C PROV export.',
     'Not a patient record; no patient/subject/encounter linkage.',
-    'Not clinical validation; the model is not clinically calibrated.',
+    'Not clinical validation; the model is not calibrated for real care.',
     'Missing inputs are represented as missing_artifact nodes, never fabricated.',
   ];
 
@@ -76,7 +76,7 @@ class EvidenceGraphBuilder {
       type: 'mechanistic_layer',
       label: 'Mechanistic layer',
       summary: 'Deterministic, literature-informed educational conflict '
-          'simulation (not clinically calibrated; no PK/PD prediction).',
+          'simulation (not calibrated for real care; no PK/PD prediction).',
       status: 'present',
     );
     const metadataGate = EvidenceGraphNode(
@@ -108,7 +108,7 @@ class EvidenceGraphBuilder {
       type: 'limitation',
       label: 'Limitations',
       summary: 'Local evidence graph; synthetic/demo only; not FHIR/PROV '
-          'conformant; not clinical validation; not clinically calibrated.',
+          'conformant; not clinical validation; not calibrated for real care.',
       status: 'present',
     );
 
