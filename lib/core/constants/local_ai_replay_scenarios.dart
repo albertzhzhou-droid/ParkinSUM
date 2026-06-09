@@ -150,3 +150,31 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
     ),
   ],
 );
+
+/// Reviewer-facing notes per archetype (keyed by the case's first focus tag).
+///
+/// Each entry explains, in non-clinical engineering language, what the
+/// archetype represents and why Local AI is expected to be allowed or blocked.
+/// Used by the reviewer Markdown report; not shown in the app UI.
+const Map<String, String> localAiReplayArchetypeNotes = <String, String>{
+  'missing_medication_time_or_dose':
+      'A medication intake is logged without a parsable dose and the meal has '
+          'no next-meal window. The data-quality gate keeps the conservative '
+          'ranking, so Local AI may polish wording but must not rerank.',
+  'low_risk_next_meal':
+      'No medications and a clear next-meal window. The safety gate is open, '
+          'so Local AI may reorder the already-safe candidate whitelist (and '
+          'nothing else).',
+  'source_fallback_partial_provenance':
+      'Candidates resolve through jurisdiction fallback with capped synthetic '
+          'provenance, and Local AI consent is off. The deterministic '
+          'conservative path is recorded unchanged.',
+  'safety_gate_blocks_local_ai':
+      'The only meal time is a legacy-migrated value of unknown precision. '
+          'The gate treats it as too low-quality to rerank against, so Local '
+          'AI reranking is blocked even though the user consented.',
+  'medication_catalog_selection_context':
+      'An active medication catalog selection with low-risk candidates and '
+          'consent enabled. The medication context flows into the safe AI '
+          'path; the rerank is still whitelist-bound.',
+};
