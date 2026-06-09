@@ -29,12 +29,17 @@ class EvidenceGraphInputs {
   /// Optional parsed `build/public_demo_walkthrough/latest.json`.
   final Map<String, dynamic>? publicDemoWalkthrough;
 
+  /// Parsed `build/recommendation_scenario_replay/latest.json` (the Local-AI
+  /// scenario replay reviewer artifact).
+  final Map<String, dynamic>? recommendationScenarioReport;
+
   const EvidenceGraphInputs({
     this.replayReport,
     this.sourceQualityReport,
     this.releaseSnapshot,
     this.evidenceBundle,
     this.publicDemoWalkthrough,
+    this.recommendationScenarioReport,
   });
 }
 
@@ -62,6 +67,8 @@ class EvidenceGraphBuilder {
     final sourceQuality = _sourceQualityNode(inputs.sourceQualityReport);
     final releaseSnapshot = _releaseSnapshotNode(inputs.releaseSnapshot);
     final bundle = _evidenceBundleNode(inputs.evidenceBundle);
+    final recommendationScenario =
+        _recommendationScenarioNode(inputs.recommendationScenarioReport);
 
     // --- Derived / structural nodes (always present) -----------------------
     const mechanisticLayer = EvidenceGraphNode(
@@ -113,6 +120,7 @@ class EvidenceGraphBuilder {
       sourceQuality,
       releaseSnapshot,
       bundle,
+      recommendationScenario,
       mechanisticLayer,
       metadataGate,
       authorityGate,
@@ -150,6 +158,12 @@ class EvidenceGraphBuilder {
           'counts source-quality rows'),
       edge('release_snapshot', 'safety_boundary', 'reports',
           'carries the safety boundary'),
+      // Local-AI scenario replay → supports release-evidence review of AI
+      // boundary behavior (candidate-set invariant; synthetic replay only).
+      edge('release_snapshot', 'recommendation_scenario_replay', 'summarizes',
+          'counts Local-AI scenario replay status'),
+      edge('recommendation_scenario_replay', 'mechanistic_layer', 'links_to',
+          'supports release-evidence review of AI boundary behavior'),
       if (walkthrough != null)
         edge('public_demo_walkthrough', 'release_snapshot', 'summarizes',
             'narrates the snapshot'),
@@ -160,6 +174,7 @@ class EvidenceGraphBuilder {
       'replay_report',
       'source_quality_report',
       'release_snapshot',
+      'recommendation_scenario_replay',
       'evidence_trace_bundle',
       'mechanistic_layer',
     ]) {
@@ -233,6 +248,52 @@ class EvidenceGraphBuilder {
           '(banned-phrase scanned).',
       sourceRefs: refs,
       metadata: {'passed': passed, 'total': total, 'scenarios': cases.length},
+      status: 'present',
+    );
+  }
+
+  EvidenceGraphNode _recommendationScenarioNode(Map<String, dynamic>? report) {
+    if (report == null) {
+      return const EvidenceGraphNode(
+        id: 'recommendation_scenario_replay',
+        type: 'recommendation_scenario_replay',
+        label: 'Local AI scenario replay',
+        summary: 'missing_artifact: '
+            'build/recommendation_scenario_replay/latest.json not found.',
+        missingness: {'artifact_present': false},
+        status: kEvidenceGraphMissingArtifact,
+      );
+    }
+    final datasetVersion = report['dataset_version'];
+    final cases = report['cases'];
+    final noMedicalAdvice = report['no_medical_advice'];
+    if (datasetVersion is! String ||
+        cases is! List ||
+        noMedicalAdvice is! bool) {
+      return const EvidenceGraphNode(
+        id: 'recommendation_scenario_replay',
+        type: 'recommendation_scenario_replay',
+        label: 'Local AI scenario replay',
+        summary: 'missing_artifact: malformed Local-AI scenario replay report.',
+        missingness: {'artifact_present': false},
+        status: kEvidenceGraphMissingArtifact,
+      );
+    }
+    final allPreserved =
+        cases.every((c) => c is Map && c['ai_preserved_candidate_set'] == true);
+    return EvidenceGraphNode(
+      id: 'recommendation_scenario_replay',
+      type: 'recommendation_scenario_replay',
+      label: 'Local AI scenario replay',
+      summary: '${cases.length} synthetic Local-AI replay scenarios; '
+          'candidate-set invariant ${allPreserved ? 'held' : 'VIOLATED'} '
+          '(synthetic replay; not calibrated for real care).',
+      metadata: {
+        'dataset_version': datasetVersion,
+        'cases': cases.length,
+        'all_preserved_candidate_set': allPreserved,
+        'scope': 'synthetic_local_ai_replay',
+      },
       status: 'present',
     );
   }

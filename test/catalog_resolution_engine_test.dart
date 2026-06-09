@@ -340,4 +340,58 @@ void main() {
     expect(validation.eligibleForRuleEvaluation, isFalse);
     expect(validation.issues.any((i) => i.code == 'MISSING_STRENGTH'), isTrue);
   });
+
+  // --- Typo-tolerant + multilingual alias robustness (synthetic only) -------
+
+  // 25 — single-edit typo resolves via the typo-tolerated alias branch.
+  test('single-edit typo resolves as typo_tolerated_alias (partial)', () {
+    final banana = food('f-banana', 'Banana',
+        aliases: const ['banana', 'バナナ', 'banane', '香蕉']);
+    final r = resolve('bananna', f: [banana], d: const []);
+    expect(r.bestCandidate, isNotNull);
+    expect(r.bestCandidate!.matchType,
+        CatalogResolutionMatchType.typoToleratedAlias);
+    expect(r.status, CatalogResolutionStatus.partial);
+    expect(r.issues.any((i) => i.issueType == 'typo_tolerated_match'), isTrue);
+  });
+
+  // 26 — typo-tolerated confidence ranks below an exact alias match.
+  test('typo-tolerated match ranks below exact alias match', () {
+    final banana = food('f-banana', 'Banana', aliases: const ['banana']);
+    final exact = resolve('banana', f: [banana], d: const []);
+    final typo = resolve('bananna', f: [banana], d: const []);
+    expect(exact.bestCandidate!.confidence,
+        greaterThan(typo.bestCandidate!.confidence));
+  });
+
+  // 27 — Japanese and French aliases resolve for synthetic demo foods.
+  test('ja/fr aliases resolve to the same demo food', () {
+    final banana = food('f-banana', 'Banana',
+        aliases: const ['banana', 'バナナ', 'banane', '香蕉']);
+    final ja = resolve('バナナ', f: [banana], d: const []);
+    expect(ja.bestCandidate?.foodItemId, 'f-banana');
+    // Kana sits below the engine's CJK detection threshold, so it classifies
+    // as an exact (synonym) alias match — never a typo-tolerated one.
+    expect(ja.bestCandidate!.matchType,
+        isNot(CatalogResolutionMatchType.typoToleratedAlias));
+    final fr = resolve('banane', f: [banana], d: const []);
+    expect(fr.bestCandidate?.foodItemId, 'f-banana');
+  });
+
+  // 28 — CJK queries are never typo-corrected (exact localized only).
+  test('CJK queries are not typo-corrected', () {
+    final banana = food('f-banana', 'Banana', aliases: const ['香蕉']);
+    final r = resolve('香交', f: [banana], d: const []); // one char off
+    expect(
+        r.bestCandidate?.matchType ==
+            CatalogResolutionMatchType.typoToleratedAlias,
+        isFalse);
+  });
+
+  // 29 — gibberish stays unresolved with the explicit no-match issue.
+  test('gibberish query stays unresolved', () {
+    final r = resolve('zzqxv', d: const []);
+    expect(r.status, CatalogResolutionStatus.unresolved);
+    expect(r.issues.any((i) => i.issueType == 'no_catalog_match'), isTrue);
+  });
 }

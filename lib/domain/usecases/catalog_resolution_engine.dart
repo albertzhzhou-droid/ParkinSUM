@@ -180,6 +180,19 @@ class CatalogResolutionEngine {
               'Present alternatives; do not auto-select one overconfident '
               'answer.',
         ));
+      } else if (best.matchType ==
+          CatalogResolutionMatchType.typoToleratedAlias) {
+        // A single-edit correction was applied; surface it explicitly so the
+        // correction is reviewable rather than silent.
+        status = CatalogResolutionStatus.partial;
+        issues.add(const CatalogResolutionIssue(
+          severity: CatalogResolutionSeverity.info,
+          issueType: 'typo_tolerated_match',
+          message: 'Best candidate matched via a single-edit typo-tolerant '
+              'alias comparison, not an exact name.',
+          suggestedNextStep:
+              'Confirm the intended catalog item before relying on it.',
+        ));
       } else if (best.confidence < config.resolveThreshold ||
           best.matchType == CatalogResolutionMatchType.genericName ||
           best.matchType == CatalogResolutionMatchType.activeIngredient ||
@@ -262,6 +275,12 @@ class CatalogResolutionEngine {
           matchType = CatalogResolutionMatchType.synonym;
           base = 0.78;
         }
+      }
+      // Typo-tolerant alias match (single edit, non-CJK, query >= 4 chars).
+      if (matchType == CatalogResolutionMatchType.unknown &&
+          _typoMatches(q, [f.name, ...f.aliases])) {
+        matchType = CatalogResolutionMatchType.typoToleratedAlias;
+        base = 0.74;
       }
       // Conservative fuzzy token overlap.
       if (matchType == CatalogResolutionMatchType.unknown) {
@@ -359,6 +378,12 @@ class CatalogResolutionEngine {
             break;
           }
         }
+      }
+      // Typo-tolerant alias match (single edit, non-CJK, query >= 4 chars).
+      if (matchType == CatalogResolutionMatchType.unknown &&
+          _typoMatches(q, [d.genericName, d.displayName, ...d.aliases])) {
+        matchType = CatalogResolutionMatchType.typoToleratedAlias;
+        base = 0.74;
       }
       // Combination: query mentions 2+ of the components.
       if (matchType == CatalogResolutionMatchType.unknown &&
@@ -542,6 +567,50 @@ class CatalogResolutionEngine {
   }
 
   bool _hasCjk(String s) => s.runes.any((r) => r >= 0x3400);
+
+  /// Typo-tolerant name/alias matching: true when the canonical query is one
+  /// edit (insert/delete/substitute) away from a canonical candidate string.
+  /// Guards: ASCII-ish (non-CJK) only and query length >= 4, so short tokens
+  /// and CJK names are never typo-corrected. Deterministic; no ranking model.
+  bool _typoMatches(String q, Iterable<String> candidates) {
+    if (q.length < 4 || !_isPlainAscii(q)) return false;
+    for (final c in candidates) {
+      final nc = _normalizer.canonicalize(c);
+      if (nc.length < 4 || !_isPlainAscii(nc)) continue;
+      if (_withinOneEdit(q, nc)) return true;
+    }
+    return false;
+  }
+
+  /// Pure-ASCII guard for typo matching: kana, CJK, and accented names are
+  /// never typo-corrected (only exact localized/alias matches apply to them).
+  bool _isPlainAscii(String s) => RegExp(r'^[a-z0-9 \-]+$').hasMatch(s);
+
+  /// Whether [a] and [b] differ by at most one edit (and are not identical —
+  /// exact matches are handled by the higher-confidence branches).
+  bool _withinOneEdit(String a, String b) {
+    if (a == b) return false;
+    final la = a.length, lb = b.length;
+    if ((la - lb).abs() > 1) return false;
+    // Ensure a is the shorter (or equal) string.
+    final shorter = la <= lb ? a : b;
+    final longer = la <= lb ? b : a;
+    var i = 0, j = 0, edits = 0;
+    while (i < shorter.length && j < longer.length) {
+      if (shorter[i] == longer[j]) {
+        i++;
+        j++;
+        continue;
+      }
+      if (++edits > 1) return false;
+      if (shorter.length == longer.length) {
+        i++; // substitution
+      }
+      j++; // insertion in the longer string (or substitution advance)
+    }
+    edits += longer.length - j;
+    return edits <= 1;
+  }
 
   double _clamp01(double v) => v < 0 ? 0 : (v > 1 ? 1 : v);
 

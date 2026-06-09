@@ -162,9 +162,9 @@ const Map<String, String> localAiReplayArchetypeNotes = <String, String>{
           'no next-meal window. The data-quality gate keeps the conservative '
           'ranking, so Local AI may polish wording but must not rerank.',
   'low_risk_next_meal':
-      'No medications and a clear next-meal window. The safety gate is open, '
-          'so Local AI may reorder the already-safe candidate whitelist (and '
-          'nothing else).',
+      'No medications and a clear next-meal window. Safety checks permit '
+          'Local AI reranking, limited to the already-safe candidate '
+          'whitelist (and nothing else).',
   'source_fallback_partial_provenance':
       'Candidates resolve through jurisdiction fallback with capped synthetic '
           'provenance, and Local AI consent is off. The deterministic '

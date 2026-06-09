@@ -49,6 +49,31 @@ class SourceAccessContractChecker {
     }
 
     for (final record in contract.records.values) {
+      // Required-field validation: the matrix is only machine-checkable when
+      // the identity/governance fields are actually filled in.
+      final missingFields = <String>[
+        if (record.sourceId.trim().isEmpty) 'source_id',
+        if (record.displayName.trim().isEmpty) 'display_name',
+        if (record.owner.trim().isEmpty) 'owner',
+        if (record.jurisdiction.trim().isEmpty) 'jurisdiction',
+        // 'unknown' values are handled by the existing unknown_access_status
+        // rule; only genuinely absent values are missing matrix fields.
+        if (record.accessMethod.trim().isEmpty) 'access_method',
+        if (record.implementationStatus.trim().isEmpty) 'implementation_status',
+      ];
+      if (missingFields.isNotEmpty) {
+        add(
+          severity: SourceAccessSeverity.blocker,
+          type: 'missing_required_fields',
+          sourceId:
+              record.sourceId.trim().isEmpty ? '(unknown)' : record.sourceId,
+          file: registryPath,
+          message:
+              'Registry record is missing required matrix fields: ${missingFields.join(', ')}.',
+          suggestedFix:
+              'Fill in the missing fields so the source/license matrix stays machine-checkable.',
+        );
+      }
       if (record.isFixtureOnly && record.allowedForProduction) {
         add(
           severity: SourceAccessSeverity.blocker,
@@ -173,6 +198,19 @@ class SourceAccessContractChecker {
           sourceId: ref.sourceId,
           file: ref.file,
           message: 'Deprecated source reference requires replacement.',
+        );
+      }
+      if (ref.usageType == SourceUsageType.publicDemo &&
+          !record.allowedForPublicDemo) {
+        add(
+          severity: SourceAccessSeverity.warn,
+          type: 'public_demo_not_allowed',
+          sourceId: ref.sourceId,
+          file: ref.file,
+          message:
+              'Source is cited in public-demo material but allowed_for_public_demo=false.',
+          suggestedFix:
+              'Remove the citation from public-demo material or set allowed_for_public_demo=true after license/terms review.',
         );
       }
     }

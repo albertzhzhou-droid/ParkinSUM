@@ -39,6 +39,10 @@ class CatalogResolutionMatchType {
   static const String combinationProduct = 'combination_product';
   static const String releaseTypeHint = 'release_type_hint';
   static const String sourceIdentifier = 'source_identifier';
+
+  /// Single-edit typo correction against a known name/alias (non-CJK only).
+  /// Ranks below exact synonym/localized matches and above fuzzy token.
+  static const String typoToleratedAlias = 'typo_tolerated_alias';
   static const String fuzzyToken = 'fuzzy_token';
   static const String category = 'category';
   static const String unknown = 'unknown';

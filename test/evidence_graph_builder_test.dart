@@ -45,12 +45,23 @@ void main() {
     'phi_policy': 'no_patient_no_subject_no_encounter',
     'source_refs': ['src.spl.identity'],
   };
+  // Mirrors build/recommendation_scenario_replay/latest.json (synthetic only).
+  final recommendationScenarioFixture = {
+    'report_type': 'recommendation_scenario_replay',
+    'dataset_version': 'local-ai-replay.2026-06.v1',
+    'no_medical_advice': true,
+    'cases': [
+      {'case_id': 'c1', 'ai_preserved_candidate_set': true},
+      {'case_id': 'c2', 'ai_preserved_candidate_set': true},
+    ],
+  };
 
   EvidenceGraphInputs fullInputs() => EvidenceGraphInputs(
         replayReport: replayFixture,
         sourceQualityReport: sourceQualityFixture,
         releaseSnapshot: releaseSnapshotFixture,
         evidenceBundle: evidenceBundleFixture,
+        recommendationScenarioReport: recommendationScenarioFixture,
       );
 
   EvidenceGraphNode nodeById(EvidenceGraph g, String id) =>
@@ -69,6 +80,7 @@ void main() {
       'replay_report',
       'source_quality_report',
       'release_snapshot',
+      'recommendation_scenario_replay',
       'evidence_trace_bundle',
       'mechanistic_layer',
       'metadata_completeness_gate',
@@ -79,6 +91,35 @@ void main() {
       expect(nodeById(g, id).isMissing, isFalse,
           reason: '$id should be present');
     }
+  });
+
+  test('Local-AI scenario replay node carries the invariant metadata', () {
+    final g = builder.build(fullInputs());
+    final node = nodeById(g, 'recommendation_scenario_replay');
+    expect(node.metadata['dataset_version'], 'local-ai-replay.2026-06.v1');
+    expect(node.metadata['cases'], 2);
+    expect(node.metadata['all_preserved_candidate_set'], isTrue);
+    expect(node.metadata['scope'], 'synthetic_local_ai_replay');
+    // Edges: summarized by the release snapshot; supports AI-boundary review;
+    // limited by the safety boundary.
+    expect(hasEdge(g, 'release_snapshot', 'recommendation_scenario_replay'),
+        isTrue);
+    expect(hasEdge(g, 'recommendation_scenario_replay', 'mechanistic_layer'),
+        isTrue);
+    expect(hasEdge(g, 'safety_boundary', 'recommendation_scenario_replay'),
+        isTrue);
+  });
+
+  test('missing Local-AI scenario replay artifact creates a missing node', () {
+    final g = builder.build(EvidenceGraphInputs(
+      replayReport: replayFixture,
+      sourceQualityReport: sourceQualityFixture,
+      releaseSnapshot: releaseSnapshotFixture,
+      evidenceBundle: evidenceBundleFixture,
+    ));
+    final node = nodeById(g, 'recommendation_scenario_replay');
+    expect(node.status, kEvidenceGraphMissingArtifact);
+    expect(node.missingness['artifact_present'], isFalse);
   });
 
   test('2. missing replay artifact creates a missing_artifact node', () {

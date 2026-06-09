@@ -31,3 +31,11 @@ Use these labels when presenting the project publicly:
 - `CDSS-style rule explanation`
 
 Avoid labels that imply real-world clinical use.
+
+## Local-mode network isolation
+
+The public demo runs in local mode by default: when the `PARKINSUM_BACKEND`
+build define is unset, the app constructs only local/in-memory services and the
+Firebase initializer is a no-op — no Firebase project or external network access
+is required. This configuration-level guarantee is pinned by
+`test/local_mode_network_isolation_test.dart`.

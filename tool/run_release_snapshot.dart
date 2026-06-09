@@ -10,6 +10,8 @@
 //   build/mechanistic_replay/latest.json
 //   build/source_quality_perturbation/latest.json
 //   build/public_release_preflight/latest.json
+//   build/recommendation_scenario_replay/latest.json
+//     (generate with: flutter test test/local_ai_replay_report_test.dart)
 // Checks without a JSON artifact (analyze/test/firestore) may be injected via
 // flags; absent inputs are recorded as `missing_artifact` — never fabricated.
 //
@@ -49,6 +51,8 @@ Future<void> main(List<String> args) async {
     sourceQualityReport:
         _readJson('build/source_quality_perturbation/latest.json'),
     preflightReport: _readJson('build/public_release_preflight/latest.json'),
+    recommendationScenarioReport:
+        _readJson('build/recommendation_scenario_replay/latest.json'),
     firestoreStatus: _flag(args, 'firestore'),
     liveSmokeStatus: _flag(args, 'live-smoke'),
     capabilityMatrixSummary: File('docs/CAPABILITY_MATRIX.md').existsSync()

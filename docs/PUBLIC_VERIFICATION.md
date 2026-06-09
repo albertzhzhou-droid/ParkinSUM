@@ -74,14 +74,40 @@ generators — they parse existing reports (and accept injected counts) rather t
 re-running slow commands — and report `missing_artifact` instead of fabricating
 results.
 
+### Recommended reviewer order
+
+1. `flutter test test/local_ai_replay_report_test.dart` — regenerates the
+   deterministic Local-AI scenario replay artifact. Proves the Local-AI
+   candidate-set invariant held over the five synthetic archetypes; does NOT
+   prove model quality or real-care behaviour.
+2. `npm run release:snapshot` — composes all artifacts into one evidence
+   summary. Proves which artifacts exist and what they reported; does NOT
+   re-run any check.
+3. Inspect `build/release_snapshot/latest.md` and `npm run evidence:graph` —
+   shows how the artifacts relate (including the Local-AI replay node). Proves
+   local traceability only; NOT FHIR/W3C-PROV conformance and not clinical
+   validation.
+4. `npm run public:preflight` and `npm run privacy:preflight` — repo-hygiene
+   and copy-boundary gates. Prove the public tree carries no banned claims or
+   sensitive artifacts; do NOT prove security or regulatory compliance.
+
+All artifacts are synthetic/demo data only and none of them make the prototype
+calibrated for real care.
+
 ### `dart run tool/run_release_snapshot.dart`  (or `npm run release:snapshot`)
 - **Checks:** composes one release-evidence snapshot from
   `build/mechanistic_replay/latest.json`,
-  `build/source_quality_perturbation/latest.json`, and
-  `build/public_release_preflight/latest.json`; analyze/test/firestore results may
-  be injected via flags (e.g. `--analyze=clean --test-count=460 --firestore=13/13`).
+  `build/source_quality_perturbation/latest.json`,
+  `build/public_release_preflight/latest.json`, and
+  `build/recommendation_scenario_replay/latest.json` (generate the last one with
+  `flutter test test/local_ai_replay_report_test.dart`); analyze/test/firestore
+  results may be injected via flags (e.g. `--analyze=clean --test-count=460
+  --firestore=13/13`).
 - **Expected:** `build/release_snapshot/latest.{json,md}` with a per-check table;
-  any absent input shows `missing_artifact`.
+  any absent input shows `missing_artifact`. The Local-AI scenario replay row
+  also surfaces the dataset version, case count, candidate-set invariant,
+  gate-reason visibility for blocked scenarios, and the synthetic/non-advice
+  scope declaration in `recommendation_scenario_replay_detail`.
 - **Failure means:** an underlying artifact is missing/malformed (recorded
   in-band, not fabricated). The tool itself exits 0 — it is an evidence summary,
   not a gate.

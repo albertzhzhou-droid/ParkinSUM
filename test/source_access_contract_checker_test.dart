@@ -248,6 +248,84 @@ void main() {
       expect(registry.contains(id), isTrue, reason: id);
     }
   });
+
+  // --- Source/license matrix hardening -------------------------------------
+
+  test('missing required matrix fields produce a blocker', () {
+    const incomplete = SourceAccessRecord(
+      sourceId: 'src.incomplete',
+      displayName: '',
+      owner: '',
+      jurisdiction: 'GLOBAL',
+      sourceFamily: 'food_composition',
+      dataDomain: 'food',
+      accessMethod: '',
+      implementationStatus: 'implemented_fixture_tested',
+    );
+    final report = checker.check(
+      contract: contract(incomplete),
+      references: const [],
+    );
+    final finding = report.findings
+        .singleWhere((f) => f.findingType == 'missing_required_fields');
+    expect(finding.severity, SourceAccessSeverity.blocker);
+    expect(finding.message, contains('display_name'));
+    expect(finding.message, contains('owner'));
+    expect(finding.message, contains('access_method'));
+    expect(report.pass, isFalse);
+  });
+
+  test('public-demo citation without the allow flag is a warn', () {
+    final source = record(); // allowedForPublicDemo defaults to false.
+    final report = run(
+      source,
+      refs: [
+        ref(source.sourceId,
+            file: 'docs/PUBLIC_DEMO_BOUNDARY.md',
+            usage: SourceUsageType.publicDemo),
+      ],
+    );
+    final finding = report.findings
+        .singleWhere((f) => f.findingType == 'public_demo_not_allowed');
+    expect(finding.severity, SourceAccessSeverity.warn);
+  });
+
+  test('public-demo citation with the allow flag stays clean', () {
+    const source = SourceAccessRecord(
+      sourceId: 'src.demoallowed',
+      displayName: 'Demo allowed',
+      owner: 'Example owner',
+      jurisdiction: 'GLOBAL',
+      sourceFamily: 'synthetic_demo',
+      dataDomain: 'mixed',
+      accessMethod: 'open_download',
+      implementationStatus: 'implemented_fixture_tested',
+      allowedForPublicDemo: true,
+    );
+    final report = checker.check(
+      contract: contract(source),
+      references: [
+        ref(source.sourceId,
+            file: 'docs/PUBLIC_DEMO_BOUNDARY.md',
+            usage: SourceUsageType.publicDemo),
+      ],
+    );
+    expect(
+        report.findings.any((f) => f.findingType == 'public_demo_not_allowed'),
+        isFalse);
+  });
+
+  test('shipped registry passes the hardened matrix checks', () {
+    final registry = _loadRegistry();
+    final report = checker.check(contract: registry, references: const []);
+    expect(
+        report.findings.any((f) => f.findingType == 'missing_required_fields'),
+        isFalse);
+    // The matrix column is present on every shipped record.
+    for (final r in registry.records.values) {
+      expect(r.toJson().containsKey('allowed_for_public_demo'), isTrue);
+    }
+  });
 }
 
 SourceAccessContract _loadRegistry() {

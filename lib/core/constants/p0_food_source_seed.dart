@@ -1069,11 +1069,14 @@ List<String> _foodAliases(
   String canonicalNameZh,
 ) {
   final extra = <String, List<String>>{
-    'food_banana': ['banana', '香蕉'],
-    'food_spinach': ['spinach', '菠菜'],
+    'food_banana': ['banana', '香蕉', 'バナナ', 'banane'],
+    'food_spinach': ['spinach', '菠菜', 'ほうれん草', 'epinard', 'épinard'],
     'food_tofu': [
       'tofu',
       'bean curd',
+      '豆腐 (とうふ)',
+      'とうふ',
+      'fromage de soja',
       '豆腐',
       '嫩豆腐',
       '北豆腐',
@@ -1088,7 +1091,15 @@ List<String> _foodAliases(
     'food_tomato': ['tomato', '番茄', '西红柿'],
     'food_broccoli': ['broccoli', '西兰花', '青花菜', '十字花科'],
     'food_oats': ['oats', 'rolled oats', '燕麦', '燕麦片', '全谷物', '杂粮'],
-    'food_brown_rice': ['brown rice', '糙米', '糙米饭', '全谷物', '杂粮饭'],
+    'food_brown_rice': [
+      'brown rice',
+      '糙米',
+      '糙米饭',
+      '全谷物',
+      '杂粮饭',
+      '玄米',
+      'riz complet',
+    ],
     'food_salmon': ['salmon', '三文鱼', '鲑鱼', '鱼类'],
     'food_fava_beans': ['broad bean', '蚕豆', 'sora bean', '胡豆'],
     'food_potato_boiled': ['potato', 'boiled potato', '土豆', '马铃薯', '洋芋', '薯类'],

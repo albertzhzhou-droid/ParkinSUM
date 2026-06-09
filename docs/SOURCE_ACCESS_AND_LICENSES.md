@@ -97,3 +97,15 @@ PARKINSUM_ENABLE_LIVE_SOURCE_SMOKE=1 dart run tool/run_live_source_smoke.dart --
 Nothing here is medical advice, a diagnosis, a dosing/timing recommendation,
 or a claim of clinical validation. The mechanistic model is **not clinically
 calibrated** (see `docs/CONFLICT_ENGINE_MODEL.md`).
+
+## Public-demo allowance column
+
+Each registry record now carries `allowed_for_public_demo` (default `false`).
+It must be set to `true` — after a license/terms review — before a source may be
+cited in public-demo material (walkthroughs, public docs). The contract checker
+(`npm run source:access`) warns on `public_demo_not_allowed` when a source is
+cited in public-demo paths without the flag, and blocks on
+`missing_required_fields` when a record omits the core matrix fields
+(`source_id`, `display_name`, `owner`, `jurisdiction`, `access_method`,
+`implementation_status`). This is governance bookkeeping, not legal advice or
+license clearance.

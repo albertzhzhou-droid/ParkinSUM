@@ -810,6 +810,8 @@ final Map<String, Map<String, String>> _strings = {
     'catalog.food_subtitle':
         '类别={category}  蛋白/碳水/脂肪={protein}/{carbs}/{fat}（每 100g）',
     'catalog.drug_subtitle': '标签={tags}',
+    'catalog.view_detail': '查看详情',
+    'catalog.selected_active': '已选为当前用药',
     'medications.view_detail': '查看药品详情',
     'detail.variant_source': '变体 / 来源',
     'detail.imported_nutrients': '已导入营养值',
@@ -1486,6 +1488,8 @@ final Map<String, Map<String, String>> _strings = {
     'catalog.food_subtitle':
         'Category={category}  P/C/F={protein}/{carbs}/{fat} (per 100g)',
     'catalog.drug_subtitle': 'Tags={tags}',
+    'catalog.view_detail': 'View details',
+    'catalog.selected_active': 'Selected as active medication',
     'medications.view_detail': 'View medication details',
     'detail.variant_source': 'Variant / source',
     'detail.imported_nutrients': 'Imported nutrients',
@@ -2144,6 +2148,8 @@ final Map<String, Map<String, String>> _strings = {
     'catalog.food_subtitle':
         'Categorie={category}  P/C/F={protein}/{carbs}/{fat} (par 100g)',
     'catalog.drug_subtitle': 'Etiquettes={tags}',
+    'catalog.view_detail': 'Voir les details',
+    'catalog.selected_active': 'Selectionne comme medicament actif',
     'medications.view_detail': 'Voir le detail du medicament',
     'detail.variant_source': 'Variante / source',
     'detail.imported_nutrients': 'Nutriments importes',
@@ -2787,6 +2793,8 @@ final Map<String, Map<String, String>> _strings = {
     'catalog.food_subtitle':
         'カテゴリ={category}  P/C/F={protein}/{carbs}/{fat}（100gあたり）',
     'catalog.drug_subtitle': 'タグ={tags}',
+    'catalog.view_detail': '詳細を見る',
+    'catalog.selected_active': '服用中の薬として選択済み',
     'medications.view_detail': '薬の詳細を見る',
     'detail.variant_source': 'バリアント / ソース',
     'detail.imported_nutrients': '取込済み栄養値',

@@ -28,6 +28,10 @@ class SourceUsageType {
   static const String documentation = 'documentation';
   static const String modelAssumption = 'model_assumption';
   static const String production = 'production';
+
+  /// Public demo / walkthrough usage (talks, videos, public docs). Wider
+  /// audience than fixtures, so it carries its own allow flag.
+  static const String publicDemo = 'public_demo';
   static const String unknown = 'unknown';
 }
 
@@ -48,6 +52,11 @@ class SourceAccessRecord {
   final bool allowedForFixture;
   final bool allowedForLiveSmoke;
   final bool allowedForProduction;
+
+  /// Whether this source may be cited/shown in public demo material
+  /// (walkthroughs, public docs). Defaults to false; reputational scope is
+  /// wider than fixture tests, so it must be opted in explicitly.
+  final bool allowedForPublicDemo;
   final bool canSupportMechanismEvidenceAlone;
   final bool canSupportIdentityOrCoding;
   final bool canSupportSourceQualityScoring;
@@ -73,6 +82,7 @@ class SourceAccessRecord {
     this.allowedForFixture = true,
     this.allowedForLiveSmoke = false,
     this.allowedForProduction = false,
+    this.allowedForPublicDemo = false,
     this.canSupportMechanismEvidenceAlone = false,
     this.canSupportIdentityOrCoding = false,
     this.canSupportSourceQualityScoring = false,
@@ -121,6 +131,7 @@ class SourceAccessRecord {
         allowedForFixture: _b(j['allowed_for_fixture']),
         allowedForLiveSmoke: _b(j['allowed_for_live_smoke']),
         allowedForProduction: _b(j['allowed_for_production']),
+        allowedForPublicDemo: _b(j['allowed_for_public_demo']),
         canSupportMechanismEvidenceAlone:
             _b(j['can_support_mechanism_evidence_alone']),
         canSupportIdentityOrCoding: _b(j['can_support_identity_or_coding']),
@@ -149,6 +160,7 @@ class SourceAccessRecord {
         'allowed_for_fixture': allowedForFixture,
         'allowed_for_live_smoke': allowedForLiveSmoke,
         'allowed_for_production': allowedForProduction,
+        'allowed_for_public_demo': allowedForPublicDemo,
         'can_support_mechanism_evidence_alone':
             canSupportMechanismEvidenceAlone,
         'can_support_identity_or_coding': canSupportIdentityOrCoding,
