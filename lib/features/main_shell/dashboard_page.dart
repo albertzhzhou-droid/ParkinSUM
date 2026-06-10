@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/copy/response_copy_service.dart';
-import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';
 import '../../domain/entities/food_recommendation.dart';

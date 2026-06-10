@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
-import '../core/i18n/app_i18n.dart';
+import '../core/i18n/app_i18n_context.dart';
 import '../core/services/services.dart';
 import '../core/state/app_state.dart';
 import '../core/theme/liquid_glass_theme.dart';
@@ -32,7 +32,7 @@ class ParkinSUMApp extends StatelessWidget {
         builder: (context, state, _) => MaterialApp(
           key: ValueKey<String>(state.userProfile.displayLocale),
           debugShowCheckedModeBanner: false,
-          locale: AppI18n.toLocale(state.userProfile.displayLocale),
+          locale: appI18nLocaleFor(state.userProfile.displayLocale),
           supportedLocales: const [
             // Originally supported.
             Locale('zh', 'CN'),

@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';

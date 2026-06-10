@@ -25,10 +25,13 @@ candidate, and it never overrides gate decisions.
 ## How to run
 
 ```sh
+npm run recommend:replay
+# or, equivalently (also verifies the report content):
 flutter test test/local_ai_replay_report_test.dart
 ```
 
-This one command regenerates and verifies the reviewer artifact:
+Either command regenerates the reviewer artifact (both entry points produce
+byte-identical files; the focused test additionally asserts the content):
 
 - `build/recommendation_scenario_replay/latest.md` — reviewer Markdown (per
   archetype: rankings, decision path, gate reasons, invariant status,
@@ -54,9 +57,12 @@ byte-stability) live in:
 flutter test test/local_ai_scenario_replay_test.dart
 ```
 
-## Why there is no `dart run` CLI
+## CLI notes
 
-The orchestrator transitively imports Flutter via `app_i18n`, so a plain-Dart
-CLI cannot compile without a larger i18n refactor. The focused test above is
-the supported one-command entry point; a Flutter-free import path for the
-orchestrator remains documented future work.
+`npm run recommend:replay` runs `tool/run_recommendation_scenario_replay.dart`
+under plain `dart run` (no device, no network, no real model). This became
+possible after the Flutter-facing i18n members (`BuildContext` access and
+`Locale` mapping) were split into `lib/core/i18n/app_i18n_context.dart`,
+leaving `app_i18n.dart` — and therefore the whole recommendation stack — pure
+Dart. The CLI exits non-zero iff the Local-AI candidate-set invariant is
+violated.

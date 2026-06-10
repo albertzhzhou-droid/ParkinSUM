@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/liquid_glass_theme.dart';
