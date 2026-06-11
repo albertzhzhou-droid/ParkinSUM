@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/services/firebase_backend.dart';
-import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import 'dashboard_page.dart';

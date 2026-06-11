@@ -1,7 +1,3 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import '../state/app_state.dart';
 import 'app_i18n_full_translations.dart';
 
 /// Lightweight in-app localization layer.
@@ -16,25 +12,6 @@ class AppI18n {
 
   factory AppI18n.fromLocaleTag(String localeTag) {
     return AppI18n._(localeTag);
-  }
-
-  static AppI18n of(BuildContext context) {
-    // 这里不能再用 context.select/watch：
-    // EntryPage 等页面会在 didChangeDependencies、保存回调、弹窗动作里读取 i18n，
-    // 若继续依赖 provider 的 build-phase API，会触发
-    // “Tried to use context.select outside of the build method” 断言。
-    // 因此统一改成 listen:false 的只读访问，让 build 内外都能安全取当前 locale。
-    final localeTag =
-        Provider.of<AppState>(context, listen: false).userProfile.displayLocale;
-    return AppI18n.fromLocaleTag(localeTag);
-  }
-
-  static Locale toLocale(String localeTag) {
-    final parts = localeTag.split('-');
-    if (parts.length >= 2) {
-      return Locale(parts[0], parts[1]);
-    }
-    return Locale(parts.first);
   }
 
   String get languageFamily {
@@ -455,10 +432,6 @@ class AppI18n {
     final familyMap = _strings[languageFamily] ?? _strings['en']!;
     return familyMap[key] ?? value;
   }
-}
-
-extension AppI18nBuildContext on BuildContext {
-  AppI18n get appI18n => AppI18n.of(this);
 }
 
 /// Family → flatKey → translatedString.

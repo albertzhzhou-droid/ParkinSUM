@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';

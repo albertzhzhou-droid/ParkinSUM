@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/food_item.dart';
 import '../../domain/usecases/cdss_catalog_projection_service.dart';

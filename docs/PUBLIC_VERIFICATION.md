@@ -76,10 +76,11 @@ results.
 
 ### Recommended reviewer order
 
-1. `flutter test test/local_ai_replay_report_test.dart` — regenerates the
-   deterministic Local-AI scenario replay artifact. Proves the Local-AI
-   candidate-set invariant held over the five synthetic archetypes; does NOT
-   prove model quality or real-care behaviour.
+1. `npm run recommend:replay` (or `flutter test
+   test/local_ai_replay_report_test.dart`) — regenerates the deterministic
+   Local-AI scenario replay artifact; both entry points produce byte-identical
+   files. Proves the Local-AI candidate-set invariant held over the five
+   synthetic archetypes; does NOT prove model quality or real-care behaviour.
 2. `npm run release:snapshot` — composes all artifacts into one evidence
    summary. Proves which artifacts exist and what they reported; does NOT
    re-run any check.
@@ -100,7 +101,7 @@ calibrated for real care.
   `build/source_quality_perturbation/latest.json`,
   `build/public_release_preflight/latest.json`, and
   `build/recommendation_scenario_replay/latest.json` (generate the last one with
-  `flutter test test/local_ai_replay_report_test.dart`); analyze/test/firestore
+  `npm run recommend:replay`); analyze/test/firestore
   results may be injected via flags (e.g. `--analyze=clean --test-count=460
   --firestore=13/13`).
 - **Expected:** `build/release_snapshot/latest.{json,md}` with a per-check table;
