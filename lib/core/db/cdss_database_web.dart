@@ -613,6 +613,7 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertStagingRow(String table, Map<String, Object?> row) async {
+    requireValidCdssTableName(table);
     final rows = await _load(table);
     final idKey = row.keys.firstWhere(
       (key) => key.endsWith('_id'),
@@ -643,6 +644,7 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<List<Map<String, Object?>>> queryTable(String table) async {
+    requireValidCdssTableName(table);
     final rows = await _load(table);
     return rows.cast<Map<String, Object?>>();
   }

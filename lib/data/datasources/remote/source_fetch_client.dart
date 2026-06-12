@@ -59,8 +59,10 @@ class HttpSourceFetchClient implements SourceFetchClient {
     Map<String, String>? headers,
   }) async {
     final uri = Uri.parse(url);
+    // Query strings may carry credentials; never echo them into errors.
+    final safeUrl = '${uri.scheme}://${uri.host}${uri.path}';
     if (uri.scheme != 'https' || uri.host.isEmpty || uri.userInfo.isNotEmpty) {
-      throw StateError('Refusing non-HTTPS or malformed source URL: $url');
+      throw StateError('Refusing non-HTTPS or malformed source URL: $safeUrl');
     }
     final request = http.Request('GET', uri)
       ..followRedirects = false
@@ -70,21 +72,21 @@ class HttpSourceFetchClient implements SourceFetchClient {
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       await streamed.stream.drain<void>();
       throw StateError(
-        'Failed to fetch $url: HTTP ${streamed.statusCode}',
+        'Failed to fetch $safeUrl: HTTP ${streamed.statusCode}',
       );
     }
     final declaredLength = streamed.contentLength;
     if (declaredLength != null && declaredLength > responseByteLimit) {
       await streamed.stream.drain<void>();
       throw StateError(
-        'Failed to fetch $url: response exceeds $responseByteLimit bytes.',
+        'Failed to fetch $safeUrl: response exceeds $responseByteLimit bytes.',
       );
     }
     final bytes = BytesBuilder(copy: false);
     await for (final chunk in streamed.stream) {
       if (bytes.length + chunk.length > responseByteLimit) {
         throw StateError(
-          'Failed to fetch $url: response exceeds $responseByteLimit bytes.',
+          'Failed to fetch $safeUrl: response exceeds $responseByteLimit bytes.',
         );
       }
       bytes.add(chunk);

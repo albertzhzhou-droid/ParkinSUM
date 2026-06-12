@@ -30,7 +30,10 @@ class DailyMedP0Importer {
 
   Future<P0ImportBundle> fetchBySetIds(List<String> setIds) async {
     P0ImportBundle bundle = const P0ImportBundle();
-    for (final setId in setIds) {
+    for (final rawSetId in setIds) {
+      // Set ids come from config/upstream indexes; encode them so a malformed
+      // value cannot alter the request path.
+      final setId = Uri.encodeComponent(rawSetId);
       final xml = await fetchClient
           .getText('${P0SourceUrls.dailymedSplXmlBase}/$setId.xml');
       final ndcs = await _safeFetchJsonList(

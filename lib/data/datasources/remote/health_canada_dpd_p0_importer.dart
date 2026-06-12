@@ -334,8 +334,10 @@ class HealthCanadaDpdP0Importer {
       final productCode = variant.externalProductCode;
       final drugCode =
           productCode.contains('-') ? productCode.split('-').last : productCode;
+      // The code is parsed from upstream data; encode it so it cannot inject
+      // additional query parameters.
       final infoUrl =
-          'https://health-products.canada.ca/dpd-bdpp/info?code=$drugCode&lang=eng';
+          'https://health-products.canada.ca/dpd-bdpp/info?code=${Uri.encodeQueryComponent(drugCode)}&lang=eng';
       try {
         final html = await fetchClient.getText(infoUrl);
         final summaryText = _summarizeHtmlDetail(html);

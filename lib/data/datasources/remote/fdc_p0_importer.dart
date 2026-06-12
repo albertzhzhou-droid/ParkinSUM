@@ -29,8 +29,14 @@ class FdcP0Importer {
     required String apiKey,
     required int fdcId,
   }) async {
-    final url = '${P0SourceUrls.fdcFoodDetail}/$fdcId?api_key=$apiKey';
-    final json = await fetchClient.getJsonMap(url);
+    // The key is sent as an X-Api-Key header (supported by api.data.gov /
+    // FDC) instead of a query parameter, so it can never leak through URLs in
+    // error messages, logs, or cache-metadata keys.
+    final url = '${P0SourceUrls.fdcFoodDetail}/$fdcId';
+    final json = await fetchClient.getJsonMap(
+      url,
+      headers: {'X-Api-Key': apiKey},
+    );
     return importFoods([json], sourceLabel: 'fdc_api_food_detail');
   }
 

@@ -767,6 +767,7 @@ class NativeCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertStagingRow(String table, Map<String, Object?> row) async {
+    requireValidCdssTableName(table);
     final db = await _open();
     await db.insert(
       table,
@@ -798,6 +799,7 @@ class NativeCdssDatabase implements CdssDatabase {
 
   @override
   Future<List<Map<String, Object?>>> queryTable(String table) async {
+    requireValidCdssTableName(table);
     final db = await _open();
     return db.query(table);
   }
