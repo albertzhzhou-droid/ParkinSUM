@@ -640,10 +640,21 @@ class AppState extends ChangeNotifier {
     return services.getProteinTrendUseCase.averageProtein(_meals);
   }
 
+  // Cryptographically secure RNG for record ids (falls back to a seeded RNG
+  // only on platforms without an entropy source). A static instance avoids
+  // re-seeding per call.
+  static final Random _idRandom = () {
+    try {
+      return Random.secure();
+    } on UnsupportedError {
+      return Random();
+    }
+  }();
+
   String newId(String prefix) {
     // Web/JS 下 `1 << 32` 会溢出成 0，导致 nextInt(0) 抛 RangeError。
     // 这里改用跨平台安全的随机范围。
-    final r = Random().nextInt(1 << 31);
+    final r = _idRandom.nextInt(1 << 31);
     final now = DateTime.now().microsecondsSinceEpoch;
     final id = '${prefix}_${now}_$r';
     _debugLog('[AppState] newId prefix=$prefix');

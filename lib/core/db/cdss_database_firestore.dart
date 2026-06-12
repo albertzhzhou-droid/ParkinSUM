@@ -31,6 +31,7 @@ class FirestoreCdssDatabase implements CdssDatabase {
       _providedFirestore ?? FirebaseFirestore.instance;
 
   Future<CollectionReference<Map<String, dynamic>>> _rows(String table) async {
+    requireValidCdssTableName(table);
     await FirebaseBackend.ensureInitialized();
     final uid = authService.currentUserId;
     if (uid == null) {
@@ -511,6 +512,13 @@ class FirestoreCdssDatabase implements CdssDatabase {
         row['rule_id'] ??
         row['event_id'] ??
         row['ticket_id'];
+    if (id == null || '$id'.trim().isEmpty) {
+      // Without an identifier every row would upsert into the same "null"
+      // document and silently overwrite earlier rows — fail loudly instead.
+      throw StateError(
+          'Staging row for "$table" has no identifier key; refusing to '
+          'upsert under a shared document id.');
+    }
     return _upsert(table, '$id', row);
   }
 

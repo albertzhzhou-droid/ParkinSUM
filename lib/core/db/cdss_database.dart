@@ -1,5 +1,19 @@
 import '../../domain/entities/cdss_records.dart';
 
+/// CDSS table identifiers are internal constants, but they end up in dynamic
+/// identifier sinks (SQL table names, Firestore path segments, storage keys),
+/// which cannot use parameter binding. This guard rejects anything that is not
+/// a plain snake_case identifier so a malformed value can never reshape a
+/// query or a collection path.
+final RegExp _cdssTableNamePattern = RegExp(r'^[a-z][a-z0-9_]{0,63}$');
+
+String requireValidCdssTableName(String table) {
+  if (!_cdssTableNamePattern.hasMatch(table)) {
+    throw ArgumentError.value(table, 'table', 'Invalid CDSS table identifier');
+  }
+  return table;
+}
+
 abstract class CdssDatabase {
   Future<void> initialize();
 
