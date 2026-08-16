@@ -24,7 +24,7 @@ dependencies:
   path: ^1.9.0
   yaml: ^3.1.2
   http: ^1.2.1
-  xml: ^6.5.0
+  xml: ^7.0.1
   archive: ^3.6.1
   csv: ^6.0.0
   firebase_core: ^4.7.0
