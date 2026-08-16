@@ -20,6 +20,14 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned deliberately. An unpinned `channel: stable` silently tracks
+          # whatever Flutter is current, which produced three surprise CI
+          # failures with no code change on our side: a new `unawaited_return_
+          # in_try_block` warning, a repo-wide `dart format` style change, and
+          # two new lint rules. Pinning makes a toolchain move an explicit,
+          # reviewable commit. Dependabot does not bump this; raise it
+          # intentionally alongside a green run.
+          flutter-version: '3.47.0'
           cache: true
 
       - run: npm ci
