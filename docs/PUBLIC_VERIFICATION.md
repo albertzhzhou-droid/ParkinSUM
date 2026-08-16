@@ -14,6 +14,22 @@ Install Flutter, Dart, Node.js, and npm. From the repository root run
 `flutter pub get` and `npm ci` once. All checks below run on **synthetic/demo
 data** and, except where noted, require **no network**.
 
+**Minimum Dart SDK in practice: 3.11.0** (Flutter 3.47 or newer). The floor is
+set by the strictest dependency — currently `xml`, which requires Dart
+`^3.11.0`. On an older SDK `flutter pub get` fails during version solving before
+any check can run, and the error names `xml` rather than the SDK:
+
+```
+Because xml 7.0.1 requires SDK version ^3.11.0 ... version solving failed.
+```
+
+Note that `pubspec.yaml` still declares `sdk: ">=3.3.0 <4.0.0"`, which no longer
+matches this. Correcting it is a one-line change, but raising the declared floor
+also raises the package's **language version**, which switches `dart format` to
+the newer style and reformats ~269 files. That formatter migration should be its
+own commit rather than a side effect of a dependency bump — until then, treat
+this section as the authoritative minimum.
+
 ## Core checks
 
 ### `flutter analyze`
