@@ -920,12 +920,18 @@ class GlassButton extends StatelessWidget {
                     Icon(leadingIcon, size: 18),
                     const SizedBox(width: 8),
                   ],
-                  DefaultTextStyle.merge(
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.1,
+                  // Flexible (not Expanded) keeps mainAxisSize.min intact while
+                  // letting a long label shrink/wrap instead of overflowing the
+                  // row. Labels are localized, so width varies a lot per locale
+                  // and grows further with large text scales.
+                  Flexible(
+                    child: DefaultTextStyle.merge(
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.1,
+                      ),
+                      child: label,
                     ),
-                    child: label,
                   ),
                 ],
               ),

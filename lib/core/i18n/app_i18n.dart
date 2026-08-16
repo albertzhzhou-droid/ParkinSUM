@@ -432,6 +432,23 @@ class AppI18n {
     final familyMap = _strings[languageFamily] ?? _strings['en']!;
     return familyMap[key] ?? value;
   }
+
+  /// Read-only view of the full translation dictionary, keyed by language
+  /// family then flat key.
+  ///
+  /// Exposed so pure-Dart governance tooling (the localization safety lint)
+  /// can audit **every** shipped string rather than only the representative
+  /// SafeCopyTemplateRegistry surfaces. Callers must not mutate it; the maps
+  /// are wrapped unmodifiable.
+  static Map<String, Map<String, String>> get translationDictionary =>
+      Map.unmodifiable({
+        for (final entry in _strings.entries)
+          entry.key: Map<String, String>.unmodifiable(entry.value),
+      });
+
+  /// Language families carried by [translationDictionary] (sorted).
+  static List<String> get translationFamilies =>
+      _strings.keys.toList(growable: false)..sort();
 }
 
 /// Family → flatKey → translatedString.
@@ -1018,10 +1035,9 @@ final Map<String, Map<String, String>> _strings = {
     'medication_note.drug_tolcapone': 'COMT 抑制剂，使用时需要关注肝毒性监测，通常保留给特定患者。',
     'medication_note.drug_opicapone':
         '每日一次的 COMT 抑制剂，用于 OFF 发作患者的左旋多巴/卡比多巴辅助治疗。',
-    'medication_note.drug_selegiline':
-        '用于帕金森病的 MAO-B 抑制剂。推荐剂量下通常不需要常规限酪胺，但极高酪胺暴露仍需注意。',
+    'medication_note.drug_selegiline': '用于帕金森病的 MAO-B 抑制剂。高酪胺规则在此仍为基线占位实现。',
     'medication_note.drug_rasagiline':
-        '选择性 MAO-B 抑制剂。推荐剂量下一般不需常规限酪胺，但极高酪胺负荷应避免。',
+        '选择性 MAO-B 抑制剂。酪胺摄入是该药物类别已记录的相互作用主题。饮食相关问题请咨询有资质的临床医生。',
     'medication_note.drug_safinamide':
         '与左旋多巴/卡比多巴联用的 MAO-B 抑制剂，主要用于伴 OFF 波动的患者。',
     'medication_note.drug_iron': '铁剂本身不是 PD 治疗药，但临床上重要，因为它可能与左旋多巴/卡比多巴螯合并降低吸收。',
@@ -1047,7 +1063,7 @@ final Map<String, Map<String, String>> _strings = {
     'medication_summary.drug_opicapone': '通常按左旋多巴时序来解释，不是直接的食物阻断药物。',
     'medication_summary.drug_selegiline': '主要饮食注意点仍是极高酪胺食物，尤其在剂量或制剂变化时。',
     'medication_summary.drug_rasagiline': '应注意极高酪胺负荷，约 150 mg 及以上时更需谨慎。',
-    'medication_summary.drug_safinamide': '推荐剂量下通常不需常规限酪胺，但大量酪胺负荷仍相关。',
+    'medication_summary.drug_safinamide': '酪胺摄入是该药物类别已记录的相互作用主题；请与有资质的临床医生讨论。',
     'medication_summary.drug_iron': '如有可能，应与含左旋多巴治疗错开。',
     'medication_summary.drug_pramipexole': '当前引擎中食物冲突较少，临床上更应关注嗜睡、冲动控制和体位性低血压。',
     'medication_summary.drug_ropinirole': '当前引擎没有针对其设置主要食物硬规则，更应关注耐受性和滴定背景。',
@@ -1788,7 +1804,7 @@ final Map<String, Map<String, String>> _strings = {
     'medication_note.drug_tolcapone':
         'COMT inhibitor with liver-monitoring context. Food timing is usually secondary to safety monitoring and levodopa co-therapy.',
     'medication_note.drug_rasagiline':
-        'MAO-B inhibitor. Routine tyramine restriction is usually not required at recommended doses, but very high tyramine foods remain relevant.',
+        'MAO-B inhibitor. Tyramine intake is a documented interaction topic for this drug class. Review any dietary questions with a qualified clinician.',
     'medication_note.drug_safinamide':
         'Adjunct MAO-B inhibitor used with levodopa/carbidopa. Very high tyramine exposure remains a caution point.',
     'medication_note.drug_selegiline':
