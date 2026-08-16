@@ -1,0 +1,43 @@
+# Dependency update automation.
+#
+# Before this file existed only GitHub's default security alerts raised PRs, so
+# the Dart/Flutter dependency tree and the CI actions had no automated
+# vulnerability or version monitoring at all.
+version: 2
+updates:
+  # Dart / Flutter packages (pubspec.yaml) — previously unmonitored.
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(pub)"
+    groups:
+      pub-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Operator / governance tooling (package.json).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(npm)"
+    groups:
+      npm-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Workflow actions (pinned action versions in .github/workflows).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(actions)"

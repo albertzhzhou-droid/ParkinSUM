@@ -61,3 +61,61 @@ jobs:
 
       - name: Validate Firestore rules contract
         run: npm run rules:contract
+
+  governance-gates:
+    name: Governance gates
+    runs-on: ubuntu-latest
+    # These gates are deterministic, offline, and synthetic-data only. Each one
+    # exits non-zero on a blocker, so they act as a real ratchet rather than a
+    # report. They need BOTH toolchains: the npm scripts are thin wrappers that
+    # spawn `dart run`.
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          npm ci
+
+      # --- Copy / localization safety -------------------------------------
+      - name: Explanation copy compiles (0 blocker)
+        run: npm run copy:compile
+
+      - name: Localization safety lint (full i18n dictionary)
+        run: npm run localization:lint
+
+      # --- Deterministic replays ------------------------------------------
+      - name: Mechanistic replay
+        run: npm run mechanistic:replay
+
+      - name: Local AI scenario replay (candidate-set invariant)
+        run: npm run recommend:replay
+
+      - name: Synthetic scenario fuzzer
+        run: npm run scenario:fuzz
+
+      # --- Privacy / source governance ------------------------------------
+      - name: Local privacy preflight
+        run: npm run privacy:preflight
+
+      - name: Source access contract check
+        run: npm run source:access
+
+      - name: Source version drift check
+        run: npm run source:drift
+
+      - name: Contribution safety router
+        run: npm run contribution:route
