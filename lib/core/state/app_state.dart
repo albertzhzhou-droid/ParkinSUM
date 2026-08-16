@@ -1093,7 +1093,10 @@ class AppState extends ChangeNotifier {
   }) async {
     try {
       final report = await buildReport();
-      return _toImportStepResult(
+      // Must be awaited inside the try: returning the future un-awaited let
+      // failures from _toImportStepResult escape this catch, so the graceful
+      // `succeeded: false` result below was never produced for them.
+      return await _toImportStepResult(
         report,
         sourceKeyOverride: sourceKey,
         sourceLabelOverride: sourceLabel,
