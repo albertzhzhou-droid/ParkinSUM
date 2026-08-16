@@ -13,14 +13,14 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  cupertino_icons: ^1.0.6
+  cupertino_icons: ^1.0.9
 
   # 状态管理（代码里用到 Provider / ChangeNotifierProxyProvider）
   provider: ^6.1.2
 
   # 本地持久化（DataService 的 SharedPreferences 实现）
-  shared_preferences: ^2.2.3
-  sqflite: ^2.3.3+1
+  shared_preferences: ^2.5.5
+  sqflite: ^2.4.3
   path: ^1.9.0
   yaml: ^3.1.2
   http: ^1.2.1
@@ -29,7 +29,7 @@ dependencies:
   csv: ^6.0.0
   firebase_core: ^4.7.0
   firebase_auth: ^6.4.0
-  cloud_firestore: ^6.3.0
+  cloud_firestore: ^6.8.0
   firebase_app_check: ^0.4.4+1
 
 dev_dependencies:
