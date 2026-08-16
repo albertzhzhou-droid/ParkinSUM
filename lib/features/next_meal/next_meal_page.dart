@@ -514,12 +514,16 @@ class _ResultBlock extends StatelessWidget {
                     Icon(Icons.shield_outlined,
                         size: 18, color: scheme.primary),
                     const SizedBox(width: 8),
-                    Text(
-                      i18n.tr('next_meal.gate_reasons'),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: LiquidGlass.onSurface,
+                    // Must flex: this label is far longer in some locales
+                    // (fr is ~2x en) and overflowed the row without it.
+                    Expanded(
+                      child: Text(
+                        i18n.tr('next_meal.gate_reasons'),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: LiquidGlass.onSurface,
+                        ),
                       ),
                     ),
                   ],
