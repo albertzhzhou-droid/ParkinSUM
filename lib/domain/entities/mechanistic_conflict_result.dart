@@ -34,12 +34,12 @@ class MechanisticLayerTrace {
   });
 
   Map<String, dynamic> toJson() => {
-        'layer': layer,
-        'inputs_used': inputsUsed,
-        'assumptions_applied': assumptionsApplied,
-        'uncertainty_contribution': uncertaintyContribution,
-        'description': description,
-      };
+    'layer': layer,
+    'inputs_used': inputsUsed,
+    'assumptions_applied': assumptionsApplied,
+    'uncertainty_contribution': uncertaintyContribution,
+    'description': description,
+  };
 }
 
 /// Structured, serializable explanation for the mechanistic engine result.
@@ -70,16 +70,15 @@ class MechanisticExplanation {
       'infer real pharmacokinetics for any person.';
 
   Map<String, dynamic> toJson() => {
-        'result_id': resultId,
-        'layer_traces':
-            layerTraces.map((e) => e.toJson()).toList(growable: false),
-        'input_fields_used': inputFieldsUsed,
-        'missing_or_uncertain_inputs': missingOrUncertainInputs,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'result_id': resultId,
+    'layer_traces': layerTraces.map((e) => e.toJson()).toList(growable: false),
+    'input_fields_used': inputFieldsUsed,
+    'missing_or_uncertain_inputs': missingOrUncertainInputs,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }
 
 /// Per-medication-event trace for the multi-dose time axis.
@@ -141,26 +140,26 @@ class MechanisticPerEventTrace {
   });
 
   Map<String, dynamic> toJson() => {
-        'medication_event_id': medicationEventId,
-        'medication_minute': medicationMinute,
-        'is_levodopa': isLevodopa,
-        'release_type': releaseType,
-        'interaction_score': interactionScore,
-        'competition_band': competitionBand,
-        'delayed_arrival_likelihood': delayedArrivalLikelihood,
-        'is_primary': isPrimary,
-        'source_refs': sourceRefs,
-        'uncertainty_reasons': uncertaintyReasons,
-        'release_type_source': releaseTypeSource,
-        'dose_form': doseForm,
-        'route': route,
-        'levodopa_component_present': levodopaComponentPresent,
-        'combination_component_count': combinationComponentCount,
-        'label_section_ref_count': labelSectionRefCount,
-        'medication_source_system': medicationSourceSystem,
-        'medication_source_doc_id': medicationSourceDocId,
-        'medication_metadata_completeness': medicationMetadataCompleteness,
-      };
+    'medication_event_id': medicationEventId,
+    'medication_minute': medicationMinute,
+    'is_levodopa': isLevodopa,
+    'release_type': releaseType,
+    'interaction_score': interactionScore,
+    'competition_band': competitionBand,
+    'delayed_arrival_likelihood': delayedArrivalLikelihood,
+    'is_primary': isPrimary,
+    'source_refs': sourceRefs,
+    'uncertainty_reasons': uncertaintyReasons,
+    'release_type_source': releaseTypeSource,
+    'dose_form': doseForm,
+    'route': route,
+    'levodopa_component_present': levodopaComponentPresent,
+    'combination_component_count': combinationComponentCount,
+    'label_section_ref_count': labelSectionRefCount,
+    'medication_source_system': medicationSourceSystem,
+    'medication_source_doc_id': medicationSourceDocId,
+    'medication_metadata_completeness': medicationMetadataCompleteness,
+  };
 }
 
 /// Top-level result returned by `MechanisticConflictEngine`.
@@ -244,26 +243,27 @@ class MechanisticConflictResult {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'interaction_type': interactionType.name,
-        'interaction_score': interactionScore,
-        'severity_band': severityBand.name,
-        'confidence_band': confidenceBand.name,
-        'primary_drivers': primaryDrivers,
-        'modeled_timeline_windows': modeledTimelineWindows
-            .map((e) => e.toJson())
-            .toList(growable: false),
-        'uncertainty_reasons': uncertaintyReasons,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-        'explanation': explanation.toJson(),
-        'primary_emptying_profile': primaryEmptyingProfile?.toJson(),
-        'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
-        'competition_timeline': competitionTimeline?.toJson(),
-        'per_event_count': perEventCount,
-        'per_event_traces':
-            perEventTraces.map((e) => e.toJson()).toList(growable: false),
-      };
+    'id': id,
+    'interaction_type': interactionType.name,
+    'interaction_score': interactionScore,
+    'severity_band': severityBand.name,
+    'confidence_band': confidenceBand.name,
+    'primary_drivers': primaryDrivers,
+    'modeled_timeline_windows': modeledTimelineWindows
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'uncertainty_reasons': uncertaintyReasons,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+    'explanation': explanation.toJson(),
+    'primary_emptying_profile': primaryEmptyingProfile?.toJson(),
+    'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
+    'competition_timeline': competitionTimeline?.toJson(),
+    'per_event_count': perEventCount,
+    'per_event_traces': perEventTraces
+        .map((e) => e.toJson())
+        .toList(growable: false),
+  };
 }

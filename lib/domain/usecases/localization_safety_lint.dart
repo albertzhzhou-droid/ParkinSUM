@@ -71,14 +71,7 @@ class LocalizationSafetyLint {
       'sûr pour vous',
       'validé cliniquement',
     ],
-    'ja': [
-      '推奨用量',
-      '服用すべき',
-      '薬を服用してください',
-      'タンパク質を避ける',
-      'あなたに安全',
-      '臨床的に検証済み',
-    ],
+    'ja': ['推奨用量', '服用すべき', '薬を服用してください', 'タンパク質を避ける', 'あなたに安全', '臨床的に検証済み'],
   };
 
   /// Overconfidence patterns (English; conservative to avoid false positives).
@@ -109,6 +102,7 @@ class LocalizationSafetyLint {
   LocalizationSafetyReport lint(
     List<LocalizationSurface> surfaces,
     LocalizationSafetyLintConfig config, {
+
     /// When false, an informational `no_locale_dictionary_discovered` finding is
     /// recorded (e.g. the Flutter-coupled app dictionary is not loadable from a
     /// pure-Dart CLI). Coverage is never fabricated.
@@ -117,46 +111,56 @@ class LocalizationSafetyLint {
     final findings = <LocalizationSafetyFinding>[];
 
     if (surfaces.isEmpty) {
-      findings.add(const LocalizationSafetyFinding(
-        severity: 'warn',
-        findingType: noLocaleDictionaryDiscovered,
-        surfaceId: 'none',
-        locale: '-',
-        key: '-',
-        message: 'No localization surfaces supplied to lint.',
-        safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-      ));
+      findings.add(
+        const LocalizationSafetyFinding(
+          severity: 'warn',
+          findingType: noLocaleDictionaryDiscovered,
+          surfaceId: 'none',
+          locale: '-',
+          key: '-',
+          message: 'No localization surfaces supplied to lint.',
+          safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+        ),
+      );
     } else if (!localeDictionaryAvailable) {
-      findings.add(const LocalizationSafetyFinding(
-        severity: 'info',
-        findingType: noLocaleDictionaryDiscovered,
-        surfaceId: 'app_i18n',
-        locale: '-',
-        key: '-',
-        message: 'App localization dictionary not loaded in this context; '
-            'linted safe-copy templates only. Full-dictionary coverage is '
-            'future work (coverage not fabricated).',
-        safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-      ));
+      findings.add(
+        const LocalizationSafetyFinding(
+          severity: 'info',
+          findingType: noLocaleDictionaryDiscovered,
+          surfaceId: 'app_i18n',
+          locale: '-',
+          key: '-',
+          message:
+              'App localization dictionary not loaded in this context; '
+              'linted safe-copy templates only. Full-dictionary coverage is '
+              'future work (coverage not fabricated).',
+          safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+        ),
+      );
     }
 
     // Rule A — required-locale coverage for each required safety key.
     if (config.requiredSafetyKeys.isNotEmpty) {
       for (final key in config.requiredSafetyKeys) {
-        final localesForKey =
-            surfaces.where((s) => s.key == key).map((s) => s.locale).toSet();
+        final localesForKey = surfaces
+            .where((s) => s.key == key)
+            .map((s) => s.locale)
+            .toSet();
         for (final loc in config.requiredLocales) {
           if (!localesForKey.contains(loc)) {
-            findings.add(LocalizationSafetyFinding(
-              severity: config.strictMode ? 'blocker' : 'warn',
-              findingType: missingLocaleCoverage,
-              surfaceId: 'key:$key',
-              locale: loc,
-              key: key,
-              message: 'Required safety key "$key" is missing locale "$loc".',
-              suggestedFix: 'Add a non-prescriptive "$key" string for "$loc".',
-              safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-            ));
+            findings.add(
+              LocalizationSafetyFinding(
+                severity: config.strictMode ? 'blocker' : 'warn',
+                findingType: missingLocaleCoverage,
+                surfaceId: 'key:$key',
+                locale: loc,
+                key: key,
+                message: 'Required safety key "$key" is missing locale "$loc".',
+                suggestedFix:
+                    'Add a non-prescriptive "$key" string for "$loc".',
+                safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+              ),
+            );
           }
         }
       }
@@ -174,33 +178,37 @@ class LocalizationSafetyLint {
 
       // Rule B — safety boundary for boundary/explanation surfaces.
       if (role == 'boundary' || role == 'explanation') {
-        final hasBoundary = lower.contains('not medical advice') ||
+        final hasBoundary =
+            lower.contains('not medical advice') ||
             lower.contains('not clinically calibrated') ||
             lower.contains('not clinical validation') ||
             // CJK / FR equivalents used in project copy.
             normalizedText.contains('未经临床校准') ||
             normalizedText.contains('不是医疗建议');
         if (!hasBoundary) {
-          findings.add(LocalizationSafetyFinding(
-            severity: 'warn',
-            findingType: missingSafetyBoundary,
-            surfaceId: s.surfaceId,
-            locale: s.locale,
-            key: s.key,
-            message:
-                'Boundary/explanation surface lacks a non-prescriptive safety '
-                'boundary term.',
-            suggestedFix:
-                'Add educational / not-medical-advice / not-clinically-'
-                'calibrated wording.',
-            safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-          ));
+          findings.add(
+            LocalizationSafetyFinding(
+              severity: 'warn',
+              findingType: missingSafetyBoundary,
+              surfaceId: s.surfaceId,
+              locale: s.locale,
+              key: s.key,
+              message:
+                  'Boundary/explanation surface lacks a non-prescriptive safety '
+                  'boundary term.',
+              suggestedFix:
+                  'Add educational / not-medical-advice / not-clinically-'
+                  'calibrated wording.',
+              safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+            ),
+          );
         }
       }
 
       // Rule C — evidence/limitation wording for explanation surfaces.
       if (role == 'explanation') {
-        final hasEvidence = lower.contains('source') ||
+        final hasEvidence =
+            lower.contains('source') ||
             lower.contains('evidence') ||
             lower.contains('provenance') ||
             lower.contains('limitation') ||
@@ -208,16 +216,19 @@ class LocalizationSafetyLint {
             s.text.contains('溯源') ||
             s.text.contains('来源');
         if (!hasEvidence) {
-          findings.add(LocalizationSafetyFinding(
-            severity: 'warn',
-            findingType: missingEvidenceTerms,
-            surfaceId: s.surfaceId,
-            locale: s.locale,
-            key: s.key,
-            message: 'Explanation surface lacks source/evidence/limitation '
-                'wording.',
-            safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-          ));
+          findings.add(
+            LocalizationSafetyFinding(
+              severity: 'warn',
+              findingType: missingEvidenceTerms,
+              surfaceId: s.surfaceId,
+              locale: s.locale,
+              key: s.key,
+              message:
+                  'Explanation surface lacks source/evidence/limitation '
+                  'wording.',
+              safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+            ),
+          );
         }
       }
 
@@ -226,17 +237,21 @@ class LocalizationSafetyLint {
         for (final entry in bannedFamilies.entries) {
           for (final pattern in entry.value) {
             if (_isBannedHit(normalizedText, lower, pattern, entry.key)) {
-              findings.add(LocalizationSafetyFinding(
-                severity: 'blocker',
-                findingType: bannedPhrase,
-                surfaceId: s.surfaceId,
-                locale: s.locale,
-                key: s.key,
-                message: 'Unsafe prescriptive phrase (${entry.key}) detected.',
-                matchedText: pattern,
-                suggestedFix: 'Rewrite as a non-prescriptive educational note.',
-                safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-              ));
+              findings.add(
+                LocalizationSafetyFinding(
+                  severity: 'blocker',
+                  findingType: bannedPhrase,
+                  surfaceId: s.surfaceId,
+                  locale: s.locale,
+                  key: s.key,
+                  message:
+                      'Unsafe prescriptive phrase (${entry.key}) detected.',
+                  matchedText: pattern,
+                  suggestedFix:
+                      'Rewrite as a non-prescriptive educational note.',
+                  safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+                ),
+              );
             }
           }
         }
@@ -244,16 +259,18 @@ class LocalizationSafetyLint {
         // Rule F — overconfidence heuristic (English).
         for (final pattern in overconfidencePatterns) {
           if (lower.contains(pattern) && !_negatedNearby(lower, pattern)) {
-            findings.add(LocalizationSafetyFinding(
-              severity: 'warn',
-              findingType: overconfidence,
-              surfaceId: s.surfaceId,
-              locale: s.locale,
-              key: s.key,
-              message: 'Overconfident wording detected.',
-              matchedText: pattern,
-              safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-            ));
+            findings.add(
+              LocalizationSafetyFinding(
+                severity: 'warn',
+                findingType: overconfidence,
+                surfaceId: s.surfaceId,
+                locale: s.locale,
+                key: s.key,
+                message: 'Overconfident wording detected.',
+                matchedText: pattern,
+                safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+              ),
+            );
           }
         }
       }
@@ -264,30 +281,34 @@ class LocalizationSafetyLint {
         final present = _placeholders(s.text);
         for (final p in present) {
           if (!s.allowedPlaceholders.contains(p)) {
-            findings.add(LocalizationSafetyFinding(
-              severity: 'warn',
-              findingType: unknownPlaceholder,
-              surfaceId: s.surfaceId,
-              locale: s.locale,
-              key: s.key,
-              message: 'Unknown placeholder "{$p}".',
-              matchedText: '{$p}',
-              safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-            ));
+            findings.add(
+              LocalizationSafetyFinding(
+                severity: 'warn',
+                findingType: unknownPlaceholder,
+                surfaceId: s.surfaceId,
+                locale: s.locale,
+                key: s.key,
+                message: 'Unknown placeholder "{$p}".',
+                matchedText: '{$p}',
+                safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+              ),
+            );
           }
         }
         for (final req in s.requiredPlaceholders) {
           if (!present.contains(req)) {
-            findings.add(LocalizationSafetyFinding(
-              severity: config.strictMode ? 'blocker' : 'warn',
-              findingType: missingRequiredPlaceholder,
-              surfaceId: s.surfaceId,
-              locale: s.locale,
-              key: s.key,
-              message: 'Missing required placeholder "{$req}".',
-              matchedText: '{$req}',
-              safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-            ));
+            findings.add(
+              LocalizationSafetyFinding(
+                severity: config.strictMode ? 'blocker' : 'warn',
+                findingType: missingRequiredPlaceholder,
+                surfaceId: s.surfaceId,
+                locale: s.locale,
+                key: s.key,
+                message: 'Missing required placeholder "{$req}".',
+                matchedText: '{$req}',
+                safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+              ),
+            );
           }
         }
       }
@@ -381,10 +402,8 @@ class LocalizationSafetyLint {
         prefix.endsWith('no');
   }
 
-  String _normalizedForScan(String text) => text.replaceAll(
-        RegExp(r'[\u200B-\u200D\u2060\uFEFF]'),
-        ' ',
-      );
+  String _normalizedForScan(String text) =>
+      text.replaceAll(RegExp(r'[\u200B-\u200D\u2060\uFEFF]'), ' ');
 
   Set<String> _placeholders(String text) {
     final out = <String>{};
@@ -404,23 +423,29 @@ String renderLocalizationSafetyMarkdown(LocalizationSafetyReport report) {
   final b = StringBuffer()
     ..writeln('# ParkinSUM Localization Safety Lint')
     ..writeln()
-    ..writeln('Educational/research prototype. **Not a translation-quality '
-        'guarantee, not a clinical-safety guarantee, not medical advice, and not '
-        'clinically calibrated.** No LLM translation; does not replace human '
-        'review.')
+    ..writeln(
+      'Educational/research prototype. **Not a translation-quality '
+      'guarantee, not a clinical-safety guarantee, not medical advice, and not '
+      'clinically calibrated.** No LLM translation; does not replace human '
+      'review.',
+    )
     ..writeln()
     ..writeln('- required locales: ${report.requiredLocales.join(', ')}')
     ..writeln('- surfaces: ${report.surfaceCount}')
-    ..writeln('- info: ${report.findingCounts['info'] ?? 0} · '
-        'warn: ${report.findingCounts['warn'] ?? 0} · '
-        'blocker: ${report.findingCounts['blocker'] ?? 0}')
+    ..writeln(
+      '- info: ${report.findingCounts['info'] ?? 0} · '
+      'warn: ${report.findingCounts['warn'] ?? 0} · '
+      'blocker: ${report.findingCounts['blocker'] ?? 0}',
+    )
     ..writeln('- pass (0 blocker): ${report.pass}')
     ..writeln()
     ..writeln('| severity | type | surface | locale | key | matched |')
     ..writeln('| --- | --- | --- | --- | --- | --- |');
   for (final f in report.findings) {
-    b.writeln('| ${f.severity} | ${f.findingType} | ${f.surfaceId} | '
-        '${f.locale} | ${f.key} | ${f.matchedText} |');
+    b.writeln(
+      '| ${f.severity} | ${f.findingType} | ${f.surfaceId} | '
+      '${f.locale} | ${f.key} | ${f.matchedText} |',
+    );
   }
   b
     ..writeln()

@@ -15,39 +15,45 @@ void main() {
   );
   final engine = RuntimeRuleEngine();
 
-  test('synthetic levodopa protein scenario triggers stable warning metadata',
-      () {
-    final matches = engine.evaluateCandidates(
-      context: _runtimeContext(
-        drug: _levodopaDrug(),
-        meal: const MealRuntimeContext(
-          id: 'demo_meal_high_protein',
-          totalProteinG: 28,
-          tyramineMgEstimate: 0,
-          highFatHighCalorie: false,
-          itemIds: ['demo_food_tofu', 'demo_food_lentils'],
+  test(
+    'synthetic levodopa protein scenario triggers stable warning metadata',
+    () {
+      final matches = engine.evaluateCandidates(
+        context: _runtimeContext(
+          drug: _levodopaDrug(),
+          meal: const MealRuntimeContext(
+            id: 'demo_meal_high_protein',
+            totalProteinG: 28,
+            tyramineMgEstimate: 0,
+            highFatHighCalorie: false,
+            itemIds: ['demo_food_tofu', 'demo_food_lentils'],
+          ),
+          timestamps: TimestampRuntimeContext(
+            drugTime: DateTime.parse('2026-01-01T08:00:00Z'),
+            mealTime: DateTime.parse('2026-01-01T09:00:00Z'),
+            coeventTime: null,
+          ),
         ),
-        timestamps: TimestampRuntimeContext(
-          drugTime: DateTime.parse('2026-01-01T08:00:00Z'),
-          mealTime: DateTime.parse('2026-01-01T09:00:00Z'),
-          coeventTime: null,
-        ),
-      ),
-      rules: rules,
-    );
+        rules: rules,
+      );
 
-    final proteinRule = matches.singleWhere(
-      (match) => match.rule.ruleId == 'pd.ldopa.protein.window.v1',
-    );
-    expect(proteinRule.rule.thenClause.decision.wireValue, 'WARN');
-    expect(proteinRule.rule.thenClause.severity, 'high');
-    expect(proteinRule.rule.thenClause.outputTags,
-        contains('levodopa_protein_timing'));
-    expect(proteinRule.rule.provenance.sourceRefs,
-        contains('fda-dhivy-high-protein'));
-    expect(proteinRule.explanation, isNotEmpty);
-    expect(proteinRule.evidence['source_refs'], isA<List<dynamic>>());
-  });
+      final proteinRule = matches.singleWhere(
+        (match) => match.rule.ruleId == 'pd.ldopa.protein.window.v1',
+      );
+      expect(proteinRule.rule.thenClause.decision.wireValue, 'WARN');
+      expect(proteinRule.rule.thenClause.severity, 'high');
+      expect(
+        proteinRule.rule.thenClause.outputTags,
+        contains('levodopa_protein_timing'),
+      );
+      expect(
+        proteinRule.rule.provenance.sourceRefs,
+        contains('fda-dhivy-high-protein'),
+      );
+      expect(proteinRule.explanation, isNotEmpty);
+      expect(proteinRule.evidence['source_refs'], isA<List<dynamic>>());
+    },
+  );
 
   test('synthetic low-protein levodopa scenario remains non-triggering', () {
     final matches = engine.evaluateCandidates(
@@ -98,8 +104,10 @@ void main() {
     );
     expect(ironRule.rule.thenClause.decision.wireValue, 'WARN');
     expect(ironRule.rule.thenClause.severity, 'high');
-    expect(ironRule.rule.thenClause.outputTags,
-        contains('levodopa_iron_chelation'));
+    expect(
+      ironRule.rule.thenClause.outputTags,
+      contains('levodopa_iron_chelation'),
+    );
     expect(ironRule.explanation, contains('pd.ldopa.iron.v1'));
   });
 
@@ -144,10 +152,14 @@ void main() {
       rules: rules,
     );
 
-    expect(usMatches.map((match) => match.rule.ruleId),
-        contains('pd.rasagiline.tyramine.us.v1'));
-    expect(caMatches.map((match) => match.rule.ruleId),
-        isNot(contains('pd.rasagiline.tyramine.us.v1')));
+    expect(
+      usMatches.map((match) => match.rule.ruleId),
+      contains('pd.rasagiline.tyramine.us.v1'),
+    );
+    expect(
+      caMatches.map((match) => match.rule.ruleId),
+      isNot(contains('pd.rasagiline.tyramine.us.v1')),
+    );
   });
 
   test('baseline rule messages expose stable localization fallback', () {
@@ -162,10 +174,14 @@ void main() {
     expect(exactSpanish.trim(), isNotEmpty);
     expect(familySpanish.trim(), isNotEmpty);
     expect(unknownFallback.trim(), isNotEmpty);
-    expect(proteinRule.thenClause.messages.asLocaleMap(),
-        containsPair('zh', isA<String>()));
-    expect(proteinRule.thenClause.messages.asLocaleMap(),
-        containsPair('es-MX', exactSpanish));
+    expect(
+      proteinRule.thenClause.messages.asLocaleMap(),
+      containsPair('zh', isA<String>()),
+    );
+    expect(
+      proteinRule.thenClause.messages.asLocaleMap(),
+      containsPair('es-MX', exactSpanish),
+    );
   });
 
   test('explanation copy keeps structure without exposing machine codes', () {

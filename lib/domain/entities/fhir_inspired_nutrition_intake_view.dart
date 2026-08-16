@@ -39,15 +39,15 @@ class FhirInspiredFoodComponentEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'food_name': foodName,
-        'amount': amount,
-        'amount_unit': amountUnit,
-        'preparation_state': preparationState,
-        'basis_type': basisType,
-        'source_system': sourceSystem,
-        'source_refs': sourceRefs,
-        'missing_fields': missingFields,
-      };
+    'food_name': foodName,
+    'amount': amount,
+    'amount_unit': amountUnit,
+    'preparation_state': preparationState,
+    'basis_type': basisType,
+    'source_system': sourceSystem,
+    'source_refs': sourceRefs,
+    'missing_fields': missingFields,
+  };
 }
 
 /// Meal-level nutrient summary (≈ NutritionIntake.ingredientLabel), PHI-free.
@@ -74,15 +74,15 @@ class FhirInspiredNutrientSummary {
   });
 
   Map<String, dynamic> toJson() => {
-        'energy_kcal': energyKcal,
-        'protein_g': proteinG,
-        'fat_g': fatG,
-        'carbohydrate_g': carbohydrateG,
-        'fiber_g': fiberG,
-        'missingness': missingness,
-        'unit': unit,
-        'basis': basis,
-      };
+    'energy_kcal': energyKcal,
+    'protein_g': proteinG,
+    'fat_g': fatG,
+    'carbohydrate_g': carbohydrateG,
+    'fiber_g': fiberG,
+    'missingness': missingness,
+    'unit': unit,
+    'basis': basis,
+  };
 }
 
 /// Amino-acid provenance summary, PHI-free. Reflects the actual-fields LNAA
@@ -106,13 +106,13 @@ class FhirInspiredAminoAcidSummary {
   });
 
   Map<String, dynamic> toJson() => {
-        'amino_acid_data_mode': aminoAcidDataMode,
-        'amino_acid_nutrient_ids': aminoAcidNutrientIds,
-        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
-        'competing_lnaa_grams': competingLnaaGrams,
-        'lnaa_values': lnaaValues,
-        'fdc_data_type': fdcDataType,
-      };
+    'amino_acid_data_mode': aminoAcidDataMode,
+    'amino_acid_nutrient_ids': aminoAcidNutrientIds,
+    'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+    'competing_lnaa_grams': competingLnaaGrams,
+    'lnaa_values': lnaaValues,
+    'fdc_data_type': fdcDataType,
+  };
 }
 
 /// Top-level FHIR-inspired NutritionIntake view. Deterministic JSON; PHI-free.
@@ -153,20 +153,21 @@ class FhirInspiredNutritionIntakeView {
   });
 
   Map<String, dynamic> toJson() => {
-        'view_type': kViewType,
-        'conformance_status': kConformanceStatus,
-        'phi_policy': kPhiPolicy,
-        'demo_meal_id': demoMealId,
-        'relative_time_minutes': relativeTimeMinutes,
-        'food_components':
-            foodComponents.map((e) => e.toJson()).toList(growable: false),
-        'nutrient_summary': nutrientSummary.toJson(),
-        'amino_acid_summary': aminoAcidSummary.toJson(),
-        'missing_fields': missingFields,
-        'source_refs': sourceRefs,
-        'provenance_summary': provenanceSummary,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'not_advice_text': notAdviceText,
-        'safety_boundary': safetyBoundary,
-      };
+    'view_type': kViewType,
+    'conformance_status': kConformanceStatus,
+    'phi_policy': kPhiPolicy,
+    'demo_meal_id': demoMealId,
+    'relative_time_minutes': relativeTimeMinutes,
+    'food_components': foodComponents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'nutrient_summary': nutrientSummary.toJson(),
+    'amino_acid_summary': aminoAcidSummary.toJson(),
+    'missing_fields': missingFields,
+    'source_refs': sourceRefs,
+    'provenance_summary': provenanceSummary,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'not_advice_text': notAdviceText,
+    'safety_boundary': safetyBoundary,
+  };
 }

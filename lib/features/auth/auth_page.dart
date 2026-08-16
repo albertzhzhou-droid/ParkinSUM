@@ -109,20 +109,20 @@ class _AuthPageState extends State<AuthPage> {
                             dimension: 18,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Icon(_isRegisterMode
-                            ? Icons.person_add_alt
-                            : Icons.login),
-                    label: Text(
-                      _isRegisterMode ? 'Register' : 'Sign in',
-                    ),
+                        : Icon(
+                            _isRegisterMode
+                                ? Icons.person_add_alt
+                                : Icons.login,
+                          ),
+                    label: Text(_isRegisterMode ? 'Register' : 'Sign in'),
                   ),
                   const SizedBox(height: 8),
                   TextButton(
                     onPressed: state.isAuthBusy
                         ? null
                         : () => setState(() {
-                              _isRegisterMode = !_isRegisterMode;
-                            }),
+                            _isRegisterMode = !_isRegisterMode;
+                          }),
                     child: Text(
                       _isRegisterMode
                           ? 'Already have an account? Sign in'

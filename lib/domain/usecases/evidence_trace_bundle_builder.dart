@@ -30,8 +30,7 @@ class EvidenceTraceBundleBuilder {
     final sourceRefs = <String>{
       ...?nutritionView?.sourceRefs,
       ...?medicationKnowledgeView?.sourceRefs,
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
 
     // Missingness summary draws only on what each view already records (missing
     // ≠ fabricated). Absent sides are recorded as not present, not as zero.
@@ -45,7 +44,8 @@ class EvidenceTraceBundleBuilder {
           medicationKnowledgeView?.labelSectionRefs.length ?? 0,
     };
 
-    final provenanceSummary = 'nutrition_view='
+    final provenanceSummary =
+        'nutrition_view='
         '${nutritionView != null ? 'present' : 'absent'}; '
         'medication_view='
         '${medicationKnowledgeView != null ? 'present' : 'absent'}; '

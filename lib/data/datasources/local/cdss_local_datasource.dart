@@ -57,8 +57,8 @@ class CdssLocalDataSource {
       database.insertConflictAuditLog(record);
 
   Future<void> writeRecommendationAuditLog(
-          RecommendationAuditLogRecord record) =>
-      database.insertRecommendationAuditLog(record);
+    RecommendationAuditLogRecord record,
+  ) => database.insertRecommendationAuditLog(record);
 
   Future<List<Map<String, Object?>>> queryTable(String table) =>
       database.queryTable(table);

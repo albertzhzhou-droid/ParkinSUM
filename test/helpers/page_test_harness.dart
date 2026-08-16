@@ -26,11 +26,14 @@ import 'package:provider/provider.dart';
 /// service wiring the pages actually read is unaffected.
 AppState createTestAppState() {
   AppState? state;
-  runZonedGuarded(() {
-    state = AppState(services: Services.createDefault());
-  }, (_, __) {
-    // Local sqlite init is unavailable in VM tests; intentionally ignored.
-  });
+  runZonedGuarded(
+    () {
+      state = AppState(services: Services.createDefault());
+    },
+    (_, _) {
+      // Local sqlite init is unavailable in VM tests; intentionally ignored.
+    },
+  );
   if (state == null) {
     throw StateError('Could not construct a local-mode AppState for tests.');
   }
@@ -76,10 +79,16 @@ Future<AppState> pumpFeaturePage(
 /// throwing, so without this a broken page can "pass" silently.
 void expectNoWidgetErrors({String? reason}) {
   final error = takePendingWidgetException();
-  expect(error, isNull,
-      reason: reason ?? 'page raised ${error.runtimeType}: $error');
-  expect(find.byType(ErrorWidget), findsNothing,
-      reason: reason ?? 'page rendered an ErrorWidget');
+  expect(
+    error,
+    isNull,
+    reason: reason ?? 'page raised ${error.runtimeType}: $error',
+  );
+  expect(
+    find.byType(ErrorWidget),
+    findsNothing,
+    reason: reason ?? 'page rendered an ErrorWidget',
+  );
 }
 
 /// Reads (and clears) the pending widget-tree exception.

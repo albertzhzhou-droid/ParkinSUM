@@ -61,8 +61,9 @@ class MedicationEntryValidator {
       'medication dosing or timing advice.';
 
   static final RegExp _bareNumeric = RegExp(r'^\s*[0-9]+(?:[.,][0-9]+)?\s*$');
-  static final RegExp _slashedNumeric =
-      RegExp(r'^\s*[0-9]+\s*[\/\-]\s*[0-9]+\s*$');
+  static final RegExp _slashedNumeric = RegExp(
+    r'^\s*[0-9]+\s*[\/\-]\s*[0-9]+\s*$',
+  );
   static final RegExp _wordCountish = RegExp(
     r'^\s*(one|two|three|four|five|a|an)\s+(pill|tablet|capsule|dose)s?\s*$',
     caseSensitive: false,
@@ -97,19 +98,24 @@ class MedicationEntryValidator {
       if (_bareNumeric.hasMatch(raw) ||
           _slashedNumeric.hasMatch(raw) ||
           _wordCountish.hasMatch(raw)) {
-        issues.add(const MedicationContextIssue(
-          code: 'BARE_NUMERIC_DOSE',
-          message:
-              'A numeric value without unit, ingredient, and formulation cannot '
-              'represent an analyzable medication entry.',
-        ));
+        issues.add(
+          const MedicationContextIssue(
+            code: 'BARE_NUMERIC_DOSE',
+            message:
+                'A numeric value without unit, ingredient, and formulation cannot '
+                'represent an analyzable medication entry.',
+          ),
+        );
       } else if (!_looksLikeStructuredText(raw)) {
         // Names like "levodopa 100" or "Sinemet 100" with no unit also fail.
-        issues.add(const MedicationContextIssue(
-          code: 'UNSTRUCTURED_FREE_TEXT',
-          message: 'Free-text medication input is not promoted into rule '
-              'evaluation. Use a catalog-backed entry.',
-        ));
+        issues.add(
+          const MedicationContextIssue(
+            code: 'UNSTRUCTURED_FREE_TEXT',
+            message:
+                'Free-text medication input is not promoted into rule '
+                'evaluation. Use a catalog-backed entry.',
+          ),
+        );
       }
     }
 
@@ -123,48 +129,60 @@ class MedicationEntryValidator {
     ];
 
     if (ingredients.isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_ACTIVE_INGREDIENT',
-        message:
-            'No active ingredient was provided. Food-medication rules require '
-            'an explicit ingredient.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_ACTIVE_INGREDIENT',
+          message:
+              'No active ingredient was provided. Food-medication rules require '
+              'an explicit ingredient.',
+        ),
+      );
     }
 
     if (entry.drugProductVariant == null ||
         entry.drugProductVariant!.trim().isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_DRUG_PRODUCT_VARIANT',
-        message:
-            'No catalog-backed product variant. Bare names or free-text drug '
-            'labels are not promoted to rule evaluation.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_DRUG_PRODUCT_VARIANT',
+          message:
+              'No catalog-backed product variant. Bare names or free-text drug '
+              'labels are not promoted to rule evaluation.',
+        ),
+      );
     }
 
     if (entry.unit == null || entry.unit!.trim().isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_UNIT',
-        message: 'Unit is required. A bare number is not a dose.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_UNIT',
+          message: 'Unit is required. A bare number is not a dose.',
+        ),
+      );
     } else if (!_allowedUnits.contains(entry.unit!.trim().toLowerCase())) {
-      issues.add(MedicationContextIssue(
-        code: 'UNKNOWN_UNIT',
-        message:
-            'Unit "${entry.unit}" is not in the allowed unit vocabulary for '
-            'this prototype.',
-      ));
+      issues.add(
+        MedicationContextIssue(
+          code: 'UNKNOWN_UNIT',
+          message:
+              'Unit "${entry.unit}" is not in the allowed unit vocabulary for '
+              'this prototype.',
+        ),
+      );
     }
 
     if (entry.strength == null) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_STRENGTH',
-        message: 'Numeric strength is required alongside an explicit unit.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_STRENGTH',
+          message: 'Numeric strength is required alongside an explicit unit.',
+        ),
+      );
     } else if ((entry.strength as num) <= 0) {
-      issues.add(const MedicationContextIssue(
-        code: 'NON_POSITIVE_STRENGTH',
-        message: 'Strength must be a positive number.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'NON_POSITIVE_STRENGTH',
+          message: 'Strength must be a positive number.',
+        ),
+      );
     }
 
     // Formulation / release type may be downgraded to "insufficient" rather
@@ -173,46 +191,60 @@ class MedicationEntryValidator {
     final releaseType = entry.releaseType?.trim();
     final route = entry.route?.trim();
     if (form == null || form.isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_FORM',
-        message: 'Dosage form (e.g. tablet, capsule) is required.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_FORM',
+          message: 'Dosage form (e.g. tablet, capsule) is required.',
+        ),
+      );
     }
     if (releaseType == null || releaseType.isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_RELEASE_TYPE',
-        message: 'Release type (immediate / extended / controlled) is required '
-            'before pharmacokinetic-sensitive rules may be evaluated.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_RELEASE_TYPE',
+          message:
+              'Release type (immediate / extended / controlled) is required '
+              'before pharmacokinetic-sensitive rules may be evaluated.',
+        ),
+      );
     }
     if (route == null || route.isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_ROUTE',
-        message: 'Administration route is required.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_ROUTE',
+          message: 'Administration route is required.',
+        ),
+      );
     }
 
     if (entry.sourceDocId == null || entry.sourceDocId!.trim().isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_PROVENANCE',
-        message: 'No source document reference. Without provenance the entry '
-            'cannot be promoted into evidence-linked rule evaluation.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_PROVENANCE',
+          message:
+              'No source document reference. Without provenance the entry '
+              'cannot be promoted into evidence-linked rule evaluation.',
+        ),
+      );
     }
 
     if (entry.jurisdiction == null || entry.jurisdiction!.trim().isEmpty) {
-      issues.add(const MedicationContextIssue(
-        code: 'MISSING_JURISDICTION',
-        message: 'Jurisdiction is required for rule applicability filtering.',
-      ));
+      issues.add(
+        const MedicationContextIssue(
+          code: 'MISSING_JURISDICTION',
+          message: 'Jurisdiction is required for rule applicability filtering.',
+        ),
+      );
     }
 
     if (issues.isNotEmpty) {
-      final hasInvalidatingIssue = issues.any((i) =>
-          i.code == 'BARE_NUMERIC_DOSE' ||
-          i.code == 'UNSTRUCTURED_FREE_TEXT' ||
-          i.code == 'UNKNOWN_UNIT' ||
-          i.code == 'NON_POSITIVE_STRENGTH');
+      final hasInvalidatingIssue = issues.any(
+        (i) =>
+            i.code == 'BARE_NUMERIC_DOSE' ||
+            i.code == 'UNSTRUCTURED_FREE_TEXT' ||
+            i.code == 'UNKNOWN_UNIT' ||
+            i.code == 'NON_POSITIVE_STRENGTH',
+      );
       return MedicationContextValidationResult(
         validity: hasInvalidatingIssue
             ? MedicationContextValidity.invalid

@@ -17,20 +17,24 @@ class PmdaP1Importer {
   const PmdaP1Importer({required this.fetchClient});
 
   Future<P0ImportBundle> fetchEnglishReferenceIndex() async {
-    final html =
-        await fetchClient.getText(P0SourceUrls.pmdaEnglishPackageInsertIndex);
+    final html = await fetchClient.getText(
+      P0SourceUrls.pmdaEnglishPackageInsertIndex,
+    );
     return importEnglishReferenceIndex(html);
   }
 
   Future<P0ImportBundle> fetchJapaneseSearchLanding() async {
-    final html =
-        await fetchClient.getText(P0SourceUrls.pmdaJapaneseMedicalSearch);
+    final html = await fetchClient.getText(
+      P0SourceUrls.pmdaJapaneseMedicalSearch,
+    );
     return importJapaneseSearchLanding(html);
   }
 
   P0ImportBundle importEnglishReferenceIndex(String html) {
-    final title = _extractTitle(html,
-        fallback: 'PMDA English-translated package inserts');
+    final title = _extractTitle(
+      html,
+      fallback: 'PMDA English-translated package inserts',
+    );
     final sourceDocId = sourceDocumentId(
       sourceSystem: 'PMDA',
       externalKey: 'english_reference_index',
@@ -90,8 +94,9 @@ class PmdaP1Importer {
               mediaId: 'media_${stableHash('$sourceDocId:${link.url}')}',
               drugProductVariantId: 'pmda_reference_index',
               sourceDocId: sourceDocId,
-              mediaType:
-                  link.url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'html',
+              mediaType: link.url.toLowerCase().endsWith('.pdf')
+                  ? 'pdf'
+                  : 'html',
               mediaUrl: link.url,
               caption: link.caption,
             ),
@@ -195,8 +200,9 @@ class PmdaP1Importer {
           sourceDocId: sourceDocId,
           sectionKey: 'pmda_document_inventory',
           sectionTitle: 'PMDA document inventory',
-          sectionText:
-              links.map((item) => '${item.caption}: ${item.url}').join(' | '),
+          sectionText: links
+              .map((item) => '${item.caption}: ${item.url}')
+              .join(' | '),
         ),
       ],
       drugProductMedias: links
@@ -205,8 +211,9 @@ class PmdaP1Importer {
               mediaId: 'media_${stableHash('$variantId:${link.url}')}',
               drugProductVariantId: variantId,
               sourceDocId: sourceDocId,
-              mediaType:
-                  link.url.toLowerCase().endsWith('.pdf') ? 'pdf' : 'html',
+              mediaType: link.url.toLowerCase().endsWith('.pdf')
+                  ? 'pdf'
+                  : 'html',
               mediaUrl: link.url,
               caption: link.caption,
             ),
@@ -304,7 +311,7 @@ class PmdaP1Importer {
           genericName: genericName,
           brandNames: [title],
           aliases: [productCode],
-          tags: [if (tag != null) tag],
+          tags: [?tag],
           notes: 'Imported from PMDA Japanese product metadata.',
           interactionSummary:
               'PMDA metadata imported. Japanese original source is primary; English translation remains reference-only.',
@@ -320,20 +327,24 @@ class PmdaP1Importer {
   }
 
   String _extractTitle(String html, {required String fallback}) {
-    final match =
-        RegExp(r'<title>(.*?)</title>', caseSensitive: false, dotAll: true)
-            .firstMatch(html);
+    final match = RegExp(
+      r'<title>(.*?)</title>',
+      caseSensitive: false,
+      dotAll: true,
+    ).firstMatch(html);
     final value = match?.group(1)?.replaceAll(RegExp(r'\s+'), ' ').trim() ?? '';
     return value.isEmpty ? fallback : value;
   }
 
   String _extractProductCode(String detailUrl, String html) {
-    final fromUrl =
-        RegExp(r'/GeneralList/([^/?#]+)').firstMatch(detailUrl)?.group(1);
+    final fromUrl = RegExp(
+      r'/GeneralList/([^/?#]+)',
+    ).firstMatch(detailUrl)?.group(1);
     if (fromUrl != null && fromUrl.isNotEmpty) return fromUrl;
     // 使用普通字符串避免 raw string 下无法安全表达单引号字符类的问题。
-    final fromHtml =
-        RegExp('GeneralList/([^"\\\'<>\\s]+)').firstMatch(html)?.group(1);
+    final fromHtml = RegExp(
+      'GeneralList/([^"\\\'<>\\s]+)',
+    ).firstMatch(html)?.group(1);
     return (fromHtml != null && fromHtml.isNotEmpty)
         ? fromHtml
         : stableSlug(detailUrl);
@@ -376,8 +387,8 @@ class PmdaP1Importer {
       final url = href.startsWith('http')
           ? href
           : href.startsWith('/')
-              ? '$baseUrl$href'
-              : '$baseUrl/$href';
+          ? '$baseUrl$href'
+          : '$baseUrl/$href';
       links.add(_PmdaLink(url: url, caption: caption));
     }
     return links;
@@ -388,8 +399,5 @@ class _PmdaLink {
   final String url;
   final String caption;
 
-  const _PmdaLink({
-    required this.url,
-    required this.caption,
-  });
+  const _PmdaLink({required this.url, required this.caption});
 }

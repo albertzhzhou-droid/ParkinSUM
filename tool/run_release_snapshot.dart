@@ -48,16 +48,18 @@ Future<void> main(List<String> args) async {
     testCount: testCountStr == null ? null : int.tryParse(testCountStr),
     testStatus: _flag(args, 'test-status'),
     replayReport: _readJson('build/mechanistic_replay/latest.json'),
-    sourceQualityReport:
-        _readJson('build/source_quality_perturbation/latest.json'),
+    sourceQualityReport: _readJson(
+      'build/source_quality_perturbation/latest.json',
+    ),
     preflightReport: _readJson('build/public_release_preflight/latest.json'),
-    recommendationScenarioReport:
-        _readJson('build/recommendation_scenario_replay/latest.json'),
+    recommendationScenarioReport: _readJson(
+      'build/recommendation_scenario_replay/latest.json',
+    ),
     firestoreStatus: _flag(args, 'firestore'),
     liveSmokeStatus: _flag(args, 'live-smoke'),
     capabilityMatrixSummary: File('docs/CAPABILITY_MATRIX.md').existsSync()
         ? 'see docs/CAPABILITY_MATRIX.md (implemented / fixture-tested / '
-            'deterministic-report / documentation-only / future-work rows)'
+              'deterministic-report / documentation-only / future-work rows)'
         : null,
   );
 
@@ -65,13 +67,16 @@ Future<void> main(List<String> args) async {
 
   final outDir = Directory('build/release_snapshot');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeReleaseSnapshot(snapshot));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeReleaseSnapshot(snapshot));
   File('${outDir.path}/latest.md').writeAsStringSync(snapshot.toMarkdown());
 
   stdout
-    ..writeln('Release snapshot written '
-        '(${snapshot.complete ? 'all required checks resolved' : 'incomplete: missing_artifact present'}).')
+    ..writeln(
+      'Release snapshot written '
+      '(${snapshot.complete ? 'all required checks resolved' : 'incomplete: missing_artifact present'}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   // Always exit 0: this is an evidence summary, not a gate. Missing inputs are

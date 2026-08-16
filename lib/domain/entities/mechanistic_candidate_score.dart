@@ -18,10 +18,10 @@ class MechanisticCandidateSampleSummary {
   });
 
   Map<String, dynamic> toJson() => {
-        'offset_minutes': offsetMinutes,
-        'conflict_overlap': conflictOverlap,
-        'confidence_band': confidenceBand,
-      };
+    'offset_minutes': offsetMinutes,
+    'conflict_overlap': conflictOverlap,
+    'confidence_band': confidenceBand,
+  };
 }
 
 /// Score components for a single food candidate evaluated against a
@@ -109,39 +109,40 @@ class MechanisticCandidateScore {
   });
 
   Map<String, dynamic> toJson() => {
-        'candidate_food_id': candidateFoodId,
-        'candidate_name': candidateName,
-        'regional_food_library_ref': regionalFoodLibraryRef,
-        'user_defined_window': userDefinedWindow.toJson(),
-        'model_compatibility_score': modelCompatibilityScore,
-        'conflict_overlap_score': conflictOverlapScore,
-        'uncertainty_penalty': uncertaintyPenalty,
-        'nutrition_data_completeness': nutritionDataCompleteness,
-        'confidence_band': confidenceBand.name,
-        'explanation': explanation,
-        'source_refs': sourceRefs,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-        'insufficient_context': insufficientContext,
-        'upstream_result': upstreamResult?.toJson(),
-        'sample_count': sampleCount,
-        'best_sampled_offset_minutes': bestSampledOffsetMinutes,
-        'worst_case_conflict_overlap_score': worstCaseConflictOverlapScore,
-        'best_case_conflict_overlap_score': bestCaseConflictOverlapScore,
-        'average_conflict_overlap_score': averageConflictOverlapScore,
-        'selected_conservative_score': selectedConservativeScore,
-        'sampled_window_summary':
-            sampledWindowSummary.map((s) => s.toJson()).toList(growable: false),
-        'protein_distribution': proteinDistribution?.toJson(),
-        'protein_redistribution_score': proteinRedistributionScore,
-        'nutrition_adequacy_contribution': nutritionAdequacyContribution,
-        'metadata_completeness_score': metadataCompletenessScore,
-        'source_authority_score': sourceAuthorityScore,
-        'jurisdiction_match_score': jurisdictionMatchScore,
-        'provenance_quality_score': provenanceQualityScore,
-        'final_candidate_score': finalCandidateScore,
-        'source_system': sourceSystem,
-        'jurisdiction': jurisdiction,
-        'scoring_parameter_set_id': scoringParameterSetId,
-      };
+    'candidate_food_id': candidateFoodId,
+    'candidate_name': candidateName,
+    'regional_food_library_ref': regionalFoodLibraryRef,
+    'user_defined_window': userDefinedWindow.toJson(),
+    'model_compatibility_score': modelCompatibilityScore,
+    'conflict_overlap_score': conflictOverlapScore,
+    'uncertainty_penalty': uncertaintyPenalty,
+    'nutrition_data_completeness': nutritionDataCompleteness,
+    'confidence_band': confidenceBand.name,
+    'explanation': explanation,
+    'source_refs': sourceRefs,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+    'insufficient_context': insufficientContext,
+    'upstream_result': upstreamResult?.toJson(),
+    'sample_count': sampleCount,
+    'best_sampled_offset_minutes': bestSampledOffsetMinutes,
+    'worst_case_conflict_overlap_score': worstCaseConflictOverlapScore,
+    'best_case_conflict_overlap_score': bestCaseConflictOverlapScore,
+    'average_conflict_overlap_score': averageConflictOverlapScore,
+    'selected_conservative_score': selectedConservativeScore,
+    'sampled_window_summary': sampledWindowSummary
+        .map((s) => s.toJson())
+        .toList(growable: false),
+    'protein_distribution': proteinDistribution?.toJson(),
+    'protein_redistribution_score': proteinRedistributionScore,
+    'nutrition_adequacy_contribution': nutritionAdequacyContribution,
+    'metadata_completeness_score': metadataCompletenessScore,
+    'source_authority_score': sourceAuthorityScore,
+    'jurisdiction_match_score': jurisdictionMatchScore,
+    'provenance_quality_score': provenanceQualityScore,
+    'final_candidate_score': finalCandidateScore,
+    'source_system': sourceSystem,
+    'jurisdiction': jurisdiction,
+    'scoring_parameter_set_id': scoringParameterSetId,
+  };
 }

@@ -47,13 +47,13 @@ MockClient buildScriptedLocalAiClient() {
       );
     }
     final body = jsonDecode(request.body) as Map<String, dynamic>;
-    final content =
-        ((body['messages'] as List).first['content'] ?? '').toString();
+    final content = ((body['messages'] as List).first['content'] ?? '')
+        .toString();
 
     if (content.contains('reply with {"ok":true}')) {
       return http.Response(
         jsonEncode({
-          'message': {'content': '{"ok":true}'}
+          'message': {'content': '{"ok":true}'},
         }),
         200,
       );
@@ -70,8 +70,8 @@ MockClient buildScriptedLocalAiClient() {
               'candidate_notes': {
                 for (final id in ids) id: 'A plain-language reason for $id.',
               },
-            })
-          }
+            }),
+          },
         }),
         200,
       );
@@ -88,8 +88,8 @@ MockClient buildScriptedLocalAiClient() {
               'summary': 'Local AI replay reranked only the safe whitelist.',
               'safety_checks': ['Preserved the safe whitelist only.'],
               'ranking_rationale': ['Used the provided candidate features.'],
-            })
-          }
+            }),
+          },
         }),
         200,
       );
@@ -97,7 +97,7 @@ MockClient buildScriptedLocalAiClient() {
 
     return http.Response(
       jsonEncode({
-        'message': {'content': '{}'}
+        'message': {'content': '{}'},
       }),
       200,
     );
@@ -108,13 +108,15 @@ MockClient buildScriptedLocalAiClient() {
 /// offline Local AI and the in-memory CDSS database, wired exactly like the
 /// scenario replay tests expect.
 RecommendationReplayRunner buildLocalAiReplayRunner() {
-  const projection =
-      CdssCatalogProjectionService(database: InMemoryCdssDatabase());
+  const projection = CdssCatalogProjectionService(
+    database: InMemoryCdssDatabase(),
+  );
   final hybrid = NextMealRecommendationOrchestrator(
     conservativeRecommender: GetFoodRecommendationsUseCase(),
     projectionService: projection,
-    localAiAdapter:
-        LocalAiRecommendationAdapter(client: buildScriptedLocalAiClient()),
+    localAiAdapter: LocalAiRecommendationAdapter(
+      client: buildScriptedLocalAiClient(),
+    ),
   );
   final deterministic = NextMealRecommendationOrchestrator(
     conservativeRecommender: GetFoodRecommendationsUseCase(),

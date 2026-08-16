@@ -242,13 +242,13 @@ class CatalogResolutionIssue {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'issue_type': issueType,
-        'message': message,
-        'field': field,
-        'suggested_next_step': suggestedNextStep,
-        'safety_boundary': safetyBoundary,
-      };
+    'severity': severity,
+    'issue_type': issueType,
+    'message': message,
+    'field': field,
+    'suggested_next_step': suggestedNextStep,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 class CatalogResolutionResult {
@@ -291,21 +291,21 @@ class CatalogResolutionResult {
       bestCandidate!.sourceRefs.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'not_medical_advice': true,
-        'no_dose_inference': true,
-        'query': query,
-        'normalized_query': normalizedQuery,
-        'domain': domain,
-        'status': status,
-        'safe_to_pass_downstream': safeToPassDownstream,
-        'best_candidate': bestCandidate?.toJson(),
-        'candidates': candidates.map((c) => c.toJson()).toList(growable: false),
-        'issues': issues.map((i) => i.toJson()).toList(growable: false),
-        'source_refs': sourceRefs,
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'not_medical_advice': true,
+    'no_dose_inference': true,
+    'query': query,
+    'normalized_query': normalizedQuery,
+    'domain': domain,
+    'status': status,
+    'safe_to_pass_downstream': safeToPassDownstream,
+    'best_candidate': bestCandidate?.toJson(),
+    'candidates': candidates.map((c) => c.toJson()).toList(growable: false),
+    'issues': issues.map((i) => i.toJson()).toList(growable: false),
+    'source_refs': sourceRefs,
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }

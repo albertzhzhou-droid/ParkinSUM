@@ -56,15 +56,15 @@ class EvidenceReferenceDetail {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_ref': sourceRef,
-        'title': title,
-        'pmid': pmid,
-        'doi': doi,
-        'source_url': sourceUrl,
-        'publication': publication,
-        'evidence_kind': evidenceKind,
-        'source_family': sourceFamily,
-      };
+    'source_ref': sourceRef,
+    'title': title,
+    'pmid': pmid,
+    'doi': doi,
+    'source_url': sourceUrl,
+    'publication': publication,
+    'evidence_kind': evidenceKind,
+    'source_family': sourceFamily,
+  };
 }
 
 class RuntimeAlert {
@@ -91,17 +91,16 @@ class RuntimeAlert {
   });
 
   Map<String, dynamic> toJson() => {
-        'target': target,
-        'decision': decision.wireValue,
-        'severity': severity,
-        'explanation': explanation,
-        'actions': actions,
-        'evidence_sources': evidenceSources,
-        'evidence_details': evidenceDetails,
-        'evidence_records':
-            evidenceRecords.map((item) => item.toJson()).toList(),
-        'rule_ids': ruleIds,
-      };
+    'target': target,
+    'decision': decision.wireValue,
+    'severity': severity,
+    'explanation': explanation,
+    'actions': actions,
+    'evidence_sources': evidenceSources,
+    'evidence_details': evidenceDetails,
+    'evidence_records': evidenceRecords.map((item) => item.toJson()).toList(),
+    'rule_ids': ruleIds,
+  };
 }
 
 class RuntimeAuditEntry {
@@ -134,20 +133,19 @@ class RuntimeAuditEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'target': target,
-        'decision': decision.wireValue,
-        'winning_rule_ids': winningRuleIds,
-        'suppressed_rule_ids': suppressedRuleIds,
-        'source_doc_refs': sourceDocRefs,
-        'evidence_details': evidenceDetails,
-        'evidence_records':
-            evidenceRecords.map((item) => item.toJson()).toList(),
-        'input_hash': inputHash,
-        'decision_reason': decisionReason,
-        'machine_actions': machineActions,
-        'human_message': humanMessage,
-        'needs_human_review': needsHumanReview,
-      };
+    'target': target,
+    'decision': decision.wireValue,
+    'winning_rule_ids': winningRuleIds,
+    'suppressed_rule_ids': suppressedRuleIds,
+    'source_doc_refs': sourceDocRefs,
+    'evidence_details': evidenceDetails,
+    'evidence_records': evidenceRecords.map((item) => item.toJson()).toList(),
+    'input_hash': inputHash,
+    'decision_reason': decisionReason,
+    'machine_actions': machineActions,
+    'human_message': humanMessage,
+    'needs_human_review': needsHumanReview,
+  };
 }
 
 class EngineRunOutput {

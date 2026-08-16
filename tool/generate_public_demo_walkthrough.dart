@@ -90,8 +90,9 @@ Map<String, dynamic> _sampleEvidenceBundle() {
 Future<void> main(List<String> args) async {
   final inputs = PublicDemoWalkthroughInputs(
     replayReport: _readJson('build/mechanistic_replay/latest.json'),
-    sourceQualityReport:
-        _readJson('build/source_quality_perturbation/latest.json'),
+    sourceQualityReport: _readJson(
+      'build/source_quality_perturbation/latest.json',
+    ),
     releaseSnapshot: _readJson('build/release_snapshot/latest.json'),
     evidenceBundle: _sampleEvidenceBundle(),
     capabilityMatrixSummary: File('docs/CAPABILITY_MATRIX.md').existsSync()
@@ -104,8 +105,9 @@ Future<void> main(List<String> args) async {
   final outDir = Directory('build/public_demo_walkthrough');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
   File('${outDir.path}/latest.md').writeAsStringSync(doc.toMarkdown());
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodePublicDemoWalkthrough(doc));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodePublicDemoWalkthrough(doc));
 
   stdout
     ..writeln('Public demo walkthrough written.')

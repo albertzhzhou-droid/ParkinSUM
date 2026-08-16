@@ -58,41 +58,53 @@ class ExplanationCopyCompiler {
     final effectiveLocale = usedFallback ? template.defaultLocale : requested;
     final raw = template.localizedText[effectiveLocale] ?? '';
 
-    CopyCompileFinding f(String sev, String type, String msg,
-            {String detail = ''}) =>
-        CopyCompileFinding(
-          severity: sev,
-          findingType: type,
-          templateId: template.templateId,
-          locale: effectiveLocale,
-          message: msg,
-          detail: detail,
-        );
+    CopyCompileFinding f(
+      String sev,
+      String type,
+      String msg, {
+      String detail = '',
+    }) => CopyCompileFinding(
+      severity: sev,
+      findingType: type,
+      templateId: template.templateId,
+      locale: effectiveLocale,
+      message: msg,
+      detail: detail,
+    );
 
     if (usedFallback && locale.isNotEmpty) {
-      findings.add(f(
+      findings.add(
+        f(
           CopyCompileSeverity.info,
           CopyCompileFindingType.localeFallback,
           'Locale "$locale" not available; rendered the default locale '
-          '"${template.defaultLocale}".'));
+          '"${template.defaultLocale}".',
+        ),
+      );
     }
 
     // Placeholder validation.
     for (final req in template.requiredPlaceholders) {
       if (!bindings.containsKey(req)) {
-        findings.add(f(
+        findings.add(
+          f(
             CopyCompileSeverity.blocker,
             CopyCompileFindingType.missingRequiredPlaceholder,
-            'Required placeholder "{$req}" has no binding.'));
+            'Required placeholder "{$req}" has no binding.',
+          ),
+        );
       }
     }
     for (final key in bindings.keys) {
       if (!template.allowedPlaceholders.contains(key) &&
           !template.requiredPlaceholders.contains(key)) {
-        findings.add(f(
+        findings.add(
+          f(
             CopyCompileSeverity.warn,
             CopyCompileFindingType.unknownPlaceholder,
-            'Binding "$key" is not an allowed placeholder for this template.'));
+            'Binding "$key" is not an allowed placeholder for this template.',
+          ),
+        );
       }
     }
 
@@ -101,14 +113,19 @@ class ExplanationCopyCompiler {
     bindings.forEach((k, v) {
       text = text.replaceAll('{$k}', v);
     });
-    final leftover =
-        _placeholder.allMatches(text).map((m) => m.group(0)!).toSet();
+    final leftover = _placeholder
+        .allMatches(text)
+        .map((m) => m.group(0)!)
+        .toSet();
     if (leftover.isNotEmpty) {
-      findings.add(f(
+      findings.add(
+        f(
           CopyCompileSeverity.blocker,
           CopyCompileFindingType.unresolvedPlaceholder,
           'Unresolved placeholder(s) remain after rendering: '
-          '${leftover.join(', ')}.'));
+          '${leftover.join(', ')}.',
+        ),
+      );
     }
 
     final lower = text.toLowerCase();
@@ -118,18 +135,24 @@ class ExplanationCopyCompiler {
     if (effectiveLocale == template.defaultLocale) {
       for (final term in template.requiredSafetyTerms) {
         if (!lower.contains(term.toLowerCase())) {
-          findings.add(f(
+          findings.add(
+            f(
               CopyCompileSeverity.blocker,
               CopyCompileFindingType.missingSafetyTerm,
-              'Required safety term "$term" is missing from the rendered text.'));
+              'Required safety term "$term" is missing from the rendered text.',
+            ),
+          );
         }
       }
       for (final term in template.requiredEvidenceTerms) {
         if (!lower.contains(term.toLowerCase())) {
-          findings.add(f(
+          findings.add(
+            f(
               CopyCompileSeverity.warn,
               CopyCompileFindingType.missingEvidenceTerm,
-              'Evidence term "$term" is missing from the rendered text.'));
+              'Evidence term "$term" is missing from the rendered text.',
+            ),
+          );
         }
       }
     }
@@ -139,39 +162,52 @@ class ExplanationCopyCompiler {
       final phrases = LocalizationSafetyLint.bannedFamilies[family] ?? const [];
       for (final phrase in phrases) {
         if (_containsBanned(text, lower, phrase)) {
-          findings.add(f(
+          findings.add(
+            f(
               CopyCompileSeverity.blocker,
               CopyCompileFindingType.bannedPhrase,
               'Banned prescriptive phrase ($family) detected.',
-              detail: phrase));
+              detail: phrase,
+            ),
+          );
         }
       }
     }
 
     // Structural requirements.
     if (template.requiresSourceRefs && context.sourceRefs.isEmpty) {
-      findings.add(f(
+      findings.add(
+        f(
           CopyCompileSeverity.blocker,
           CopyCompileFindingType.requiresSourceRefsUnsatisfied,
-          'Template requires sourceRefs but none were supplied.'));
+          'Template requires sourceRefs but none were supplied.',
+        ),
+      );
     }
     if (template.requiresLimitationText && !context.hasLimitationText) {
-      findings.add(f(
+      findings.add(
+        f(
           CopyCompileSeverity.blocker,
           CopyCompileFindingType.requiresLimitationUnsatisfied,
-          'Template requires limitation text but none was supplied.'));
+          'Template requires limitation text but none was supplied.',
+        ),
+      );
     }
     if (template.requiresNotAdviceText &&
         !context.hasNotAdviceText &&
         !lower.contains('not medical advice')) {
-      findings.add(f(
+      findings.add(
+        f(
           CopyCompileSeverity.blocker,
           CopyCompileFindingType.requiresNotAdviceUnsatisfied,
-          'Template requires not-advice text but it is absent.'));
+          'Template requires not-advice text but it is absent.',
+        ),
+      );
     }
 
-    final hasBlocker =
-        findings.any((x) => x.severity == CopyCompileSeverity.blocker);
+    final hasBlocker = findings.any(
+      (x) => x.severity == CopyCompileSeverity.blocker,
+    );
     final compiled = hasBlocker
         ? null
         : CompiledCopy(
@@ -237,7 +273,8 @@ class ExplanationCopyCompiler {
       final start = (idx - 8).clamp(0, hay.length);
       final window = hay.substring(start, idx + needle.length);
       final safe = _safeNegations.any(
-          (n) => (isCjk ? text : lower).contains(n) && window.contains('not'));
+        (n) => (isCjk ? text : lower).contains(n) && window.contains('not'),
+      );
       if (!safe) return true;
       idx = hay.indexOf(needle, idx + needle.length);
     }
@@ -255,15 +292,18 @@ String renderCopyCompileMarkdown(CopyCompileReport r) {
     ..writeln('# ParkinSUM Explanation Copy Compiler')
     ..writeln()
     ..writeln(
-        'Educational/research prototype. **Deterministic copy compilation '
-        '+ validation only — no medical advice, no clinical-calibration claim, '
-        'and not wired into the UI or scoring.**')
+      'Educational/research prototype. **Deterministic copy compilation '
+      '+ validation only — no medical advice, no clinical-calibration claim, '
+      'and not wired into the UI or scoring.**',
+    )
     ..writeln()
     ..writeln('- templates: ${r.templateCount}')
     ..writeln('- compiled: ${r.compiledCount}')
-    ..writeln('- info: ${r.counts['info'] ?? 0} · '
-        'warn: ${r.counts['warn'] ?? 0} · '
-        'blocker: ${r.blockerCount}')
+    ..writeln(
+      '- info: ${r.counts['info'] ?? 0} · '
+      'warn: ${r.counts['warn'] ?? 0} · '
+      'blocker: ${r.blockerCount}',
+    )
     ..writeln('- pass (0 blocker): ${r.pass}')
     ..writeln()
     ..writeln('## Compiled copy')
@@ -282,8 +322,10 @@ String renderCopyCompileMarkdown(CopyCompileReport r) {
       ..writeln('| severity | type | template | message |')
       ..writeln('| --- | --- | --- | --- |');
     for (final f in r.findings) {
-      b.writeln('| ${f.severity} | ${f.findingType} | ${f.templateId} | '
-          '${f.message} |');
+      b.writeln(
+        '| ${f.severity} | ${f.findingType} | ${f.templateId} | '
+        '${f.message} |',
+      );
     }
   }
   b

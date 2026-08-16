@@ -75,31 +75,35 @@ class PublicDemoWalkthrough {
   ];
 
   Map<String, dynamic> toJson() => {
-        'doc_type': kDocType,
-        'not_clinically_calibrated': true,
-        'synthetic_demo_data_only': true,
-        'no_medical_advice': true,
-        'synthetic_input_summary': syntheticInputSummary,
-        'source_quality_summary': sourceQualitySummary,
-        'missingness_summary': missingnessSummary,
-        'replay_summary': replaySummary,
-        'evidence_bundle_summary': evidenceBundleSummary,
-        'what_it_proves': whatItProves,
-        'what_it_does_not_prove': whatItDoesNotProve,
-        'safety_boundary': RuleExplanation.defaultSafetyBoundary,
-        'not_advice_text': RuleExplanation.defaultNotAdvice,
-      };
+    'doc_type': kDocType,
+    'not_clinically_calibrated': true,
+    'synthetic_demo_data_only': true,
+    'no_medical_advice': true,
+    'synthetic_input_summary': syntheticInputSummary,
+    'source_quality_summary': sourceQualitySummary,
+    'missingness_summary': missingnessSummary,
+    'replay_summary': replaySummary,
+    'evidence_bundle_summary': evidenceBundleSummary,
+    'what_it_proves': whatItProves,
+    'what_it_does_not_prove': whatItDoesNotProve,
+    'safety_boundary': RuleExplanation.defaultSafetyBoundary,
+    'not_advice_text': RuleExplanation.defaultNotAdvice,
+  };
 
   String toMarkdown() {
     final b = StringBuffer()
       ..writeln('# ParkinSUM Public Demo Walkthrough')
       ..writeln()
-      ..writeln('Educational/research prototype. Synthetic/demo data only. '
-          '**Not medical advice, not clinically calibrated, and carries no '
-          'clinical-validation claim.** No patient data is used or shown.')
+      ..writeln(
+        'Educational/research prototype. Synthetic/demo data only. '
+        '**Not medical advice, not clinically calibrated, and carries no '
+        'clinical-validation claim.** No patient data is used or shown.',
+      )
       ..writeln()
-      ..writeln('Composed from existing synthetic artifacts. Missing artifacts '
-          'are reported as `missing_artifact` — never fabricated.')
+      ..writeln(
+        'Composed from existing synthetic artifacts. Missing artifacts '
+        'are reported as `missing_artifact` — never fabricated.',
+      )
       ..writeln()
       ..writeln('## 1. Synthetic input summary')
       ..writeln()
@@ -141,8 +145,10 @@ class PublicDemoWalkthrough {
       ..writeln()
       ..writeln('## 9. Not clinically calibrated')
       ..writeln()
-      ..writeln('The mechanistic model is **not clinically calibrated**; '
-          'numeric magnitudes are literature-informed prototype parameters.')
+      ..writeln(
+        'The mechanistic model is **not clinically calibrated**; '
+        'numeric magnitudes are literature-informed prototype parameters.',
+      )
       ..writeln()
       ..writeln('## 10. Not medical advice')
       ..writeln()

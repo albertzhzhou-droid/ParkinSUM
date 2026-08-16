@@ -44,7 +44,8 @@ class WebAppDatabase implements AppDatabase {
     await prefs.setString(
       _kMedications,
       jsonEncode(
-          seedMedications.map((medication) => medication.toJson()).toList()),
+        seedMedications.map((medication) => medication.toJson()).toList(),
+      ),
     );
     await prefs.setString(
       _kRules,
@@ -158,8 +159,10 @@ class WebAppDatabase implements AppDatabase {
     final raw = prefs.getString(_kRules);
     if (raw == null) return <InteractionRuleRecord>[];
     return (jsonDecode(raw) as List<dynamic>)
-        .map((value) =>
-            InteractionRuleRecord.fromJson(value as Map<String, dynamic>))
+        .map(
+          (value) =>
+              InteractionRuleRecord.fromJson(value as Map<String, dynamic>),
+        )
         .toList(growable: false);
   }
 }

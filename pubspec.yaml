@@ -5,7 +5,12 @@ publish_to: "none"
 version: 0.2.0+2
 
 environment:
-  sdk: ">=3.3.0 <4.0.0"
+  # Floor tracks the strictest dependency rather than history: xml 7.0.1
+  # requires Dart ^3.11.0, so anything lower cannot resolve at all. Keeping the
+  # stale ">=3.3.0" made `flutter pub get` fail with an error naming xml
+  # instead of the SDK. Raising it also raises the package language version,
+  # which is why this commit carries the accompanying `dart format` pass.
+  sdk: ">=3.11.0 <4.0.0"
 
 dependencies:
   flutter:

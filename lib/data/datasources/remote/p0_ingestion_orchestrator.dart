@@ -79,23 +79,24 @@ class _ImportInputDescriptor {
         .whereType<String>()
         .where((value) => value.trim().isNotEmpty)
         .toList(growable: false);
-    final stableInputChecksum = checksum ??
+    final stableInputChecksum =
+        checksum ??
         (remoteUrls.isEmpty
             ? null
             : stableHash('$sourceKey:${remoteUrls.join('|')}:$remoteMetadata'));
     final normalizedSourceUrl = remoteUrls.isNotEmpty
         ? remoteUrls.first
         : (localPath ?? '').isNotEmpty
-            ? localPath
-            : null;
+        ? localPath
+        : null;
     return <String, Object?>{
       'source_key': sourceKey,
       'importer_id': sourceKey,
       'input_kind': inputKind,
       if (localPath != null) 'local_path': localPath,
-      if (normalizedSourceUrl != null) 'source_url': normalizedSourceUrl,
+      'source_url': ?normalizedSourceUrl,
       if (remoteUrls.length == 1) 'remote_url': remoteUrls.single,
-      if (stableInputChecksum != null) 'checksum': stableInputChecksum,
+      'checksum': ?stableInputChecksum,
       if (remoteUrls.isNotEmpty) 'remote_urls': remoteUrls,
       if (etags.isNotEmpty) 'etag': etags.length == 1 ? etags.single : etags,
       if (lastModifiedValues.isNotEmpty)
@@ -103,8 +104,7 @@ class _ImportInputDescriptor {
             ? lastModifiedValues.single
             : lastModifiedValues,
       if (remoteMetadata.isNotEmpty) 'remote_metadata': remoteMetadata,
-      if (lastCompletedStage != null)
-        'last_completed_stage': lastCompletedStage,
+      'last_completed_stage': ?lastCompletedStage,
       'cached_bundle_available': cachedBundleAvailable,
     };
   }
@@ -158,16 +158,17 @@ class P0IngestionOrchestrator {
     required this.cdssService,
     this.appRepository,
     required SourceFetchClient fetchClient,
-  })  : _fetchClient = fetchClient,
-        ciqualImporter = CiqualP0Importer(fetchClient: fetchClient),
-        fdcImporter = FdcP0Importer(fetchClient: fetchClient),
-        dailymedImporter = DailyMedP0Importer(fetchClient: fetchClient),
-        dpdImporter = HealthCanadaDpdP0Importer(fetchClient: fetchClient),
-        chinaFoodImporter =
-            ChinaCdcFoodPlatformImporter(fetchClient: fetchClient),
-        faoFbdgImporter = FaoFbdgP1Importer(fetchClient: fetchClient),
-        emaImporter = EmaP1Importer(fetchClient: fetchClient),
-        pmdaImporter = PmdaP1Importer(fetchClient: fetchClient);
+  }) : _fetchClient = fetchClient,
+       ciqualImporter = CiqualP0Importer(fetchClient: fetchClient),
+       fdcImporter = FdcP0Importer(fetchClient: fetchClient),
+       dailymedImporter = DailyMedP0Importer(fetchClient: fetchClient),
+       dpdImporter = HealthCanadaDpdP0Importer(fetchClient: fetchClient),
+       chinaFoodImporter = ChinaCdcFoodPlatformImporter(
+         fetchClient: fetchClient,
+       ),
+       faoFbdgImporter = FaoFbdgP1Importer(fetchClient: fetchClient),
+       emaImporter = EmaP1Importer(fetchClient: fetchClient),
+       pmdaImporter = PmdaP1Importer(fetchClient: fetchClient);
 
   Future<P0ImportBundle> importCoreSources({
     required List<int> fdcIds,
@@ -181,8 +182,9 @@ class P0IngestionOrchestrator {
       );
     }
     if (dailyMedSetIds.isNotEmpty) {
-      bundle =
-          bundle.merge(await dailymedImporter.fetchBySetIds(dailyMedSetIds));
+      bundle = bundle.merge(
+        await dailymedImporter.fetchBySetIds(dailyMedSetIds),
+      );
     }
     bundle = bundle.merge(await dpdImporter.fetchAndImport());
     await cdssService.importBundle(bundle);
@@ -242,7 +244,7 @@ class P0IngestionOrchestrator {
   }
 
   Future<P0OfflineImportStepReport>
-      importEmaPostAuthorisationMetadataDetailed() {
+  importEmaPostAuthorisationMetadataDetailed() {
     return _runRemoteSource(
       sourceKey: 'ema_post_authorisation',
       sourceLabel: 'EMA',
@@ -284,16 +286,20 @@ class P0IngestionOrchestrator {
 
     // 没有 in-process 描述符时，回退到 ingestion_run 表里的记录，沿用过去的入口。
     final rows = await cdssService.database.queryTable('ingestion_run');
-    final matched = rows.where((row) {
-      final notes = _safeDecodeMap('${row['notes_json'] ?? '{}'}');
-      return notes['resume_token'] == resumeToken ||
-          (notes['checkpoint'] is Map &&
-              (notes['checkpoint'] as Map)['resume_run_id'] == resumeToken);
-    }).toList(growable: false)
-      ..sort(
-        (left, right) => ((right['created_at'] as num?)?.toInt() ?? 0)
-            .compareTo((left['created_at'] as num?)?.toInt() ?? 0),
-      );
+    final matched =
+        rows
+            .where((row) {
+              final notes = _safeDecodeMap('${row['notes_json'] ?? '{}'}');
+              return notes['resume_token'] == resumeToken ||
+                  (notes['checkpoint'] is Map &&
+                      (notes['checkpoint'] as Map)['resume_run_id'] ==
+                          resumeToken);
+            })
+            .toList(growable: false)
+          ..sort(
+            (left, right) => ((right['created_at'] as num?)?.toInt() ?? 0)
+                .compareTo((left['created_at'] as num?)?.toInt() ?? 0),
+          );
     if (matched.isEmpty) {
       return P0OfflineImportStepReport(
         sourceKey: 'unknown',
@@ -366,41 +372,49 @@ class P0IngestionOrchestrator {
   }) async {
     final results = <P0OfflineImportStepReport>[];
     if (ciqualArchiveBytes != null) {
-      results.add(await _runLocalSource(
-        sourceKey: 'ciqual',
-        sourceLabel: 'CIQUAL',
-        bytes: ciqualArchiveBytes,
-        localPath: sourcePaths?['ciqual'],
-        parse: (b) async => ciqualImporter.importArchiveBytes(b),
-      ));
+      results.add(
+        await _runLocalSource(
+          sourceKey: 'ciqual',
+          sourceLabel: 'CIQUAL',
+          bytes: ciqualArchiveBytes,
+          localPath: sourcePaths?['ciqual'],
+          parse: (b) async => ciqualImporter.importArchiveBytes(b),
+        ),
+      );
     }
     if (fdcZipBytes != null) {
-      results.add(await _runLocalSource(
-        sourceKey: 'fdc',
-        sourceLabel: 'FDC',
-        bytes: fdcZipBytes,
-        localPath: sourcePaths?['fdc'],
-        parse: (b) async =>
-            fdcImporter.importZipBytes(b, sourceLabel: 'fdc_bulk_zip'),
-      ));
+      results.add(
+        await _runLocalSource(
+          sourceKey: 'fdc',
+          sourceLabel: 'FDC',
+          bytes: fdcZipBytes,
+          localPath: sourcePaths?['fdc'],
+          parse: (b) async =>
+              fdcImporter.importZipBytes(b, sourceLabel: 'fdc_bulk_zip'),
+        ),
+      );
     }
     if (dailyMedZipBytes != null) {
-      results.add(await _runLocalSource(
-        sourceKey: 'dailymed',
-        sourceLabel: 'DAILYMED',
-        bytes: dailyMedZipBytes,
-        localPath: sourcePaths?['dailymed'],
-        parse: (b) async => dailymedImporter.importZipBytes(b),
-      ));
+      results.add(
+        await _runLocalSource(
+          sourceKey: 'dailymed',
+          sourceLabel: 'DAILYMED',
+          bytes: dailyMedZipBytes,
+          localPath: sourcePaths?['dailymed'],
+          parse: (b) async => dailymedImporter.importZipBytes(b),
+        ),
+      );
     }
     if (dpdZipBytes != null) {
-      results.add(await _runLocalSource(
-        sourceKey: 'dpd',
-        sourceLabel: 'HEALTH_CANADA_DPD',
-        bytes: dpdZipBytes,
-        localPath: sourcePaths?['dpd'],
-        parse: (b) async => dpdImporter.importZipBytes(b),
-      ));
+      results.add(
+        await _runLocalSource(
+          sourceKey: 'dpd',
+          sourceLabel: 'HEALTH_CANADA_DPD',
+          bytes: dpdZipBytes,
+          localPath: sourcePaths?['dpd'],
+          parse: (b) async => dpdImporter.importZipBytes(b),
+        ),
+      );
     }
     return results;
   }
@@ -485,8 +499,9 @@ class P0IngestionOrchestrator {
     // Try to short-circuit if a previous run already wrote this exact seed.
     if (!forceRewrite) {
       try {
-        final existing =
-            await cdssService.database.queryTable('source_document');
+        final existing = await cdssService.database.queryTable(
+          'source_document',
+        );
         final priorAudit = existing.firstWhere(
           (row) =>
               '${row['source_family'] ?? ''}' == 'LOCALE_RESOURCE_SEED' &&
@@ -524,11 +539,14 @@ class P0IngestionOrchestrator {
   /// key, text)` tuples as a sorted list so reordering inside the importer
   /// has no effect.
   String _localeSeedChecksum(List<LocaleResourceBundleRecord> rows) {
-    final entries = rows
-        .map((r) =>
-            '${r.localeTag}|${r.namespace}|${r.key}|${r.text}|${r.pluralRule ?? ''}')
-        .toList()
-      ..sort();
+    final entries =
+        rows
+            .map(
+              (r) =>
+                  '${r.localeTag}|${r.namespace}|${r.key}|${r.text}|${r.pluralRule ?? ''}',
+            )
+            .toList()
+          ..sort();
     return stableHash(entries.join('\n'));
   }
 
@@ -628,12 +646,13 @@ class P0IngestionOrchestrator {
     _inputDescriptors[baseRunId] = descriptor;
     P0ImportBundle? bundle = cachedBundle;
     Object? lastError;
-    String? lastCompletedStage =
-        cachedBundle == null ? null : P0IngestionCheckpoint.bundleParsed;
+    String? lastCompletedStage = cachedBundle == null
+        ? null
+        : P0IngestionCheckpoint.bundleParsed;
     Map<String, Object?> describe() => descriptor.toNotes(
-          lastCompletedStage: lastCompletedStage,
-          cachedBundleAvailable: bundle != null,
-        );
+      lastCompletedStage: lastCompletedStage,
+      cachedBundleAvailable: bundle != null,
+    );
 
     for (var attempt = 1; attempt <= 2; attempt++) {
       // ---- parse stage ----
@@ -708,9 +727,7 @@ class P0IngestionOrchestrator {
           status: 'completed',
           checkpoint: P0IngestionCheckpoint.promoteCompleted,
           descriptor: describe(),
-          extra: {
-            'snapshot_id': cdssReport.promotedSnapshotId,
-          },
+          extra: {'snapshot_id': cdssReport.promotedSnapshotId},
           completed: true,
         );
         final report = P0OfflineImportStepReport(
@@ -809,8 +826,9 @@ class P0IngestionOrchestrator {
     await appRepository!.initialize(
       seedFoods: nextFoods,
       seedMedications: nextDrugs,
-      seedRules:
-          currentRules.isEmpty ? const <InteractionRuleRecord>[] : currentRules,
+      seedRules: currentRules.isEmpty
+          ? const <InteractionRuleRecord>[]
+          : currentRules,
     );
   }
 

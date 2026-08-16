@@ -57,13 +57,15 @@ class LocaleResourceSeedImporter {
     final rows = <LocaleResourceBundleRecord>[];
     void emit(String localeTag, String namespace, Map<String, String> map) {
       for (final entry in map.entries) {
-        rows.add(LocaleResourceBundleRecord(
-          localeTag: localeTag,
-          namespace: namespace,
-          key: entry.key,
-          text: entry.value,
-          pluralRule: null,
-        ));
+        rows.add(
+          LocaleResourceBundleRecord(
+            localeTag: localeTag,
+            namespace: namespace,
+            key: entry.key,
+            text: entry.value,
+            pluralRule: null,
+          ),
+        );
       }
     }
 
@@ -98,61 +100,65 @@ class LocaleResourceSeedImporter {
       sourceSystem: 'LOCALE_RESOURCE_SEED',
       externalKey: 'locale_seed_v1',
     );
-    return P0ImportBundle(sourceDocuments: [
-      buildSourceDocumentRecord(
-        sourceDocId: sourceDocId,
-        sourceFamily: 'LOCALE_RESOURCE_SEED',
-        organization: 'ParkinSUM Companion (importer-side locale seed)',
-        jurisdiction: 'GLOBAL',
-        docType: 'locale_resource_seed',
-        title: 'Locale resource seed v1 (regional namespaces)',
-        originUrl: 'app://locale-resource-seed/v1',
-        licenseNote:
-            'Built-in locale seed. App-level UI labels only; not authoritative '
-            'medical, regulatory, or food-safety wording.',
-        language: 'multi',
-        dataTier: KnowledgeDataTier.p2,
-        ingestionStrategy: SourceIngestionStrategy.controlledExport,
-        rawPayload: stringifyPayload({
-          'row_count': rowCount,
-          'locale_tags': localeTags.toList()..sort(),
-          'namespaces': namespaces.toList()..sort(),
-          // Persisted checksum lets the orchestrator no-op on repeated
-          // `seedLocaleResourceBundles()` calls when the seed payload has
-          // not changed since the last successful write.
-          if (seedChecksum != null) 'seed_checksum': seedChecksum,
-          'audit_gaps': <Map<String, Object?>>[
-            ImporterAudit.auditGap(
-              fieldName: 'translation_quality_review',
-              reason: 'Translations are seed values for UX labels only. Native '
-                  'reviewers should QA every locale before public release. '
-                  'No translation contract is implied.',
-              observedCount: rowCount,
-            ),
-            ImporterAudit.auditGap(
-              fieldName: 'plural_rules',
-              reason:
-                  'pluralRule is null on every seeded row; plural handling is '
-                  'a UI concern owned by `lib/core/i18n/app_i18n.dart` and is '
-                  'intentionally out of the importer write area.',
-              observedCount: rowCount,
-            ),
-            ImporterAudit.auditGap(
-              fieldName: 'ui_string_catalog_coverage',
-              reason: 'This seed covers food_categories, meal_slots, '
-                  'texture_classes, nav, common, and recommend.path '
-                  'namespaces. The full UI string catalog is still not '
-                  'covered by this importer seed.',
-              observedCount: namespaces.length,
-            ),
-          ],
-          'parser_limitation':
-              'Locale seed is a database-backed UI enrichment for selected '
-                  'namespaces only. It does not guarantee full app string '
-                  'coverage for the locale.',
-        }),
-      ),
-    ]);
+    return P0ImportBundle(
+      sourceDocuments: [
+        buildSourceDocumentRecord(
+          sourceDocId: sourceDocId,
+          sourceFamily: 'LOCALE_RESOURCE_SEED',
+          organization: 'ParkinSUM Companion (importer-side locale seed)',
+          jurisdiction: 'GLOBAL',
+          docType: 'locale_resource_seed',
+          title: 'Locale resource seed v1 (regional namespaces)',
+          originUrl: 'app://locale-resource-seed/v1',
+          licenseNote:
+              'Built-in locale seed. App-level UI labels only; not authoritative '
+              'medical, regulatory, or food-safety wording.',
+          language: 'multi',
+          dataTier: KnowledgeDataTier.p2,
+          ingestionStrategy: SourceIngestionStrategy.controlledExport,
+          rawPayload: stringifyPayload({
+            'row_count': rowCount,
+            'locale_tags': localeTags.toList()..sort(),
+            'namespaces': namespaces.toList()..sort(),
+            // Persisted checksum lets the orchestrator no-op on repeated
+            // `seedLocaleResourceBundles()` calls when the seed payload has
+            // not changed since the last successful write.
+            'seed_checksum': ?seedChecksum,
+            'audit_gaps': <Map<String, Object?>>[
+              ImporterAudit.auditGap(
+                fieldName: 'translation_quality_review',
+                reason:
+                    'Translations are seed values for UX labels only. Native '
+                    'reviewers should QA every locale before public release. '
+                    'No translation contract is implied.',
+                observedCount: rowCount,
+              ),
+              ImporterAudit.auditGap(
+                fieldName: 'plural_rules',
+                reason:
+                    'pluralRule is null on every seeded row; plural handling is '
+                    'a UI concern owned by `lib/core/i18n/app_i18n.dart` and is '
+                    'intentionally out of the importer write area.',
+                observedCount: rowCount,
+              ),
+              ImporterAudit.auditGap(
+                fieldName: 'ui_string_catalog_coverage',
+                reason:
+                    'This seed covers food_categories, meal_slots, '
+                    'texture_classes, nav, common, and recommend.path '
+                    'namespaces. The full UI string catalog is still not '
+                    'covered by this importer seed.',
+                observedCount: namespaces.length,
+              ),
+            ],
+            'parser_limitation':
+                'Locale seed is a database-backed UI enrichment for selected '
+                'namespaces only. It does not guarantee full app string '
+                'coverage for the locale.',
+          }),
+        ),
+      ],
+    );
   }
 }
 
@@ -197,11 +203,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': '저녁',
       'snack': '간식',
     },
-    textureClasses: {
-      'liquid': '액체',
-      'soft': '부드러움',
-      'regular': '일반',
-    },
+    textureClasses: {'liquid': '액체', 'soft': '부드러움', 'regular': '일반'},
     nav: {
       'home': '홈',
       'analytics': '분석',
@@ -265,11 +267,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': 'रात का भोजन',
       'snack': 'हल्का नाश्ता',
     },
-    textureClasses: {
-      'liquid': 'तरल',
-      'soft': 'मुलायम',
-      'regular': 'सामान्य',
-    },
+    textureClasses: {'liquid': 'तरल', 'soft': 'मुलायम', 'regular': 'सामान्य'},
     nav: {
       'home': 'होम',
       'analytics': 'विश्लेषण',
@@ -473,11 +471,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': 'Bữa tối',
       'snack': 'Ăn vặt',
     },
-    textureClasses: {
-      'liquid': 'Lỏng',
-      'soft': 'Mềm',
-      'regular': 'Thường',
-    },
+    textureClasses: {'liquid': 'Lỏng', 'soft': 'Mềm', 'regular': 'Thường'},
     nav: {
       'home': 'Trang chủ',
       'analytics': 'Phân tích',
@@ -543,11 +537,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': 'อาหารเย็น',
       'snack': 'ของว่าง',
     },
-    textureClasses: {
-      'liquid': 'ของเหลว',
-      'soft': 'นุ่ม',
-      'regular': 'ปกติ',
-    },
+    textureClasses: {'liquid': 'ของเหลว', 'soft': 'นุ่ม', 'regular': 'ปกติ'},
     nav: {
       'home': 'หน้าแรก',
       'analytics': 'การวิเคราะห์',
@@ -613,11 +603,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': 'Makan malam',
       'snack': 'Camilan',
     },
-    textureClasses: {
-      'liquid': 'Cair',
-      'soft': 'Lembut',
-      'regular': 'Biasa',
-    },
+    textureClasses: {'liquid': 'Cair', 'soft': 'Lembut', 'regular': 'Biasa'},
     nav: {
       'home': 'Beranda',
       'analytics': 'Analitik',
@@ -754,11 +740,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': 'Kolacja',
       'snack': 'Przekąska',
     },
-    textureClasses: {
-      'liquid': 'Płyn',
-      'soft': 'Miękki',
-      'regular': 'Zwykły',
-    },
+    textureClasses: {'liquid': 'Płyn', 'soft': 'Miękki', 'regular': 'Zwykły'},
     nav: {
       'home': 'Start',
       'analytics': 'Analiza',
@@ -824,11 +806,7 @@ const List<_LocaleSeed> _localeSeeds = <_LocaleSeed>[
       'dinner': 'العشاء',
       'snack': 'وجبة خفيفة',
     },
-    textureClasses: {
-      'liquid': 'سائل',
-      'soft': 'ناعم',
-      'regular': 'عادي',
-    },
+    textureClasses: {'liquid': 'سائل', 'soft': 'ناعم', 'regular': 'عادي'},
     nav: {
       'home': 'الرئيسية',
       'analytics': 'التحليلات',

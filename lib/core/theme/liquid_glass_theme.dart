@@ -134,8 +134,10 @@ class LiquidGlass {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: glassFillSoft,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
           borderSide: const BorderSide(color: stroke, width: hairline),
@@ -289,7 +291,8 @@ class LiquidGlass {
     return showGeneralDialog<T>(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierLabel: barrierLabel ??
+      barrierLabel:
+          barrierLabel ??
           MaterialLocalizations.of(context).modalBarrierDismissLabel,
       // Use a near-transparent barrier; the blur is drawn by the
       // `_FrostedBarrier` below, on top of the page content.
@@ -394,10 +397,7 @@ class GlassSelectField<T> extends StatelessWidget {
   GlassSelectOption<T>? get _selected => options
       .where((o) => o.value == value)
       .cast<GlassSelectOption<T>?>()
-      .firstWhere(
-        (_) => true,
-        orElse: () => null,
-      );
+      .firstWhere((_) => true, orElse: () => null);
 
   @override
   Widget build(BuildContext context) {
@@ -532,7 +532,7 @@ class _GlassSelectSheetState<T> extends State<_GlassSelectSheet<T>> {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: widget.options.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 4),
+                  separatorBuilder: (_, _) => const SizedBox(height: 4),
                   itemBuilder: (context, index) {
                     final opt = widget.options[index];
                     final isSelected = opt.value == widget.currentValue;
@@ -540,8 +540,8 @@ class _GlassSelectSheetState<T> extends State<_GlassSelectSheet<T>> {
                     final highlight = isSelected
                         ? scheme.primary.withValues(alpha: 0.18)
                         : isHovered
-                            ? scheme.primary.withValues(alpha: 0.10)
-                            : Colors.transparent;
+                        ? scheme.primary.withValues(alpha: 0.10)
+                        : Colors.transparent;
                     final border = isSelected
                         ? Border.all(
                             color: scheme.primary.withValues(alpha: 0.55),
@@ -560,18 +560,22 @@ class _GlassSelectSheetState<T> extends State<_GlassSelectSheet<T>> {
                         decoration: BoxDecoration(
                           color: highlight,
                           border: border,
-                          borderRadius:
-                              BorderRadius.circular(LiquidGlass.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            LiquidGlass.radiusMd,
+                          ),
                         ),
                         child: Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            borderRadius:
-                                BorderRadius.circular(LiquidGlass.radiusMd),
+                            borderRadius: BorderRadius.circular(
+                              LiquidGlass.radiusMd,
+                            ),
                             onTap: () => Navigator.of(context).pop(opt.value),
                             child: Padding(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 12),
+                                horizontal: 14,
+                                vertical: 12,
+                              ),
                               child: Row(
                                 children: [
                                   if (opt.icon != null) ...[
@@ -620,7 +624,9 @@ class _GlassSelectSheetState<T> extends State<_GlassSelectSheet<T>> {
                                     duration: const Duration(milliseconds: 140),
                                     transitionBuilder: (child, anim) =>
                                         ScaleTransition(
-                                            scale: anim, child: child),
+                                          scale: anim,
+                                          child: child,
+                                        ),
                                     child: isSelected
                                         ? Icon(
                                             Icons.check_rounded,
@@ -703,9 +709,10 @@ class LiquidGlassBackground extends StatefulWidget {
 
 class _LiquidGlassBackgroundState extends State<LiquidGlassBackground>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller =
-      AnimationController(vsync: this, duration: const Duration(seconds: 22))
-        ..repeat();
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 22),
+  )..repeat();
 
   @override
   void dispose() {
@@ -826,12 +833,14 @@ class GlassSurface extends StatelessWidget {
                 (tint ?? LiquidGlass.glassFillSoft).withValues(alpha: 0.30),
               ],
             ),
-            border: border ??
+            border:
+                border ??
                 Border.all(
                   color: Colors.white.withValues(alpha: 0.55),
                   width: LiquidGlass.hairline,
                 ),
-            boxShadow: boxShadow ??
+            boxShadow:
+                boxShadow ??
                 [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.04),
@@ -840,10 +849,7 @@ class GlassSurface extends StatelessWidget {
                   ),
                 ],
           ),
-          child: Padding(
-            padding: padding,
-            child: child,
-          ),
+          child: Padding(padding: padding, child: child),
         ),
       ),
     );
@@ -966,7 +972,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(
             children: [
-              if (leading != null) leading!,
+              ?leading,
               if (title != null)
                 Expanded(
                   child: DefaultTextStyle.merge(
@@ -980,7 +986,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                     child: title!,
                   ),
                 ),
-              if (actions != null) ...actions!,
+              ...?actions,
             ],
           ),
         ),

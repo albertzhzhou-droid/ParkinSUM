@@ -17,18 +17,18 @@ import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orc
 /// `heuristic_legacy_fallback` with explicit fallback reasons.
 void main() {
   FoodItem food(String id, String name, double protein) => FoodItem(
-        id: id,
-        name: name,
-        category: FoodCategory.protein,
-        sourceSystem: 'USDA_FDC',
-        jurisdiction: 'US',
-        proteinG: protein,
-        carbsG: 10,
-        fatG: 2,
-        fiberG: 1,
-        sodiumMg: 50,
-        energyKcal: 150,
-      );
+    id: id,
+    name: name,
+    category: FoodCategory.protein,
+    sourceSystem: 'USDA_FDC',
+    jurisdiction: 'US',
+    proteinG: protein,
+    carbsG: 10,
+    fatG: 2,
+    fiberG: 1,
+    sodiumMg: 50,
+    energyKcal: 150,
+  );
 
   final candidates = [
     food('food_low', 'low protein item', 1),
@@ -39,7 +39,9 @@ void main() {
     final now = DateTime.utc(2026, 1, 1, 8);
     return NextMealRecommendationRequest(
       userProfile: UserProfile.defaults().copyWith(
-          registrationRegion: 'US', contentJurisdictionOverride: const ['US']),
+        registrationRegion: 'US',
+        contentJurisdictionOverride: const ['US'],
+      ),
       history: const [],
       activeDrugs: [
         DrugDefinition(
@@ -75,42 +77,46 @@ void main() {
         localAiAdapter: null,
       );
 
-  test('eligible → mechanistic_primary and order follows mechanistic scores',
-      () async {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final result = await buildOrchestrator().recommend(
-      request: request(
-        window: UserDefinedMealWindow(
-          window: TimelineWindow(
-            startMinute: dateTimeToMinute(now) + 60,
-            endMinute: dateTimeToMinute(now) + 120,
+  test(
+    'eligible → mechanistic_primary and order follows mechanistic scores',
+    () async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final result = await buildOrchestrator().recommend(
+        request: request(
+          window: UserDefinedMealWindow(
+            window: TimelineWindow(
+              startMinute: dateTimeToMinute(now) + 60,
+              endMinute: dateTimeToMinute(now) + 120,
+            ),
+            source: 'test',
           ),
-          source: 'test',
         ),
-      ),
-      candidateFoods: candidates,
-    );
+        candidateFoods: candidates,
+      );
 
-    expect(result.rankerEligibility, isNotNull);
-    expect(result.rankerEligibility!.rankerUsed, 'mechanistic_primary');
-    expect(result.rankerEligibility!.mechanisticPrimaryEligible, isTrue);
-    expect(result.rankerEligibility!.fallbackReasons, isEmpty);
+      expect(result.rankerEligibility, isNotNull);
+      expect(result.rankerEligibility!.rankerUsed, 'mechanistic_primary');
+      expect(result.rankerEligibility!.mechanisticPrimaryEligible, isTrue);
+      expect(result.rankerEligibility!.fallbackReasons, isEmpty);
 
-    // Final recommendation order must be consistent with the mechanistic
-    // finalCandidateScore (legacy heuristic did not override it): for any two
-    // recommendations that were scored, the earlier one scores >= the later.
-    final scoreById = {
-      for (final s in result.mechanisticCandidateScores ?? [])
-        s.candidateFoodId: s.finalCandidateScore,
-    };
-    final ordered = result.recommendations
-        .where((r) => scoreById.containsKey(r.food.id))
-        .toList();
-    for (var i = 1; i < ordered.length; i++) {
-      expect(scoreById[ordered[i - 1].food.id]!,
-          greaterThanOrEqualTo(scoreById[ordered[i].food.id]!));
-    }
-  });
+      // Final recommendation order must be consistent with the mechanistic
+      // finalCandidateScore (legacy heuristic did not override it): for any two
+      // recommendations that were scored, the earlier one scores >= the later.
+      final scoreById = {
+        for (final s in result.mechanisticCandidateScores ?? [])
+          s.candidateFoodId: s.finalCandidateScore,
+      };
+      final ordered = result.recommendations
+          .where((r) => scoreById.containsKey(r.food.id))
+          .toList();
+      for (var i = 1; i < ordered.length; i++) {
+        expect(
+          scoreById[ordered[i - 1].food.id]!,
+          greaterThanOrEqualTo(scoreById[ordered[i].food.id]!),
+        );
+      }
+    },
+  );
 
   test('missing user window → heuristic_legacy_fallback with reason', () async {
     final result = await buildOrchestrator().recommend(
@@ -119,8 +125,10 @@ void main() {
     );
     expect(result.rankerEligibility!.rankerUsed, 'heuristic_legacy_fallback');
     expect(result.rankerEligibility!.mechanisticPrimaryEligible, isFalse);
-    expect(result.rankerEligibility!.fallbackReasons,
-        contains('missing_user_defined_window'));
+    expect(
+      result.rankerEligibility!.fallbackReasons,
+      contains('missing_user_defined_window'),
+    );
   });
 }
 

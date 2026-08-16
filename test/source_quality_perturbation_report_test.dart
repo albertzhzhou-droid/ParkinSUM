@@ -25,12 +25,18 @@ void main() {
     final official = r.byCase('prov_official_in_jurisdiction');
     final synthetic = r.byCase('prov_synthetic_demo');
     // Same meal/conflict input; only provenance differs.
-    expect(official.conflictOverlapScore,
-        closeTo(synthetic.conflictOverlapScore, 1e-9));
-    expect(official.finalCandidateScore,
-        greaterThanOrEqualTo(synthetic.finalCandidateScore));
-    expect(official.sourceAuthorityScore,
-        greaterThan(synthetic.sourceAuthorityScore));
+    expect(
+      official.conflictOverlapScore,
+      closeTo(synthetic.conflictOverlapScore, 1e-9),
+    );
+    expect(
+      official.finalCandidateScore,
+      greaterThanOrEqualTo(synthetic.finalCandidateScore),
+    );
+    expect(
+      official.sourceAuthorityScore,
+      greaterThan(synthetic.sourceAuthorityScore),
+    );
   });
 
   test('missing sourceRefs lowers provenance quality (and the score)', () {
@@ -39,8 +45,10 @@ void main() {
     final official = r.byCase('prov_official_in_jurisdiction');
     // Identical authority/jurisdiction + identical conflict input; missing
     // sourceRefs drops provenance quality + completeness, so the score is lower.
-    expect(missing.conflictOverlapScore,
-        closeTo(official.conflictOverlapScore, 1e-9));
+    expect(
+      missing.conflictOverlapScore,
+      closeTo(official.conflictOverlapScore, 1e-9),
+    );
     expect(missing.finalCandidateScore, lessThan(official.finalCandidateScore));
   });
 
@@ -111,27 +119,32 @@ void main() {
     }
     // Nutrient provenance quality is ordered by tier (analytical > imputed).
     final analytical = report.byCase('aa_analytical').nutrientProvenanceQuality;
-    final imputed =
-        report.byCase('aa_imputedOrAssumed').nutrientProvenanceQuality;
+    final imputed = report
+        .byCase('aa_imputedOrAssumed')
+        .nutrientProvenanceQuality;
     final unknown = report.byCase('aa_unknown').nutrientProvenanceQuality;
     expect(analytical, greaterThan(imputed));
     expect(imputed, greaterThan(unknown));
   });
 
-  test('source authority and nutrient-provenance tier move independently (P5)',
-      () {
-    final report = runner.run();
-    final synthAnalytical =
-        report.byCase('mix_synthetic_source_analytical_provenance');
-    final officialImputed =
-        report.byCase('mix_official_source_imputed_provenance');
-    // Synthetic source but analytical nutrient provenance: low authority, high
-    // nutrient provenance quality.
-    expect(synthAnalytical.sourceAuthorityScore, lessThan(0.5));
-    expect(synthAnalytical.nutrientProvenanceQuality, 1.0);
-    // Official source but imputed nutrient provenance: high authority, low
-    // nutrient provenance quality. The two axes do not collapse into each other.
-    expect(officialImputed.sourceAuthorityScore, greaterThan(0.5));
-    expect(officialImputed.nutrientProvenanceQuality, lessThan(0.5));
-  });
+  test(
+    'source authority and nutrient-provenance tier move independently (P5)',
+    () {
+      final report = runner.run();
+      final synthAnalytical = report.byCase(
+        'mix_synthetic_source_analytical_provenance',
+      );
+      final officialImputed = report.byCase(
+        'mix_official_source_imputed_provenance',
+      );
+      // Synthetic source but analytical nutrient provenance: low authority, high
+      // nutrient provenance quality.
+      expect(synthAnalytical.sourceAuthorityScore, lessThan(0.5));
+      expect(synthAnalytical.nutrientProvenanceQuality, 1.0);
+      // Official source but imputed nutrient provenance: high authority, low
+      // nutrient provenance quality. The two axes do not collapse into each other.
+      expect(officialImputed.sourceAuthorityScore, greaterThan(0.5));
+      expect(officialImputed.nutrientProvenanceQuality, lessThan(0.5));
+    },
+  );
 }

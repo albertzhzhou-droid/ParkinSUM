@@ -27,11 +27,11 @@ class Intake {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'drugId': drugId,
-        'takenAt': takenAt.toIso8601String(),
-        'dosageNote': dosageNote,
-      };
+    'id': id,
+    'drugId': drugId,
+    'takenAt': takenAt.toIso8601String(),
+    'dosageNote': dosageNote,
+  };
 
   static Intake fromJson(Map<String, dynamic> json) {
     return Intake(

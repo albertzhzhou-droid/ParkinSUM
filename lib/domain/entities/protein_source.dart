@@ -40,12 +40,12 @@ class LnaaLoadFactor {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_type': sourceType.name,
-        'load_factor': loadFactor,
-        'source_refs': sourceRefs,
-        'limitation': limitation,
-        'is_prototype_heuristic': isPrototypeHeuristic,
-      };
+    'source_type': sourceType.name,
+    'load_factor': loadFactor,
+    'source_refs': sourceRefs,
+    'limitation': limitation,
+    'is_prototype_heuristic': isPrototypeHeuristic,
+  };
 }
 
 /// Static registry mapping `ProteinSourceType` to a load factor. Defaults
@@ -164,23 +164,53 @@ ProteinSourceType inferProteinSourceFromNameAndCategory({
   if (any(['lentil', 'chickpea', 'bean', 'pea ', 'pulse', 'fava'])) {
     return ProteinSourceType.legume;
   }
-  if (any(
-      ['salmon', 'tuna', 'cod', 'fish', 'sardine', 'mackerel', 'tilapia'])) {
+  if (any([
+    'salmon',
+    'tuna',
+    'cod',
+    'fish',
+    'sardine',
+    'mackerel',
+    'tilapia',
+  ])) {
     return ProteinSourceType.fish;
   }
   if (any(['egg', 'omelet', 'frittata'])) {
     return ProteinSourceType.egg;
   }
-  if (any(
-      ['milk', 'yogurt', 'yoghurt', 'cheese', 'cottage', 'kefir', 'whey'])) {
+  if (any([
+    'milk',
+    'yogurt',
+    'yoghurt',
+    'cheese',
+    'cottage',
+    'kefir',
+    'whey',
+  ])) {
     return ProteinSourceType.dairy;
   }
-  if (any(
-      ['beef', 'pork', 'lamb', 'chicken', 'turkey', 'duck', 'meat', 'steak'])) {
+  if (any([
+    'beef',
+    'pork',
+    'lamb',
+    'chicken',
+    'turkey',
+    'duck',
+    'meat',
+    'steak',
+  ])) {
     return ProteinSourceType.meat;
   }
-  if (any(
-      ['oat', 'wheat', 'rice', 'barley', 'rye', 'quinoa', 'corn', 'bread'])) {
+  if (any([
+    'oat',
+    'wheat',
+    'rice',
+    'barley',
+    'rye',
+    'quinoa',
+    'corn',
+    'bread',
+  ])) {
     return ProteinSourceType.grain;
   }
   if (category != null && category.toLowerCase() == 'protein') {

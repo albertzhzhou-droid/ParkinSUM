@@ -18,10 +18,7 @@ void _entryDebugLog(String message) {
 class EntryPage extends StatefulWidget {
   final Meal? initialMeal;
 
-  const EntryPage({
-    super.key,
-    this.initialMeal,
-  });
+  const EntryPage({super.key, this.initialMeal});
 
   bool get isEditing => initialMeal != null;
 
@@ -58,7 +55,8 @@ class _EntryPageState extends State<EntryPage> {
     _items = initialMeal == null
         ? <MealItem>[]
         : List<MealItem>.from(initialMeal.items);
-    _actualMealTime = initialMeal?.occurredAt ??
+    _actualMealTime =
+        initialMeal?.occurredAt ??
         initialMeal?.effectiveOccurredAt ??
         DateTime.now();
     _useApproximateWindow = initialMeal?.timePrecision == 'interval';
@@ -71,11 +69,12 @@ class _EntryPageState extends State<EntryPage> {
         initialMeal?.coeventSubstanceTags.contains('iron_salt') ?? false;
     _withIronMultivitamin =
         initialMeal?.coeventSubstanceTags.contains('multivitamin_with_iron') ??
-            false;
+        false;
     _thickenerType = initialMeal?.thickenerType;
     _enteralFeedMode = initialMeal?.enteralFeedMode;
-    _enteralFeedFormulaCtrl =
-        TextEditingController(text: initialMeal?.enteralFeedFormula ?? '');
+    _enteralFeedFormulaCtrl = TextEditingController(
+      text: initialMeal?.enteralFeedFormula ?? '',
+    );
     _enteralFeedProteinCtrl = TextEditingController(
       text: initialMeal?.enteralFeedProteinGPerDay?.toStringAsFixed(0) ?? '',
     );
@@ -105,7 +104,8 @@ class _EntryPageState extends State<EntryPage> {
 
   Future<void> _saveMeal() async {
     _entryDebugLog(
-        '[EntryPage] save:pressed items=${_items.length} mounted=$mounted');
+      '[EntryPage] save:pressed items=${_items.length} mounted=$mounted',
+    );
 
     final i18n = context.appI18n;
     if (_isSaving) {
@@ -115,9 +115,9 @@ class _EntryPageState extends State<EntryPage> {
 
     if (_items.isEmpty) {
       _entryDebugLog('[EntryPage] save:blocked empty-items');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(i18n.tr('entry.add_food_first'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(i18n.tr('entry.add_food_first'))));
       return;
     }
 
@@ -126,19 +126,22 @@ class _EntryPageState extends State<EntryPage> {
         ? i18n.tr('entry.default_meal_title')
         : _titleCtrl.text.trim();
     final now = DateTime.now();
-    final normalizedMealWindowStart =
-        _useApproximateWindow ? (_mealWindowStart ?? _actualMealTime) : null;
+    final normalizedMealWindowStart = _useApproximateWindow
+        ? (_mealWindowStart ?? _actualMealTime)
+        : null;
     final normalizedMealWindowEnd = _useApproximateWindow
         ? (_mealWindowEnd ??
-            (_mealWindowStart ?? _actualMealTime)
-                .add(const Duration(minutes: 20)))
+              (_mealWindowStart ?? _actualMealTime).add(
+                const Duration(minutes: 20),
+              ))
         : null;
     final coeventSubstanceTags = <String>[
       if (_withIronSupplement) 'iron_salt',
       if (_withIronMultivitamin) 'multivitamin_with_iron',
     ];
-    final effectiveOccurredAt =
-        _useApproximateWindow ? normalizedMealWindowStart! : _actualMealTime;
+    final effectiveOccurredAt = _useApproximateWindow
+        ? normalizedMealWindowStart!
+        : _actualMealTime;
     final meal = Meal(
       id: widget.initialMeal?.id ?? appState.newId('meal'),
       title: title,
@@ -152,16 +155,18 @@ class _EntryPageState extends State<EntryPage> {
       timePrecision: _useApproximateWindow ? 'interval' : 'exact',
       nextMealWindowStart: _nextMealWindowStart,
       nextMealWindowEnd: _nextMealWindowEnd,
-      coeventTime:
-          _hasCoeventContext ? (_coeventTime ?? effectiveOccurredAt) : null,
+      coeventTime: _hasCoeventContext
+          ? (_coeventTime ?? effectiveOccurredAt)
+          : null,
       coeventSubstanceTags: coeventSubstanceTags,
       thickenerType: _thickenerType,
       enteralFeedMode: _enteralFeedMode,
       enteralFeedFormula: _enteralFeedFormulaCtrl.text.trim().isEmpty
           ? null
           : _enteralFeedFormulaCtrl.text.trim(),
-      enteralFeedProteinGPerDay:
-          double.tryParse(_enteralFeedProteinCtrl.text.trim()),
+      enteralFeedProteinGPerDay: double.tryParse(
+        _enteralFeedProteinCtrl.text.trim(),
+      ),
       items: List<MealItem>.from(_items),
     );
 
@@ -191,9 +196,11 @@ class _EntryPageState extends State<EntryPage> {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
-          title: Text(widget.isEditing
-              ? i18n.tr('entry.updated_title')
-              : i18n.tr('entry.saved_title')),
+          title: Text(
+            widget.isEditing
+                ? i18n.tr('entry.updated_title')
+                : i18n.tr('entry.saved_title'),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -221,7 +228,8 @@ class _EntryPageState extends State<EntryPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-            content: Text(i18n.tr('entry.save_failed', {'error': '$error'}))),
+          content: Text(i18n.tr('entry.save_failed', {'error': '$error'})),
+        ),
       );
     } finally {
       if (mounted) {
@@ -247,8 +255,9 @@ class _EntryPageState extends State<EntryPage> {
         SnackBar(
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(12, 12, 12, 110),
-          content:
-              Text(i18n.tr('entry.food_added', {'name': localizedFoodName})),
+          content: Text(
+            i18n.tr('entry.food_added', {'name': localizedFoodName}),
+          ),
           duration: const Duration(milliseconds: 1200),
         ),
       );
@@ -302,15 +311,17 @@ class _EntryPageState extends State<EntryPage> {
 
             return AlertDialog(
               title: Text(
-                  i18n.tr('entry.adjust_quantity', {'name': current.foodName})),
+                i18n.tr('entry.adjust_quantity', {'name': current.foodName}),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
                     controller: controller,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: InputDecoration(
                       labelText: i18n.tr('entry.grams'),
                       border: const OutlineInputBorder(),
@@ -323,8 +334,11 @@ class _EntryPageState extends State<EntryPage> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  Text(i18n.tr('entry.quantity_factor',
-                      {'value': factor.toStringAsFixed(2)})),
+                  Text(
+                    i18n.tr('entry.quantity_factor', {
+                      'value': factor.toStringAsFixed(2),
+                    }),
+                  ),
                   Slider(
                     value: grams.clamp(25.0, 500.0).toDouble(),
                     min: 25,
@@ -335,9 +349,11 @@ class _EntryPageState extends State<EntryPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                      '${i18n.tr('entry.protein')}：${protein.toStringAsFixed(1)} g'),
+                    '${i18n.tr('entry.protein')}：${protein.toStringAsFixed(1)} g',
+                  ),
                   Text(
-                      '${i18n.tr('entry.carbs')}：${carbs.toStringAsFixed(1)} g'),
+                    '${i18n.tr('entry.carbs')}：${carbs.toStringAsFixed(1)} g',
+                  ),
                 ],
               ),
               actions: [
@@ -494,9 +510,11 @@ class _EntryPageState extends State<EntryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing
-            ? i18n.tr('entry.edit_title')
-            : i18n.tr('entry.new_title')),
+        title: Text(
+          widget.isEditing
+              ? i18n.tr('entry.edit_title')
+              : i18n.tr('entry.new_title'),
+        ),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 120),
@@ -529,18 +547,19 @@ class _EntryPageState extends State<EntryPage> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(i18n.tr(
-                    'entry.recorded_time_hint',
-                    {
+                  Text(
+                    i18n.tr('entry.recorded_time_hint', {
                       'value': _formatDateTime(
-                          widget.initialMeal?.recordedAt ?? DateTime.now())
-                    },
-                  )),
+                        widget.initialMeal?.recordedAt ?? DateTime.now(),
+                      ),
+                    }),
+                  ),
                   const SizedBox(height: 8),
-                  Text(i18n.tr(
-                    'entry.actual_time_value',
-                    {'value': _formatDateTime(_actualMealTime)},
-                  )),
+                  Text(
+                    i18n.tr('entry.actual_time_value', {
+                      'value': _formatDateTime(_actualMealTime),
+                    }),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -568,17 +587,14 @@ class _EntryPageState extends State<EntryPage> {
                   if (_useApproximateWindow) ...[
                     const SizedBox(height: 8),
                     Text(
-                      i18n.tr(
-                        'entry.actual_window_value',
-                        {
-                          'start': _mealWindowStart == null
-                              ? '--'
-                              : _formatDateTime(_mealWindowStart!),
-                          'end': _mealWindowEnd == null
-                              ? '--'
-                              : _formatDateTime(_mealWindowEnd!),
-                        },
-                      ),
+                      i18n.tr('entry.actual_window_value', {
+                        'start': _mealWindowStart == null
+                            ? '--'
+                            : _formatDateTime(_mealWindowStart!),
+                        'end': _mealWindowEnd == null
+                            ? '--'
+                            : _formatDateTime(_mealWindowEnd!),
+                      }),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
@@ -646,8 +662,9 @@ class _EntryPageState extends State<EntryPage> {
                     selected: {_thickenerType},
                     onSelectionChanged: (selection) {
                       setState(() {
-                        _thickenerType =
-                            selection.isEmpty ? null : selection.first;
+                        _thickenerType = selection.isEmpty
+                            ? null
+                            : selection.first;
                       });
                     },
                   ),
@@ -656,10 +673,9 @@ class _EntryPageState extends State<EntryPage> {
                     Text(
                       _coeventTime == null
                           ? i18n.tr('entry.coevent_time_empty')
-                          : i18n.tr(
-                              'entry.coevent_time_value',
-                              {'value': _formatDateTime(_coeventTime!)},
-                            ),
+                          : i18n.tr('entry.coevent_time_value', {
+                              'value': _formatDateTime(_coeventTime!),
+                            }),
                     ),
                     const SizedBox(height: 8),
                     OutlinedButton(
@@ -701,8 +717,9 @@ class _EntryPageState extends State<EntryPage> {
                     selected: {_enteralFeedMode},
                     onSelectionChanged: (selection) {
                       setState(() {
-                        _enteralFeedMode =
-                            selection.isEmpty ? null : selection.first;
+                        _enteralFeedMode = selection.isEmpty
+                            ? null
+                            : selection.first;
                       });
                     },
                   ),
@@ -718,11 +735,13 @@ class _EntryPageState extends State<EntryPage> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _enteralFeedProteinCtrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       decoration: InputDecoration(
-                        labelText:
-                            i18n.tr('entry.enteral_feed_protein_g_per_day'),
+                        labelText: i18n.tr(
+                          'entry.enteral_feed_protein_g_per_day',
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                     ),
@@ -746,13 +765,10 @@ class _EntryPageState extends State<EntryPage> {
                   Text(
                     _nextMealWindowStart == null || _nextMealWindowEnd == null
                         ? i18n.tr('entry.next_meal_window_empty')
-                        : i18n.tr(
-                            'entry.next_meal_window_value',
-                            {
-                              'start': _formatDateTime(_nextMealWindowStart!),
-                              'end': _formatDateTime(_nextMealWindowEnd!),
-                            },
-                          ),
+                        : i18n.tr('entry.next_meal_window_value', {
+                            'start': _formatDateTime(_nextMealWindowStart!),
+                            'end': _formatDateTime(_nextMealWindowEnd!),
+                          }),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -791,9 +807,11 @@ class _EntryPageState extends State<EntryPage> {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  Text(_items.isEmpty
-                      ? i18n.tr('entry.no_foods_yet')
-                      : _formatTotals()),
+                  Text(
+                    _items.isEmpty
+                        ? i18n.tr('entry.no_foods_yet')
+                        : _formatTotals(),
+                  ),
                 ],
               ),
             ),
@@ -819,13 +837,7 @@ class _EntryPageState extends State<EntryPage> {
                   return ListTile(
                     title: Text(i18n.foodName(food.id, food.name)),
                     subtitle: Text(
-                      '${i18n.tr(
-                        'entry.per_100g',
-                        {
-                          'protein': food.proteinG.toStringAsFixed(1),
-                          'carbs': food.carbsG.toStringAsFixed(1),
-                        },
-                      )} · F ${food.fatG.toStringAsFixed(1)} · Fiber ${food.fiberG.toStringAsFixed(1)}'
+                      '${i18n.tr('entry.per_100g', {'protein': food.proteinG.toStringAsFixed(1), 'carbs': food.carbsG.toStringAsFixed(1)})} · F ${food.fatG.toStringAsFixed(1)} · Fiber ${food.fiberG.toStringAsFixed(1)}'
                       '\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}'
                       '${textureLine == null ? '' : '\n$textureLine'}'
                       '\n${food.description}',
@@ -902,14 +914,19 @@ class _EntryPageState extends State<EntryPage> {
                       children: [
                         IconButton(
                           onPressed: () => _updateItemQuantity(
-                              i, _items[i].quantityFactor - 0.25),
+                            i,
+                            _items[i].quantityFactor - 0.25,
+                          ),
                           icon: const Icon(Icons.remove_circle_outline),
                         ),
                         Text(
-                            '${_items[i].quantityFactor.toStringAsFixed(2)} x'),
+                          '${_items[i].quantityFactor.toStringAsFixed(2)} x',
+                        ),
                         IconButton(
                           onPressed: () => _updateItemQuantity(
-                              i, _items[i].quantityFactor + 0.25),
+                            i,
+                            _items[i].quantityFactor + 0.25,
+                          ),
                           icon: const Icon(Icons.add_circle_outline),
                         ),
                         const SizedBox(width: 8),
@@ -937,8 +954,8 @@ class _EntryPageState extends State<EntryPage> {
                 _isSaving
                     ? i18n.tr('entry.saving')
                     : widget.isEditing
-                        ? i18n.tr('entry.save_edit')
-                        : i18n.tr('entry.save_new'),
+                    ? i18n.tr('entry.save_edit')
+                    : i18n.tr('entry.save_new'),
               ),
             ),
           ),

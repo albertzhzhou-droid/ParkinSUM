@@ -38,9 +38,9 @@ class ClinicalDecisionSupportService {
     RuntimeRuleSupport? runtimeRuleSupport,
     CdssArtifactStore? artifactStore,
     RuleRegistryCompiler? ruleRegistryCompiler,
-  })  : runtimeRuleSupport = runtimeRuleSupport ?? const RuntimeRuleSupport(),
-        artifactStore = artifactStore ?? createCdssArtifactStore(),
-        ruleRegistryCompiler = ruleRegistryCompiler ?? RuleRegistryCompiler();
+  }) : runtimeRuleSupport = runtimeRuleSupport ?? const RuntimeRuleSupport(),
+       artifactStore = artifactStore ?? createCdssArtifactStore(),
+       ruleRegistryCompiler = ruleRegistryCompiler ?? RuleRegistryCompiler();
 
   Future<void> initializeRuleRegistry({
     required List<RuleRegistryEntry> rules,
@@ -157,19 +157,24 @@ class ClinicalDecisionSupportService {
     final baseHash = base64.encode(
       utf8.encode(
         jsonEncode({
-          'source_documents':
-              bundle.sourceDocuments.map((e) => e.sourceDocId).toList(),
-          'country_diet_profiles':
-              bundle.countryDietProfiles.map((e) => e.countryCode).toList(),
-          'food_variants':
-              bundle.foodVariants.map((e) => e.foodVariantId).toList(),
+          'source_documents': bundle.sourceDocuments
+              .map((e) => e.sourceDocId)
+              .toList(),
+          'country_diet_profiles': bundle.countryDietProfiles
+              .map((e) => e.countryCode)
+              .toList(),
+          'food_variants': bundle.foodVariants
+              .map((e) => e.foodVariantId)
+              .toList(),
           'drug_variants': bundle.drugProductVariants
               .map((e) => e.drugProductVariantId)
               .toList(),
-          'observations':
-              bundle.observations.map((e) => e.observationId).toList(),
-          'rule_registry':
-              bundle.ruleRegistryRows.map((e) => e['rule_id']).toList(),
+          'observations': bundle.observations
+              .map((e) => e.observationId)
+              .toList(),
+          'rule_registry': bundle.ruleRegistryRows
+              .map((e) => e['rule_id'])
+              .toList(),
           'runtime_events': bundle.runtimeEvents.map((e) => e.eventId).toList(),
         }),
       ),
@@ -371,10 +376,12 @@ class ClinicalDecisionSupportService {
     }
 
     // promote: 从 staging 表读取经过落盘的结果，再写正式表，确保导入链可回放。
-    final stagedFoodVariants =
-        await database.queryTable('staging_food_variant');
-    for (final row
-        in stagedFoodVariants.where((row) => row['run_id'] == runId)) {
+    final stagedFoodVariants = await database.queryTable(
+      'staging_food_variant',
+    );
+    for (final row in stagedFoodVariants.where(
+      (row) => row['run_id'] == runId,
+    )) {
       final payload =
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
       await database.insertFoodVariant(
@@ -394,10 +401,12 @@ class ClinicalDecisionSupportService {
         ),
       );
     }
-    final stagedDrugVariants =
-        await database.queryTable('staging_drug_product_variant');
-    for (final row
-        in stagedDrugVariants.where((row) => row['run_id'] == runId)) {
+    final stagedDrugVariants = await database.queryTable(
+      'staging_drug_product_variant',
+    );
+    for (final row in stagedDrugVariants.where(
+      (row) => row['run_id'] == runId,
+    )) {
       final payload =
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
       await database.insertDrugProductVariant(
@@ -437,8 +446,9 @@ class ClinicalDecisionSupportService {
       );
     }
     final stagedObservations = await database.queryTable('staging_observation');
-    for (final row
-        in stagedObservations.where((row) => row['run_id'] == runId)) {
+    for (final row in stagedObservations.where(
+      (row) => row['run_id'] == runId,
+    )) {
       final payload =
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
       await database.insertObservation(
@@ -451,8 +461,9 @@ class ClinicalDecisionSupportService {
           valueType: '${payload['value_type']}',
           value: QualifiedValue(
             rawValueText: '${payload['raw_value_text'] ?? ''}',
-            qualifierKind:
-                _qualifierKindFromWireValue('${payload['qualifier_kind']}'),
+            qualifierKind: _qualifierKindFromWireValue(
+              '${payload['qualifier_kind']}',
+            ),
             low: (payload['low'] as num?)?.toDouble(),
             high: (payload['high'] as num?)?.toDouble(),
             valueNum: (payload['value_num'] as num?)?.toDouble(),
@@ -496,8 +507,9 @@ class ClinicalDecisionSupportService {
           chosenObservationId: '${payload['chosen_observation_id']}',
           resolvedValue: QualifiedValue(
             rawValueText: '${payload['raw_value_text'] ?? ''}',
-            qualifierKind:
-                _qualifierKindFromWireValue('${payload['qualifier_kind']}'),
+            qualifierKind: _qualifierKindFromWireValue(
+              '${payload['qualifier_kind']}',
+            ),
             low: (payload['resolved_low'] as num?)?.toDouble(),
             high: (payload['resolved_high'] as num?)?.toDouble(),
             valueNum: (payload['value_num'] as num?)?.toDouble(),
@@ -516,10 +528,12 @@ class ClinicalDecisionSupportService {
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
       await database.insertRuleRegistry(payload);
     }
-    final stagedRuntimeEvents =
-        await database.queryTable('staging_runtime_event');
-    for (final row
-        in stagedRuntimeEvents.where((row) => row['run_id'] == runId)) {
+    final stagedRuntimeEvents = await database.queryTable(
+      'staging_runtime_event',
+    );
+    for (final row in stagedRuntimeEvents.where(
+      (row) => row['run_id'] == runId,
+    )) {
       final payload =
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
       await database.insertRuntimeEvent(
@@ -539,8 +553,9 @@ class ClinicalDecisionSupportService {
         ),
       );
     }
-    final stagedCrosswalks =
-        await database.queryTable('staging_concept_variant_crosswalk');
+    final stagedCrosswalks = await database.queryTable(
+      'staging_concept_variant_crosswalk',
+    );
     for (final row in stagedCrosswalks.where((row) => row['run_id'] == runId)) {
       final payload =
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
@@ -589,8 +604,9 @@ class ClinicalDecisionSupportService {
               .map((item) => 'unresolved_conflict:${item['cluster_key']}')
               .toList(growable: false),
         }),
-        'conflict_rationale.json':
-            const JsonEncoder.withIndent('  ').convert(conflictRationales),
+        'conflict_rationale.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(conflictRationales),
       },
       manifest: {
         'kind': 'import',
@@ -647,8 +663,9 @@ class ClinicalDecisionSupportService {
   }) async {
     await database.initialize();
     final rows = await database.queryTable('rule_registry');
-    final allActiveRows =
-        rows.where((row) => '${row['status'] ?? ''}' == 'active').toList();
+    final allActiveRows = rows
+        .where((row) => '${row['status'] ?? ''}' == 'active')
+        .toList();
     final resolvedRulesVersion = await _resolveRuntimeRulesVersion(
       requestedRulesVersion: rulesVersion,
       activeRuleRows: allActiveRows,
@@ -656,9 +673,10 @@ class ClinicalDecisionSupportService {
     final versionRows = resolvedRulesVersion == null
         ? allActiveRows
         : allActiveRows
-            .where(
-                (row) => '${row['rule_version'] ?? ''}' == resolvedRulesVersion)
-            .toList(growable: false);
+              .where(
+                (row) => '${row['rule_version'] ?? ''}' == resolvedRulesVersion,
+              )
+              .toList(growable: false);
     final candidateRows = versionRows.isNotEmpty || resolvedRulesVersion == null
         ? versionRows
         : allActiveRows;
@@ -689,7 +707,7 @@ class ClinicalDecisionSupportService {
             inputHash: stableHash(jsonEncode(row)),
             decisionReason: '$error',
             machineActionsJson: jsonEncode([
-              {'type': 'block_rule_from_runtime'}
+              {'type': 'block_rule_from_runtime'},
             ]),
             humanMessage: 'Rule registry row failed validation: $error',
             needsHumanReview: true,
@@ -717,13 +735,14 @@ class ClinicalDecisionSupportService {
       return requested;
     }
     final snapshots = await database.queryTable('engine_snapshot');
-    final promoted = snapshots
-        .where((row) => row['promoted_at'] != null)
-        .toList(growable: false)
-      ..sort(
-        (left, right) => ((right['promoted_at'] as num?)?.toInt() ?? 0)
-            .compareTo((left['promoted_at'] as num?)?.toInt() ?? 0),
-      );
+    final promoted =
+        snapshots
+            .where((row) => row['promoted_at'] != null)
+            .toList(growable: false)
+          ..sort(
+            (left, right) => ((right['promoted_at'] as num?)?.toInt() ?? 0)
+                .compareTo((left['promoted_at'] as num?)?.toInt() ?? 0),
+          );
     for (final snapshot in promoted) {
       final version = '${snapshot['rules_version'] ?? ''}';
       if (activeVersions.contains(version)) return version;
@@ -748,11 +767,13 @@ class ClinicalDecisionSupportService {
     await database.initialize();
     final facts = await database.queryTable('resolved_fact');
     final snapshots = await database.queryTable('engine_snapshot');
-    final sourceFacts =
-        facts.where((row) => '${row['snapshot_id']}' == snapshotId).toList();
+    final sourceFacts = facts
+        .where((row) => '${row['snapshot_id']}' == snapshotId)
+        .toList();
     if (sourceFacts.isEmpty) {
       throw StateError(
-          'Snapshot $snapshotId has no resolved facts to rollback.');
+        'Snapshot $snapshotId has no resolved facts to rollback.',
+      );
     }
     final targetSnapshot = snapshots.firstWhere(
       (row) => '${row['snapshot_id']}' == snapshotId,
@@ -783,7 +804,8 @@ class ClinicalDecisionSupportService {
         resolvedValue: QualifiedValue(
           rawValueText: '${row['raw_value_text'] ?? ''}',
           qualifierKind: _qualifierKindFromWireValue(
-              '${row['qualifier_kind'] ?? 'missing'}'),
+            '${row['qualifier_kind'] ?? 'missing'}',
+          ),
           low: (row['resolved_low'] as num?)?.toDouble(),
           high: (row['resolved_high'] as num?)?.toDouble(),
           valueNum: (row['value_num'] as num?)?.toDouble(),
@@ -818,8 +840,9 @@ class ClinicalDecisionSupportService {
     final promoted =
         rows.where((row) => row['promoted_at'] != null).toList(growable: false)
           ..sort(
-            (a, b) => ((b['promoted_at'] as num?)?.toInt() ?? 0)
-                .compareTo((a['promoted_at'] as num?)?.toInt() ?? 0),
+            (a, b) => ((b['promoted_at'] as num?)?.toInt() ?? 0).compareTo(
+              (a['promoted_at'] as num?)?.toInt() ?? 0,
+            ),
           );
     if (promoted.isEmpty) return null;
     final row = promoted.first;
@@ -833,7 +856,8 @@ class ClinicalDecisionSupportService {
       promotedAt: row['promoted_at'] == null
           ? null
           : DateTime.fromMillisecondsSinceEpoch(
-              (row['promoted_at'] as num).toInt()),
+              (row['promoted_at'] as num).toInt(),
+            ),
       rollbackParent: row['rollback_parent']?.toString(),
       inputHash: '${row['input_hash'] ?? ''}',
     );
@@ -874,11 +898,11 @@ class ClinicalDecisionSupportService {
       context,
       regionJurisdictionRows: regionRows,
     );
-    final regionJurisdictionMapSource =
-        runtimeRuleEngine.regionJurisdictionMapSource(
-      context,
-      regionJurisdictionRows: regionRows,
-    );
+    final regionJurisdictionMapSource = runtimeRuleEngine
+        .regionJurisdictionMapSource(
+          context,
+          regionJurisdictionRows: regionRows,
+        );
     final i18n = AppI18n.fromLocaleTag(context.userProfile.displayLocale);
 
     final inputHash = base64.encode(utf8.encode(jsonEncode(context.toJson())));
@@ -893,8 +917,9 @@ class ClinicalDecisionSupportService {
     );
     await database.insertEngineSnapshot(snapshot);
 
-    final registryRules =
-        await loadCompiledRulesFromRegistry(rulesVersion: rulesVersion);
+    final registryRules = await loadCompiledRulesFromRegistry(
+      rulesVersion: rulesVersion,
+    );
     final registryRuleIds = registryRules.map((rule) => rule.ruleId).toSet();
     final effectiveRules = [
       ...registryRules,
@@ -933,7 +958,8 @@ class ClinicalDecisionSupportService {
     for (final entry in grouped.entries) {
       final bucket = entry.value;
       final winner = bucket.first;
-      final sameBandEscalation = sameBandByTarget[entry.key] ??
+      final sameBandEscalation =
+          sameBandByTarget[entry.key] ??
           runtimeRuleSupport.evaluateSameBandEscalation(bucket);
       final sameBandConflict = sameBandEscalation.requiresReview;
       final missingFields = runtimeRuleSupport
@@ -942,8 +968,9 @@ class ClinicalDecisionSupportService {
             rules: bucket.map((item) => item.rule).toList(growable: false),
           )
           .toList(growable: false);
-      final localizedMissingFields =
-          missingFields.map(i18n.missingFieldLabel).toList(growable: false);
+      final localizedMissingFields = missingFields
+          .map(i18n.missingFieldLabel)
+          .toList(growable: false);
 
       var decision = winner.rule.thenClause.decision;
       var explanation = _localizedRuleMessage(
@@ -954,10 +981,9 @@ class ClinicalDecisionSupportService {
         decision = RuntimeDecisionType.requireReview;
         explanation = sameBandConflict
             ? i18n.tr('runtime.same_band_conflict')
-            : i18n.tr(
-                'runtime.missing_fields',
-                {'fields': localizedMissingFields.join(', ')},
-              );
+            : i18n.tr('runtime.missing_fields', {
+                'fields': localizedMissingFields.join(', '),
+              });
       }
 
       // 决策生成后始终补出 machine actions，保证自动动作和人工复核路径都可审计。
@@ -975,10 +1001,12 @@ class ClinicalDecisionSupportService {
             },
           },
       ];
-      final evidenceRecords =
-          await _resolveEvidenceDetails(winner.rule.provenance.sourceRefs);
-      final evidenceDetails =
-          evidenceRecords.map(_formatEvidenceDetail).toList(growable: false);
+      final evidenceRecords = await _resolveEvidenceDetails(
+        winner.rule.provenance.sourceRefs,
+      );
+      final evidenceDetails = evidenceRecords
+          .map(_formatEvidenceDetail)
+          .toList(growable: false);
       final auditMessageWithEvidence = _appendEvidenceDetails(
         explanation,
         evidenceDetails,
@@ -994,8 +1022,9 @@ class ClinicalDecisionSupportService {
           evidenceSources: winner.rule.provenance.sourceRefs,
           evidenceDetails: evidenceDetails,
           evidenceRecords: evidenceRecords,
-          ruleIds:
-              bucket.map((item) => item.rule.ruleId).toList(growable: false),
+          ruleIds: bucket
+              .map((item) => item.rule.ruleId)
+              .toList(growable: false),
         ),
       );
 
@@ -1004,8 +1033,10 @@ class ClinicalDecisionSupportService {
           target: entry.key,
           decision: decision,
           winningRuleIds: [winner.rule.ruleId],
-          suppressedRuleIds:
-              bucket.skip(1).map((item) => item.rule.ruleId).toList(),
+          suppressedRuleIds: bucket
+              .skip(1)
+              .map((item) => item.rule.ruleId)
+              .toList(),
           sourceDocRefs: winner.rule.provenance.sourceRefs,
           evidenceDetails: evidenceDetails,
           evidenceRecords: evidenceRecords,
@@ -1033,10 +1064,9 @@ class ClinicalDecisionSupportService {
           : RuntimeDecisionType.requireReview;
       final explanation = fallbackMissingFields.isEmpty
           ? i18n.tr('runtime.no_rules')
-          : i18n.tr(
-              'runtime.missing_fields',
-              {'fields': localizedMissingFields.join(', ')},
-            );
+          : i18n.tr('runtime.missing_fields', {
+              'fields': localizedMissingFields.join(', '),
+            });
 
       final actions = fallbackMissingFields.isEmpty
           ? const <Map<String, dynamic>>[]
@@ -1115,17 +1145,15 @@ class ClinicalDecisionSupportService {
         '- ${alert.decision.name.toUpperCase()} [${alert.target}] ${alert.explanation}',
       );
       if (alert.evidenceDetails.isNotEmpty) {
-        humanReadable
-            .writeln('  Evidence: ${alert.evidenceDetails.join(' | ')}');
+        humanReadable.writeln(
+          '  Evidence: ${alert.evidenceDetails.join(' | ')}',
+        );
       }
     }
 
     final auditJsonl = [
       ...auditEntries.map((entry) => entry.toJson()),
-      ...ruleHitTrace.map((entry) => {
-            'event_type': 'rule_trace',
-            ...entry,
-          }),
+      ...ruleHitTrace.map((entry) => {'event_type': 'rule_trace', ...entry}),
     ].map(toJsonLine).join();
 
     final runtimeEvent = RuntimeEventRecord(
@@ -1153,11 +1181,13 @@ class ClinicalDecisionSupportService {
         'release_readiness.json': jsonEncode({
           'status': 'runtime_artifacts_generated',
           'snapshot_id': snapshot.snapshotId,
-          'needs_human_review':
-              auditEntries.any((entry) => entry.needsHumanReview),
+          'needs_human_review': auditEntries.any(
+            (entry) => entry.needsHumanReview,
+          ),
         }),
-        'rule_trace.json':
-            const JsonEncoder.withIndent('  ').convert(ruleHitTrace),
+        'rule_trace.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(ruleHitTrace),
         'conflict_rationale.json': const JsonEncoder.withIndent('  ').convert({
           'rule_hit_trace': ruleHitTrace,
           'audit_entries': auditEntries.map((entry) => entry.toJson()).toList(),
@@ -1269,8 +1299,9 @@ class ClinicalDecisionSupportService {
     }
 
     final rationales = <Map<String, dynamic>>[];
-    for (final entry
-        in grouped.entries.where((entry) => entry.value.length > 1)) {
+    for (final entry in grouped.entries.where(
+      (entry) => entry.value.length > 1,
+    )) {
       final resolution = factConflictEngine.resolveCluster(
         observations: entry.value,
         existingFacts: const <ResolvedFactRecord>[],
@@ -1325,7 +1356,7 @@ class ClinicalDecisionSupportService {
                   ? 'open_manual_conflict_review'
                   : 'accept_ranked_observation',
               'params': payload,
-            }
+            },
           ]),
           humanMessage: resolution.explanation,
           needsHumanReview: resolution.needsManualReview,
@@ -1356,77 +1387,86 @@ class ClinicalDecisionSupportService {
       for (final entry in groupedCandidates.entries)
         entry.key: entry.value.skip(1).map((item) => item.rule.ruleId).toSet(),
     };
-    return rules.map((rule) {
-      final candidate = candidateByRuleId[rule.ruleId];
-      final target = rule.target;
-      final winner = winnerByTarget[target];
-      final sameBand = sameBandByTarget[target];
-      final missingFields = runtimeRuleSupport
-          .missingFieldsForRule(context: context, rule: rule)
-          .toList(growable: false);
-      final jurisdictionMatched = runtimeRuleEngine.jurisdictionMatches(
-          rule.jurisdictions, jurisdictionChain);
-      final jurisdictionSpecificity =
-          _jurisdictionSpecificity(rule.jurisdictions, jurisdictionChain);
-      final suppressed =
-          suppressedByTarget[target]?.contains(rule.ruleId) ?? false;
-      final matched = candidate != null;
-      String decision;
-      if (!jurisdictionMatched) {
-        decision = 'not_applicable_jurisdiction';
-      } else if (!matched) {
-        decision = 'not_matched';
-      } else if (suppressed) {
-        decision = 'suppressed';
-      } else {
-        decision = 'matched';
-      }
-      return {
-        'rule_id': rule.ruleId,
-        'target': target,
-        'decision': rule.thenClause.decision.wireValue,
-        'trace_decision': decision,
-        'matched': matched,
-        'suppressed': suppressed,
-        'winner': winner?.rule.ruleId == rule.ruleId,
-        'priority_band': rule.priorityBand,
-        'specificity_band': rule.specificityBand,
-        'priority': rule.priorityBand,
-        'specificity': rule.specificityBand,
-        'evidence_level': rule.provenance.evidenceLevel,
-        'source_status': rule.status,
-        'source_authority': rule.sourceAuthority,
-        'effective_from': rule.provenance.effectiveFrom?.toIso8601String(),
-        'provenance_score': {
-          'evidence_level': rule.provenance.evidenceLevel,
-          'source_authority': rule.sourceAuthority,
-          'source_status': rule.status,
-          'effective_from': rule.provenance.effectiveFrom?.toIso8601String(),
-          'recency': rule.provenance.effectiveFrom?.millisecondsSinceEpoch ?? 0,
-          'specificity_band': rule.specificityBand,
-          'jurisdiction_specificity': jurisdictionSpecificity,
-          'priority_band': rule.priorityBand,
-        },
-        'source_refs': rule.provenance.sourceRefs,
-        'jurisdictions': rule.jurisdictions,
-        'jurisdiction_chain': jurisdictionChain,
-        'region_jurisdiction_source': regionJurisdictionMapSource,
-        'jurisdiction_matched': jurisdictionMatched,
-        'jurisdiction_specificity': jurisdictionSpecificity,
-        'referenced_paths': runtimeRuleSupport
-            .collectReferencedPaths(rule.conditions)
-            .toList(growable: false),
-        'missing_fields': missingFields,
-        'missing_field_reason':
-            missingFields.isEmpty ? null : 'missing_${missingFields.join("_")}',
-        'tie_break_reason': matched ? sameBand?.reason : null,
-        'suppressed_rule_ids': matched
-            ? (sameBand?.suppressedRuleIds ?? const <String>[])
-            : const <String>[],
-        'explanation': candidate?.explanation,
-        'evidence': candidate?.evidence ?? const <String, dynamic>{},
-      };
-    }).toList(growable: false);
+    return rules
+        .map((rule) {
+          final candidate = candidateByRuleId[rule.ruleId];
+          final target = rule.target;
+          final winner = winnerByTarget[target];
+          final sameBand = sameBandByTarget[target];
+          final missingFields = runtimeRuleSupport
+              .missingFieldsForRule(context: context, rule: rule)
+              .toList(growable: false);
+          final jurisdictionMatched = runtimeRuleEngine.jurisdictionMatches(
+            rule.jurisdictions,
+            jurisdictionChain,
+          );
+          final jurisdictionSpecificity = _jurisdictionSpecificity(
+            rule.jurisdictions,
+            jurisdictionChain,
+          );
+          final suppressed =
+              suppressedByTarget[target]?.contains(rule.ruleId) ?? false;
+          final matched = candidate != null;
+          String decision;
+          if (!jurisdictionMatched) {
+            decision = 'not_applicable_jurisdiction';
+          } else if (!matched) {
+            decision = 'not_matched';
+          } else if (suppressed) {
+            decision = 'suppressed';
+          } else {
+            decision = 'matched';
+          }
+          return {
+            'rule_id': rule.ruleId,
+            'target': target,
+            'decision': rule.thenClause.decision.wireValue,
+            'trace_decision': decision,
+            'matched': matched,
+            'suppressed': suppressed,
+            'winner': winner?.rule.ruleId == rule.ruleId,
+            'priority_band': rule.priorityBand,
+            'specificity_band': rule.specificityBand,
+            'priority': rule.priorityBand,
+            'specificity': rule.specificityBand,
+            'evidence_level': rule.provenance.evidenceLevel,
+            'source_status': rule.status,
+            'source_authority': rule.sourceAuthority,
+            'effective_from': rule.provenance.effectiveFrom?.toIso8601String(),
+            'provenance_score': {
+              'evidence_level': rule.provenance.evidenceLevel,
+              'source_authority': rule.sourceAuthority,
+              'source_status': rule.status,
+              'effective_from': rule.provenance.effectiveFrom
+                  ?.toIso8601String(),
+              'recency':
+                  rule.provenance.effectiveFrom?.millisecondsSinceEpoch ?? 0,
+              'specificity_band': rule.specificityBand,
+              'jurisdiction_specificity': jurisdictionSpecificity,
+              'priority_band': rule.priorityBand,
+            },
+            'source_refs': rule.provenance.sourceRefs,
+            'jurisdictions': rule.jurisdictions,
+            'jurisdiction_chain': jurisdictionChain,
+            'region_jurisdiction_source': regionJurisdictionMapSource,
+            'jurisdiction_matched': jurisdictionMatched,
+            'jurisdiction_specificity': jurisdictionSpecificity,
+            'referenced_paths': runtimeRuleSupport
+                .collectReferencedPaths(rule.conditions)
+                .toList(growable: false),
+            'missing_fields': missingFields,
+            'missing_field_reason': missingFields.isEmpty
+                ? null
+                : 'missing_${missingFields.join("_")}',
+            'tie_break_reason': matched ? sameBand?.reason : null,
+            'suppressed_rule_ids': matched
+                ? (sameBand?.suppressedRuleIds ?? const <String>[])
+                : const <String>[],
+            'explanation': candidate?.explanation,
+            'evidence': candidate?.evidence ?? const <String, dynamic>{},
+          };
+        })
+        .toList(growable: false);
   }
 
   int _jurisdictionSpecificity(
@@ -1464,49 +1504,51 @@ class ClinicalDecisionSupportService {
     final byId = <String, Map<String, Object?>>{
       for (final row in rows) '${row['source_doc_id']}': row,
     };
-    return sourceRefs.map((ref) {
-      final row = byId[ref];
-      if (row == null) {
-        return EvidenceReferenceDetail(sourceRef: ref, title: ref);
-      }
-      final title = '${row['title'] ?? ref}';
-      final originUrl = '${row['origin_url'] ?? ''}';
-      final sourceFamily = row['source_family']?.toString();
-      final rawPayload = row['raw_payload']?.toString() ?? '';
-      String? pmid;
-      String? doi;
-      String? publication;
-      String? evidenceKind;
-      if (rawPayload.isNotEmpty) {
-        try {
-          final payload = jsonDecode(rawPayload);
-          if (payload is Map<String, dynamic>) {
-            pmid = payload['pmid']?.toString();
-            doi = payload['doi']?.toString();
-            publication = payload['publication']?.toString();
-            evidenceKind = payload['evidence_kind']?.toString();
+    return sourceRefs
+        .map((ref) {
+          final row = byId[ref];
+          if (row == null) {
+            return EvidenceReferenceDetail(sourceRef: ref, title: ref);
           }
-        } catch (_) {
-          // 老数据可能不是 JSON；此时回退到 title/origin_url 即可。
-        }
-      }
-      return EvidenceReferenceDetail(
-        sourceRef: ref,
-        title: title,
-        pmid: (pmid != null && pmid.isNotEmpty) ? pmid : null,
-        doi: (doi != null && doi.isNotEmpty) ? doi : null,
-        sourceUrl: originUrl.isNotEmpty ? originUrl : null,
-        publication: (publication != null && publication.isNotEmpty)
-            ? publication
-            : null,
-        evidenceKind: (evidenceKind != null && evidenceKind.isNotEmpty)
-            ? evidenceKind
-            : null,
-        sourceFamily: (sourceFamily != null && sourceFamily.isNotEmpty)
-            ? sourceFamily
-            : null,
-      );
-    }).toList(growable: false);
+          final title = '${row['title'] ?? ref}';
+          final originUrl = '${row['origin_url'] ?? ''}';
+          final sourceFamily = row['source_family']?.toString();
+          final rawPayload = row['raw_payload']?.toString() ?? '';
+          String? pmid;
+          String? doi;
+          String? publication;
+          String? evidenceKind;
+          if (rawPayload.isNotEmpty) {
+            try {
+              final payload = jsonDecode(rawPayload);
+              if (payload is Map<String, dynamic>) {
+                pmid = payload['pmid']?.toString();
+                doi = payload['doi']?.toString();
+                publication = payload['publication']?.toString();
+                evidenceKind = payload['evidence_kind']?.toString();
+              }
+            } catch (_) {
+              // 老数据可能不是 JSON；此时回退到 title/origin_url 即可。
+            }
+          }
+          return EvidenceReferenceDetail(
+            sourceRef: ref,
+            title: title,
+            pmid: (pmid != null && pmid.isNotEmpty) ? pmid : null,
+            doi: (doi != null && doi.isNotEmpty) ? doi : null,
+            sourceUrl: originUrl.isNotEmpty ? originUrl : null,
+            publication: (publication != null && publication.isNotEmpty)
+                ? publication
+                : null,
+            evidenceKind: (evidenceKind != null && evidenceKind.isNotEmpty)
+                ? evidenceKind
+                : null,
+            sourceFamily: (sourceFamily != null && sourceFamily.isNotEmpty)
+                ? sourceFamily
+                : null,
+          );
+        })
+        .toList(growable: false);
   }
 
   String _formatEvidenceDetail(EvidenceReferenceDetail detail) {
@@ -1574,16 +1616,15 @@ class ClinicalDecisionSupportService {
           );
     final inputHash = base64.encode(
       utf8.encode(
-        jsonEncode(
-          {
-            'patient_id': userProfile.patientId,
-            'meal_slot': mealSlot,
-            'facts_version': factsVersion,
-            'rules_version': rulesVersion,
-            'recommendations':
-                recommendations.map((item) => item.food.id).toList(),
-          },
-        ),
+        jsonEncode({
+          'patient_id': userProfile.patientId,
+          'meal_slot': mealSlot,
+          'facts_version': factsVersion,
+          'rules_version': rulesVersion,
+          'recommendations': recommendations
+              .map((item) => item.food.id)
+              .toList(),
+        }),
       ),
     );
     final snapshotId = 'recommendation_snapshot_$inputHash';
@@ -1640,11 +1681,9 @@ class ClinicalDecisionSupportService {
 
   String _bundleSourceFamily(P0ImportBundle bundle) {
     if (bundle.sourceDocuments.isEmpty) return 'UNKNOWN';
-    final families = bundle.sourceDocuments
-        .map((item) => item.sourceFamily)
-        .toSet()
-        .toList()
-      ..sort();
+    final families =
+        bundle.sourceDocuments.map((item) => item.sourceFamily).toSet().toList()
+          ..sort();
     return families.join('+');
   }
 
@@ -1825,8 +1864,9 @@ class ClinicalDecisionSupportService {
       'rule_type': _ruleTypeWireValue('${row['rule_type'] ?? 'soft_rule'}'),
       'priority_band': (row['priority_band'] as num?)?.toInt() ?? 0,
       'specificity_band': (row['specificity_band'] as num?)?.toInt() ?? 0,
-      'jurisdiction':
-          _decodeRegistryList('${row['jurisdiction_json'] ?? '[]'}'),
+      'jurisdiction': _decodeRegistryList(
+        '${row['jurisdiction_json'] ?? '[]'}',
+      ),
       'applies_to': _decodeRegistryMap('${row['applies_to_json'] ?? '{}'}'),
       'when': _decodeRegistryMap('${row['predicate_json'] ?? '{}'}'),
       'then': {

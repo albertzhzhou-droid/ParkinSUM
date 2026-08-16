@@ -13,23 +13,27 @@ import 'package:parkinsum_companion/domain/usecases/meal_composition_normalizer.
 void main() {
   final normalizer = MealCompositionNormalizer();
 
-  MealItem item(String foodId, String name, FoodCategory cat, double qf,
-          {double protein = 0,
-          double fat = 0,
-          double fiber = 0,
-          double carbs = 0}) =>
-      MealItem(
-        foodId: foodId,
-        foodName: name,
-        foodCategory: cat,
-        quantityFactor: qf,
-        foodTags: const [],
-        proteinPer100g: protein,
-        carbsPer100g: carbs,
-        fatPer100g: fat,
-        fiberPer100g: fiber,
-        sodiumPer100g: 0,
-      );
+  MealItem item(
+    String foodId,
+    String name,
+    FoodCategory cat,
+    double qf, {
+    double protein = 0,
+    double fat = 0,
+    double fiber = 0,
+    double carbs = 0,
+  }) => MealItem(
+    foodId: foodId,
+    foodName: name,
+    foodCategory: cat,
+    quantityFactor: qf,
+    foodTags: const [],
+    proteinPer100g: protein,
+    carbsPer100g: carbs,
+    fatPer100g: fat,
+    fiberPer100g: fiber,
+    sodiumPer100g: 0,
+  );
 
   FoodItem catalogFood(
     String id,
@@ -38,21 +42,20 @@ void main() {
     double? energyKcal,
     AminoAcidProfile? aa,
     String sourceSystem = 'USDA_FDC',
-  }) =>
-      FoodItem(
-        id: id,
-        name: name,
-        category: FoodCategory.protein,
-        sourceSystem: sourceSystem,
-        textureClass: texture,
-        energyKcal: energyKcal,
-        aminoAcidProfile: aa,
-        proteinG: 0,
-        carbsG: 0,
-        fatG: 0,
-        fiberG: 0,
-        sodiumMg: 0,
-      );
+  }) => FoodItem(
+    id: id,
+    name: name,
+    category: FoodCategory.protein,
+    sourceSystem: sourceSystem,
+    textureClass: texture,
+    energyKcal: energyKcal,
+    aminoAcidProfile: aa,
+    proteinG: 0,
+    carbsG: 0,
+    fatG: 0,
+    fiberG: 0,
+    sodiumMg: 0,
+  );
 
   test('catalog-backed item recovers physical form, scaled calories + AA', () {
     final catalog = catalogFood(
@@ -63,8 +66,13 @@ void main() {
       aa: const AminoAcidProfile(leucine: 2.0, valine: 1.0, basis: 'per_100g'),
     );
     final c = mealItemToFoodComponent(
-      item('f_chicken', 'chicken breast', FoodCategory.protein, 1.5,
-          protein: 31),
+      item(
+        'f_chicken',
+        'chicken breast',
+        FoodCategory.protein,
+        1.5,
+        protein: 31,
+      ),
       componentId: 'mi_0',
       catalogMatch: catalog,
     );
@@ -103,31 +111,48 @@ void main() {
     expect(c.calories, isNull); // catalog lacked energyKcal → unknown, not 0
   });
 
-  test('multi-item meal → mixed composition, not a single unknown aggregate',
-      () {
-    final liquid = mealItemToFoodComponent(
-      item('f_juice', 'orange juice', FoodCategory.beverage, 2.0, carbs: 10),
-      componentId: 'mi_a',
-      catalogMatch: catalogFood('f_juice', 'orange juice',
-          texture: 'liquid', energyKcal: 45),
-    );
-    final solid = mealItemToFoodComponent(
-      item('f_steak', 'steak', FoodCategory.protein, 1.5, protein: 26, fat: 15),
-      componentId: 'mi_b',
-      catalogMatch:
-          catalogFood('f_steak', 'steak', texture: 'solid', energyKcal: 271),
-    );
-    final comp = normalizer.normalize(
-      mealId: 'comp_meal1',
-      components: [liquid, solid],
-    );
-    expect(comp.foodComponents.length, 2); // componentized, NOT aggregated
-    expect(comp.mealPhysicalForm, MealPhysicalForm.mixed);
-    // Calories aggregate across both items (catalog-derived, present).
-    expect(comp.totalCalories, isNotNull);
-    expect(comp.liquidFraction, isNotNull);
-    // Liquid fraction by mass: 200 g juice / (200 + 150) g.
-    expect(comp.liquidFraction, closeTo(200 / 350, 1e-9));
-    expect(comp.missingFields, isNot(contains('total_calories')));
-  });
+  test(
+    'multi-item meal → mixed composition, not a single unknown aggregate',
+    () {
+      final liquid = mealItemToFoodComponent(
+        item('f_juice', 'orange juice', FoodCategory.beverage, 2.0, carbs: 10),
+        componentId: 'mi_a',
+        catalogMatch: catalogFood(
+          'f_juice',
+          'orange juice',
+          texture: 'liquid',
+          energyKcal: 45,
+        ),
+      );
+      final solid = mealItemToFoodComponent(
+        item(
+          'f_steak',
+          'steak',
+          FoodCategory.protein,
+          1.5,
+          protein: 26,
+          fat: 15,
+        ),
+        componentId: 'mi_b',
+        catalogMatch: catalogFood(
+          'f_steak',
+          'steak',
+          texture: 'solid',
+          energyKcal: 271,
+        ),
+      );
+      final comp = normalizer.normalize(
+        mealId: 'comp_meal1',
+        components: [liquid, solid],
+      );
+      expect(comp.foodComponents.length, 2); // componentized, NOT aggregated
+      expect(comp.mealPhysicalForm, MealPhysicalForm.mixed);
+      // Calories aggregate across both items (catalog-derived, present).
+      expect(comp.totalCalories, isNotNull);
+      expect(comp.liquidFraction, isNotNull);
+      // Liquid fraction by mass: 200 g juice / (200 + 150) g.
+      expect(comp.liquidFraction, closeTo(200 / 350, 1e-9));
+      expect(comp.missingFields, isNot(contains('total_calories')));
+    },
+  );
 }

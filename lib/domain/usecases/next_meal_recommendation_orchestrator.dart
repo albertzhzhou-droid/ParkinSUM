@@ -67,16 +67,16 @@ class NextMealRecommendationOrchestrator {
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
     DosageNoteParser? dosageNoteParser,
-  })  : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
-        mechanisticScorer = mechanisticScorer ?? MechanisticNextMealScorer(),
-        mealCompositionNormalizer =
-            mealCompositionNormalizer ?? MealCompositionNormalizer(),
-        medicationEntryValidator =
-            medicationEntryValidator ?? MedicationEntryValidator(),
-        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
-        _dosageNoteParser = dosageNoteParser ?? DosageNoteParser(),
-        _authorityScorer = SourceAuthorityScorer(),
-        _completenessGate = MetadataCompletenessGate();
+  }) : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
+       mechanisticScorer = mechanisticScorer ?? MechanisticNextMealScorer(),
+       mealCompositionNormalizer =
+           mealCompositionNormalizer ?? MealCompositionNormalizer(),
+       medicationEntryValidator =
+           medicationEntryValidator ?? MedicationEntryValidator(),
+       timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
+       _dosageNoteParser = dosageNoteParser ?? DosageNoteParser(),
+       _authorityScorer = SourceAuthorityScorer(),
+       _completenessGate = MetadataCompletenessGate();
 
   /// Public entry point. Enriches the conservative result with a deterministic
   /// mechanistic conflict trace and (when the request includes a
@@ -112,23 +112,23 @@ class NextMealRecommendationOrchestrator {
     required List<FoodItem> mergedCandidates,
   }) async {
     final i18n = AppI18n.fromLocaleTag(request.userProfile.displayLocale);
-    final projectedDrugDetails =
-        await _projectActiveDrugDetails(request.activeDrugs);
+    final projectedDrugDetails = await _projectActiveDrugDetails(
+      request.activeDrugs,
+    );
     final latestMeal = request.history.isEmpty
         ? null
-        : ([...request.history]..sort((a, b) =>
-                b.effectiveOccurredAt.compareTo(a.effectiveOccurredAt)))
-            .first;
+        : ([...request.history]..sort(
+                (a, b) =>
+                    b.effectiveOccurredAt.compareTo(a.effectiveOccurredAt),
+              ))
+              .first;
     final labelExplanationLines = _buildImportedLabelFactExplanations(
       details: projectedDrugDetails,
       i18n: i18n,
     );
     final mealContextLines = latestMeal == null
         ? const <String>[]
-        : _buildLatestMealContextExplanations(
-            meal: latestMeal,
-            i18n: i18n,
-          );
+        : _buildLatestMealContextExplanations(meal: latestMeal, i18n: i18n);
     final baseline = conservativeRecommender.call(
       history: request.history,
       drugs: request.activeDrugs,
@@ -156,7 +156,8 @@ class NextMealRecommendationOrchestrator {
       i18n: i18n,
     );
 
-    final aiEligible = request.mode != RecommendationMode.conservativeOnly &&
+    final aiEligible =
+        request.mode != RecommendationMode.conservativeOnly &&
         request.userConsentedToAi &&
         localAiAdapter != null;
 
@@ -182,8 +183,9 @@ class NextMealRecommendationOrchestrator {
       );
     }
 
-    final availability =
-        await localAiAdapter!.probe(userProfile: request.userProfile);
+    final availability = await localAiAdapter!.probe(
+      userProfile: request.userProfile,
+    );
     if (!availability.available) {
       return NextMealRecommendationResult(
         recommendations: windowAware,
@@ -328,10 +330,7 @@ class NextMealRecommendationOrchestrator {
           (item) => notes[item.food.id] == null
               ? item
               : item.copyWith(
-                  reasons: [
-                    notes[item.food.id]!,
-                    ...item.reasons.take(2),
-                  ],
+                  reasons: [notes[item.food.id]!, ...item.reasons.take(2)],
                 ),
         )
         .toList(growable: false);
@@ -418,10 +417,12 @@ class NextMealRecommendationOrchestrator {
     final end = latest.nextMealWindowEnd;
     if (start == null || end == null) return baseline;
 
-    final midpoint = start
-        .add(Duration(milliseconds: end.difference(start).inMilliseconds ~/ 2));
-    final gapMinutes =
-        midpoint.difference(latest.effectiveOccurredAt).inMinutes;
+    final midpoint = start.add(
+      Duration(milliseconds: end.difference(start).inMilliseconds ~/ 2),
+    );
+    final gapMinutes = midpoint
+        .difference(latest.effectiveOccurredAt)
+        .inMinutes;
     // 这里使用 meal_template.texture_level 做轻量排序增强：
     // 只影响 deterministic 排序和解释，不替代临床吞咽评估，也不是硬性阻断。
     final mealSlot = _inferMealSlot(midpoint);
@@ -431,98 +432,104 @@ class NextMealRecommendationOrchestrator {
       mealSlot: mealSlot,
     );
 
-    return baseline.map((item) {
-      var score = item.score;
-      final reasons = [...item.reasons];
-      final breakdown = Map<String, double>.from(item.scoreBreakdown);
-      final updatedRiskTags = [...item.featureSnapshot.riskTags];
-      final templateTextureAffinity = _templateTextureAffinity(
-        food: item.food,
-        swallowingTextureMode: userProfile.swallowingTextureMode,
-        templateTextureLevel: templateTextureLevel,
-      );
-      final templateTextureAdjustment = (templateTextureAffinity - 0.55) * 8.0;
+    return baseline
+        .map((item) {
+          var score = item.score;
+          final reasons = [...item.reasons];
+          final breakdown = Map<String, double>.from(item.scoreBreakdown);
+          final updatedRiskTags = [...item.featureSnapshot.riskTags];
+          final templateTextureAffinity = _templateTextureAffinity(
+            food: item.food,
+            swallowingTextureMode: userProfile.swallowingTextureMode,
+            templateTextureLevel: templateTextureLevel,
+          );
+          final templateTextureAdjustment =
+              (templateTextureAffinity - 0.55) * 8.0;
 
-      // 这是工程默认排序项，不是医学硬阈值。
-      if (gapMinutes < 180 && item.food.proteinG >= 15) {
-        score -= 10;
-        reasons.add(i18n.tr('recommend.next_meal_gap_close'));
-        if (!updatedRiskTags.contains('short_next_meal_gap')) {
-          updatedRiskTags.add('short_next_meal_gap');
-        }
-      } else if (gapMinutes >= 240 && item.food.fiberG >= 2) {
-        score += 4;
-        reasons.add(i18n.tr('recommend.next_meal_window_fiber'));
-      }
+          // 这是工程默认排序项，不是医学硬阈值。
+          if (gapMinutes < 180 && item.food.proteinG >= 15) {
+            score -= 10;
+            reasons.add(i18n.tr('recommend.next_meal_gap_close'));
+            if (!updatedRiskTags.contains('short_next_meal_gap')) {
+              updatedRiskTags.add('short_next_meal_gap');
+            }
+          } else if (gapMinutes >= 240 && item.food.fiberG >= 2) {
+            score += 4;
+            reasons.add(i18n.tr('recommend.next_meal_window_fiber'));
+          }
 
-      final intakePenalty = _levodopaWindowPenalty(
-        midpoint: midpoint,
-        activeDrugs: activeDrugs,
-        intakes: intakes,
-        food: item.food,
-      );
-      if (intakePenalty > 0) {
-        score -= intakePenalty;
-        reasons.add(i18n.tr('recommend.medication_timing_caution'));
-        if (!updatedRiskTags.contains('levodopa_window_penalty')) {
-          updatedRiskTags.add('levodopa_window_penalty');
-        }
-      }
+          final intakePenalty = _levodopaWindowPenalty(
+            midpoint: midpoint,
+            activeDrugs: activeDrugs,
+            intakes: intakes,
+            food: item.food,
+          );
+          if (intakePenalty > 0) {
+            score -= intakePenalty;
+            reasons.add(i18n.tr('recommend.medication_timing_caution'));
+            if (!updatedRiskTags.contains('levodopa_window_penalty')) {
+              updatedRiskTags.add('levodopa_window_penalty');
+            }
+          }
 
-      score += templateTextureAdjustment;
-      if (templateTextureAffinity >= 0.95) {
-        reasons.add(i18n.tr('recommend.texture_template_supported'));
-      } else if (templateTextureAffinity <= 0.25) {
-        reasons.add(i18n.tr('recommend.texture_template_mismatch'));
-        if (!updatedRiskTags.contains('template_texture_mismatch')) {
-          updatedRiskTags.add('template_texture_mismatch');
-        }
-      }
+          score += templateTextureAdjustment;
+          if (templateTextureAffinity >= 0.95) {
+            reasons.add(i18n.tr('recommend.texture_template_supported'));
+          } else if (templateTextureAffinity <= 0.25) {
+            reasons.add(i18n.tr('recommend.texture_template_mismatch'));
+            if (!updatedRiskTags.contains('template_texture_mismatch')) {
+              updatedRiskTags.add('template_texture_mismatch');
+            }
+          }
 
-      breakdown['window_gap_minutes'] = gapMinutes.toDouble();
-      breakdown['levodopa_window_penalty'] = intakePenalty;
-      breakdown['template_texture_affinity'] = templateTextureAffinity;
-      breakdown['template_texture_adjustment'] = templateTextureAdjustment;
-      breakdown['window_adjusted_score'] = score;
+          breakdown['window_gap_minutes'] = gapMinutes.toDouble();
+          breakdown['levodopa_window_penalty'] = intakePenalty;
+          breakdown['template_texture_affinity'] = templateTextureAffinity;
+          breakdown['template_texture_adjustment'] = templateTextureAdjustment;
+          breakdown['window_adjusted_score'] = score;
 
-      return FoodRecommendation(
-        food: item.food,
-        score: score,
-        reasons:
-            reasons.isEmpty ? [i18n.tr('recommend.general_friendly')] : reasons,
-        decision: item.decision,
-        jurisdiction: item.jurisdiction,
-        fallbackUsed: item.fallbackUsed,
-        scoreBreakdown: breakdown,
-        featureSnapshot: RecommendationFeatureSnapshot(
-          safetyScore: item.featureSnapshot.safetyScore,
-          nutrientMatch: item.featureSnapshot.nutrientMatch,
-          medicationScheduleFit: item.featureSnapshot.medicationScheduleFit,
-          culturalAffinity: item.featureSnapshot.culturalAffinity,
-          userPreferenceScore: item.featureSnapshot.userPreferenceScore,
-          provenanceScore: item.featureSnapshot.provenanceScore,
-          databaseFactCoverage: item.featureSnapshot.databaseFactCoverage,
-          timingWindowClarity:
-              item.featureSnapshot.hasPreciseTimingWindow ? 1.0 : 0.35,
-          drugTimingSensitivity: intakePenalty > 0
-              ? 1.0
-              : item.featureSnapshot.drugTimingSensitivity,
-          fallbackPenalty: item.featureSnapshot.fallbackPenalty,
-          repetitionPenalty: item.featureSnapshot.repetitionPenalty,
-          fiberSupportScore: item.featureSnapshot.fiberSupportScore,
-          regionMatchScore: item.featureSnapshot.regionMatchScore,
-          mealContextPenalty: item.featureSnapshot.mealContextPenalty,
-          contextDataGapPenalty: item.featureSnapshot.contextDataGapPenalty,
-          swallowingTexturePenalty:
-              item.featureSnapshot.swallowingTexturePenalty,
-          templateTextureAffinity: templateTextureAffinity,
-          usedDatabaseFacts: item.featureSnapshot.usedDatabaseFacts,
-          hasPreciseTimingWindow: item.featureSnapshot.hasPreciseTimingWindow,
-          levodopaSensitive: item.featureSnapshot.levodopaSensitive,
-          riskTags: updatedRiskTags,
-        ),
-      );
-    }).toList(growable: false)
+          return FoodRecommendation(
+            food: item.food,
+            score: score,
+            reasons: reasons.isEmpty
+                ? [i18n.tr('recommend.general_friendly')]
+                : reasons,
+            decision: item.decision,
+            jurisdiction: item.jurisdiction,
+            fallbackUsed: item.fallbackUsed,
+            scoreBreakdown: breakdown,
+            featureSnapshot: RecommendationFeatureSnapshot(
+              safetyScore: item.featureSnapshot.safetyScore,
+              nutrientMatch: item.featureSnapshot.nutrientMatch,
+              medicationScheduleFit: item.featureSnapshot.medicationScheduleFit,
+              culturalAffinity: item.featureSnapshot.culturalAffinity,
+              userPreferenceScore: item.featureSnapshot.userPreferenceScore,
+              provenanceScore: item.featureSnapshot.provenanceScore,
+              databaseFactCoverage: item.featureSnapshot.databaseFactCoverage,
+              timingWindowClarity: item.featureSnapshot.hasPreciseTimingWindow
+                  ? 1.0
+                  : 0.35,
+              drugTimingSensitivity: intakePenalty > 0
+                  ? 1.0
+                  : item.featureSnapshot.drugTimingSensitivity,
+              fallbackPenalty: item.featureSnapshot.fallbackPenalty,
+              repetitionPenalty: item.featureSnapshot.repetitionPenalty,
+              fiberSupportScore: item.featureSnapshot.fiberSupportScore,
+              regionMatchScore: item.featureSnapshot.regionMatchScore,
+              mealContextPenalty: item.featureSnapshot.mealContextPenalty,
+              contextDataGapPenalty: item.featureSnapshot.contextDataGapPenalty,
+              swallowingTexturePenalty:
+                  item.featureSnapshot.swallowingTexturePenalty,
+              templateTextureAffinity: templateTextureAffinity,
+              usedDatabaseFacts: item.featureSnapshot.usedDatabaseFacts,
+              hasPreciseTimingWindow:
+                  item.featureSnapshot.hasPreciseTimingWindow,
+              levodopaSensitive: item.featureSnapshot.levodopaSensitive,
+              riskTags: updatedRiskTags,
+            ),
+          );
+        })
+        .toList(growable: false)
       ..sort((a, b) => b.score.compareTo(a.score));
   }
 
@@ -550,8 +557,9 @@ class NextMealRecommendationOrchestrator {
     if (start == null || end == null) {
       return const _TemplateContext();
     }
-    final midpoint = start
-        .add(Duration(milliseconds: end.difference(start).inMilliseconds ~/ 2));
+    final midpoint = start.add(
+      Duration(milliseconds: end.difference(start).inMilliseconds ~/ 2),
+    );
     final mealSlot = _inferMealSlot(midpoint);
     final regionCode =
         userProfile.dietProfileRegion ?? userProfile.registrationRegion;
@@ -566,14 +574,11 @@ class NextMealRecommendationOrchestrator {
       countryCode: record.countryCode,
       mealSlot: record.mealSlot,
       textureLevel: record.textureLevel,
-      explanationLine: i18n.tr(
-        'dashboard.recommendation_template',
-        {
-          'region': i18n.regionLabel(record.countryCode),
-          'mealSlot': i18n.mealSlotLabel(record.mealSlot),
-          'texture': i18n.textureClassLabel(record.textureLevel),
-        },
-      ),
+      explanationLine: i18n.tr('dashboard.recommendation_template', {
+        'region': i18n.regionLabel(record.countryCode),
+        'mealSlot': i18n.mealSlotLabel(record.mealSlot),
+        'texture': i18n.textureClassLabel(record.textureLevel),
+      }),
     );
   }
 
@@ -674,9 +679,11 @@ class NextMealRecommendationOrchestrator {
     final reasons = <String>[];
     final latestMeal = history.isEmpty
         ? null
-        : ([...history]..sort((a, b) =>
-                b.effectiveOccurredAt.compareTo(a.effectiveOccurredAt)))
-            .first;
+        : ([...history]..sort(
+                (a, b) =>
+                    b.effectiveOccurredAt.compareTo(a.effectiveOccurredAt),
+              ))
+              .first;
     if (latestMeal == null) {
       reasons.add(i18n.tr('recommend.runtime.no_prior_meal_history'));
       return reasons;
@@ -700,14 +707,17 @@ class NextMealRecommendationOrchestrator {
     if (latestMeal.enteralFeedMode == 'continuous') {
       reasons.add(i18n.tr('recommend.runtime.enteral_conservative'));
     }
-    final hasLevodopa =
-        activeDrugs.any((drug) => drug.tags.contains(DrugTag.levodopaLike));
-    final midpoint = latestMeal.nextMealWindowStart == null ||
+    final hasLevodopa = activeDrugs.any(
+      (drug) => drug.tags.contains(DrugTag.levodopaLike),
+    );
+    final midpoint =
+        latestMeal.nextMealWindowStart == null ||
             latestMeal.nextMealWindowEnd == null
         ? null
         : latestMeal.nextMealWindowStart!.add(
             Duration(
-              milliseconds: latestMeal.nextMealWindowEnd!
+              milliseconds:
+                  latestMeal.nextMealWindowEnd!
                       .difference(latestMeal.nextMealWindowStart!)
                       .inMilliseconds ~/
                   2,
@@ -715,14 +725,16 @@ class NextMealRecommendationOrchestrator {
           );
     if (hasLevodopa &&
         midpoint != null &&
-        safeCandidates.any((candidate) =>
-            _levodopaWindowPenalty(
-              midpoint: midpoint,
-              activeDrugs: activeDrugs,
-              intakes: intakes,
-              food: candidate.food,
-            ) >=
-            12)) {
+        safeCandidates.any(
+          (candidate) =>
+              _levodopaWindowPenalty(
+                midpoint: midpoint,
+                activeDrugs: activeDrugs,
+                intakes: intakes,
+                food: candidate.food,
+              ) >=
+              12,
+        )) {
       reasons.add(i18n.tr('recommend.runtime.levodopa_ai_sensitive'));
     }
     return reasons;
@@ -746,11 +758,12 @@ class NextMealRecommendationOrchestrator {
     final activeDrugNames = request.activeDrugs
         .map((drug) => drug.genericName)
         .toList(growable: false);
-    final riskTags = safeCandidates
-        .expand((candidate) => candidate.featureSnapshot.riskTags)
-        .toSet()
-        .toList(growable: false)
-      ..sort();
+    final riskTags =
+        safeCandidates
+            .expand((candidate) => candidate.featureSnapshot.riskTags)
+            .toSet()
+            .toList(growable: false)
+          ..sort();
     final importedFactLines = _buildImportedLabelFactExplanations(
       details: projectedDrugDetails,
       i18n: AppI18n.fromLocaleTag(request.userProfile.displayLocale),
@@ -795,13 +808,13 @@ class NextMealRecommendationOrchestrator {
       lines.add(i18n.tr('recommend.context_xanthan_thickener'));
     }
     if (meal.enteralFeedMode == 'continuous') {
-      lines.add(i18n.tr(
-        'recommend.context_enteral_feed_continuous',
-        {
-          'protein': meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
+      lines.add(
+        i18n.tr('recommend.context_enteral_feed_continuous', {
+          'protein':
+              meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
               'unspecified',
-        },
-      ));
+        }),
+      );
     } else if (meal.enteralFeedMode == 'bolus') {
       lines.add(i18n.tr('recommend.context_enteral_feed_bolus'));
     }
@@ -840,8 +853,10 @@ class NextMealRecommendationOrchestrator {
         ],
         limitationText: 'Educational prototype. Not medical advice.',
       );
-      final authorityScore =
-          _authorityScorer.score(source, userJurisdictionChain: chain);
+      final authorityScore = _authorityScorer.score(
+        source,
+        userJurisdictionChain: chain,
+      );
       final jurisdictionMatch = _authorityScorer.jurisdictionMatchScore(
         sourceJurisdiction: item.jurisdiction,
         userJurisdictionChain: chain,
@@ -850,8 +865,9 @@ class NextMealRecommendationOrchestrator {
       // Nutrient completeness from the missing-set (missing ≠ zero): fraction
       // of the core macronutrient fields actually present.
       const coreFields = ['proteinG', 'carbsG', 'fatG', 'fiberG', 'sodiumMg'];
-      final presentCount =
-          coreFields.where((f) => !item.isNutrientMissing(f)).length;
+      final presentCount = coreFields
+          .where((f) => !item.isNutrientMissing(f))
+          .length;
       final nutrientCompleteness = presentCount / coreFields.length;
 
       // FDC nutrient provenance (P5): make the amino-acid derivation tier
@@ -878,7 +894,8 @@ class NextMealRecommendationOrchestrator {
         aminoAcidConfidenceTier: nutrientTier?.name,
         nutrientDataType: aaProfile?.fdcDataType,
         nutrientDataPoints: representativeDerivation?.dataPoints,
-        nutrientDerivationSource: representativeDerivation?.sourceCode ??
+        nutrientDerivationSource:
+            representativeDerivation?.sourceCode ??
             representativeDerivation?.derivationCode,
         nutrientProvenanceQuality: nutrientTier == null
             ? null
@@ -980,9 +997,7 @@ class NextMealRecommendationOrchestrator {
     List<FoodRecommendation> baseline,
     List<String> orderedIds,
   ) {
-    final byId = {
-      for (final item in baseline) item.food.id: item,
-    };
+    final byId = {for (final item in baseline) item.food.id: item};
     final seen = <String>{};
     final result = <FoodRecommendation>[];
     for (final id in orderedIds) {
@@ -1038,14 +1053,17 @@ class NextMealRecommendationOrchestrator {
 
     List<MechanisticCandidateScore>? candidateScores;
     if (request.userDefinedWindow != null && candidateFoods.isNotEmpty) {
-      final candidates =
-          candidateFoods.map(foodItemToCandidateFood).toList(growable: false);
+      final candidates = candidateFoods
+          .map(foodItemToCandidateFood)
+          .toList(growable: false);
       // Build real per-candidate metadata from imported source data
       // (authority, jurisdiction match, completeness, provenance) so the
       // scorer ranks official-in-jurisdiction above synthetic/seed. Missing
       // metadata yields neutral defaults inside the scorer — never fake-high.
-      final candidateMetadata =
-          _buildCandidateMetadata(candidateFoods, request.userProfile);
+      final candidateMetadata = _buildCandidateMetadata(
+        candidateFoods,
+        request.userProfile,
+      );
       candidateScores = mechanisticScorer.score(
         baseContext: context,
         baseMealCompositionsById: compositionsById,
@@ -1080,8 +1098,9 @@ class NextMealRecommendationOrchestrator {
         trace.confidenceBand == ConfidenceBand.medium) {
       eligibilityReasons.add('confidence_${trace.confidenceBand.name}');
     } else {
-      fallbackReasons
-          .add('insufficient_confidence_${trace.confidenceBand.name}');
+      fallbackReasons.add(
+        'insufficient_confidence_${trace.confidenceBand.name}',
+      );
     }
 
     final canPromoteMechanistic = fallbackReasons.isEmpty;
@@ -1131,11 +1150,10 @@ class NextMealRecommendationOrchestrator {
   }
 
   List<MedicationTimelineInput> _buildMechanisticMedicationInputs(
-      NextMealRecommendationRequest request) {
+    NextMealRecommendationRequest request,
+  ) {
     final inputs = <MedicationTimelineInput>[];
-    final drugsById = {
-      for (final d in request.activeDrugs) d.id: d,
-    };
+    final drugsById = {for (final d in request.activeDrugs) d.id: d};
     for (final intake in request.intakes) {
       final drug = drugsById[intake.drugId];
       if (drug == null) continue;
@@ -1157,11 +1175,13 @@ class NextMealRecommendationOrchestrator {
         sourceDocId: 'synthetic:${drug.sourceSystem}',
       );
       final validation = medicationEntryValidator.validate(raw);
-      inputs.add(MedicationTimelineInput(
-        id: 'intake_${intake.id}',
-        takenAt: intake.takenAt,
-        medicationContext: validation,
-      ));
+      inputs.add(
+        MedicationTimelineInput(
+          id: 'intake_${intake.id}',
+          takenAt: intake.takenAt,
+          medicationContext: validation,
+        ),
+      );
     }
     return inputs;
   }
@@ -1188,12 +1208,14 @@ class NextMealRecommendationOrchestrator {
       // Use the composition's inferred physical form (single/mixed/liquid)
       // when available, instead of always declaring `unknown`.
       final comp = compositionsById['comp_${meal.id}'];
-      inputs.add(MealTimelineInput(
-        id: 'meal_${meal.id}',
-        startedAt: meal.effectiveOccurredAt,
-        compositionId: 'comp_${meal.id}',
-        physicalForm: comp?.mealPhysicalForm ?? MealPhysicalForm.unknown,
-      ));
+      inputs.add(
+        MealTimelineInput(
+          id: 'meal_${meal.id}',
+          startedAt: meal.effectiveOccurredAt,
+          compositionId: 'comp_${meal.id}',
+          physicalForm: comp?.mealPhysicalForm ?? MealPhysicalForm.unknown,
+        ),
+      );
     }
     return inputs;
   }
@@ -1215,25 +1237,29 @@ class NextMealRecommendationOrchestrator {
         // No item structure available → keep the legacy aggregate (macros from
         // totals; calories/portion unknown rather than fabricated).
         final totals = meal.computeTotals();
-        components.add(FoodComponent(
-          id: 'meal_aggregate_${meal.id}',
-          name: meal.title,
-          physicalForm: MealPhysicalForm.unknown,
-          proteinGrams: totals.totalProteinG,
-          fatGrams: totals.totalFatG,
-          fiberGrams: totals.totalFiberG,
-          carbohydrateGrams: totals.totalCarbsG,
-          calories: null,
-          portionGrams: null,
-          sourceDocId: 'meal_history',
-        ));
+        components.add(
+          FoodComponent(
+            id: 'meal_aggregate_${meal.id}',
+            name: meal.title,
+            physicalForm: MealPhysicalForm.unknown,
+            proteinGrams: totals.totalProteinG,
+            fatGrams: totals.totalFatG,
+            fiberGrams: totals.totalFiberG,
+            carbohydrateGrams: totals.totalCarbsG,
+            calories: null,
+            portionGrams: null,
+            sourceDocId: 'meal_history',
+          ),
+        );
       } else {
         for (var i = 0; i < meal.items.length; i++) {
-          components.add(mealItemToFoodComponent(
-            meal.items[i],
-            componentId: 'mealitem_${meal.id}_$i',
-            catalogMatch: catalogById[meal.items[i].foodId],
-          ));
+          components.add(
+            mealItemToFoodComponent(
+              meal.items[i],
+              componentId: 'mealitem_${meal.id}_$i',
+              catalogMatch: catalogById[meal.items[i].foodId],
+            ),
+          );
         }
       }
       final composition = mealCompositionNormalizer.normalize(

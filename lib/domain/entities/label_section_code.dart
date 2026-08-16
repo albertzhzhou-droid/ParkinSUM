@@ -48,12 +48,12 @@ class LabelSectionCode {
   bool get isMapped => mappingConfidence == SectionCodeMappingConfidence.mapped;
 
   Map<String, dynamic> toJson() => {
-        'source_section_key': sourceSectionKey,
-        'section_title': sectionTitle,
-        'loinc_code': loincCode,
-        'loinc_display': loincDisplay,
-        'mapping_confidence': mappingConfidence.name,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-      };
+    'source_section_key': sourceSectionKey,
+    'section_title': sectionTitle,
+    'loinc_code': loincCode,
+    'loinc_display': loincDisplay,
+    'mapping_confidence': mappingConfidence.name,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+  };
 }

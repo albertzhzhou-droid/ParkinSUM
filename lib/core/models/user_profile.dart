@@ -97,21 +97,21 @@ class UserProfile {
   }
 
   Map<String, dynamic> toJson() => {
-        'patientId': patientId,
-        'registrationRegion': registrationRegion,
-        'displayLocale': displayLocale,
-        'contentJurisdictionOverride': contentJurisdictionOverride,
-        'dietProfileRegion': dietProfileRegion,
-        'timezone': timezone,
-        'swallowingTextureMode': swallowingTextureMode,
-        'localAiConsentEnabled': localAiConsentEnabled,
-        'localAiProviderPreference': localAiProviderPreference,
-        'localAiModel': localAiModel,
-        'localAiMedicalModel': localAiMedicalModel,
-        'localAiOllamaEndpoint': localAiOllamaEndpoint,
-        'localAiOpenAiCompatEndpoint': localAiOpenAiCompatEndpoint,
-        'localAiTimeoutMs': localAiTimeoutMs,
-      };
+    'patientId': patientId,
+    'registrationRegion': registrationRegion,
+    'displayLocale': displayLocale,
+    'contentJurisdictionOverride': contentJurisdictionOverride,
+    'dietProfileRegion': dietProfileRegion,
+    'timezone': timezone,
+    'swallowingTextureMode': swallowingTextureMode,
+    'localAiConsentEnabled': localAiConsentEnabled,
+    'localAiProviderPreference': localAiProviderPreference,
+    'localAiModel': localAiModel,
+    'localAiMedicalModel': localAiMedicalModel,
+    'localAiOllamaEndpoint': localAiOllamaEndpoint,
+    'localAiOpenAiCompatEndpoint': localAiOpenAiCompatEndpoint,
+    'localAiTimeoutMs': localAiTimeoutMs,
+  };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -130,13 +130,15 @@ class UserProfile {
       localAiProviderPreference:
           (json['localAiProviderPreference'] as String?) ?? 'auto',
       localAiModel: (json['localAiModel'] as String?) ?? 'gemma3n:e2b',
-      localAiMedicalModel: (json['localAiMedicalModel'] as String?) ??
+      localAiMedicalModel:
+          (json['localAiMedicalModel'] as String?) ??
           'hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M',
-      localAiOllamaEndpoint: (json['localAiOllamaEndpoint'] as String?) ??
+      localAiOllamaEndpoint:
+          (json['localAiOllamaEndpoint'] as String?) ??
           'http://127.0.0.1:11434/api/chat',
       localAiOpenAiCompatEndpoint:
           (json['localAiOpenAiCompatEndpoint'] as String?) ??
-              'http://127.0.0.1:8080/v1/chat/completions',
+          'http://127.0.0.1:8080/v1/chat/completions',
       localAiTimeoutMs: (json['localAiTimeoutMs'] as num?)?.toInt() ?? 12000,
     );
   }

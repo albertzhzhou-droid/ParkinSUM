@@ -17,7 +17,7 @@ class MedicationContextMetadataAdapter {
   final MetadataCompletenessGate completenessGate;
 
   MedicationContextMetadataAdapter({MetadataCompletenessGate? completenessGate})
-      : completenessGate = completenessGate ?? MetadataCompletenessGate();
+    : completenessGate = completenessGate ?? MetadataCompletenessGate();
 
   MechanisticMedicationMetadata fromCdssMetadata({
     required DrugProductVariantMetadata variant,
@@ -32,25 +32,29 @@ class MedicationContextMetadataAdapter {
     final components = _components(variant);
 
     final labelSectionRefs = sections
-        .map((s) => LabelSectionRef(
-              sourceSystem: variant.sourceSystem,
-              sourceDocId: s.sourceDocId,
-              sourceDocVersion: sourceDocVersion,
-              jurisdiction: variant.jurisdiction,
-              language: variant.language,
-              sectionId: s.sectionId,
-              sectionKey: s.sectionKey,
-              sectionTitle: s.sectionTitle,
-              effectiveDate: effectiveDate,
-              parserName: 'cdss_drug_label_section_record',
-              sourceRefs: variant.sourceRefs,
-              limitationText: variant.limitationText,
-            ))
+        .map(
+          (s) => LabelSectionRef(
+            sourceSystem: variant.sourceSystem,
+            sourceDocId: s.sourceDocId,
+            sourceDocVersion: sourceDocVersion,
+            jurisdiction: variant.jurisdiction,
+            language: variant.language,
+            sectionId: s.sectionId,
+            sectionKey: s.sectionKey,
+            sectionTitle: s.sectionTitle,
+            effectiveDate: effectiveDate,
+            parserName: 'cdss_drug_label_section_record',
+            sourceRefs: variant.sourceRefs,
+            limitationText: variant.limitationText,
+          ),
+        )
         .toList(growable: false);
 
     final completeness = completenessGate
-        .scoreMedicationContext(variant,
-            hasLabelSectionProvenance: labelSectionRefs.isNotEmpty)
+        .scoreMedicationContext(
+          variant,
+          hasLabelSectionProvenance: labelSectionRefs.isNotEmpty,
+        )
         .name;
 
     return MechanisticMedicationMetadata(
@@ -85,14 +89,16 @@ class MedicationContextMetadataAdapter {
         .toList(growable: false);
     final singleIngredient = names.length == 1;
     return names
-        .map((name) => MedicationComponent(
-              ingredientName: name,
-              role: _roleFor(name),
-              strengthValue: singleIngredient ? variant.strengthValue : null,
-              strengthUnit: singleIngredient ? variant.strengthUnit : null,
-              sourceRefs: variant.sourceRefs,
-              extractionConfidence: variant.extractionConfidence,
-            ))
+        .map(
+          (name) => MedicationComponent(
+            ingredientName: name,
+            role: _roleFor(name),
+            strengthValue: singleIngredient ? variant.strengthValue : null,
+            strengthUnit: singleIngredient ? variant.strengthUnit : null,
+            sourceRefs: variant.sourceRefs,
+            extractionConfidence: variant.extractionConfidence,
+          ),
+        )
         .toList(growable: false);
   }
 

@@ -60,15 +60,15 @@ class LocalizationSurface {
   });
 
   Map<String, dynamic> toJson() => {
-        'surface_id': surfaceId,
-        'locale': locale,
-        'key': key,
-        'source': source,
-        'expected_safety_role': expectedSafetyRole,
-        // Note: `text` is intentionally omitted from the report JSON to avoid
-        // echoing any flagged copy; `matched_text` on findings carries the
-        // minimal snippet needed for triage.
-      };
+    'surface_id': surfaceId,
+    'locale': locale,
+    'key': key,
+    'source': source,
+    'expected_safety_role': expectedSafetyRole,
+    // Note: `text` is intentionally omitted from the report JSON to avoid
+    // echoing any flagged copy; `matched_text` on findings carries the
+    // minimal snippet needed for triage.
+  };
 }
 
 class LocalizationSafetyFinding {
@@ -96,16 +96,16 @@ class LocalizationSafetyFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'finding_type': findingType,
-        'surface_id': surfaceId,
-        'locale': locale,
-        'key': key,
-        'message': message,
-        'matched_text': matchedText,
-        'suggested_fix': suggestedFix,
-        'safety_boundary': safetyBoundary,
-      };
+    'severity': severity,
+    'finding_type': findingType,
+    'surface_id': surfaceId,
+    'locale': locale,
+    'key': key,
+    'message': message,
+    'matched_text': matchedText,
+    'suggested_fix': suggestedFix,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 class LocalizationSafetyReport {
@@ -138,18 +138,18 @@ class LocalizationSafetyReport {
   int get blockerCount => findingCounts['blocker'] ?? 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'synthetic_demo_data_only': true,
-        'no_medical_advice': true,
-        'generated_at': generatedAt,
-        'required_locales': requiredLocales,
-        'surface_count': surfaceCount,
-        'finding_counts': findingCounts,
-        'pass': pass,
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'synthetic_demo_data_only': true,
+    'no_medical_advice': true,
+    'generated_at': generatedAt,
+    'required_locales': requiredLocales,
+    'surface_count': surfaceCount,
+    'finding_counts': findingCounts,
+    'pass': pass,
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }

@@ -101,14 +101,14 @@ class ReleaseSnapshot {
 
   /// True when every required section resolved (no `missing_artifact`).
   bool get complete => ![
-        analyzeStatus,
-        testStatus,
-        replayStatus,
-        sourceQualityStatus,
-        preflightStatus,
-        firestoreStatus,
-        recommendationScenarioStatus,
-      ].any((s) => s.contains(kMissingArtifact));
+    analyzeStatus,
+    testStatus,
+    replayStatus,
+    sourceQualityStatus,
+    preflightStatus,
+    firestoreStatus,
+    recommendationScenarioStatus,
+  ].any((s) => s.contains(kMissingArtifact));
 
   static const List<String> knownLimitations = [
     'Deterministic synthetic-data regression + governance evidence only.',
@@ -119,39 +119,43 @@ class ReleaseSnapshot {
   ];
 
   Map<String, dynamic> toJson() => {
-        'snapshot_type': kSnapshotType,
-        'not_clinically_calibrated': true,
-        'synthetic_demo_data_only': true,
-        'no_medical_advice': true,
-        'complete': complete,
-        'checks': {
-          'flutter_analyze': analyzeStatus,
-          'flutter_test': testStatus,
-          'mechanistic_replay': replayStatus,
-          'source_quality_perturbation': sourceQualityStatus,
-          'public_preflight': preflightStatus,
-          'firestore_rules_contract': firestoreStatus,
-          'live_source_smoke': liveSmokeStatus,
-          'recommendation_scenario_replay': recommendationScenarioStatus,
-        },
-        if (recommendationScenarioDetail != null)
-          'recommendation_scenario_replay_detail': recommendationScenarioDetail,
-        'capability_matrix_summary': capabilityMatrixSummary,
-        'known_limitations': knownLimitations,
-        'safety_boundary': RuleExplanation.defaultSafetyBoundary,
-        'not_advice_text': RuleExplanation.defaultNotAdvice,
-      };
+    'snapshot_type': kSnapshotType,
+    'not_clinically_calibrated': true,
+    'synthetic_demo_data_only': true,
+    'no_medical_advice': true,
+    'complete': complete,
+    'checks': {
+      'flutter_analyze': analyzeStatus,
+      'flutter_test': testStatus,
+      'mechanistic_replay': replayStatus,
+      'source_quality_perturbation': sourceQualityStatus,
+      'public_preflight': preflightStatus,
+      'firestore_rules_contract': firestoreStatus,
+      'live_source_smoke': liveSmokeStatus,
+      'recommendation_scenario_replay': recommendationScenarioStatus,
+    },
+    if (recommendationScenarioDetail != null)
+      'recommendation_scenario_replay_detail': recommendationScenarioDetail,
+    'capability_matrix_summary': capabilityMatrixSummary,
+    'known_limitations': knownLimitations,
+    'safety_boundary': RuleExplanation.defaultSafetyBoundary,
+    'not_advice_text': RuleExplanation.defaultNotAdvice,
+  };
 
   String toMarkdown() {
     final b = StringBuffer()
       ..writeln('# ParkinSUM Release Snapshot')
       ..writeln()
-      ..writeln('Educational/research prototype. Synthetic/demo data only. '
-          '**Not medical advice, not calibrated for real care, and carries no '
-          'clinical-validation claim.**')
+      ..writeln(
+        'Educational/research prototype. Synthetic/demo data only. '
+        '**Not medical advice, not calibrated for real care, and carries no '
+        'clinical-validation claim.**',
+      )
       ..writeln()
-      ..writeln('Composed from existing verification artifacts. Missing inputs '
-          'are recorded as `missing_artifact` — never fabricated.')
+      ..writeln(
+        'Composed from existing verification artifacts. Missing inputs '
+        'are recorded as `missing_artifact` — never fabricated.',
+      )
       ..writeln()
       ..writeln('| Check | Status |')
       ..writeln('| --- | --- |')
@@ -167,7 +171,8 @@ class ReleaseSnapshot {
       ..writeln('Capability matrix: $capabilityMatrixSummary')
       ..writeln()
       ..writeln(
-          'Overall: ${complete ? 'all required checks resolved' : 'incomplete (missing_artifact present)'}.')
+        'Overall: ${complete ? 'all required checks resolved' : 'incomplete (missing_artifact present)'}.',
+      )
       ..writeln()
       ..writeln('## Known limitations')
       ..writeln();
@@ -200,17 +205,20 @@ class ReleaseSnapshotGenerator {
       liveSmokeStatus: inputs.liveSmokeStatus ?? 'skipped_opt_in',
       capabilityMatrixSummary:
           inputs.capabilityMatrixSummary ?? kMissingArtifact,
-      recommendationScenarioStatus:
-          _recommendationScenarioStatus(inputs.recommendationScenarioReport),
-      recommendationScenarioDetail:
-          _recommendationScenarioDetail(inputs.recommendationScenarioReport),
+      recommendationScenarioStatus: _recommendationScenarioStatus(
+        inputs.recommendationScenarioReport,
+      ),
+      recommendationScenarioDetail: _recommendationScenarioDetail(
+        inputs.recommendationScenarioReport,
+      ),
     );
   }
 
   /// Validates the Local-AI scenario replay artifact shape. Returns null for a
   /// missing or malformed artifact (never fabricated success).
   Map<String, dynamic>? _recommendationScenarioDetail(
-      Map<String, dynamic>? report) {
+    Map<String, dynamic>? report,
+  ) {
     if (report == null) return null;
     final datasetVersion = report['dataset_version'];
     final cases = report['cases'];

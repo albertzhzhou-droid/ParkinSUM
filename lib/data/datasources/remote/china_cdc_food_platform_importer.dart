@@ -29,10 +29,7 @@ class ChinaCdcFoodPlatformImporter {
   /// - 每个条目都要求先通过官方页面模式核验；
   /// - 当前只扩到“常见中国饮食场景里高价值”的代表性食物，不伪装成整库镜像。
   static const selectedFoodPages = <_ChinaFoodSeed>[
-    _ChinaFoodSeed(
-      key: 'tofu_average',
-      url: P0SourceUrls.chinaFoodTofuAverage,
-    ),
+    _ChinaFoodSeed(key: 'tofu_average', url: P0SourceUrls.chinaFoodTofuAverage),
     _ChinaFoodSeed(
       key: 'rice_steamed_average',
       url: P0SourceUrls.chinaFoodRiceSteamedAverage,
@@ -49,38 +46,20 @@ class ChinaCdcFoodPlatformImporter {
       key: 'millet_porridge',
       url: P0SourceUrls.chinaFoodMilletPorridge,
     ),
-    _ChinaFoodSeed(
-      key: 'soy_milk',
-      url: P0SourceUrls.chinaFoodSoyMilk,
-    ),
-    _ChinaFoodSeed(
-      key: 'egg_average',
-      url: P0SourceUrls.chinaFoodEggAverage,
-    ),
+    _ChinaFoodSeed(key: 'soy_milk', url: P0SourceUrls.chinaFoodSoyMilk),
+    _ChinaFoodSeed(key: 'egg_average', url: P0SourceUrls.chinaFoodEggAverage),
     _ChinaFoodSeed(
       key: 'apple_guoguang',
       url: P0SourceUrls.chinaFoodAppleGuoguang,
     ),
-    _ChinaFoodSeed(
-      key: 'banana',
-      url: P0SourceUrls.chinaFoodBanana,
-    ),
-    _ChinaFoodSeed(
-      key: 'spinach',
-      url: P0SourceUrls.chinaFoodSpinach,
-    ),
+    _ChinaFoodSeed(key: 'banana', url: P0SourceUrls.chinaFoodBanana),
+    _ChinaFoodSeed(key: 'spinach', url: P0SourceUrls.chinaFoodSpinach),
     _ChinaFoodSeed(
       key: 'pork_tenderloin',
       url: P0SourceUrls.chinaFoodPorkTenderloin,
     ),
-    _ChinaFoodSeed(
-      key: 'xiao_bai_cai',
-      url: P0SourceUrls.chinaFoodXiaoBaiCai,
-    ),
-    _ChinaFoodSeed(
-      key: 'you_tiao',
-      url: P0SourceUrls.chinaFoodYouTiao,
-    ),
+    _ChinaFoodSeed(key: 'xiao_bai_cai', url: P0SourceUrls.chinaFoodXiaoBaiCai),
+    _ChinaFoodSeed(key: 'you_tiao', url: P0SourceUrls.chinaFoodYouTiao),
   ];
 
   /// 公开静态 URL 列表，方便 orchestrator 在 resume notes 里记录。
@@ -96,10 +75,7 @@ class ChinaCdcFoodPlatformImporter {
     return bundle;
   }
 
-  P0ImportBundle importFoodPage({
-    required String url,
-    required String html,
-  }) {
+  P0ImportBundle importFoodPage({required String url, required String html}) {
     final page = _parsePage(url, html);
     final sourceDocId = sourceDocumentId(
       sourceSystem: 'CHINA_CDC_FOOD_PLATFORM',
@@ -184,15 +160,19 @@ class ChinaCdcFoodPlatformImporter {
       jurisdiction: 'CN',
       textureClass: textureClass,
       iddsiLevel: inferIddsiLevelFromTextureClass(textureClass),
-      proteinG:
-          displayValueFromRaw(page.attributeValues[('protein_g', 'g')] ?? '0'),
+      proteinG: displayValueFromRaw(
+        page.attributeValues[('protein_g', 'g')] ?? '0',
+      ),
       carbsG: displayValueFromRaw(
-          page.attributeValues[('carbohydrate_g', 'g')] ?? '0'),
+        page.attributeValues[('carbohydrate_g', 'g')] ?? '0',
+      ),
       fatG: displayValueFromRaw(page.attributeValues[('fat_g', 'g')] ?? '0'),
-      fiberG:
-          displayValueFromRaw(page.attributeValues[('fiber_g', 'g')] ?? '0'),
-      sodiumMg:
-          displayValueFromRaw(page.attributeValues[('sodium_mg', 'mg')] ?? '0'),
+      fiberG: displayValueFromRaw(
+        page.attributeValues[('fiber_g', 'g')] ?? '0',
+      ),
+      sodiumMg: displayValueFromRaw(
+        page.attributeValues[('sodium_mg', 'mg')] ?? '0',
+      ),
     );
 
     return P0ImportBundle(
@@ -272,22 +252,16 @@ class ChinaCdcFoodPlatformImporter {
 
   _ChinaFoodPage _parsePage(String url, String html) {
     final normalized = _normalizeText(html);
-    final title = _firstNonEmptyLine(normalized) ??
+    final title =
+        _firstNonEmptyLine(normalized) ??
         _firstMatch(normalized, RegExp(r'5\.\s*([^\n]+)')) ??
         '中国食物';
-    final foodGroup = _firstMatch(
-          normalized,
-          RegExp(r'食物类：([^\s]+)'),
-        ) ??
-        'other';
-    final subGroup = _firstMatch(
-          normalized,
-          RegExp(r'亚\s*类：([^\s]+)'),
-        ) ??
-        '';
+    final foodGroup =
+        _firstMatch(normalized, RegExp(r'食物类：([^\s]+)')) ?? 'other';
+    final subGroup = _firstMatch(normalized, RegExp(r'亚\s*类：([^\s]+)')) ?? '';
     final pageCode =
         RegExp(r'/foodinfo/(\d+)\.html').firstMatch(url)?.group(1) ??
-            stableHash(url);
+        stableHash(url);
 
     final attributeValues = <(String, String), String>{};
     for (final mapping in _attributeMap.entries) {
@@ -313,8 +287,9 @@ class ChinaCdcFoodPlatformImporter {
     if (normalized == '—') {
       return parseQualifiedValue('-');
     }
-    final numeric =
-        RegExp(r'^([<>]?\=?\s*[0-9]+(?:\.[0-9]+)?)').firstMatch(normalized);
+    final numeric = RegExp(
+      r'^([<>]?\=?\s*[0-9]+(?:\.[0-9]+)?)',
+    ).firstMatch(normalized);
     if (numeric != null) {
       return parseQualifiedValue(numeric.group(1));
     }
@@ -356,8 +331,9 @@ class ChinaCdcFoodPlatformImporter {
     if (raw == 'Tr' || raw == 'tr' || raw == '—') {
       return raw;
     }
-    final numeric =
-        RegExp(r'^[<>]?\=?\s*[0-9]+(?:\.[0-9]+)?').firstMatch(raw)?.group(0);
+    final numeric = RegExp(
+      r'^[<>]?\=?\s*[0-9]+(?:\.[0-9]+)?',
+    ).firstMatch(raw)?.group(0);
     return numeric ?? raw;
   }
 }
@@ -366,10 +342,7 @@ class _ChinaFoodSeed {
   final String key;
   final String url;
 
-  const _ChinaFoodSeed({
-    required this.key,
-    required this.url,
-  });
+  const _ChinaFoodSeed({required this.key, required this.url});
 }
 
 class _ChinaFoodPage {

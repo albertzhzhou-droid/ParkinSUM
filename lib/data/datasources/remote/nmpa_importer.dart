@@ -17,8 +17,9 @@ class NmpaImporter {
   NmpaParseResult parse(Map<String, dynamic> payload) {
     final notes = <String>[];
     String s(String key) => (payload[key] ?? '').toString().trim();
-    final sourceDocId =
-        s('source_doc_id').isEmpty ? 'nmpa:unknown' : s('source_doc_id');
+    final sourceDocId = s('source_doc_id').isEmpty
+        ? 'nmpa:unknown'
+        : s('source_doc_id');
     final jurisdiction = s('jurisdiction').isEmpty ? 'CN' : s('jurisdiction');
     final language = s('language').isEmpty ? 'zh' : s('language');
 
@@ -53,10 +54,10 @@ class NmpaImporter {
 
     final limitation = s('limitation_text').isEmpty
         ? 'NMPA source is FIXTURE-VALIDATED, NOT live-verified: this parser '
-            'reads a synthetic NMPA-style payload and has not been validated '
-            'against a live NMPA schema or feed. Chinese-language source is '
-            'authoritative; English mapping is reference-only. Educational '
-            'prototype, not medical advice, not production ingestion.'
+              'reads a synthetic NMPA-style payload and has not been validated '
+              'against a live NMPA schema or feed. Chinese-language source is '
+              'authoritative; English mapping is reference-only. Educational '
+              'prototype, not medical advice, not production ingestion.'
         : s('limitation_text');
 
     final doc = SourceDocumentMetadata(
@@ -92,10 +93,12 @@ class NmpaImporter {
       doseForm: doseForm,
       route: route,
       releaseType: release,
-      productIdentifier:
-          s('approval_number').isEmpty ? null : s('approval_number'),
-      labelSection:
-          s('label_section_zh').isEmpty ? null : s('label_section_zh'),
+      productIdentifier: s('approval_number').isEmpty
+          ? null
+          : s('approval_number'),
+      labelSection: s('label_section_zh').isEmpty
+          ? null
+          : s('label_section_zh'),
       translationStatus: translation,
       extractionConfidence: confidence,
       sourceRefs: const ['src.nmpa.database'],

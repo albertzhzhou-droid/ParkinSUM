@@ -88,7 +88,8 @@ class _IoLocalP0ImportLocator implements LocalP0ImportLocator {
         );
       }
       archive.addFile(
-          ArchiveFile(file.uri.pathSegments.last, bytes.length, bytes));
+        ArchiveFile(file.uri.pathSegments.last, bytes.length, bytes),
+      );
     }
     resolvedPaths['ciqual'] = directory.path;
     return ZipEncoder().encode(archive);

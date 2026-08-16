@@ -37,9 +37,9 @@ class FirestoreCdssDatabase implements CdssDatabase {
     if (uid == null) {
       throw StateError('Firebase user is not signed in.');
     }
-    return firestore.collection(FirebaseUserDataPaths(uid).cdssRowsCollection(
-      table,
-    ));
+    return firestore.collection(
+      FirebaseUserDataPaths(uid).cdssRowsCollection(table),
+    );
   }
 
   Future<void> _upsert(
@@ -48,10 +48,9 @@ class FirestoreCdssDatabase implements CdssDatabase {
     Map<String, Object?> row,
   ) async {
     if (!allowWrites) return;
-    await (await _rows(table)).doc(id).set({
-      ...row,
-      '_synced_at': FieldValue.serverTimestamp(),
-    });
+    await (await _rows(
+      table,
+    )).doc(id).set({...row, '_synced_at': FieldValue.serverTimestamp()});
   }
 
   @override
@@ -176,9 +175,7 @@ class FirestoreCdssDatabase implements CdssDatabase {
   }
 
   @override
-  Future<void> insertDrugProductPackaging(
-    DrugProductPackagingRecord record,
-  ) {
+  Future<void> insertDrugProductPackaging(DrugProductPackagingRecord record) {
     return _upsert('drug_product_packaging', record.packagingId, {
       'packaging_id': record.packagingId,
       'drug_product_variant_id': record.drugProductVariantId,
@@ -331,9 +328,7 @@ class FirestoreCdssDatabase implements CdssDatabase {
   }
 
   @override
-  Future<void> insertRegionJurisdictionMap(
-    RegionJurisdictionMapRecord record,
-  ) {
+  Future<void> insertRegionJurisdictionMap(RegionJurisdictionMapRecord record) {
     return _upsert('region_jurisdiction_map', record.regionCode, {
       'region_code': record.regionCode,
       'jurisdiction_chain_json': record.jurisdictionChainJson,
@@ -416,7 +411,8 @@ class FirestoreCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {
+    SnapshotDistributionRecord record,
+  ) async {
     final row = {
       'distribution_id': record.distributionId,
       'snapshot_id': record.snapshotId,
@@ -506,7 +502,8 @@ class FirestoreCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertStagingRow(String table, Map<String, Object?> row) {
-    final id = row['staging_id'] ??
+    final id =
+        row['staging_id'] ??
         row['fact_id'] ??
         row['observation_id'] ??
         row['rule_id'] ??
@@ -516,8 +513,9 @@ class FirestoreCdssDatabase implements CdssDatabase {
       // Without an identifier every row would upsert into the same "null"
       // document and silently overwrite earlier rows — fail loudly instead.
       throw StateError(
-          'Staging row for "$table" has no identifier key; refusing to '
-          'upsert under a shared document id.');
+        'Staging row for "$table" has no identifier key; refusing to '
+        'upsert under a shared document id.',
+      );
     }
     return _upsert(table, '$id', row);
   }

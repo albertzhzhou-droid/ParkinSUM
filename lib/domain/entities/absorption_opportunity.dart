@@ -11,8 +11,10 @@ class AbsorptionOpennessSample {
   final int minute;
   final double openness; // 0..1
 
-  const AbsorptionOpennessSample(
-      {required this.minute, required this.openness});
+  const AbsorptionOpennessSample({
+    required this.minute,
+    required this.openness,
+  });
 
   Map<String, dynamic> toJson() => {'minute': minute, 'openness': openness};
 }
@@ -80,16 +82,17 @@ class AbsorptionOpportunityWindow {
   }
 
   Map<String, dynamic> toJson() => {
-        'medication_event_id': medicationEventId,
-        'window': window.toJson(),
-        'peak_minute': peakMinute,
-        'delayed_arrival_likelihood': delayedArrivalLikelihood.name,
-        'uncertainty_band': uncertaintyBand.name,
-        'assumptions': assumptions,
-        'missing_inputs': missingInputs,
-        'source_refs': sourceRefs,
-        'openness_profile':
-            opennessProfile.map((s) => s.toJson()).toList(growable: false),
-        'peak_openness': peakOpenness,
-      };
+    'medication_event_id': medicationEventId,
+    'window': window.toJson(),
+    'peak_minute': peakMinute,
+    'delayed_arrival_likelihood': delayedArrivalLikelihood.name,
+    'uncertainty_band': uncertaintyBand.name,
+    'assumptions': assumptions,
+    'missing_inputs': missingInputs,
+    'source_refs': sourceRefs,
+    'openness_profile': opennessProfile
+        .map((s) => s.toJson())
+        .toList(growable: false),
+    'peak_openness': peakOpenness,
+  };
 }

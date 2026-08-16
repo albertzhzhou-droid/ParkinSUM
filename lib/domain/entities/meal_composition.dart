@@ -52,24 +52,25 @@ class MealComposition {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'total_calories': totalCalories,
-        'protein_grams': proteinGrams,
-        'fat_grams': fatGrams,
-        'fiber_grams': fiberGrams,
-        'carbohydrate_grams': carbohydrateGrams,
-        'liquid_fraction': liquidFraction,
-        'meal_physical_form': mealPhysicalForm.name,
-        'portion_size_band': portionSizeBand.name,
-        'protein_amount_band': proteinAmountBand.name,
-        'fat_amount_band': fatAmountBand.name,
-        'fiber_amount_band': fiberAmountBand.name,
-        'calorie_band': calorieBand.name,
-        'composition_completeness': compositionCompleteness,
-        'missing_fields': missingFields,
-        'food_components':
-            foodComponents.map((e) => e.toJson()).toList(growable: false),
-      };
+    'id': id,
+    'total_calories': totalCalories,
+    'protein_grams': proteinGrams,
+    'fat_grams': fatGrams,
+    'fiber_grams': fiberGrams,
+    'carbohydrate_grams': carbohydrateGrams,
+    'liquid_fraction': liquidFraction,
+    'meal_physical_form': mealPhysicalForm.name,
+    'portion_size_band': portionSizeBand.name,
+    'protein_amount_band': proteinAmountBand.name,
+    'fat_amount_band': fatAmountBand.name,
+    'fiber_amount_band': fiberAmountBand.name,
+    'calorie_band': calorieBand.name,
+    'composition_completeness': compositionCompleteness,
+    'missing_fields': missingFields,
+    'food_components': foodComponents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+  };
 }
 
 /// A single food contributing to a meal. Nutrient fields are *per serving*
@@ -111,17 +112,17 @@ class FoodComponent {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'physical_form': physicalForm.name,
-        'protein_grams': proteinGrams,
-        'fat_grams': fatGrams,
-        'fiber_grams': fiberGrams,
-        'carbohydrate_grams': carbohydrateGrams,
-        'calories': calories,
-        'portion_grams': portionGrams,
-        'source_doc_id': sourceDocId,
-        'protein_source': proteinSource.name,
-        'amino_acid_profile': aminoAcidProfile?.toJson(),
-      };
+    'id': id,
+    'name': name,
+    'physical_form': physicalForm.name,
+    'protein_grams': proteinGrams,
+    'fat_grams': fatGrams,
+    'fiber_grams': fiberGrams,
+    'carbohydrate_grams': carbohydrateGrams,
+    'calories': calories,
+    'portion_grams': portionGrams,
+    'source_doc_id': sourceDocId,
+    'protein_source': proteinSource.name,
+    'amino_acid_profile': aminoAcidProfile?.toJson(),
+  };
 }

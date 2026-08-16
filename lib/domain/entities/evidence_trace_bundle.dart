@@ -34,13 +34,13 @@ class MechanisticTraceSummary {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity_band': severityBand,
-        'confidence_band': confidenceBand,
-        'ranker_used': rankerUsed,
-        'replay_scenario_id': replayScenarioId,
-        'top_source_authority_score': topSourceAuthorityScore,
-        'medication_metadata_completeness': medicationMetadataCompleteness,
-      };
+    'severity_band': severityBand,
+    'confidence_band': confidenceBand,
+    'ranker_used': rankerUsed,
+    'replay_scenario_id': replayScenarioId,
+    'top_source_authority_score': topSourceAuthorityScore,
+    'medication_metadata_completeness': medicationMetadataCompleteness,
+  };
 }
 
 /// The local evidence-trace bundle. Deterministic JSON; PHI-free; not a FHIR
@@ -86,19 +86,19 @@ class EvidenceTraceBundle {
   });
 
   Map<String, dynamic> toJson() => {
-        'bundle_type': kBundleType,
-        'conformance_status': kConformanceStatus,
-        'phi_policy': kPhiPolicy,
-        'bundle_id': bundleId,
-        'created_at': createdAt,
-        'nutrition_view': nutritionView?.toJson(),
-        'medication_knowledge_view': medicationKnowledgeView?.toJson(),
-        'mechanistic_trace_summary': mechanisticTraceSummary.toJson(),
-        'source_refs': sourceRefs,
-        'provenance_summary': provenanceSummary,
-        'missingness_summary': missingnessSummary,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-      };
+    'bundle_type': kBundleType,
+    'conformance_status': kConformanceStatus,
+    'phi_policy': kPhiPolicy,
+    'bundle_id': bundleId,
+    'created_at': createdAt,
+    'nutrition_view': nutritionView?.toJson(),
+    'medication_knowledge_view': medicationKnowledgeView?.toJson(),
+    'mechanistic_trace_summary': mechanisticTraceSummary.toJson(),
+    'source_refs': sourceRefs,
+    'provenance_summary': provenanceSummary,
+    'missingness_summary': missingnessSummary,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+  };
 }

@@ -45,9 +45,7 @@ class NativeAppDatabase implements AppDatabase {
         await db.execute(
           'CREATE TABLE interaction_rules (id TEXT PRIMARY KEY, drug_id TEXT NOT NULL, rule_type TEXT NOT NULL, target TEXT NOT NULL, severity INTEGER NOT NULL, weight REAL NOT NULL, description TEXT NOT NULL)',
         );
-        await db.execute(
-          'CREATE TABLE active_drugs (id TEXT PRIMARY KEY)',
-        );
+        await db.execute('CREATE TABLE active_drugs (id TEXT PRIMARY KEY)');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -55,61 +53,82 @@ class NativeAppDatabase implements AppDatabase {
           await db.execute('ALTER TABLE meals ADD COLUMN recorded_at INTEGER');
           await db.execute('ALTER TABLE meals ADD COLUMN occurred_at INTEGER');
           await db.execute(
-              'ALTER TABLE meals ADD COLUMN occurred_range_start INTEGER');
+            'ALTER TABLE meals ADD COLUMN occurred_range_start INTEGER',
+          );
           await db.execute(
-              'ALTER TABLE meals ADD COLUMN occurred_range_end INTEGER');
+            'ALTER TABLE meals ADD COLUMN occurred_range_end INTEGER',
+          );
           await db.execute('ALTER TABLE meals ADD COLUMN time_source TEXT');
           await db.execute('ALTER TABLE meals ADD COLUMN time_precision TEXT');
           await db.execute(
-              'ALTER TABLE meals ADD COLUMN next_meal_window_start INTEGER');
+            'ALTER TABLE meals ADD COLUMN next_meal_window_start INTEGER',
+          );
           await db.execute(
-              'ALTER TABLE meals ADD COLUMN next_meal_window_end INTEGER');
+            'ALTER TABLE meals ADD COLUMN next_meal_window_end INTEGER',
+          );
           await db.execute(
             "UPDATE meals SET recorded_at = eaten_at, occurred_at = eaten_at, time_source = 'migration_legacy', time_precision = 'exact' WHERE recorded_at IS NULL",
           );
 
           // foods: 为目录搜索和展示增加来源、别名、描述。
           await db.execute(
-              "ALTER TABLE foods ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]'");
+            "ALTER TABLE foods ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]'",
+          );
           await db.execute(
-              "ALTER TABLE foods ADD COLUMN description TEXT NOT NULL DEFAULT ''");
+            "ALTER TABLE foods ADD COLUMN description TEXT NOT NULL DEFAULT ''",
+          );
           await db.execute(
-              "ALTER TABLE foods ADD COLUMN source_system TEXT NOT NULL DEFAULT 'LOCAL_SEED'");
-          await db
-              .execute('ALTER TABLE foods ADD COLUMN source_food_code TEXT');
+            "ALTER TABLE foods ADD COLUMN source_system TEXT NOT NULL DEFAULT 'LOCAL_SEED'",
+          );
           await db.execute(
-              "ALTER TABLE foods ADD COLUMN jurisdiction TEXT NOT NULL DEFAULT 'GLOBAL'");
+            'ALTER TABLE foods ADD COLUMN source_food_code TEXT',
+          );
+          await db.execute(
+            "ALTER TABLE foods ADD COLUMN jurisdiction TEXT NOT NULL DEFAULT 'GLOBAL'",
+          );
 
           // medications: 增加更丰富的标签摘要与来源信息。
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]'");
+            "ALTER TABLE medications ADD COLUMN aliases TEXT NOT NULL DEFAULT '[]'",
+          );
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN interaction_summary TEXT NOT NULL DEFAULT ''");
+            "ALTER TABLE medications ADD COLUMN interaction_summary TEXT NOT NULL DEFAULT ''",
+          );
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN source_system TEXT NOT NULL DEFAULT 'LOCAL_SEED'");
+            "ALTER TABLE medications ADD COLUMN source_system TEXT NOT NULL DEFAULT 'LOCAL_SEED'",
+          );
           await db.execute(
-              'ALTER TABLE medications ADD COLUMN source_product_code TEXT');
+            'ALTER TABLE medications ADD COLUMN source_product_code TEXT',
+          );
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN jurisdiction TEXT NOT NULL DEFAULT 'GLOBAL'");
+            "ALTER TABLE medications ADD COLUMN jurisdiction TEXT NOT NULL DEFAULT 'GLOBAL'",
+          );
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN route TEXT NOT NULL DEFAULT 'oral'");
+            "ALTER TABLE medications ADD COLUMN route TEXT NOT NULL DEFAULT 'oral'",
+          );
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN dosage_form TEXT NOT NULL DEFAULT 'unspecified'");
+            "ALTER TABLE medications ADD COLUMN dosage_form TEXT NOT NULL DEFAULT 'unspecified'",
+          );
           await db.execute(
-              "ALTER TABLE medications ADD COLUMN release_type TEXT NOT NULL DEFAULT 'unspecified'");
+            "ALTER TABLE medications ADD COLUMN release_type TEXT NOT NULL DEFAULT 'unspecified'",
+          );
         }
         if (oldVersion < 3) {
           // meals: 新增高风险共事件/肠内营养上下文，供数据库驱动冲突引擎直接消费。
           await db.execute('ALTER TABLE meals ADD COLUMN coevent_time INTEGER');
           await db.execute(
-              "ALTER TABLE meals ADD COLUMN coevent_substance_tags TEXT NOT NULL DEFAULT '[]'");
+            "ALTER TABLE meals ADD COLUMN coevent_substance_tags TEXT NOT NULL DEFAULT '[]'",
+          );
           await db.execute('ALTER TABLE meals ADD COLUMN thickener_type TEXT');
-          await db
-              .execute('ALTER TABLE meals ADD COLUMN enteral_feed_mode TEXT');
           await db.execute(
-              'ALTER TABLE meals ADD COLUMN enteral_feed_formula TEXT');
+            'ALTER TABLE meals ADD COLUMN enteral_feed_mode TEXT',
+          );
           await db.execute(
-              'ALTER TABLE meals ADD COLUMN enteral_feed_protein_g_per_day REAL');
+            'ALTER TABLE meals ADD COLUMN enteral_feed_formula TEXT',
+          );
+          await db.execute(
+            'ALTER TABLE meals ADD COLUMN enteral_feed_protein_g_per_day REAL',
+          );
         }
         if (oldVersion < 4) {
           // foods: 新增结构化质地/IDDSI 字段，支撑吞咽上下文下的保守推荐。
@@ -132,69 +151,57 @@ class NativeAppDatabase implements AppDatabase {
 
     final foodBatch = db.batch();
     for (final food in seedFoods) {
-      foodBatch.insert(
-        'foods',
-        {
-          'id': food.id,
-          'name': food.name,
-          'protein': food.proteinG,
-          'carbs': food.carbsG,
-          'fat': food.fatG,
-          'fiber': food.fiberG,
-          'sodium': food.sodiumMg,
-          'category': food.category.name,
-          'aliases': jsonEncode(food.aliases),
-          'description': food.description,
-          'source_system': food.sourceSystem,
-          'source_food_code': food.sourceFoodCode,
-          'jurisdiction': food.jurisdiction,
-          'texture_class': food.textureClass,
-          'iddsi_level': food.iddsiLevel,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      foodBatch.insert('foods', {
+        'id': food.id,
+        'name': food.name,
+        'protein': food.proteinG,
+        'carbs': food.carbsG,
+        'fat': food.fatG,
+        'fiber': food.fiberG,
+        'sodium': food.sodiumMg,
+        'category': food.category.name,
+        'aliases': jsonEncode(food.aliases),
+        'description': food.description,
+        'source_system': food.sourceSystem,
+        'source_food_code': food.sourceFoodCode,
+        'jurisdiction': food.jurisdiction,
+        'texture_class': food.textureClass,
+        'iddsi_level': food.iddsiLevel,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await foodBatch.commit(noResult: true);
 
     final medicationBatch = db.batch();
     for (final medication in seedMedications) {
-      medicationBatch.insert(
-        'medications',
-        {
-          'id': medication.id,
-          'name': medication.displayName,
-          'type': medication.genericName,
-          'notes': medication.notes,
-          'tags': jsonEncode(medication.tags.map((tag) => tag.name).toList()),
-          'aliases': jsonEncode(medication.aliases),
-          'interaction_summary': medication.interactionSummary,
-          'source_system': medication.sourceSystem,
-          'source_product_code': medication.sourceProductCode,
-          'jurisdiction': medication.jurisdiction,
-          'route': medication.route,
-          'dosage_form': medication.dosageForm,
-          'release_type': medication.releaseType,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      medicationBatch.insert('medications', {
+        'id': medication.id,
+        'name': medication.displayName,
+        'type': medication.genericName,
+        'notes': medication.notes,
+        'tags': jsonEncode(medication.tags.map((tag) => tag.name).toList()),
+        'aliases': jsonEncode(medication.aliases),
+        'interaction_summary': medication.interactionSummary,
+        'source_system': medication.sourceSystem,
+        'source_product_code': medication.sourceProductCode,
+        'jurisdiction': medication.jurisdiction,
+        'route': medication.route,
+        'dosage_form': medication.dosageForm,
+        'release_type': medication.releaseType,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await medicationBatch.commit(noResult: true);
 
     final ruleBatch = db.batch();
     for (final rule in seedRules) {
-      ruleBatch.insert(
-        'interaction_rules',
-        {
-          'id': rule.id,
-          'drug_id': rule.drugId,
-          'rule_type': rule.ruleType,
-          'target': rule.target,
-          'severity': rule.severity,
-          'weight': rule.weight,
-          'description': rule.description,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+      ruleBatch.insert('interaction_rules', {
+        'id': rule.id,
+        'drug_id': rule.drugId,
+        'rule_type': rule.ruleType,
+        'target': rule.target,
+        'severity': rule.severity,
+        'weight': rule.weight,
+        'description': rule.description,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
     }
     await ruleBatch.commit(noResult: true);
   }
@@ -202,8 +209,12 @@ class NativeAppDatabase implements AppDatabase {
   @override
   Future<bool> loadOnboarded() async {
     final db = await _open();
-    final rows = await db.query('app_meta',
-        where: 'key = ?', whereArgs: ['onboarded'], limit: 1);
+    final rows = await db.query(
+      'app_meta',
+      where: 'key = ?',
+      whereArgs: ['onboarded'],
+      limit: 1,
+    );
     if (rows.isEmpty) return false;
     return rows.first['value'] == 'true';
   }
@@ -211,11 +222,10 @@ class NativeAppDatabase implements AppDatabase {
   @override
   Future<void> saveOnboarded(bool value) async {
     final db = await _open();
-    await db.insert(
-      'app_meta',
-      {'key': 'onboarded', 'value': value ? 'true' : 'false'},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('app_meta', {
+      'key': 'onboarded',
+      'value': value ? 'true' : 'false',
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
@@ -238,11 +248,10 @@ class NativeAppDatabase implements AppDatabase {
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
     final db = await _open();
-    await db.insert(
-      'app_meta',
-      {'key': 'user_profile', 'value': jsonEncode(profile.toJson())},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('app_meta', {
+      'key': 'user_profile',
+      'value': jsonEncode(profile.toJson()),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
@@ -268,56 +277,70 @@ class NativeAppDatabase implements AppDatabase {
     final mealRows = await db.query('meals', orderBy: 'eaten_at DESC');
     final itemRows = await db.query('meal_items');
 
-    return mealRows.map((row) {
-      final mealId = row['id'] as String;
-      final items = itemRows
-          .where((item) => item['meal_id'] == mealId)
-          .map(_mealItemFromRow)
-          .toList();
-      return Meal(
-        id: mealId,
-        eatenAt: DateTime.fromMillisecondsSinceEpoch(row['eaten_at'] as int),
-        recordedAt: row['recorded_at'] == null
-            ? DateTime.fromMillisecondsSinceEpoch(row['eaten_at'] as int)
-            : DateTime.fromMillisecondsSinceEpoch(row['recorded_at'] as int),
-        occurredAt: row['occurred_at'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(row['occurred_at'] as int),
-        occurredRangeStart: row['occurred_range_start'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                row['occurred_range_start'] as int),
-        occurredRangeEnd: row['occurred_range_end'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                row['occurred_range_end'] as int),
-        timeSource: (row['time_source'] as String?) ?? 'migration_legacy',
-        timePrecision: (row['time_precision'] as String?) ?? 'exact',
-        nextMealWindowStart: row['next_meal_window_start'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                row['next_meal_window_start'] as int),
-        nextMealWindowEnd: row['next_meal_window_end'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                row['next_meal_window_end'] as int),
-        coeventTime: row['coevent_time'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(row['coevent_time'] as int),
-        coeventSubstanceTags:
-            (jsonDecode((row['coevent_substance_tags'] as String?) ?? '[]')
-                    as List<dynamic>)
-                .map((value) => value.toString())
-                .toList(growable: false),
-        thickenerType: row['thickener_type'] as String?,
-        enteralFeedMode: row['enteral_feed_mode'] as String?,
-        enteralFeedFormula: row['enteral_feed_formula'] as String?,
-        enteralFeedProteinGPerDay:
-            (row['enteral_feed_protein_g_per_day'] as num?)?.toDouble(),
-        title: row['title'] as String,
-        items: items,
-      );
-    }).toList(growable: false);
+    return mealRows
+        .map((row) {
+          final mealId = row['id'] as String;
+          final items = itemRows
+              .where((item) => item['meal_id'] == mealId)
+              .map(_mealItemFromRow)
+              .toList();
+          return Meal(
+            id: mealId,
+            eatenAt: DateTime.fromMillisecondsSinceEpoch(
+              row['eaten_at'] as int,
+            ),
+            recordedAt: row['recorded_at'] == null
+                ? DateTime.fromMillisecondsSinceEpoch(row['eaten_at'] as int)
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['recorded_at'] as int,
+                  ),
+            occurredAt: row['occurred_at'] == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['occurred_at'] as int,
+                  ),
+            occurredRangeStart: row['occurred_range_start'] == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['occurred_range_start'] as int,
+                  ),
+            occurredRangeEnd: row['occurred_range_end'] == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['occurred_range_end'] as int,
+                  ),
+            timeSource: (row['time_source'] as String?) ?? 'migration_legacy',
+            timePrecision: (row['time_precision'] as String?) ?? 'exact',
+            nextMealWindowStart: row['next_meal_window_start'] == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['next_meal_window_start'] as int,
+                  ),
+            nextMealWindowEnd: row['next_meal_window_end'] == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['next_meal_window_end'] as int,
+                  ),
+            coeventTime: row['coevent_time'] == null
+                ? null
+                : DateTime.fromMillisecondsSinceEpoch(
+                    row['coevent_time'] as int,
+                  ),
+            coeventSubstanceTags:
+                (jsonDecode((row['coevent_substance_tags'] as String?) ?? '[]')
+                        as List<dynamic>)
+                    .map((value) => value.toString())
+                    .toList(growable: false),
+            thickenerType: row['thickener_type'] as String?,
+            enteralFeedMode: row['enteral_feed_mode'] as String?,
+            enteralFeedFormula: row['enteral_feed_formula'] as String?,
+            enteralFeedProteinGPerDay:
+                (row['enteral_feed_protein_g_per_day'] as num?)?.toDouble(),
+            title: row['title'] as String,
+            items: items,
+          );
+        })
+        .toList(growable: false);
   }
 
   @override
@@ -379,8 +402,9 @@ class NativeAppDatabase implements AppDatabase {
           (row) => Intake(
             id: row['id'] as String,
             drugId: row['drug_id'] as String,
-            takenAt:
-                DateTime.fromMillisecondsSinceEpoch(row['taken_at'] as int),
+            takenAt: DateTime.fromMillisecondsSinceEpoch(
+              row['taken_at'] as int,
+            ),
             dosageNote: row['dosage_note'] as String,
           ),
         )
@@ -421,15 +445,17 @@ class NativeAppDatabase implements AppDatabase {
     final db = await _open();
     final rows = await db.query('interaction_rules');
     return rows
-        .map((row) => InteractionRuleRecord(
-              id: row['id'] as String,
-              drugId: row['drug_id'] as String,
-              ruleType: row['rule_type'] as String,
-              target: row['target'] as String,
-              severity: row['severity'] as int,
-              weight: (row['weight'] as num).toDouble(),
-              description: row['description'] as String,
-            ))
+        .map(
+          (row) => InteractionRuleRecord(
+            id: row['id'] as String,
+            drugId: row['drug_id'] as String,
+            ruleType: row['rule_type'] as String,
+            target: row['target'] as String,
+            severity: row['severity'] as int,
+            weight: (row['weight'] as num).toDouble(),
+            description: row['description'] as String,
+          ),
+        )
         .toList(growable: false);
   }
 

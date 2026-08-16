@@ -27,15 +27,15 @@ class InteractionEvidence {
   });
 
   Map<String, dynamic> toJson() => {
-        'sourceRef': sourceRef,
-        'title': title,
-        'pmid': pmid,
-        'doi': doi,
-        'sourceUrl': sourceUrl,
-        'publication': publication,
-        'evidenceKind': evidenceKind,
-        'sourceFamily': sourceFamily,
-      };
+    'sourceRef': sourceRef,
+    'title': title,
+    'pmid': pmid,
+    'doi': doi,
+    'sourceUrl': sourceUrl,
+    'publication': publication,
+    'evidenceKind': evidenceKind,
+    'sourceFamily': sourceFamily,
+  };
 
   static InteractionEvidence fromJson(Map<String, dynamic> json) {
     return InteractionEvidence(
@@ -84,12 +84,12 @@ class InteractionIssue {
   }
 
   Map<String, dynamic> toJson() => {
-        'severity': severity.name,
-        'title': title,
-        'detail': detail,
-        'relatedDrugId': relatedDrugId,
-        'evidence': evidence.map((item) => item.toJson()).toList(),
-      };
+    'severity': severity.name,
+    'title': title,
+    'detail': detail,
+    'relatedDrugId': relatedDrugId,
+    'evidence': evidence.map((item) => item.toJson()).toList(),
+  };
 
   static InteractionIssue fromJson(Map<String, dynamic> json) {
     final sevName =
@@ -127,10 +127,10 @@ class InteractionScoreFactor {
   });
 
   Map<String, dynamic> toJson() => {
-        'code': code,
-        'label': label,
-        'points': points,
-      };
+    'code': code,
+    'label': label,
+    'points': points,
+  };
 
   static InteractionScoreFactor fromJson(Map<String, dynamic> json) {
     return InteractionScoreFactor(
@@ -211,8 +211,10 @@ class InteractionResult {
     );
   }
 
-  factory InteractionResult.ok(
-      {required String mealId, required String message}) {
+  factory InteractionResult.ok({
+    required String mealId,
+    required String message,
+  }) {
     return InteractionResult(
       mealId: mealId,
       status: InteractionStatus.ok,
@@ -235,20 +237,19 @@ class InteractionResult {
   }
 
   Map<String, dynamic> toJson() => {
-        'mealId': mealId,
-        'status': status.name,
-        'summary': summary,
-        'analysisText': analysisText,
-        'keyFindings': keyFindings,
-        'nextActions': nextActions,
-        'dataNotes': dataNotes,
-        'issues': issues.map((e) => e.toJson()).toList(),
-        'generatedAt': generatedAt.toIso8601String(),
-        'score': score,
-        'scoreFactors': scoreFactors.map((item) => item.toJson()).toList(),
-        if (mechanisticTraceJson != null)
-          'mechanisticTrace': mechanisticTraceJson,
-      };
+    'mealId': mealId,
+    'status': status.name,
+    'summary': summary,
+    'analysisText': analysisText,
+    'keyFindings': keyFindings,
+    'nextActions': nextActions,
+    'dataNotes': dataNotes,
+    'issues': issues.map((e) => e.toJson()).toList(),
+    'generatedAt': generatedAt.toIso8601String(),
+    'score': score,
+    'scoreFactors': scoreFactors.map((item) => item.toJson()).toList(),
+    if (mechanisticTraceJson != null) 'mechanisticTrace': mechanisticTraceJson,
+  };
 
   static InteractionResult fromJson(Map<String, dynamic> json) {
     final statusName = (json['status'] as String?) ?? InteractionStatus.ok.name;

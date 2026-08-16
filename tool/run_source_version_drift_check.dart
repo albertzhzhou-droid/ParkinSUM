@@ -40,8 +40,9 @@ const List<String> _artifactPaths = [
 ];
 
 final RegExp _srcId = RegExp(r'src\.[a-zA-Z0-9_.]+');
-final RegExp _assumptionSourceId =
-    RegExp(r"sourceId:\s*'(src\.[a-zA-Z0-9_.]+)'");
+final RegExp _assumptionSourceId = RegExp(
+  r"sourceId:\s*'(src\.[a-zA-Z0-9_.]+)'",
+);
 final RegExp _adapterSourceRefs = RegExp(r"sourceRefs:\s*\[([^\]]*)\]");
 
 void main(List<String> args) {
@@ -60,12 +61,14 @@ void main(List<String> args) {
     }
   }
   for (final id in bibliographyIds.toList()..sort()) {
-    records.add(SourceVersionRecord(
-      recordId: 'bib:$id',
-      sourceId: id,
-      recordType: SourceVersionRecordType.bibliographyEntry,
-      file: _bibliographyPath,
-    ));
+    records.add(
+      SourceVersionRecord(
+        recordId: 'bib:$id',
+        sourceId: id,
+        recordType: SourceVersionRecordType.bibliographyEntry,
+        file: _bibliographyPath,
+      ),
+    );
   }
 
   // 2) Source-access registry.
@@ -75,18 +78,20 @@ void main(List<String> args) {
     final sources = (doc['sources'] as List?) ?? const [];
     for (final s in sources) {
       final m = s as Map<String, dynamic>;
-      records.add(SourceVersionRecord(
-        recordId: 'reg:${m['source_id']}',
-        sourceId: (m['source_id'] ?? '').toString(),
-        sourceFamily: (m['source_family'] ?? '').toString(),
-        recordType: SourceVersionRecordType.sourceAccessRegistry,
-        file: _registryPath,
-        lastPolicyReviewed: (m['last_policy_reviewed'] ?? '').toString(),
-        implementationStatus: (m['implementation_status'] ?? '').toString(),
-        bibliographyRefs: _strList(m['bibliography_refs']),
-        documentationRefs: _strList(m['documentation_refs']),
-        limitations: _strList(m['known_limitations']),
-      ));
+      records.add(
+        SourceVersionRecord(
+          recordId: 'reg:${m['source_id']}',
+          sourceId: (m['source_id'] ?? '').toString(),
+          sourceFamily: (m['source_family'] ?? '').toString(),
+          recordType: SourceVersionRecordType.sourceAccessRegistry,
+          file: _registryPath,
+          lastPolicyReviewed: (m['last_policy_reviewed'] ?? '').toString(),
+          implementationStatus: (m['implementation_status'] ?? '').toString(),
+          bibliographyRefs: _strList(m['bibliography_refs']),
+          documentationRefs: _strList(m['documentation_refs']),
+          limitations: _strList(m['known_limitations']),
+        ),
+      );
     }
   }
 
@@ -97,14 +102,16 @@ void main(List<String> args) {
     var i = 0;
     for (final m in _assumptionSourceId.allMatches(content)) {
       final id = m.group(1)!;
-      records.add(SourceVersionRecord(
-        recordId: 'assumption:${i++}:$id',
-        sourceId: id,
-        recordType: SourceVersionRecordType.modelAssumption,
-        file: _modelAssumptionsPath,
-        sourceRefs: [id],
-        metadata: const {'mechanism_role': 'true'},
-      ));
+      records.add(
+        SourceVersionRecord(
+          recordId: 'assumption:${i++}:$id',
+          sourceId: id,
+          recordType: SourceVersionRecordType.modelAssumption,
+          file: _modelAssumptionsPath,
+          sourceRefs: [id],
+          metadata: const {'mechanism_role': 'true'},
+        ),
+      );
     }
   }
 
@@ -116,13 +123,15 @@ void main(List<String> args) {
     for (final m in _adapterSourceRefs.allMatches(content)) {
       for (final idMatch in _srcId.allMatches(m.group(1) ?? '')) {
         final id = idMatch.group(0)!;
-        records.add(SourceVersionRecord(
-          recordId: 'adapter:${i++}:$id',
-          sourceId: id,
-          recordType: SourceVersionRecordType.sourceAdapter,
-          file: _sourceAdapterPath,
-          sourceRefs: [id],
-        ));
+        records.add(
+          SourceVersionRecord(
+            recordId: 'adapter:${i++}:$id',
+            sourceId: id,
+            recordType: SourceVersionRecordType.sourceAdapter,
+            file: _sourceAdapterPath,
+            sourceRefs: [id],
+          ),
+        );
       }
     }
   }
@@ -136,30 +145,33 @@ void main(List<String> args) {
       try {
         final doc = jsonDecode(file.readAsStringSync());
         if (doc is Map<String, dynamic>) {
-          generatedAt =
-              (doc['generated_at'] ?? doc['generatedAt'] ?? '').toString();
+          generatedAt = (doc['generated_at'] ?? doc['generatedAt'] ?? '')
+              .toString();
         }
       } catch (_) {
         // leave generatedAt empty; checker flags it.
       }
     }
-    records.add(SourceVersionRecord(
-      recordId: 'artifact:$path',
-      recordType: SourceVersionRecordType.generatedArtifact,
-      file: path,
-      generatedAt: generatedAt,
-      metadata: {
-        'exists': exists ? 'true' : 'false',
-        'expected': 'true',
-        'optional': 'true',
-      },
-    ));
+    records.add(
+      SourceVersionRecord(
+        recordId: 'artifact:$path',
+        recordType: SourceVersionRecordType.generatedArtifact,
+        file: path,
+        generatedAt: generatedAt,
+        metadata: {
+          'exists': exists ? 'true' : 'false',
+          'expected': 'true',
+          'optional': 'true',
+        },
+      ),
+    );
   }
 
   final config = SourceVersionDriftConfig(
     referenceTimestamp: nowArg ?? '',
-    stalenessThresholdDays:
-        staleArg == null ? 180 : int.tryParse(staleArg) ?? 180,
+    stalenessThresholdDays: staleArg == null
+        ? 180
+        : int.tryParse(staleArg) ?? 180,
     strictMode: strict,
   );
 
@@ -167,22 +179,27 @@ void main(List<String> args) {
 
   final outDir = Directory('build/source_version_drift');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeSourceVersionDrift(report));
-  File('${outDir.path}/latest.md')
-      .writeAsStringSync(renderSourceVersionDriftMarkdown(report));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeSourceVersionDrift(report));
+  File(
+    '${outDir.path}/latest.md',
+  ).writeAsStringSync(renderSourceVersionDriftMarkdown(report));
 
   stdout
-    ..writeln('Source version drift: ${report.recordCount} records — '
-        'info=${report.findingCounts['info'] ?? 0} '
-        'warn=${report.findingCounts['warn'] ?? 0} '
-        'blocker=${report.blockerCount} (pass=${report.pass}).')
+    ..writeln(
+      'Source version drift: ${report.recordCount} records — '
+      'info=${report.findingCounts['info'] ?? 0} '
+      'warn=${report.findingCounts['warn'] ?? 0} '
+      'blocker=${report.blockerCount} (pass=${report.pass}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   if (!report.pass) {
     stderr.writeln('BLOCKER findings:');
-    for (final fnd in report.findings
-        .where((x) => x.severity == SourceVersionDriftSeverity.blocker)) {
+    for (final fnd in report.findings.where(
+      (x) => x.severity == SourceVersionDriftSeverity.blocker,
+    )) {
       stderr.writeln('  - ${fnd.findingType} @ ${fnd.file} (${fnd.sourceId})');
     }
   }

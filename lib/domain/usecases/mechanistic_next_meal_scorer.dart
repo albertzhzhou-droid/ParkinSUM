@@ -78,12 +78,13 @@ class MechanisticNextMealScorer {
     MealCompositionNormalizer? normalizer,
     ProteinDistributionModel? proteinDistributionModel,
     NextMealScoringParameterSet? scoringParameters,
-  })  : engine = engine ?? MechanisticConflictEngine(),
-        normalizer = normalizer ?? MealCompositionNormalizer(),
-        proteinDistributionModel =
-            proteinDistributionModel ?? ProteinDistributionModel(),
-        scoringParameters = scoringParameters ??
-            NextMealScoringParameterSet.literatureInformedDefault() {
+  }) : engine = engine ?? MechanisticConflictEngine(),
+       normalizer = normalizer ?? MealCompositionNormalizer(),
+       proteinDistributionModel =
+           proteinDistributionModel ?? ProteinDistributionModel(),
+       scoringParameters =
+           scoringParameters ??
+           NextMealScoringParameterSet.literatureInformedDefault() {
     // Enforce the safety invariant: modeled conflict overlap must remain the
     // dominant scoring term so provenance/metadata can never overpower a high
     // modeled conflict overlap. A non-dominant weight set is rejected outright
@@ -110,34 +111,40 @@ class MechanisticNextMealScorer {
     final window = userDefinedWindow ?? baseContext.userDefinedWindow;
     if (window == null) {
       return candidates
-          .map((c) => _insufficient(
-                c,
-                window: _placeholderWindow(),
-                reason: 'user_defined_window_missing',
-              ))
+          .map(
+            (c) => _insufficient(
+              c,
+              window: _placeholderWindow(),
+              reason: 'user_defined_window_missing',
+            ),
+          )
           .toList(growable: false);
     }
     if (baseContext.medicationEvents.isEmpty) {
       return candidates
-          .map((c) => _insufficient(
-                c,
-                window: window,
-                reason: 'medication_context_invalid',
-              ))
+          .map(
+            (c) => _insufficient(
+              c,
+              window: window,
+              reason: 'medication_context_invalid',
+            ),
+          )
           .toList(growable: false);
     }
 
     final sampleOffsets = _sampleOffsets(window);
     final scores = <MechanisticCandidateScore>[];
     for (final candidate in candidates) {
-      scores.add(_scoreOne(
-        candidate: candidate,
-        baseContext: baseContext,
-        baseMealCompositionsById: baseMealCompositionsById,
-        userDefinedWindow: window,
-        sampleOffsets: sampleOffsets,
-        candidateMetadata: candidateMetadata,
-      ));
+      scores.add(
+        _scoreOne(
+          candidate: candidate,
+          baseContext: baseContext,
+          baseMealCompositionsById: baseMealCompositionsById,
+          userDefinedWindow: window,
+          sampleOffsets: sampleOffsets,
+          candidateMetadata: candidateMetadata,
+        ),
+      );
     }
 
     // Rank by composite finalCandidateScore DESC (higher = better educational
@@ -147,8 +154,9 @@ class MechanisticNextMealScorer {
     scores.sort((a, b) {
       final byFinal = b.finalCandidateScore.compareTo(a.finalCandidateScore);
       if (byFinal != 0) return byFinal;
-      final byCompleteness =
-          b.nutritionDataCompleteness.compareTo(a.nutritionDataCompleteness);
+      final byCompleteness = b.nutritionDataCompleteness.compareTo(
+        a.nutritionDataCompleteness,
+      );
       if (byCompleteness != 0) return byCompleteness;
       return a.candidateFoodId.compareTo(b.candidateFoodId);
     });
@@ -161,13 +169,17 @@ class MechanisticNextMealScorer {
       return [window.window.startMinute];
     }
     var count = math.max(
-        minSampleCount, (durationMinutes / sampleStrideMinutes).ceil());
+      minSampleCount,
+      (durationMinutes / sampleStrideMinutes).ceil(),
+    );
     count = math.min(count, maxSampleCount);
     if (count < 2) return [window.window.startMinute];
     final step = durationMinutes / (count - 1);
     return List<int>.generate(
-        count, (i) => window.window.startMinute + (i * step).round(),
-        growable: false);
+      count,
+      (i) => window.window.startMinute + (i * step).round(),
+      growable: false,
+    );
   }
 
   MechanisticCandidateScore _scoreOne({
@@ -207,11 +219,13 @@ class MechanisticNextMealScorer {
         preferredMealId: candidateMealId,
       );
       perSampleResults.add(result);
-      samples.add(MechanisticCandidateSampleSummary(
-        offsetMinutes: offset - userDefinedWindow.window.startMinute,
-        conflictOverlap: result.interactionScore,
-        confidenceBand: result.confidenceBand.name,
-      ));
+      samples.add(
+        MechanisticCandidateSampleSummary(
+          offsetMinutes: offset - userDefinedWindow.window.startMinute,
+          conflictOverlap: result.interactionScore,
+          confidenceBand: result.confidenceBand.name,
+        ),
+      );
     }
 
     // Conservative selection: pick the WORST-overlap sample as the ranking
@@ -235,7 +249,8 @@ class MechanisticNextMealScorer {
 
     final overlap = worst.interactionScore;
     final bestOverlap = best.interactionScore;
-    final avgOverlap = perSampleResults
+    final avgOverlap =
+        perSampleResults
             .map((r) => r.interactionScore)
             .fold<double>(0, (a, b) => a + b) /
         perSampleResults.length;
@@ -246,12 +261,15 @@ class MechanisticNextMealScorer {
       ConfidenceBand.low => 0.25,
       ConfidenceBand.insufficient => 0.5,
     };
-    final compatibility =
-        (1.0 - overlap - 0.2 * uncertaintyPenalty).clamp(0.0, 1.0);
+    final compatibility = (1.0 - overlap - 0.2 * uncertaintyPenalty).clamp(
+      0.0,
+      1.0,
+    );
 
     // Protein-redistribution objective (NOT global protein minimization).
-    final localHourHint =
-        minuteToDateTime(userDefinedWindow.midpointMinute).toUtc().hour;
+    final localHourHint = minuteToDateTime(
+      userDefinedWindow.midpointMinute,
+    ).toUtc().hour;
     final proteinScore = proteinDistributionModel.evaluate(
       ProteinDistributionContext(
         modeledOverlap: overlap,
@@ -275,15 +293,17 @@ class MechanisticNextMealScorer {
     // `NextMealScoringParameterSet.conflictRemainsDominant`); redistribution,
     // adequacy, and provenance refine. Deterministic.
     final w = scoringParameters;
-    final finalScore = (w.conflictOverlap.value * (1.0 - overlap) +
-            w.proteinRedistribution.value * proteinScore.redistributionScore +
-            w.nutritionAdequacy.value * proteinScore.adequacy.contribution +
-            w.metadataCompleteness.value * metadataCompleteness +
-            w.sourceAuthority.value * sourceAuthority +
-            w.jurisdictionMatch.value * jurisdictionMatch +
-            w.provenanceQuality.value * provenanceQuality -
-            w.uncertaintyPenalty.value * uncertaintyPenalty)
-        .clamp(0.0, 1.0);
+    final finalScore =
+        (w.conflictOverlap.value * (1.0 - overlap) +
+                w.proteinRedistribution.value *
+                    proteinScore.redistributionScore +
+                w.nutritionAdequacy.value * proteinScore.adequacy.contribution +
+                w.metadataCompleteness.value * metadataCompleteness +
+                w.sourceAuthority.value * sourceAuthority +
+                w.jurisdictionMatch.value * jurisdictionMatch +
+                w.provenanceQuality.value * provenanceQuality -
+                w.uncertaintyPenalty.value * uncertaintyPenalty)
+            .clamp(0.0, 1.0);
 
     final explanation = <String>[
       'Within the time window you provided, this candidate has a worst-case '
@@ -375,9 +395,9 @@ class MechanisticNextMealScorer {
   }
 
   UserDefinedMealWindow _placeholderWindow() => const UserDefinedMealWindow(
-        window: TimelineWindow(startMinute: 0, endMinute: 0),
-        source: 'placeholder_no_user_window',
-      );
+    window: TimelineWindow(startMinute: 0, endMinute: 0),
+    source: 'placeholder_no_user_window',
+  );
 
   TimeAxisConflictContext _hypotheticalContext({
     required TimeAxisConflictContext baseContext,

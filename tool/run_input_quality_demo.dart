@@ -27,18 +27,17 @@ RawMedicationEntry _validMed({
   String? releaseType = 'immediate',
   num? strength = 100,
   String? unit = 'mg',
-}) =>
-    RawMedicationEntry(
-      activeIngredient: 'levodopa',
-      drugProductVariant: 'levodopa-carbidopa 100/25 tablet',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: releaseType,
-      strength: strength,
-      unit: unit,
-      jurisdiction: 'US',
-      sourceDocId: 'src.dailymed.sinemet.label',
-    );
+}) => RawMedicationEntry(
+  activeIngredient: 'levodopa',
+  drugProductVariant: 'levodopa-carbidopa 100/25 tablet',
+  form: 'tablet',
+  route: 'oral',
+  releaseType: releaseType,
+  strength: strength,
+  unit: unit,
+  jurisdiction: 'US',
+  sourceDocId: 'src.dailymed.sinemet.label',
+);
 
 FoodComponent _comp({double? protein = 8, double? portion = 150}) =>
     FoodComponent(
@@ -60,22 +59,21 @@ MealComposition _meal(List<FoodComponent> comps) =>
 FoodVariantMetadata _foodMeta({
   String? tier = 'analytical',
   String sourceSystem = 'USDA_FDC',
-}) =>
-    FoodVariantMetadata(
-      foodVariantId: 'fv1',
-      sourceSystem: sourceSystem,
-      jurisdiction: 'US',
-      language: 'en',
-      foodName: 'demo oats',
-      basisType: 'per_100g',
-      servingUnit: 'g',
-      preparationState: 'cooked',
-      aminoAcidFieldsPresent: true,
-      extractionConfidence: 0.9,
-      sourceRefs: const ['src.usda.fdc.foundation_docs'],
-      limitationText: 'synthetic demo',
-      nutrientConfidenceTier: tier,
-    );
+}) => FoodVariantMetadata(
+  foodVariantId: 'fv1',
+  sourceSystem: sourceSystem,
+  jurisdiction: 'US',
+  language: 'en',
+  foodName: 'demo oats',
+  basisType: 'per_100g',
+  servingUnit: 'g',
+  preparationState: 'cooked',
+  aminoAcidFieldsPresent: true,
+  extractionConfidence: 0.9,
+  sourceRefs: const ['src.usda.fdc.foundation_docs'],
+  limitationText: 'synthetic demo',
+  nutrientConfidenceTier: tier,
+);
 
 const _window = UserDefinedMealWindow(
   window: TimelineWindow(startMinute: 0, endMinute: 30),
@@ -157,15 +155,18 @@ void main() {
 
   final outDir = Directory('build/input_quality');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(const JsonEncoder.withIndent('  ').convert(jsonDoc));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(jsonDoc));
   File('${outDir.path}/latest.md').writeAsStringSync(_markdown(results));
 
   stdout.writeln('Input quality demo: ${results.length} synthetic cases.');
   for (final r in results) {
-    stdout.writeln('  - ${r.key}: ${r.value.overallStatus} '
-        '(eligible=${r.value.mechanisticPrimaryEligible}, '
-        'blockers=${r.value.blockerCount})');
+    stdout.writeln(
+      '  - ${r.key}: ${r.value.overallStatus} '
+      '(eligible=${r.value.mechanisticPrimaryEligible}, '
+      'blockers=${r.value.blockerCount})',
+    );
   }
   stdout
     ..writeln('Report: ${outDir.path}/latest.json')
@@ -176,19 +177,25 @@ String _markdown(List<MapEntry<String, MealMedicationInputQualityResult>> rs) {
   final b = StringBuffer()
     ..writeln('# ParkinSUM Input Quality Gate — synthetic demo')
     ..writeln()
-    ..writeln('Educational/research prototype. **Input/context-completeness '
-        'assessment only — not medical advice, not a recommendation engine, '
-        'and not clinically calibrated.** It never recommends dose, timing, or '
-        'meal choices and never fabricates missing values. Synthetic data only.')
+    ..writeln(
+      'Educational/research prototype. **Input/context-completeness '
+      'assessment only — not medical advice, not a recommendation engine, '
+      'and not clinically calibrated.** It never recommends dose, timing, or '
+      'meal choices and never fabricates missing values. Synthetic data only.',
+    )
     ..writeln()
-    ..writeln('| case | overall | score | mechanistic-primary eligible | '
-        'blockers |')
+    ..writeln(
+      '| case | overall | score | mechanistic-primary eligible | '
+      'blockers |',
+    )
     ..writeln('| --- | --- | --- | --- | --- |');
   for (final r in rs) {
     final v = r.value;
-    b.writeln('| ${r.key} | ${v.overallStatus} | '
-        '${v.overallScore.toStringAsFixed(2)} | '
-        '${v.mechanisticPrimaryEligible} | ${v.blockerCount} |');
+    b.writeln(
+      '| ${r.key} | ${v.overallStatus} | '
+      '${v.overallScore.toStringAsFixed(2)} | '
+      '${v.mechanisticPrimaryEligible} | ${v.blockerCount} |',
+    );
   }
   b
     ..writeln()
@@ -202,7 +209,8 @@ String _markdown(List<MapEntry<String, MealMedicationInputQualityResult>> rs) {
       ..writeln('| --- | --- | --- |');
     for (final d in r.value.dimensionScores) {
       b.writeln(
-          '| ${d.dimension} | ${d.status} | ${d.score.toStringAsFixed(2)} |');
+        '| ${d.dimension} | ${d.status} | ${d.score.toStringAsFixed(2)} |',
+      );
     }
     if (r.value.fallbackReasons.isNotEmpty) {
       b

@@ -9,8 +9,11 @@ void main() {
   test('default parameter set loads with sourceRefs for every parameter', () {
     final ps = GastricEmptyingParameterSet.literatureInformedDefault();
     for (final p in ps.all) {
-      expect(p.sourceRefs, isNotEmpty,
-          reason: 'parameter ${p.id} missing sourceRefs');
+      expect(
+        p.sourceRefs,
+        isNotEmpty,
+        reason: 'parameter ${p.id} missing sourceRefs',
+      );
     }
     expect(ps.unionSourceRefs, isNotEmpty);
   });
@@ -24,8 +27,7 @@ void main() {
     expect(solidHalf['confidence'], 'mechanism');
   });
 
-  test(
-      'swapping in a parameter set with double the half-time extends the '
+  test('swapping in a parameter set with double the half-time extends the '
       'mostly-emptied window', () {
     final defaultPs = GastricEmptyingParameterSet.literatureInformedDefault();
     final doubledPs = GastricEmptyingParameterSet(
@@ -74,14 +76,22 @@ void main() {
     final defaultModel = GastricEmptyingModel(parameters: defaultPs);
     final doubledModel = GastricEmptyingModel(parameters: doubledPs);
     final defaultProfile = defaultModel.build(
-        mealId: 'm', mealStartMinute: 0, composition: composition);
+      mealId: 'm',
+      mealStartMinute: 0,
+      composition: composition,
+    );
     final doubledProfile = doubledModel.build(
-        mealId: 'm', mealStartMinute: 0, composition: composition);
+      mealId: 'm',
+      mealStartMinute: 0,
+      composition: composition,
+    );
     expect(
       doubledProfile.mostlyEmptiedWindow.endMinute -
           doubledProfile.mostlyEmptiedWindow.startMinute,
-      greaterThan(defaultProfile.mostlyEmptiedWindow.endMinute -
-          defaultProfile.mostlyEmptiedWindow.startMinute),
+      greaterThan(
+        defaultProfile.mostlyEmptiedWindow.endMinute -
+            defaultProfile.mostlyEmptiedWindow.startMinute,
+      ),
     );
   });
 }

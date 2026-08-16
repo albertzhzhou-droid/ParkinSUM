@@ -47,82 +47,89 @@ class CdssCatalogProjectionService {
       final valueNum = row['value_num'];
       if (attributeCode.isEmpty || valueNum is! num) continue;
       nutrientByVariant.putIfAbsent(
-              entityKey, () => <String, double>{})[attributeCode] =
-          valueNum.toDouble();
+        entityKey,
+        () => <String, double>{},
+      )[attributeCode] = valueNum
+          .toDouble();
     }
 
-    return variants.map((row) {
-      final variantId = '${row['food_variant_id']}';
-      final hasCrosswalk = appIdByVariant.containsKey(variantId);
-      final projectedId = appIdByVariant[variantId] ??
-          'food_projected_${variantId.toLowerCase()}';
-      final concept = conceptById['${row['food_concept_id']}'];
-      final nutrients =
-          nutrientByVariant[variantId] ?? const <String, double>{};
-      final description = _buildFoodProjectionDescription(
-        sourceFamily: '${row['source_family'] ?? 'CDSS'}',
-        jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
-        nutrients: nutrients,
-        fallbackWarning: hasCrosswalk
-            ? null
-            : 'missing_concept_variant_crosswalk; legacy_variant_id_projection',
-      );
-      return FoodItem(
-        id: projectedId,
-        name:
-            '${row['display_name_local'] ?? concept?['canonical_name_en'] ?? variantId}',
-        category: _inferFoodCategory('${concept?['food_group'] ?? 'other'}'),
-        aliases: [
-          if (concept?['canonical_name_en'] != null)
-            '${concept!['canonical_name_en']}',
-          if (concept?['canonical_name_zh'] != null)
-            '${concept!['canonical_name_zh']}',
-        ],
-        description: description,
-        sourceSystem: '${row['source_family'] ?? 'CDSS'}',
-        sourceFoodCode: row['source_food_code']?.toString(),
-        jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
-        textureClass: inferTextureClassFromText(
-          name:
-              '${row['display_name_local'] ?? concept?['canonical_name_en'] ?? variantId}',
-          description: description,
-          categoryName: '${concept?['food_group'] ?? 'other'}',
-        ),
-        iddsiLevel: inferIddsiLevelFromTextureClass(
-          inferTextureClassFromText(
+    return variants
+        .map((row) {
+          final variantId = '${row['food_variant_id']}';
+          final hasCrosswalk = appIdByVariant.containsKey(variantId);
+          final projectedId =
+              appIdByVariant[variantId] ??
+              'food_projected_${variantId.toLowerCase()}';
+          final concept = conceptById['${row['food_concept_id']}'];
+          final nutrients =
+              nutrientByVariant[variantId] ?? const <String, double>{};
+          final description = _buildFoodProjectionDescription(
+            sourceFamily: '${row['source_family'] ?? 'CDSS'}',
+            jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
+            nutrients: nutrients,
+            fallbackWarning: hasCrosswalk
+                ? null
+                : 'missing_concept_variant_crosswalk; legacy_variant_id_projection',
+          );
+          return FoodItem(
+            id: projectedId,
             name:
                 '${row['display_name_local'] ?? concept?['canonical_name_en'] ?? variantId}',
+            category: _inferFoodCategory(
+              '${concept?['food_group'] ?? 'other'}',
+            ),
+            aliases: [
+              if (concept?['canonical_name_en'] != null)
+                '${concept!['canonical_name_en']}',
+              if (concept?['canonical_name_zh'] != null)
+                '${concept!['canonical_name_zh']}',
+            ],
             description: description,
-            categoryName: '${concept?['food_group'] ?? 'other'}',
-          ),
-        ),
-        // Missing ≠ zero: record which nutrient attributes were actually
-        // present in the projected observations. Absent attributes are carried
-        // in `missingNutrientFields` so downstream passes null (unknown) rather
-        // than a fabricated true 0 g. The non-nullable getters keep the legacy
-        // 0 only for UI display; the missing-set is the source of truth for the
-        // model layer.
-        proteinG: nutrients['protein_g'] ?? 0,
-        carbsG: nutrients['carbohydrate_g'] ?? 0,
-        fatG: nutrients['fat_g'] ?? 0,
-        fiberG: nutrients['fiber_g'] ?? 0,
-        sodiumMg: nutrients['sodium_mg'] ?? 0,
-        missingNutrientFields: <String>{
-          if (!nutrients.containsKey('protein_g')) 'proteinG',
-          if (!nutrients.containsKey('carbohydrate_g')) 'carbsG',
-          if (!nutrients.containsKey('fat_g')) 'fatG',
-          if (!nutrients.containsKey('fiber_g')) 'fiberG',
-          if (!nutrients.containsKey('sodium_mg')) 'sodiumMg',
-          if (!nutrients.containsKey('energy_kcal')) 'energyKcal',
-          if (!nutrients.containsKey('water_g')) 'waterG',
-        },
-        // Carry energy/water only when actually projected (never fabricated).
-        energyKcal: nutrients['energy_kcal'],
-        waterG: nutrients['water_g'],
-        basisType: row['basis_type']?.toString(),
-        qualifierKind: QualifierKind.exact.wireValue,
-      );
-    }).toList(growable: false);
+            sourceSystem: '${row['source_family'] ?? 'CDSS'}',
+            sourceFoodCode: row['source_food_code']?.toString(),
+            jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
+            textureClass: inferTextureClassFromText(
+              name:
+                  '${row['display_name_local'] ?? concept?['canonical_name_en'] ?? variantId}',
+              description: description,
+              categoryName: '${concept?['food_group'] ?? 'other'}',
+            ),
+            iddsiLevel: inferIddsiLevelFromTextureClass(
+              inferTextureClassFromText(
+                name:
+                    '${row['display_name_local'] ?? concept?['canonical_name_en'] ?? variantId}',
+                description: description,
+                categoryName: '${concept?['food_group'] ?? 'other'}',
+              ),
+            ),
+            // Missing ≠ zero: record which nutrient attributes were actually
+            // present in the projected observations. Absent attributes are carried
+            // in `missingNutrientFields` so downstream passes null (unknown) rather
+            // than a fabricated true 0 g. The non-nullable getters keep the legacy
+            // 0 only for UI display; the missing-set is the source of truth for the
+            // model layer.
+            proteinG: nutrients['protein_g'] ?? 0,
+            carbsG: nutrients['carbohydrate_g'] ?? 0,
+            fatG: nutrients['fat_g'] ?? 0,
+            fiberG: nutrients['fiber_g'] ?? 0,
+            sodiumMg: nutrients['sodium_mg'] ?? 0,
+            missingNutrientFields: <String>{
+              if (!nutrients.containsKey('protein_g')) 'proteinG',
+              if (!nutrients.containsKey('carbohydrate_g')) 'carbsG',
+              if (!nutrients.containsKey('fat_g')) 'fatG',
+              if (!nutrients.containsKey('fiber_g')) 'fiberG',
+              if (!nutrients.containsKey('sodium_mg')) 'sodiumMg',
+              if (!nutrients.containsKey('energy_kcal')) 'energyKcal',
+              if (!nutrients.containsKey('water_g')) 'waterG',
+            },
+            // Carry energy/water only when actually projected (never fabricated).
+            energyKcal: nutrients['energy_kcal'],
+            waterG: nutrients['water_g'],
+            basisType: row['basis_type']?.toString(),
+            qualifierKind: QualifierKind.exact.wireValue,
+          );
+        })
+        .toList(growable: false);
   }
 
   Future<List<DrugDefinition>> projectDrugs() async {
@@ -154,45 +161,51 @@ class CdssCatalogProjectionService {
     for (final row in media) {
       final variantId = '${row['drug_product_variant_id'] ?? ''}';
       if (variantId.isEmpty) continue;
-      mediaCountByVariant.update(variantId, (value) => value + 1,
-          ifAbsent: () => 1);
+      mediaCountByVariant.update(
+        variantId,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
     }
 
-    return variants.map((row) {
-      final concept = conceptById['${row['drug_concept_id']}'];
-      final genericName =
-          '${concept?['generic_name'] ?? row['external_product_code'] ?? 'Unknown drug'}';
-      final tag = inferDrugTag(genericName);
-      final variantId = '${row['drug_product_variant_id']}';
-      final hasCrosswalk = appIdByVariant.containsKey(variantId);
-      final projectedId = appIdByVariant[variantId] ??
-          'drug_projected_${variantId.toLowerCase()}';
-      final variantSections = sectionsByVariant[variantId] ?? const [];
-      final sectionSummary = variantSections
-          .take(3)
-          .map((item) => '${item['section_key']}: ${item['section_text']}')
-          .join(' ');
-      final mediaCount = mediaCountByVariant[variantId] ?? 0;
-      return DrugDefinition(
-        id: projectedId,
-        genericName: genericName,
-        brandNames: ['${row['external_product_code'] ?? genericName}'],
-        aliases: ['${row['external_product_code'] ?? ''}'],
-        tags: [if (tag != null) tag],
-        notes: sectionSummary.isEmpty
-            ? 'Projected from CDSS drug_product_variant${hasCrosswalk ? '' : ' (warning: missing_concept_variant_crosswalk; legacy_variant_id_projection)'}'
-            : '$sectionSummary${hasCrosswalk ? '' : ' Warning: missing_concept_variant_crosswalk; legacy_variant_id_projection.'}',
-        interactionSummary: mediaCount > 0
-            ? 'Projected from imported label/product data with $mediaCount linked media resources.'
-            : 'Projected from imported label/product data.',
-        sourceSystem: '${row['regulator'] ?? 'CDSS'}',
-        sourceProductCode: row['external_product_code']?.toString(),
-        jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
-        route: '${row['route'] ?? 'oral'}',
-        dosageForm: '${row['dosage_form'] ?? 'unspecified'}',
-        releaseType: '${row['release_type'] ?? 'unspecified'}',
-      );
-    }).toList(growable: false);
+    return variants
+        .map((row) {
+          final concept = conceptById['${row['drug_concept_id']}'];
+          final genericName =
+              '${concept?['generic_name'] ?? row['external_product_code'] ?? 'Unknown drug'}';
+          final tag = inferDrugTag(genericName);
+          final variantId = '${row['drug_product_variant_id']}';
+          final hasCrosswalk = appIdByVariant.containsKey(variantId);
+          final projectedId =
+              appIdByVariant[variantId] ??
+              'drug_projected_${variantId.toLowerCase()}';
+          final variantSections = sectionsByVariant[variantId] ?? const [];
+          final sectionSummary = variantSections
+              .take(3)
+              .map((item) => '${item['section_key']}: ${item['section_text']}')
+              .join(' ');
+          final mediaCount = mediaCountByVariant[variantId] ?? 0;
+          return DrugDefinition(
+            id: projectedId,
+            genericName: genericName,
+            brandNames: ['${row['external_product_code'] ?? genericName}'],
+            aliases: ['${row['external_product_code'] ?? ''}'],
+            tags: [?tag],
+            notes: sectionSummary.isEmpty
+                ? 'Projected from CDSS drug_product_variant${hasCrosswalk ? '' : ' (warning: missing_concept_variant_crosswalk; legacy_variant_id_projection)'}'
+                : '$sectionSummary${hasCrosswalk ? '' : ' Warning: missing_concept_variant_crosswalk; legacy_variant_id_projection.'}',
+            interactionSummary: mediaCount > 0
+                ? 'Projected from imported label/product data with $mediaCount linked media resources.'
+                : 'Projected from imported label/product data.',
+            sourceSystem: '${row['regulator'] ?? 'CDSS'}',
+            sourceProductCode: row['external_product_code']?.toString(),
+            jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
+            route: '${row['route'] ?? 'oral'}',
+            dosageForm: '${row['dosage_form'] ?? 'unspecified'}',
+            releaseType: '${row['release_type'] ?? 'unspecified'}',
+          );
+        })
+        .toList(growable: false);
   }
 
   /// 食品详情投影：
@@ -203,33 +216,39 @@ class CdssCatalogProjectionService {
     final observations = await database.queryTable('observation');
     final sourceDocuments = await database.queryTable('source_document');
 
-    final matchingVariants = variants.where((row) {
-      final sameCode = food.sourceFoodCode != null &&
-          '${row['source_food_code'] ?? ''}' == food.sourceFoodCode;
-      final sameJurisdiction =
-          '${row['jurisdiction'] ?? 'GLOBAL'}' == food.jurisdiction;
-      return sameCode && sameJurisdiction;
-    }).toList(growable: false);
+    final matchingVariants = variants
+        .where((row) {
+          final sameCode =
+              food.sourceFoodCode != null &&
+              '${row['source_food_code'] ?? ''}' == food.sourceFoodCode;
+          final sameJurisdiction =
+              '${row['jurisdiction'] ?? 'GLOBAL'}' == food.jurisdiction;
+          return sameCode && sameJurisdiction;
+        })
+        .toList(growable: false);
     if (matchingVariants.isEmpty) return null;
 
-    final variantIds =
-        matchingVariants.map((row) => '${row['food_variant_id']}').toSet();
+    final variantIds = matchingVariants
+        .map((row) => '${row['food_variant_id']}')
+        .toSet();
     final sourceDocById = {
       for (final row in sourceDocuments) '${row['source_doc_id']}': row,
     };
     final nutrientLines = observations
         .where((row) => variantIds.contains('${row['entity_key'] ?? ''}'))
-        .map((row) => ProjectedNutrientLine(
-              attributeCode: '${row['attribute_code'] ?? ''}',
-              displayLabel: _attributeLabel('${row['attribute_code'] ?? ''}'),
-              rawValueText: '${row['raw_value_text'] ?? ''}',
-              unit: '${row['unit'] ?? ''}',
-              qualifierKind: '${row['qualifier_kind'] ?? ''}',
-              methodCode: row['method_code']?.toString(),
-              sourceDocTitle: sourceDocById['${row['source_doc_id'] ?? ''}']
-                      ?['title']
-                  ?.toString(),
-            ))
+        .map(
+          (row) => ProjectedNutrientLine(
+            attributeCode: '${row['attribute_code'] ?? ''}',
+            displayLabel: _attributeLabel('${row['attribute_code'] ?? ''}'),
+            rawValueText: '${row['raw_value_text'] ?? ''}',
+            unit: '${row['unit'] ?? ''}',
+            qualifierKind: '${row['qualifier_kind'] ?? ''}',
+            methodCode: row['method_code']?.toString(),
+            sourceDocTitle:
+                sourceDocById['${row['source_doc_id'] ?? ''}']?['title']
+                    ?.toString(),
+          ),
+        )
         .toList(growable: false);
 
     return ProjectedFoodDetail(
@@ -253,13 +272,16 @@ class CdssCatalogProjectionService {
     final medias = await database.queryTable('drug_product_media');
     final sourceDocuments = await database.queryTable('source_document');
 
-    final matchingVariants = variants.where((row) {
-      final sameCode = drug.sourceProductCode != null &&
-          '${row['external_product_code'] ?? ''}' == drug.sourceProductCode;
-      final sameJurisdiction =
-          '${row['jurisdiction'] ?? 'GLOBAL'}' == drug.jurisdiction;
-      return sameCode && sameJurisdiction;
-    }).toList(growable: false);
+    final matchingVariants = variants
+        .where((row) {
+          final sameCode =
+              drug.sourceProductCode != null &&
+              '${row['external_product_code'] ?? ''}' == drug.sourceProductCode;
+          final sameJurisdiction =
+              '${row['jurisdiction'] ?? 'GLOBAL'}' == drug.jurisdiction;
+          return sameCode && sameJurisdiction;
+        })
+        .toList(growable: false);
     if (matchingVariants.isEmpty) return null;
 
     final variantIds = matchingVariants
@@ -273,26 +295,34 @@ class CdssCatalogProjectionService {
       drug: drug,
       variantIds: variantIds.toList(growable: false),
       sections: sections
-          .where((row) =>
-              variantIds.contains('${row['drug_product_variant_id'] ?? ''}'))
-          .map((row) => ProjectedDrugSection(
-                sectionKey: '${row['section_key'] ?? ''}',
-                sectionTitle: '${row['section_title'] ?? ''}',
-                sectionText: '${row['section_text'] ?? ''}',
-                sourceDocTitle: sourceDocById['${row['source_doc_id'] ?? ''}']
-                        ?['title']
-                    ?.toString(),
-              ))
+          .where(
+            (row) =>
+                variantIds.contains('${row['drug_product_variant_id'] ?? ''}'),
+          )
+          .map(
+            (row) => ProjectedDrugSection(
+              sectionKey: '${row['section_key'] ?? ''}',
+              sectionTitle: '${row['section_title'] ?? ''}',
+              sectionText: '${row['section_text'] ?? ''}',
+              sourceDocTitle:
+                  sourceDocById['${row['source_doc_id'] ?? ''}']?['title']
+                      ?.toString(),
+            ),
+          )
           .toList(growable: false),
       packagingDescriptions: packagings
-          .where((row) =>
-              variantIds.contains('${row['drug_product_variant_id'] ?? ''}'))
+          .where(
+            (row) =>
+                variantIds.contains('${row['drug_product_variant_id'] ?? ''}'),
+          )
           .map((row) => '${row['description'] ?? ''}')
           .where((text) => text.trim().isNotEmpty)
           .toList(growable: false),
       mediaLinks: medias
-          .where((row) =>
-              variantIds.contains('${row['drug_product_variant_id'] ?? ''}'))
+          .where(
+            (row) =>
+                variantIds.contains('${row['drug_product_variant_id'] ?? ''}'),
+          )
           .map((row) => '${row['media_url'] ?? ''}')
           .where((url) => url.trim().isNotEmpty)
           .toList(growable: false),
@@ -310,8 +340,10 @@ class CdssCatalogProjectionService {
     required Map<String, Map<String, Object?>> sourceDocById,
   }) {
     final sourceDocIds = sections
-        .where((row) =>
-            variantIds.contains('${row['drug_product_variant_id'] ?? ''}'))
+        .where(
+          (row) =>
+              variantIds.contains('${row['drug_product_variant_id'] ?? ''}'),
+        )
         .map((row) => '${row['source_doc_id'] ?? ''}')
         .where((id) => id.isNotEmpty)
         .toSet();

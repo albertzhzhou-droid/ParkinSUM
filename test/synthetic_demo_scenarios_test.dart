@@ -33,8 +33,8 @@ void main() {
     expect(labels, contains('not a medical device'));
 
     final safetyNotice = Map<String, dynamic>.from(pack['safetyNotice'] as Map);
-    final mustNotUseFor =
-        (safetyNotice['mustNotUseFor'] as List<dynamic>).cast<String>();
+    final mustNotUseFor = (safetyNotice['mustNotUseFor'] as List<dynamic>)
+        .cast<String>();
     expect(mustNotUseFor, contains('medication timing changes'));
     expect(mustNotUseFor, contains('clinical decision-making'));
     expect(safetyNotice['patientData'], contains('No real patient'));
@@ -59,8 +59,9 @@ void main() {
       }
 
       final intakes = (scenario['intakes'] as List<dynamic>)
-          .map((value) =>
-              Intake.fromJson(Map<String, dynamic>.from(value as Map)))
+          .map(
+            (value) => Intake.fromJson(Map<String, dynamic>.from(value as Map)),
+          )
           .toList(growable: false);
       expect(intakes, isNotEmpty);
       for (final intake in intakes) {
@@ -92,8 +93,8 @@ void main() {
       final expected = Map<String, dynamic>.from(
         scenario['expectedEngineBehavior'] as Map,
       );
-      final expectedMatches =
-          (expected['baselineRuleMatches'] as List<dynamic>).cast<String>();
+      final expectedMatches = (expected['baselineRuleMatches'] as List<dynamic>)
+          .cast<String>();
 
       final matches = engine.evaluateCandidates(
         context: _runtimeContext(
@@ -139,8 +140,8 @@ DrugRuntimeContext _drugContextFromPack(Map<String, dynamic> pack) {
     id: json['id'] as String,
     genericName: json['genericName'] as String,
     brandName: json['brandName'] as String?,
-    activeIngredients:
-        (json['activeIngredients'] as List<dynamic>).cast<String>(),
+    activeIngredients: (json['activeIngredients'] as List<dynamic>)
+        .cast<String>(),
     substanceTags: (json['substanceTags'] as List<dynamic>).cast<String>(),
     formulation: json['formulation'] as String,
     dosageForm: json['dosageForm'] as String,

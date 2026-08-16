@@ -26,14 +26,17 @@ class OnboardingDraft {
     required this.initialIntakeDoseNote,
   });
 
-  UserProfile buildProfile(UserProfile baseProfile,
-      {required String patientId}) {
+  UserProfile buildProfile(
+    UserProfile baseProfile, {
+    required String patientId,
+  }) {
     return baseProfile.copyWith(
       patientId: patientId,
       registrationRegion: registrationRegion,
       displayLocale: displayLocale,
-      contentJurisdictionOverride:
-          parseJurisdictionOverride(contentJurisdictionOverrideText),
+      contentJurisdictionOverride: parseJurisdictionOverride(
+        contentJurisdictionOverrideText,
+      ),
       dietProfileRegion: dietProfileRegion ?? registrationRegion,
       swallowingTextureMode: swallowingTextureMode,
       localAiConsentEnabled: localAiConsentEnabled,

@@ -55,8 +55,10 @@ class InteractionEngine {
                   'legacy_high_protein_strong_detail',
                   locale: locale,
                   bindings: bindings,
-                  fallback:
-                      i18n.tr('legacy.high_protein_strong_detail', bindings),
+                  fallback: i18n.tr(
+                    'legacy.high_protein_strong_detail',
+                    bindings,
+                  ),
                 );
               }(),
               relatedDrugId: d.id,
@@ -93,8 +95,9 @@ class InteractionEngine {
 
       // 规则 2：MAOI（示例）——高酪胺风险（这里只做占位规则）
       if (d.tags.contains(DrugTag.maoi)) {
-        final hasHighTyramine =
-            meal.items.any((it) => it.foodTags.contains('high_tyramine'));
+        final hasHighTyramine = meal.items.any(
+          (it) => it.foodTags.contains('high_tyramine'),
+        );
         if (hasHighTyramine) {
           score += _tyraminePenalty;
           issues.add(
@@ -122,7 +125,8 @@ class InteractionEngine {
 
       // 规则 3：铁/钙补充剂（示例）——与部分药物存在螯合/吸收影响（占位）
       if (d.tags.contains(DrugTag.mineralSupplement)) {
-        final calciumLikelyHigh = totals.totalProteinG > 0 &&
+        final calciumLikelyHigh =
+            totals.totalProteinG > 0 &&
             meal.items.any((it) => it.foodCategoryName == 'dairy');
         if (calciumLikelyHigh) {
           score += _mineralTimingPenalty;
@@ -165,8 +169,8 @@ class InteractionEngine {
     final severityLabel = boundedScore >= 70
         ? i18n.tr('legacy.severity.high')
         : boundedScore >= 30
-            ? i18n.tr('legacy.severity.moderate')
-            : i18n.tr('legacy.severity.low');
+        ? i18n.tr('legacy.severity.moderate')
+        : i18n.tr('legacy.severity.low');
 
     // 否则返回带问题的结果
     return InteractionResult(
@@ -235,17 +239,21 @@ class InteractionEngine {
     ];
 
     if (meal.items.any((it) => it.foodTags.contains('high_tyramine'))) {
-      segments.add(copy.resolveForLocale(
-        'legacy_analysis_tyramine',
-        locale: locale,
-        fallback: i18n.tr('legacy.analysis_tyramine'),
-      ));
+      segments.add(
+        copy.resolveForLocale(
+          'legacy_analysis_tyramine',
+          locale: locale,
+          fallback: i18n.tr('legacy.analysis_tyramine'),
+        ),
+      );
     }
-    segments.add(copy.resolveForLocale(
-      'legacy_analysis_followup',
-      locale: locale,
-      fallback: i18n.tr('legacy.analysis_followup'),
-    ));
+    segments.add(
+      copy.resolveForLocale(
+        'legacy_analysis_followup',
+        locale: locale,
+        fallback: i18n.tr('legacy.analysis_followup'),
+      ),
+    );
     return segments.join(' ');
   }
 }

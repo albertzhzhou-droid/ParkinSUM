@@ -41,7 +41,7 @@ class LabelSectionCodeMapper {
     'how supplied': ['34069-5', 'How supplied/storage and handling'],
     'how supplied storage and handling': [
       '34069-5',
-      'How supplied/storage and handling'
+      'How supplied/storage and handling',
     ],
     'adverse reactions': ['34084-4', 'Adverse reactions'],
   };

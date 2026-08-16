@@ -82,14 +82,15 @@ class _NextMealPageState extends State<NextMealPage> {
       _error = null;
     });
     try {
-      final result =
-          await context.read<AppState>().requestNextMealRecommendation(
-                nextMealAt: _targetTime,
-                useLocalAi: _useLocalAi,
-                windowDuration: _windowMinutes > 0
-                    ? Duration(minutes: _windowMinutes)
-                    : null,
-              );
+      final result = await context
+          .read<AppState>()
+          .requestNextMealRecommendation(
+            nextMealAt: _targetTime,
+            useLocalAi: _useLocalAi,
+            windowDuration: _windowMinutes > 0
+                ? Duration(minutes: _windowMinutes)
+                : null,
+          );
       if (!mounted) return;
       setState(() => _result = result);
     } catch (error) {
@@ -143,7 +144,9 @@ class _NextMealPageState extends State<NextMealPage> {
                     'candidates inside it and does not choose your meal time. '
                     'A window is required for mechanistic-primary ranking.',
                     style: TextStyle(
-                        fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+                      fontSize: 11,
+                      color: LiquidGlass.onSurfaceMuted,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -187,8 +190,11 @@ class _SubtitleBlock extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          const Icon(Icons.auto_awesome_outlined,
-              size: 22, color: LiquidGlass.onSurfaceMuted),
+          const Icon(
+            Icons.auto_awesome_outlined,
+            size: 22,
+            color: LiquidGlass.onSurfaceMuted,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -270,8 +276,11 @@ class _ControlsCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(Icons.event_outlined,
-                        size: 20, color: LiquidGlass.onSurfaceMuted),
+                    const Icon(
+                      Icons.event_outlined,
+                      size: 20,
+                      color: LiquidGlass.onSurfaceMuted,
+                    ),
                   ],
                 ),
               ),
@@ -328,8 +337,11 @@ class _EmptyCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
       child: Column(
         children: [
-          const Icon(Icons.restaurant_menu_outlined,
-              size: 40, color: LiquidGlass.onSurfaceMuted),
+          const Icon(
+            Icons.restaurant_menu_outlined,
+            size: 40,
+            color: LiquidGlass.onSurfaceMuted,
+          ),
           const SizedBox(height: 12),
           Text(
             i18n.tr('next_meal.empty'),
@@ -358,8 +370,11 @@ class _ErrorCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.error_outline_rounded,
-              size: 22, color: Colors.red.withValues(alpha: 0.85)),
+          Icon(
+            Icons.error_outline_rounded,
+            size: 22,
+            color: Colors.red.withValues(alpha: 0.85),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -394,8 +409,11 @@ class _ResultBlock extends StatelessWidget {
   final AppI18n i18n;
   final NextMealRecommendationResult result;
   final bool windowProvided;
-  const _ResultBlock(
-      {required this.i18n, required this.result, required this.windowProvided});
+  const _ResultBlock({
+    required this.i18n,
+    required this.result,
+    required this.windowProvided,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -482,9 +500,10 @@ class _ResultBlock extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('• ',
-                            style:
-                                TextStyle(color: LiquidGlass.onSurfaceMuted)),
+                        const Text(
+                          '• ',
+                          style: TextStyle(color: LiquidGlass.onSurfaceMuted),
+                        ),
                         Expanded(
                           child: Text(
                             line,
@@ -511,8 +530,11 @@ class _ResultBlock extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.shield_outlined,
-                        size: 18, color: scheme.primary),
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 18,
+                      color: scheme.primary,
+                    ),
                     const SizedBox(width: 8),
                     // Must flex: this label is far longer in some locales
                     // (fr is ~2x en) and overflowed the row without it.
@@ -591,20 +613,18 @@ class _ResultBlock extends StatelessWidget {
                         ),
                       ),
                       _DecisionChip(
-                          label: i18n.decisionLabel(rec.decision),
-                          tone: rec.decision),
+                        label: i18n.decisionLabel(rec.decision),
+                        tone: rec.decision,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    i18n.tr(
-                      'dashboard.recommendation_macro_line',
-                      {
-                        'protein': rec.food.proteinG.toStringAsFixed(1),
-                        'carbs': rec.food.carbsG.toStringAsFixed(1),
-                        'fat': rec.food.fatG.toStringAsFixed(1),
-                      },
-                    ),
+                    i18n.tr('dashboard.recommendation_macro_line', {
+                      'protein': rec.food.proteinG.toStringAsFixed(1),
+                      'carbs': rec.food.carbsG.toStringAsFixed(1),
+                      'fat': rec.food.fatG.toStringAsFixed(1),
+                    }),
                     style: const TextStyle(
                       fontSize: 12,
                       color: LiquidGlass.onSurfaceMuted,
@@ -657,21 +677,26 @@ class _ResultBlock extends StatelessWidget {
             'Ranker used: ${result.rankerUsed}'
             '${result.rankerEligibility != null ? ' · eligible: ${result.rankerEligibility!.mechanisticPrimaryEligible}' : ''}',
             style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+              fontSize: 11,
+              color: LiquidGlass.onSurfaceMuted,
+            ),
           ),
         ],
         if (result.rankerEligibility != null &&
             result.rankerEligibility!.fallbackReasons.isNotEmpty) ...[
           const SizedBox(height: 4),
           Text(
-            result.rankerEligibility!.fallbackReasons
-                    .contains('missing_user_defined_window')
+            result.rankerEligibility!.fallbackReasons.contains(
+                  'missing_user_defined_window',
+                )
                 ? 'Mechanistic-primary ranking is unavailable because no '
-                    'user-defined meal window was provided.'
+                      'user-defined meal window was provided.'
                 : 'Mechanistic-primary ranking is unavailable because context '
-                    'metadata is incomplete (${result.rankerEligibility!.fallbackReasons.join(', ')}).',
+                      'metadata is incomplete (${result.rankerEligibility!.fallbackReasons.join(', ')}).',
             style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+              fontSize: 11,
+              color: LiquidGlass.onSurfaceMuted,
+            ),
           ),
         ],
         if (result.mechanisticCandidateScores == null &&
@@ -680,13 +705,15 @@ class _ResultBlock extends StatelessWidget {
           Text(
             !windowProvided
                 ? 'Mechanistic-primary ranking is unavailable because no '
-                    'meal-time window was provided. Choose a window above to '
-                    'enable it. This is not medical advice.'
+                      'meal-time window was provided. Choose a window above to '
+                      'enable it. This is not medical advice.'
                 : 'Mechanistic-primary ranking is unavailable for this request '
-                    '(insufficient context). Showing the conservative fallback. '
-                    'This is not medical advice.',
+                      '(insufficient context). Showing the conservative fallback. '
+                      'This is not medical advice.',
             style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+              fontSize: 11,
+              color: LiquidGlass.onSurfaceMuted,
+            ),
           ),
         ],
       ],

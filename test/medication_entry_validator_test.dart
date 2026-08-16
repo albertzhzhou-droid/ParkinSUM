@@ -8,15 +8,13 @@ void main() {
 
   group('MedicationEntryValidator — invalid free-text inputs', () {
     test('rejects a bare numeric "100"', () {
-      final result =
-          validator.validate(const RawMedicationEntry(freeText: '100'));
+      final result = validator.validate(
+        const RawMedicationEntry(freeText: '100'),
+      );
       expect(result.validity, MedicationContextValidity.invalid);
       expect(result.eligibleForRuleEvaluation, isFalse);
       expect(result.normalized, isNull);
-      expect(
-        result.issues.any((i) => i.code == 'BARE_NUMERIC_DOSE'),
-        isTrue,
-      );
+      expect(result.issues.any((i) => i.code == 'BARE_NUMERIC_DOSE'), isTrue);
     });
 
     test('rejects "100 tablets"', () {
@@ -54,10 +52,9 @@ void main() {
 
   group('MedicationEntryValidator — insufficient context', () {
     test('rejects strength+unit but no ingredient', () {
-      final result = validator.validate(const RawMedicationEntry(
-        strength: 100,
-        unit: 'mg',
-      ));
+      final result = validator.validate(
+        const RawMedicationEntry(strength: 100, unit: 'mg'),
+      );
       expect(result.eligibleForRuleEvaluation, isFalse);
       expect(
         result.issues.any((i) => i.code == 'MISSING_ACTIVE_INGREDIENT'),
@@ -66,45 +63,55 @@ void main() {
     });
 
     test('rejects ingredient+strength but no unit (no dose inference)', () {
-      final result = validator.validate(const RawMedicationEntry(
-        activeIngredient: 'levodopa',
-        strength: 100,
-        drugProductVariant: 'synthetic_demo_variant',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        jurisdiction: 'US',
-        sourceDocId: 'synthetic:demo',
-      ));
+      final result = validator.validate(
+        const RawMedicationEntry(
+          activeIngredient: 'levodopa',
+          strength: 100,
+          drugProductVariant: 'synthetic_demo_variant',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo',
+        ),
+      );
       expect(result.eligibleForRuleEvaluation, isFalse);
       expect(result.issues.any((i) => i.code == 'MISSING_UNIT'), isTrue);
     });
 
     test('rejects when formulation/release_type is missing', () {
-      final result = validator.validate(const RawMedicationEntry(
-        activeIngredient: 'levodopa',
-        drugProductVariant: 'synthetic_demo_variant',
-        strength: 100,
-        unit: 'mg',
-        route: 'oral',
-        jurisdiction: 'US',
-        sourceDocId: 'synthetic:demo',
-      ));
+      final result = validator.validate(
+        const RawMedicationEntry(
+          activeIngredient: 'levodopa',
+          drugProductVariant: 'synthetic_demo_variant',
+          strength: 100,
+          unit: 'mg',
+          route: 'oral',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo',
+        ),
+      );
       expect(result.eligibleForRuleEvaluation, isFalse);
       expect(
-        result.issues.any((i) =>
-            i.code == 'MISSING_FORM' || i.code == 'MISSING_RELEASE_TYPE'),
+        result.issues.any(
+          (i) => i.code == 'MISSING_FORM' || i.code == 'MISSING_RELEASE_TYPE',
+        ),
         isTrue,
       );
     });
 
     test('produces safe validation copy and no conflict result', () {
-      final result =
-          validator.validate(const RawMedicationEntry(freeText: '100'));
+      final result = validator.validate(
+        const RawMedicationEntry(freeText: '100'),
+      );
       expect(
-          result.safeUserCopy.toLowerCase(), contains('context is incomplete'));
-      expect(result.safeUserCopy.toLowerCase(),
-          contains('does not provide medication dosing'));
+        result.safeUserCopy.toLowerCase(),
+        contains('context is incomplete'),
+      );
+      expect(
+        result.safeUserCopy.toLowerCase(),
+        contains('does not provide medication dosing'),
+      );
       // No banned advice copy may leak into the safe validation message.
       expect(findBannedSubstrings(result.safeUserCopy), isEmpty);
     });
@@ -112,19 +119,21 @@ void main() {
 
   group('MedicationEntryValidator — valid catalog-backed entry', () {
     test('accepts synthetic carbidopa/levodopa entry', () {
-      final result = validator.validate(const RawMedicationEntry(
-        activeIngredients: ['carbidopa', 'levodopa'],
-        drugProductVariant: 'synthetic:carbidopa-levodopa-25-100-ir-tablet',
-        strength: 100,
-        unit: 'mg',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        jurisdiction: 'US',
-        sourceDocId: 'synthetic:demo_label_carbidopa_levodopa',
-        labelSection: 'dosage_and_administration',
-        extractionConfidence: 0.95,
-      ));
+      final result = validator.validate(
+        const RawMedicationEntry(
+          activeIngredients: ['carbidopa', 'levodopa'],
+          drugProductVariant: 'synthetic:carbidopa-levodopa-25-100-ir-tablet',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo_label_carbidopa_levodopa',
+          labelSection: 'dosage_and_administration',
+          extractionConfidence: 0.95,
+        ),
+      );
       expect(result.validity, MedicationContextValidity.valid);
       expect(result.eligibleForRuleEvaluation, isTrue);
       final n = result.normalized!;

@@ -83,9 +83,11 @@ class RuleRegistryCompiler {
                 .map((value) => value.toString())
                 .toList(growable: false),
         effectiveFrom: DateTime.tryParse(
-            provenanceJson['effective_from']?.toString() ?? ''),
-        effectiveTo:
-            DateTime.tryParse(provenanceJson['effective_to']?.toString() ?? ''),
+          provenanceJson['effective_from']?.toString() ?? '',
+        ),
+        effectiveTo: DateTime.tryParse(
+          provenanceJson['effective_to']?.toString() ?? '',
+        ),
       ),
       override: json['override'] == null
           ? null

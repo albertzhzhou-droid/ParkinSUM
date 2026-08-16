@@ -18,17 +18,19 @@ void main() {
   final validator = MedicationEntryValidator();
 
   NormalizedMedicationContext levodopa() => validator
-      .validate(const RawMedicationEntry(
-        activeIngredients: ['carbidopa', 'levodopa'],
-        drugProductVariant: 'synthetic:demo',
-        strength: 100,
-        unit: 'mg',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        jurisdiction: 'US',
-        sourceDocId: 'synthetic:demo',
-      ))
+      .validate(
+        const RawMedicationEntry(
+          activeIngredients: ['carbidopa', 'levodopa'],
+          drugProductVariant: 'synthetic:demo',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo',
+        ),
+      )
       .normalized!;
 
   test('same total protein, meat vs legume produces different LNAA load', () {
@@ -71,30 +73,47 @@ void main() {
       declaredPhysicalForm: MealPhysicalForm.solid,
     );
     final meatProfile = emptying.build(
-        mealId: 'meat', mealStartMinute: 0, composition: meatComp);
+      mealId: 'meat',
+      mealStartMinute: 0,
+      composition: meatComp,
+    );
     final legumeProfile = emptying.build(
-        mealId: 'legume', mealStartMinute: 0, composition: legumeComp);
-    final med =
-        MedicationTimelineEvent(id: 'm', minute: 15, context: levodopa());
-    final meatWindow =
-        absorption.build(medication: med, overlappingMealProfile: meatProfile);
+      mealId: 'legume',
+      mealStartMinute: 0,
+      composition: legumeComp,
+    );
+    final med = MedicationTimelineEvent(
+      id: 'm',
+      minute: 15,
+      context: levodopa(),
+    );
+    final meatWindow = absorption.build(
+      medication: med,
+      overlappingMealProfile: meatProfile,
+    );
     final legumeWindow = absorption.build(
-        medication: med, overlappingMealProfile: legumeProfile);
+      medication: med,
+      overlappingMealProfile: legumeProfile,
+    );
     final meatC = competition.build(
-        mealComposition: meatComp,
-        mealEmptyingProfile: meatProfile,
-        absorptionWindow: meatWindow,
-        mealStartMinute: 0);
+      mealComposition: meatComp,
+      mealEmptyingProfile: meatProfile,
+      absorptionWindow: meatWindow,
+      mealStartMinute: 0,
+    );
     final legumeC = competition.build(
-        mealComposition: legumeComp,
-        mealEmptyingProfile: legumeProfile,
-        absorptionWindow: legumeWindow,
-        mealStartMinute: 0);
+      mealComposition: legumeComp,
+      mealEmptyingProfile: legumeProfile,
+      absorptionWindow: legumeWindow,
+      mealStartMinute: 0,
+    );
     expect(meatC.peakPressure, greaterThan(legumeC.peakPressure));
     expect(meatC.lnaaSummary, isNotNull);
     expect(legumeC.lnaaSummary, isNotNull);
-    expect(meatC.lnaaSummary!.effectiveLoadFactor,
-        greaterThan(legumeC.lnaaSummary!.effectiveLoadFactor));
+    expect(
+      meatC.lnaaSummary!.effectiveLoadFactor,
+      greaterThan(legumeC.lnaaSummary!.effectiveLoadFactor),
+    );
   });
 
   test('unknown protein source widens uncertainty vs known source', () {
@@ -136,47 +155,74 @@ void main() {
       ],
       declaredPhysicalForm: MealPhysicalForm.solid,
     );
-    final knownProfile =
-        emptying.build(mealId: 'k', mealStartMinute: 0, composition: knownComp);
+    final knownProfile = emptying.build(
+      mealId: 'k',
+      mealStartMinute: 0,
+      composition: knownComp,
+    );
     final unknownProfile = emptying.build(
-        mealId: 'u', mealStartMinute: 0, composition: unknownComp);
-    final med =
-        MedicationTimelineEvent(id: 'm', minute: 15, context: levodopa());
-    final wK =
-        absorption.build(medication: med, overlappingMealProfile: knownProfile);
+      mealId: 'u',
+      mealStartMinute: 0,
+      composition: unknownComp,
+    );
+    final med = MedicationTimelineEvent(
+      id: 'm',
+      minute: 15,
+      context: levodopa(),
+    );
+    final wK = absorption.build(
+      medication: med,
+      overlappingMealProfile: knownProfile,
+    );
     final wU = absorption.build(
-        medication: med, overlappingMealProfile: unknownProfile);
+      medication: med,
+      overlappingMealProfile: unknownProfile,
+    );
     final cK = competition.build(
-        mealComposition: knownComp,
-        mealEmptyingProfile: knownProfile,
-        absorptionWindow: wK,
-        mealStartMinute: 0);
+      mealComposition: knownComp,
+      mealEmptyingProfile: knownProfile,
+      absorptionWindow: wK,
+      mealStartMinute: 0,
+    );
     final cU = competition.build(
-        mealComposition: unknownComp,
-        mealEmptyingProfile: unknownProfile,
-        absorptionWindow: wU,
-        mealStartMinute: 0);
+      mealComposition: unknownComp,
+      mealEmptyingProfile: unknownProfile,
+      absorptionWindow: wU,
+      mealStartMinute: 0,
+    );
     const order = [
       UncertaintyBand.narrow,
       UncertaintyBand.moderate,
       UncertaintyBand.wide,
       UncertaintyBand.veryWide,
     ];
-    expect(order.indexOf(cU.uncertaintyBand),
-        greaterThanOrEqualTo(order.indexOf(cK.uncertaintyBand)));
+    expect(
+      order.indexOf(cU.uncertaintyBand),
+      greaterThanOrEqualTo(order.indexOf(cK.uncertaintyBand)),
+    );
     expect(cU.lnaaSummary!.uncertaintyWidened, isTrue);
   });
 
   test('inferProteinSourceFromNameAndCategory maps common synthetic foods', () {
-    expect(inferProteinSourceFromNameAndCategory(name: 'silken tofu'),
-        ProteinSourceType.soy);
-    expect(inferProteinSourceFromNameAndCategory(name: 'beef brisket'),
-        ProteinSourceType.meat);
-    expect(inferProteinSourceFromNameAndCategory(name: 'rolled oats'),
-        ProteinSourceType.grain);
-    expect(inferProteinSourceFromNameAndCategory(name: 'cheddar cheese'),
-        ProteinSourceType.dairy);
-    expect(inferProteinSourceFromNameAndCategory(name: 'mystery food'),
-        ProteinSourceType.unknown);
+    expect(
+      inferProteinSourceFromNameAndCategory(name: 'silken tofu'),
+      ProteinSourceType.soy,
+    );
+    expect(
+      inferProteinSourceFromNameAndCategory(name: 'beef brisket'),
+      ProteinSourceType.meat,
+    );
+    expect(
+      inferProteinSourceFromNameAndCategory(name: 'rolled oats'),
+      ProteinSourceType.grain,
+    );
+    expect(
+      inferProteinSourceFromNameAndCategory(name: 'cheddar cheese'),
+      ProteinSourceType.dairy,
+    );
+    expect(
+      inferProteinSourceFromNameAndCategory(name: 'mystery food'),
+      ProteinSourceType.unknown,
+    );
   });
 }

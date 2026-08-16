@@ -27,17 +27,19 @@ void main() {
   bool resolves(String ref) => ModelAssumptionRegistry.byId(ref) != null;
 
   MedicationTimelineEvent levodopa(String releaseType) {
-    final v = validator.validate(RawMedicationEntry(
-      activeIngredients: const ['carbidopa', 'levodopa'],
-      drugProductVariant: 'synthetic:demo',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: releaseType,
-      jurisdiction: 'US',
-      sourceDocId: 'synthetic:demo',
-    ));
+    final v = validator.validate(
+      RawMedicationEntry(
+        activeIngredients: const ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: releaseType,
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    );
     return MedicationTimelineEvent(id: 'm', minute: 30, context: v.normalized!);
   }
 
@@ -48,51 +50,62 @@ void main() {
     final refs = <String>{};
 
     // Parameter sets (provenance-tagged weights).
-    refs.addAll(GastricEmptyingParameterSet.literatureInformedDefault()
-        .unionSourceRefs);
+    refs.addAll(
+      GastricEmptyingParameterSet.literatureInformedDefault().unionSourceRefs,
+    );
     for (final w
         in NextMealScoringParameterSet.literatureInformedDefault().all) {
       refs.addAll(w.sourceRefs);
     }
 
-    FoodComponent food(
-            {AminoAcidProfile? aa, required ProteinSourceType src}) =>
-        FoodComponent(
-          id: 'f',
-          name: 'f',
-          physicalForm: MealPhysicalForm.solid,
-          proteinGrams: 26,
-          fatGrams: 6,
-          fiberGrams: 1,
-          carbohydrateGrams: 5,
-          calories: 220,
-          portionGrams: 160,
-          sourceDocId: 'synthetic',
-          proteinSource: src,
-          aminoAcidProfile: aa,
-        );
+    FoodComponent food({
+      AminoAcidProfile? aa,
+      required ProteinSourceType src,
+    }) => FoodComponent(
+      id: 'f',
+      name: 'f',
+      physicalForm: MealPhysicalForm.solid,
+      proteinGrams: 26,
+      fatGrams: 6,
+      fiberGrams: 1,
+      carbohydrateGrams: 5,
+      calories: 220,
+      portionGrams: 160,
+      sourceDocId: 'synthetic',
+      proteinSource: src,
+      aminoAcidProfile: aa,
+    );
 
     void runEval(MedicationTimelineEvent med, FoodComponent component) {
-      final composition =
-          normalizer.normalize(mealId: 'c', components: [component]);
+      final composition = normalizer.normalize(
+        mealId: 'c',
+        components: [component],
+      );
       final ctx = builder.build(
         now: DateTime.utc(2026, 1, 1, 8),
         medicationInputs: [
           MedicationTimelineInput(
             id: med.id,
-            takenAt: DateTime.utc(2026, 1, 1, 8, 0)
-                .add(Duration(minutes: med.minute)),
-            medicationContext: validator.validate(const RawMedicationEntry(
-              activeIngredients: ['carbidopa', 'levodopa'],
-              drugProductVariant: 'synthetic:demo',
-              strength: 100,
-              unit: 'mg',
-              form: 'tablet',
-              route: 'oral',
-              releaseType: 'immediate',
-              jurisdiction: 'US',
-              sourceDocId: 'synthetic:demo',
-            )),
+            takenAt: DateTime.utc(
+              2026,
+              1,
+              1,
+              8,
+              0,
+            ).add(Duration(minutes: med.minute)),
+            medicationContext: validator.validate(
+              const RawMedicationEntry(
+                activeIngredients: ['carbidopa', 'levodopa'],
+                drugProductVariant: 'synthetic:demo',
+                strength: 100,
+                unit: 'mg',
+                form: 'tablet',
+                route: 'oral',
+                releaseType: 'immediate',
+                jurisdiction: 'US',
+                sourceDocId: 'synthetic:demo',
+              ),
+            ),
           ),
         ],
         mealInputs: [
@@ -105,7 +118,9 @@ void main() {
         ],
       );
       final r = engine.evaluate(
-          context: ctx, mealCompositionsById: {composition.id: composition});
+        context: ctx,
+        mealCompositionsById: {composition.id: composition},
+      );
       refs.addAll(r.sourceRefs);
       refs.addAll(r.primaryEmptyingProfile?.sourceRefs ?? const []);
       refs.addAll(r.absorptionOpportunityWindow?.sourceRefs ?? const []);
@@ -139,26 +154,41 @@ void main() {
     return refs;
   }
 
-  test('every mechanism-layer sourceRef resolves in ModelAssumptionRegistry',
-      () {
-    final refs = collectMechanismRefs();
-    expect(refs, isNotEmpty);
-    final unresolved = refs.where((r) => !resolves(r)).toList()..sort();
-    expect(unresolved, isEmpty,
-        reason: 'Unregistered mechanism sourceRef(s): $unresolved. Add a '
+  test(
+    'every mechanism-layer sourceRef resolves in ModelAssumptionRegistry',
+    () {
+      final refs = collectMechanismRefs();
+      expect(refs, isNotEmpty);
+      final unresolved = refs.where((r) => !resolves(r)).toList()..sort();
+      expect(
+        unresolved,
+        isEmpty,
+        reason:
+            'Unregistered mechanism sourceRef(s): $unresolved. Add a '
             'ModelAssumption to model_assumption_registry.dart (and a row in '
-            'Bibliographies.md) for each.');
-  });
+            'Bibliographies.md) for each.',
+      );
+    },
+  );
 
   test('registry entries are well-formed (id, citation, review date)', () {
     expect(ModelAssumptionRegistry.all, isNotEmpty);
     for (final a in ModelAssumptionRegistry.all) {
-      expect(a.sourceId, startsWith('src.'),
-          reason: 'sourceId must be namespaced: ${a.sourceId}');
-      expect(a.citationText.trim(), isNotEmpty,
-          reason: '${a.sourceId} missing citation text');
-      expect(a.lastReviewed, isNotEmpty,
-          reason: '${a.sourceId} missing lastReviewed');
+      expect(
+        a.sourceId,
+        startsWith('src.'),
+        reason: 'sourceId must be namespaced: ${a.sourceId}',
+      );
+      expect(
+        a.citationText.trim(),
+        isNotEmpty,
+        reason: '${a.sourceId} missing citation text',
+      );
+      expect(
+        a.lastReviewed,
+        isNotEmpty,
+        reason: '${a.sourceId} missing lastReviewed',
+      );
       // byId must round-trip every entry.
       expect(ModelAssumptionRegistry.byId(a.sourceId), isNotNull);
     }
@@ -166,7 +196,10 @@ void main() {
 
   test('sourceIds are unique', () {
     final ids = ModelAssumptionRegistry.all.map((a) => a.sourceId).toList();
-    expect(ids.toSet().length, ids.length,
-        reason: 'duplicate sourceId present');
+    expect(
+      ids.toSet().length,
+      ids.length,
+      reason: 'duplicate sourceId present',
+    );
   });
 }

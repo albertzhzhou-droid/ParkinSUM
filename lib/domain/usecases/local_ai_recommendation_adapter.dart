@@ -18,11 +18,7 @@ class LocalAiProviders {
   static const ollama = 'ollama';
   static const openAiCompat = 'openai_compat';
 
-  static const supported = <String>{
-    auto,
-    ollama,
-    openAiCompat,
-  };
+  static const supported = <String>{auto, ollama, openAiCompat};
 }
 
 class LocalAiRecommendedModels {
@@ -119,13 +115,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
 
   final http.Client _client;
 
-  LocalAiRecommendationAdapter({
-    http.Client? client,
-  }) : _client = client ?? http.Client();
+  LocalAiRecommendationAdapter({http.Client? client})
+    : _client = client ?? http.Client();
 
-  Future<LocalAiAvailability> probe({
-    required UserProfile userProfile,
-  }) async {
+  Future<LocalAiAvailability> probe({required UserProfile userProfile}) async {
     final model = _textModel(userProfile);
     final medicalModel = _medicalModel(userProfile);
     final timeout = _timeout(userProfile);
@@ -143,8 +136,9 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       }
     }
 
-    final preferred =
-        _normalizedProvider(userProfile.localAiProviderPreference);
+    final preferred = _normalizedProvider(
+      userProfile.localAiProviderPreference,
+    );
     return LocalAiAvailability(
       available: false,
       provider: preferred,
@@ -168,7 +162,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     final schema = {
       'type': 'object',
       'properties': {
-        'polished_text': {'type': 'string'}
+        'polished_text': {'type': 'string'},
       },
       'required': ['polished_text'],
     };
@@ -220,19 +214,19 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         'analysis_text': {'type': 'string'},
         'key_findings': {
           'type': 'array',
-          'items': {'type': 'string'}
+          'items': {'type': 'string'},
         },
         'next_actions': {
           'type': 'array',
-          'items': {'type': 'string'}
+          'items': {'type': 'string'},
         },
         'data_notes': {
           'type': 'array',
-          'items': {'type': 'string'}
+          'items': {'type': 'string'},
         },
         'issue_details': {
           'type': 'array',
-          'items': {'type': 'string'}
+          'items': {'type': 'string'},
         },
         'safety_alignment': {'type': 'string'},
       },
@@ -253,10 +247,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       'Do not invent diagnosis, dosing instructions, foods, drugs, or evidence.',
       'Risk gradient: score ${result.score}, severity ${result.overallSeverity.name}.',
       'Meal JSON: ${jsonEncode(meal.toJson())}',
-      'Active drugs: ${jsonEncode(activeDrugs.map((drug) => {
-            'id': drug.id,
-            'generic_name': drug.genericName
-          }).toList(growable: false))}',
+      'Active drugs: ${jsonEncode(activeDrugs.map((drug) => {'id': drug.id, 'generic_name': drug.genericName}).toList(growable: false))}',
       'Intakes: ${jsonEncode(intakes.map((item) => item.toJson()).toList(growable: false))}',
       'Current result JSON: ${jsonEncode(result.toJson())}',
       'Return JSON only. issue_details must have exactly ${result.issues.length} items in the same order.',
@@ -367,30 +358,25 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       'properties': {
         'candidate_ids': {
           'type': 'array',
-          'items': {
-            'type': 'string',
-            'enum': allowedIds,
-          }
+          'items': {'type': 'string', 'enum': allowedIds},
         },
         'summary': {'type': 'string'},
         'safety_checks': {
           'type': 'array',
-          'items': {'type': 'string'}
+          'items': {'type': 'string'},
         },
         'ranking_rationale': {
           'type': 'array',
-          'items': {'type': 'string'}
+          'items': {'type': 'string'},
         },
-        'candidate_notes': {
-          'type': 'object',
-        },
+        'candidate_notes': {'type': 'object'},
       },
       'required': [
         'candidate_ids',
         'summary',
         'safety_checks',
         'ranking_rationale',
-      ]
+      ],
     };
 
     final payload = await _completeStructured(
@@ -444,9 +430,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       'type': 'object',
       'properties': {
         'summary': {'type': 'string'},
-        'candidate_notes': {
-          'type': 'object',
-        },
+        'candidate_notes': {'type': 'object'},
       },
       'required': ['summary', 'candidate_notes'],
     };
@@ -650,47 +634,39 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
   }) {
     final uri = Uri.parse(endpoint);
     return switch (provider) {
-      LocalAiProviders.ollama => _postJsonNoRedirect(
-          uri,
-          {
-            'model': model,
-            'stream': false,
-            'messages': const [
-              {'role': 'user', 'content': 'reply with {"ok":true}'}
-            ],
-            'format': {
+      LocalAiProviders.ollama => _postJsonNoRedirect(uri, {
+        'model': model,
+        'stream': false,
+        'messages': const [
+          {'role': 'user', 'content': 'reply with {"ok":true}'},
+        ],
+        'format': {
+          'type': 'object',
+          'properties': {
+            'ok': {'type': 'boolean'},
+          },
+          'required': ['ok'],
+        },
+      }, timeout),
+      LocalAiProviders.openAiCompat => _postJsonNoRedirect(uri, {
+        'model': model,
+        'messages': const [
+          {'role': 'user', 'content': 'reply with {"ok":true}'},
+        ],
+        'response_format': {
+          'type': 'json_schema',
+          'json_schema': {
+            'name': 'availability_probe',
+            'schema': {
               'type': 'object',
               'properties': {
-                'ok': {'type': 'boolean'}
+                'ok': {'type': 'boolean'},
               },
-              'required': ['ok']
+              'required': ['ok'],
             },
           },
-          timeout,
-        ),
-      LocalAiProviders.openAiCompat => _postJsonNoRedirect(
-          uri,
-          {
-            'model': model,
-            'messages': const [
-              {'role': 'user', 'content': 'reply with {"ok":true}'}
-            ],
-            'response_format': {
-              'type': 'json_schema',
-              'json_schema': {
-                'name': 'availability_probe',
-                'schema': {
-                  'type': 'object',
-                  'properties': {
-                    'ok': {'type': 'boolean'}
-                  },
-                  'required': ['ok']
-                }
-              }
-            }
-          },
-          timeout,
-        ),
+        },
+      }, timeout),
       _ => throw UnsupportedError('Unsupported provider'),
     };
   }
@@ -740,18 +716,14 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Duration timeout,
   }) async {
     try {
-      final response = await _postJsonNoRedirect(
-        Uri.parse(endpoint),
-        {
-          'model': model,
-          'stream': false,
-          'messages': [
-            {'role': 'user', 'content': prompt}
-          ],
-          'format': schema,
-        },
-        timeout,
-      );
+      final response = await _postJsonNoRedirect(Uri.parse(endpoint), {
+        'model': model,
+        'stream': false,
+        'messages': [
+          {'role': 'user', 'content': prompt},
+        ],
+        'format': schema,
+      }, timeout);
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final content =
@@ -773,20 +745,20 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
   }) {
     return switch (availability.provider) {
       LocalAiProviders.ollama => _tryOllama(
-          endpoint: availability.endpoint,
-          model: model,
-          prompt: prompt,
-          schema: schema,
-          timeout: timeout,
-        ),
+        endpoint: availability.endpoint,
+        model: model,
+        prompt: prompt,
+        schema: schema,
+        timeout: timeout,
+      ),
       LocalAiProviders.openAiCompat => _tryOpenAiCompat(
-          endpoint: availability.endpoint,
-          model: model,
-          prompt: prompt,
-          schema: schema,
-          schemaName: schemaName,
-          timeout: timeout,
-        ),
+        endpoint: availability.endpoint,
+        model: model,
+        prompt: prompt,
+        schema: schema,
+        schemaName: schemaName,
+        timeout: timeout,
+      ),
       _ => Future.value(null),
     };
   }
@@ -800,31 +772,25 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Duration timeout,
   }) async {
     try {
-      final response = await _postJsonNoRedirect(
-        Uri.parse(endpoint),
-        {
-          'model': model,
-          'messages': [
-            {'role': 'user', 'content': prompt}
-          ],
-          'response_format': {
-            'type': 'json_schema',
-            'json_schema': {
-              'name': schemaName,
-              'schema': schema,
-            }
-          }
+      final response = await _postJsonNoRedirect(Uri.parse(endpoint), {
+        'model': model,
+        'messages': [
+          {'role': 'user', 'content': prompt},
+        ],
+        'response_format': {
+          'type': 'json_schema',
+          'json_schema': {'name': schemaName, 'schema': schema},
         },
-        timeout,
-      );
+      }, timeout);
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final choices = json['choices'] as List<dynamic>? ?? const [];
       if (choices.isEmpty) return null;
-      final content = (((choices.first as Map<String, dynamic>)['message']
-                  as Map<String, dynamic>?)?['content'] ??
-              '{}')
-          .toString();
+      final content =
+          (((choices.first as Map<String, dynamic>)['message']
+                      as Map<String, dynamic>?)?['content'] ??
+                  '{}')
+              .toString();
       return jsonDecode(content) as Map<String, dynamic>;
     } catch (_) {
       return null;
@@ -951,9 +917,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       return value.any(_containsUnsafeGeneratedCopy);
     }
     if (value is! String) return false;
-    final normalized = value
-        .toLowerCase()
-        .replaceAll(RegExp(r'[\u200B-\u200D\u2060\uFEFF]'), '');
+    final normalized = value.toLowerCase().replaceAll(
+      RegExp(r'[\u200B-\u200D\u2060\uFEFF]'),
+      '',
+    );
     return _unsafeGeneratedCopyPhrases.any(normalized.contains);
   }
 }
@@ -962,8 +929,5 @@ class _ProviderTarget {
   final String provider;
   final String endpoint;
 
-  const _ProviderTarget({
-    required this.provider,
-    required this.endpoint,
-  });
+  const _ProviderTarget({required this.provider, required this.endpoint});
 }

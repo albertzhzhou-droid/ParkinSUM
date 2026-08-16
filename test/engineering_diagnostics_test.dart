@@ -27,14 +27,19 @@ void main() {
       expect(report.templateCount, greaterThan(0));
     });
 
-    test('localization lint covers the full dictionary, not just templates',
-        () {
-      final report = lintAllLocalizationSurfaces();
-      expect(report.blockerCount, 0);
-      // Registry-only linting was ~26 surfaces; the dictionary is thousands.
-      expect(report.surfaceCount, greaterThan(1000),
-          reason: 'lint should cover the app dictionary, not only templates');
-    });
+    test(
+      'localization lint covers the full dictionary, not just templates',
+      () {
+        final report = lintAllLocalizationSurfaces();
+        expect(report.blockerCount, 0);
+        // Registry-only linting was ~26 surfaces; the dictionary is thousands.
+        expect(
+          report.surfaceCount,
+          greaterThan(1000),
+          reason: 'lint should cover the app dictionary, not only templates',
+        );
+      },
+    );
 
     test('every shipped language family contributes surfaces', () {
       final surfaces = appDictionarySurfaces();
@@ -53,8 +58,11 @@ void main() {
     testWidgets('renders its checks and the boundary framing', (tester) async {
       // Tall viewport: ListView does not build off-screen children into the
       // element tree, so every card must fit for these finders to see them.
-      await pumpFeaturePage(tester, const EngineeringDiagnosticsPage(),
-          surfaceSize: const Size(1170, 5200));
+      await pumpFeaturePage(
+        tester,
+        const EngineeringDiagnosticsPage(),
+        surfaceSize: const Size(1170, 5200),
+      );
       // The checks run in a post-frame callback.
       await tester.pump();
       expectNoWidgetErrors(reason: 'diagnostics page failed to build');
@@ -74,8 +82,11 @@ void main() {
     });
 
     testWidgets('reports pass when the gates are clean', (tester) async {
-      await pumpFeaturePage(tester, const EngineeringDiagnosticsPage(),
-          surfaceSize: const Size(1170, 5200));
+      await pumpFeaturePage(
+        tester,
+        const EngineeringDiagnosticsPage(),
+        surfaceSize: const Size(1170, 5200),
+      );
       await tester.pump();
       // A clean tree should show no blocker/error labels anywhere.
       expect(find.textContaining('blocker'), findsNothing);
@@ -83,8 +94,9 @@ void main() {
       expect(find.text('pass'), findsWidgets);
     });
 
-    testWidgets('diagnostics copy contains no banned prescriptive phrases',
-        (tester) async {
+    testWidgets('diagnostics copy contains no banned prescriptive phrases', (
+      tester,
+    ) async {
       for (final tag in const ['en-US', 'zh-CN', 'fr-FR', 'ja-JP']) {
         final i18n = AppI18n.fromLocaleTag(tag);
         for (final key in const [
@@ -95,8 +107,11 @@ void main() {
         ]) {
           final value = i18n.tr(key);
           expect(value, isNot(key), reason: '$key unresolved for $tag');
-          expect(findBannedSubstrings(value), isEmpty,
-              reason: '$key ($tag) contains banned copy');
+          expect(
+            findBannedSubstrings(value),
+            isEmpty,
+            reason: '$key ($tag) contains banned copy',
+          );
         }
       }
     });

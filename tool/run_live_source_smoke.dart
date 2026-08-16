@@ -28,17 +28,16 @@ Future<void> main(List<String> args) async {
     stdout
       ..writeln('Live source smoke: SKIPPED (opt-in).')
       ..writeln('Set PARKINSUM_ENABLE_LIVE_SOURCE_SMOKE=1 to enable.')
-      ..writeln('No network was contacted. Educational prototype; no clinical '
-          'advice is ever fetched. Source license/terms review is still '
-          'required before any production use.');
+      ..writeln(
+        'No network was contacted. Educational prototype; no clinical '
+        'advice is ever fetched. Source license/terms review is still '
+        'required before any production use.',
+      );
     exit(0);
   }
 
   // Enabled path: run the (network) smoke. Real transport lives here only.
-  final summary = await runLiveSourceSmoke(
-    source: source,
-    enabled: true,
-  );
+  final summary = await runLiveSourceSmoke(source: source, enabled: true);
   stdout.writeln(summary.toRedactedString());
   exit(summary.ok ? 0 : 1);
 }

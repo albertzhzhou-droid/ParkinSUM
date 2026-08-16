@@ -46,12 +46,16 @@ class MechanisticConflictTraceCard extends StatelessWidget {
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        title: Text(sectionTitle,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Text(
+          sectionTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         subtitle: Text(
           'Interaction score ${view.scoreText} · severity ${view.severityLabel} · confidence ${view.confidenceLabel}',
-          style:
-              const TextStyle(color: LiquidGlass.onSurfaceMuted, fontSize: 12),
+          style: const TextStyle(
+            color: LiquidGlass.onSurfaceMuted,
+            fontSize: 12,
+          ),
         ),
         children: [_TraceBody(view: view)],
       ),
@@ -77,16 +81,20 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(score.candidateName,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                child: Text(
+                  score.candidateName,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ),
               _BandChip(label: 'conf ${view.confidenceLabel}'),
             ],
           ),
           const SizedBox(height: 6),
           if (view.insufficientContext)
-            Text(view.firstExplanationLine,
-                style: const TextStyle(color: LiquidGlass.onSurfaceMuted))
+            Text(
+              view.firstExplanationLine,
+              style: const TextStyle(color: LiquidGlass.onSurfaceMuted),
+            )
           else ...[
             Wrap(
               spacing: 6,
@@ -98,21 +106,26 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
                 _BandChip(label: 'samples ${view.sampleCount}'),
                 _BandChip(label: 'protein-window ${view.proteinWindowRole}'),
                 _BandChip(
-                    label: 'redistribution ${view.redistributionPctText}'),
+                  label: 'redistribution ${view.redistributionPctText}',
+                ),
                 _BandChip(label: 'aa-mode ${view.aminoAcidDataMode}'),
                 _BandChip(label: 'src ${view.sourceSystem}'),
               ],
             ),
             const SizedBox(height: 6),
-            Text(view.firstExplanationLine,
-                style: const TextStyle(fontSize: 13)),
+            Text(
+              view.firstExplanationLine,
+              style: const TextStyle(fontSize: 13),
+            ),
           ],
           const SizedBox(height: 6),
-          Text(score.notAdviceText,
-              style: const TextStyle(
-                fontSize: 11,
-                color: LiquidGlass.onSurfaceMuted,
-              )),
+          Text(
+            score.notAdviceText,
+            style: const TextStyle(
+              fontSize: 11,
+              color: LiquidGlass.onSurfaceMuted,
+            ),
+          ),
         ],
       ),
     );
@@ -128,50 +141,80 @@ class _TraceBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(spacing: 6, runSpacing: 6, children: [
-          _BandChip(label: 'score ${view.scoreText}'),
-          _BandChip(label: 'severity ${view.severityLabel}'),
-          _BandChip(label: 'confidence ${view.confidenceLabel}'),
-        ]),
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            _BandChip(label: 'score ${view.scoreText}'),
+            _BandChip(label: 'severity ${view.severityLabel}'),
+            _BandChip(label: 'confidence ${view.confidenceLabel}'),
+          ],
+        ),
         const SizedBox(height: 10),
         if (view.primaryDrivers.isNotEmpty) ...[
-          const Text('Primary modeled drivers',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Primary modeled drivers',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 4),
-          Text(view.primaryDrivers.join(', '),
-              style: const TextStyle(fontSize: 12)),
+          Text(
+            view.primaryDrivers.join(', '),
+            style: const TextStyle(fontSize: 12),
+          ),
           const SizedBox(height: 10),
         ],
         if (view.modeledWindowsLabel.isNotEmpty) ...[
-          const Text('Modeled timeline windows',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Modeled timeline windows',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 4),
           Text(view.modeledWindowsLabel, style: const TextStyle(fontSize: 12)),
           const SizedBox(height: 10),
         ],
         if (view.missingInputs.isNotEmpty) ...[
-          const Text('Missing or uncertain inputs',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          const Text(
+            'Missing or uncertain inputs',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
           const SizedBox(height: 4),
-          Text(view.missingInputs.take(3).join(', '),
-              style: const TextStyle(fontSize: 12)),
+          Text(
+            view.missingInputs.take(3).join(', '),
+            style: const TextStyle(fontSize: 12),
+          ),
           const SizedBox(height: 10),
         ],
-        Text(view.limitationText,
-            style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted)),
+        Text(
+          view.limitationText,
+          style: const TextStyle(
+            fontSize: 11,
+            color: LiquidGlass.onSurfaceMuted,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(view.safetyBoundary,
-            style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted)),
+        Text(
+          view.safetyBoundary,
+          style: const TextStyle(
+            fontSize: 11,
+            color: LiquidGlass.onSurfaceMuted,
+          ),
+        ),
         const SizedBox(height: 4),
-        Text(view.notAdviceText,
-            style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted)),
+        Text(
+          view.notAdviceText,
+          style: const TextStyle(
+            fontSize: 11,
+            color: LiquidGlass.onSurfaceMuted,
+          ),
+        ),
         const SizedBox(height: 10),
-        Text(view.sourceRefsLabel,
-            style: const TextStyle(
-                fontSize: 11, color: LiquidGlass.onSurfaceMuted)),
+        Text(
+          view.sourceRefsLabel,
+          style: const TextStyle(
+            fontSize: 11,
+            color: LiquidGlass.onSurfaceMuted,
+          ),
+        ),
       ],
     );
   }
@@ -307,7 +350,8 @@ class MechanisticCandidateScoreViewModel {
   });
 
   factory MechanisticCandidateScoreViewModel.fromScore(
-      MechanisticCandidateScore score) {
+    MechanisticCandidateScore score,
+  ) {
     String pct(double v) => '${(v * 100).toStringAsFixed(0)}%';
     final firstLine = score.explanation.isEmpty ? '' : score.explanation.first;
     return MechanisticCandidateScoreViewModel(
@@ -319,8 +363,13 @@ class MechanisticCandidateScoreViewModel {
       proteinWindowRole:
           score.proteinDistribution?.windowRole.name ?? 'unknown',
       redistributionPctText: pct(score.proteinRedistributionScore),
-      aminoAcidDataMode: score.upstreamResult?.competitionTimeline?.lnaaSummary
-              ?.dataMode.name ??
+      aminoAcidDataMode:
+          score
+              .upstreamResult
+              ?.competitionTimeline
+              ?.lnaaSummary
+              ?.dataMode
+              .name ??
           'unknown',
       sourceSystem: score.sourceSystem,
       firstExplanationLine: firstLine,

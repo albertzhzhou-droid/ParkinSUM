@@ -65,7 +65,8 @@ const List<String> _detectorDefinitionFiles = [
 ];
 
 final RegExp _textFile = RegExp(
-    r'\.(dart|md|json|ya?ml|txt|html|css|js|mjs|ts|gradle|kts|plist|xml|properties|sh|cff|toml)$');
+  r'\.(dart|md|json|ya?ml|txt|html|css|js|mjs|ts|gradle|kts|plist|xml|properties|sh|cff|toml)$',
+);
 
 bool _looksBinary(String path) =>
     !_textFile.hasMatch(path) &&
@@ -92,11 +93,13 @@ List<String> _collectPaths() {
     // fall through to a tree walk
   }
   final paths = <String>[];
-  for (final entity
-      in Directory('.').listSync(recursive: true, followLinks: false)) {
+  for (final entity in Directory(
+    '.',
+  ).listSync(recursive: true, followLinks: false)) {
     if (entity is! File) continue;
-    var rel =
-        entity.path.startsWith('./') ? entity.path.substring(2) : entity.path;
+    var rel = entity.path.startsWith('./')
+        ? entity.path.substring(2)
+        : entity.path;
     rel = rel.replaceAll('\\', '/');
     if (_skipDirs.any((d) => rel == d || rel.startsWith('$d/'))) continue;
     paths.add(rel);
@@ -111,13 +114,15 @@ void main(List<String> args) {
   // Report top-level generated/local dirs (WARN) if present (informational).
   for (final d in _generatedDirsToReport) {
     if (Directory(d).existsSync()) {
-      targets.add(LocalPrivacyScanTarget(
-        path: '$d/',
-        kind: 'directory',
-        sizeBytes: 0,
-        included: false,
-        skipReason: 'generated_or_local_dir',
-      ));
+      targets.add(
+        LocalPrivacyScanTarget(
+          path: '$d/',
+          kind: 'directory',
+          sizeBytes: 0,
+          included: false,
+          skipReason: 'generated_or_local_dir',
+        ),
+      );
     }
   }
 
@@ -127,55 +132,65 @@ void main(List<String> args) {
     if (!file.existsSync()) continue;
     final size = file.lengthSync();
     if (_detectorDefinitionFiles.contains(rel)) {
-      targets.add(LocalPrivacyScanTarget(
-        path: rel,
-        kind: 'file',
-        sizeBytes: size,
-        included: false,
-        skipReason: 'detector_definition_or_test_fixture',
-      ));
+      targets.add(
+        LocalPrivacyScanTarget(
+          path: rel,
+          kind: 'file',
+          sizeBytes: size,
+          included: false,
+          skipReason: 'detector_definition_or_test_fixture',
+        ),
+      );
       continue;
     }
     if (_looksBinary(rel)) {
-      targets.add(LocalPrivacyScanTarget(
-        path: rel,
-        kind: 'binary',
-        sizeBytes: size,
-        included: false,
-        skipReason: 'binary_or_non_text',
-      ));
+      targets.add(
+        LocalPrivacyScanTarget(
+          path: rel,
+          kind: 'binary',
+          sizeBytes: size,
+          included: false,
+          skipReason: 'binary_or_non_text',
+        ),
+      );
       continue;
     }
     if (size > _maxScanBytes) {
-      targets.add(LocalPrivacyScanTarget(
-        path: rel,
-        kind: 'file',
-        sizeBytes: size,
-        included: false,
-        skipReason: 'too_large',
-      ));
+      targets.add(
+        LocalPrivacyScanTarget(
+          path: rel,
+          kind: 'file',
+          sizeBytes: size,
+          included: false,
+          skipReason: 'too_large',
+        ),
+      );
       continue;
     }
     String content;
     try {
       content = file.readAsStringSync();
     } catch (_) {
-      targets.add(LocalPrivacyScanTarget(
-        path: rel,
-        kind: 'binary',
-        sizeBytes: size,
-        included: false,
-        skipReason: 'unreadable_as_text',
-      ));
+      targets.add(
+        LocalPrivacyScanTarget(
+          path: rel,
+          kind: 'binary',
+          sizeBytes: size,
+          included: false,
+          skipReason: 'unreadable_as_text',
+        ),
+      );
       continue;
     }
-    targets.add(LocalPrivacyScanTarget(
-      path: rel,
-      kind: 'file',
-      sizeBytes: size,
-      included: true,
-      content: content,
-    ));
+    targets.add(
+      LocalPrivacyScanTarget(
+        path: rel,
+        kind: 'file',
+        sizeBytes: size,
+        included: true,
+        content: content,
+      ),
+    );
   }
 
   // Deterministic ordering by path.
@@ -188,26 +203,33 @@ void main(List<String> args) {
 
   final outDir = Directory('build/local_privacy_preflight');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeLocalPrivacyReport(report));
-  File('${outDir.path}/latest.md')
-      .writeAsStringSync(renderLocalPrivacyMarkdown(report));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeLocalPrivacyReport(report));
+  File(
+    '${outDir.path}/latest.md',
+  ).writeAsStringSync(renderLocalPrivacyMarkdown(report));
 
   stdout
-    ..writeln('Local privacy preflight: ${report.scannedFiles} scanned, '
-        '${report.skippedFiles} skipped — '
-        'info=${report.counts['info'] ?? 0} '
-        'warn=${report.counts['warn'] ?? 0} '
-        'blocker=${report.blockerCount} (pass=${report.pass}).')
+    ..writeln(
+      'Local privacy preflight: ${report.scannedFiles} scanned, '
+      '${report.skippedFiles} skipped — '
+      'info=${report.counts['info'] ?? 0} '
+      'warn=${report.counts['warn'] ?? 0} '
+      'blocker=${report.blockerCount} (pass=${report.pass}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   // Print the blocker lines for quick triage.
   if (!report.pass) {
     stderr.writeln('BLOCKER findings:');
-    for (final fnd in report.findings
-        .where((x) => x.severity == LocalPrivacySeverity.blocker)) {
-      stderr.writeln('  - ${fnd.findingType} @ ${fnd.file}:${fnd.line} '
-          '(${fnd.matchedText})');
+    for (final fnd in report.findings.where(
+      (x) => x.severity == LocalPrivacySeverity.blocker,
+    )) {
+      stderr.writeln(
+        '  - ${fnd.findingType} @ ${fnd.file}:${fnd.line} '
+        '(${fnd.matchedText})',
+      );
     }
   }
   exitCode = report.pass ? 0 : 1;

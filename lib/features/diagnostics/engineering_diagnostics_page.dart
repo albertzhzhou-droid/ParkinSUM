@@ -51,14 +51,18 @@ class _EngineeringDiagnosticsPageState
     // 1 — Explanation copy compiler (P6).
     try {
       final report = compileRegistryWithSamples();
-      results.add(_Check(
-        title: 'Explanation copy compiler',
-        summary: '${report.compiledCount}/${report.templateCount} templates '
-            'compiled',
-        detail: 'Validates placeholders, required safety terms and banned '
-            'prescriptive phrasing across the safe-copy registry.',
-        blockers: report.blockerCount,
-      ));
+      results.add(
+        _Check(
+          title: 'Explanation copy compiler',
+          summary:
+              '${report.compiledCount}/${report.templateCount} templates '
+              'compiled',
+          detail:
+              'Validates placeholders, required safety terms and banned '
+              'prescriptive phrasing across the safe-copy registry.',
+          blockers: report.blockerCount,
+        ),
+      );
     } catch (e) {
       results.add(_Check.error('Explanation copy compiler', e));
     }
@@ -66,13 +70,16 @@ class _EngineeringDiagnosticsPageState
     // 2 — Localization safety lint (P7), registry + full app dictionary.
     try {
       final report = lintAllLocalizationSurfaces();
-      results.add(_Check(
-        title: 'Localization safety lint',
-        summary: '${report.surfaceCount} surfaces scanned',
-        detail: 'Every shipped string across all language families is checked '
-            'for prescriptive or over-assertive phrasing.',
-        blockers: report.blockerCount,
-      ));
+      results.add(
+        _Check(
+          title: 'Localization safety lint',
+          summary: '${report.surfaceCount} surfaces scanned',
+          detail:
+              'Every shipped string across all language families is checked '
+              'for prescriptive or over-assertive phrasing.',
+          blockers: report.blockerCount,
+        ),
+      );
     } catch (e) {
       results.add(_Check.error('Localization safety lint', e));
     }
@@ -80,27 +87,34 @@ class _EngineeringDiagnosticsPageState
     // 3 — Deterministic mechanistic replay.
     try {
       final report = MechanisticReplayRunner().run();
-      results.add(_Check(
-        title: 'Mechanistic replay',
-        summary: '${report.passedCount}/${report.totalCount} synthetic '
-            'scenarios passed',
-        detail: 'Fixed synthetic scenarios replayed through the deterministic '
-            'engine; output is compared against recorded expectations.',
-        blockers: report.totalCount - report.passedCount,
-      ));
+      results.add(
+        _Check(
+          title: 'Mechanistic replay',
+          summary:
+              '${report.passedCount}/${report.totalCount} synthetic '
+              'scenarios passed',
+          detail:
+              'Fixed synthetic scenarios replayed through the deterministic '
+              'engine; output is compared against recorded expectations.',
+          blockers: report.totalCount - report.passedCount,
+        ),
+      );
     } catch (e) {
       results.add(_Check.error('Mechanistic replay', e));
     }
 
     // 4 — Registry inventory (no pass/fail; context for the checks above).
     const registry = SafeCopyTemplateRegistry();
-    results.add(_Check(
-      title: 'Safe-copy template registry',
-      summary: '${registry.templates.length} governed templates',
-      detail: 'Boundary and rule-finding copy resolved through the compiler '
-          'rather than hard-coded at each call site.',
-      blockers: 0,
-    ));
+    results.add(
+      _Check(
+        title: 'Safe-copy template registry',
+        summary: '${registry.templates.length} governed templates',
+        detail:
+            'Boundary and rule-finding copy resolved through the compiler '
+            'rather than hard-coded at each call site.',
+        blockers: 0,
+      ),
+    );
 
     sw.stop();
     if (!mounted) return;
@@ -217,8 +231,8 @@ class _CheckCard extends StatelessWidget {
     final label = check.failed
         ? 'error'
         : check.blockers == 0
-            ? 'pass'
-            : '${check.blockers} blocker${check.blockers == 1 ? '' : 's'}';
+        ? 'pass'
+        : '${check.blockers} blocker${check.blockers == 1 ? '' : 's'}';
 
     return GlassCard(
       padding: const EdgeInsets.all(14),
@@ -261,10 +275,7 @@ class _CheckCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             check.summary,
-            style: const TextStyle(
-              fontSize: 13,
-              color: LiquidGlass.onSurface,
-            ),
+            style: const TextStyle(fontSize: 13, color: LiquidGlass.onSurface),
           ),
           const SizedBox(height: 4),
           Text(
@@ -297,10 +308,10 @@ class _Check {
   });
 
   factory _Check.error(String title, Object error) => _Check(
-        title: title,
-        summary: 'Check could not run',
-        detail: '$error',
-        blockers: 0,
-        failed: true,
-      );
+    title: title,
+    summary: 'Check could not run',
+    detail: '$error',
+    blockers: 0,
+    failed: true,
+  );
 }

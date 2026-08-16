@@ -27,8 +27,11 @@ void main() {
   Future<void> smoke(WidgetTester tester, Widget page, String label) async {
     await pumpFeaturePage(tester, page);
     expectNoWidgetErrors(reason: '$label failed to build cleanly');
-    expect(find.byType(page.runtimeType), findsOneWidget,
-        reason: '$label did not render');
+    expect(
+      find.byType(page.runtimeType),
+      findsOneWidget,
+      reason: '$label did not render',
+    );
   }
 
   testWidgets('DashboardPage builds', (t) async {
@@ -63,8 +66,9 @@ void main() {
     await smoke(t, const AuthPage(), 'AuthPage');
   });
 
-  testWidgets('PrivacyDisclaimerPage builds and keeps its boundary copy',
-      (t) async {
+  testWidgets('PrivacyDisclaimerPage builds and keeps its boundary copy', (
+    t,
+  ) async {
     await smoke(t, const PrivacyDisclaimerPage(), 'PrivacyDisclaimerPage');
     // This page exists to carry the educational boundary; an empty render
     // would be a silent safety regression.

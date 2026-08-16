@@ -143,7 +143,8 @@ const List<SecondarySourceDeclaration> kSecondarySources = [
   SecondarySourceDeclaration(
     dataTier: KnowledgeDataTier.p2,
     sourceFamily: 'KR_RDA_FOOD_COMPOSITION',
-    organization: 'Rural Development Administration / National Institute of '
+    organization:
+        'Rural Development Administration / National Institute of '
         'Agricultural Sciences (Korea)',
     jurisdiction: 'KR',
     landingUrl: 'https://koreanfood.rda.go.kr/',
@@ -172,7 +173,8 @@ const List<SecondarySourceDeclaration> kSecondarySources = [
   SecondarySourceDeclaration(
     dataTier: KnowledgeDataTier.p2,
     sourceFamily: 'IN_IFCT_NIN',
-    organization: 'National Institute of Nutrition / Indian Council of Medical '
+    organization:
+        'National Institute of Nutrition / Indian Council of Medical '
         'Research (Indian Food Composition Tables)',
     jurisdiction: 'IN',
     landingUrl: 'https://www.nin.res.in/',
@@ -194,7 +196,8 @@ const List<SecondarySourceDeclaration> kSecondarySources = [
     docType: 'drug_regulator_landing',
     language: 'es',
     licenseNote: 'Spanish public agency; reuse per AEMPS terms.',
-    tierRationale: 'Spanish drug regulator; landing-page-only entry. EMA still '
+    tierRationale:
+        'Spanish drug regulator; landing-page-only entry. EMA still '
         'authoritative for centralised products.',
   ),
   SecondarySourceDeclaration(
@@ -271,7 +274,8 @@ const List<SecondarySourceDeclaration> kSecondarySources = [
   SecondarySourceDeclaration(
     dataTier: KnowledgeDataTier.p1,
     sourceFamily: 'RU_ROSZDRAVNADZOR',
-    organization: 'Roszdravnadzor (Federal Service for Surveillance in '
+    organization:
+        'Roszdravnadzor (Federal Service for Surveillance in '
         'Healthcare, Russia)',
     jurisdiction: 'RU',
     landingUrl: 'https://roszdravnadzor.gov.ru/',

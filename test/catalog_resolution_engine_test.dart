@@ -24,22 +24,21 @@ void main() {
     String? sourceFoodCode = 'F-CODE',
     String jurisdiction = 'GLOBAL',
     String? basisType = 'per_100g',
-  }) =>
-      FoodItem(
-        id: id,
-        name: name,
-        category: category,
-        aliases: aliases,
-        sourceSystem: sourceSystem,
-        sourceFoodCode: sourceFoodCode,
-        jurisdiction: jurisdiction,
-        basisType: basisType,
-        proteinG: 1,
-        carbsG: 10,
-        fatG: 1,
-        fiberG: 0,
-        sodiumMg: 5,
-      );
+  }) => FoodItem(
+    id: id,
+    name: name,
+    category: category,
+    aliases: aliases,
+    sourceSystem: sourceSystem,
+    sourceFoodCode: sourceFoodCode,
+    jurisdiction: jurisdiction,
+    basisType: basisType,
+    proteinG: 1,
+    carbsG: 10,
+    fatG: 1,
+    fiberG: 0,
+    sodiumMg: 5,
+  );
 
   DrugDefinition drug(
     String id,
@@ -50,50 +49,66 @@ void main() {
     String? code = 'SPL-CODE',
     String jurisdiction = 'US',
     String sourceSystem = 'DAILYMED',
-  }) =>
-      DrugDefinition(
-        id: id,
-        genericName: generic,
-        brandNames: brands,
-        aliases: aliases,
-        tags: const [DrugTag.levodopaLike],
-        notes: '',
-        sourceSystem: sourceSystem,
-        sourceProductCode: code,
-        jurisdiction: jurisdiction,
-        route: 'oral',
-        dosageForm: 'tablet',
-        releaseType: releaseType,
-      );
+  }) => DrugDefinition(
+    id: id,
+    genericName: generic,
+    brandNames: brands,
+    aliases: aliases,
+    tags: const [DrugTag.levodopaLike],
+    notes: '',
+    sourceSystem: sourceSystem,
+    sourceProductCode: code,
+    jurisdiction: jurisdiction,
+    route: 'oral',
+    dosageForm: 'tablet',
+    releaseType: releaseType,
+  );
 
   // Standard synthetic catalogs.
-  final milkTea =
-      food('f-milktea', 'Milk Tea', aliases: const ['bubble tea', '奶茶']);
+  final milkTea = food(
+    'f-milktea',
+    'Milk Tea',
+    aliases: const ['bubble tea', '奶茶'],
+  );
   final greenTea = food('f-green', 'Green Tea');
   final blackTea = food('f-black', 'Black Tea');
-  final proteinShake =
-      food('f-shake', 'Protein Shake', category: FoodCategory.protein);
+  final proteinShake = food(
+    'f-shake',
+    'Protein Shake',
+    category: FoodCategory.protein,
+  );
   final foods = [milkTea, greenTea, blackTea, proteinShake];
 
   final levodopaMono = drug('d-ldopa', 'levodopa', code: 'SPL-001');
-  final sinemetIR = drug('d-sinemet-ir', 'carbidopa/levodopa',
-      brands: const ['Sinemet'], releaseType: 'immediate', code: 'SPL-002');
-  final sinemetCR = drug('d-sinemet-cr', 'carbidopa/levodopa',
-      brands: const ['Sinemet CR'], releaseType: 'controlled', code: 'SPL-003');
+  final sinemetIR = drug(
+    'd-sinemet-ir',
+    'carbidopa/levodopa',
+    brands: const ['Sinemet'],
+    releaseType: 'immediate',
+    code: 'SPL-002',
+  );
+  final sinemetCR = drug(
+    'd-sinemet-cr',
+    'carbidopa/levodopa',
+    brands: const ['Sinemet CR'],
+    releaseType: 'controlled',
+    code: 'SPL-003',
+  );
   final drugs = [levodopaMono, sinemetIR, sinemetCR];
 
-  CatalogResolutionResult resolve(String q,
-          {List<FoodItem>? f,
-          List<DrugDefinition>? d,
-          String jurisdiction = '',
-          String locale = ''}) =>
-      engine.resolve(
-        query: q,
-        foods: f ?? foods,
-        drugs: d ?? drugs,
-        jurisdiction: jurisdiction,
-        locale: locale,
-      );
+  CatalogResolutionResult resolve(
+    String q, {
+    List<FoodItem>? f,
+    List<DrugDefinition>? d,
+    String jurisdiction = '',
+    String locale = '',
+  }) => engine.resolve(
+    query: q,
+    foods: f ?? foods,
+    drugs: d ?? drugs,
+    jurisdiction: jurisdiction,
+    locale: locale,
+  );
 
   // 1 — exact food name → high confidence.
   test('exact food name resolves with high confidence', () {
@@ -101,7 +116,9 @@ void main() {
     expect(r.status, CatalogResolutionStatus.resolved);
     expect(r.bestCandidate!.matchType, CatalogResolutionMatchType.exactName);
     expect(
-        r.bestCandidate!.confidenceBand, CatalogResolutionConfidenceBand.high);
+      r.bestCandidate!.confidenceBand,
+      CatalogResolutionConfidenceBand.high,
+    );
     expect(r.domain, CatalogResolutionDomain.food);
   });
 
@@ -110,7 +127,9 @@ void main() {
     final r = resolve('奶茶', d: const []);
     expect(r.bestCandidate!.foodItemId, 'f-milktea');
     expect(
-        r.bestCandidate!.matchType, CatalogResolutionMatchType.localizedName);
+      r.bestCandidate!.matchType,
+      CatalogResolutionMatchType.localizedName,
+    );
     final json = encodeCatalogResolution(r).toLowerCase();
     expect(json.contains('eat this'), isFalse);
     expect(json.contains('recommended'), isFalse);
@@ -144,7 +163,9 @@ void main() {
     expect(r.bestCandidate!.drugProductId, 'd-ldopa');
     expect(r.bestCandidate!.matchType, CatalogResolutionMatchType.exactName);
     expect(
-        r.bestCandidate!.confidenceBand, CatalogResolutionConfidenceBand.high);
+      r.bestCandidate!.confidenceBand,
+      CatalogResolutionConfidenceBand.high,
+    );
   });
 
   // 7 — brand drug name → source-backed product candidate.
@@ -156,31 +177,42 @@ void main() {
   });
 
   // 8 — generic active ingredient with non-specific variant → partial/ambiguous.
-  test('generic ingredient with non-specific variants is partial/ambiguous',
-      () {
-    final r = resolve('levodopa', f: const [], d: [sinemetIR, sinemetCR]);
-    expect(
-        [CatalogResolutionStatus.partial, CatalogResolutionStatus.ambiguous]
-            .contains(r.status),
-        isTrue);
-  });
+  test(
+    'generic ingredient with non-specific variants is partial/ambiguous',
+    () {
+      final r = resolve('levodopa', f: const [], d: [sinemetIR, sinemetCR]);
+      expect(
+        [
+          CatalogResolutionStatus.partial,
+          CatalogResolutionStatus.ambiguous,
+        ].contains(r.status),
+        isTrue,
+      );
+    },
+  );
 
   // 9 — combination product query preserves components.
   test('combination product query preserves components', () {
     final r = resolve('carbidopa levodopa 25/100', f: const []);
-    expect(r.bestCandidate!.matchType,
-        CatalogResolutionMatchType.combinationProduct);
-    expect(r.bestCandidate!.combinationComponents,
-        containsAll(<String>['carbidopa', 'levodopa']));
+    expect(
+      r.bestCandidate!.matchType,
+      CatalogResolutionMatchType.combinationProduct,
+    );
+    expect(
+      r.bestCandidate!.combinationComponents,
+      containsAll(<String>['carbidopa', 'levodopa']),
+    );
   });
 
   // 10 — release type hint distinguishes IR vs CR candidate.
   test('release type hint distinguishes IR vs CR', () {
     final r = resolve('levodopa cr', f: const [], d: [sinemetIR, sinemetCR]);
-    final cr =
-        r.candidates.firstWhere((c) => c.drugProductId == 'd-sinemet-cr');
-    final ir =
-        r.candidates.firstWhere((c) => c.drugProductId == 'd-sinemet-ir');
+    final cr = r.candidates.firstWhere(
+      (c) => c.drugProductId == 'd-sinemet-cr',
+    );
+    final ir = r.candidates.firstWhere(
+      (c) => c.drugProductId == 'd-sinemet-ir',
+    );
     expect(cr.confidence, greaterThan(ir.confidence));
     expect(cr.releaseTypeSource, contains('match'));
   });
@@ -199,8 +231,9 @@ void main() {
     final baseConf = base.candidates
         .firstWhere((c) => c.drugProductId == 'd-ldopa')
         .confidence;
-    final jpCand =
-        jp.candidates.firstWhere((c) => c.drugProductId == 'd-ldopa');
+    final jpCand = jp.candidates.firstWhere(
+      (c) => c.drugProductId == 'd-ldopa',
+    );
     expect(jpCand.confidence, lessThan(baseConf));
     expect(jpCand.ambiguityWarnings.contains('jurisdiction_mismatch'), isTrue);
   });
@@ -208,8 +241,11 @@ void main() {
   // 13 — missing sourceRefs lowers confidence.
   test('missing sourceRefs lowers confidence', () {
     final withSrc = resolve('levodopa', f: const [], d: [levodopaMono]);
-    final noSrc = resolve('levodopa',
-        f: const [], d: [drug('d-nosrc', 'levodopa', code: null)]);
+    final noSrc = resolve(
+      'levodopa',
+      f: const [],
+      d: [drug('d-nosrc', 'levodopa', code: null)],
+    );
     final a = withSrc.bestCandidate!.confidence;
     final b = noSrc.bestCandidate!;
     expect(b.confidence, lessThan(a));
@@ -220,15 +256,20 @@ void main() {
   test('fuzzy token-only match is not high confidence', () {
     final r = resolve('tea matcha latte', d: const []);
     if (r.bestCandidate != null) {
-      expect(r.bestCandidate!.confidenceBand,
-          isNot(CatalogResolutionConfidenceBand.high));
+      expect(
+        r.bestCandidate!.confidenceBand,
+        isNot(CatalogResolutionConfidenceBand.high),
+      );
     }
   });
 
   // 15 — multiple close candidates → ambiguous.
   test('multiple close candidates produce ambiguous status', () {
-    final r =
-        resolve('carbidopa levodopa', f: const [], d: [sinemetIR, sinemetCR]);
+    final r = resolve(
+      'carbidopa levodopa',
+      f: const [],
+      d: [sinemetIR, sinemetCR],
+    );
     expect(r.status, CatalogResolutionStatus.ambiguous);
   });
 
@@ -246,10 +287,11 @@ void main() {
   // 17 — no advice phrases emitted.
   test('no advice phrases emitted', () {
     final banned = RegExp(
-        r'choose this food|eat this|take this medication|switch to this '
-        r'medication|use this dose|recommended dose|recommended timing|'
-        r'adjust your dose|safe for you|confirmed safe|clinically validated',
-        caseSensitive: false);
+      r'choose this food|eat this|take this medication|switch to this '
+      r'medication|use this dose|recommended dose|recommended timing|'
+      r'adjust your dose|safe for you|confirmed safe|clinically validated',
+      caseSensitive: false,
+    );
     for (final q in [
       'milk tea',
       '奶茶',
@@ -257,18 +299,23 @@ void main() {
       'Sinemet',
       'carbidopa levodopa 25/100',
       'levodopa cr',
-      'unknown_xyz'
+      'unknown_xyz',
     ]) {
-      expect(banned.hasMatch(encodeCatalogResolution(resolve(q))), isFalse,
-          reason: 'advice phrase leaked for "$q"');
+      expect(
+        banned.hasMatch(encodeCatalogResolution(resolve(q))),
+        isFalse,
+        reason: 'advice phrase leaked for "$q"',
+      );
     }
   });
 
   // 18 — no PHI / patient / subject / encounter keys emitted.
   test('no PHI/patient/subject/encounter keys emitted', () {
-    final decoded = jsonDecode(
-            encodeCatalogResolution(resolve('carbidopa levodopa 25/100')))
-        as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(
+              encodeCatalogResolution(resolve('carbidopa levodopa 25/100')),
+            )
+            as Map<String, dynamic>;
     scanNoPhiKeys(decoded);
   });
 
@@ -287,8 +334,12 @@ void main() {
 
   // 21 — mixed food/drug query handled safely.
   test('mixed food/drug query is mixed/ambiguous', () {
-    final weird = drug('d-weird', 'placeholder generic',
-        aliases: const ['protein shake'], code: 'SPL-W');
+    final weird = drug(
+      'd-weird',
+      'placeholder generic',
+      aliases: const ['protein shake'],
+      code: 'SPL-W',
+    );
     final r = resolve('protein shake', d: [weird]);
     expect(r.domain, CatalogResolutionDomain.mixed);
     expect(r.status, CatalogResolutionStatus.ambiguous);
@@ -304,10 +355,18 @@ void main() {
 
   // 23 — synthetic seed source is not treated as official.
   test('synthetic seed source is not treated as official', () {
-    final seed = food('f-seed', 'Seed Snack',
-        sourceSystem: 'LOCAL_SEED', sourceFoodCode: 'S-1');
-    final official = food('f-off', 'Official Snack',
-        sourceSystem: 'USDA_FDC', sourceFoodCode: 'U-1');
+    final seed = food(
+      'f-seed',
+      'Seed Snack',
+      sourceSystem: 'LOCAL_SEED',
+      sourceFoodCode: 'S-1',
+    );
+    final official = food(
+      'f-off',
+      'Official Snack',
+      sourceSystem: 'USDA_FDC',
+      sourceFoodCode: 'U-1',
+    );
     final seedR = resolve('seed snack', f: [seed], d: const []);
     final offR = resolve('official snack', f: [official], d: const []);
     final seedAuth = seedR.bestCandidate!.sourceAuthorityScore!;
@@ -345,12 +404,17 @@ void main() {
 
   // 25 — single-edit typo resolves via the typo-tolerated alias branch.
   test('single-edit typo resolves as typo_tolerated_alias (partial)', () {
-    final banana = food('f-banana', 'Banana',
-        aliases: const ['banana', 'バナナ', 'banane', '香蕉']);
+    final banana = food(
+      'f-banana',
+      'Banana',
+      aliases: const ['banana', 'バナナ', 'banane', '香蕉'],
+    );
     final r = resolve('bananna', f: [banana], d: const []);
     expect(r.bestCandidate, isNotNull);
-    expect(r.bestCandidate!.matchType,
-        CatalogResolutionMatchType.typoToleratedAlias);
+    expect(
+      r.bestCandidate!.matchType,
+      CatalogResolutionMatchType.typoToleratedAlias,
+    );
     expect(r.status, CatalogResolutionStatus.partial);
     expect(r.issues.any((i) => i.issueType == 'typo_tolerated_match'), isTrue);
   });
@@ -360,20 +424,27 @@ void main() {
     final banana = food('f-banana', 'Banana', aliases: const ['banana']);
     final exact = resolve('banana', f: [banana], d: const []);
     final typo = resolve('bananna', f: [banana], d: const []);
-    expect(exact.bestCandidate!.confidence,
-        greaterThan(typo.bestCandidate!.confidence));
+    expect(
+      exact.bestCandidate!.confidence,
+      greaterThan(typo.bestCandidate!.confidence),
+    );
   });
 
   // 27 — Japanese and French aliases resolve for synthetic demo foods.
   test('ja/fr aliases resolve to the same demo food', () {
-    final banana = food('f-banana', 'Banana',
-        aliases: const ['banana', 'バナナ', 'banane', '香蕉']);
+    final banana = food(
+      'f-banana',
+      'Banana',
+      aliases: const ['banana', 'バナナ', 'banane', '香蕉'],
+    );
     final ja = resolve('バナナ', f: [banana], d: const []);
     expect(ja.bestCandidate?.foodItemId, 'f-banana');
     // Kana sits below the engine's CJK detection threshold, so it classifies
     // as an exact (synonym) alias match — never a typo-tolerated one.
-    expect(ja.bestCandidate!.matchType,
-        isNot(CatalogResolutionMatchType.typoToleratedAlias));
+    expect(
+      ja.bestCandidate!.matchType,
+      isNot(CatalogResolutionMatchType.typoToleratedAlias),
+    );
     final fr = resolve('banane', f: [banana], d: const []);
     expect(fr.bestCandidate?.foodItemId, 'f-banana');
   });
@@ -383,9 +454,10 @@ void main() {
     final banana = food('f-banana', 'Banana', aliases: const ['香蕉']);
     final r = resolve('香交', f: [banana], d: const []); // one char off
     expect(
-        r.bestCandidate?.matchType ==
-            CatalogResolutionMatchType.typoToleratedAlias,
-        isFalse);
+      r.bestCandidate?.matchType ==
+          CatalogResolutionMatchType.typoToleratedAlias,
+      isFalse,
+    );
   });
 
   // 29 — gibberish stays unresolved with the explicit no-match issue.

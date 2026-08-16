@@ -67,21 +67,22 @@ class CompetitionLnaaSummary {
   });
 
   Map<String, dynamic> toJson() => {
-        'effective_load_factor': effectiveLoadFactor,
-        'sources_present':
-            sourcesPresent.map((s) => s.name).toList(growable: false),
-        'is_prototype_heuristic': isPrototypeHeuristic,
-        'uncertainty_widened': uncertaintyWidened,
-        'source_refs': sourceRefs,
-        'data_mode': dataMode.name,
-        'amino_acid_nutrient_ids': aminoAcidNutrientIds,
-        'competing_lnaa_grams': competingLnaaGrams,
-        'competing_lnaa_grams_per_serving': competingLnaaGramsPerServing,
-        'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
-        'dose_relative_available': doseRelativeAvailable,
-        'partial_amino_acid_data': partialAminoAcidData,
-        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
-      };
+    'effective_load_factor': effectiveLoadFactor,
+    'sources_present': sourcesPresent
+        .map((s) => s.name)
+        .toList(growable: false),
+    'is_prototype_heuristic': isPrototypeHeuristic,
+    'uncertainty_widened': uncertaintyWidened,
+    'source_refs': sourceRefs,
+    'data_mode': dataMode.name,
+    'amino_acid_nutrient_ids': aminoAcidNutrientIds,
+    'competing_lnaa_grams': competingLnaaGrams,
+    'competing_lnaa_grams_per_serving': competingLnaaGramsPerServing,
+    'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
+    'dose_relative_available': doseRelativeAvailable,
+    'partial_amino_acid_data': partialAminoAcidData,
+    'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+  };
 }
 
 /// Discretized competition-pressure timeline. A single sample is the
@@ -91,8 +92,10 @@ class CompetitionPressureSample {
   final int minute;
   final double pressure; // 0..1, unitless educational proxy
 
-  const CompetitionPressureSample(
-      {required this.minute, required this.pressure});
+  const CompetitionPressureSample({
+    required this.minute,
+    required this.pressure,
+  });
 
   Map<String, dynamic> toJson() => {'minute': minute, 'pressure': pressure};
 }
@@ -123,14 +126,14 @@ class CompetitionPressureTimeline {
   });
 
   Map<String, dynamic> toJson() => {
-        'samples': samples.map((e) => e.toJson()).toList(growable: false),
-        'peak_minute': peakMinute,
-        'peak_pressure': peakPressure,
-        'overlap_with_absorption_window': overlapWithAbsorptionWindow,
-        'competition_band': competitionBand.name,
-        'uncertainty_band': uncertaintyBand.name,
-        'assumptions': assumptions,
-        'source_refs': sourceRefs,
-        'lnaa_summary': lnaaSummary?.toJson(),
-      };
+    'samples': samples.map((e) => e.toJson()).toList(growable: false),
+    'peak_minute': peakMinute,
+    'peak_pressure': peakPressure,
+    'overlap_with_absorption_window': overlapWithAbsorptionWindow,
+    'competition_band': competitionBand.name,
+    'uncertainty_band': uncertaintyBand.name,
+    'assumptions': assumptions,
+    'source_refs': sourceRefs,
+    'lnaa_summary': lnaaSummary?.toJson(),
+  };
 }

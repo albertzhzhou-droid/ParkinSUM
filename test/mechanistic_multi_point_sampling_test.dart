@@ -83,13 +83,15 @@ void main() {
     );
     final ctx = makeCtx(now, window);
     final a = scorer.score(
-        baseContext: ctx,
-        baseMealCompositionsById: const {},
-        candidates: const [banana]);
+      baseContext: ctx,
+      baseMealCompositionsById: const {},
+      candidates: const [banana],
+    );
     final b = scorer.score(
-        baseContext: ctx,
-        baseMealCompositionsById: const {},
-        candidates: const [banana]);
+      baseContext: ctx,
+      baseMealCompositionsById: const {},
+      candidates: const [banana],
+    );
     expect(a.single.sampleCount, b.single.sampleCount);
     expect(a.single.sampleCount, greaterThanOrEqualTo(5));
     expect(a.single.sampleCount, lessThanOrEqualTo(12));
@@ -105,14 +107,21 @@ void main() {
       source: 'test',
     );
     final ctx = makeCtx(now, window);
-    final s = scorer.score(
-        baseContext: ctx,
-        baseMealCompositionsById: const {},
-        candidates: const [banana]).single;
-    expect(s.worstCaseConflictOverlapScore,
-        greaterThanOrEqualTo(s.bestCaseConflictOverlapScore));
-    expect(s.averageConflictOverlapScore,
-        lessThanOrEqualTo(s.worstCaseConflictOverlapScore));
+    final s = scorer
+        .score(
+          baseContext: ctx,
+          baseMealCompositionsById: const {},
+          candidates: const [banana],
+        )
+        .single;
+    expect(
+      s.worstCaseConflictOverlapScore,
+      greaterThanOrEqualTo(s.bestCaseConflictOverlapScore),
+    );
+    expect(
+      s.averageConflictOverlapScore,
+      lessThanOrEqualTo(s.worstCaseConflictOverlapScore),
+    );
     expect(s.sampleCount, s.sampledWindowSummary.length);
   });
 
@@ -126,109 +135,113 @@ void main() {
       source: 'test',
     );
     final ctx = makeCtx(now, window);
-    final s = scorer.score(
-      baseContext: ctx,
-      baseMealCompositionsById: const {},
-      candidates: const [banana],
-    ).single;
+    final s = scorer
+        .score(
+          baseContext: ctx,
+          baseMealCompositionsById: const {},
+          candidates: const [banana],
+        )
+        .single;
     final blob = s.explanation.join(' ').toLowerCase();
     expect(blob.contains('eat at'), isFalse);
     expect(blob.contains('you should'), isFalse);
     expect(findBannedSubstrings(blob), isEmpty);
   });
 
-  test('far-window sampling binds the hypothetical meal instead of history',
-      () {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final start = dateTimeToMinute(now) + 300;
-    final window = UserDefinedMealWindow(
-      window: TimelineWindow(startMinute: start, endMinute: start + 60),
-      source: 'test',
-    );
-    final base = makeCtx(now, window);
-    final historical = MealCompositionNormalizer().normalize(
-      mealId: 'historical',
-      components: const [
-        FoodComponent(
-          id: 'historical_component',
-          name: 'historical meal',
-          physicalForm: MealPhysicalForm.solid,
-          proteinGrams: 3,
-          fatGrams: 1,
-          fiberGrams: 1,
-          carbohydrateGrams: 25,
-          calories: 130,
-          portionGrams: 150,
-          sourceDocId: 'synthetic',
-        ),
-      ],
-    );
-    final ctx = TimeAxisConflictContext(
-      referenceMinute: base.referenceMinute,
-      medicationEvents: base.medicationEvents,
-      mealEvents: [
-        MealTimelineEvent(
-          id: 'historical_meal',
-          minute: dateTimeToMinute(now) - 30,
-          compositionId: historical.id,
-          physicalForm: MealPhysicalForm.solid,
-        ),
-      ],
-      userDefinedWindow: window,
-    );
-    const highProtein = CandidateFood(
-      id: 'high_protein',
-      name: 'high protein',
-      regionalFoodLibraryRef: 'synthetic',
-      declaredPhysicalForm: MealPhysicalForm.solid,
-      components: [
-        FoodComponent(
-          id: 'high',
-          name: 'high protein',
-          physicalForm: MealPhysicalForm.solid,
-          proteinGrams: 40,
-          fatGrams: 4,
-          fiberGrams: 1,
-          carbohydrateGrams: 5,
-          calories: 220,
-          portionGrams: 150,
-          sourceDocId: 'synthetic',
-          aminoAcidProfile: AminoAcidProfile(
-            leucine: 8,
-            basis: 'per_serving',
+  test(
+    'far-window sampling binds the hypothetical meal instead of history',
+    () {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final start = dateTimeToMinute(now) + 300;
+      final window = UserDefinedMealWindow(
+        window: TimelineWindow(startMinute: start, endMinute: start + 60),
+        source: 'test',
+      );
+      final base = makeCtx(now, window);
+      final historical = MealCompositionNormalizer().normalize(
+        mealId: 'historical',
+        components: const [
+          FoodComponent(
+            id: 'historical_component',
+            name: 'historical meal',
+            physicalForm: MealPhysicalForm.solid,
+            proteinGrams: 3,
+            fatGrams: 1,
+            fiberGrams: 1,
+            carbohydrateGrams: 25,
+            calories: 130,
+            portionGrams: 150,
+            sourceDocId: 'synthetic',
           ),
-        ),
-      ],
-    );
+        ],
+      );
+      final ctx = TimeAxisConflictContext(
+        referenceMinute: base.referenceMinute,
+        medicationEvents: base.medicationEvents,
+        mealEvents: [
+          MealTimelineEvent(
+            id: 'historical_meal',
+            minute: dateTimeToMinute(now) - 30,
+            compositionId: historical.id,
+            physicalForm: MealPhysicalForm.solid,
+          ),
+        ],
+        userDefinedWindow: window,
+      );
+      const highProtein = CandidateFood(
+        id: 'high_protein',
+        name: 'high protein',
+        regionalFoodLibraryRef: 'synthetic',
+        declaredPhysicalForm: MealPhysicalForm.solid,
+        components: [
+          FoodComponent(
+            id: 'high',
+            name: 'high protein',
+            physicalForm: MealPhysicalForm.solid,
+            proteinGrams: 40,
+            fatGrams: 4,
+            fiberGrams: 1,
+            carbohydrateGrams: 5,
+            calories: 220,
+            portionGrams: 150,
+            sourceDocId: 'synthetic',
+            aminoAcidProfile: AminoAcidProfile(
+              leucine: 8,
+              basis: 'per_serving',
+            ),
+          ),
+        ],
+      );
 
-    final scores = scorer.score(
-      baseContext: ctx,
-      baseMealCompositionsById: {historical.id: historical},
-      candidates: const [banana, highProtein],
-    );
-    final byId = {for (final score in scores) score.candidateFoodId: score};
+      final scores = scorer.score(
+        baseContext: ctx,
+        baseMealCompositionsById: {historical.id: historical},
+        candidates: const [banana, highProtein],
+      );
+      final byId = {for (final score in scores) score.candidateFoodId: score};
 
-    expect(
-      byId['banana']!.upstreamResult?.primaryEmptyingProfile?.mealId,
-      startsWith('hypothetical_banana_'),
-    );
-    expect(
-      byId['high_protein']!.upstreamResult?.primaryEmptyingProfile?.mealId,
-      startsWith('hypothetical_high_protein_'),
-    );
-    expect(
-      byId['banana']!
-          .upstreamResult
-          ?.competitionTimeline
-          ?.lnaaSummary
-          ?.effectiveLoadFactor,
-      isNot(
-        byId['high_protein']!
+      expect(
+        byId['banana']!.upstreamResult?.primaryEmptyingProfile?.mealId,
+        startsWith('hypothetical_banana_'),
+      );
+      expect(
+        byId['high_protein']!.upstreamResult?.primaryEmptyingProfile?.mealId,
+        startsWith('hypothetical_high_protein_'),
+      );
+      expect(
+        byId['banana']!
             .upstreamResult
             ?.competitionTimeline
             ?.lnaaSummary
             ?.effectiveLoadFactor,
-      ),
-    );
-  });
+        isNot(
+          byId['high_protein']!
+              .upstreamResult
+              ?.competitionTimeline
+              ?.lnaaSummary
+              ?.effectiveLoadFactor,
+        ),
+      );
+    },
+  );
 }

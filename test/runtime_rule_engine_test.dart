@@ -141,8 +141,9 @@ void main() {
 
     final matches = engine.evaluateCandidates(context: context, rules: rules);
     expect(
-      matches
-          .any((match) => match.rule.ruleId == 'pd.rasagiline.tyramine.us.v1'),
+      matches.any(
+        (match) => match.rule.ruleId == 'pd.rasagiline.tyramine.us.v1',
+      ),
       isTrue,
     );
   });
@@ -177,7 +178,8 @@ void main() {
     final matches = engine.evaluateCandidates(context: context, rules: rules);
     expect(
       matches.any(
-          (match) => match.rule.ruleId == 'pd.peg.starch_thickener.block.v1'),
+        (match) => match.rule.ruleId == 'pd.peg.starch_thickener.block.v1',
+      ),
       isTrue,
     );
   });
@@ -214,90 +216,98 @@ void main() {
     final matches = engine.evaluateCandidates(context: context, rules: rules);
     expect(
       matches.any(
-          (match) => match.rule.ruleId == 'pd.ldopa.enteral.feed.review.v1'),
+        (match) => match.rule.ruleId == 'pd.ldopa.enteral.feed.review.v1',
+      ),
       isTrue,
     );
   });
 
-  test('jurisdiction chain prefers database region map over static fallback',
-      () {
-    final context = buildContext(
-      drug: const DrugRuntimeContext(
-        id: 'drug_1',
-        genericName: 'carbidopa/levodopa',
-        brandName: null,
-        activeIngredients: ['carbidopa', 'levodopa'],
-        substanceTags: ['levodopa'],
-        formulation: 'tablet',
-        dosageForm: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        dailyDoseMg: 300,
-        jurisdiction: 'US',
-      ),
-      timestamps: const TimestampRuntimeContext(
-        drugTime: null,
-        mealTime: null,
-        coeventTime: null,
-      ),
-      registrationRegion: 'US',
-      displayLocale: 'en-US',
-    );
+  test(
+    'jurisdiction chain prefers database region map over static fallback',
+    () {
+      final context = buildContext(
+        drug: const DrugRuntimeContext(
+          id: 'drug_1',
+          genericName: 'carbidopa/levodopa',
+          brandName: null,
+          activeIngredients: ['carbidopa', 'levodopa'],
+          substanceTags: ['levodopa'],
+          formulation: 'tablet',
+          dosageForm: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          dailyDoseMg: 300,
+          jurisdiction: 'US',
+        ),
+        timestamps: const TimestampRuntimeContext(
+          drugTime: null,
+          mealTime: null,
+          coeventTime: null,
+        ),
+        registrationRegion: 'US',
+        displayLocale: 'en-US',
+      );
 
-    final chain = engine.resolveJurisdictionChain(
-      context,
-      regionJurisdictionRows: const [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US_DB","NORTH_AMERICA_DB","GLOBAL"]',
-        },
-      ],
-    );
-
-    expect(chain.take(3), ['US_DB', 'NORTH_AMERICA_DB', 'GLOBAL']);
-    expect(
-      engine.regionJurisdictionMapSource(
+      final chain = engine.resolveJurisdictionChain(
         context,
         regionJurisdictionRows: const [
           {
             'region_code': 'US',
-            'jurisdiction_chain_json': '["US_DB","GLOBAL"]',
+            'jurisdiction_chain_json': '["US_DB","NORTH_AMERICA_DB","GLOBAL"]',
           },
         ],
-      ),
-      'database_region_jurisdiction_map',
-    );
-  });
+      );
 
-  test('jurisdiction chain falls back to static map when database row missing',
-      () {
-    final context = buildContext(
-      drug: const DrugRuntimeContext(
-        id: 'drug_1',
-        genericName: 'carbidopa/levodopa',
-        brandName: null,
-        activeIngredients: ['carbidopa', 'levodopa'],
-        substanceTags: ['levodopa'],
-        formulation: 'tablet',
-        dosageForm: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        dailyDoseMg: 300,
-        jurisdiction: 'US',
-      ),
-      timestamps: const TimestampRuntimeContext(
-        drugTime: null,
-        mealTime: null,
-        coeventTime: null,
-      ),
-      registrationRegion: 'US',
-      displayLocale: 'en-US',
-    );
+      expect(chain.take(3), ['US_DB', 'NORTH_AMERICA_DB', 'GLOBAL']);
+      expect(
+        engine.regionJurisdictionMapSource(
+          context,
+          regionJurisdictionRows: const [
+            {
+              'region_code': 'US',
+              'jurisdiction_chain_json': '["US_DB","GLOBAL"]',
+            },
+          ],
+        ),
+        'database_region_jurisdiction_map',
+      );
+    },
+  );
 
-    expect(engine.resolveJurisdictionChain(context).take(3),
-        ['US', 'NA', 'GLOBAL']);
-    expect(engine.regionJurisdictionMapSource(context), 'runtime_static_map');
-  });
+  test(
+    'jurisdiction chain falls back to static map when database row missing',
+    () {
+      final context = buildContext(
+        drug: const DrugRuntimeContext(
+          id: 'drug_1',
+          genericName: 'carbidopa/levodopa',
+          brandName: null,
+          activeIngredients: ['carbidopa', 'levodopa'],
+          substanceTags: ['levodopa'],
+          formulation: 'tablet',
+          dosageForm: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          dailyDoseMg: 300,
+          jurisdiction: 'US',
+        ),
+        timestamps: const TimestampRuntimeContext(
+          drugTime: null,
+          mealTime: null,
+          coeventTime: null,
+        ),
+        registrationRegion: 'US',
+        displayLocale: 'en-US',
+      );
+
+      expect(engine.resolveJurisdictionChain(context).take(3), [
+        'US',
+        'NA',
+        'GLOBAL',
+      ]);
+      expect(engine.regionJurisdictionMapSource(context), 'runtime_static_map');
+    },
+  );
 
   test('JP locale falls back to JP/APAC/GLOBAL chain', () {
     final context = buildContext(
@@ -346,20 +356,20 @@ void main() {
           'dose_band': {
             'path': 'drug.daily_dose_mg',
             'threshold': {'value': 0.2, 'unit': 'g'},
-            'op': 'gte'
-          }
+            'op': 'gte',
+          },
         },
         'then': {
           'decision': 'INFO',
           'severity': 'low',
           'messages': {'zh': '剂量提示'},
           'actions': [],
-          'output_tags': []
+          'output_tags': [],
         },
         'provenance': {
           'evidence_level': 'official_label',
-          'source_refs': ['doc_dose']
-        }
+          'source_refs': ['doc_dose'],
+        },
       },
       {
         'rule_id': 'test.trace.lt',
@@ -376,20 +386,20 @@ void main() {
           'cmp': {
             'path': 'coevent.supplements.tyramine',
             'op': 'lt',
-            'value': 1
-          }
+            'value': 1,
+          },
         },
         'then': {
           'decision': 'INFO',
           'severity': 'low',
           'messages': {'zh': 'trace提示'},
           'actions': [],
-          'output_tags': []
+          'output_tags': [],
         },
         'provenance': {
           'evidence_level': 'official_database',
-          'source_refs': ['doc_trace']
-        }
+          'source_refs': ['doc_trace'],
+        },
       },
     ], rulesVersion: 'unit_test_rules');
 
@@ -428,183 +438,197 @@ void main() {
       ),
     );
 
-    final matches =
-        engine.evaluateCandidates(context: context, rules: customRules);
-    expect(matches.map((match) => match.rule.ruleId),
-        containsAll(['test.dose.grams', 'test.trace.lt']));
+    final matches = engine.evaluateCandidates(
+      context: context,
+      rules: customRules,
+    );
+    expect(
+      matches.map((match) => match.rule.ruleId),
+      containsAll(['test.dose.grams', 'test.trace.lt']),
+    );
   });
 
-  test('same-band matrix escalates decision conflicts and explains tie-break',
-      () {
-    final customRules = compiler.compileJsonList([
-      _testRuleJson(
-        ruleId: 'same.warn.official',
-        decision: 'WARN',
-        evidenceLevel: 'official_label',
-      ),
-      _testRuleJson(
-        ruleId: 'same.info.review',
-        decision: 'INFO',
-        evidenceLevel: 'review',
-      ),
-    ], rulesVersion: 'same_band_rules');
-    final context = buildContext(
-      drug: const DrugRuntimeContext(
-        id: 'drug_1',
-        genericName: 'levodopa',
-        brandName: null,
-        activeIngredients: ['levodopa'],
-        substanceTags: ['levodopa'],
-        formulation: 'tablet',
-        dosageForm: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        dailyDoseMg: 100,
-        jurisdiction: 'US',
-      ),
-      timestamps: const TimestampRuntimeContext(
-        drugTime: null,
-        mealTime: null,
-        coeventTime: null,
-      ),
-    );
-    final sorted = engine.resolveByPriority(
-      engine.evaluateCandidates(context: context, rules: customRules),
-      jurisdictionChain: engine.resolveJurisdictionChain(context),
-    );
-    const support = RuntimeRuleSupport();
-    final escalation = support.evaluateSameBandEscalation(sorted);
-    expect(escalation.requiresReview, isTrue);
-    expect(escalation.reason, 'same_band_warn_permissive_conflict');
-    expect(escalation.suppressedRuleIds, contains('same.info.review'));
+  test(
+    'same-band matrix escalates decision conflicts and explains tie-break',
+    () {
+      final customRules = compiler.compileJsonList([
+        _testRuleJson(
+          ruleId: 'same.warn.official',
+          decision: 'WARN',
+          evidenceLevel: 'official_label',
+        ),
+        _testRuleJson(
+          ruleId: 'same.info.review',
+          decision: 'INFO',
+          evidenceLevel: 'review',
+        ),
+      ], rulesVersion: 'same_band_rules');
+      final context = buildContext(
+        drug: const DrugRuntimeContext(
+          id: 'drug_1',
+          genericName: 'levodopa',
+          brandName: null,
+          activeIngredients: ['levodopa'],
+          substanceTags: ['levodopa'],
+          formulation: 'tablet',
+          dosageForm: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          dailyDoseMg: 100,
+          jurisdiction: 'US',
+        ),
+        timestamps: const TimestampRuntimeContext(
+          drugTime: null,
+          mealTime: null,
+          coeventTime: null,
+        ),
+      );
+      final sorted = engine.resolveByPriority(
+        engine.evaluateCandidates(context: context, rules: customRules),
+        jurisdictionChain: engine.resolveJurisdictionChain(context),
+      );
+      const support = RuntimeRuleSupport();
+      final escalation = support.evaluateSameBandEscalation(sorted);
+      expect(escalation.requiresReview, isTrue);
+      expect(escalation.reason, 'same_band_warn_permissive_conflict');
+      expect(escalation.suppressedRuleIds, contains('same.info.review'));
 
-    final sameDecisionRules = compiler.compileJsonList([
-      _testRuleJson(
-        ruleId: 'same.warn.official',
-        decision: 'WARN',
-        evidenceLevel: 'official_label',
-      ),
-      _testRuleJson(
-        ruleId: 'same.warn.review',
-        decision: 'WARN',
-        evidenceLevel: 'review',
-      ),
-    ], rulesVersion: 'same_band_rules');
-    final sameDecisionSorted = engine.resolveByPriority(
-      engine.evaluateCandidates(context: context, rules: sameDecisionRules),
-      jurisdictionChain: engine.resolveJurisdictionChain(context),
-    );
-    final tieBreak = support.evaluateSameBandEscalation(sameDecisionSorted);
-    expect(tieBreak.requiresReview, isFalse);
-    expect(tieBreak.reason, 'same_decision_provenance_tiebreak');
-    expect(sameDecisionSorted.first.rule.ruleId, 'same.warn.official');
-    expect(sameDecisionSorted.first.rule.sourceAuthority,
-        greaterThan(sameDecisionSorted.last.rule.sourceAuthority));
-  });
+      final sameDecisionRules = compiler.compileJsonList([
+        _testRuleJson(
+          ruleId: 'same.warn.official',
+          decision: 'WARN',
+          evidenceLevel: 'official_label',
+        ),
+        _testRuleJson(
+          ruleId: 'same.warn.review',
+          decision: 'WARN',
+          evidenceLevel: 'review',
+        ),
+      ], rulesVersion: 'same_band_rules');
+      final sameDecisionSorted = engine.resolveByPriority(
+        engine.evaluateCandidates(context: context, rules: sameDecisionRules),
+        jurisdictionChain: engine.resolveJurisdictionChain(context),
+      );
+      final tieBreak = support.evaluateSameBandEscalation(sameDecisionSorted);
+      expect(tieBreak.requiresReview, isFalse);
+      expect(tieBreak.reason, 'same_decision_provenance_tiebreak');
+      expect(sameDecisionSorted.first.rule.ruleId, 'same.warn.official');
+      expect(
+        sameDecisionSorted.first.rule.sourceAuthority,
+        greaterThan(sameDecisionSorted.last.rule.sourceAuthority),
+      );
+    },
+  );
 
   // added test
   // 验证 levodopa + protein 这个 rule 触发后，返回的 explanation 不是单纯一句提示，不是真实医疗建议，
   //而是包含清楚的 source、input trace、limitation 和 safety boundary 的教育性解释。
-  test('levodopa protein rule explanation includes evidence boundary fields',
-      () {
-    final context = buildContext(
-      drug: const DrugRuntimeContext(
-        id: 'drug_1',
-        genericName: 'carbidopa/levodopa',
-        brandName: 'Sinemet',
-        activeIngredients: ['carbidopa', 'levodopa'],
-        substanceTags: ['levodopa'],
-        formulation: 'tablet',
-        dosageForm: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        dailyDoseMg: 300,
-        jurisdiction: 'US',
-      ),
-      meal: const MealRuntimeContext(
-        id: 'meal_1',
-        totalProteinG: 25,
-        tyramineMgEstimate: 1,
-        highFatHighCalorie: false,
-        itemIds: ['food_1'],
-      ),
-      timestamps: TimestampRuntimeContext(
-        drugTime: DateTime.parse('2026-01-01T08:00:00Z'),
-        mealTime: DateTime.parse('2026-01-01T09:00:00Z'),
-        coeventTime: null,
-      ),
-    );
+  test(
+    'levodopa protein rule explanation includes evidence boundary fields',
+    () {
+      final context = buildContext(
+        drug: const DrugRuntimeContext(
+          id: 'drug_1',
+          genericName: 'carbidopa/levodopa',
+          brandName: 'Sinemet',
+          activeIngredients: ['carbidopa', 'levodopa'],
+          substanceTags: ['levodopa'],
+          formulation: 'tablet',
+          dosageForm: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          dailyDoseMg: 300,
+          jurisdiction: 'US',
+        ),
+        meal: const MealRuntimeContext(
+          id: 'meal_1',
+          totalProteinG: 25,
+          tyramineMgEstimate: 1,
+          highFatHighCalorie: false,
+          itemIds: ['food_1'],
+        ),
+        timestamps: TimestampRuntimeContext(
+          drugTime: DateTime.parse('2026-01-01T08:00:00Z'),
+          mealTime: DateTime.parse('2026-01-01T09:00:00Z'),
+          coeventTime: null,
+        ),
+      );
 
-    final matches = engine.evaluateCandidates(context: context, rules: rules);
-    final match = matches.firstWhere(
-      (match) => match.rule.ruleId == 'pd.ldopa.protein.window.v1',
-    );
+      final matches = engine.evaluateCandidates(context: context, rules: rules);
+      final match = matches.firstWhere(
+        (match) => match.rule.ruleId == 'pd.ldopa.protein.window.v1',
+      );
 
-    final sourceRefs = List<String>.from(match.evidence['source_refs'] as List);
-    final inputFieldsUsed =
-        List<String>.from(match.evidence['input_fields_used'] as List);
+      final sourceRefs = List<String>.from(
+        match.evidence['source_refs'] as List,
+      );
+      final inputFieldsUsed = List<String>.from(
+        match.evidence['input_fields_used'] as List,
+      );
 
-    expect(sourceRefs, isNotEmpty);
-    expect(inputFieldsUsed, isNotEmpty);
+      expect(sourceRefs, isNotEmpty);
+      expect(inputFieldsUsed, isNotEmpty);
 
-    final evidenceBoundaryText = [
-      match.explanation,
-      match.evidence['limitation_text'],
-      match.evidence['safety_boundary'],
-      match.evidence['not_advice_text'],
-    ].whereType<String>().join(' ').toLowerCase();
+      final evidenceBoundaryText = [
+        match.explanation,
+        match.evidence['limitation_text'],
+        match.evidence['safety_boundary'],
+        match.evidence['not_advice_text'],
+      ].whereType<String>().join(' ').toLowerCase();
 
-    expect(evidenceBoundaryText, contains('educational'));
-    expect(evidenceBoundaryText, contains('not medical advice'));
-    expect(evidenceBoundaryText, contains('clinical decision tool'));
-    expect(evidenceBoundaryText,
-        contains('consult a qualified healthcare professional'));
+      expect(evidenceBoundaryText, contains('educational'));
+      expect(evidenceBoundaryText, contains('not medical advice'));
+      expect(evidenceBoundaryText, contains('clinical decision tool'));
+      expect(
+        evidenceBoundaryText,
+        contains('consult a qualified healthcare professional'),
+      );
 
-    const bannedPhrases = [
-      'take your medication',
-      'change your dose',
-      'avoid protein',
-      'recommended timing',
-      'clinically validated',
-      'diagnose',
-      'treat this condition',
-    ];
+      const bannedPhrases = [
+        'take your medication',
+        'change your dose',
+        'avoid protein',
+        'recommended timing',
+        'clinically validated',
+        'diagnose',
+        'treat this condition',
+      ];
 
-    for (final phrase in bannedPhrases) {
-      expect(evidenceBoundaryText, isNot(contains(phrase)));
-    }
-  });
+      for (final phrase in bannedPhrases) {
+        expect(evidenceBoundaryText, isNot(contains(phrase)));
+      }
+    },
+  );
 }
 
 Map<String, dynamic> _testRuleJson({
   required String ruleId,
   required String decision,
   required String evidenceLevel,
-}) =>
-    {
-      'rule_id': ruleId,
-      'version': '1.0.0',
-      'status': 'active',
-      'rule_type': 'soft_rule',
-      'priority_band': 7,
-      'specificity_band': 7,
-      'jurisdiction': ['GLOBAL'],
-      'applies_to': {
-        'subject_types': ['drug'],
-      },
-      'when': {
-        'exists': {'path': 'drug.id'}
-      },
-      'then': {
-        'decision': decision,
-        'severity': 'low',
-        'messages': {'zh': '测试规则'},
-        'actions': [],
-        'output_tags': []
-      },
-      'provenance': {
-        'evidence_level': evidenceLevel,
-        'source_refs': ['doc_$ruleId'],
-        'effective_from': '2026-01-01T00:00:00Z',
-      }
-    };
+}) => {
+  'rule_id': ruleId,
+  'version': '1.0.0',
+  'status': 'active',
+  'rule_type': 'soft_rule',
+  'priority_band': 7,
+  'specificity_band': 7,
+  'jurisdiction': ['GLOBAL'],
+  'applies_to': {
+    'subject_types': ['drug'],
+  },
+  'when': {
+    'exists': {'path': 'drug.id'},
+  },
+  'then': {
+    'decision': decision,
+    'severity': 'low',
+    'messages': {'zh': '测试规则'},
+    'actions': [],
+    'output_tags': [],
+  },
+  'provenance': {
+    'evidence_level': evidenceLevel,
+    'source_refs': ['doc_$ruleId'],
+    'effective_from': '2026-01-01T00:00:00Z',
+  },
+};
