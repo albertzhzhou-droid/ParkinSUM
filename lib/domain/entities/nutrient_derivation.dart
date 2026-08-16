@@ -164,22 +164,23 @@ class NutrientDerivation {
   }
 
   Map<String, dynamic> toJson() => {
-        'derivation_code': derivationCode,
-        'derivation_description': derivationDescription,
-        'source_code': sourceCode,
-        'data_points': dataPoints,
-        'min': min,
-        'max': max,
-        'median': median,
-        'tier': tier.name,
-      };
+    'derivation_code': derivationCode,
+    'derivation_description': derivationDescription,
+    'source_code': sourceCode,
+    'data_points': dataPoints,
+    'min': min,
+    'max': max,
+    'median': median,
+    'tier': tier.name,
+  };
 }
 
 /// Conservative "weakest-wins" aggregate over a set of per-nutrient
 /// derivations. Returns null when the set is empty (no provenance to report —
 /// missing ≠ a confident value).
 NutrientConfidenceTier? weakestConfidenceTier(
-    Iterable<NutrientDerivation> derivations) {
+  Iterable<NutrientDerivation> derivations,
+) {
   NutrientConfidenceTier? worst;
   for (final d in derivations) {
     final t = d.tier;

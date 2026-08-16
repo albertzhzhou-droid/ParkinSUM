@@ -73,8 +73,8 @@ void main() {
       return http.Response(
         jsonEncode({
           'models': [
-            {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
-          ]
+            {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+          ],
         }),
         200,
       );
@@ -104,31 +104,33 @@ void main() {
     expect(result.message, contains('localhost'));
   });
 
-  test('probe rejects localhost endpoints with unsafe URL components',
-      () async {
-    final client = MockClient((request) async {
-      fail('network should not be called for unsafe localhost endpoints');
-    });
-    final adapter = LocalAiRecommendationAdapter(client: client);
-    const endpoints = [
-      'ftp://localhost:11434/api/chat',
-      'http://user:pass@localhost:11434/api/chat',
-      'http://localhost:11434/api/chat?redirect=https://example.com',
-      'http://localhost:11434/api/chat#fragment',
-      'http://0.0.0.0:11434/api/chat',
-    ];
+  test(
+    'probe rejects localhost endpoints with unsafe URL components',
+    () async {
+      final client = MockClient((request) async {
+        fail('network should not be called for unsafe localhost endpoints');
+      });
+      final adapter = LocalAiRecommendationAdapter(client: client);
+      const endpoints = [
+        'ftp://localhost:11434/api/chat',
+        'http://user:pass@localhost:11434/api/chat',
+        'http://localhost:11434/api/chat?redirect=https://example.com',
+        'http://localhost:11434/api/chat#fragment',
+        'http://0.0.0.0:11434/api/chat',
+      ];
 
-    for (final endpoint in endpoints) {
-      final result = await adapter.probe(
-        userProfile: buildProfile(
-          provider: LocalAiProviders.ollama,
-          ollamaEndpoint: endpoint,
-        ),
-      );
-      expect(result.available, isFalse, reason: endpoint);
-      expect(result.message, contains('localhost'), reason: endpoint);
-    }
-  });
+      for (final endpoint in endpoints) {
+        final result = await adapter.probe(
+          userProfile: buildProfile(
+            provider: LocalAiProviders.ollama,
+            ollamaEndpoint: endpoint,
+          ),
+        );
+        expect(result.available, isFalse, reason: endpoint);
+        expect(result.message, contains('localhost'), reason: endpoint);
+      }
+    },
+  );
 
   test('probe accepts IPv6 loopback endpoint', () async {
     final client = MockClient((request) async {
@@ -137,8 +139,8 @@ void main() {
       return http.Response(
         jsonEncode({
           'models': [
-            {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
-          ]
+            {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+          ],
         }),
         200,
       );
@@ -160,9 +162,11 @@ void main() {
     final client = MockClient((request) async {
       expect(request.followRedirects, isFalse);
       expect(request.maxRedirects, 0);
-      return http.Response('redirect blocked', 307, headers: {
-        'location': 'https://example.com/capture',
-      });
+      return http.Response(
+        'redirect blocked',
+        307,
+        headers: {'location': 'https://example.com/capture'},
+      );
     });
     final adapter = LocalAiRecommendationAdapter(client: client);
 
@@ -179,8 +183,8 @@ void main() {
         return http.Response(
           jsonEncode({
             'models': [
-              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
-            ]
+              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+            ],
           }),
           200,
         );
@@ -188,8 +192,8 @@ void main() {
       return http.Response(
         jsonEncode({
           'message': {
-            'content': '{"candidate_ids":["food_a","food_x"],"summary":"bad"}'
-          }
+            'content': '{"candidate_ids":["food_a","food_x"],"summary":"bad"}',
+          },
         }),
         200,
       );
@@ -198,10 +202,7 @@ void main() {
 
     final result = await adapter.rerankSafeCandidates(
       userProfile: buildProfile(provider: LocalAiProviders.ollama),
-      candidates: [
-        buildCandidate('food_a'),
-        buildCandidate('food_b'),
-      ],
+      candidates: [buildCandidate('food_a'), buildCandidate('food_b')],
       contextLines: const ['safe'],
     );
 
@@ -214,8 +215,8 @@ void main() {
         return http.Response(
           jsonEncode({
             'models': [
-              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
-            ]
+              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+            ],
           }),
           200,
         );
@@ -224,8 +225,8 @@ void main() {
         jsonEncode({
           'message': {
             'content':
-                '{"candidate_ids":["food_b"],"summary":"partial","safety_checks":["kept safe"],"ranking_rationale":["partial order"]}'
-          }
+                '{"candidate_ids":["food_b"],"summary":"partial","safety_checks":["kept safe"],"ranking_rationale":["partial order"]}',
+          },
         }),
         200,
       );
@@ -234,95 +235,96 @@ void main() {
 
     final result = await adapter.rerankSafeCandidates(
       userProfile: buildProfile(provider: LocalAiProviders.ollama),
-      candidates: [
-        buildCandidate('food_a'),
-        buildCandidate('food_b'),
-      ],
+      candidates: [buildCandidate('food_a'), buildCandidate('food_b')],
       contextLines: const ['safe'],
     );
 
     expect(result, isNull);
   });
 
-  test('meal conflict polish changes wording without changing risk score',
-      () async {
-    final client = MockClient((request) async {
-      if (request.url.path == '/api/tags') {
+  test(
+    'meal conflict polish changes wording without changing risk score',
+    () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/tags') {
+          return http.Response(
+            jsonEncode({
+              'models': [
+                {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+                {
+                  'name': LocalAiRecommendedModels.medGemmaText,
+                  'model': LocalAiRecommendedModels.medGemmaText,
+                },
+              ],
+            }),
+            200,
+          );
+        }
         return http.Response(
           jsonEncode({
-            'models': [
-              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
-              {
-                'name': LocalAiRecommendedModels.medGemmaText,
-                'model': LocalAiRecommendedModels.medGemmaText,
-              }
-            ]
+            'message': {
+              'content': jsonEncode({
+                'summary': 'Keep this meal separate from levodopa timing.',
+                'analysis_text':
+                    'The existing score stays high because the meal timing and protein context need caution.',
+                'key_findings': ['Protein timing is the main concern.'],
+                'next_actions': ['Confirm the medication and meal timing.'],
+                'data_notes': ['AI only rewrote the wording.'],
+                'issue_details': [
+                  'This issue was rewritten in plain language.',
+                ],
+                'safety_alignment': 'aligned',
+              }),
+            },
           }),
           200,
         );
-      }
-      return http.Response(
-        jsonEncode({
-          'message': {
-            'content': jsonEncode({
-              'summary': 'Keep this meal separate from levodopa timing.',
-              'analysis_text':
-                  'The existing score stays high because the meal timing and protein context need caution.',
-              'key_findings': ['Protein timing is the main concern.'],
-              'next_actions': ['Confirm the medication and meal timing.'],
-              'data_notes': ['AI only rewrote the wording.'],
-              'issue_details': ['This issue was rewritten in plain language.'],
-              'safety_alignment': 'aligned',
-            }),
-          }
-        }),
-        200,
+      });
+      final adapter = LocalAiRecommendationAdapter(client: client);
+      final original = InteractionResult(
+        mealId: 'meal_1',
+        status: InteractionStatus.warning,
+        summary: 'raw summary',
+        analysisText: 'raw analysis',
+        issues: [
+          InteractionIssue(
+            severity: InteractionSeverity.high,
+            title: 'High protein conflict',
+            detail: 'raw issue detail',
+            relatedDrugId: 'levodopa',
+          ),
+        ],
+        generatedAt: DateTime(2026, 5, 12),
+        score: 81,
+        scoreFactors: const [
+          InteractionScoreFactor(
+            code: 'protein_timing_penalty',
+            label: 'Protein timing',
+            points: 50,
+          ),
+        ],
       );
-    });
-    final adapter = LocalAiRecommendationAdapter(client: client);
-    final original = InteractionResult(
-      mealId: 'meal_1',
-      status: InteractionStatus.warning,
-      summary: 'raw summary',
-      analysisText: 'raw analysis',
-      issues: [
-        InteractionIssue(
-          severity: InteractionSeverity.high,
-          title: 'High protein conflict',
-          detail: 'raw issue detail',
-          relatedDrugId: 'levodopa',
-        ),
-      ],
-      generatedAt: DateTime(2026, 5, 12),
-      score: 81,
-      scoreFactors: const [
-        InteractionScoreFactor(
-          code: 'protein_timing_penalty',
-          label: 'Protein timing',
-          points: 50,
-        ),
-      ],
-    );
 
-    final polished = await adapter.polishInteractionResult(
-      userProfile: buildProfile(provider: LocalAiProviders.ollama),
-      meal: Meal(
-        id: 'meal_1',
-        title: 'Dinner',
-        eatenAt: DateTime(2026, 5, 12, 18),
-        items: const [],
-      ),
-      result: original,
-      activeDrugs: const [],
-      intakes: const [],
-    );
+      final polished = await adapter.polishInteractionResult(
+        userProfile: buildProfile(provider: LocalAiProviders.ollama),
+        meal: Meal(
+          id: 'meal_1',
+          title: 'Dinner',
+          eatenAt: DateTime(2026, 5, 12, 18),
+          items: const [],
+        ),
+        result: original,
+        activeDrugs: const [],
+        intakes: const [],
+      );
 
-    expect(polished.score, original.score);
-    expect(polished.overallSeverity, original.overallSeverity);
-    expect(polished.scoreFactors.single.code, 'protein_timing_penalty');
-    expect(polished.summary, contains('levodopa'));
-    expect(polished.issues.single.detail, contains('plain language'));
-  });
+      expect(polished.score, original.score);
+      expect(polished.overallSeverity, original.overallSeverity);
+      expect(polished.scoreFactors.single.code, 'protein_timing_penalty');
+      expect(polished.summary, contains('levodopa'));
+      expect(polished.issues.single.detail, contains('plain language'));
+    },
+  );
 
   test('meal conflict polish rejects unsafe generated actions', () async {
     final client = MockClient((request) async {
@@ -330,8 +332,8 @@ void main() {
         return http.Response(
           jsonEncode({
             'models': [
-              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'}
-            ]
+              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+            ],
           }),
           200,
         );
@@ -348,7 +350,7 @@ void main() {
               'issue_details': ['unsafe'],
               'safety_alignment': 'unsafe',
             }),
-          }
+          },
         }),
         200,
       );

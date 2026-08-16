@@ -71,7 +71,9 @@ class FirestoreAppDatabase implements AppDatabase {
     }
     for (final medication in seedMedications) {
       batch.set(
-          _catalog('medications').doc(medication.id), medication.toJson());
+        _catalog('medications').doc(medication.id),
+        medication.toJson(),
+      );
     }
     for (final rule in seedRules) {
       batch.set(_catalog('interaction_rules').doc(rule.id), rule.toJson());
@@ -95,9 +97,9 @@ class FirestoreAppDatabase implements AppDatabase {
 
   @override
   Future<List<Intake>> loadIntakes() async {
-    final snapshot = await (await _userRows('intakes'))
-        .orderBy('takenAtIso', descending: true)
-        .get();
+    final snapshot = await (await _userRows(
+      'intakes',
+    )).orderBy('takenAtIso', descending: true).get();
     return snapshot.docs
         .map((doc) => Intake.fromJson(doc.data()))
         .toList(growable: false);
@@ -121,9 +123,9 @@ class FirestoreAppDatabase implements AppDatabase {
 
   @override
   Future<List<Meal>> loadMeals() async {
-    final snapshot = await (await _userRows('meals'))
-        .orderBy('eatenAtIso', descending: true)
-        .get();
+    final snapshot = await (await _userRows(
+      'meals',
+    )).orderBy('eatenAtIso', descending: true).get();
     return snapshot.docs
         .map((doc) => Meal.fromJson(doc.data()))
         .toList(growable: false);
@@ -199,8 +201,9 @@ class FirestoreAppDatabase implements AppDatabase {
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
     final uid = await _requireUid();
-    final rows =
-        firestore.collection(FirebaseUserDataPaths(uid).collection('profile'));
+    final rows = firestore.collection(
+      FirebaseUserDataPaths(uid).collection('profile'),
+    );
     await rows.doc('current').set(profile.copyWith(patientId: uid).toJson());
   }
 }

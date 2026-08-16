@@ -44,8 +44,7 @@ class FhirInspiredMedicationKnowledgeMapper {
     final sectionRefIds = <String>{
       for (final s in meta.labelSectionRefs) s.sectionId,
       for (final s in meta.labelSectionRefs) s.sectionKey,
-    }.where((s) => s.isNotEmpty).toList(growable: false)
-      ..sort();
+    }.where((s) => s.isNotEmpty).toList(growable: false)..sort();
 
     final components = meta.components
         .map((c) => _componentEntry(c, sectionRefIds))
@@ -60,11 +59,11 @@ class FhirInspiredMedicationKnowledgeMapper {
 
     final activeIngredients = <String>{
       for (final c in meta.components) c.ingredientName,
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
 
-    final labelSectionRefs =
-        meta.labelSectionRefs.map(_labelSectionRef).toList(growable: false);
+    final labelSectionRefs = meta.labelSectionRefs
+        .map(_labelSectionRef)
+        .toList(growable: false);
 
     // Union of metadata + component + section source refs. The mapped section
     // refs already fold in the LOINC terminology citation (P2) when a section
@@ -74,10 +73,10 @@ class FhirInspiredMedicationKnowledgeMapper {
       ...meta.sourceRefs,
       for (final c in meta.components) ...c.sourceRefs,
       for (final s in labelSectionRefs) ...s.sourceRefs,
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
 
-    final provenanceSummary = 'release_type_source=${meta.releaseTypeSource}; '
+    final provenanceSummary =
+        'release_type_source=${meta.releaseTypeSource}; '
         'label_section_refs=${meta.labelSectionRefs.length}; '
         'components=${meta.components.length}; '
         'metadata_completeness=${meta.metadataCompleteness}; '
@@ -153,7 +152,7 @@ class FhirInspiredMedicationKnowledgeMapper {
       labelSectionRefs: productSectionRefIds,
       limitationText: c.hasMissingStrength
           ? 'Per-component strength not carried by the source record; recorded '
-              'as missing (not fabricated). Product metadata only.'
+                'as missing (not fabricated). Product metadata only.'
           : null,
     );
   }
@@ -167,9 +166,10 @@ class FhirInspiredMedicationKnowledgeMapper {
       sectionKey: s.sectionKey,
       sectionTitle: s.sectionTitle.isEmpty ? null : s.sectionTitle,
     );
-    final refs = <String>{...s.sourceRefs, ...code.sourceRefs}
-        .toList(growable: false)
-      ..sort();
+    final refs = <String>{
+      ...s.sourceRefs,
+      ...code.sourceRefs,
+    }.toList(growable: false)..sort();
     return FhirInspiredLabelSectionRef(
       sourceSystem: s.sourceSystem,
       sourceDocId: s.sourceDocId,

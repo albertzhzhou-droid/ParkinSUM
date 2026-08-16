@@ -29,18 +29,15 @@ class QualifiedValue {
   bool get isComparable => low != null && high != null;
 
   Map<String, dynamic> toJson() => {
-        'qualifier_kind': qualifierKind.wireValue,
-        'low': low,
-        'high': high,
-        'value_num': valueNum,
-        'raw_value_text': rawValueText,
-      };
+    'qualifier_kind': qualifierKind.wireValue,
+    'low': low,
+    'high': high,
+    'value_num': valueNum,
+    'raw_value_text': rawValueText,
+  };
 }
 
-QualifiedValue parseQualifiedValue(
-  String? raw, {
-  double traceCap = 0.1,
-}) {
+QualifiedValue parseQualifiedValue(String? raw, {double traceCap = 0.1}) {
   final normalized = (raw ?? '').trim();
   final lower = normalized.toLowerCase();
 
@@ -67,8 +64,9 @@ QualifiedValue parseQualifiedValue(
     );
   }
 
-  final lessEqMatch =
-      RegExp(r'^<=\s*([0-9]+(?:[.,][0-9]+)?)$').firstMatch(lower);
+  final lessEqMatch = RegExp(
+    r'^<=\s*([0-9]+(?:[.,][0-9]+)?)$',
+  ).firstMatch(lower);
   if (lessEqMatch != null) {
     final high = double.parse(lessEqMatch.group(1)!.replaceAll(',', '.'));
     return QualifiedValue(
@@ -92,9 +90,9 @@ QualifiedValue parseQualifiedValue(
     );
   }
 
-  final rangeMatch =
-      RegExp(r'^([0-9]+(?:[.,][0-9]+)?)\s*[-–]\s*([0-9]+(?:[.,][0-9]+)?)$')
-          .firstMatch(lower);
+  final rangeMatch = RegExp(
+    r'^([0-9]+(?:[.,][0-9]+)?)\s*[-–]\s*([0-9]+(?:[.,][0-9]+)?)$',
+  ).firstMatch(lower);
   if (rangeMatch != null) {
     final low = double.parse(rangeMatch.group(1)!.replaceAll(',', '.'));
     final high = double.parse(rangeMatch.group(2)!.replaceAll(',', '.'));

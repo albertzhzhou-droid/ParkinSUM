@@ -55,15 +55,19 @@ Future<void> main(List<String> args) async {
 
   final outDir = Directory('build/synthetic_scenario_fuzzer');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeSyntheticScenarioReport(report));
-  File('${outDir.path}/latest.md')
-      .writeAsStringSync(renderSyntheticScenarioMarkdown(report));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeSyntheticScenarioReport(report));
+  File(
+    '${outDir.path}/latest.md',
+  ).writeAsStringSync(renderSyntheticScenarioMarkdown(report));
 
   stdout
-    ..writeln('Synthetic scenario fuzzer: '
-        '${report.passed}/${report.caseCount} cases passed '
-        '(seed=${report.seed}).')
+    ..writeln(
+      'Synthetic scenario fuzzer: '
+      '${report.passed}/${report.caseCount} cases passed '
+      '(seed=${report.seed}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   if (!report.allMustPass) {

@@ -68,7 +68,7 @@ class AppI18n {
   /// the DB explicitly declares that namespace.
   static void installRuntimeOverrides(
     Iterable<({String localeTag, String namespace, String key, String text})>
-        rows,
+    rows,
   ) {
     _runtimeOverride.clear();
     for (final row in rows) {

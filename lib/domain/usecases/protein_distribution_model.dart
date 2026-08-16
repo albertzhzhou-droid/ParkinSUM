@@ -32,7 +32,7 @@ class ProteinDistributionModel {
 
   ProteinRedistributionScore evaluate(ProteinDistributionContext ctx) {
     final assumptions = <String>[
-      'protein.redistribution.not_global_minimization'
+      'protein.redistribution.not_global_minimization',
     ];
 
     if (!ctx.medicationContextValid) {
@@ -45,8 +45,10 @@ class ProteinDistributionModel {
           basis: 'medication_context_invalid',
           sourceRefs: _sourceRefs,
         ),
-        assumptions:
-            List.unmodifiable([...assumptions, 'medication_context_invalid']),
+        assumptions: List.unmodifiable([
+          ...assumptions,
+          'medication_context_invalid',
+        ]),
         sourceRefs: _sourceRefs,
         optimizationActive: false,
       );
@@ -54,12 +56,16 @@ class ProteinDistributionModel {
 
     final role = _windowRole(ctx);
     final protein = ctx.candidateProteinGrams ?? 0.0;
-    final proteinPresence =
-        (protein / adequacyReferenceProteinG).clamp(0.0, 1.0);
+    final proteinPresence = (protein / adequacyReferenceProteinG).clamp(
+      0.0,
+      1.0,
+    );
 
     // Overlap-driven protein penalty: scales with both overlap and protein.
-    final overlapPenalty =
-        (ctx.modeledOverlap * proteinPresence).clamp(0.0, 1.0);
+    final overlapPenalty = (ctx.modeledOverlap * proteinPresence).clamp(
+      0.0,
+      1.0,
+    );
 
     // Redistribution compatibility: high when overlap is low AND the meal
     // carries some protein (i.e. a good place to "spend" daily protein).
@@ -71,8 +77,10 @@ class ProteinDistributionModel {
         break;
       case ProteinWindowRole.lowerOverlapLaterWindow:
       case ProteinWindowRole.eveningRedistributionCandidateWindow:
-        redistribution =
-            (0.5 + 0.5 * proteinPresence - overlapPenalty).clamp(0.0, 1.0);
+        redistribution = (0.5 + 0.5 * proteinPresence - overlapPenalty).clamp(
+          0.0,
+          1.0,
+        );
         assumptions.add('protein.allowed_in_low_overlap_window');
         break;
       case ProteinWindowRole.unknownWindowRole:

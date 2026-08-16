@@ -81,16 +81,16 @@ class EvidenceGraphNode {
   bool get isMissing => status == kEvidenceGraphMissingArtifact;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'label': label,
-        'summary': summary,
-        'source_refs': sourceRefs,
-        'metadata': metadata,
-        'missingness': missingness,
-        'safety_boundary': safetyBoundary,
-        'status': status,
-      };
+    'id': id,
+    'type': type,
+    'label': label,
+    'summary': summary,
+    'source_refs': sourceRefs,
+    'metadata': metadata,
+    'missingness': missingness,
+    'safety_boundary': safetyBoundary,
+    'status': status,
+  };
 }
 
 class EvidenceGraphEdge {
@@ -113,14 +113,14 @@ class EvidenceGraphEdge {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'from': from,
-        'to': to,
-        'type': type,
-        'label': label,
-        'source_refs': sourceRefs,
-        'metadata': metadata,
-      };
+    'id': id,
+    'from': from,
+    'to': to,
+    'type': type,
+    'label': label,
+    'source_refs': sourceRefs,
+    'metadata': metadata,
+  };
 }
 
 /// A local ParkinSUM evidence graph. Deterministic JSON; no patient linkage.
@@ -157,17 +157,17 @@ class EvidenceGraph {
   });
 
   Map<String, dynamic> toJson() => {
-        'graph_type': kGraphType,
-        'conformance_status': kConformanceStatus,
-        'phi_policy': kPhiPolicy,
-        'graph_id': graphId,
-        'created_at': createdAt,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'nodes': nodes.map((n) => n.toJson()).toList(growable: false),
-        'edges': edges.map((e) => e.toJson()).toList(growable: false),
-        'source_refs': sourceRefs,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-        'limitations': limitations,
-      };
+    'graph_type': kGraphType,
+    'conformance_status': kConformanceStatus,
+    'phi_policy': kPhiPolicy,
+    'graph_id': graphId,
+    'created_at': createdAt,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'nodes': nodes.map((n) => n.toJson()).toList(growable: false),
+    'edges': edges.map((e) => e.toJson()).toList(growable: false),
+    'source_refs': sourceRefs,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+    'limitations': limitations,
+  };
 }

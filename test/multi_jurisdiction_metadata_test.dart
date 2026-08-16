@@ -37,80 +37,110 @@ void main() {
 
     test('official-in-jurisdiction outranks out-of-jurisdiction official', () {
       final us = _doc(
-          system: 'DailyMed',
-          jurisdiction: 'US',
-          tier: SourceAuthorityTier.officialLabelInJurisdiction);
+        system: 'DailyMed',
+        jurisdiction: 'US',
+        tier: SourceAuthorityTier.officialLabelInJurisdiction,
+      );
       final foreign = _doc(
-          system: 'EMA',
-          jurisdiction: 'EU',
-          tier: SourceAuthorityTier.officialOutOfJurisdiction);
+        system: 'EMA',
+        jurisdiction: 'EU',
+        tier: SourceAuthorityTier.officialOutOfJurisdiction,
+      );
       final chain = ['US', 'NA', 'GLOBAL'];
-      expect(scorer.score(us, userJurisdictionChain: chain),
-          greaterThan(scorer.score(foreign, userJurisdictionChain: chain)));
+      expect(
+        scorer.score(us, userJurisdictionChain: chain),
+        greaterThan(scorer.score(foreign, userJurisdictionChain: chain)),
+      );
     });
 
     test('synthetic/seed can never outrank official', () {
       final official = _doc(
-          system: 'DailyMed',
-          jurisdiction: 'US',
-          tier: SourceAuthorityTier.officialLabelInJurisdiction);
+        system: 'DailyMed',
+        jurisdiction: 'US',
+        tier: SourceAuthorityTier.officialLabelInJurisdiction,
+      );
       final synthetic = _doc(
-          system: 'synthetic_demo',
-          jurisdiction: 'US',
-          tier: SourceAuthorityTier.syntheticDemo);
+        system: 'synthetic_demo',
+        jurisdiction: 'US',
+        tier: SourceAuthorityTier.syntheticDemo,
+      );
       final chain = ['US', 'GLOBAL'];
-      expect(scorer.score(synthetic, userJurisdictionChain: chain),
-          lessThan(scorer.score(official, userJurisdictionChain: chain)));
+      expect(
+        scorer.score(synthetic, userJurisdictionChain: chain),
+        lessThan(scorer.score(official, userJurisdictionChain: chain)),
+      );
       expect(scorer.seedMayOverride(synthetic, official), isFalse);
     });
 
     test('reference translation is downgraded vs non-translation', () {
       final official = _doc(
-          system: 'PMDA',
-          jurisdiction: 'JP',
-          tier: SourceAuthorityTier.officialLabelInJurisdiction);
+        system: 'PMDA',
+        jurisdiction: 'JP',
+        tier: SourceAuthorityTier.officialLabelInJurisdiction,
+      );
       final translation = _doc(
-          system: 'PMDA',
-          jurisdiction: 'JP',
-          tier: SourceAuthorityTier.officialLabelInJurisdiction,
-          translation: ReferenceTranslationStatus.referenceOnlyTranslation);
+        system: 'PMDA',
+        jurisdiction: 'JP',
+        tier: SourceAuthorityTier.officialLabelInJurisdiction,
+        translation: ReferenceTranslationStatus.referenceOnlyTranslation,
+      );
       final chain = ['JP', 'GLOBAL'];
-      expect(scorer.score(translation, userJurisdictionChain: chain),
-          lessThan(scorer.score(official, userJurisdictionChain: chain)));
+      expect(
+        scorer.score(translation, userJurisdictionChain: chain),
+        lessThan(scorer.score(official, userJurisdictionChain: chain)),
+      );
     });
 
     test('cross-jurisdiction conflict is preserved, not collapsed', () {
       final us = _doc(
-          system: 'DailyMed',
-          jurisdiction: 'US',
-          tier: SourceAuthorityTier.officialLabelInJurisdiction);
+        system: 'DailyMed',
+        jurisdiction: 'US',
+        tier: SourceAuthorityTier.officialLabelInJurisdiction,
+      );
       final ca = _doc(
-          system: 'HealthCanadaDPD',
-          jurisdiction: 'CA',
-          tier: SourceAuthorityTier.officialDatabaseInJurisdiction);
-      expect(scorer.classifyConflict(a: us, b: ca, valuesAgree: false),
-          CrossJurisdictionConflictStatus.differentJurisdictionConflict);
-      expect(scorer.classifyConflict(a: us, b: ca, valuesAgree: true),
-          CrossJurisdictionConflictStatus.differentJurisdictionNoConflict);
+        system: 'HealthCanadaDPD',
+        jurisdiction: 'CA',
+        tier: SourceAuthorityTier.officialDatabaseInJurisdiction,
+      );
+      expect(
+        scorer.classifyConflict(a: us, b: ca, valuesAgree: false),
+        CrossJurisdictionConflictStatus.differentJurisdictionConflict,
+      );
+      expect(
+        scorer.classifyConflict(a: us, b: ca, valuesAgree: true),
+        CrossJurisdictionConflictStatus.differentJurisdictionNoConflict,
+      );
     });
 
     test('jurisdiction match score decays along the chain', () {
       expect(
-          scorer.jurisdictionMatchScore(
-              sourceJurisdiction: 'US', userJurisdictionChain: ['US', 'NA']),
-          1.0);
+        scorer.jurisdictionMatchScore(
+          sourceJurisdiction: 'US',
+          userJurisdictionChain: ['US', 'NA'],
+        ),
+        1.0,
+      );
       expect(
-          scorer.jurisdictionMatchScore(
-              sourceJurisdiction: 'NA', userJurisdictionChain: ['US', 'NA']),
-          lessThan(1.0));
+        scorer.jurisdictionMatchScore(
+          sourceJurisdiction: 'NA',
+          userJurisdictionChain: ['US', 'NA'],
+        ),
+        lessThan(1.0),
+      );
       expect(
-          scorer.jurisdictionMatchScore(
-              sourceJurisdiction: 'GLOBAL', userJurisdictionChain: ['US']),
-          0.2);
+        scorer.jurisdictionMatchScore(
+          sourceJurisdiction: 'GLOBAL',
+          userJurisdictionChain: ['US'],
+        ),
+        0.2,
+      );
       expect(
-          scorer.jurisdictionMatchScore(
-              sourceJurisdiction: 'JP', userJurisdictionChain: ['US']),
-          0.0);
+        scorer.jurisdictionMatchScore(
+          sourceJurisdiction: 'JP',
+          userJurisdictionChain: ['US'],
+        ),
+        0.0,
+      );
     });
   });
 
@@ -150,82 +180,105 @@ void main() {
     }
 
     test('complete metadata scores complete', () {
-      expect(gate.scoreMedicationContext(drug()),
-          MetadataCompletenessScore.complete);
+      expect(
+        gate.scoreMedicationContext(drug()),
+        MetadataCompletenessScore.complete,
+      );
     });
 
     test('no active ingredient → invalid', () {
-      expect(gate.scoreMedicationContext(drug(ingredients: const [])),
-          MetadataCompletenessScore.invalid);
+      expect(
+        gate.scoreMedicationContext(drug(ingredients: const [])),
+        MetadataCompletenessScore.invalid,
+      );
     });
 
     test('no unit → insufficient (no dose)', () {
-      expect(gate.scoreMedicationContext(drug(unit: '')),
-          MetadataCompletenessScore.insufficient);
+      expect(
+        gate.scoreMedicationContext(drug(unit: '')),
+        MetadataCompletenessScore.insufficient,
+      );
     });
 
     test('missing release type + provenance downgrades', () {
-      final score =
-          gate.scoreMedicationContext(drug(release: 'unknown', refs: const []));
+      final score = gate.scoreMedicationContext(
+        drug(release: 'unknown', refs: const []),
+      );
       expect([
         MetadataCompletenessScore.partial,
-        MetadataCompletenessScore.sufficient
+        MetadataCompletenessScore.sufficient,
       ], contains(score));
     });
 
     test('rule explanation with no sourceRefs is insufficient', () {
       expect(
-          gate.scoreRuleExplanation(
-              sourceRefs: const [],
-              hasLimitationText: true,
-              hasSafetyBoundary: true),
-          MetadataCompletenessScore.insufficient);
+        gate.scoreRuleExplanation(
+          sourceRefs: const [],
+          hasLimitationText: true,
+          hasSafetyBoundary: true,
+        ),
+        MetadataCompletenessScore.insufficient,
+      );
     });
 
     test('completeness weight is monotonic', () {
-      expect(gate.toWeight(MetadataCompletenessScore.complete),
-          greaterThan(gate.toWeight(MetadataCompletenessScore.partial)));
+      expect(
+        gate.toWeight(MetadataCompletenessScore.complete),
+        greaterThan(gate.toWeight(MetadataCompletenessScore.partial)),
+      );
       expect(gate.toWeight(MetadataCompletenessScore.invalid), 0.0);
     });
 
     FoodVariantMetadata foodMeta() => const FoodVariantMetadata(
-          foodVariantId: 'f',
-          sourceSystem: 'USDA_FDC',
-          jurisdiction: 'US',
-          language: 'und',
-          foodName: 'food',
-          basisType: 'per_100g',
-          servingUnit: null,
-          preparationState: 'unknown',
-          aminoAcidFieldsPresent: true,
-          extractionConfidence: null,
-          sourceRefs: ['src.usda.fdc.foundation_docs'],
-          limitationText: 'educational',
-        );
+      foodVariantId: 'f',
+      sourceSystem: 'USDA_FDC',
+      jurisdiction: 'US',
+      language: 'und',
+      foodName: 'food',
+      basisType: 'per_100g',
+      servingUnit: null,
+      preparationState: 'unknown',
+      aminoAcidFieldsPresent: true,
+      extractionConfidence: null,
+      sourceRefs: ['src.usda.fdc.foundation_docs'],
+      limitationText: 'educational',
+    );
 
     test('candidate food: full metadata + analytical tier → complete (B1)', () {
       expect(
-        gate.scoreCandidateFood(foodMeta(),
-            nutrientCompleteness: 1.0,
-            nutrientConfidenceTier: NutrientConfidenceTier.analytical),
+        gate.scoreCandidateFood(
+          foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: NutrientConfidenceTier.analytical,
+        ),
         MetadataCompletenessScore.complete,
       );
     });
 
     test('candidate food: imputed tier blocks complete (B1)', () {
-      final score = gate.scoreCandidateFood(foodMeta(),
-          nutrientCompleteness: 1.0,
-          nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed);
+      final score = gate.scoreCandidateFood(
+        foodMeta(),
+        nutrientCompleteness: 1.0,
+        nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed,
+      );
       expect(score, isNot(MetadataCompletenessScore.complete));
     });
 
     test('candidate food: calculated tier downgrades vs analytical (B1)', () {
-      final analytical = gate.toWeight(gate.scoreCandidateFood(foodMeta(),
+      final analytical = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
           nutrientCompleteness: 1.0,
-          nutrientConfidenceTier: NutrientConfidenceTier.analytical));
-      final calculated = gate.toWeight(gate.scoreCandidateFood(foodMeta(),
+          nutrientConfidenceTier: NutrientConfidenceTier.analytical,
+        ),
+      );
+      final calculated = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
           nutrientCompleteness: 1.0,
-          nutrientConfidenceTier: NutrientConfidenceTier.calculated));
+          nutrientConfidenceTier: NutrientConfidenceTier.calculated,
+        ),
+      );
       expect(calculated, lessThan(analytical));
     });
 
@@ -233,8 +286,11 @@ void main() {
       // No FDC provenance supplied → unchanged from the pre-B1 grade.
       expect(
         gate.scoreCandidateFood(foodMeta(), nutrientCompleteness: 1.0),
-        gate.scoreCandidateFood(foodMeta(),
-            nutrientCompleteness: 1.0, nutrientConfidenceTier: null),
+        gate.scoreCandidateFood(
+          foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: null,
+        ),
       );
     });
   });
@@ -252,8 +308,11 @@ void main() {
         'NMPA',
         'synthetic_demo',
       ]) {
-        expect(systems, contains(required),
-            reason: 'missing source family $required');
+        expect(
+          systems,
+          contains(required),
+          reason: 'missing source family $required',
+        );
       }
     });
 
@@ -271,8 +330,10 @@ void main() {
 
     test('PMDA + NMPA carry reference-translation / language flags', () {
       final pmda = SourceAdapterRegistry.bySourceSystem('PMDA')!;
-      expect(pmda.translationStatus,
-          ReferenceTranslationStatus.referenceOnlyTranslation);
+      expect(
+        pmda.translationStatus,
+        ReferenceTranslationStatus.referenceOnlyTranslation,
+      );
       final nmpa = SourceAdapterRegistry.bySourceSystem('NMPA')!;
       expect(nmpa.language, 'zh');
     });
@@ -287,8 +348,10 @@ void main() {
         'EU_National_Register',
       ]) {
         expect(
-            SourceAdapterRegistry.bySourceSystem(system)!.implemented, isTrue,
-            reason: '$system should be implemented');
+          SourceAdapterRegistry.bySourceSystem(system)!.implemented,
+          isTrue,
+          reason: '$system should be implemented',
+        );
       }
     });
 

@@ -32,8 +32,9 @@ class RuleMessageSet {
   String forLocale(String localeTag) {
     final exact = localized[localeTag];
     if (exact != null && exact.isNotEmpty) return exact;
-    final familyKey =
-        localeTag.contains('-') ? localeTag.split('-').first : localeTag;
+    final familyKey = localeTag.contains('-')
+        ? localeTag.split('-').first
+        : localeTag;
     final family = localized[familyKey];
     if (family != null && family.isNotEmpty) return family;
     if ((en ?? '').isNotEmpty) return en!;

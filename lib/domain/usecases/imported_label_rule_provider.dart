@@ -43,7 +43,7 @@ class ImportedLabelRuleProvider {
       if (sourceDocId.isEmpty || rawPayload.trim().isEmpty) continue;
       final variantIds =
           variantIdsBySourceDoc[sourceDocId]?.toList(growable: false) ??
-              const <String>[];
+          const <String>[];
       if (variantIds.isEmpty) continue;
 
       Map<String, dynamic> payload;
@@ -118,7 +118,8 @@ class ImportedLabelRuleProvider {
       return null;
     }
     return {
-      'rule_id': 'imported.label.${_slug(variantId)}.meal_window.$before'
+      'rule_id':
+          'imported.label.${_slug(variantId)}.meal_window.$before'
           '_$after',
       'version': '1.0.0',
       'status': 'active',
@@ -133,11 +134,7 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
             'between': {
@@ -197,16 +194,10 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
-            'exists': {
-              'path': 'meal.id',
-            },
+            'exists': {'path': 'meal.id'},
           },
         ],
       },
@@ -250,11 +241,7 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
             'cmp': {
@@ -327,11 +314,7 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
             'cmp': {
@@ -388,11 +371,7 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
             'in': {
@@ -449,11 +428,7 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
             'cmp': {
@@ -481,9 +456,7 @@ class ImportedLabelRuleProvider {
           },
           {
             'type': 'switch_thickener',
-            'params': {
-              'suggested': 'xanthan_based_or_review',
-            },
+            'params': {'suggested': 'xanthan_based_or_review'},
           },
         ],
         'output_tags': ['imported_label_starch_thickener_incompatibility'],
@@ -515,11 +488,7 @@ class ImportedLabelRuleProvider {
       'when': {
         'all': [
           {
-            'cmp': {
-              'path': 'drug.id',
-              'op': 'eq',
-              'value': variantId,
-            },
+            'cmp': {'path': 'drug.id', 'op': 'eq', 'value': variantId},
           },
           {
             'cmp': {
@@ -529,9 +498,7 @@ class ImportedLabelRuleProvider {
             },
           },
           {
-            'exists': {
-              'path': 'enteral_feed.protein_g_per_day',
-            },
+            'exists': {'path': 'enteral_feed.protein_g_per_day'},
           },
         ],
       },
@@ -546,9 +513,7 @@ class ImportedLabelRuleProvider {
         'actions': [
           {
             'type': 'require_manual_review',
-            'params': {
-              'review_queue': 'pd_nutrition_pharmacy',
-            },
+            'params': {'review_queue': 'pd_nutrition_pharmacy'},
           },
         ],
         'output_tags': ['imported_label_enteral_feed_review'],

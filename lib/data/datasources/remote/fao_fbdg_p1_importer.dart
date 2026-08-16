@@ -23,14 +23,13 @@ class FaoFbdgP1Importer {
     if (uri.scheme != 'https' ||
         (uri.host != 'fao.org' && !uri.host.endsWith('.fao.org'))) {
       throw ArgumentError.value(
-          url, 'url', 'Expected an official FAO HTTPS URL.');
+        url,
+        'url',
+        'Expected an official FAO HTTPS URL.',
+      );
     }
     final html = await fetchClient.getText(url);
-    return importCountryPage(
-      countryCode: countryCode,
-      url: url,
-      html: html,
-    );
+    return importCountryPage(countryCode: countryCode, url: url, html: html);
   }
 
   P0ImportBundle importCountryPage({
@@ -140,7 +139,9 @@ class FaoFbdgP1Importer {
 
   String _extractTitle(String text, String countryCode) {
     final officialName = _firstMatch(
-        text, RegExp(r'Official name\s+([^\n]+)', caseSensitive: false));
+      text,
+      RegExp(r'Official name\s+([^\n]+)', caseSensitive: false),
+    );
     if (officialName != null && officialName.trim().isNotEmpty) {
       return officialName.trim();
     }
@@ -173,9 +174,13 @@ class FaoFbdgP1Importer {
   String _normalizeText(String html) {
     return html
         .replaceAll(
-            RegExp(r'<script[\s\S]*?</script>', caseSensitive: false), ' ')
+          RegExp(r'<script[\s\S]*?</script>', caseSensitive: false),
+          ' ',
+        )
         .replaceAll(
-            RegExp(r'<style[\s\S]*?</style>', caseSensitive: false), ' ')
+          RegExp(r'<style[\s\S]*?</style>', caseSensitive: false),
+          ' ',
+        )
         .replaceAll(RegExp(r'<[^>]+>'), '\n')
         .replaceAll('&nbsp;', ' ')
         .replaceAll(RegExp(r'[ \t]+'), ' ')

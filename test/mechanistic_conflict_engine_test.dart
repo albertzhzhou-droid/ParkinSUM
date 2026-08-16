@@ -76,40 +76,48 @@ void main() {
       medTakenAt: now,
       mealStartedAt: now,
     );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final composition = normalizer.normalize(
+      mealId: 'c1',
+      components: const [highProtein],
+    );
     final r = engine.evaluate(
       context: ctx,
       mealCompositionsById: {'c1': composition},
     );
-    expect(r.interactionType,
-        MechanisticInteractionType.insufficientMedicationContext);
+    expect(
+      r.interactionType,
+      MechanisticInteractionType.insufficientMedicationContext,
+    );
     expect(r.confidenceBand, ConfidenceBand.insufficient);
   });
 
-  test('valid context + high protein near medication yields moderate severity',
-      () {
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final ctx = makeContext(
-      now: now,
-      medEntry: validLevodopa,
-      medTakenAt: now.add(const Duration(minutes: 30)),
-      mealStartedAt: now,
-    );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
-    final r = engine.evaluate(
-      context: ctx,
-      mealCompositionsById: {'c1': composition},
-    );
-    expect(r.interactionScore, greaterThan(0.05));
-    expect(
-      [SeverityBand.moderate, SeverityBand.high],
-      contains(r.severityBand),
-    );
-    expect(r.absorptionOpportunityWindow, isNotNull);
-    expect(r.competitionTimeline, isNotNull);
-  });
+  test(
+    'valid context + high protein near medication yields moderate severity',
+    () {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final ctx = makeContext(
+        now: now,
+        medEntry: validLevodopa,
+        medTakenAt: now.add(const Duration(minutes: 30)),
+        mealStartedAt: now,
+      );
+      final composition = normalizer.normalize(
+        mealId: 'c1',
+        components: const [highProtein],
+      );
+      final r = engine.evaluate(
+        context: ctx,
+        mealCompositionsById: {'c1': composition},
+      );
+      expect(r.interactionScore, greaterThan(0.05));
+      expect([
+        SeverityBand.moderate,
+        SeverityBand.high,
+      ], contains(r.severityBand));
+      expect(r.absorptionOpportunityWindow, isNotNull);
+      expect(r.competitionTimeline, isNotNull);
+    },
+  );
 
   test('no meal event returns noModeledInteraction with medium confidence', () {
     final now = DateTime.utc(2026, 1, 1, 8);
@@ -120,10 +128,7 @@ void main() {
       mealStartedAt: null,
     );
     final r = engine.evaluate(context: ctx, mealCompositionsById: const {});
-    expect(
-      r.interactionType,
-      MechanisticInteractionType.noModeledInteraction,
-    );
+    expect(r.interactionType, MechanisticInteractionType.noModeledInteraction);
   });
 
   const validIron = RawMedicationEntry(
@@ -178,8 +183,10 @@ void main() {
         ),
       ],
     );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final composition = normalizer.normalize(
+      mealId: 'c1',
+      components: const [highProtein],
+    );
     final r = engine.evaluate(
       context: ctx,
       mealCompositionsById: {'c1': composition},
@@ -222,8 +229,10 @@ void main() {
         ),
       ],
     );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final composition = normalizer.normalize(
+      mealId: 'c1',
+      components: const [highProtein],
+    );
     final r = engine.evaluate(
       context: ctx,
       mealCompositionsById: {'c1': composition},
@@ -237,13 +246,15 @@ void main() {
   test('ER formulation widens the absorption window vs immediate release', () {
     final now = DateTime.utc(2026, 1, 1, 8);
     TimeAxisConflictContext ctxFor(RawMedicationEntry e) => makeContext(
-          now: now,
-          medEntry: e,
-          medTakenAt: now.add(const Duration(minutes: 20)),
-          mealStartedAt: now,
-        );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+      now: now,
+      medEntry: e,
+      medTakenAt: now.add(const Duration(minutes: 20)),
+      mealStartedAt: now,
+    );
+    final composition = normalizer.normalize(
+      mealId: 'c1',
+      components: const [highProtein],
+    );
     final ir = engine.evaluate(
       context: ctxFor(validLevodopa),
       mealCompositionsById: {'c1': composition},
@@ -284,10 +295,14 @@ void main() {
       portionGrams: 150,
       sourceDocId: 'synthetic:demo',
     );
-    final compA =
-        normalizer.normalize(mealId: 'cA', components: const [lowProtein]);
-    final compB =
-        normalizer.normalize(mealId: 'cB', components: const [highProtein]);
+    final compA = normalizer.normalize(
+      mealId: 'cA',
+      components: const [lowProtein],
+    );
+    final compB = normalizer.normalize(
+      mealId: 'cB',
+      components: const [highProtein],
+    );
     final mealA = MealTimelineEvent(
       id: 'a_meal',
       minute: refMinute,
@@ -345,10 +360,14 @@ void main() {
       portionGrams: 150,
       sourceDocId: 'synthetic:demo',
     );
-    final historical = normalizer
-        .normalize(mealId: 'historical', components: const [lowProtein]);
-    final hypothetical = normalizer
-        .normalize(mealId: 'hypothetical', components: const [highProtein]);
+    final historical = normalizer.normalize(
+      mealId: 'historical',
+      components: const [lowProtein],
+    );
+    final hypothetical = normalizer.normalize(
+      mealId: 'hypothetical',
+      components: const [highProtein],
+    );
     final ctx = TimeAxisConflictContext(
       referenceMinute: refMinute,
       medicationEvents: [med],
@@ -372,8 +391,10 @@ void main() {
       hypothetical.id: hypothetical,
     };
 
-    final ordinary =
-        engine.evaluate(context: ctx, mealCompositionsById: compositions);
+    final ordinary = engine.evaluate(
+      context: ctx,
+      mealCompositionsById: compositions,
+    );
     final preferred = engine.evaluate(
       context: ctx,
       mealCompositionsById: compositions,
@@ -392,8 +413,10 @@ void main() {
       medTakenAt: now,
       mealStartedAt: now,
     );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final composition = normalizer.normalize(
+      mealId: 'c1',
+      components: const [highProtein],
+    );
 
     final result = engine.evaluate(
       context: ctx,
@@ -419,8 +442,10 @@ void main() {
       medTakenAt: now.add(const Duration(minutes: 30)),
       mealStartedAt: now,
     );
-    final composition =
-        normalizer.normalize(mealId: 'c1', components: const [highProtein]);
+    final composition = normalizer.normalize(
+      mealId: 'c1',
+      components: const [highProtein],
+    );
     final r = engine.evaluate(
       context: ctx,
       mealCompositionsById: {'c1': composition},

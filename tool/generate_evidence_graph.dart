@@ -94,13 +94,16 @@ Map<String, dynamic> _sampleEvidenceBundle() {
 Future<void> main(List<String> args) async {
   final inputs = EvidenceGraphInputs(
     replayReport: _readJson('build/mechanistic_replay/latest.json'),
-    sourceQualityReport:
-        _readJson('build/source_quality_perturbation/latest.json'),
+    sourceQualityReport: _readJson(
+      'build/source_quality_perturbation/latest.json',
+    ),
     releaseSnapshot: _readJson('build/release_snapshot/latest.json'),
-    publicDemoWalkthrough:
-        _readJson('build/public_demo_walkthrough/latest.json'),
-    recommendationScenarioReport:
-        _readJson('build/recommendation_scenario_replay/latest.json'),
+    publicDemoWalkthrough: _readJson(
+      'build/public_demo_walkthrough/latest.json',
+    ),
+    recommendationScenarioReport: _readJson(
+      'build/recommendation_scenario_replay/latest.json',
+    ),
     evidenceBundle: _sampleEvidenceBundle(),
   );
 
@@ -109,8 +112,9 @@ Future<void> main(List<String> args) async {
 
   final outDir = Directory('build/evidence_graph');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeEvidenceGraph(graph));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeEvidenceGraph(graph));
   File('${outDir.path}/latest.mmd').writeAsStringSync(mermaid);
   File('${outDir.path}/latest.md').writeAsStringSync(
     '# ParkinSUM Local Evidence Graph\n\n'
@@ -120,12 +124,16 @@ Future<void> main(List<String> args) async {
     '```mermaid\n$mermaid```\n',
   );
 
-  final missing =
-      graph.nodes.where((n) => n.isMissing).map((n) => n.id).toList();
+  final missing = graph.nodes
+      .where((n) => n.isMissing)
+      .map((n) => n.id)
+      .toList();
   stdout
-    ..writeln('Evidence graph written '
-        '(${graph.nodes.length} nodes, ${graph.edges.length} edges'
-        '${missing.isEmpty ? '' : '; missing_artifact: ${missing.join(', ')}'}).')
+    ..writeln(
+      'Evidence graph written '
+      '(${graph.nodes.length} nodes, ${graph.edges.length} edges'
+      '${missing.isEmpty ? '' : '; missing_artifact: ${missing.join(', ')}'}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.mmd')
     ..writeln('Report: ${outDir.path}/latest.md');

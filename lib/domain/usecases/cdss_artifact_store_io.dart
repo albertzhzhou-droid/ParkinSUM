@@ -30,11 +30,13 @@ class LocalCdssArtifactStore implements CdssArtifactStore {
       written[entry.key] = file.path;
     }
     final manifestFile = File(p.join(baseDir.path, 'snapshot_manifest.json'));
-    await manifestFile.writeAsString(artifactManifestJson(
-      artifactId: artifactId,
-      files: written,
-      extra: manifest,
-    ));
+    await manifestFile.writeAsString(
+      artifactManifestJson(
+        artifactId: artifactId,
+        files: written,
+        extra: manifest,
+      ),
+    );
     written['snapshot_manifest.json'] = manifestFile.path;
     return CdssArtifactWriteResult(
       artifactPath: baseDir.path,

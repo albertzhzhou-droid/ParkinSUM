@@ -42,10 +42,7 @@ class AuthUser {
   final String uid;
   final String? email;
 
-  const AuthUser({
-    required this.uid,
-    this.email,
-  });
+  const AuthUser({required this.uid, this.email});
 }
 
 // =====================================================
@@ -125,15 +122,11 @@ class FirebaseAuthService implements AuthService {
   @override
   Stream<AuthUser?> get authStateChanges =>
       FirebaseBackend.ensureInitialized().asStream().asyncExpand(
-            (_) => _auth.authStateChanges().map(
-                  (user) => user == null
-                      ? null
-                      : AuthUser(
-                          uid: user.uid,
-                          email: user.email,
-                        ),
-                ),
-          );
+        (_) => _auth.authStateChanges().map(
+          (user) =>
+              user == null ? null : AuthUser(uid: user.uid, email: user.email),
+        ),
+      );
 
   @override
   Future<String> ensureUser() async {

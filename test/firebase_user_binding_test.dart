@@ -74,21 +74,25 @@ void main() {
     );
   });
 
-  test('Firestore private writes are blocked before Firebase sign-in',
-      () async {
-    final database = FirestoreAppDatabase(authService: SignedOutAuthService());
+  test(
+    'Firestore private writes are blocked before Firebase sign-in',
+    () async {
+      final database = FirestoreAppDatabase(
+        authService: SignedOutAuthService(),
+      );
 
-    await expectLater(
-      database.saveMeals(<Meal>[]),
-      throwsA(
-        isA<StateError>().having(
-          (error) => error.message,
-          'message',
-          contains('not signed in'),
+      await expectLater(
+        database.saveMeals(<Meal>[]),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('not signed in'),
+          ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 
   test('Firestore rules keep user writes on explicit safe collections', () {
     final rules = File('firestore.rules').readAsStringSync();
@@ -101,15 +105,18 @@ void main() {
     expect(rules, contains('match /intakes/{intakeId}'));
     expect(rules, contains('match /clinical_audits/{auditId}'));
     expect(
-        rules,
-        contains(
-            'allow create: if isOwner(uid) && validClinicalAudit(uid, auditId);'));
+      rules,
+      contains(
+        'allow create: if isOwner(uid) && validClinicalAudit(uid, auditId);',
+      ),
+    );
     expect(rules, contains('allow update, delete: if false;'));
     expect(rules, contains('match /cdss_tables/{table}/rows/{rowId}'));
     expect(
       rules,
       contains(
-          'allow read: if isOwner(uid) && safeId(table) && safeId(rowId);'),
+        'allow read: if isOwner(uid) && safeId(table) && safeId(rowId);',
+      ),
     );
     expect(rules, contains('match /cdss_tables/{table}/rows/{rowId}'));
     expect(rules, contains('match /app_catalog/{table}/rows/{rowId}'));
@@ -121,9 +128,13 @@ void main() {
     expect(rules, contains('allow read, write: if false;'));
     expect(rules, isNot(contains('allow read, write: if true')));
     expect(
-        rules,
-        isNot(contains(
-            'match /cdss_tables/{table}/rows/{rowId} {\n      allow read: if signedIn();')));
+      rules,
+      isNot(
+        contains(
+          'match /cdss_tables/{table}/rows/{rowId} {\n      allow read: if signedIn();',
+        ),
+      ),
+    );
   });
 
   test('Firebase patient meal-check audit payload stays user-scoped', () {

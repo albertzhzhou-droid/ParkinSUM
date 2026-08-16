@@ -36,14 +36,14 @@ class ScoringWeight {
       evidenceLevel == ModelEvidenceLevel.prototypeHeuristic;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'label': label,
-        'value': value,
-        'source_refs': sourceRefs,
-        'evidence_level': evidenceLevel.name,
-        'limitation': limitation,
-        'prototype_heuristic': isPrototypeHeuristic,
-      };
+    'id': id,
+    'label': label,
+    'value': value,
+    'source_refs': sourceRefs,
+    'evidence_level': evidenceLevel.name,
+    'limitation': limitation,
+    'prototype_heuristic': isPrototypeHeuristic,
+  };
 }
 
 class NextMealScoringParameterSet {
@@ -158,15 +158,15 @@ class NextMealScoringParameterSet {
   }
 
   List<ScoringWeight> get all => [
-        conflictOverlap,
-        proteinRedistribution,
-        nutritionAdequacy,
-        metadataCompleteness,
-        sourceAuthority,
-        jurisdictionMatch,
-        provenanceQuality,
-        uncertaintyPenalty,
-      ];
+    conflictOverlap,
+    proteinRedistribution,
+    nutritionAdequacy,
+    metadataCompleteness,
+    sourceAuthority,
+    jurisdictionMatch,
+    provenanceQuality,
+    uncertaintyPenalty,
+  ];
 
   /// Sum of the provenance/metadata refinement weights. Must stay below the
   /// conflict-overlap weight so provenance can never outrank a high modeled
@@ -188,14 +188,14 @@ class NextMealScoringParameterSet {
       conflictOverlap.value >= provenanceQuality.value;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'conflict_overlap': conflictOverlap.toJson(),
-        'protein_redistribution': proteinRedistribution.toJson(),
-        'nutrition_adequacy': nutritionAdequacy.toJson(),
-        'metadata_completeness': metadataCompleteness.toJson(),
-        'source_authority': sourceAuthority.toJson(),
-        'jurisdiction_match': jurisdictionMatch.toJson(),
-        'provenance_quality': provenanceQuality.toJson(),
-        'uncertainty_penalty': uncertaintyPenalty.toJson(),
-      };
+    'id': id,
+    'conflict_overlap': conflictOverlap.toJson(),
+    'protein_redistribution': proteinRedistribution.toJson(),
+    'nutrition_adequacy': nutritionAdequacy.toJson(),
+    'metadata_completeness': metadataCompleteness.toJson(),
+    'source_authority': sourceAuthority.toJson(),
+    'jurisdiction_match': jurisdictionMatch.toJson(),
+    'provenance_quality': provenanceQuality.toJson(),
+    'uncertainty_penalty': uncertaintyPenalty.toJson(),
+  };
 }

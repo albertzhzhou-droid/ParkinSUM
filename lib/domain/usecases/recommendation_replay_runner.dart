@@ -73,9 +73,11 @@ class RecommendationReplayRunner {
         .map((item) => item.food.id)
         .toList(growable: false);
     final matchedExpected = benchmarkCase.expectedTopFoodIds
-        .where((id) => aiRanking
-            .take(benchmarkCase.expectedTopFoodIds.length)
-            .contains(id))
+        .where(
+          (id) => aiRanking
+              .take(benchmarkCase.expectedTopFoodIds.length)
+              .contains(id),
+        )
         .toList(growable: false);
     final missingExpected = benchmarkCase.expectedTopFoodIds
         .where((id) => !matchedExpected.contains(id))
@@ -110,8 +112,9 @@ class RecommendationReplayRunner {
     final meal = Meal(
       id: 'bench_meal_${benchmarkCase.caseId}',
       eatenAt: mealTime,
-      occurredAt:
-          benchmarkCase.historyMealTimePrecision == 'exact' ? mealTime : null,
+      occurredAt: benchmarkCase.historyMealTimePrecision == 'exact'
+          ? mealTime
+          : null,
       occurredRangeStart: benchmarkCase.historyMealTimePrecision == 'interval'
           ? mealTime
           : null,
@@ -136,12 +139,7 @@ class RecommendationReplayRunner {
           : null,
       title: benchmarkCase.historyMealTitle,
       items: historyFoods
-          .map(
-            (food) => MealItem.fromFood(
-              food: food,
-              quantityFactor: 1.0,
-            ),
-          )
+          .map((food) => MealItem.fromFood(food: food, quantityFactor: 1.0))
           .toList(growable: false),
     );
     final drugs = benchmarkCase.activeDrugIds

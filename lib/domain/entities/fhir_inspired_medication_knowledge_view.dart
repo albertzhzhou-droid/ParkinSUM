@@ -55,15 +55,15 @@ class FhirInspiredMedicationComponentEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'ingredient_name': ingredientName,
-        'ingredient_role': ingredientRole,
-        'strength_value': strengthValue,
-        'strength_unit': strengthUnit,
-        'strength_basis': strengthBasis,
-        'source_refs': sourceRefs,
-        'label_section_refs': labelSectionRefs,
-        'limitation_text': limitationText,
-      };
+    'ingredient_name': ingredientName,
+    'ingredient_role': ingredientRole,
+    'strength_value': strengthValue,
+    'strength_unit': strengthUnit,
+    'strength_basis': strengthBasis,
+    'source_refs': sourceRefs,
+    'label_section_refs': labelSectionRefs,
+    'limitation_text': limitationText,
+  };
 }
 
 /// A reference to a labeled section of an official product-information document
@@ -114,20 +114,20 @@ class FhirInspiredLabelSectionRef {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_system': sourceSystem,
-        'source_doc_id': sourceDocId,
-        'section_id': sectionId,
-        'section_code': sectionCode,
-        'loinc_code': loincCode,
-        'loinc_display': loincDisplay,
-        'loinc_mapping_confidence': loincMappingConfidence,
-        'section_title': sectionTitle,
-        'section_path': sectionPath,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-      };
+    'source_system': sourceSystem,
+    'source_doc_id': sourceDocId,
+    'section_id': sectionId,
+    'section_code': sectionCode,
+    'loinc_code': loincCode,
+    'loinc_display': loincDisplay,
+    'loinc_mapping_confidence': loincMappingConfidence,
+    'section_title': sectionTitle,
+    'section_path': sectionPath,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+  };
 }
 
 /// Source document descriptor (no patient/encounter linkage).
@@ -143,10 +143,10 @@ class FhirInspiredSourceDocument {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_doc_id': sourceDocId,
-        'source_doc_version': sourceDocVersion,
-        'effective_date': effectiveDate,
-      };
+    'source_doc_id': sourceDocId,
+    'source_doc_version': sourceDocVersion,
+    'effective_date': effectiveDate,
+  };
 }
 
 /// Top-level FHIR-inspired MedicationKnowledge view. Deterministic JSON;
@@ -217,35 +217,36 @@ class FhirInspiredMedicationKnowledgeView {
   });
 
   Map<String, dynamic> toJson() => {
-        'view_type': kViewType,
-        'conformance_status': kConformanceStatus,
-        'phi_policy': kPhiPolicy,
-        'demo_drug_product_id': demoDrugProductId,
-        'source_system': sourceSystem,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'product_name': productName,
-        'generic_name': genericName,
-        'brand_name': brandName,
-        'active_ingredients': activeIngredients,
-        'combination_components': combinationComponents
-            .map((e) => e.toJson())
-            .toList(growable: false),
-        'strengths': strengths.map((e) => e.toJson()).toList(growable: false),
-        'dose_form': doseForm,
-        'route': route,
-        'release_type': releaseType,
-        'release_type_source': releaseTypeSource,
-        'source_document': sourceDocument.toJson(),
-        'label_section_refs':
-            labelSectionRefs.map((e) => e.toJson()).toList(growable: false),
-        'source_refs': sourceRefs,
-        'metadata_completeness': metadataCompleteness,
-        'source_authority_score': sourceAuthorityScore,
-        'provenance_summary': provenanceSummary,
-        'limitation_text': limitationText,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'not_advice_text': notAdviceText,
-        'safety_boundary': safetyBoundary,
-      };
+    'view_type': kViewType,
+    'conformance_status': kConformanceStatus,
+    'phi_policy': kPhiPolicy,
+    'demo_drug_product_id': demoDrugProductId,
+    'source_system': sourceSystem,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'product_name': productName,
+    'generic_name': genericName,
+    'brand_name': brandName,
+    'active_ingredients': activeIngredients,
+    'combination_components': combinationComponents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'strengths': strengths.map((e) => e.toJson()).toList(growable: false),
+    'dose_form': doseForm,
+    'route': route,
+    'release_type': releaseType,
+    'release_type_source': releaseTypeSource,
+    'source_document': sourceDocument.toJson(),
+    'label_section_refs': labelSectionRefs
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'source_refs': sourceRefs,
+    'metadata_completeness': metadataCompleteness,
+    'source_authority_score': sourceAuthorityScore,
+    'provenance_summary': provenanceSummary,
+    'limitation_text': limitationText,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'not_advice_text': notAdviceText,
+    'safety_boundary': safetyBoundary,
+  };
 }

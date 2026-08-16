@@ -63,10 +63,7 @@ class RuntimeRuleEngine {
     final localeRegion = _regionFromBcp47(context.userProfile.displayLocale);
     if (localeRegion != null) {
       addAll(
-        _regionToJurisdictionChain(
-          localeRegion,
-          rows: regionJurisdictionRows,
-        ),
+        _regionToJurisdictionChain(localeRegion, rows: regionJurisdictionRows),
       );
     }
 
@@ -126,8 +123,9 @@ class RuntimeRuleEngine {
 
               // Runtime fields inspected by this rule, used to connect the trigger condition
               // to the explanation and evidence boundary.
-              'input_fields_used':
-                  _collectConditionPaths(rule.conditions).toList()..sort(),
+              'input_fields_used': _collectConditionPaths(
+                rule.conditions,
+              ).toList()..sort(),
 
               // Limitation copy prevents this deterministic match from being interpreted
               // as individualized diagnosis, treatment, medication timing, or diet advice.
@@ -168,10 +166,14 @@ class RuntimeRuleEngine {
     // 优先级顺序：
     // manual override > strictness > jurisdiction > specificity > authority > recency > rule id。
     // 最后一项 rule id 只作为稳定排序兜底；解释性 provenance score 在 service trace 中输出。
-    final leftJurisdictionRank =
-        _bestJurisdictionRank(left.jurisdictions, jurisdictionChain);
-    final rightJurisdictionRank =
-        _bestJurisdictionRank(right.jurisdictions, jurisdictionChain);
+    final leftJurisdictionRank = _bestJurisdictionRank(
+      left.jurisdictions,
+      jurisdictionChain,
+    );
+    final rightJurisdictionRank = _bestJurisdictionRank(
+      right.jurisdictions,
+      jurisdictionChain,
+    );
 
     return _compareTuple(
       [
@@ -436,8 +438,9 @@ class RuntimeRuleEngine {
       return _convertDoseToMg(value.toDouble(), unit);
     }
     if (value is String) {
-      final match =
-          RegExp(r'([0-9]+(?:\.[0-9]+)?)\s*([a-zA-Zµμ]+)?').firstMatch(value);
+      final match = RegExp(
+        r'([0-9]+(?:\.[0-9]+)?)\s*([a-zA-Zµμ]+)?',
+      ).firstMatch(value);
       if (match == null) return null;
       final amount = double.tryParse(match.group(1) ?? '');
       if (amount == null) return null;
@@ -478,12 +481,15 @@ class RuntimeRuleEngine {
   /// 对外公开给 service/support 层复用，避免重复实现辖区匹配。
   bool jurisdictionMatches(List<String> ruleJurisdictions, List<String> chain) {
     if (ruleJurisdictions.contains('*')) return true;
-    return ruleJurisdictions
-        .any((value) => chain.contains(value.toUpperCase()));
+    return ruleJurisdictions.any(
+      (value) => chain.contains(value.toUpperCase()),
+    );
   }
 
   int _bestJurisdictionRank(
-      List<String> ruleJurisdictions, List<String> chain) {
+    List<String> ruleJurisdictions,
+    List<String> chain,
+  ) {
     if (ruleJurisdictions.contains('*')) return chain.length + 1;
     var best = -1;
     for (final jurisdiction in ruleJurisdictions) {

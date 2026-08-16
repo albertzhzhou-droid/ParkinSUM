@@ -123,23 +123,23 @@ class SourceVersionRecord {
   bool get isMechanismRole => metadata['mechanism_role'] == 'true';
 
   Map<String, dynamic> toJson() => {
-        'record_id': recordId,
-        'source_id': sourceId,
-        'source_family': sourceFamily,
-        'record_type': recordType,
-        'file': file,
-        'version': version,
-        'effective_date': effectiveDate,
-        'last_checked': lastChecked,
-        'last_policy_reviewed': lastPolicyReviewed,
-        'generated_at': generatedAt,
-        'implementation_status': implementationStatus,
-        'bibliography_refs': bibliographyRefs,
-        'documentation_refs': documentationRefs,
-        'source_refs': sourceRefs,
-        'limitations': limitations,
-        'metadata': metadata,
-      };
+    'record_id': recordId,
+    'source_id': sourceId,
+    'source_family': sourceFamily,
+    'record_type': recordType,
+    'file': file,
+    'version': version,
+    'effective_date': effectiveDate,
+    'last_checked': lastChecked,
+    'last_policy_reviewed': lastPolicyReviewed,
+    'generated_at': generatedAt,
+    'implementation_status': implementationStatus,
+    'bibliography_refs': bibliographyRefs,
+    'documentation_refs': documentationRefs,
+    'source_refs': sourceRefs,
+    'limitations': limitations,
+    'metadata': metadata,
+  };
 }
 
 class SourceVersionDriftFinding {
@@ -164,15 +164,15 @@ class SourceVersionDriftFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'finding_type': findingType,
-        'source_id': sourceId,
-        'record_id': recordId,
-        'file': file,
-        'message': message,
-        'suggested_fix': suggestedFix,
-        'safety_boundary': safetyBoundary,
-      };
+    'severity': severity,
+    'finding_type': findingType,
+    'source_id': sourceId,
+    'record_id': recordId,
+    'file': file,
+    'message': message,
+    'suggested_fix': suggestedFix,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 class SourceVersionDriftReport {
@@ -203,19 +203,19 @@ class SourceVersionDriftReport {
   int get blockerCount => findingCounts['blocker'] ?? 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'no_live_fetch': true,
-        'not_legal_or_license_clearance': true,
-        'generated_at': generatedAt,
-        'record_count': recordCount,
-        'finding_counts': findingCounts,
-        'pass': pass,
-        'records': records.map((r) => r.toJson()).toList(growable: false),
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'no_live_fetch': true,
+    'not_legal_or_license_clearance': true,
+    'generated_at': generatedAt,
+    'record_count': recordCount,
+    'finding_counts': findingCounts,
+    'pass': pass,
+    'records': records.map((r) => r.toJson()).toList(growable: false),
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 /// Optional configuration.

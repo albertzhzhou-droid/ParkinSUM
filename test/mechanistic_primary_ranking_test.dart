@@ -10,8 +10,7 @@ import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 /// the actual ranking flip is exercised by the multi-point sampling test +
 /// the replay runner's s13/s14/s15 scenarios.
 void main() {
-  test(
-      'promotion contract requires user window AND medium/high confidence AND '
+  test('promotion contract requires user window AND medium/high confidence AND '
       'all candidates scored', () {
     bool canPromote({
       required UserDefinedMealWindow? window,
@@ -25,42 +24,56 @@ void main() {
     }
 
     expect(
-        canPromote(
-            window: null,
-            confidence: ConfidenceBand.high,
-            everyCandidateScored: true),
-        isFalse);
+      canPromote(
+        window: null,
+        confidence: ConfidenceBand.high,
+        everyCandidateScored: true,
+      ),
+      isFalse,
+    );
     expect(
-        canPromote(
-            window: const UserDefinedMealWindow(
-                window: TimelineWindow(startMinute: 0, endMinute: 60),
-                source: 't'),
-            confidence: ConfidenceBand.low,
-            everyCandidateScored: true),
-        isFalse);
+      canPromote(
+        window: const UserDefinedMealWindow(
+          window: TimelineWindow(startMinute: 0, endMinute: 60),
+          source: 't',
+        ),
+        confidence: ConfidenceBand.low,
+        everyCandidateScored: true,
+      ),
+      isFalse,
+    );
     expect(
-        canPromote(
-            window: const UserDefinedMealWindow(
-                window: TimelineWindow(startMinute: 0, endMinute: 60),
-                source: 't'),
-            confidence: ConfidenceBand.high,
-            everyCandidateScored: false),
-        isFalse);
+      canPromote(
+        window: const UserDefinedMealWindow(
+          window: TimelineWindow(startMinute: 0, endMinute: 60),
+          source: 't',
+        ),
+        confidence: ConfidenceBand.high,
+        everyCandidateScored: false,
+      ),
+      isFalse,
+    );
     expect(
-        canPromote(
-            window: const UserDefinedMealWindow(
-                window: TimelineWindow(startMinute: 0, endMinute: 60),
-                source: 't'),
-            confidence: ConfidenceBand.high,
-            everyCandidateScored: true),
-        isTrue);
+      canPromote(
+        window: const UserDefinedMealWindow(
+          window: TimelineWindow(startMinute: 0, endMinute: 60),
+          source: 't',
+        ),
+        confidence: ConfidenceBand.high,
+        everyCandidateScored: true,
+      ),
+      isTrue,
+    );
     expect(
-        canPromote(
-            window: const UserDefinedMealWindow(
-                window: TimelineWindow(startMinute: 0, endMinute: 60),
-                source: 't'),
-            confidence: ConfidenceBand.medium,
-            everyCandidateScored: true),
-        isTrue);
+      canPromote(
+        window: const UserDefinedMealWindow(
+          window: TimelineWindow(startMinute: 0, endMinute: 60),
+          source: 't',
+        ),
+        confidence: ConfidenceBand.medium,
+        everyCandidateScored: true,
+      ),
+      isTrue,
+    );
   });
 }

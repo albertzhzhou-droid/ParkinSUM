@@ -31,8 +31,11 @@ void main() {
         final value = i18n.tr(key);
         expect(value.trim(), isNotEmpty, reason: '$key empty for $tag');
         expect(value, isNot(key), reason: '$key unresolved for $tag');
-        expect(findBannedSubstrings(value), isEmpty,
-            reason: '$key for $tag contains banned copy');
+        expect(
+          findBannedSubstrings(value),
+          isEmpty,
+          reason: '$key for $tag contains banned copy',
+        );
       }
     }
   });
@@ -40,57 +43,74 @@ void main() {
   testWidgets('catalog trailing icons expose semantic labels', (tester) async {
     final i18n = AppI18n.fromLocaleTag('en-US');
     // The same construct the catalog rows use after the a11y fix.
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: Column(children: [
-          ListTile(
-            title: const Text('demo food'),
-            trailing: Icon(Icons.chevron_right,
-                semanticLabel: i18n.tr('catalog.view_detail')),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              ListTile(
+                title: const Text('demo food'),
+                trailing: Icon(
+                  Icons.chevron_right,
+                  semanticLabel: i18n.tr('catalog.view_detail'),
+                ),
+              ),
+              ListTile(
+                title: const Text('demo drug'),
+                trailing: Icon(
+                  Icons.check_circle,
+                  semanticLabel: i18n.tr('catalog.selected_active'),
+                ),
+              ),
+            ],
           ),
-          ListTile(
-            title: const Text('demo drug'),
-            trailing: Icon(Icons.check_circle,
-                semanticLabel: i18n.tr('catalog.selected_active')),
-          ),
-        ]),
+        ),
       ),
-    ));
+    );
     // ListTile merges its children's semantics into one node, so match the
     // icon labels inside the merged row labels.
     expect(find.bySemanticsLabel(RegExp('View details')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('Selected as active medication')),
-        findsOneWidget);
+    expect(
+      find.bySemanticsLabel(RegExp('Selected as active medication')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('next-meal decision-path icon exposes its meaning',
-      (tester) async {
+  testWidgets('next-meal decision-path icon exposes its meaning', (
+    tester,
+  ) async {
     final i18n = AppI18n.fromLocaleTag('en-US');
     for (final aiUsed in [true, false]) {
       final label = aiUsed
           ? i18n.tr('next_meal.ai_polished')
           : i18n.tr('next_meal.conservative_engine');
-      await tester.pumpWidget(MaterialApp(
-        home: Scaffold(
-          body: Icon(
-            aiUsed ? Icons.auto_awesome_rounded : Icons.shield_outlined,
-            semanticLabel: label,
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Icon(
+              aiUsed ? Icons.auto_awesome_rounded : Icons.shield_outlined,
+              semanticLabel: label,
+            ),
           ),
         ),
-      ));
-      expect(find.bySemanticsLabel(label), findsOneWidget,
-          reason: 'decision-path icon (aiUsed=$aiUsed) must expose "$label"');
+      );
+      expect(
+        find.bySemanticsLabel(label),
+        findsOneWidget,
+        reason: 'decision-path icon (aiUsed=$aiUsed) must expose "$label"',
+      );
     }
   });
 
-  testWidgets('CatalogPage exposes the view-details labels (page-level audit)',
-      (tester) async {
+  testWidgets('CatalogPage exposes the view-details labels (page-level audit)', (
+    tester,
+  ) async {
     // Local-mode services + AppState; the background sqlite init has no VM
     // support and is irrelevant here, so it is captured by a guarded zone.
     AppState? state;
     runZonedGuarded(() {
       state = AppState(services: Services.createDefault());
-    }, (_, __) {});
+    }, (_, _) {});
     expect(state, isNotNull);
 
     // The page is laid out for a phone viewport; widen the test surface so the

@@ -40,7 +40,9 @@ class RuntimeRuleSupport {
   bool hasSameBandDecisionConflict(List<RuleEvaluationCandidate> bucket) {
     if (bucket.length < 2) return false;
     final winner = bucket.first;
-    return bucket.skip(1).any(
+    return bucket
+        .skip(1)
+        .any(
           (candidate) =>
               candidate.rule.priorityBand == winner.rule.priorityBand &&
               candidate.rule.thenClause.decision !=
@@ -61,8 +63,10 @@ class RuntimeRuleSupport {
     final winner = bucket.first;
     final sameBand = bucket
         .skip(1)
-        .where((candidate) =>
-            candidate.rule.priorityBand == winner.rule.priorityBand)
+        .where(
+          (candidate) =>
+              candidate.rule.priorityBand == winner.rule.priorityBand,
+        )
         .toList(growable: false);
     if (sameBand.isEmpty) {
       return const SameBandEscalation(
@@ -89,8 +93,9 @@ class RuntimeRuleSupport {
       return SameBandEscalation(
         requiresReview: true,
         reason: matrixReason,
-        suppressedRuleIds:
-            sameBand.map((candidate) => candidate.rule.ruleId).toList(),
+        suppressedRuleIds: sameBand
+            .map((candidate) => candidate.rule.ruleId)
+            .toList(),
       );
     }
     return SameBandEscalation(
@@ -98,14 +103,16 @@ class RuntimeRuleSupport {
       reason: sameDecisionLowerProvenance
           ? 'same_decision_provenance_tiebreak'
           : 'same_band_consistent',
-      suppressedRuleIds:
-          sameBand.map((candidate) => candidate.rule.ruleId).toList(),
+      suppressedRuleIds: sameBand
+          .map((candidate) => candidate.rule.ruleId)
+          .toList(),
     );
   }
 
   String _sameBandMatrixReason(List<RuleRegistryEntry> rules) {
-    final decisions =
-        rules.map((rule) => rule.thenClause.decision.wireValue).toSet();
+    final decisions = rules
+        .map((rule) => rule.thenClause.decision.wireValue)
+        .toSet();
     if (decisions.contains('BLOCK')) {
       return 'same_band_block_conflict';
     }
@@ -128,13 +135,15 @@ class RuntimeRuleSupport {
     if (node.containsKey('all')) {
       for (final child in (node['all'] as List<dynamic>)) {
         paths.addAll(
-            collectReferencedPaths(Map<String, dynamic>.from(child as Map)));
+          collectReferencedPaths(Map<String, dynamic>.from(child as Map)),
+        );
       }
     }
     if (node.containsKey('any')) {
       for (final child in (node['any'] as List<dynamic>)) {
         paths.addAll(
-            collectReferencedPaths(Map<String, dynamic>.from(child as Map)));
+          collectReferencedPaths(Map<String, dynamic>.from(child as Map)),
+        );
       }
     }
     if (node.containsKey('not')) {

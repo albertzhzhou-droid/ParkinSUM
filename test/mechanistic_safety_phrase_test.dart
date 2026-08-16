@@ -13,8 +13,10 @@ import 'package:parkinsum_companion/domain/usecases/model_assumption_registry.da
 
 void main() {
   test('mechanistic default copy strings contain no banned substrings', () {
-    expect(findBannedSubstrings(MechanisticExplanation.defaultLimitation),
-        isEmpty);
+    expect(
+      findBannedSubstrings(MechanisticExplanation.defaultLimitation),
+      isEmpty,
+    );
   });
 
   test('every model assumption citation copy is free of banned substrings', () {
@@ -25,30 +27,34 @@ void main() {
         a.limitation,
         a.citationText,
       ].join(' ');
-      expect(findBannedSubstrings(joined), isEmpty,
-          reason: 'assumption ${a.sourceId} leaked banned phrase');
+      expect(
+        findBannedSubstrings(joined),
+        isEmpty,
+        reason: 'assumption ${a.sourceId} leaked banned phrase',
+      );
     }
   });
 
-  test(
-      'mechanistic engine output for a high-protein scenario stays '
+  test('mechanistic engine output for a high-protein scenario stays '
       'non-prescriptive', () {
     final validator = MedicationEntryValidator();
     final normalizer = MealCompositionNormalizer();
     final builder = TimeAxisBuilder();
     final engine = MechanisticConflictEngine();
 
-    final v = validator.validate(const RawMedicationEntry(
-      activeIngredients: ['carbidopa', 'levodopa'],
-      drugProductVariant: 'synthetic:demo',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'synthetic:demo',
-    ));
+    final v = validator.validate(
+      const RawMedicationEntry(
+        activeIngredients: ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    );
     final composition = normalizer.normalize(
       mealId: 'c',
       components: const [
@@ -104,17 +110,19 @@ void main() {
     final validator = MedicationEntryValidator();
     final builder = TimeAxisBuilder();
     final now = DateTime.utc(2026, 1, 1, 8);
-    final v = validator.validate(const RawMedicationEntry(
-      activeIngredients: ['carbidopa', 'levodopa'],
-      drugProductVariant: 'synthetic:demo',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'synthetic:demo',
-    ));
+    final v = validator.validate(
+      const RawMedicationEntry(
+        activeIngredients: ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    );
     final ctx = builder.build(
       now: now,
       medicationInputs: [
@@ -164,13 +172,15 @@ void main() {
     }
   });
 
-  test('every replay scenario\'s serialized JSON is free of banned phrases',
-      () {
-    final runner = MechanisticReplayRunner();
-    final report = runner.run();
-    final encoded = encodeReplayReport(report);
-    expect(findBannedSubstrings(encoded), isEmpty);
-  });
+  test(
+    'every replay scenario\'s serialized JSON is free of banned phrases',
+    () {
+      final runner = MechanisticReplayRunner();
+      final report = runner.run();
+      final encoded = encodeReplayReport(report);
+      expect(findBannedSubstrings(encoded), isEmpty);
+    },
+  );
 
   test('dosage/insufficient-context user copy stays non-prescriptive', () {
     final validator = MedicationEntryValidator();
@@ -195,8 +205,11 @@ void main() {
         result.safeUserCopy,
         ...result.issues.map((i) => i.message),
       ].join(' ');
-      expect(findBannedSubstrings(copy), isEmpty,
-          reason: 'dosage copy leaked a banned phrase: $copy');
+      expect(
+        findBannedSubstrings(copy),
+        isEmpty,
+        reason: 'dosage copy leaked a banned phrase: $copy',
+      );
     }
   });
 }

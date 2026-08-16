@@ -43,7 +43,7 @@ class CatalogResolutionEngine {
   final CatalogQueryNormalizer _normalizer;
 
   const CatalogResolutionEngine({CatalogQueryNormalizer? normalizer})
-      : _normalizer = normalizer ?? const CatalogQueryNormalizer();
+    : _normalizer = normalizer ?? const CatalogQueryNormalizer();
 
   static const List<String> _limitations = [
     'Catalog resolution only; returns candidates + uncertainty, not a recommendation.',
@@ -108,13 +108,29 @@ class CatalogResolutionEngine {
     final raw = <CatalogResolutionCandidate>[];
 
     for (final f in foods) {
-      final c = _matchFood(f, q, nq, locale, jurisdiction, synonyms,
-          localizationDictionary, config);
+      final c = _matchFood(
+        f,
+        q,
+        nq,
+        locale,
+        jurisdiction,
+        synonyms,
+        localizationDictionary,
+        config,
+      );
       if (c != null) raw.add(c);
     }
     for (final d in drugs) {
-      final c = _matchDrug(d, q, nq, locale, jurisdiction, synonyms,
-          localizationDictionary, config);
+      final c = _matchDrug(
+        d,
+        q,
+        nq,
+        locale,
+        jurisdiction,
+        synonyms,
+        localizationDictionary,
+        config,
+      );
       if (c != null) raw.add(c);
     }
 
@@ -138,73 +154,88 @@ class CatalogResolutionEngine {
     final domain = (hasFood && hasDrug)
         ? CatalogResolutionDomain.mixed
         : hasFood
-            ? CatalogResolutionDomain.food
-            : hasDrug
-                ? CatalogResolutionDomain.drug
-                : (domainHint ?? CatalogResolutionDomain.unknown);
+        ? CatalogResolutionDomain.food
+        : hasDrug
+        ? CatalogResolutionDomain.drug
+        : (domainHint ?? CatalogResolutionDomain.unknown);
 
     // Status.
     String status;
     if (ranked.isEmpty) {
       status = CatalogResolutionStatus.unresolved;
-      issues.add(const CatalogResolutionIssue(
-        severity: CatalogResolutionSeverity.warn,
-        issueType: 'no_catalog_match',
-        message: 'No catalog candidate cleared the confidence threshold.',
-        suggestedNextStep:
-            'Refine the query or confirm a structured catalog item; this '
-            'prototype does not guess.',
-      ));
+      issues.add(
+        const CatalogResolutionIssue(
+          severity: CatalogResolutionSeverity.warn,
+          issueType: 'no_catalog_match',
+          message: 'No catalog candidate cleared the confidence threshold.',
+          suggestedNextStep:
+              'Refine the query or confirm a structured catalog item; this '
+              'prototype does not guess.',
+        ),
+      );
     } else {
       final best = ranked.first;
       final second = ranked.length > 1 ? ranked[1] : null;
-      final close = second != null &&
+      final close =
+          second != null &&
           (best.confidence - second.confidence) <= config.ambiguityDelta;
       if (hasFood && hasDrug) {
         status = CatalogResolutionStatus.ambiguous;
-        issues.add(const CatalogResolutionIssue(
-          severity: CatalogResolutionSeverity.warn,
-          issueType: 'mixed_domain',
-          message: 'Query matched both food and drug catalogs (ambiguous '
-              'domain).',
-          suggestedNextStep: 'Disambiguate whether this is a food or a drug.',
-        ));
+        issues.add(
+          const CatalogResolutionIssue(
+            severity: CatalogResolutionSeverity.warn,
+            issueType: 'mixed_domain',
+            message:
+                'Query matched both food and drug catalogs (ambiguous '
+                'domain).',
+            suggestedNextStep: 'Disambiguate whether this is a food or a drug.',
+          ),
+        );
       } else if (close) {
         status = CatalogResolutionStatus.ambiguous;
-        issues.add(const CatalogResolutionIssue(
-          severity: CatalogResolutionSeverity.warn,
-          issueType: 'ambiguous_match',
-          message: 'Multiple candidates have closely ranked confidence; '
-              'resolution is ambiguous.',
-          suggestedNextStep:
-              'Present alternatives; do not auto-select one overconfident '
-              'answer.',
-        ));
+        issues.add(
+          const CatalogResolutionIssue(
+            severity: CatalogResolutionSeverity.warn,
+            issueType: 'ambiguous_match',
+            message:
+                'Multiple candidates have closely ranked confidence; '
+                'resolution is ambiguous.',
+            suggestedNextStep:
+                'Present alternatives; do not auto-select one overconfident '
+                'answer.',
+          ),
+        );
       } else if (best.matchType ==
           CatalogResolutionMatchType.typoToleratedAlias) {
         // A single-edit correction was applied; surface it explicitly so the
         // correction is reviewable rather than silent.
         status = CatalogResolutionStatus.partial;
-        issues.add(const CatalogResolutionIssue(
-          severity: CatalogResolutionSeverity.info,
-          issueType: 'typo_tolerated_match',
-          message: 'Best candidate matched via a single-edit typo-tolerant '
-              'alias comparison, not an exact name.',
-          suggestedNextStep:
-              'Confirm the intended catalog item before relying on it.',
-        ));
+        issues.add(
+          const CatalogResolutionIssue(
+            severity: CatalogResolutionSeverity.info,
+            issueType: 'typo_tolerated_match',
+            message:
+                'Best candidate matched via a single-edit typo-tolerant '
+                'alias comparison, not an exact name.',
+            suggestedNextStep:
+                'Confirm the intended catalog item before relying on it.',
+          ),
+        );
       } else if (best.confidence < config.resolveThreshold ||
           best.matchType == CatalogResolutionMatchType.genericName ||
           best.matchType == CatalogResolutionMatchType.activeIngredient ||
           best.matchType == CatalogResolutionMatchType.fuzzyToken) {
         status = CatalogResolutionStatus.partial;
-        issues.add(const CatalogResolutionIssue(
-          severity: CatalogResolutionSeverity.info,
-          issueType: 'partial_match',
-          message: 'Best candidate is not a specific source-backed exact '
-              'product/food match; treat as partial.',
-          suggestedNextStep: 'Requires structured confirmation before use.',
-        ));
+        issues.add(
+          const CatalogResolutionIssue(
+            severity: CatalogResolutionSeverity.info,
+            issueType: 'partial_match',
+            message:
+                'Best candidate is not a specific source-backed exact '
+                'product/food match; treat as partial.',
+            suggestedNextStep: 'Requires structured confirmation before use.',
+          ),
+        );
       } else {
         status = CatalogResolutionStatus.resolved;
       }
@@ -631,8 +662,7 @@ class CatalogResolutionEngine {
   }) {
     final allRefs = <String>{
       for (final c in candidates) ...c.sourceRefs,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
     return CatalogResolutionResult(
       query: query,
       normalizedQuery: nq.normalized,

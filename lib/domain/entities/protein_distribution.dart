@@ -60,10 +60,10 @@ class NutritionAdequacyProxy {
   });
 
   Map<String, dynamic> toJson() => {
-        'contribution': contribution,
-        'basis': basis,
-        'source_refs': sourceRefs,
-      };
+    'contribution': contribution,
+    'basis': basis,
+    'source_refs': sourceRefs,
+  };
 }
 
 class ProteinRedistributionScore {
@@ -92,14 +92,14 @@ class ProteinRedistributionScore {
   });
 
   Map<String, dynamic> toJson() => {
-        'window_role': windowRole.name,
-        'redistribution_score': redistributionScore,
-        'overlap_protein_penalty': overlapProteinPenalty,
-        'adequacy': adequacy.toJson(),
-        'assumptions': assumptions,
-        'source_refs': sourceRefs,
-        'optimization_active': optimizationActive,
-      };
+    'window_role': windowRole.name,
+    'redistribution_score': redistributionScore,
+    'overlap_protein_penalty': overlapProteinPenalty,
+    'adequacy': adequacy.toJson(),
+    'assumptions': assumptions,
+    'source_refs': sourceRefs,
+    'optimization_active': optimizationActive,
+  };
 }
 
 /// Compact trace object surfaced in the candidate score / UI.
@@ -119,10 +119,10 @@ class ProteinDistributionTrace {
   });
 
   Map<String, dynamic> toJson() => {
-        'window_role': windowRole.name,
-        'redistribution_score': redistributionScore,
-        'nutrition_adequacy_contribution': nutritionAdequacyContribution,
-        'optimization_active': optimizationActive,
-        'objective_description': objectiveDescription,
-      };
+    'window_role': windowRole.name,
+    'redistribution_score': redistributionScore,
+    'nutrition_adequacy_contribution': nutritionAdequacyContribution,
+    'optimization_active': optimizationActive,
+    'objective_description': objectiveDescription,
+  };
 }

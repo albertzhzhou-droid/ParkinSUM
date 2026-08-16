@@ -30,13 +30,13 @@ class GastricEmptyingParameter<T> {
       confidence == ModelEvidenceLevel.prototypeHeuristic;
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'label': label,
-        'value': value,
-        'source_refs': sourceRefs,
-        'confidence': confidence.name,
-        'limitation': limitation,
-      };
+    'id': id,
+    'label': label,
+    'value': value,
+    'source_refs': sourceRefs,
+    'confidence': confidence.name,
+    'limitation': limitation,
+  };
 }
 
 class GastricEmptyingParameterSet {
@@ -236,20 +236,20 @@ class GastricEmptyingParameterSet {
   }
 
   List<GastricEmptyingParameter<Object>> get all => [
-        solidLagMinutes,
-        solidHalfMinutes,
-        liquidLagMinutes,
-        liquidHalfMinutes,
-        referenceMealCalories,
-        fatSlowdownMultiplier,
-        fatFractionThreshold,
-        fiberSlowdownMultiplier,
-        mixedMealUncertaintyBoost,
-        overlapUncertaintyBoost,
-        fatUncertaintyBoost,
-        highCalorieUncertaintyBoost,
-        highCalorieFractionThreshold,
-      ];
+    solidLagMinutes,
+    solidHalfMinutes,
+    liquidLagMinutes,
+    liquidHalfMinutes,
+    referenceMealCalories,
+    fatSlowdownMultiplier,
+    fatFractionThreshold,
+    fiberSlowdownMultiplier,
+    mixedMealUncertaintyBoost,
+    overlapUncertaintyBoost,
+    fatUncertaintyBoost,
+    highCalorieUncertaintyBoost,
+    highCalorieFractionThreshold,
+  ];
 
   /// Union of every parameter's `sourceRefs`. Used by
   /// `GastricEmptyingProfile.sourceRefs` so reviewers can trace back any
@@ -263,15 +263,15 @@ class GastricEmptyingParameterSet {
   }
 
   Map<String, dynamic> toJson() => {
-        'solid_lag_minutes': solidLagMinutes.toJson(),
-        'solid_half_minutes': solidHalfMinutes.toJson(),
-        'liquid_lag_minutes': liquidLagMinutes.toJson(),
-        'liquid_half_minutes': liquidHalfMinutes.toJson(),
-        'reference_meal_calories': referenceMealCalories.toJson(),
-        'fat_slowdown_multiplier': fatSlowdownMultiplier.toJson(),
-        'fat_fraction_threshold': fatFractionThreshold.toJson(),
-        'fiber_slowdown_multiplier': fiberSlowdownMultiplier.toJson(),
-        'mixed_meal_uncertainty_boost': mixedMealUncertaintyBoost.toJson(),
-        'overlap_uncertainty_boost': overlapUncertaintyBoost.toJson(),
-      };
+    'solid_lag_minutes': solidLagMinutes.toJson(),
+    'solid_half_minutes': solidHalfMinutes.toJson(),
+    'liquid_lag_minutes': liquidLagMinutes.toJson(),
+    'liquid_half_minutes': liquidHalfMinutes.toJson(),
+    'reference_meal_calories': referenceMealCalories.toJson(),
+    'fat_slowdown_multiplier': fatSlowdownMultiplier.toJson(),
+    'fat_fraction_threshold': fatFractionThreshold.toJson(),
+    'fiber_slowdown_multiplier': fiberSlowdownMultiplier.toJson(),
+    'mixed_meal_uncertainty_boost': mixedMealUncertaintyBoost.toJson(),
+    'overlap_uncertainty_boost': overlapUncertaintyBoost.toJson(),
+  };
 }

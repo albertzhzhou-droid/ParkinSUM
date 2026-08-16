@@ -103,7 +103,9 @@ class MealCompositionNormalizer {
   }
 
   MealPhysicalForm _inferForm(
-      List<FoodComponent> components, double? liquidFraction) {
+    List<FoodComponent> components,
+    double? liquidFraction,
+  ) {
     if (liquidFraction == null) {
       final forms = components.map((c) => c.physicalForm).toSet();
       if (forms.length == 1) return forms.single;

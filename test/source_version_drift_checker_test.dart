@@ -21,9 +21,10 @@ void main() {
         strictMode: strict,
       );
 
-  SourceVersionDriftReport run(List<SourceVersionRecord> records,
-          {bool strict = false}) =>
-      checker.check(records, cfg(strict: strict));
+  SourceVersionDriftReport run(
+    List<SourceVersionRecord> records, {
+    bool strict = false,
+  }) => checker.check(records, cfg(strict: strict));
 
   bool hasType(SourceVersionDriftReport r, String type) =>
       r.findings.any((f) => f.findingType == type);
@@ -40,16 +41,15 @@ void main() {
     String id, {
     String status = 'implemented_fixture_tested',
     String reviewed = '2026-05-30',
-  }) =>
-      SourceVersionRecord(
-        recordId: 'reg:$id',
-        sourceId: id,
-        recordType: SourceVersionRecordType.sourceAccessRegistry,
-        file: 'config/source_access_registry.json',
-        implementationStatus: status,
-        lastPolicyReviewed: reviewed,
-        bibliographyRefs: [id],
-      );
+  }) => SourceVersionRecord(
+    recordId: 'reg:$id',
+    sourceId: id,
+    recordType: SourceVersionRecordType.sourceAccessRegistry,
+    file: 'config/source_access_registry.json',
+    implementationStatus: status,
+    lastPolicyReviewed: reviewed,
+    bibliographyRefs: [id],
+  );
 
   // 1 — missing version/effective date (source document) produces finding.
   test('missing effective date/version produces finding', () {
@@ -62,7 +62,9 @@ void main() {
       ),
     ]);
     expect(
-        hasType(r, SourceVersionDriftFindingType.missingEffectiveDate), isTrue);
+      hasType(r, SourceVersionDriftFindingType.missingEffectiveDate),
+      isTrue,
+    );
   });
 
   // 2 — source document WITH a limitation note does not flag missing date.
@@ -76,8 +78,10 @@ void main() {
         limitations: ['fixture only'],
       ),
     ]);
-    expect(hasType(r, SourceVersionDriftFindingType.missingEffectiveDate),
-        isFalse);
+    expect(
+      hasType(r, SourceVersionDriftFindingType.missingEffectiveDate),
+      isFalse,
+    );
   });
 
   // 3 — missing lastPolicyReviewed in source registry produces finding.
@@ -91,9 +95,9 @@ void main() {
       ),
     ]);
     expect(
-        find(r, SourceVersionDriftFindingType.missingPolicyReviewDate)!
-            .severity,
-        SourceVersionDriftSeverity.warn);
+      find(r, SourceVersionDriftFindingType.missingPolicyReviewDate)!.severity,
+      SourceVersionDriftSeverity.warn,
+    );
   });
 
   // 4 — generated artifact missing produces WARN, report still not a BLOCKER.
@@ -123,8 +127,9 @@ void main() {
       ),
     ]);
     expect(
-        find(r, SourceVersionDriftFindingType.generatedArtifactStale)!.severity,
-        SourceVersionDriftSeverity.warn);
+      find(r, SourceVersionDriftFindingType.generatedArtifactStale)!.severity,
+      SourceVersionDriftSeverity.warn,
+    );
   });
 
   // 6 — fresh generated artifact passes the staleness check.
@@ -138,8 +143,10 @@ void main() {
         metadata: {'exists': 'true'},
       ),
     ]);
-    expect(hasType(r, SourceVersionDriftFindingType.generatedArtifactStale),
-        isFalse);
+    expect(
+      hasType(r, SourceVersionDriftFindingType.generatedArtifactStale),
+      isFalse,
+    );
   });
 
   // 7 — bibliography mismatch produces a finding.
@@ -153,7 +160,9 @@ void main() {
       ),
     ]);
     expect(
-        hasType(r, SourceVersionDriftFindingType.bibliographyMissing), isTrue);
+      hasType(r, SourceVersionDriftFindingType.bibliographyMissing),
+      isTrue,
+    );
   });
 
   // 8 — source registry mismatch produces a finding.
@@ -167,8 +176,10 @@ void main() {
         bibliographyRefs: ['src.not.in.registry'],
       ),
     ]);
-    expect(hasType(r, SourceVersionDriftFindingType.sourceRegistryMismatch),
-        isTrue);
+    expect(
+      hasType(r, SourceVersionDriftFindingType.sourceRegistryMismatch),
+      isTrue,
+    );
   });
 
   // 9 — fixture-only source cannot be production-ready (BLOCKER).
@@ -201,7 +212,9 @@ void main() {
       reg('src.old', status: 'deprecated'),
     ]);
     expect(
-        hasType(r, SourceVersionDriftFindingType.deprecatedSourceUsed), isTrue);
+      hasType(r, SourceVersionDriftFindingType.deprecatedSourceUsed),
+      isTrue,
+    );
   });
 
   // 11 — unknown implementation status produces a finding.
@@ -216,8 +229,9 @@ void main() {
       ),
     ]);
     expect(
-        hasType(r, SourceVersionDriftFindingType.unknownImplementationStatus),
-        isTrue);
+      hasType(r, SourceVersionDriftFindingType.unknownImplementationStatus),
+      isTrue,
+    );
   });
 
   // 12 — model assumption sourceRefs that resolve produce no drift finding.
@@ -233,13 +247,17 @@ void main() {
       ),
     ]);
     expect(
-        hasType(r, SourceVersionDriftFindingType.bibliographyMissing), isFalse);
-    expect(hasType(r, SourceVersionDriftFindingType.sourceRegistryMismatch),
-        isFalse);
+      hasType(r, SourceVersionDriftFindingType.bibliographyMissing),
+      isFalse,
+    );
     expect(
-        hasType(
-            r, SourceVersionDriftFindingType.assumptionRegistryUnreferenced),
-        isFalse);
+      hasType(r, SourceVersionDriftFindingType.sourceRegistryMismatch),
+      isFalse,
+    );
+    expect(
+      hasType(r, SourceVersionDriftFindingType.assumptionRegistryUnreferenced),
+      isFalse,
+    );
   });
 
   // 13 — report JSON is deterministic.
@@ -265,39 +283,49 @@ void main() {
 
   // 15 — no patient / subject / encounter keys emitted.
   test('no PHI/patient/subject/encounter keys emitted', () {
-    final decoded = jsonDecode(encodeSourceVersionDrift(run([
-      reg('src.a'),
-      const SourceVersionRecord(
-        recordId: 'doc',
-        sourceId: 'src.a',
-        recordType: SourceVersionRecordType.sourceDocument,
-        effectiveDate: '2024-01-01',
-      ),
-    ]))) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(
+              encodeSourceVersionDrift(
+                run([
+                  reg('src.a'),
+                  const SourceVersionRecord(
+                    recordId: 'doc',
+                    sourceId: 'src.a',
+                    recordType: SourceVersionRecordType.sourceDocument,
+                    effectiveDate: '2024-01-01',
+                  ),
+                ]),
+              ),
+            )
+            as Map<String, dynamic>;
     scanNoPhiKeys(decoded);
   });
 
   // 16 — no medical advice phrases emitted.
   test('no medical advice phrases emitted', () {
     final banned = RegExp(
-        r'recommended dose|adjust your dose|take your medication at|'
-        r'safe for you|confirmed safe|clinically validated|production-ready',
-        caseSensitive: false);
-    final json = encodeSourceVersionDrift(run([
-      reg('src.a'),
-      const SourceVersionRecord(
-        recordId: 'use1',
-        sourceId: 'src.a',
-        recordType: SourceVersionRecordType.sourceAdapter,
-        implementationStatus: 'implemented_production_ready',
-        bibliographyRefs: ['src.a'],
-      ),
-    ]));
+      r'recommended dose|adjust your dose|take your medication at|'
+      r'safe for you|confirmed safe|clinically validated|production-ready',
+      caseSensitive: false,
+    );
+    final json = encodeSourceVersionDrift(
+      run([
+        reg('src.a'),
+        const SourceVersionRecord(
+          recordId: 'use1',
+          sourceId: 'src.a',
+          recordType: SourceVersionRecordType.sourceAdapter,
+          implementationStatus: 'implemented_production_ready',
+          bibliographyRefs: ['src.a'],
+        ),
+      ]),
+    );
     // The phrase "production-ready" may only appear inside a finding *message*
     // that warns against it; assert no advice phrases leak.
     expect(
-        banned.hasMatch(json.toLowerCase().replaceAll('production-ready', '')),
-        isFalse);
+      banned.hasMatch(json.toLowerCase().replaceAll('production-ready', '')),
+      isFalse,
+    );
   });
 
   // 17 — strict mode escalates selected WARN to BLOCKER.
@@ -321,9 +349,12 @@ void main() {
       ),
     ], strict: true);
     expect(
-        find(strict, SourceVersionDriftFindingType.missingPolicyReviewDate)!
-            .severity,
-        SourceVersionDriftSeverity.blocker);
+      find(
+        strict,
+        SourceVersionDriftFindingType.missingPolicyReviewDate,
+      )!.severity,
+      SourceVersionDriftSeverity.blocker,
+    );
     expect(strict.pass, isFalse);
   });
 
@@ -351,15 +382,19 @@ void main() {
         bibliographyRefs: ['src.missing'],
       ),
     ]);
-    expect(hasType(r, SourceVersionDriftFindingType.fixtureStatusMismatch),
-        isTrue);
+    expect(
+      hasType(r, SourceVersionDriftFindingType.fixtureStatusMismatch),
+      isTrue,
+    );
     expect(r.pass, isFalse);
   });
 
   test('duplicate registry source id is BLOCKER', () {
     final r = run([reg('src.dup'), reg('src.dup')]);
-    expect(hasType(r, SourceVersionDriftFindingType.duplicateSourceRegistryId),
-        isTrue);
+    expect(
+      hasType(r, SourceVersionDriftFindingType.duplicateSourceRegistryId),
+      isTrue,
+    );
     expect(r.pass, isFalse);
   });
 

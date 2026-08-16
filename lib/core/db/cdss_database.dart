@@ -38,7 +38,8 @@ abstract class CdssDatabase {
   Future<void> insertRuntimeEvent(RuntimeEventRecord record);
   Future<void> insertConflictAuditLog(ConflictAuditLogRecord record);
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record);
+    RecommendationAuditLogRecord record,
+  );
   Future<void> insertIngestionRun(IngestionRunRecord record);
   Future<void> insertSnapshotDistribution(SnapshotDistributionRecord record);
   Future<void> insertStagingRow(String table, Map<String, Object?> row);

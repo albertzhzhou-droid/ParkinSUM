@@ -23,10 +23,12 @@ class EmaP1Importer {
 
   /// 抓取 medicines 主表的 JSON + XLSX，两路都保留，便于后续对账。
   Future<P0ImportBundle> fetchAndImportMedicines() async {
-    final medicinesJson =
-        await fetchClient.getText(P0SourceUrls.emaMedicinesJson);
-    final medicinesXlsx =
-        await fetchClient.getBytes(P0SourceUrls.emaMedicinesXlsx);
+    final medicinesJson = await fetchClient.getText(
+      P0SourceUrls.emaMedicinesJson,
+    );
+    final medicinesXlsx = await fetchClient.getBytes(
+      P0SourceUrls.emaMedicinesXlsx,
+    );
     final medicinesBundle = importMedicinesJson(
       medicinesJson,
       sourceLabel: 'ema_medicines_json',
@@ -40,10 +42,12 @@ class EmaP1Importer {
 
   /// 抓取 post-authorisation 主表的 JSON + XLSX，并作为单独任务暴露给 UI。
   Future<P0ImportBundle> fetchAndImportPostAuthorisation() async {
-    final postAuthJson =
-        await fetchClient.getText(P0SourceUrls.emaPostAuthorisationJson);
-    final postAuthXlsx =
-        await fetchClient.getBytes(P0SourceUrls.emaPostAuthorisationXlsx);
+    final postAuthJson = await fetchClient.getText(
+      P0SourceUrls.emaPostAuthorisationJson,
+    );
+    final postAuthXlsx = await fetchClient.getBytes(
+      P0SourceUrls.emaPostAuthorisationXlsx,
+    );
     final postAuthBundle = importPostAuthorisationJson(
       postAuthJson,
       sourceLabel: 'ema_post_authorisation_json',
@@ -131,8 +135,9 @@ class EmaP1Importer {
         sourceFamily: 'EMA',
         organization: 'European Medicines Agency',
         jurisdiction: 'EU',
-        docType:
-            sourceUrl.endsWith('.json') ? 'json_snapshot' : 'xlsx_snapshot',
+        docType: sourceUrl.endsWith('.json')
+            ? 'json_snapshot'
+            : 'xlsx_snapshot',
         title: 'EMA import $sourceLabel',
         originUrl: sourceUrl,
         licenseNote: 'UNSPECIFIED',
@@ -174,8 +179,9 @@ class EmaP1Importer {
         'international_non_proprietary_name_common_name',
         'inn_common_name',
       ]);
-      final genericName =
-          activeSubstance.isEmpty ? medicineName : activeSubstance;
+      final genericName = activeSubstance.isEmpty
+          ? medicineName
+          : activeSubstance;
       final conceptId = buildDrugConceptId(genericName);
       final variantId = buildDrugVariantId(
         conceptId: conceptId,
@@ -193,10 +199,7 @@ class EmaP1Importer {
         'url',
         'medicine_page_url',
       ]);
-      final atcCode = _firstNonEmpty(row, const [
-        'atc_code_human',
-        'atc_code',
-      ]);
+      final atcCode = _firstNonEmpty(row, const ['atc_code_human', 'atc_code']);
       final route = _inferRoute(row);
       final dosageForm = _inferDosageForm(row);
       final releaseType = _inferReleaseType(medicineName, dosageForm);
@@ -340,10 +343,7 @@ class EmaP1Importer {
                 ImporterAudit.sourceIdTypeAuthoritativeProductCode,
             reason: 'EMA product number copied verbatim from medicines row.',
             promotedFields: const ['ema_product_number'],
-            nonPromotedFields: const [
-              'procedure_type',
-              'condition_indication',
-            ],
+            nonPromotedFields: const ['procedure_type', 'condition_indication'],
           ),
         },
       );
@@ -474,7 +474,7 @@ class EmaP1Importer {
                 activeSubstance,
               if (productNumber.isNotEmpty) productNumber,
             ],
-            tags: [if (tag != null) tag],
+            tags: [?tag],
             notes: holder.isEmpty
                 ? 'Imported from EMA medicines metadata.'
                 : 'Imported from EMA medicines metadata ($holder).',
@@ -526,29 +526,33 @@ class EmaP1Importer {
   List<Map<String, dynamic>> _xlsxRowsToMaps(List<int> xlsxBytes) {
     final archive = ZipDecoder().decodeBytes(xlsxBytes);
     final sharedStrings = _loadSharedStrings(archive);
-    final worksheetFile = archive.files
-        .where((file) => file.name.startsWith('xl/worksheets/sheet'))
-        .toList(growable: false)
-      ..sort((a, b) => a.name.compareTo(b.name));
+    final worksheetFile =
+        archive.files
+            .where((file) => file.name.startsWith('xl/worksheets/sheet'))
+            .toList(growable: false)
+          ..sort((a, b) => a.name.compareTo(b.name));
     if (worksheetFile.isEmpty) return const <Map<String, dynamic>>[];
     final sheetXml = utf8.decode(worksheetFile.first.content as List<int>);
     final sheetDoc = XmlDocument.parse(sheetXml);
     final rowNodes = sheetDoc.findAllElements('row').toList(growable: false);
     if (rowNodes.isEmpty) return const <Map<String, dynamic>>[];
 
-    final grid =
-        rowNodes.map((row) => _extractRowValues(row, sharedStrings)).toList();
+    final grid = rowNodes
+        .map((row) => _extractRowValues(row, sharedStrings))
+        .toList();
     if (grid.isEmpty) return const <Map<String, dynamic>>[];
-    final headers =
-        grid.first.map((value) => value.trim()).toList(growable: false);
+    final headers = grid.first
+        .map((value) => value.trim())
+        .toList(growable: false);
     final rows = <Map<String, dynamic>>[];
     for (final row in grid.skip(1)) {
       final mapped = <String, dynamic>{};
       for (var index = 0; index < headers.length; index++) {
         final header = headers[index];
         if (header.isEmpty) continue;
-        mapped[_normalizeHeader(header)] =
-            index < row.length ? row[index].trim() : '';
+        mapped[_normalizeHeader(header)] = index < row.length
+            ? row[index].trim()
+            : '';
       }
       if (mapped.values.any((value) => value.toString().trim().isNotEmpty)) {
         rows.add(mapped);
@@ -569,10 +573,12 @@ class EmaP1Importer {
     final doc = XmlDocument.parse(text);
     return doc
         .findAllElements('si')
-        .map((node) => node.descendants
-            .whereType<XmlText>()
-            .map((part) => part.value)
-            .join())
+        .map(
+          (node) => node.descendants
+              .whereType<XmlText>()
+              .map((part) => part.value)
+              .join(),
+        )
         .toList(growable: false);
   }
 
@@ -661,8 +667,8 @@ class EmaP1Importer {
       final type = lowerKey.contains('translation')
           ? 'translation_link'
           : lowerKey.contains('document') || lowerKey.contains('leaflet')
-              ? 'document_link'
-              : 'url';
+          ? 'document_link'
+          : 'url';
       links.add(_EmaLink(url: text, type: type, caption: key));
     }
     return links;

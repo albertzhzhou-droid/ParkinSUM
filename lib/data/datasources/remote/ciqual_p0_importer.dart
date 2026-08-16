@@ -51,16 +51,14 @@ class CiqualP0Importer {
   P0ImportBundle importArchiveBytes(List<int> zipBytes) {
     final files = ArchiveImportSupport.unzipTextFiles(zipBytes);
     String pick(List<String> stems) {
-      final match = files.entries.firstWhere(
-        (entry) {
-          final lower = entry.key.toLowerCase();
-          return stems.any(lower.contains);
-        },
-        orElse: () => const MapEntry('', ''),
-      );
+      final match = files.entries.firstWhere((entry) {
+        final lower = entry.key.toLowerCase();
+        return stems.any(lower.contains);
+      }, orElse: () => const MapEntry('', ''));
       if (match.key.isEmpty) {
         throw StateError(
-            'Ciqual archive missing file for ${stems.join(" / ")}.');
+          'Ciqual archive missing file for ${stems.join(" / ")}.',
+        );
       }
       return match.value;
     }
@@ -92,10 +90,7 @@ class CiqualP0Importer {
       externalKey: 'doi_10_57745_RDMHWY',
     );
     final provenanceEntries = sourceMethods.entries
-        .map((entry) => {
-              'source_code': entry.key,
-              'summary': entry.value,
-            })
+        .map((entry) => {'source_code': entry.key, 'summary': entry.value})
         .toList(growable: false);
     final firstSourceIds = provenanceEntries
         .take(5)
@@ -286,8 +281,9 @@ class CiqualP0Importer {
         sourceFoodCode: food.code,
       );
       nutrientByVariant.putIfAbsent(
-              variantId, () => <String, String>{})[nutrient.attributeCode] =
-          composition.rawValue;
+        variantId,
+        () => <String, String>{},
+      )[nutrient.attributeCode] = composition.rawValue;
     }
 
     for (final food in foods.values) {
@@ -310,10 +306,7 @@ class CiqualP0Importer {
           id: 'food_ciqual_${food.code}',
           name: food.nameLocal,
           category: inferFoodCategory(groups[food.groupCode] ?? 'other'),
-          aliases: [
-            if (food.nameEn != null) food.nameEn!,
-            food.nameLocal,
-          ],
+          aliases: [if (food.nameEn != null) food.nameEn!, food.nameLocal],
           description: 'Ciqual imported food variant',
           sourceSystem: 'CIQUAL',
           sourceFoodCode: food.code,
@@ -399,11 +392,13 @@ class CiqualP0Importer {
     final rows = _findRowMaps(document);
     final result = <String, String>{};
     for (final row in rows) {
-      final code = row['source_code'] ??
+      final code =
+          row['source_code'] ??
           row['sources_code'] ??
           row['code_source'] ??
           row['src_code'];
-      final method = row['source_nom'] ??
+      final method =
+          row['source_nom'] ??
           row['source_nom_fr'] ??
           row['source_nom_eng'] ??
           row['description'];
@@ -440,7 +435,8 @@ class CiqualP0Importer {
           foodCode: foodCode,
           nutrientCode: nutrientCode,
           rawValue: rawValue,
-          sourceCode: row['source_code'] ??
+          sourceCode:
+              row['source_code'] ??
               row['sources_code'] ??
               row['code_source'] ??
               row['src_code'],

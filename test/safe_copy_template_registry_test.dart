@@ -14,15 +14,16 @@ void main() {
   test('1. registry contains the initial required templates', () {
     final ids = registry.templates.map((t) => t.templateId).toSet();
     expect(
-        ids,
-        containsAll([
-          'mechanistic_explanation_boundary',
-          'source_quality_boundary',
-          'missing_context_boundary',
-          'evidence_trace_boundary',
-          'not_advice_default',
-          'not_clinically_calibrated_default',
-        ]));
+      ids,
+      containsAll([
+        'mechanistic_explanation_boundary',
+        'source_quality_boundary',
+        'missing_context_boundary',
+        'evidence_trace_boundary',
+        'not_advice_default',
+        'not_clinically_calibrated_default',
+      ]),
+    );
   });
 
   test('2. every template has default English text', () {
@@ -36,8 +37,11 @@ void main() {
   test('3. required safety templates contain safety boundary terms', () {
     for (final t in registry.templates) {
       for (final term in t.requiredSafetyTerms) {
-        expect(t.defaultText.toLowerCase(), contains(term.toLowerCase()),
-            reason: '${t.templateId} must contain safety term "$term"');
+        expect(
+          t.defaultText.toLowerCase(),
+          contains(term.toLowerCase()),
+          reason: '${t.templateId} must contain safety term "$term"',
+        );
       }
     }
   });
@@ -52,12 +56,18 @@ void main() {
       const LocalizationSafetyLintConfig(),
       localeDictionaryAvailable: false,
     );
-    expect(report.blockerCount, 0,
-        reason: 'registry templates must lint with 0 blockers');
+    expect(
+      report.blockerCount,
+      0,
+      reason: 'registry templates must lint with 0 blockers',
+    );
     // Templates carry no banned medical-advice phrases in their default text.
     for (final t in registry.templates) {
-      expect(findBannedSubstrings(t.defaultText), isEmpty,
-          reason: '${t.templateId} default text leaked a banned phrase');
+      expect(
+        findBannedSubstrings(t.defaultText),
+        isEmpty,
+        reason: '${t.templateId} default text leaked a banned phrase',
+      );
     }
     expect(findBannedSubstrings(jsonEncode(report.toJson())), isEmpty);
   });

@@ -91,15 +91,17 @@ class _BootstrapperState extends State<_Bootstrapper> {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
-      builder: (_, state, __) {
+      builder: (_, state, _) {
         if (state.isBootstrapping) {
           final i18n = context.appI18n;
           return Scaffold(
             backgroundColor: Colors.transparent,
             body: Center(
               child: GlassCard(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 24,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [

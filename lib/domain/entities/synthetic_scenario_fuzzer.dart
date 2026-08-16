@@ -20,13 +20,13 @@ enum SyntheticScenarioFamily {
 
 extension SyntheticScenarioFamilyName on SyntheticScenarioFamily {
   String get id => switch (this) {
-        SyntheticScenarioFamily.medicationDosage => 'medication_dosage',
-        SyntheticScenarioFamily.mealMissingness => 'meal_missingness',
-        SyntheticScenarioFamily.releaseTimeline => 'release_timeline',
-        SyntheticScenarioFamily.sourceQuality => 'source_quality',
-        SyntheticScenarioFamily.windowRanking => 'window_ranking',
-        SyntheticScenarioFamily.safetyCopyNoPhi => 'safety_copy_no_phi',
-      };
+    SyntheticScenarioFamily.medicationDosage => 'medication_dosage',
+    SyntheticScenarioFamily.mealMissingness => 'meal_missingness',
+    SyntheticScenarioFamily.releaseTimeline => 'release_timeline',
+    SyntheticScenarioFamily.sourceQuality => 'source_quality',
+    SyntheticScenarioFamily.windowRanking => 'window_ranking',
+    SyntheticScenarioFamily.safetyCopyNoPhi => 'safety_copy_no_phi',
+  };
 }
 
 /// Failure categories the evaluator can record (never thrown for data issues).
@@ -88,13 +88,13 @@ class SyntheticScenarioMutation {
   });
 
   Map<String, dynamic> toJson() => {
-        'mutation_id': mutationId,
-        'field': field,
-        'from': from,
-        'to': to,
-        'reason': reason,
-        'expected_effect': expectedEffect,
-      };
+    'mutation_id': mutationId,
+    'field': field,
+    'from': from,
+    'to': to,
+    'reason': reason,
+    'expected_effect': expectedEffect,
+  };
 }
 
 class SyntheticScenarioExpectedInvariant {
@@ -113,12 +113,12 @@ class SyntheticScenarioExpectedInvariant {
   });
 
   Map<String, dynamic> toJson() => {
-        'invariant_id': invariantId,
-        'description': description,
-        'severity': severity,
-        'must_pass': mustPass,
-        'failure_message': failureMessage,
-      };
+    'invariant_id': invariantId,
+    'description': description,
+    'severity': severity,
+    'must_pass': mustPass,
+    'failure_message': failureMessage,
+  };
 }
 
 class SyntheticScenarioCase {
@@ -147,17 +147,18 @@ class SyntheticScenarioCase {
   });
 
   Map<String, dynamic> toJson() => {
-        'scenario_id': scenarioId,
-        'family': family,
-        'description': description,
-        'mutations': mutations.map((m) => m.toJson()).toList(growable: false),
-        'input_summary': inputSummary,
-        'expected_invariants':
-            expectedInvariants.map((i) => i.toJson()).toList(growable: false),
-        'synthetic_only': syntheticOnly,
-        'safety_boundary': safetyBoundary,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-      };
+    'scenario_id': scenarioId,
+    'family': family,
+    'description': description,
+    'mutations': mutations.map((m) => m.toJson()).toList(growable: false),
+    'input_summary': inputSummary,
+    'expected_invariants': expectedInvariants
+        .map((i) => i.toJson())
+        .toList(growable: false),
+    'synthetic_only': syntheticOnly,
+    'safety_boundary': safetyBoundary,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+  };
 }
 
 class SyntheticScenarioEvaluation {
@@ -186,17 +187,17 @@ class SyntheticScenarioEvaluation {
   });
 
   Map<String, dynamic> toJson() => {
-        'scenario_id': scenarioId,
-        'passed': passed,
-        'failed_invariants': failedInvariants,
-        'observed_signals': observedSignals,
-        'unsafe_phrase_hits': unsafePhraseHits,
-        'phi_key_hits': phiKeyHits,
-        'unexpected_ranker_switch': unexpectedRankerSwitch,
-        'missingness_regression': missingnessRegression,
-        'dosage_regression': dosageRegression,
-        'source_quality_regression': sourceQualityRegression,
-      };
+    'scenario_id': scenarioId,
+    'passed': passed,
+    'failed_invariants': failedInvariants,
+    'observed_signals': observedSignals,
+    'unsafe_phrase_hits': unsafePhraseHits,
+    'phi_key_hits': phiKeyHits,
+    'unexpected_ranker_switch': unexpectedRankerSwitch,
+    'missingness_regression': missingnessRegression,
+    'dosage_regression': dosageRegression,
+    'source_quality_regression': sourceQualityRegression,
+  };
 }
 
 /// A case paired with its evaluation, for the report.
@@ -207,9 +208,9 @@ class SyntheticScenarioResult {
   const SyntheticScenarioResult(this.scenario, this.evaluation);
 
   Map<String, dynamic> toJson() => {
-        'scenario': scenario.toJson(),
-        'evaluation': evaluation.toJson(),
-      };
+    'scenario': scenario.toJson(),
+    'evaluation': evaluation.toJson(),
+  };
 }
 
 class SyntheticScenarioFuzzerReport {
@@ -243,18 +244,18 @@ class SyntheticScenarioFuzzerReport {
   bool get allMustPass => failed == 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'synthetic_demo_data_only': true,
-        'no_medical_advice': true,
-        'seed': seed,
-        'case_count': caseCount,
-        'passed': passed,
-        'failed': failed,
-        'families': families,
-        'cases': cases.map((c) => c.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'synthetic_demo_data_only': true,
+    'no_medical_advice': true,
+    'seed': seed,
+    'case_count': caseCount,
+    'passed': passed,
+    'failed': failed,
+    'families': families,
+    'cases': cases.map((c) => c.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }

@@ -44,10 +44,7 @@ class CatalogEngine {
   Map<String, dynamic> classifyMeal(Meal meal) {
     // 返回结构给 UI 或日志用
     final tags = nutritionClassifier.classifyMeal(meal);
-    return {
-      'mealId': meal.id,
-      'tags': tags,
-    };
+    return {'mealId': meal.id, 'tags': tags};
   }
 
   /// 对“某个 meal + 当前用药方案”做快速交互检查
@@ -56,6 +53,8 @@ class CatalogEngine {
     required List<DrugDefinition> activeDrugs,
   }) {
     return interactionEngine.evaluateMealWithDrugs(
-        meal: meal, drugs: activeDrugs);
+      meal: meal,
+      drugs: activeDrugs,
+    );
   }
 }

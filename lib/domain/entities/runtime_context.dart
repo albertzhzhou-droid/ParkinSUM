@@ -16,13 +16,13 @@ class UserProfileRuntimeContext {
   });
 
   Map<String, dynamic> toJson() => {
-        'patient_id': patientId,
-        'registration_region': registrationRegion,
-        'display_locale': displayLocale,
-        'content_jurisdiction_override': contentJurisdictionOverride,
-        'diet_profile_region': dietProfileRegion,
-        'timezone': timezone,
-      };
+    'patient_id': patientId,
+    'registration_region': registrationRegion,
+    'display_locale': displayLocale,
+    'content_jurisdiction_override': contentJurisdictionOverride,
+    'diet_profile_region': dietProfileRegion,
+    'timezone': timezone,
+  };
 }
 
 class DrugRuntimeContext {
@@ -123,47 +123,47 @@ class UnifiedRuntimeContext {
   });
 
   Map<String, dynamic> toJson() => {
-        'user_profile': userProfile.toJson(),
-        'drug': {
-          'id': drug.id,
-          'generic_name': drug.genericName,
-          'brand_name': drug.brandName,
-          'active_ingredients': drug.activeIngredients,
-          'substance_tags': drug.substanceTags,
-          'formulation': drug.formulation,
-          'dosage_form': drug.dosageForm,
-          'route': drug.route,
-          'release_type': drug.releaseType,
-          'daily_dose_mg': drug.dailyDoseMg,
-          'jurisdiction': drug.jurisdiction,
-        },
-        'meal': meal == null
-            ? null
-            : {
-                'id': meal!.id,
-                'protein_g': meal!.totalProteinG,
-                'tyramine_mg_est': meal!.tyramineMgEstimate,
-                'high_fat_high_calorie': meal!.highFatHighCalorie,
-                'item_ids': meal!.itemIds,
-              },
-        'coevent': coevent == null
-            ? null
-            : {
-                'substance_tags': coevent!.substanceTags,
-                'supplements': coevent!.supplements,
-                'thickener_type': coevent!.thickenerType,
-              },
-        'enteral_feed': enteralFeed == null
-            ? null
-            : {
-                'mode': enteralFeed!.mode,
-                'formula': enteralFeed!.formula,
-                'protein_g_per_day': enteralFeed!.proteinGPerDay,
-              },
-        'timestamps': {
-          'drug_time': timestamps.drugTime?.toIso8601String(),
-          'meal_time': timestamps.mealTime?.toIso8601String(),
-          'coevent_time': timestamps.coeventTime?.toIso8601String(),
-        },
-      };
+    'user_profile': userProfile.toJson(),
+    'drug': {
+      'id': drug.id,
+      'generic_name': drug.genericName,
+      'brand_name': drug.brandName,
+      'active_ingredients': drug.activeIngredients,
+      'substance_tags': drug.substanceTags,
+      'formulation': drug.formulation,
+      'dosage_form': drug.dosageForm,
+      'route': drug.route,
+      'release_type': drug.releaseType,
+      'daily_dose_mg': drug.dailyDoseMg,
+      'jurisdiction': drug.jurisdiction,
+    },
+    'meal': meal == null
+        ? null
+        : {
+            'id': meal!.id,
+            'protein_g': meal!.totalProteinG,
+            'tyramine_mg_est': meal!.tyramineMgEstimate,
+            'high_fat_high_calorie': meal!.highFatHighCalorie,
+            'item_ids': meal!.itemIds,
+          },
+    'coevent': coevent == null
+        ? null
+        : {
+            'substance_tags': coevent!.substanceTags,
+            'supplements': coevent!.supplements,
+            'thickener_type': coevent!.thickenerType,
+          },
+    'enteral_feed': enteralFeed == null
+        ? null
+        : {
+            'mode': enteralFeed!.mode,
+            'formula': enteralFeed!.formula,
+            'protein_g_per_day': enteralFeed!.proteinGPerDay,
+          },
+    'timestamps': {
+      'drug_time': timestamps.drugTime?.toIso8601String(),
+      'meal_time': timestamps.mealTime?.toIso8601String(),
+      'coevent_time': timestamps.coeventTime?.toIso8601String(),
+    },
+  };
 }

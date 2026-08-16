@@ -21,9 +21,9 @@ const List<String> kLocalizationLintRequiredLocales = ['en', 'zh', 'fr', 'ja'];
 /// Default (non-strict) lint configuration.
 const LocalizationSafetyLintConfig kLocalizationLintConfig =
     LocalizationSafetyLintConfig(
-  requiredLocales: kLocalizationLintRequiredLocales,
-  sourceLocale: 'en',
-);
+      requiredLocales: kLocalizationLintRequiredLocales,
+      sourceLocale: 'en',
+    );
 
 /// Every shipped translation as a lintable surface.
 ///
@@ -39,13 +39,15 @@ List<LocalizationSurface> appDictionarySurfaces() {
     for (final key in keys) {
       final text = entries[key] ?? '';
       if (text.trim().isEmpty) continue;
-      out.add(LocalizationSurface(
-        surfaceId: 'app_i18n.$family.$key',
-        locale: family,
-        key: key,
-        text: text,
-        source: 'app_i18n',
-      ));
+      out.add(
+        LocalizationSurface(
+          surfaceId: 'app_i18n.$family.$key',
+          locale: family,
+          key: key,
+          text: text,
+          source: 'app_i18n',
+        ),
+      );
     }
   }
   return out;
@@ -55,19 +57,17 @@ List<LocalizationSurface> appDictionarySurfaces() {
 List<LocalizationSurface> allLocalizationSurfaces({
   SafeCopyTemplateRegistry registry = const SafeCopyTemplateRegistry(),
   LocalizationSafetyLint lint = const LocalizationSafetyLint(),
-}) =>
-    <LocalizationSurface>[
-      for (final t in registry.templates) ...lint.surfacesFromTemplate(t),
-      ...appDictionarySurfaces(),
-    ];
+}) => <LocalizationSurface>[
+  for (final t in registry.templates) ...lint.surfacesFromTemplate(t),
+  ...appDictionarySurfaces(),
+];
 
 /// Runs the lint over [allLocalizationSurfaces].
 LocalizationSafetyReport lintAllLocalizationSurfaces({
   LocalizationSafetyLint lint = const LocalizationSafetyLint(),
   LocalizationSafetyLintConfig config = kLocalizationLintConfig,
-}) =>
-    lint.lint(
-      allLocalizationSurfaces(lint: lint),
-      config,
-      localeDictionaryAvailable: true,
-    );
+}) => lint.lint(
+  allLocalizationSurfaces(lint: lint),
+  config,
+  localeDictionaryAvailable: true,
+);

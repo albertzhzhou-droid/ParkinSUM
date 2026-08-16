@@ -20,12 +20,10 @@ class MedicationPage extends StatelessWidget {
     final activeIds = state.activeDrugs.map((e) => e.id).toSet();
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.tr('medications.title')),
-      ),
+      appBar: AppBar(title: Text(i18n.tr('medications.title'))),
       body: ListView.separated(
         itemCount: all.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
+        separatorBuilder: (_, _) => const Divider(height: 1),
         itemBuilder: (_, i) {
           final d = all[i];
           final checked = activeIds.contains(d.id);

@@ -3,11 +3,7 @@ import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform, kIsWeb;
 
 class DefaultFirebaseOptions {
-  static const supportedEnvironmentIds = <String>[
-    'dev',
-    'stage',
-    'prod',
-  ];
+  static const supportedEnvironmentIds = <String>['dev', 'stage', 'prod'];
 
   static const productionProjectId = 'parkinsum-companion';
   static const developmentProjectId = 'parkinsum-companion-dev';

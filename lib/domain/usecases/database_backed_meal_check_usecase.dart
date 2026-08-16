@@ -56,14 +56,14 @@ class DatabaseBackedMealCheckUseCase {
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
     DosageNoteParser? dosageNoteParser,
-  })  : foodRepository = foodRepository ?? FoodRepository.createDefault(),
-        mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
-        mealCompositionNormalizer =
-            mealCompositionNormalizer ?? MealCompositionNormalizer(),
-        medicationEntryValidator =
-            medicationEntryValidator ?? MedicationEntryValidator(),
-        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
-        _dosageNoteParser = dosageNoteParser ?? DosageNoteParser();
+  }) : foodRepository = foodRepository ?? FoodRepository.createDefault(),
+       mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
+       mealCompositionNormalizer =
+           mealCompositionNormalizer ?? MealCompositionNormalizer(),
+       medicationEntryValidator =
+           medicationEntryValidator ?? MedicationEntryValidator(),
+       timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
+       _dosageNoteParser = dosageNoteParser ?? DosageNoteParser();
 
   Future<InteractionResult> call({
     required Meal meal,
@@ -137,17 +137,13 @@ class DatabaseBackedMealCheckUseCase {
     );
 
     if (temporalState.isOutsideCurrentRiskWindow) {
-      final summary = i18n.tr(
-        'mealcheck.historical_no_current_risk',
-        {'hours': temporalState.age.inHours.toString()},
-      );
-      final analysisText = i18n.tr(
-        'mealcheck.historical_analysis',
-        {
-          'hours': temporalState.age.inHours.toString(),
-          'window': temporalState.activeWindow.inHours.toString(),
-        },
-      );
+      final summary = i18n.tr('mealcheck.historical_no_current_risk', {
+        'hours': temporalState.age.inHours.toString(),
+      });
+      final analysisText = i18n.tr('mealcheck.historical_analysis', {
+        'hours': temporalState.age.inHours.toString(),
+        'window': temporalState.activeWindow.inHours.toString(),
+      });
       return InteractionResult(
         mealId: meal.id,
         status: InteractionStatus.ok,
@@ -155,10 +151,9 @@ class DatabaseBackedMealCheckUseCase {
         analysisText: analysisText,
         keyFindings: [summary],
         dataNotes: [
-          i18n.tr(
-            'mealcheck.historical_note',
-            {'window': temporalState.activeWindow.inHours.toString()},
-          ),
+          i18n.tr('mealcheck.historical_note', {
+            'window': temporalState.activeWindow.inHours.toString(),
+          }),
           ..._buildMealContextNotes(i18n, meal),
         ],
         issues: const <InteractionIssue>[],
@@ -174,12 +169,10 @@ class DatabaseBackedMealCheckUseCase {
     dataNotes.addAll(_buildMealContextNotes(i18n, meal));
     final scoring = _MealConflictScoringModel(i18n: i18n);
     final scoreInputs = <_DrugMealScoreInput>[];
-    final supplementalRules = await importedLabelRuleProvider?.loadRules() ??
+    final supplementalRules =
+        await importedLabelRuleProvider?.loadRules() ??
         const <RuleRegistryEntry>[];
-    final effectiveRules = [
-      ...compiledRules,
-      ...supplementalRules,
-    ];
+    final effectiveRules = [...compiledRules, ...supplementalRules];
 
     for (final drug in activeDrugs) {
       final resolvedDrug = await variantResolver.resolveDrugVariant(
@@ -276,10 +269,9 @@ class DatabaseBackedMealCheckUseCase {
         );
         dataNotes.addAll(_extractMissingInputNotes(i18n, alert.explanation));
         if (evidenceTitles.isNotEmpty) {
-          final evidenceLine = i18n.tr(
-            'mealcheck.official_source',
-            {'title': evidenceTitles.first},
-          );
+          final evidenceLine = i18n.tr('mealcheck.official_source', {
+            'title': evidenceTitles.first,
+          });
           keyFindings.add(evidenceLine);
           dataNotes.add(evidenceLine);
           detailBuffer.write(' $evidenceLine');
@@ -360,18 +352,14 @@ class DatabaseBackedMealCheckUseCase {
           issue.severity.index > current.index ? issue.severity : current,
     );
     final segments = <String>[
-      i18n.tr(
-        'mealcheck.analysis',
-        {
-          'drugCount': '$activeDrugCount',
-          'severity': i18n.severityLabel(_severityWireValue(highestSeverity)),
-          'score': '$score',
-        },
-      ),
-      i18n.tr(
-        'mealcheck.analysis_protein',
-        {'protein': mealMetrics.totalProteinG.toStringAsFixed(1)},
-      ),
+      i18n.tr('mealcheck.analysis', {
+        'drugCount': '$activeDrugCount',
+        'severity': i18n.severityLabel(_severityWireValue(highestSeverity)),
+        'score': '$score',
+      }),
+      i18n.tr('mealcheck.analysis_protein', {
+        'protein': mealMetrics.totalProteinG.toStringAsFixed(1),
+      }),
     ];
 
     if (mealMetrics.highFatHighCalorie) {
@@ -379,25 +367,24 @@ class DatabaseBackedMealCheckUseCase {
     }
     if (scoreFactors.isNotEmpty) {
       segments.add(
-        i18n.tr(
-          'mealcheck.analysis_scoring',
-          {
-            'factors': scoreFactors
-                .take(3)
-                .map((factor) => '${factor.label} +${factor.points}')
-                .join(', '),
-          },
-        ),
+        i18n.tr('mealcheck.analysis_scoring', {
+          'factors': scoreFactors
+              .take(3)
+              .map((factor) => '${factor.label} +${factor.points}')
+              .join(', '),
+        }),
       );
     }
     if (mealMetrics.usedDatabaseFacts) {
       segments.add(i18n.tr('mealcheck.analysis_dbfacts'));
     }
-    if (issues.any((issue) =>
-        issue.detail.contains('starch-based thickener') ||
-        issue.detail.contains('淀粉型增稠剂') ||
-        issue.detail.contains('enteral feeding') ||
-        issue.detail.contains('肠内营养'))) {
+    if (issues.any(
+      (issue) =>
+          issue.detail.contains('starch-based thickener') ||
+          issue.detail.contains('淀粉型增稠剂') ||
+          issue.detail.contains('enteral feeding') ||
+          issue.detail.contains('肠内营养'),
+    )) {
       segments.add(i18n.tr('mealcheck.analysis_context_used'));
     }
     if (issues.any((issue) => issue.evidence.isNotEmpty)) {
@@ -433,10 +420,7 @@ class DatabaseBackedMealCheckUseCase {
     }
   }
 
-  String _describeMachineAction(
-    AppI18n i18n,
-    Map<String, dynamic> action,
-  ) {
+  String _describeMachineAction(AppI18n i18n, Map<String, dynamic> action) {
     final type = '${action['type'] ?? ''}';
     final params = action['params'] is Map<String, dynamic>
         ? action['params'] as Map<String, dynamic>
@@ -446,23 +430,21 @@ class DatabaseBackedMealCheckUseCase {
         final before = params['preferred_before_meal_min'];
         final after = params['preferred_after_meal_min'];
         if (before != null && after != null) {
-          return i18n.tr(
-            'interaction.action_reschedule_full',
-            {'before': '$before', 'after': '$after'},
-          );
+          return i18n.tr('interaction.action_reschedule_full', {
+            'before': '$before',
+            'after': '$after',
+          });
         }
         if (before != null) {
-          return i18n.tr(
-            'interaction.action_reschedule_before',
-            {'before': '$before'},
-          );
+          return i18n.tr('interaction.action_reschedule_before', {
+            'before': '$before',
+          });
         }
         return i18n.tr('interaction.action_reschedule_generic');
       case 'separate_by_time':
-        return i18n.tr(
-          'interaction.action_separate_by_time',
-          {'minutes': '${params['min_separation_minutes'] ?? 0}'},
-        );
+        return i18n.tr('interaction.action_separate_by_time', {
+          'minutes': '${params['min_separation_minutes'] ?? 0}',
+        });
       case 'avoid_food':
         return i18n.tr('interaction.action_avoid_food');
       case 'avoid_combination':
@@ -508,13 +490,10 @@ class DatabaseBackedMealCheckUseCase {
       yield i18n.tr('mealcheck.context_xanthan_thickener');
     }
     if (meal.enteralFeedMode == 'continuous') {
-      yield i18n.tr(
-        'mealcheck.context_enteral_feed_continuous',
-        {
-          'protein': meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
-              'unspecified',
-        },
-      );
+      yield i18n.tr('mealcheck.context_enteral_feed_continuous', {
+        'protein':
+            meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ?? 'unspecified',
+      });
     } else if (meal.enteralFeedMode == 'bolus') {
       yield i18n.tr('mealcheck.context_enteral_feed_bolus');
     }
@@ -620,8 +599,9 @@ class DatabaseBackedMealCheckUseCase {
   }
 
   double _estimateTyramine(Meal meal) {
-    final hasHighTyramine =
-        meal.items.any((item) => item.foodTags.contains('high_tyramine'));
+    final hasHighTyramine = meal.items.any(
+      (item) => item.foodTags.contains('high_tyramine'),
+    );
     return hasHighTyramine ? 180 : 0;
   }
 
@@ -668,8 +648,9 @@ class DatabaseBackedMealCheckUseCase {
   }) async {
     // 当前只读取 qualifier=exact 的 observation 来重算餐级营养。
     // 未完成：还没有把 range / lt / trace 等区间值纳入餐级聚合逻辑。
-    final rows =
-        await clinicalDecisionSupportService.database.queryTable('observation');
+    final rows = await clinicalDecisionSupportService.database.queryTable(
+      'observation',
+    );
     final exactByVariant = <String, Map<String, double>>{};
 
     for (final row in rows) {
@@ -684,8 +665,10 @@ class DatabaseBackedMealCheckUseCase {
         continue;
       }
       exactByVariant.putIfAbsent(
-              entityKey, () => <String, double>{})[attributeCode] =
-          valueNum.toDouble();
+        entityKey,
+        () => <String, double>{},
+      )[attributeCode] = valueNum
+          .toDouble();
     }
 
     var totalProteinG = 0.0;
@@ -794,11 +777,13 @@ class DatabaseBackedMealCheckUseCase {
         sourceDocId: 'synthetic:${drug.sourceSystem}',
       );
       final validation = medicationEntryValidator.validate(raw);
-      medInputs.add(MedicationTimelineInput(
-        id: 'intake_${intake.id}',
-        takenAt: intake.takenAt,
-        medicationContext: validation,
-      ));
+      medInputs.add(
+        MedicationTimelineInput(
+          id: 'intake_${intake.id}',
+          takenAt: intake.takenAt,
+          medicationContext: validation,
+        ),
+      );
     }
 
     if (medInputs.isEmpty) return null;
@@ -879,10 +864,7 @@ class _MealConflictScoreResult {
   final int score;
   final List<InteractionScoreFactor> factors;
 
-  const _MealConflictScoreResult({
-    required this.score,
-    required this.factors,
-  });
+  const _MealConflictScoreResult({required this.score, required this.factors});
 }
 
 class _MealConflictScoringModel {
@@ -969,10 +951,9 @@ class _MealConflictScoringModel {
       points: hasEvidence ? 5 : 0,
     );
 
-    final sortedFactors = factors
-        .where((factor) => factor.points > 0)
-        .toList(growable: false)
-      ..sort((left, right) => right.points.compareTo(left.points));
+    final sortedFactors =
+        factors.where((factor) => factor.points > 0).toList(growable: false)
+          ..sort((left, right) => right.points.compareTo(left.points));
     final total = sortedFactors.fold<int>(
       0,
       (sum, factor) => sum + factor.points,
@@ -1039,8 +1020,11 @@ class _MealConflictScoringModel {
       return;
     }
     if (points > factors[existingIndex].points) {
-      factors[existingIndex] =
-          InteractionScoreFactor(code: code, label: label, points: points);
+      factors[existingIndex] = InteractionScoreFactor(
+        code: code,
+        label: label,
+        points: points,
+      );
     }
   }
 }

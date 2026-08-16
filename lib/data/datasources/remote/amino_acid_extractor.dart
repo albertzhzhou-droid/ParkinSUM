@@ -48,12 +48,14 @@ class AminoAcidExtractor {
     final ids = <String>[];
     // Basis follows the payload when present (FDC Foundation/SR are per_100g);
     // defaults to per_100g only when the payload does not declare one.
-    final basis = (payload['basisType'] is String &&
+    final basis =
+        (payload['basisType'] is String &&
             (payload['basisType'] as String).trim().isNotEmpty)
         ? payload['basisType'] as String
         : 'per_100g';
     // Optional FDC food data type (Foundation / SR Legacy / Survey / Branded).
-    final fdcDataType = (payload['dataType'] is String &&
+    final fdcDataType =
+        (payload['dataType'] is String &&
             (payload['dataType'] as String).trim().isNotEmpty)
         ? payload['dataType'] as String
         : null;
@@ -177,7 +179,8 @@ class AminoAcidExtractor {
       final source = derivation['foodNutrientSource'];
       if (source is Map) sourceCode = source['code']?.toString();
     }
-    final hasAny = code != null ||
+    final hasAny =
+        code != null ||
         description != null ||
         sourceCode != null ||
         dataPoints is num ||

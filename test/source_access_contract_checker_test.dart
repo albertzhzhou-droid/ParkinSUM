@@ -23,27 +23,26 @@ void main() {
     bool mechanism = true,
     bool identity = true,
     bool sourceQuality = true,
-  }) =>
-      SourceAccessRecord(
-        sourceId: id,
-        displayName: id,
-        owner: 'Example owner',
-        jurisdiction: 'GLOBAL',
-        sourceFamily: family,
-        dataDomain: 'mixed',
-        accessMethod: access,
-        requiresApiKey: apiKey,
-        requiresAccount: account,
-        licenseReviewNeeded: license,
-        legalReviewNeeded: legal,
-        implementationStatus: status,
-        allowedForFixture: fixture,
-        allowedForLiveSmoke: live,
-        allowedForProduction: production,
-        canSupportMechanismEvidenceAlone: mechanism,
-        canSupportIdentityOrCoding: identity,
-        canSupportSourceQualityScoring: sourceQuality,
-      );
+  }) => SourceAccessRecord(
+    sourceId: id,
+    displayName: id,
+    owner: 'Example owner',
+    jurisdiction: 'GLOBAL',
+    sourceFamily: family,
+    dataDomain: 'mixed',
+    accessMethod: access,
+    requiresApiKey: apiKey,
+    requiresAccount: account,
+    licenseReviewNeeded: license,
+    legalReviewNeeded: legal,
+    implementationStatus: status,
+    allowedForFixture: fixture,
+    allowedForLiveSmoke: live,
+    allowedForProduction: production,
+    canSupportMechanismEvidenceAlone: mechanism,
+    canSupportIdentityOrCoding: identity,
+    canSupportSourceQualityScoring: sourceQuality,
+  );
 
   SourceAccessContract contract(SourceAccessRecord source) =>
       SourceAccessContract(records: {source.sourceId: source});
@@ -52,28 +51,23 @@ void main() {
     String sourceId, {
     String file = 'lib/example.dart',
     String usage = SourceUsageType.unknown,
-  }) =>
-      ObservedSourceRef(sourceId: sourceId, file: file, usageType: usage);
+  }) => ObservedSourceRef(sourceId: sourceId, file: file, usageType: usage);
 
   SourceAccessContractReport run(
     SourceAccessRecord source, {
     List<ObservedSourceRef>? refs,
     bool strict = false,
-  }) =>
-      checker.check(
-        contract: contract(source),
-        references: refs ?? [ref(source.sourceId)],
-        strictMode: strict,
-      );
+  }) => checker.check(
+    contract: contract(source),
+    references: refs ?? [ref(source.sourceId)],
+    strictMode: strict,
+  );
 
   test('registry parses and serializes deterministically', () {
     final parsed = SourceAccessContract.fromJson({
       'registry_type': 'source_access_registry',
       'version': '1',
-      'sources': [
-        record(id: 'src.z').toJson(),
-        record(id: 'src.a').toJson(),
-      ],
+      'sources': [record(id: 'src.z').toJson(), record(id: 'src.a').toJson()],
     });
     final encoded = jsonEncode(parsed.toJson());
     expect(encoded.indexOf('src.a'), lessThan(encoded.indexOf('src.z')));
@@ -105,7 +99,9 @@ void main() {
   test('fixture-only source cannot be production-ready', () {
     final report = run(record(production: true), refs: const []);
     expect(
-        report.findings.single.findingType, 'fixture_only_marked_production');
+      report.findings.single.findingType,
+      'fixture_only_marked_production',
+    );
   });
 
   test('API-key-required source carries access warning', () {
@@ -220,12 +216,12 @@ void main() {
 
   test('current model-assumption source refs resolve', () {
     final registry = _loadRegistry();
-    final source = File('lib/domain/usecases/model_assumption_registry.dart')
-        .readAsStringSync();
-    final ids = RegExp(r'''["'](src\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)["']''')
-        .allMatches(source)
-        .map((match) => match.group(1)!)
-        .toSet();
+    final source = File(
+      'lib/domain/usecases/model_assumption_registry.dart',
+    ).readAsStringSync();
+    final ids = RegExp(
+      r'''["'](src\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)["']''',
+    ).allMatches(source).map((match) => match.group(1)!).toSet();
     expect(ids, isNotEmpty);
     expect(ids.where((id) => !registry.contains(id)), isEmpty);
   });
@@ -266,8 +262,9 @@ void main() {
       contract: contract(incomplete),
       references: const [],
     );
-    final finding = report.findings
-        .singleWhere((f) => f.findingType == 'missing_required_fields');
+    final finding = report.findings.singleWhere(
+      (f) => f.findingType == 'missing_required_fields',
+    );
     expect(finding.severity, SourceAccessSeverity.blocker);
     expect(finding.message, contains('display_name'));
     expect(finding.message, contains('owner'));
@@ -280,13 +277,16 @@ void main() {
     final report = run(
       source,
       refs: [
-        ref(source.sourceId,
-            file: 'docs/PUBLIC_DEMO_BOUNDARY.md',
-            usage: SourceUsageType.publicDemo),
+        ref(
+          source.sourceId,
+          file: 'docs/PUBLIC_DEMO_BOUNDARY.md',
+          usage: SourceUsageType.publicDemo,
+        ),
       ],
     );
-    final finding = report.findings
-        .singleWhere((f) => f.findingType == 'public_demo_not_allowed');
+    final finding = report.findings.singleWhere(
+      (f) => f.findingType == 'public_demo_not_allowed',
+    );
     expect(finding.severity, SourceAccessSeverity.warn);
   });
 
@@ -305,22 +305,26 @@ void main() {
     final report = checker.check(
       contract: contract(source),
       references: [
-        ref(source.sourceId,
-            file: 'docs/PUBLIC_DEMO_BOUNDARY.md',
-            usage: SourceUsageType.publicDemo),
+        ref(
+          source.sourceId,
+          file: 'docs/PUBLIC_DEMO_BOUNDARY.md',
+          usage: SourceUsageType.publicDemo,
+        ),
       ],
     );
     expect(
-        report.findings.any((f) => f.findingType == 'public_demo_not_allowed'),
-        isFalse);
+      report.findings.any((f) => f.findingType == 'public_demo_not_allowed'),
+      isFalse,
+    );
   });
 
   test('shipped registry passes the hardened matrix checks', () {
     final registry = _loadRegistry();
     final report = checker.check(contract: registry, references: const []);
     expect(
-        report.findings.any((f) => f.findingType == 'missing_required_fields'),
-        isFalse);
+      report.findings.any((f) => f.findingType == 'missing_required_fields'),
+      isFalse,
+    );
     // The matrix column is present on every shipped record.
     for (final r in registry.records.values) {
       expect(r.toJson().containsKey('allowed_for_public_demo'), isTrue);

@@ -16,8 +16,8 @@ class GastricEmptyingModel {
   final GastricEmptyingParameterSet parameters;
 
   GastricEmptyingModel({GastricEmptyingParameterSet? parameters})
-      : parameters = parameters ??
-            GastricEmptyingParameterSet.literatureInformedDefault();
+    : parameters =
+          parameters ?? GastricEmptyingParameterSet.literatureInformedDefault();
 
   GastricEmptyingProfile build({
     required String mealId,
@@ -45,28 +45,33 @@ class GastricEmptyingModel {
 
     double sizeMultiplier;
     if (sizeAvailable) {
-      sizeMultiplier = 0.6 +
+      sizeMultiplier =
+          0.6 +
           0.4 *
               (composition.totalCalories! /
                   parameters.referenceMealCalories.value);
       sizeMultiplier = sizeMultiplier.clamp(0.6, 2.0);
       assumptions.add(
-          'ge.size.linear_scale (size multiplier ${sizeMultiplier.toStringAsFixed(2)})');
+        'ge.size.linear_scale (size multiplier ${sizeMultiplier.toStringAsFixed(2)})',
+      );
     } else {
       sizeMultiplier = 1.0;
       assumptions.add(
-          'ge.size.unknown_default (size multiplier 1.00, uncertainty widened)');
+        'ge.size.unknown_default (size multiplier 1.00, uncertainty widened)',
+      );
     }
 
     double fatMultiplier;
-    final highFat = fatFraction != null &&
+    final highFat =
+        fatFraction != null &&
         fatFraction >= parameters.fatFractionThreshold.value;
     if (highFat) {
       fatMultiplier = parameters.fatSlowdownMultiplier.value;
       modifiers.add('fat_slowdown_${fatMultiplier.toStringAsFixed(2)}x');
       assumptions.add(parameters.fatSlowdownMultiplier.id);
       assumptions.add(
-          '${parameters.fatUncertaintyBoost.id} (high fat, uncertainty widened)');
+        '${parameters.fatUncertaintyBoost.id} (high fat, uncertainty widened)',
+      );
     } else {
       fatMultiplier = 1.0;
     }
@@ -74,13 +79,15 @@ class GastricEmptyingModel {
     // High-calorie load: meals well above the reference size empty more slowly
     // and with greater inter-subject variance → widen uncertainty (in addition
     // to the size multiplier already applied to the emptying curve).
-    final highCalorie = sizeAvailable &&
+    final highCalorie =
+        sizeAvailable &&
         composition.totalCalories! >=
             parameters.referenceMealCalories.value *
                 parameters.highCalorieFractionThreshold.value;
     if (highCalorie) {
       assumptions.add(
-          '${parameters.highCalorieUncertaintyBoost.id} (high calorie load, uncertainty widened)');
+        '${parameters.highCalorieUncertaintyBoost.id} (high calorie load, uncertainty widened)',
+      );
     }
 
     // Fiber contribution: small slowdown if high, but mainly widens uncertainty.
@@ -89,7 +96,8 @@ class GastricEmptyingModel {
     if (highFiber) {
       fiberMultiplier = parameters.fiberSlowdownMultiplier.value;
       assumptions.add(
-          '${parameters.fiberSlowdownMultiplier.id} (high fiber, slight slowdown)');
+        '${parameters.fiberSlowdownMultiplier.id} (high fiber, slight slowdown)',
+      );
       modifiers.add('fiber_uncertainty_widen');
     }
     if (composition.fiberAmountBand == AmountBand.unknown) {
@@ -100,15 +108,17 @@ class GastricEmptyingModel {
     // representative component using meal-level physical form.
     final componentProfiles = <EmptyingComponentProfile>[];
     if (composition.foodComponents.isEmpty) {
-      componentProfiles.add(_buildComponent(
-        componentId: '${mealId}__synthesized',
-        form: composition.mealPhysicalForm,
-        sizeMultiplier: sizeMultiplier,
-        fatMultiplier: fatMultiplier,
-        fiberMultiplier: fiberMultiplier,
-        fractionOfMeal: 1.0,
-        modifiers: List<String>.unmodifiable(modifiers),
-      ));
+      componentProfiles.add(
+        _buildComponent(
+          componentId: '${mealId}__synthesized',
+          form: composition.mealPhysicalForm,
+          sizeMultiplier: sizeMultiplier,
+          fatMultiplier: fatMultiplier,
+          fiberMultiplier: fiberMultiplier,
+          fractionOfMeal: 1.0,
+          modifiers: List<String>.unmodifiable(modifiers),
+        ),
+      );
       if (composition.mealPhysicalForm == MealPhysicalForm.unknown) {
         missingInputs.add('meal_physical_form');
       }
@@ -120,23 +130,26 @@ class GastricEmptyingModel {
         final fraction = totalMass > 0
             ? (c.portionGrams ?? 0) / totalMass
             : 1.0 / composition.foodComponents.length;
-        componentProfiles.add(_buildComponent(
-          componentId: c.id,
-          form: c.physicalForm,
-          sizeMultiplier: sizeMultiplier,
-          fatMultiplier: fatMultiplier,
-          fiberMultiplier: fiberMultiplier,
-          fractionOfMeal: fraction <= 0
-              ? 1.0 / composition.foodComponents.length
-              : fraction,
-          modifiers: List<String>.unmodifiable(modifiers),
-        ));
+        componentProfiles.add(
+          _buildComponent(
+            componentId: c.id,
+            form: c.physicalForm,
+            sizeMultiplier: sizeMultiplier,
+            fatMultiplier: fatMultiplier,
+            fiberMultiplier: fiberMultiplier,
+            fractionOfMeal: fraction <= 0
+                ? 1.0 / composition.foodComponents.length
+                : fraction,
+            modifiers: List<String>.unmodifiable(modifiers),
+          ),
+        );
       }
     }
 
     if (overlappingResidualLoad > 0) {
       assumptions.add(
-          'ge.overlap.cumulate (residual load ${overlappingResidualLoad.toStringAsFixed(2)}, uncertainty widened)');
+        'ge.overlap.cumulate (residual load ${overlappingResidualLoad.toStringAsFixed(2)}, uncertainty widened)',
+      );
     }
 
     final uncertaintyBand = _uncertaintyBand(
@@ -149,11 +162,15 @@ class GastricEmptyingModel {
 
     // Aggregate lag = mass-weighted lag across components.
     final aggregateLag = componentProfiles.fold<double>(
-        0, (acc, c) => acc + c.fractionOfMeal * c.lagMinutes);
+      0,
+      (acc, c) => acc + c.fractionOfMeal * c.lagMinutes,
+    );
 
     // Peak emptying window: from lag end to lag + half * 1.5 (heuristic).
     final aggregateHalf = componentProfiles.fold<double>(
-        0, (acc, c) => acc + c.fractionOfMeal * c.halfEmptyingMinutes);
+      0,
+      (acc, c) => acc + c.fractionOfMeal * c.halfEmptyingMinutes,
+    );
     final peakStart = mealStartMinute + aggregateLag.round();
     final peakEnd = peakStart + (aggregateHalf * 1.5).round();
     final mostlyEmptiedEnd =
@@ -167,10 +184,14 @@ class GastricEmptyingModel {
       missingInputs: List.unmodifiable(missingInputs),
       sourceRefs: parameters.unionSourceRefs,
       aggregateLagMinutes: aggregateLag,
-      peakEmptyingWindow:
-          TimelineWindow(startMinute: peakStart, endMinute: peakEnd),
-      mostlyEmptiedWindow:
-          TimelineWindow(startMinute: peakStart, endMinute: mostlyEmptiedEnd),
+      peakEmptyingWindow: TimelineWindow(
+        startMinute: peakStart,
+        endMinute: peakEnd,
+      ),
+      mostlyEmptiedWindow: TimelineWindow(
+        startMinute: peakStart,
+        endMinute: mostlyEmptiedEnd,
+      ),
     );
   }
 
@@ -187,13 +208,13 @@ class GastricEmptyingModel {
     final baseLag = isLiquid
         ? parameters.liquidLagMinutes.value
         : (form == MealPhysicalForm.unknown
-            ? parameters.solidLagMinutes.value * 0.7
-            : parameters.solidLagMinutes.value);
+              ? parameters.solidLagMinutes.value * 0.7
+              : parameters.solidLagMinutes.value);
     final baseHalf = isLiquid
         ? parameters.liquidHalfMinutes.value
         : (form == MealPhysicalForm.unknown
-            ? parameters.solidHalfMinutes.value * 0.9
-            : parameters.solidHalfMinutes.value);
+              ? parameters.solidHalfMinutes.value * 0.9
+              : parameters.solidHalfMinutes.value);
 
     return EmptyingComponentProfile(
       componentId: componentId,

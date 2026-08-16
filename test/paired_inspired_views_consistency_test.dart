@@ -80,8 +80,11 @@ void main() {
   test('both views expose the 8 common envelope fields', () {
     for (final json in [nutritionJson(), medicationJson()]) {
       for (final k in commonKeys) {
-        expect(json.containsKey(k), isTrue,
-            reason: 'missing common envelope field: $k');
+        expect(
+          json.containsKey(k),
+          isTrue,
+          reason: 'missing common envelope field: $k',
+        );
       }
     }
   });
@@ -102,19 +105,24 @@ void main() {
     expect(n['not_advice_text'], m['not_advice_text']);
   });
 
-  test('both views declare inspired_not_conformant + not clinically calibrated',
-      () {
-    for (final json in [nutritionJson(), medicationJson()]) {
-      expect(json['conformance_status'], 'inspired_not_conformant');
-      expect(json['not_clinically_calibrated'], isTrue);
-    }
-  });
+  test(
+    'both views declare inspired_not_conformant + not clinically calibrated',
+    () {
+      for (final json in [nutritionJson(), medicationJson()]) {
+        expect(json['conformance_status'], 'inspired_not_conformant');
+        expect(json['not_clinically_calibrated'], isTrue);
+      }
+    },
+  );
 
   test('neither view emits banned medical-advice phrases', () {
     for (final json in [nutritionJson(), medicationJson()]) {
       for (final t in collectFreeTextValues(json)) {
-        expect(findBannedSubstrings(t), isEmpty,
-            reason: 'banned phrase in free text: "$t"');
+        expect(
+          findBannedSubstrings(t),
+          isEmpty,
+          reason: 'banned phrase in free text: "$t"',
+        );
       }
       expect(findBannedSubstrings(jsonEncode(json)), isEmpty);
     }

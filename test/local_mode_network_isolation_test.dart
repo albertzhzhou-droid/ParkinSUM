@@ -34,26 +34,40 @@ void main() {
     // the network-isolation property under test, so it is captured by a
     // guarded zone instead of failing the test.
     Services? services;
-    runZonedGuarded(() {
-      services = Services.createDefault();
-    }, (_, __) {
-      // Local sqlite init is unavailable in VM tests; intentionally ignored.
-    });
+    runZonedGuarded(
+      () {
+        services = Services.createDefault();
+      },
+      (_, _) {
+        // Local sqlite init is unavailable in VM tests; intentionally ignored.
+      },
+    );
     expect(services, isNotNull);
-    expect(services!.authService, isA<LocalAuthService>(),
-        reason: 'Auth must be the local in-memory service in demo mode.');
+    expect(
+      services!.authService,
+      isA<LocalAuthService>(),
+      reason: 'Auth must be the local in-memory service in demo mode.',
+    );
     expect(services!.authService, isNot(isA<FirebaseAuthService>()));
-    expect(services!.appDatabase, isNot(isA<FirestoreAppDatabase>()),
-        reason: 'App data must stay on the local database in demo mode.');
-    expect(services!.cdssDatabase, isNot(isA<FirestoreCdssDatabase>()),
-        reason: 'CDSS data must stay on the local database in demo mode.');
+    expect(
+      services!.appDatabase,
+      isNot(isA<FirestoreAppDatabase>()),
+      reason: 'App data must stay on the local database in demo mode.',
+    );
+    expect(
+      services!.cdssDatabase,
+      isNot(isA<FirestoreCdssDatabase>()),
+      reason: 'CDSS data must stay on the local database in demo mode.',
+    );
   });
 
-  test('Firebase initialization is a no-op when the backend is local',
-      () async {
-    // ensureInitialized() returns before touching any Firebase API when the
-    // gate is closed; if it tried to initialize Firebase in a plain test
-    // environment this would throw (no platform channels available).
-    await FirebaseBackend.ensureInitialized();
-  });
+  test(
+    'Firebase initialization is a no-op when the backend is local',
+    () async {
+      // ensureInitialized() returns before touching any Firebase API when the
+      // gate is closed; if it tried to initialize Firebase in a plain test
+      // environment this would throw (no platform channels available).
+      await FirebaseBackend.ensureInitialized();
+    },
+  );
 }

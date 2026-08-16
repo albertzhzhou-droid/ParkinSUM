@@ -18,14 +18,14 @@ class InteractionRuleRecord {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'drugId': drugId,
-        'ruleType': ruleType,
-        'target': target,
-        'severity': severity,
-        'weight': weight,
-        'description': description,
-      };
+    'id': id,
+    'drugId': drugId,
+    'ruleType': ruleType,
+    'target': target,
+    'severity': severity,
+    'weight': weight,
+    'description': description,
+  };
 
   factory InteractionRuleRecord.fromJson(Map<String, dynamic> json) {
     return InteractionRuleRecord(

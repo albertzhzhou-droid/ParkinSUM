@@ -113,64 +113,63 @@ class SourceAccessRecord {
 
   static bool _b(dynamic v) => v == true;
 
-  factory SourceAccessRecord.fromJson(Map<String, dynamic> j) =>
-      SourceAccessRecord(
-        sourceId: (j['source_id'] ?? '').toString(),
-        displayName: (j['display_name'] ?? '').toString(),
-        owner: (j['owner'] ?? '').toString(),
-        jurisdiction: (j['jurisdiction'] ?? '').toString(),
-        sourceFamily: (j['source_family'] ?? 'unknown').toString(),
-        dataDomain: (j['data_domain'] ?? 'unknown').toString(),
-        accessMethod: (j['access_method'] ?? 'unknown').toString(),
-        requiresApiKey: _b(j['requires_api_key']),
-        requiresAccount: _b(j['requires_account']),
-        licenseReviewNeeded: _b(j['license_review_needed']),
-        legalReviewNeeded: _b(j['legal_review_needed']),
-        implementationStatus:
-            (j['implementation_status'] ?? 'unknown').toString(),
-        allowedForFixture: _b(j['allowed_for_fixture']),
-        allowedForLiveSmoke: _b(j['allowed_for_live_smoke']),
-        allowedForProduction: _b(j['allowed_for_production']),
-        allowedForPublicDemo: _b(j['allowed_for_public_demo']),
-        canSupportMechanismEvidenceAlone:
-            _b(j['can_support_mechanism_evidence_alone']),
-        canSupportIdentityOrCoding: _b(j['can_support_identity_or_coding']),
-        canSupportSourceQualityScoring:
-            _b(j['can_support_source_quality_scoring']),
-        knownLimitations: _strList(j['known_limitations']),
-        documentationRefs: _strList(j['documentation_refs']),
-        bibliographyRefs: _strList(j['bibliography_refs']),
-        lastPolicyReviewed: (j['last_policy_reviewed'] ?? '').toString(),
-        notes: (j['notes'] ?? '').toString(),
-      );
+  factory SourceAccessRecord.fromJson(
+    Map<String, dynamic> j,
+  ) => SourceAccessRecord(
+    sourceId: (j['source_id'] ?? '').toString(),
+    displayName: (j['display_name'] ?? '').toString(),
+    owner: (j['owner'] ?? '').toString(),
+    jurisdiction: (j['jurisdiction'] ?? '').toString(),
+    sourceFamily: (j['source_family'] ?? 'unknown').toString(),
+    dataDomain: (j['data_domain'] ?? 'unknown').toString(),
+    accessMethod: (j['access_method'] ?? 'unknown').toString(),
+    requiresApiKey: _b(j['requires_api_key']),
+    requiresAccount: _b(j['requires_account']),
+    licenseReviewNeeded: _b(j['license_review_needed']),
+    legalReviewNeeded: _b(j['legal_review_needed']),
+    implementationStatus: (j['implementation_status'] ?? 'unknown').toString(),
+    allowedForFixture: _b(j['allowed_for_fixture']),
+    allowedForLiveSmoke: _b(j['allowed_for_live_smoke']),
+    allowedForProduction: _b(j['allowed_for_production']),
+    allowedForPublicDemo: _b(j['allowed_for_public_demo']),
+    canSupportMechanismEvidenceAlone: _b(
+      j['can_support_mechanism_evidence_alone'],
+    ),
+    canSupportIdentityOrCoding: _b(j['can_support_identity_or_coding']),
+    canSupportSourceQualityScoring: _b(j['can_support_source_quality_scoring']),
+    knownLimitations: _strList(j['known_limitations']),
+    documentationRefs: _strList(j['documentation_refs']),
+    bibliographyRefs: _strList(j['bibliography_refs']),
+    lastPolicyReviewed: (j['last_policy_reviewed'] ?? '').toString(),
+    notes: (j['notes'] ?? '').toString(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'source_id': sourceId,
-        'display_name': displayName,
-        'owner': owner,
-        'jurisdiction': jurisdiction,
-        'source_family': sourceFamily,
-        'data_domain': dataDomain,
-        'access_method': accessMethod,
-        'requires_api_key': requiresApiKey,
-        'requires_account': requiresAccount,
-        'license_review_needed': licenseReviewNeeded,
-        'legal_review_needed': legalReviewNeeded,
-        'implementation_status': implementationStatus,
-        'allowed_for_fixture': allowedForFixture,
-        'allowed_for_live_smoke': allowedForLiveSmoke,
-        'allowed_for_production': allowedForProduction,
-        'allowed_for_public_demo': allowedForPublicDemo,
-        'can_support_mechanism_evidence_alone':
-            canSupportMechanismEvidenceAlone,
-        'can_support_identity_or_coding': canSupportIdentityOrCoding,
-        'can_support_source_quality_scoring': canSupportSourceQualityScoring,
-        'known_limitations': knownLimitations,
-        'documentation_refs': documentationRefs,
-        'bibliography_refs': bibliographyRefs,
-        'last_policy_reviewed': lastPolicyReviewed,
-        'notes': notes,
-      };
+    'source_id': sourceId,
+    'display_name': displayName,
+    'owner': owner,
+    'jurisdiction': jurisdiction,
+    'source_family': sourceFamily,
+    'data_domain': dataDomain,
+    'access_method': accessMethod,
+    'requires_api_key': requiresApiKey,
+    'requires_account': requiresAccount,
+    'license_review_needed': licenseReviewNeeded,
+    'legal_review_needed': legalReviewNeeded,
+    'implementation_status': implementationStatus,
+    'allowed_for_fixture': allowedForFixture,
+    'allowed_for_live_smoke': allowedForLiveSmoke,
+    'allowed_for_production': allowedForProduction,
+    'allowed_for_public_demo': allowedForPublicDemo,
+    'can_support_mechanism_evidence_alone': canSupportMechanismEvidenceAlone,
+    'can_support_identity_or_coding': canSupportIdentityOrCoding,
+    'can_support_source_quality_scoring': canSupportSourceQualityScoring,
+    'known_limitations': knownLimitations,
+    'documentation_refs': documentationRefs,
+    'bibliography_refs': bibliographyRefs,
+    'last_policy_reviewed': lastPolicyReviewed,
+    'notes': notes,
+  };
 }
 
 /// Parsed registry: records keyed by source id, plus policy metadata.
@@ -210,14 +209,14 @@ class SourceAccessContract {
   }
 
   Map<String, dynamic> toJson() => {
-        'registry_type': registryType,
-        'version': version,
-        'safety_boundary': safetyBoundary,
-        'companion_doc': companionDoc,
-        'sources': (records.keys.toList()..sort())
-            .map((k) => records[k]!.toJson())
-            .toList(growable: false),
-      };
+    'registry_type': registryType,
+    'version': version,
+    'safety_boundary': safetyBoundary,
+    'companion_doc': companionDoc,
+    'sources': (records.keys.toList()..sort())
+        .map((k) => records[k]!.toJson())
+        .toList(growable: false),
+  };
 }
 
 /// One observed reference to a source id from code/docs/tests/artifacts.
@@ -241,11 +240,11 @@ class ObservedSourceRef {
       file == 'Bibliographies.md';
 
   Map<String, dynamic> toJson() => {
-        'source_id': sourceId,
-        'file': file,
-        'role': role,
-        'usage_type': usageType,
-      };
+    'source_id': sourceId,
+    'file': file,
+    'role': role,
+    'usage_type': usageType,
+  };
 }
 
 class SourceAccessFinding {
@@ -268,14 +267,14 @@ class SourceAccessFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'finding_type': findingType,
-        'source_id': sourceId,
-        'file': file,
-        'message': message,
-        'suggested_fix': suggestedFix,
-        'safety_boundary': safetyBoundary,
-      };
+    'severity': severity,
+    'finding_type': findingType,
+    'source_id': sourceId,
+    'file': file,
+    'message': message,
+    'suggested_fix': suggestedFix,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 class SourceAccessContractReport {
@@ -308,19 +307,19 @@ class SourceAccessContractReport {
   int get blockerCount => counts['blocker'] ?? 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'not_legal_advice': true,
-        'not_license_clearance': true,
-        'no_live_ingestion': true,
-        'generated_at': generatedAt,
-        'registry_path': registryPath,
-        'source_count': sourceCount,
-        'reference_count': referenceCount,
-        'counts': counts,
-        'pass': pass,
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'not_legal_advice': true,
+    'not_license_clearance': true,
+    'no_live_ingestion': true,
+    'generated_at': generatedAt,
+    'registry_path': registryPath,
+    'source_count': sourceCount,
+    'reference_count': referenceCount,
+    'counts': counts,
+    'pass': pass,
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+  };
 }

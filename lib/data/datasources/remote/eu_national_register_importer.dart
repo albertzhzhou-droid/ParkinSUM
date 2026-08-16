@@ -14,10 +14,12 @@ class EuNationalRegisterImporter {
     final notes = <String>[];
     String s(String key) => (payload[key] ?? '').toString().trim();
 
-    final sourceDocId =
-        s('source_doc_id').isEmpty ? 'eu-nat:unknown' : s('source_doc_id');
-    final memberState =
-        s('member_state').isEmpty ? 'EU_MEMBER' : s('member_state');
+    final sourceDocId = s('source_doc_id').isEmpty
+        ? 'eu-nat:unknown'
+        : s('source_doc_id');
+    final memberState = s('member_state').isEmpty
+        ? 'EU_MEMBER'
+        : s('member_state');
     final language = s('language').isEmpty ? 'multi' : s('language');
 
     final ingredients = <String>[
@@ -44,11 +46,11 @@ class EuNationalRegisterImporter {
 
     final limitation = hasSmpc
         ? 'EU national-register entry with linked SmPC text. Synthetic demo; '
-            'educational prototype, not medical advice.'
+              'educational prototype, not medical advice.'
         : 'EU national-register entry provides product identity and a link to '
-            'product information; full SmPC / food-effect text is not present '
-            'in this record. Synthetic demo; educational prototype, not '
-            'medical advice.';
+              'product information; full SmPC / food-effect text is not present '
+              'in this record. Synthetic demo; educational prototype, not '
+              'medical advice.';
 
     final doc = SourceDocumentMetadata(
       sourceDocId: sourceDocId,

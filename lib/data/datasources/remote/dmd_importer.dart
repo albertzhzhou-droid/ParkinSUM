@@ -13,8 +13,9 @@ class DmdImporter {
     final notes = <String>[];
     String s(String key) => (payload[key] ?? '').toString().trim();
 
-    final sourceDocId =
-        s('source_doc_id').isEmpty ? 'dmd:unknown' : s('source_doc_id');
+    final sourceDocId = s('source_doc_id').isEmpty
+        ? 'dmd:unknown'
+        : s('source_doc_id');
     final jurisdiction = s('jurisdiction').isEmpty ? 'GB' : s('jurisdiction');
     final language = s('language').isEmpty ? 'en' : s('language');
 
@@ -28,8 +29,10 @@ class DmdImporter {
     final productIdentifier = s('vmp_id').isNotEmpty
         ? s('vmp_id')
         : (s('amp_id').isNotEmpty
-            ? s('amp_id')
-            : (s('snomed_concept_id').isEmpty ? null : s('snomed_concept_id')));
+              ? s('amp_id')
+              : (s('snomed_concept_id').isEmpty
+                    ? null
+                    : s('snomed_concept_id')));
     if (productIdentifier == null) notes.add('missing:product_identifier');
 
     final hasFoodEffect = payload['has_food_effect_label_section'] == true;

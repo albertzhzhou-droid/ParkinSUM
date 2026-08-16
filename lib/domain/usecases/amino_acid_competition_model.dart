@@ -62,8 +62,10 @@ class AminoAcidCompetitionModel {
         overlapWithAbsorptionWindow: 0,
         competitionBand: CompetitionBand.unknown,
         uncertaintyBand: UncertaintyBand.veryWide,
-        assumptions:
-            List.unmodifiable([...assumptions, 'protein_grams_missing']),
+        assumptions: List.unmodifiable([
+          ...assumptions,
+          'protein_grams_missing',
+        ]),
         sourceRefs: _baseSourceRefs,
         lnaaSummary: const CompetitionLnaaSummary(
           effectiveLoadFactor: 1.0,
@@ -78,7 +80,8 @@ class AminoAcidCompetitionModel {
 
     final lnaa = _computeLnaaLoad(mealComposition, levodopaDoseMg);
     assumptions.add(
-        'aa.lnaa.source_type_load_factor (effective ${lnaa.effectiveLoadFactor.toStringAsFixed(2)})');
+      'aa.lnaa.source_type_load_factor (effective ${lnaa.effectiveLoadFactor.toStringAsFixed(2)})',
+    );
     if (lnaa.uncertaintyWidened) {
       assumptions.add('aa.lnaa.unknown_source_widened_uncertainty');
     }
@@ -89,8 +92,9 @@ class AminoAcidCompetitionModel {
     if (tier != null) {
       assumptions.add('aa.lnaa.fdc_nutrient_confidence_tier ($tier)');
       if (tier != 'analytical') {
-        assumptions
-            .add('aa.lnaa.non_analytical_provenance_widened_uncertainty');
+        assumptions.add(
+          'aa.lnaa.non_analytical_provenance_widened_uncertainty',
+        );
       }
     }
     if (lnaa.dataMode == AminoAcidDataMode.actualAminoAcidFields) {
@@ -103,8 +107,8 @@ class AminoAcidCompetitionModel {
 
     final proteinAmplitudeBase =
         (mealComposition.proteinGrams! / referenceProteinG).clamp(0.0, 2.0);
-    final proteinAmplitude =
-        (proteinAmplitudeBase * lnaa.effectiveLoadFactor).clamp(0.0, 2.0);
+    final proteinAmplitude = (proteinAmplitudeBase * lnaa.effectiveLoadFactor)
+        .clamp(0.0, 2.0);
 
     final samples = <CompetitionPressureSample>[];
     final startMin = mealStartMinute;
@@ -114,8 +118,9 @@ class AminoAcidCompetitionModel {
 
     for (var t = startMin; t <= endMin; t += sampleStrideMinutes) {
       final tSinceMeal = t - mealStartMinute;
-      final arrivalRate =
-          mealEmptyingProfile.intestinalArrivalRateAt(tSinceMeal);
+      final arrivalRate = mealEmptyingProfile.intestinalArrivalRateAt(
+        tSinceMeal,
+      );
       // Pressure proxy: arrival rate (which already reflects fat/fiber/size
       // modifiers) modulated by protein-amplitude * LNAA-load-factor.
       final pressure = (arrivalRate * proteinAmplitude).clamp(0.0, 1.0);
@@ -185,11 +190,14 @@ class AminoAcidCompetitionModel {
   /// `AminoAcidProfile`; otherwise falls back to the protein-source proxy;
   /// otherwise `unknown` with widened uncertainty.
   CompetitionLnaaSummary _computeLnaaLoad(
-      MealComposition composition, double? levodopaDoseMg) {
+    MealComposition composition,
+    double? levodopaDoseMg,
+  ) {
     final components = composition.foodComponents;
     if (components.isEmpty) {
-      final unknown =
-          ProteinSourceLnaaRegistry.factorFor(ProteinSourceType.unknown);
+      final unknown = ProteinSourceLnaaRegistry.factorFor(
+        ProteinSourceType.unknown,
+      );
       return CompetitionLnaaSummary(
         effectiveLoadFactor: unknown.loadFactor,
         sourcesPresent: const [ProteinSourceType.unknown],
@@ -206,10 +214,12 @@ class AminoAcidCompetitionModel {
     // protein) to get a load factor comparable to the proxy. Prototype
     // magnitude; direction supported by the cited literature.
     final aaComponents = components
-        .where((c) =>
-            c.aminoAcidProfile != null &&
-            c.aminoAcidProfile!.competingLnaaGrams != null &&
-            (c.proteinGrams ?? 0) > 0)
+        .where(
+          (c) =>
+              c.aminoAcidProfile != null &&
+              c.aminoAcidProfile!.competingLnaaGrams != null &&
+              (c.proteinGrams ?? 0) > 0,
+        )
         .toList(growable: false);
     if (aaComponents.isNotEmpty) {
       const referenceLnaaFractionOfProtein = 0.45;
@@ -226,8 +236,10 @@ class AminoAcidCompetitionModel {
         final profile = c.aminoAcidProfile!;
         final lnaa = profile.competingLnaaGrams!;
         final fraction = (lnaa / p).clamp(0.0, 1.0);
-        final factor =
-            (fraction / referenceLnaaFractionOfProtein).clamp(0.5, 1.5);
+        final factor = (fraction / referenceLnaaFractionOfProtein).clamp(
+          0.5,
+          1.5,
+        );
         totalProtein += p;
         weighted += p * factor;
         totalCompetingLnaaGrams += lnaa;
@@ -310,8 +322,9 @@ class AminoAcidCompetitionModel {
     }
 
     if (totalProtein <= 0) {
-      final unknown =
-          ProteinSourceLnaaRegistry.factorFor(ProteinSourceType.unknown);
+      final unknown = ProteinSourceLnaaRegistry.factorFor(
+        ProteinSourceType.unknown,
+      );
       return CompetitionLnaaSummary(
         effectiveLoadFactor: unknown.loadFactor,
         sourcesPresent: const [ProteinSourceType.unknown],

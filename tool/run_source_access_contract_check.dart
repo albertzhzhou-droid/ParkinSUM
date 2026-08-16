@@ -24,10 +24,12 @@ const _collectorFixtureFiles = {
   'test/source_version_drift_checker_test.dart',
 };
 
-final _quotedSourceId =
-    RegExp(r'''["'](src\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)["']''');
+final _quotedSourceId = RegExp(
+  r'''["'](src\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)["']''',
+);
 final _sourceSystem = RegExp(
-    r'''sourceSystem\s*:\s*["']([A-Za-z0-9_]+)["']|["']source_system["']\s*:\s*["']([A-Za-z0-9_]+)["']''');
+  r'''sourceSystem\s*:\s*["']([A-Za-z0-9_]+)["']|["']source_system["']\s*:\s*["']([A-Za-z0-9_]+)["']''',
+);
 
 const _sourceSystemRefs = {
   'DailyMed': 'src.dailymed.spl.webservices.v2',
@@ -70,9 +72,11 @@ List<String> _trackedPaths() {
   return (result.stdout as String)
       .split(String.fromCharCode(0))
       .where((path) => path.isNotEmpty)
-      .where((path) =>
-          path == 'Bibliographies.md' ||
-          _scanRoots.any((root) => path.startsWith('$root/')))
+      .where(
+        (path) =>
+            path == 'Bibliographies.md' ||
+            _scanRoots.any((root) => path.startsWith('$root/')),
+      )
       .where((path) => !_collectorFixtureFiles.contains(path))
       .toList(growable: false);
 }
@@ -82,20 +86,21 @@ List<ObservedSourceRef> collectObservedSourceRefs() {
     ..._trackedPaths(),
     for (final path in _artifactPaths)
       if (File(path).existsSync()) path,
-  }.toList()
-    ..sort();
+  }.toList()..sort();
   final refs = <ObservedSourceRef>[];
   final seen = <String>{};
 
   void add(String sourceId, String path, String role) {
     final key = '$sourceId|$path|$role';
     if (!seen.add(key)) return;
-    refs.add(ObservedSourceRef(
-      sourceId: sourceId,
-      file: path,
-      role: role,
-      usageType: _usageType(path),
-    ));
+    refs.add(
+      ObservedSourceRef(
+        sourceId: sourceId,
+        file: path,
+        role: role,
+        usageType: _usageType(path),
+      ),
+    );
   }
 
   for (final path in paths) {
@@ -128,8 +133,9 @@ List<ObservedSourceRef> collectObservedSourceRefs() {
 
 void main(List<String> args) {
   final strict = args.contains('--strict');
-  final registryJson = jsonDecode(File(_registryPath).readAsStringSync())
-      as Map<String, dynamic>;
+  final registryJson =
+      jsonDecode(File(_registryPath).readAsStringSync())
+          as Map<String, dynamic>;
   final contract = SourceAccessContract.fromJson(registryJson);
   final references = collectObservedSourceRefs();
   final report = const SourceAccessContractChecker().check(
@@ -139,16 +145,20 @@ void main(List<String> args) {
   );
   final out = Directory('build/source_access_contract')
     ..createSync(recursive: true);
-  File('${out.path}/latest.json')
-      .writeAsStringSync(encodeSourceAccessReport(report));
-  File('${out.path}/latest.md')
-      .writeAsStringSync(renderSourceAccessMarkdown(report));
+  File(
+    '${out.path}/latest.json',
+  ).writeAsStringSync(encodeSourceAccessReport(report));
+  File(
+    '${out.path}/latest.md',
+  ).writeAsStringSync(renderSourceAccessMarkdown(report));
   stdout
-    ..writeln('Source access contract: ${report.sourceCount} sources, '
-        '${report.referenceCount} observed references — '
-        'info=${report.counts['info'] ?? 0} '
-        'warn=${report.counts['warn'] ?? 0} '
-        'blocker=${report.blockerCount} (pass=${report.pass}).')
+    ..writeln(
+      'Source access contract: ${report.sourceCount} sources, '
+      '${report.referenceCount} observed references — '
+      'info=${report.counts['info'] ?? 0} '
+      'warn=${report.counts['warn'] ?? 0} '
+      'blocker=${report.blockerCount} (pass=${report.pass}).',
+    )
     ..writeln('Report: ${out.path}/latest.json')
     ..writeln('Report: ${out.path}/latest.md');
   exitCode = report.pass ? 0 : 1;

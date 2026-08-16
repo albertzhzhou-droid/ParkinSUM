@@ -131,8 +131,9 @@ class RuleExplanation {
           'No rule fired because medication context failed the validity gate.',
       evidenceStrength: RuleEvidenceStrength.insufficient,
       limitationText: validation.safeUserCopy,
-      missingOrUncertainInputs:
-          validation.issues.map((i) => i.code).toList(growable: false),
+      missingOrUncertainInputs: validation.issues
+          .map((i) => i.code)
+          .toList(growable: false),
       safetyBoundary: defaultSafetyBoundary,
       notAdviceText: defaultNotAdvice,
       outputType: MedicationExplanationOutputType.invalidContext,
@@ -143,22 +144,22 @@ class RuleExplanation {
   }
 
   Map<String, dynamic> toJson() => {
-        'rule_id': ruleId,
-        'triggered': triggered,
-        'triggered_conditions': triggeredConditions,
-        'user_facing_decision': userFacingDecision,
-        'input_fields_used': inputFieldsUsed,
-        'source_refs': sourceRefs,
-        'provenance_summary': provenanceSummary,
-        'evidence_strength': evidenceStrength.name,
-        'limitation_text': limitationText,
-        'missing_or_uncertain_inputs': missingOrUncertainInputs,
-        'safety_boundary': safetyBoundary,
-        'confidence_note': confidenceNote,
-        'not_advice_text': notAdviceText,
-        'copy_source': copySource,
-        'output_type': outputType.name,
-      };
+    'rule_id': ruleId,
+    'triggered': triggered,
+    'triggered_conditions': triggeredConditions,
+    'user_facing_decision': userFacingDecision,
+    'input_fields_used': inputFieldsUsed,
+    'source_refs': sourceRefs,
+    'provenance_summary': provenanceSummary,
+    'evidence_strength': evidenceStrength.name,
+    'limitation_text': limitationText,
+    'missing_or_uncertain_inputs': missingOrUncertainInputs,
+    'safety_boundary': safetyBoundary,
+    'confidence_note': confidenceNote,
+    'not_advice_text': notAdviceText,
+    'copy_source': copySource,
+    'output_type': outputType.name,
+  };
 }
 
 /// Banned phrase substrings that must never appear in user-facing rule

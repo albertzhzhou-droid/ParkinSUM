@@ -8,22 +8,22 @@ import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
 /// and that the new fields are additive + safe. Educational prototype only.
 void main() {
   RuleExplanation triggeredExample() => const RuleExplanation(
-        ruleId: 'rule.levodopa_protein_timing',
-        triggeredConditions: ['meal.protein_g >= moderate'],
-        inputFieldsUsed: ['meal.protein_g', 'drug.release_type'],
-        sourceRefs: ['src.dailymed.sinemet.label'],
-        provenanceSummary: 'Backed by official label food-effect section.',
-        evidenceStrength: RuleEvidenceStrength.label,
-        limitationText: 'Educational only; not personal medical advice.',
-        missingOrUncertainInputs: ['intake.exact_time'],
-        safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-        notAdviceText: RuleExplanation.defaultNotAdvice,
-        outputType: MedicationExplanationOutputType.educationalCaution,
-        triggered: true,
-        userFacingDecision: 'educational caution',
-        confidenceNote: 'moderate — label-backed, timing uncertain',
-        copySource: 'legacy.high_protein_detail',
-      );
+    ruleId: 'rule.levodopa_protein_timing',
+    triggeredConditions: ['meal.protein_g >= moderate'],
+    inputFieldsUsed: ['meal.protein_g', 'drug.release_type'],
+    sourceRefs: ['src.dailymed.sinemet.label'],
+    provenanceSummary: 'Backed by official label food-effect section.',
+    evidenceStrength: RuleEvidenceStrength.label,
+    limitationText: 'Educational only; not personal medical advice.',
+    missingOrUncertainInputs: ['intake.exact_time'],
+    safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+    notAdviceText: RuleExplanation.defaultNotAdvice,
+    outputType: MedicationExplanationOutputType.educationalCaution,
+    triggered: true,
+    userFacingDecision: 'educational caution',
+    confidenceNote: 'moderate — label-backed, timing uncertain',
+    copySource: 'legacy.high_protein_detail',
+  );
 
   test('exposes the full auditable explanation chain in JSON', () {
     final json = triggeredExample().toJson();
@@ -95,10 +95,14 @@ void main() {
     expect(explanation.toJson()['triggered'], isFalse);
   });
 
-  test('default boundary/not-advice copy contains no banned prescriptive copy',
-      () {
-    expect(findBannedSubstrings(RuleExplanation.defaultNotAdvice), isEmpty);
-    expect(
-        findBannedSubstrings(RuleExplanation.defaultSafetyBoundary), isEmpty);
-  });
+  test(
+    'default boundary/not-advice copy contains no banned prescriptive copy',
+    () {
+      expect(findBannedSubstrings(RuleExplanation.defaultNotAdvice), isEmpty);
+      expect(
+        findBannedSubstrings(RuleExplanation.defaultSafetyBoundary),
+        isEmpty,
+      );
+    },
+  );
 }

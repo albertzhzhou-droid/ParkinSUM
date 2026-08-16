@@ -39,17 +39,21 @@ void main(List<String> args) {
 
   final outDir = Directory('build/localization_safety_lint');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeLocalizationSafetyReport(report));
-  File('${outDir.path}/latest.md')
-      .writeAsStringSync(renderLocalizationSafetyMarkdown(report));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeLocalizationSafetyReport(report));
+  File(
+    '${outDir.path}/latest.md',
+  ).writeAsStringSync(renderLocalizationSafetyMarkdown(report));
 
   stdout
-    ..writeln('Localization safety lint: ${report.surfaceCount} surfaces, '
-        'info=${report.findingCounts['info'] ?? 0} '
-        'warn=${report.findingCounts['warn'] ?? 0} '
-        'blocker=${report.blockerCount} '
-        '(pass=${report.pass}).')
+    ..writeln(
+      'Localization safety lint: ${report.surfaceCount} surfaces, '
+      'info=${report.findingCounts['info'] ?? 0} '
+      'warn=${report.findingCounts['warn'] ?? 0} '
+      'blocker=${report.blockerCount} '
+      '(pass=${report.pass}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   exit(report.pass ? 0 : 1);

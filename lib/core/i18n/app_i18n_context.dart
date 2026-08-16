@@ -33,8 +33,10 @@ extension AppI18nBuildContext on BuildContext {
   /// “Tried to use context.select outside of the build method” 断言。
   /// 因此统一改成 listen:false 的只读访问，让 build 内外都能安全取当前 locale。
   AppI18n get appI18n {
-    final localeTag =
-        Provider.of<AppState>(this, listen: false).userProfile.displayLocale;
+    final localeTag = Provider.of<AppState>(
+      this,
+      listen: false,
+    ).userProfile.displayLocale;
     return AppI18n.fromLocaleTag(localeTag);
   }
 }

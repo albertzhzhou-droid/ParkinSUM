@@ -30,9 +30,7 @@ String artifactManifestJson({
   required Map<String, String> files,
   required Map<String, dynamic> extra,
 }) {
-  return const JsonEncoder.withIndent('  ').convert({
-    'artifact_id': artifactId,
-    'files': files,
-    ...extra,
-  });
+  return const JsonEncoder.withIndent(
+    '  ',
+  ).convert({'artifact_id': artifactId, 'files': files, ...extra});
 }

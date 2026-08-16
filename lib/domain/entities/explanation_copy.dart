@@ -67,13 +67,13 @@ class CompiledCopy {
   });
 
   Map<String, dynamic> toJson() => {
-        'template_id': templateId,
-        'output_type': outputType,
-        'locale': locale,
-        'used_default_locale_fallback': usedDefaultLocaleFallback,
-        'text': text,
-        'bound_placeholders': boundPlaceholders,
-      };
+    'template_id': templateId,
+    'output_type': outputType,
+    'locale': locale,
+    'used_default_locale_fallback': usedDefaultLocaleFallback,
+    'text': text,
+    'bound_placeholders': boundPlaceholders,
+  };
 }
 
 class CopyCompileFinding {
@@ -94,13 +94,13 @@ class CopyCompileFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'finding_type': findingType,
-        'template_id': templateId,
-        'locale': locale,
-        'message': message,
-        'detail': detail,
-      };
+    'severity': severity,
+    'finding_type': findingType,
+    'template_id': templateId,
+    'locale': locale,
+    'message': message,
+    'detail': detail,
+  };
 }
 
 /// Result of compiling one template (rendered copy when valid, plus findings).
@@ -146,18 +146,18 @@ class CopyCompileReport {
   int get blockerCount => counts['blocker'] ?? 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'no_medical_advice': true,
-        'not_wired_into_ui_or_scoring': true,
-        'generated_at': generatedAt,
-        'template_count': templateCount,
-        'compiled_count': compiledCount,
-        'counts': counts,
-        'pass': pass,
-        'compiled': compiled.map((c) => c.toJson()).toList(growable: false),
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'no_medical_advice': true,
+    'not_wired_into_ui_or_scoring': true,
+    'generated_at': generatedAt,
+    'template_count': templateCount,
+    'compiled_count': compiledCount,
+    'counts': counts,
+    'pass': pass,
+    'compiled': compiled.map((c) => c.toJson()).toList(growable: false),
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+  };
 }

@@ -45,9 +45,7 @@ class _CatalogPageState extends State<CatalogPage> {
     final drugs = engine.searchDrugs(keyword);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.tr('catalog.title')),
-      ),
+      appBar: AppBar(title: Text(i18n.tr('catalog.title'))),
       body: Column(
         children: [
           Padding(
@@ -91,32 +89,27 @@ class _CatalogPageState extends State<CatalogPage> {
             child: _showFoods
                 ? ListView.separated(
                     itemCount: foods.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, i) {
                       final food = foods[i];
                       final textureLine = _foodTextureLine(i18n, food);
                       return ListTile(
                         title: Text(i18n.foodName(food.id, food.name)),
                         subtitle: Text(
-                          '${i18n.tr(
-                            'catalog.food_subtitle',
-                            {
-                              'category': food.category.name,
-                              'protein': '${food.proteinG}',
-                              'carbs': '${food.carbsG}',
-                              'fat': '${food.fatG}',
-                            },
-                          )}\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}${textureLine == null ? '' : '\n$textureLine'}\n${food.description}',
+                          '${i18n.tr('catalog.food_subtitle', {'category': food.category.name, 'protein': '${food.proteinG}', 'carbs': '${food.carbsG}', 'fat': '${food.fatG}'})}\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}${textureLine == null ? '' : '\n$textureLine'}\n${food.description}',
                         ),
                         isThreeLine: true,
-                        trailing: Icon(Icons.chevron_right,
-                            semanticLabel: i18n.tr('catalog.view_detail')),
+                        trailing: Icon(
+                          Icons.chevron_right,
+                          semanticLabel: i18n.tr('catalog.view_detail'),
+                        ),
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => FoodDetailPage(
                               food: food,
                               future: state
-                                  .services.cdssCatalogProjectionService
+                                  .services
+                                  .cdssCatalogProjectionService
                                   .projectFoodDetail(food),
                             ),
                           ),
@@ -126,33 +119,38 @@ class _CatalogPageState extends State<CatalogPage> {
                   )
                 : ListView.separated(
                     itemCount: drugs.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, i) {
                       final drug = drugs[i];
-                      final active =
-                          state.activeDrugs.any((item) => item.id == drug.id);
+                      final active = state.activeDrugs.any(
+                        (item) => item.id == drug.id,
+                      );
                       return ListTile(
                         title: Text(
-                            i18n.medicationName(drug.id, drug.displayName)),
+                          i18n.medicationName(drug.id, drug.displayName),
+                        ),
                         subtitle: Text(
-                          '${i18n.tr(
-                            'catalog.drug_subtitle',
-                            {'tags': drug.tags.map((e) => e.name).join(', ')},
-                          )}\n${i18n.sourceSystemLabel(drug.sourceSystem)} · ${i18n.regionLabel(drug.jurisdiction)} · ${i18n.routeLabel(drug.route)} · ${i18n.dosageFormLabel(drug.dosageForm)}\n${i18n.medicationNote(drug.id, drug.notes)}',
+                          '${i18n.tr('catalog.drug_subtitle', {'tags': drug.tags.map((e) => e.name).join(', ')})}\n${i18n.sourceSystemLabel(drug.sourceSystem)} · ${i18n.regionLabel(drug.jurisdiction)} · ${i18n.routeLabel(drug.route)} · ${i18n.dosageFormLabel(drug.dosageForm)}\n${i18n.medicationNote(drug.id, drug.notes)}',
                         ),
                         trailing: active
-                            ? Icon(Icons.check_circle,
-                                semanticLabel:
-                                    i18n.tr('catalog.selected_active'))
-                            : Icon(Icons.chevron_right,
-                                semanticLabel: i18n.tr('catalog.view_detail')),
+                            ? Icon(
+                                Icons.check_circle,
+                                semanticLabel: i18n.tr(
+                                  'catalog.selected_active',
+                                ),
+                              )
+                            : Icon(
+                                Icons.chevron_right,
+                                semanticLabel: i18n.tr('catalog.view_detail'),
+                              ),
                         isThreeLine: true,
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) => DrugDetailPage(
                               drug: drug,
                               future: state
-                                  .services.cdssCatalogProjectionService
+                                  .services
+                                  .cdssCatalogProjectionService
                                   .projectDrugDetail(drug),
                             ),
                           ),
@@ -206,9 +204,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
           ),
           Container(
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: LiquidGlass.stroke),
-              ),
+              border: Border(top: BorderSide(color: LiquidGlass.stroke)),
             ),
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
@@ -258,12 +254,14 @@ class _CatalogShowcaseCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     DecoratedBox(
                       decoration: BoxDecoration(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.10),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.10,
+                        ),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color:
-                              theme.colorScheme.primary.withValues(alpha: 0.22),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.22,
+                          ),
                         ),
                       ),
                       child: Padding(
@@ -381,10 +379,7 @@ class _CatalogShowcaseChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _CatalogShowcaseChip({
-    required this.label,
-    required this.color,
-  });
+  const _CatalogShowcaseChip({required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {

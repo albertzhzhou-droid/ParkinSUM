@@ -117,8 +117,10 @@ void main() {
   });
 
   test('2. preserves combination components incl. carbidopa and levodopa', () {
-    final view = mapper.fromMechanisticMetadata(carbidopaLevodopa(),
-        demoDrugProductId: 'demo-cl-ir-1');
+    final view = mapper.fromMechanisticMetadata(
+      carbidopaLevodopa(),
+      demoDrugProductId: 'demo-cl-ir-1',
+    );
     final names = view.combinationComponents.map((c) => c.ingredientName);
     expect(names, containsAll(['carbidopa', 'levodopa']));
     expect(view.activeIngredients, containsAll(['carbidopa', 'levodopa']));
@@ -126,21 +128,27 @@ void main() {
   });
 
   test('3. preserves product strength as product metadata', () {
-    final view = mapper.fromMechanisticMetadata(levodopaErWithStrength(),
-        demoDrugProductId: 'demo-ldopa-er-1');
+    final view = mapper.fromMechanisticMetadata(
+      levodopaErWithStrength(),
+      demoDrugProductId: 'demo-ldopa-er-1',
+    );
     expect(view.strengths, hasLength(1));
     final s = view.strengths.single;
     expect(s.strengthValue, 200);
     expect(s.strengthUnit, 'mg');
     expect(s.strengthBasis, 'product_label_metadata');
-    expect(FhirInspiredMedicationKnowledgeView.kStrengthIsProductMetadata,
-        'product_label_metadata');
+    expect(
+      FhirInspiredMedicationKnowledgeView.kStrengthIsProductMetadata,
+      'product_label_metadata',
+    );
   });
 
   test('4. does not present product strength as a user intake dose', () {
     final json = mapper
-        .fromMechanisticMetadata(levodopaErWithStrength(),
-            demoDrugProductId: 'demo-ldopa-er-1')
+        .fromMechanisticMetadata(
+          levodopaErWithStrength(),
+          demoDrugProductId: 'demo-ldopa-er-1',
+        )
         .toJson();
     // No intake-dose / timing / frequency keys anywhere.
     scanKeys(json);
@@ -153,8 +161,11 @@ void main() {
       'schedule',
       'dosage_instruction',
     ]) {
-      expect(jsonEncode(json).contains(banned), isFalse,
-          reason: 'must not expose $banned (strength is product metadata)');
+      expect(
+        jsonEncode(json).contains(banned),
+        isFalse,
+        reason: 'must not expose $banned (strength is product metadata)',
+      );
     }
     // Every strength is explicitly tagged as product metadata.
     for (final s in (json['strengths'] as List)) {
@@ -164,8 +175,9 @@ void main() {
 
   test('5. preserves label section refs', () {
     final view = mapper.fromMechanisticMetadata(
-        carbidopaLevodopa(sections: const [irSection]),
-        demoDrugProductId: 'demo-cl-ir-1');
+      carbidopaLevodopa(sections: const [irSection]),
+      demoDrugProductId: 'demo-cl-ir-1',
+    );
     expect(view.labelSectionRefs, hasLength(1));
     final ref = view.labelSectionRefs.single;
     expect(ref.sectionId, '34068-7');
@@ -174,19 +186,24 @@ void main() {
   });
 
   test('6. preserves release type and release type source', () {
-    final ir = mapper.fromMechanisticMetadata(carbidopaLevodopa(),
-        demoDrugProductId: 'd1');
+    final ir = mapper.fromMechanisticMetadata(
+      carbidopaLevodopa(),
+      demoDrugProductId: 'd1',
+    );
     expect(ir.releaseType, 'immediate');
     expect(ir.releaseTypeSource, 'structured_variant_metadata');
-    final er = mapper.fromMechanisticMetadata(levodopaErWithStrength(),
-        demoDrugProductId: 'd2');
+    final er = mapper.fromMechanisticMetadata(
+      levodopaErWithStrength(),
+      demoDrugProductId: 'd2',
+    );
     expect(er.releaseType, 'extended');
   });
 
   test('7. preserves sourceRefs and provenance summary', () {
     final view = mapper.fromMechanisticMetadata(
-        carbidopaLevodopa(sections: const [irSection]),
-        demoDrugProductId: 'demo-cl-ir-1');
+      carbidopaLevodopa(sections: const [irSection]),
+      demoDrugProductId: 'demo-cl-ir-1',
+    );
     expect(view.sourceRefs, contains('src.spl.identity'));
     expect(view.sourceRefs, contains('src.spl.composition'));
     expect(view.sourceRefs, contains('src.spl.section'));
@@ -197,18 +214,22 @@ void main() {
     expect(view.provenanceSummary, contains('label_section_refs=1'));
   });
 
-  test('8. omits patient/subject/encounter/administration/prescription keys',
-      () {
-    final json = mapper
-        .fromMechanisticMetadata(carbidopaLevodopa(sections: const [irSection]),
-            demoDrugProductId: 'demo-cl-ir-1')
-        .toJson();
-    scanKeys(json); // recursive key-level scan
-    expect(json['phi_policy'], 'no_patient_no_administration_no_phi');
-    expect(json.containsKey('patient'), isFalse);
-    expect(json.containsKey('subject'), isFalse);
-    expect(json.containsKey('encounter'), isFalse);
-  });
+  test(
+    '8. omits patient/subject/encounter/administration/prescription keys',
+    () {
+      final json = mapper
+          .fromMechanisticMetadata(
+            carbidopaLevodopa(sections: const [irSection]),
+            demoDrugProductId: 'demo-cl-ir-1',
+          )
+          .toJson();
+      scanKeys(json); // recursive key-level scan
+      expect(json['phi_policy'], 'no_patient_no_administration_no_phi');
+      expect(json.containsKey('patient'), isFalse);
+      expect(json.containsKey('subject'), isFalse);
+      expect(json.containsKey('encounter'), isFalse);
+    },
+  );
 
   test('9. does not claim FHIR conformance', () {
     final json = mapper
@@ -227,13 +248,18 @@ void main() {
 
   test('11. emits no medication-timing or dose-advice phrases', () {
     final json = mapper
-        .fromMechanisticMetadata(levodopaErWithStrength(),
-            demoDrugProductId: 'd')
+        .fromMechanisticMetadata(
+          levodopaErWithStrength(),
+          demoDrugProductId: 'd',
+        )
         .toJson();
     // Free-text scan (skipping safety-policy fields).
     for (final t in freeTextValues(json)) {
-      expect(findBannedSubstrings(t), isEmpty,
-          reason: 'banned medical-advice phrase in free text: "$t"');
+      expect(
+        findBannedSubstrings(t),
+        isEmpty,
+        reason: 'banned medical-advice phrase in free text: "$t"',
+      );
     }
     // Stronger: full serialized JSON is banned-phrase-clean too.
     expect(findBannedSubstrings(jsonEncode(json)), isEmpty);
@@ -242,30 +268,33 @@ void main() {
   test('12. JSON output is deterministic', () {
     final meta = carbidopaLevodopa(sections: const [irSection]);
     final a = jsonEncode(
-        mapper.fromMechanisticMetadata(meta, demoDrugProductId: 'd').toJson());
+      mapper.fromMechanisticMetadata(meta, demoDrugProductId: 'd').toJson(),
+    );
     final b = jsonEncode(
-        mapper.fromMechanisticMetadata(meta, demoDrugProductId: 'd').toJson());
+      mapper.fromMechanisticMetadata(meta, demoDrugProductId: 'd').toJson(),
+    );
     expect(a, b);
   });
 
-  test('13. unitless user dosage stays insufficient despite product strength',
-      () {
+  test('13. unitless user dosage stays insufficient despite product strength', () {
     // The bridge attaches rich product strength metadata, but a unitless user
     // dose must NOT be rescued — the dose path stays insufficient, and the view
     // still presents strength only as product metadata (never an intake dose).
     final validator = MedicationEntryValidator();
     final meta = levodopaErWithStrength(); // has 200 mg product strength
-    final result = validator.validate(RawMedicationEntry(
-      freeText: 'levodopa 200', // unitless
-      activeIngredients: const ['levodopa'],
-      drugProductVariant: 'v1',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'extended',
-      jurisdiction: 'US',
-      sourceDocId: 'spl:levodopa-er-demo',
-      medicationMetadata: meta,
-    ));
+    final result = validator.validate(
+      RawMedicationEntry(
+        freeText: 'levodopa 200', // unitless
+        activeIngredients: const ['levodopa'],
+        drugProductVariant: 'v1',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'extended',
+        jurisdiction: 'US',
+        sourceDocId: 'spl:levodopa-er-demo',
+        medicationMetadata: meta,
+      ),
+    );
     expect(result.validity, isNot(MedicationContextValidity.valid));
     expect(result.normalized, isNull); // no dose fabricated from metadata
 
@@ -275,8 +304,10 @@ void main() {
   });
 
   test('14. reuses shared safety copy', () {
-    final view = mapper.fromMechanisticMetadata(carbidopaLevodopa(),
-        demoDrugProductId: 'd');
+    final view = mapper.fromMechanisticMetadata(
+      carbidopaLevodopa(),
+      demoDrugProductId: 'd',
+    );
     expect(view.notAdviceText, RuleExplanation.defaultNotAdvice);
     expect(view.safetyBoundary, RuleExplanation.defaultSafetyBoundary);
   });
@@ -285,13 +316,18 @@ void main() {
   test('replay-style SPL IR + ER metadata map to PHI-free views', () {
     final ir = mapper
         .fromMechanisticMetadata(
-            carbidopaLevodopa(
-                releaseType: 'immediate', sections: const [irSection]),
-            demoDrugProductId: 's39-cl-ir')
+          carbidopaLevodopa(
+            releaseType: 'immediate',
+            sections: const [irSection],
+          ),
+          demoDrugProductId: 's39-cl-ir',
+        )
         .toJson();
     final er = mapper
-        .fromMechanisticMetadata(levodopaErWithStrength(),
-            demoDrugProductId: 's40-ldopa-er')
+        .fromMechanisticMetadata(
+          levodopaErWithStrength(),
+          demoDrugProductId: 's40-ldopa-er',
+        )
         .toJson();
     for (final json in [ir, er]) {
       scanKeys(json);
@@ -304,8 +340,10 @@ void main() {
   });
 
   test('component with no strength is recorded missing, not fabricated', () {
-    final view = mapper.fromMechanisticMetadata(carbidopaLevodopa(),
-        demoDrugProductId: 'd');
+    final view = mapper.fromMechanisticMetadata(
+      carbidopaLevodopa(),
+      demoDrugProductId: 'd',
+    );
     // Carbidopa/levodopa fixture carries no per-component strength.
     for (final c in view.combinationComponents) {
       expect(c.strengthValue, isNull);

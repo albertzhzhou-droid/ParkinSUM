@@ -51,35 +51,35 @@ class DrugDefinition {
   /// - 让目录页能通过通用名、商品名、别名、剂型、来源系统、交互摘要检索。
   /// - 这里仍是 UI 辅助索引，不替代正式标签解析。
   String get searchableText => [
-        id,
-        genericName,
-        ...brandNames,
-        ...aliases,
-        notes,
-        interactionSummary,
-        sourceSystem,
-        jurisdiction,
-        route,
-        dosageForm,
-        releaseType,
-        sourceProductCode ?? '',
-      ].join(' ').toLowerCase();
+    id,
+    genericName,
+    ...brandNames,
+    ...aliases,
+    notes,
+    interactionSummary,
+    sourceSystem,
+    jurisdiction,
+    route,
+    dosageForm,
+    releaseType,
+    sourceProductCode ?? '',
+  ].join(' ').toLowerCase();
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'genericName': genericName,
-        'brandNames': brandNames,
-        'aliases': aliases,
-        'tags': tags.map((e) => e.name).toList(),
-        'notes': notes,
-        'interactionSummary': interactionSummary,
-        'sourceSystem': sourceSystem,
-        'sourceProductCode': sourceProductCode,
-        'jurisdiction': jurisdiction,
-        'route': route,
-        'dosageForm': dosageForm,
-        'releaseType': releaseType,
-      };
+    'id': id,
+    'genericName': genericName,
+    'brandNames': brandNames,
+    'aliases': aliases,
+    'tags': tags.map((e) => e.name).toList(),
+    'notes': notes,
+    'interactionSummary': interactionSummary,
+    'sourceSystem': sourceSystem,
+    'sourceProductCode': sourceProductCode,
+    'jurisdiction': jurisdiction,
+    'route': route,
+    'dosageForm': dosageForm,
+    'releaseType': releaseType,
+  };
 
   static DrugDefinition fromJson(Map<String, dynamic> json) {
     final tagsRaw = (json['tags'] as List<dynamic>? ?? const [])
@@ -96,8 +96,12 @@ class DrugDefinition {
           .map((e) => e.toString())
           .toList(growable: false),
       tags: tagsRaw
-          .map((t) => DrugTag.values.firstWhere((x) => x.name == t,
-              orElse: () => DrugTag.levodopaLike))
+          .map(
+            (t) => DrugTag.values.firstWhere(
+              (x) => x.name == t,
+              orElse: () => DrugTag.levodopaLike,
+            ),
+          )
           .toList(),
       notes: (json['notes'] as String?) ?? '',
       interactionSummary: (json['interactionSummary'] as String?) ?? '',

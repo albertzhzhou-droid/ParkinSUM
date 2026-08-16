@@ -26,11 +26,12 @@ class MechanisticConflictEngine {
     LevodopaAbsorptionOpportunityModel? absorptionModel,
     AminoAcidCompetitionModel? competitionModel,
     GastricEmptyingParameterSet? gastricEmptyingParameters,
-  })  : gastricEmptyingModel = gastricEmptyingModel ??
-            GastricEmptyingModel(parameters: gastricEmptyingParameters),
-        absorptionModel =
-            absorptionModel ?? LevodopaAbsorptionOpportunityModel(),
-        competitionModel = competitionModel ?? AminoAcidCompetitionModel();
+  }) : gastricEmptyingModel =
+           gastricEmptyingModel ??
+           GastricEmptyingModel(parameters: gastricEmptyingParameters),
+       absorptionModel =
+           absorptionModel ?? LevodopaAbsorptionOpportunityModel(),
+       competitionModel = competitionModel ?? AminoAcidCompetitionModel();
 
   MechanisticConflictResult evaluate({
     required TimeAxisConflictContext context,
@@ -80,24 +81,30 @@ class MechanisticConflictEngine {
 
     // No meal event = no food-medication interaction modeled.
     if (context.mealEvents.isEmpty) {
-      final absorption =
-          absorptionModel.build(medication: med, overlappingMealProfile: null);
+      final absorption = absorptionModel.build(
+        medication: med,
+        overlappingMealProfile: null,
+      );
       final explanation = _buildExplanation(
         resultId: resultId,
         layerTraces: [
-          _trace('time_axis', ['medication_event'], const ['no_meal_overlap'],
-              'no meal', 'No meal events on the timeline.'),
           _trace(
-              'absorption_opportunity',
-              ['medication.release_type', 'medication.minute'],
-              absorption.assumptions,
-              absorption.uncertaintyBand.name,
-              'Absorption opportunity window built from medication event '
-                  'without an overlapping meal profile.'),
+            'time_axis',
+            ['medication_event'],
+            const ['no_meal_overlap'],
+            'no meal',
+            'No meal events on the timeline.',
+          ),
+          _trace(
+            'absorption_opportunity',
+            ['medication.release_type', 'medication.minute'],
+            absorption.assumptions,
+            absorption.uncertaintyBand.name,
+            'Absorption opportunity window built from medication event '
+                'without an overlapping meal profile.',
+          ),
         ],
-        inputFieldsUsed: const [
-          'medication_events[0]',
-        ],
+        inputFieldsUsed: const ['medication_events[0]'],
         missingInputs: ['meal_events'],
         sourceRefs: absorption.sourceRefs,
       );
@@ -173,43 +180,44 @@ class MechanisticConflictEngine {
     final perEventOrdered = [...evaluations]
       ..sort((a, b) => a.med.minute.compareTo(b.med.minute));
     final perEventTraces = perEventOrdered
-        .map((e) => MechanisticPerEventTrace(
-              medicationEventId: e.med.id,
-              medicationMinute: e.med.minute,
-              isLevodopa: e.med.isLevodopaContext,
-              releaseType: e.med.context.releaseType,
-              interactionScore: e.interactionScore,
-              competitionBand: e.competition.competitionBand.name,
-              delayedArrivalLikelihood:
-                  e.absorption.delayedArrivalLikelihood.name,
-              isPrimary: identical(e, primary),
-              sourceRefs: <String>{
-                ...e.emptyingProfile.sourceRefs,
-                ...e.absorption.sourceRefs,
-                ...e.competition.sourceRefs,
-              }.toList(growable: false),
-              uncertaintyReasons: <String>[
-                if (e.emptyingProfile.uncertaintyBand != UncertaintyBand.narrow)
-                  'gastric_emptying_${e.emptyingProfile.uncertaintyBand.name}',
-                ...e.absorption.missingInputs
-                    .map((m) => 'absorption_missing:$m'),
-              ],
-              // Medication provenance bridged from CDSS metadata (when present;
-              // null/0/false otherwise). Provenance only — never a dose.
-              releaseTypeSource: e.med.context.metadata?.releaseTypeSource,
-              doseForm: e.med.context.metadata?.doseForm,
-              route: e.med.context.metadata?.route,
-              levodopaComponentPresent:
-                  e.med.context.metadata?.levodopaComponent != null,
-              combinationComponentCount:
-                  e.med.context.metadata?.combinationComponents.length ?? 0,
-              labelSectionRefCount:
-                  e.med.context.metadata?.labelSectionRefs.length ?? 0,
-              medicationSourceSystem: e.med.context.metadata?.sourceSystem,
-              medicationSourceDocId: e.med.context.metadata?.sourceDocId,
-              medicationMetadataCompleteness:
-                  e.med.context.metadata?.metadataCompleteness,
-            ))
+        .map(
+          (e) => MechanisticPerEventTrace(
+            medicationEventId: e.med.id,
+            medicationMinute: e.med.minute,
+            isLevodopa: e.med.isLevodopaContext,
+            releaseType: e.med.context.releaseType,
+            interactionScore: e.interactionScore,
+            competitionBand: e.competition.competitionBand.name,
+            delayedArrivalLikelihood:
+                e.absorption.delayedArrivalLikelihood.name,
+            isPrimary: identical(e, primary),
+            sourceRefs: <String>{
+              ...e.emptyingProfile.sourceRefs,
+              ...e.absorption.sourceRefs,
+              ...e.competition.sourceRefs,
+            }.toList(growable: false),
+            uncertaintyReasons: <String>[
+              if (e.emptyingProfile.uncertaintyBand != UncertaintyBand.narrow)
+                'gastric_emptying_${e.emptyingProfile.uncertaintyBand.name}',
+              ...e.absorption.missingInputs.map((m) => 'absorption_missing:$m'),
+            ],
+            // Medication provenance bridged from CDSS metadata (when present;
+            // null/0/false otherwise). Provenance only — never a dose.
+            releaseTypeSource: e.med.context.metadata?.releaseTypeSource,
+            doseForm: e.med.context.metadata?.doseForm,
+            route: e.med.context.metadata?.route,
+            levodopaComponentPresent:
+                e.med.context.metadata?.levodopaComponent != null,
+            combinationComponentCount:
+                e.med.context.metadata?.combinationComponents.length ?? 0,
+            labelSectionRefCount:
+                e.med.context.metadata?.labelSectionRefs.length ?? 0,
+            medicationSourceSystem: e.med.context.metadata?.sourceSystem,
+            medicationSourceDocId: e.med.context.metadata?.sourceDocId,
+            medicationMetadataCompleteness:
+                e.med.context.metadata?.metadataCompleteness,
+          ),
+        )
         .toList(growable: false);
 
     final composition = primary.composition;
@@ -219,8 +227,11 @@ class MechanisticConflictEngine {
     final competition = primary.competition;
     final interactionScore = primary.interactionScore;
 
-    final severity = _severity(interactionScore, competition.competitionBand,
-        absorption.delayedArrivalLikelihood);
+    final severity = _severity(
+      interactionScore,
+      competition.competitionBand,
+      absorption.delayedArrivalLikelihood,
+    );
 
     final confidence = _confidence(
       compositionCompleteness: composition.compositionCompleteness,
@@ -247,11 +258,11 @@ class MechanisticConflictEngine {
     final interactionType = drivers.contains('delayed_gastric_arrival_high')
         ? MechanisticInteractionType.delayedGastricArrival
         : (competition.competitionBand == CompetitionBand.high ||
-                competition.competitionBand == CompetitionBand.moderate)
-            ? MechanisticInteractionType.aminoAcidCompetitionProxy
-            : (interactionScore > 0.05)
-                ? MechanisticInteractionType.foodLevodopaTimingOverlap
-                : MechanisticInteractionType.noModeledInteraction;
+              competition.competitionBand == CompetitionBand.moderate)
+        ? MechanisticInteractionType.aminoAcidCompetitionProxy
+        : (interactionScore > 0.05)
+        ? MechanisticInteractionType.foodLevodopaTimingOverlap
+        : MechanisticInteractionType.noModeledInteraction;
 
     final uncertaintyReasons = <String>[
       if (composition.compositionCompleteness < 0.99)
@@ -273,50 +284,54 @@ class MechanisticConflictEngine {
       resultId: resultId,
       layerTraces: [
         _trace(
-            'meal_composition',
-            [
-              'meal_composition.protein_grams',
-              'meal_composition.fat_grams',
-              'meal_composition.fiber_grams',
-              'meal_composition.total_calories'
-            ],
-            [
-              'composition_completeness=${composition.compositionCompleteness.toStringAsFixed(2)}'
-            ],
-            composition.compositionCompleteness < 1.0
-                ? 'composition_incomplete'
-                : 'composition_complete',
-            'Meal composition normalized; bands and missing fields recorded.'),
+          'meal_composition',
+          [
+            'meal_composition.protein_grams',
+            'meal_composition.fat_grams',
+            'meal_composition.fiber_grams',
+            'meal_composition.total_calories',
+          ],
+          [
+            'composition_completeness=${composition.compositionCompleteness.toStringAsFixed(2)}',
+          ],
+          composition.compositionCompleteness < 1.0
+              ? 'composition_incomplete'
+              : 'composition_complete',
+          'Meal composition normalized; bands and missing fields recorded.',
+        ),
         _trace(
-            'gastric_emptying',
-            [
-              'meal_composition.fat',
-              'meal_composition.fiber',
-              'meal_composition.calories',
-              'overlapping_meals'
-            ],
-            emptyingProfile.assumptions,
-            emptyingProfile.uncertaintyBand.name,
-            'Gastric emptying profile built per-component; modifiers applied.'),
+          'gastric_emptying',
+          [
+            'meal_composition.fat',
+            'meal_composition.fiber',
+            'meal_composition.calories',
+            'overlapping_meals',
+          ],
+          emptyingProfile.assumptions,
+          emptyingProfile.uncertaintyBand.name,
+          'Gastric emptying profile built per-component; modifiers applied.',
+        ),
         _trace(
-            'absorption_opportunity',
-            [
-              'medication.release_type',
-              'medication.minute',
-              'gastric_emptying_profile.residual'
-            ],
-            absorption.assumptions,
-            absorption.uncertaintyBand.name,
-            'Absorption opportunity window estimated.'),
+          'absorption_opportunity',
+          [
+            'medication.release_type',
+            'medication.minute',
+            'gastric_emptying_profile.residual',
+          ],
+          absorption.assumptions,
+          absorption.uncertaintyBand.name,
+          'Absorption opportunity window estimated.',
+        ),
         _trace(
-            'amino_acid_competition',
-            [
-              'meal_composition.protein_grams',
-              'gastric_emptying_profile.arrival_rate'
-            ],
-            competition.assumptions,
-            competition.uncertaintyBand.name,
-            'Competition pressure timeline integrated over absorption window.'),
+          'amino_acid_competition',
+          [
+            'meal_composition.protein_grams',
+            'gastric_emptying_profile.arrival_rate',
+          ],
+          competition.assumptions,
+          competition.uncertaintyBand.name,
+          'Competition pressure timeline integrated over absorption window.',
+        ),
       ],
       inputFieldsUsed: const [
         'medication_events[0].context',
@@ -376,7 +391,8 @@ class MechanisticConflictEngine {
       }
       return null;
     }
-    final sorted = [...context.mealEvents]..sort((a, b) {
+    final sorted = [...context.mealEvents]
+      ..sort((a, b) {
         final byMinute = a.minute.compareTo(b.minute);
         return byMinute != 0 ? byMinute : a.id.compareTo(b.id);
       });
@@ -446,8 +462,9 @@ class MechanisticConflictEngine {
         composition: earlierComp,
       );
       final tSinceEarlier = primaryMeal.minute - earlier.minute;
-      residual +=
-          earlierProfile.remainingFractionAt(tSinceEarlier).clamp(0.0, 1.0);
+      residual += earlierProfile
+          .remainingFractionAt(tSinceEarlier)
+          .clamp(0.0, 1.0);
     }
     if (residual > 1.0) residual = 1.0;
 
@@ -511,8 +528,11 @@ class MechanisticConflictEngine {
     return raw.clamp(0.0, 1.0);
   }
 
-  SeverityBand _severity(double score, CompetitionBand competition,
-      DelayedArrivalLikelihood delay) {
+  SeverityBand _severity(
+    double score,
+    CompetitionBand competition,
+    DelayedArrivalLikelihood delay,
+  ) {
     if (competition == CompetitionBand.unknown) return SeverityBand.unknown;
     if (score >= 0.35) return SeverityBand.high;
     if (score >= 0.15) return SeverityBand.moderate;

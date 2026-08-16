@@ -23,8 +23,10 @@ Future<void> main(List<String> args) async {
   jsonFile.writeAsStringSync(encodeReplayReport(report));
   mdFile.writeAsStringSync(report.toMarkdown());
   stdout
-    ..writeln('Mechanistic replay: ${report.passedCount}/${report.totalCount} '
-        'scenarios passed.')
+    ..writeln(
+      'Mechanistic replay: ${report.passedCount}/${report.totalCount} '
+      'scenarios passed.',
+    )
     ..writeln('Report: ${jsonFile.path}')
     ..writeln('Report: ${mdFile.path}');
   exit(report.allPassed ? 0 : 1);

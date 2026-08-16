@@ -19,24 +19,27 @@ void main() {
 
   TimeAxisConflictContext ctx() {
     final now = DateTime.utc(2026, 1, 1, 8);
-    final v = validator.validate(const RawMedicationEntry(
-      activeIngredients: ['carbidopa', 'levodopa'],
-      drugProductVariant: 'synthetic:demo',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'synthetic:demo',
-    ));
+    final v = validator.validate(
+      const RawMedicationEntry(
+        activeIngredients: ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    );
     return builder.build(
       now: now,
       medicationInputs: [
         MedicationTimelineInput(
-            id: 'm',
-            takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v),
+          id: 'm',
+          takenAt: now.add(const Duration(minutes: 30)),
+          medicationContext: v,
+        ),
       ],
       mealInputs: const [],
       userDefinedWindow: UserDefinedMealWindow(
@@ -50,38 +53,37 @@ void main() {
   }
 
   CandidateFood food(String id, {required double protein}) => CandidateFood(
+    id: id,
+    name: id,
+    regionalFoodLibraryRef: 'synthetic',
+    declaredPhysicalForm: MealPhysicalForm.solid,
+    components: [
+      FoodComponent(
         id: id,
         name: id,
-        regionalFoodLibraryRef: 'synthetic',
-        declaredPhysicalForm: MealPhysicalForm.solid,
-        components: [
-          FoodComponent(
-            id: id,
-            name: id,
-            physicalForm: MealPhysicalForm.solid,
-            proteinGrams: protein,
-            fatGrams: 2,
-            fiberGrams: 1,
-            carbohydrateGrams: 20,
-            calories: 150,
-            portionGrams: 150,
-            sourceDocId: 'synthetic',
-          ),
-        ],
-      );
+        physicalForm: MealPhysicalForm.solid,
+        proteinGrams: protein,
+        fatGrams: 2,
+        fiberGrams: 1,
+        carbohydrateGrams: 20,
+        calories: 150,
+        portionGrams: 150,
+        sourceDocId: 'synthetic',
+      ),
+    ],
+  );
 
   CandidateMetadata meta({
     required double authority,
     required double provenance,
     required double completeness,
-  }) =>
-      CandidateMetadata(
-        completeness: completeness,
-        authorityScore: authority,
-        jurisdictionMatchScore: authority,
-        provenanceQuality: provenance,
-        jurisdiction: 'US',
-      );
+  }) => CandidateMetadata(
+    completeness: completeness,
+    authorityScore: authority,
+    jurisdictionMatchScore: authority,
+    provenanceQuality: provenance,
+    jurisdiction: 'US',
+  );
 
   double scoreOf(List<MechanisticCandidateScore> s, String id) =>
       s.firstWhere((e) => e.candidateFoodId == id).finalCandidateScore;
@@ -93,7 +95,7 @@ void main() {
       baseMealCompositionsById: const {},
       candidates: [c],
       candidateMetadata: {
-        'a': meta(authority: 0.1, provenance: 0.1, completeness: 0.3)
+        'a': meta(authority: 0.1, provenance: 0.1, completeness: 0.3),
       },
     );
     final high = scorer.score(
@@ -101,7 +103,7 @@ void main() {
       baseMealCompositionsById: const {},
       candidates: [c],
       candidateMetadata: {
-        'a': meta(authority: 0.9, provenance: 0.9, completeness: 1.0)
+        'a': meta(authority: 0.9, provenance: 0.9, completeness: 1.0),
       },
     );
     expect(scoreOf(high, 'a'), greaterThanOrEqualTo(scoreOf(low, 'a')));
@@ -139,15 +141,17 @@ void main() {
     final c = food('a', protein: 10);
     final m = {'a': meta(authority: 0.5, provenance: 0.5, completeness: 0.8)};
     final r1 = scorer.score(
-        baseContext: ctx(),
-        baseMealCompositionsById: const {},
-        candidates: [c],
-        candidateMetadata: m);
+      baseContext: ctx(),
+      baseMealCompositionsById: const {},
+      candidates: [c],
+      candidateMetadata: m,
+    );
     final r2 = scorer.score(
-        baseContext: ctx(),
-        baseMealCompositionsById: const {},
-        candidates: [c],
-        candidateMetadata: m);
+      baseContext: ctx(),
+      baseMealCompositionsById: const {},
+      candidates: [c],
+      candidateMetadata: m,
+    );
     expect(scoreOf(r1, 'a'), scoreOf(r2, 'a'));
   });
 }

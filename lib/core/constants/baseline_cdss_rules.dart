@@ -17,8 +17,9 @@ Map<String, dynamic> _withLocalizedMessages(Map<String, dynamic> rule) {
   final clone = Map<String, dynamic>.from(rule);
   final thenClause = Map<String, dynamic>.from(clone['then'] as Map);
   final messages = Map<String, dynamic>.from(thenClause['messages'] as Map);
-  final existing =
-      Map<String, dynamic>.from((messages['localized'] as Map?) ?? const {});
+  final existing = Map<String, dynamic>.from(
+    (messages['localized'] as Map?) ?? const {},
+  );
   // Existing entries in `localized` win over the overlay so a rule can
   // override a global translation per-rule if needed.
   for (final entry in overlay.entries) {
@@ -52,11 +53,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
           },
         },
         {
-          'cmp': {
-            'path': 'meal.protein_g',
-            'op': 'gte',
-            'value': 10,
-          },
+          'cmp': {'path': 'meal.protein_g', 'op': 'gte', 'value': 10},
         },
         {
           'between': {
@@ -72,9 +69,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'WARN',
       'severity': 'high',
-      'messages': {
-        'zh': '高蛋白餐可能降低左旋多巴吸收或临床反应，建议错峰。',
-      },
+      'messages': {'zh': '高蛋白餐可能降低左旋多巴吸收或临床反应，建议错峰。'},
       'actions': [
         {
           'type': 'suggest_reschedule',
@@ -138,9 +133,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'WARN',
       'severity': 'high',
-      'messages': {
-        'zh': '铁盐或含铁复合维生素可能与左旋多巴/卡比多巴形成螯合并降低生物利用度，建议分开服用。',
-      },
+      'messages': {'zh': '铁盐或含铁复合维生素可能与左旋多巴/卡比多巴形成螯合并降低生物利用度，建议分开服用。'},
       'actions': [
         {
           'type': 'separate_by_time',
@@ -190,20 +183,14 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
           },
         },
         {
-          'cmp': {
-            'path': 'meal.tyramine_mg_est',
-            'op': 'gt',
-            'value': 150,
-          },
+          'cmp': {'path': 'meal.tyramine_mg_est', 'op': 'gt', 'value': 150},
         },
       ],
     },
     'then': {
       'decision': 'WARN',
       'severity': 'critical',
-      'messages': {
-        'zh': 'rasagiline 推荐剂量下通常无需普遍限酪胺，但极高酪胺摄入可能引起严重升压反应。',
-      },
+      'messages': {'zh': 'rasagiline 推荐剂量下通常无需普遍限酪胺，但极高酪胺摄入可能引起严重升压反应。'},
       'actions': [
         {
           'type': 'avoid_food',
@@ -249,20 +236,14 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
           },
         },
         {
-          'cmp': {
-            'path': 'meal.tyramine_mg_est',
-            'op': 'gt',
-            'value': 150,
-          },
+          'cmp': {'path': 'meal.tyramine_mg_est', 'op': 'gt', 'value': 150},
         },
       ],
     },
     'then': {
       'decision': 'WARN',
       'severity': 'critical',
-      'messages': {
-        'zh': 'safinamide 推荐剂量下通常不需常规限酪胺，但极高酪胺摄入仍应避免。',
-      },
+      'messages': {'zh': 'safinamide 推荐剂量下通常不需常规限酪胺，但极高酪胺摄入仍应避免。'},
       'actions': [
         {
           'type': 'avoid_food',
@@ -310,9 +291,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'BLOCK',
       'severity': 'critical',
-      'messages': {
-        'zh': 'PEG 制剂与淀粉型增稠剂共混可能降低黏度并增加误吸风险，不应混合。',
-      },
+      'messages': {'zh': 'PEG 制剂与淀粉型增稠剂共混可能降低黏度并增加误吸风险，不应混合。'},
       'actions': [
         {
           'type': 'avoid_combination',
@@ -367,9 +346,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'REQUIRE_REVIEW',
       'severity': 'critical',
-      'messages': {
-        'zh': '连续肠内营养可能干扰左旋多巴反应，应由药师与营养团队按蛋白量和喂养窗口评估。',
-      },
+      'messages': {'zh': '连续肠内营养可能干扰左旋多巴反应，应由药师与营养团队按蛋白量和喂养窗口评估。'},
       'actions': [
         {
           'type': 'require_manual_review',

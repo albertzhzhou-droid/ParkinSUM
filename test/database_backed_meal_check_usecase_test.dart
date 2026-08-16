@@ -37,7 +37,8 @@ class QueryBackedCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertCountryDietProfile(
-      CountryDietProfileRecord record) async {}
+    CountryDietProfileRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugConcept(DrugConceptRecord record) async {}
@@ -50,14 +51,16 @@ class QueryBackedCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertDrugProductPackaging(
-      DrugProductPackagingRecord record) async {}
+    DrugProductPackagingRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugProductMedia(DrugProductMediaRecord record) async {}
 
   @override
   Future<void> insertDrugProductVariant(
-      DrugProductVariantRecord record) async {}
+    DrugProductVariantRecord record,
+  ) async {}
 
   @override
   Future<void> insertEngineSnapshot(EngineSnapshotRecord record) async {}
@@ -70,7 +73,8 @@ class QueryBackedCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertLocaleResourceBundle(
-      LocaleResourceBundleRecord record) async {}
+    LocaleResourceBundleRecord record,
+  ) async {}
 
   @override
   Future<void> insertMealTemplate(MealTemplateRecord record) async {}
@@ -80,11 +84,13 @@ class QueryBackedCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record) async {}
+    RecommendationAuditLogRecord record,
+  ) async {}
 
   @override
   Future<void> insertRegionJurisdictionMap(
-      RegionJurisdictionMapRecord record) async {}
+    RegionJurisdictionMapRecord record,
+  ) async {}
 
   @override
   Future<void> insertResolvedFact(ResolvedFactRecord record) async {}
@@ -100,7 +106,8 @@ class QueryBackedCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {}
+    SnapshotDistributionRecord record,
+  ) async {}
 
   @override
   Future<void> insertStagingRow(String table, Map<String, Object?> row) async {}
@@ -216,243 +223,243 @@ void main() {
     );
 
     expect(
-        foodVariant.selectedVariantId, 'FOOD_BANANA#US#USDA_FDC#food_banana');
+      foodVariant.selectedVariantId,
+      'FOOD_BANANA#US#USDA_FDC#food_banana',
+    );
     expect(foodVariant.fallbackUsed, isFalse);
-    expect(drugVariant.selectedVariantId,
-        'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa');
+    expect(
+      drugVariant.selectedVariantId,
+      'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+    );
     expect(drugVariant.fallbackUsed, isFalse);
   });
 
   test(
-      'database-backed meal check uses resolved variants without fallback note',
-      () async {
-    final db = QueryBackedCdssDatabase({
-      'region_jurisdiction_map': [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
-          'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
-          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
-        },
-      ],
-      'food_variant': [
-        {
-          'food_variant_id': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
-          'food_concept_id': 'FOOD_CHICKEN',
-          'jurisdiction': 'US',
-          'source_family': 'USDA_FDC',
-          'source_food_code': 'food_chicken_breast',
-          'is_authoritative_for_region': 1,
-        },
-      ],
-      'observation': [
-        {
-          'observation_id': 'obs_chicken_protein',
-          'entity_key': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
-          'attribute_code': 'protein_g',
-          'qualifier_kind': 'exact',
-          'value_num': 31.0,
-        },
-        {
-          'observation_id': 'obs_chicken_carbs',
-          'entity_key': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
-          'attribute_code': 'carbohydrate_g',
-          'qualifier_kind': 'exact',
-          'value_num': 0.0,
-        },
-        {
-          'observation_id': 'obs_chicken_fat',
-          'entity_key': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
-          'attribute_code': 'fat_g',
-          'qualifier_kind': 'exact',
-          'value_num': 3.6,
-        },
-      ],
-      'drug_product_variant': [
-        {
-          'drug_product_variant_id':
-              'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
-          'drug_concept_id': 'DRUG_LDOPA',
-          'jurisdiction': 'US',
-          'regulator': 'DAILYMED',
-          'external_product_code': 'drug_levodopa_carbidopa',
-          'route': 'oral',
-          'dosage_form': 'tablet',
-          'release_type': 'immediate',
-        },
-      ],
-      'source_document': [
-        {
-          'source_doc_id': 'fda-dhivy-high-protein',
-          'title': 'DHIVY label food effect reference',
-          'origin_url':
-              'https://www.accessdata.fda.gov/drugsatfda_docs/label/2022/214829s000lbl.pdf',
-          'raw_payload': '{"pmid":"35730414"}',
-        },
-      ],
-    });
+    'database-backed meal check uses resolved variants without fallback note',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
+            'food_concept_id': 'FOOD_CHICKEN',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_chicken_breast',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'observation': [
+          {
+            'observation_id': 'obs_chicken_protein',
+            'entity_key': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
+            'attribute_code': 'protein_g',
+            'qualifier_kind': 'exact',
+            'value_num': 31.0,
+          },
+          {
+            'observation_id': 'obs_chicken_carbs',
+            'entity_key': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
+            'attribute_code': 'carbohydrate_g',
+            'qualifier_kind': 'exact',
+            'value_num': 0.0,
+          },
+          {
+            'observation_id': 'obs_chicken_fat',
+            'entity_key': 'FOOD_CHICKEN#US#USDA_FDC#food_chicken_breast',
+            'attribute_code': 'fat_g',
+            'qualifier_kind': 'exact',
+            'value_num': 3.6,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id':
+                'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+            'drug_concept_id': 'DRUG_LDOPA',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_levodopa_carbidopa',
+            'route': 'oral',
+            'dosage_form': 'tablet',
+            'release_type': 'immediate',
+          },
+        ],
+        'source_document': [
+          {
+            'source_doc_id': 'fda-dhivy-high-protein',
+            'title': 'DHIVY label food effect reference',
+            'origin_url':
+                'https://www.accessdata.fda.gov/drugsatfda_docs/label/2022/214829s000lbl.pdf',
+            'raw_payload': '{"pmid":"35730414"}',
+          },
+        ],
+      });
 
-    final compiler = RuleRegistryCompiler();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-    );
+      final compiler = RuleRegistryCompiler();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
+        ),
+      );
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_1',
-        eatenAt: DateTime.utc(2026, 1, 1, 9),
-        title: 'Breakfast',
-        items: [
-          MealItem(
-            foodId: 'food_chicken_breast',
-            foodName: '鸡胸肉',
-            foodCategory: FoodCategory.protein,
-            quantityFactor: 1,
-            foodTags: const [],
-            proteinPer100g: 5,
-            carbsPer100g: 0,
-            fatPer100g: 3.6,
-            fiberPer100g: 0,
-            sodiumPer100g: 70,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_1',
+          eatenAt: DateTime.utc(2026, 1, 1, 9),
+          title: 'Breakfast',
+          items: [
+            MealItem(
+              foodId: 'food_chicken_breast',
+              foodName: '鸡胸肉',
+              foodCategory: FoodCategory.protein,
+              quantityFactor: 1,
+              foodTags: const [],
+              proteinPer100g: 5,
+              carbsPer100g: 0,
+              fatPer100g: 3.6,
+              fiberPer100g: 0,
+              sodiumPer100g: 70,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_levodopa_carbidopa',
+            genericName: 'Levodopa/Carbidopa',
+            brandNames: ['Sinemet'],
+            tags: [DrugTag.levodopaLike],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_levodopa_carbidopa',
-          genericName: 'Levodopa/Carbidopa',
-          brandNames: ['Sinemet'],
-          tags: [DrugTag.levodopaLike],
-          notes: '',
-        ),
-      ],
-      intakes: [
-        Intake(
-          id: 'intake_1',
-          drugId: 'drug_levodopa_carbidopa',
-          takenAt: DateTime.utc(2026, 1, 1, 8),
-          dosageNote: '300 mg/day',
-        ),
-      ],
-      userProfile: UserProfile.defaults(),
-    );
+        intakes: [
+          Intake(
+            id: 'intake_1',
+            drugId: 'drug_levodopa_carbidopa',
+            takenAt: DateTime.utc(2026, 1, 1, 8),
+            dosageNote: '300 mg/day',
+          ),
+        ],
+        userProfile: UserProfile.defaults(),
+      );
 
-    expect(result.status, InteractionStatus.warning);
-    expect(result.score, greaterThanOrEqualTo(70));
-    expect(
-      result.scoreFactors.map((factor) => factor.code),
-      containsAll([
-        'levodopa_interference_weight',
-        'protein_timing_penalty',
-        'rule_decision_weight',
-      ]),
-    );
-    expect(result.analysisText, contains('weighted'));
-    expect(result.issues, isNotEmpty);
-    expect(result.issues.first.detail.contains('回退链'), isFalse);
-    expect(
-      result.issues.first.detail,
-      contains('database food variants'),
-    );
-    expect(result.issues.first.evidence, isNotEmpty);
-    expect(
-      result.issues.first.evidence.first.title,
-      'DHIVY label food effect reference',
-    );
-    expect(result.issues.first.evidence.first.pmid, '35730414');
-    expect(result.keyFindings, isNotEmpty);
-    expect(result.nextActions, isNotEmpty);
-    expect(
-      result.dataNotes.any((note) => note.contains('database')),
-      isTrue,
-    );
-    expect(
-      result.dataNotes
-          .any((note) => note.contains('fallback_variant_resolution')),
-      isFalse,
-    );
-  });
+      expect(result.status, InteractionStatus.warning);
+      expect(result.score, greaterThanOrEqualTo(70));
+      expect(
+        result.scoreFactors.map((factor) => factor.code),
+        containsAll([
+          'levodopa_interference_weight',
+          'protein_timing_penalty',
+          'rule_decision_weight',
+        ]),
+      );
+      expect(result.analysisText, contains('weighted'));
+      expect(result.issues, isNotEmpty);
+      expect(result.issues.first.detail.contains('回退链'), isFalse);
+      expect(result.issues.first.detail, contains('database food variants'));
+      expect(result.issues.first.evidence, isNotEmpty);
+      expect(
+        result.issues.first.evidence.first.title,
+        'DHIVY label food effect reference',
+      );
+      expect(result.issues.first.evidence.first.pmid, '35730414');
+      expect(result.keyFindings, isNotEmpty);
+      expect(result.nextActions, isNotEmpty);
+      expect(result.dataNotes.any((note) => note.contains('database')), isTrue);
+      expect(
+        result.dataNotes.any(
+          (note) => note.contains('fallback_variant_resolution'),
+        ),
+        isFalse,
+      );
+    },
+  );
 
   test(
-      'database-backed meal check can fire imported official label rules from source_document facts',
-      () async {
-    final db = QueryBackedCdssDatabase({
-      'region_jurisdiction_map': [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
-          'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
-          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
-        },
-      ],
-      'food_variant': [
-        {
-          'food_variant_id': 'FOOD_SOUP#US#USDA_FDC#food_soup',
-          'food_concept_id': 'FOOD_SOUP',
-          'jurisdiction': 'US',
-          'source_family': 'USDA_FDC',
-          'source_food_code': 'food_soup',
-          'is_authoritative_for_region': 1,
-        },
-      ],
-      'observation': [
-        {
-          'observation_id': 'obs_soup_protein',
-          'entity_key': 'FOOD_SOUP#US#USDA_FDC#food_soup',
-          'attribute_code': 'protein_g',
-          'qualifier_kind': 'exact',
-          'value_num': 2.0,
-        },
-        {
-          'observation_id': 'obs_soup_carbs',
-          'entity_key': 'FOOD_SOUP#US#USDA_FDC#food_soup',
-          'attribute_code': 'carbohydrate_g',
-          'qualifier_kind': 'exact',
-          'value_num': 8.0,
-        },
-      ],
-      'drug_product_variant': [
-        {
-          'drug_product_variant_id':
-              'DRUG_OPICAPONE#US#DAILYMED#drug_opicapone',
-          'drug_concept_id': 'DRUG_OPICAPONE',
-          'jurisdiction': 'US',
-          'regulator': 'DAILYMED',
-          'external_product_code': 'drug_opicapone',
-          'route': 'oral',
-          'dosage_form': 'capsule',
-          'release_type': 'immediate',
-        },
-      ],
-      'drug_label_section': [
-        {
-          'section_id': 'section_1',
-          'drug_product_variant_id':
-              'DRUG_OPICAPONE#US#DAILYMED#drug_opicapone',
-          'source_doc_id': 'doc_opicapone',
-          'section_key': 'administration',
-          'section_title': 'Administration',
-          'section_text':
-              'Take at least 1 hour before and at least 2 hours after meals.',
-        },
-      ],
-      'source_document': [
-        {
-          'source_doc_id': 'doc_opicapone',
-          'title': 'Imported opicapone label fact',
-          'origin_url': 'https://example.test/opicapone',
-          'source_family': 'DAILYMED',
-          'raw_payload': '''
+    'database-backed meal check can fire imported official label rules from source_document facts',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_SOUP#US#USDA_FDC#food_soup',
+            'food_concept_id': 'FOOD_SOUP',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_soup',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'observation': [
+          {
+            'observation_id': 'obs_soup_protein',
+            'entity_key': 'FOOD_SOUP#US#USDA_FDC#food_soup',
+            'attribute_code': 'protein_g',
+            'qualifier_kind': 'exact',
+            'value_num': 2.0,
+          },
+          {
+            'observation_id': 'obs_soup_carbs',
+            'entity_key': 'FOOD_SOUP#US#USDA_FDC#food_soup',
+            'attribute_code': 'carbohydrate_g',
+            'qualifier_kind': 'exact',
+            'value_num': 8.0,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id':
+                'DRUG_OPICAPONE#US#DAILYMED#drug_opicapone',
+            'drug_concept_id': 'DRUG_OPICAPONE',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_opicapone',
+            'route': 'oral',
+            'dosage_form': 'capsule',
+            'release_type': 'immediate',
+          },
+        ],
+        'drug_label_section': [
+          {
+            'section_id': 'section_1',
+            'drug_product_variant_id':
+                'DRUG_OPICAPONE#US#DAILYMED#drug_opicapone',
+            'source_doc_id': 'doc_opicapone',
+            'section_key': 'administration',
+            'section_title': 'Administration',
+            'section_text':
+                'Take at least 1 hour before and at least 2 hours after meals.',
+          },
+        ],
+        'source_document': [
+          {
+            'source_doc_id': 'doc_opicapone',
+            'title': 'Imported opicapone label fact',
+            'origin_url': 'https://example.test/opicapone',
+            'source_family': 'DAILYMED',
+            'raw_payload': '''
 {
   "label_facts": [
     {
@@ -467,91 +474,91 @@ void main() {
   ]
 }
 ''',
-        },
-      ],
-    });
+          },
+        ],
+      });
 
-    final compiler = RuleRegistryCompiler();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: const <RuleRegistryEntry>[],
-      importedLabelRuleProvider: ImportedLabelRuleProvider(
+      final compiler = RuleRegistryCompiler();
+      final service = ClinicalDecisionSupportService(
         database: db,
-        compiler: compiler,
-      ),
-    );
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: const <RuleRegistryEntry>[],
+        importedLabelRuleProvider: ImportedLabelRuleProvider(
+          database: db,
+          compiler: compiler,
+        ),
+      );
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_2',
-        eatenAt: DateTime.utc(2026, 1, 1, 8, 30),
-        title: 'Soup',
-        items: [
-          MealItem(
-            foodId: 'food_soup',
-            foodName: 'Soup',
-            foodCategory: FoodCategory.other,
-            quantityFactor: 1,
-            foodTags: const [],
-            proteinPer100g: 2,
-            carbsPer100g: 8,
-            fatPer100g: 1,
-            fiberPer100g: 0,
-            sodiumPer100g: 100,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_2',
+          eatenAt: DateTime.utc(2026, 1, 1, 8, 30),
+          title: 'Soup',
+          items: [
+            MealItem(
+              foodId: 'food_soup',
+              foodName: 'Soup',
+              foodCategory: FoodCategory.other,
+              quantityFactor: 1,
+              foodTags: const [],
+              proteinPer100g: 2,
+              carbsPer100g: 8,
+              fatPer100g: 1,
+              fiberPer100g: 0,
+              sodiumPer100g: 100,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_opicapone',
+            genericName: 'Opicapone',
+            brandNames: ['Ongentys'],
+            tags: const [DrugTag.comtInhibitor],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_opicapone',
-          genericName: 'Opicapone',
-          brandNames: ['Ongentys'],
-          tags: const [DrugTag.comtInhibitor],
-          notes: '',
-        ),
-      ],
-      intakes: [
-        Intake(
-          id: 'intake_2',
-          drugId: 'drug_opicapone',
-          takenAt: DateTime.utc(2026, 1, 1, 8, 0),
-          dosageNote: '50 mg',
-        ),
-      ],
-      userProfile: UserProfile.defaults(),
-    );
+        intakes: [
+          Intake(
+            id: 'intake_2',
+            drugId: 'drug_opicapone',
+            takenAt: DateTime.utc(2026, 1, 1, 8, 0),
+            dosageNote: '50 mg',
+          ),
+        ],
+        userProfile: UserProfile.defaults(),
+      );
 
-    expect(result.issues, isNotEmpty);
-    expect(
-      result.issues.first.detail,
-      contains('official label requires separation from meals'),
-    );
-    expect(
-      result.issues.first.evidence.first.title,
-      'Imported opicapone label fact',
-    );
-    expect(
-      result.keyFindings.any(
-        (line) =>
-            line.contains('Official source') &&
-            line.contains('Imported opicapone label fact'),
-      ),
-      isTrue,
-    );
-    expect(
-      result.analysisText,
-      contains('official label or a registered evidence source'),
-    );
-  });
+      expect(result.issues, isNotEmpty);
+      expect(
+        result.issues.first.detail,
+        contains('official label requires separation from meals'),
+      );
+      expect(
+        result.issues.first.evidence.first.title,
+        'Imported opicapone label fact',
+      );
+      expect(
+        result.keyFindings.any(
+          (line) =>
+              line.contains('Official source') &&
+              line.contains('Imported opicapone label fact'),
+        ),
+        isTrue,
+      );
+      expect(
+        result.analysisText,
+        contains('official label or a registered evidence source'),
+      );
+    },
+  );
 
-  test('meal iron coevent triggers imported official label warn rule',
-      () async {
+  test('meal iron coevent triggers imported official label warn rule', () async {
     final db = QueryBackedCdssDatabase({
       'region_jurisdiction_map': [
         {
@@ -687,56 +694,57 @@ void main() {
     );
   });
 
-  test('meal coevent fields trigger imported starch thickener block rule',
-      () async {
-    final db = QueryBackedCdssDatabase({
-      'region_jurisdiction_map': [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
-          'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
-          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
-        },
-      ],
-      'food_variant': [
-        {
-          'food_variant_id': 'FOOD_SOUP#US#USDA_FDC#food_soup',
-          'food_concept_id': 'FOOD_SOUP',
-          'jurisdiction': 'US',
-          'source_family': 'USDA_FDC',
-          'source_food_code': 'food_soup',
-          'is_authoritative_for_region': 1,
-        },
-      ],
-      'drug_product_variant': [
-        {
-          'drug_product_variant_id': 'DRUG_PEG#US#DAILYMED#drug_peg_3350',
-          'drug_concept_id': 'DRUG_PEG',
-          'jurisdiction': 'US',
-          'regulator': 'DAILYMED',
-          'external_product_code': 'drug_peg_3350',
-          'route': 'oral',
-          'dosage_form': 'powder',
-          'release_type': 'immediate',
-        },
-      ],
-      'drug_label_section': [
-        {
-          'section_id': 'peg_section',
-          'drug_product_variant_id': 'DRUG_PEG#US#DAILYMED#drug_peg_3350',
-          'source_doc_id': 'doc_peg',
-          'section_key': 'administration',
-          'section_title': 'Administration',
-          'section_text':
-              'Do not mix this product with starch-based thickeners.',
-        },
-      ],
-      'source_document': [
-        {
-          'source_doc_id': 'doc_peg',
-          'title': 'Imported PEG label fact',
-          'origin_url': 'https://example.test/peg',
-          'raw_payload': '''
+  test(
+    'meal coevent fields trigger imported starch thickener block rule',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_SOUP#US#USDA_FDC#food_soup',
+            'food_concept_id': 'FOOD_SOUP',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_soup',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id': 'DRUG_PEG#US#DAILYMED#drug_peg_3350',
+            'drug_concept_id': 'DRUG_PEG',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_peg_3350',
+            'route': 'oral',
+            'dosage_form': 'powder',
+            'release_type': 'immediate',
+          },
+        ],
+        'drug_label_section': [
+          {
+            'section_id': 'peg_section',
+            'drug_product_variant_id': 'DRUG_PEG#US#DAILYMED#drug_peg_3350',
+            'source_doc_id': 'doc_peg',
+            'section_key': 'administration',
+            'section_title': 'Administration',
+            'section_text':
+                'Do not mix this product with starch-based thickeners.',
+          },
+        ],
+        'source_document': [
+          {
+            'source_doc_id': 'doc_peg',
+            'title': 'Imported PEG label fact',
+            'origin_url': 'https://example.test/peg',
+            'raw_payload': '''
 {
   "label_facts": [
     {
@@ -747,129 +755,134 @@ void main() {
   ]
 }
 ''',
-        },
-      ],
-    });
+          },
+        ],
+      });
 
-    final compiler = RuleRegistryCompiler();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: const <RuleRegistryEntry>[],
-      importedLabelRuleProvider: ImportedLabelRuleProvider(
+      final compiler = RuleRegistryCompiler();
+      final service = ClinicalDecisionSupportService(
         database: db,
-        compiler: compiler,
-      ),
-    );
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: const <RuleRegistryEntry>[],
+        importedLabelRuleProvider: ImportedLabelRuleProvider(
+          database: db,
+          compiler: compiler,
+        ),
+      );
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_peg',
-        eatenAt: DateTime.utc(2026, 1, 1, 8, 30),
-        coeventTime: DateTime.utc(2026, 1, 1, 8, 35),
-        thickenerType: 'starch_based',
-        title: 'Soup',
-        items: [
-          MealItem(
-            foodId: 'food_soup',
-            foodName: 'Soup',
-            foodCategory: FoodCategory.other,
-            quantityFactor: 1,
-            foodTags: const [],
-            proteinPer100g: 2,
-            carbsPer100g: 8,
-            fatPer100g: 1,
-            fiberPer100g: 0,
-            sodiumPer100g: 100,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_peg',
+          eatenAt: DateTime.utc(2026, 1, 1, 8, 30),
+          coeventTime: DateTime.utc(2026, 1, 1, 8, 35),
+          thickenerType: 'starch_based',
+          title: 'Soup',
+          items: [
+            MealItem(
+              foodId: 'food_soup',
+              foodName: 'Soup',
+              foodCategory: FoodCategory.other,
+              quantityFactor: 1,
+              foodTags: const [],
+              proteinPer100g: 2,
+              carbsPer100g: 8,
+              fatPer100g: 1,
+              fiberPer100g: 0,
+              sodiumPer100g: 100,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_peg_3350',
+            genericName: 'peg 3350',
+            brandNames: ['PEG'],
+            tags: const [DrugTag.laxative],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_peg_3350',
-          genericName: 'peg 3350',
-          brandNames: ['PEG'],
-          tags: const [DrugTag.laxative],
-          notes: '',
+        intakes: const [],
+        userProfile: UserProfile.defaults(),
+      );
+
+      expect(result.score, greaterThanOrEqualTo(95));
+      expect(
+        result.scoreFactors.map((factor) => factor.code),
+        contains('rule_decision_weight'),
+      );
+      expect(
+        result.issues.any(
+          (issue) => issue.severity == InteractionSeverity.high,
         ),
-      ],
-      intakes: const [],
-      userProfile: UserProfile.defaults(),
-    );
+        isTrue,
+      );
+      expect(
+        result.keyFindings.any(
+          (line) => line.contains('Imported PEG label fact'),
+        ),
+        isTrue,
+      );
+    },
+  );
 
-    expect(result.score, greaterThanOrEqualTo(95));
-    expect(
-      result.scoreFactors.map((factor) => factor.code),
-      contains('rule_decision_weight'),
-    );
-    expect(
-      result.issues.any((issue) => issue.severity == InteractionSeverity.high),
-      isTrue,
-    );
-    expect(
-      result.keyFindings
-          .any((line) => line.contains('Imported PEG label fact')),
-      isTrue,
-    );
-  });
-
-  test('meal enteral feed fields trigger imported manual review rule',
-      () async {
-    final db = QueryBackedCdssDatabase({
-      'region_jurisdiction_map': [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
-          'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
-          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
-        },
-      ],
-      'food_variant': [
-        {
-          'food_variant_id': 'FOOD_SHAKE#US#USDA_FDC#food_shake',
-          'food_concept_id': 'FOOD_SHAKE',
-          'jurisdiction': 'US',
-          'source_family': 'USDA_FDC',
-          'source_food_code': 'food_shake',
-          'is_authoritative_for_region': 1,
-        },
-      ],
-      'drug_product_variant': [
-        {
-          'drug_product_variant_id':
-              'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
-          'drug_concept_id': 'DRUG_LDOPA',
-          'jurisdiction': 'US',
-          'regulator': 'DAILYMED',
-          'external_product_code': 'drug_levodopa_carbidopa',
-          'route': 'oral',
-          'dosage_form': 'tablet',
-          'release_type': 'immediate',
-        },
-      ],
-      'drug_label_section': [
-        {
-          'section_id': 'enteral_section',
-          'drug_product_variant_id':
-              'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
-          'source_doc_id': 'doc_enteral',
-          'section_key': 'warning',
-          'section_title': 'Warnings',
-          'section_text':
-              'Continuous enteral feeding may require manual review.',
-        },
-      ],
-      'source_document': [
-        {
-          'source_doc_id': 'doc_enteral',
-          'title': 'Imported enteral feeding review fact',
-          'origin_url': 'https://example.test/enteral',
-          'raw_payload': '''
+  test(
+    'meal enteral feed fields trigger imported manual review rule',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_SHAKE#US#USDA_FDC#food_shake',
+            'food_concept_id': 'FOOD_SHAKE',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_shake',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id':
+                'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+            'drug_concept_id': 'DRUG_LDOPA',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_levodopa_carbidopa',
+            'route': 'oral',
+            'dosage_form': 'tablet',
+            'release_type': 'immediate',
+          },
+        ],
+        'drug_label_section': [
+          {
+            'section_id': 'enteral_section',
+            'drug_product_variant_id':
+                'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+            'source_doc_id': 'doc_enteral',
+            'section_key': 'warning',
+            'section_title': 'Warnings',
+            'section_text':
+                'Continuous enteral feeding may require manual review.',
+          },
+        ],
+        'source_document': [
+          {
+            'source_doc_id': 'doc_enteral',
+            'title': 'Imported enteral feeding review fact',
+            'origin_url': 'https://example.test/enteral',
+            'raw_payload': '''
 {
   "label_facts": [
     {
@@ -880,388 +893,395 @@ void main() {
   ]
 }
 ''',
-        },
-      ],
-    });
+          },
+        ],
+      });
 
-    final compiler = RuleRegistryCompiler();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: const <RuleRegistryEntry>[],
-      importedLabelRuleProvider: ImportedLabelRuleProvider(
+      final compiler = RuleRegistryCompiler();
+      final service = ClinicalDecisionSupportService(
         database: db,
-        compiler: compiler,
-      ),
-    );
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: const <RuleRegistryEntry>[],
+        importedLabelRuleProvider: ImportedLabelRuleProvider(
+          database: db,
+          compiler: compiler,
+        ),
+      );
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_enteral',
-        eatenAt: DateTime.utc(2026, 1, 1, 8, 30),
-        enteralFeedMode: 'continuous',
-        enteralFeedFormula: 'high protein polymeric',
-        enteralFeedProteinGPerDay: 82,
-        title: 'Tube feed',
-        items: [
-          MealItem(
-            foodId: 'food_shake',
-            foodName: 'Nutrition shake',
-            foodCategory: FoodCategory.other,
-            quantityFactor: 1,
-            foodTags: const [],
-            proteinPer100g: 8,
-            carbsPer100g: 20,
-            fatPer100g: 4,
-            fiberPer100g: 1,
-            sodiumPer100g: 120,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_enteral',
+          eatenAt: DateTime.utc(2026, 1, 1, 8, 30),
+          enteralFeedMode: 'continuous',
+          enteralFeedFormula: 'high protein polymeric',
+          enteralFeedProteinGPerDay: 82,
+          title: 'Tube feed',
+          items: [
+            MealItem(
+              foodId: 'food_shake',
+              foodName: 'Nutrition shake',
+              foodCategory: FoodCategory.other,
+              quantityFactor: 1,
+              foodTags: const [],
+              proteinPer100g: 8,
+              carbsPer100g: 20,
+              fatPer100g: 4,
+              fiberPer100g: 1,
+              sodiumPer100g: 120,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_levodopa_carbidopa',
+            genericName: 'carbidopa/levodopa',
+            brandNames: ['Sinemet'],
+            tags: const [DrugTag.levodopaLike],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_levodopa_carbidopa',
-          genericName: 'carbidopa/levodopa',
-          brandNames: ['Sinemet'],
-          tags: const [DrugTag.levodopaLike],
-          notes: '',
-        ),
-      ],
-      intakes: const [],
-      userProfile: UserProfile.defaults(),
-    );
+        intakes: const [],
+        userProfile: UserProfile.defaults(),
+      );
 
-    expect(result.score, greaterThanOrEqualTo(85));
-    expect(
-      result.scoreFactors.map((factor) => factor.code),
-      contains('continuous_enteral_feed_modifier'),
-    );
-    expect(
-      result.keyFindings.any(
-        (line) => line.contains('Imported enteral feeding review fact'),
-      ),
-      isTrue,
-    );
-  });
+      expect(result.score, greaterThanOrEqualTo(85));
+      expect(
+        result.scoreFactors.map((factor) => factor.code),
+        contains('continuous_enteral_feed_modifier'),
+      );
+      expect(
+        result.keyFindings.any(
+          (line) => line.contains('Imported enteral feeding review fact'),
+        ),
+        isTrue,
+      );
+    },
+  );
 
   test(
-      'flags near-simultaneous levodopa intake with moderate protein even when a later dose exists',
-      () async {
-    final db = QueryBackedCdssDatabase({
-      'region_jurisdiction_map': [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US","GLOBAL"]',
-          'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
-          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
-        },
-      ],
-      'food_variant': [
-        {
-          'food_variant_id': 'FOOD_SALMON#US#USDA_FDC#food_salmon',
-          'food_concept_id': 'FOOD_SALMON',
-          'jurisdiction': 'US',
-          'source_family': 'USDA_FDC',
-          'source_food_code': 'food_salmon',
-          'is_authoritative_for_region': 1,
-        },
-      ],
-      'drug_product_variant': [
-        {
-          'drug_product_variant_id':
-              'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
-          'drug_concept_id': 'DRUG_LDOPA',
-          'jurisdiction': 'US',
-          'regulator': 'DAILYMED',
-          'external_product_code': 'drug_levodopa_carbidopa',
-          'route': 'oral',
-          'dosage_form': 'tablet',
-          'release_type': 'immediate',
-        },
-      ],
-    });
+    'flags near-simultaneous levodopa intake with moderate protein even when a later dose exists',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_SALMON#US#USDA_FDC#food_salmon',
+            'food_concept_id': 'FOOD_SALMON',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_salmon',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id':
+                'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+            'drug_concept_id': 'DRUG_LDOPA',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_levodopa_carbidopa',
+            'route': 'oral',
+            'dosage_form': 'tablet',
+            'release_type': 'immediate',
+          },
+        ],
+      });
 
-    final compiler = RuleRegistryCompiler();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-    );
-    final mealTime = DateTime.utc(2026, 4, 28, 17, 44);
+      final compiler = RuleRegistryCompiler();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
+        ),
+      );
+      final mealTime = DateTime.utc(2026, 4, 28, 17, 44);
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_same_time_protein',
-        eatenAt: mealTime,
-        recordedAt: mealTime,
-        occurredAt: mealTime,
-        timeSource: 'user_exact',
-        title: 'Protein meal',
-        items: [
-          MealItem(
-            foodId: 'food_salmon',
-            foodName: 'Salmon',
-            foodCategory: FoodCategory.protein,
-            quantityFactor: 1,
-            foodTags: const [],
-            proteinPer100g: 13.5,
-            carbsPer100g: 0.5,
-            fatPer100g: 8.6,
-            fiberPer100g: 0,
-            sodiumPer100g: 70,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_same_time_protein',
+          eatenAt: mealTime,
+          recordedAt: mealTime,
+          occurredAt: mealTime,
+          timeSource: 'user_exact',
+          title: 'Protein meal',
+          items: [
+            MealItem(
+              foodId: 'food_salmon',
+              foodName: 'Salmon',
+              foodCategory: FoodCategory.protein,
+              quantityFactor: 1,
+              foodTags: const [],
+              proteinPer100g: 13.5,
+              carbsPer100g: 0.5,
+              fatPer100g: 8.6,
+              fiberPer100g: 0,
+              sodiumPer100g: 70,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_levodopa_carbidopa',
+            genericName: 'carbidopa/levodopa',
+            brandNames: ['Sinemet'],
+            tags: const [DrugTag.levodopaLike],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_levodopa_carbidopa',
-          genericName: 'carbidopa/levodopa',
-          brandNames: ['Sinemet'],
-          tags: const [DrugTag.levodopaLike],
-          notes: '',
-        ),
-      ],
-      intakes: [
-        Intake(
-          id: 'near_intake',
-          drugId: 'drug_levodopa_carbidopa',
-          takenAt: mealTime.add(const Duration(seconds: 30)),
-          dosageNote: '',
-        ),
-        Intake(
-          id: 'later_intake',
-          drugId: 'drug_levodopa_carbidopa',
-          takenAt: mealTime.add(const Duration(days: 1)),
-          dosageNote: '',
-        ),
-      ],
-      userProfile: UserProfile.defaults(),
-    );
+        intakes: [
+          Intake(
+            id: 'near_intake',
+            drugId: 'drug_levodopa_carbidopa',
+            takenAt: mealTime.add(const Duration(seconds: 30)),
+            dosageNote: '',
+          ),
+          Intake(
+            id: 'later_intake',
+            drugId: 'drug_levodopa_carbidopa',
+            takenAt: mealTime.add(const Duration(days: 1)),
+            dosageNote: '',
+          ),
+        ],
+        userProfile: UserProfile.defaults(),
+      );
 
-    expect(result.status, InteractionStatus.warning);
-    expect(result.issues, isNotEmpty);
-    expect(
-      result.scoreFactors.map((factor) => factor.code),
-      containsAll([
-        'rule_decision_weight',
-        'levodopa_interference_weight',
-        'protein_timing_penalty',
-      ]),
-    );
-  });
+      expect(result.status, InteractionStatus.warning);
+      expect(result.issues, isNotEmpty);
+      expect(
+        result.scoreFactors.map((factor) => factor.code),
+        containsAll([
+          'rule_decision_weight',
+          'levodopa_interference_weight',
+          'protein_timing_penalty',
+        ]),
+      );
+    },
+  );
 
   test(
-      'historical meals outside the active digestion window do not create current high risk',
-      () async {
-    final db = QueryBackedCdssDatabase({
-      'region_jurisdiction_map': [
-        {
-          'region_code': 'US',
-          'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
-          'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
-          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
-        },
-      ],
-      'food_variant': [
-        {
-          'food_variant_id': 'FOOD_SALMON#US#USDA_FDC#food_salmon',
-          'food_concept_id': 'FOOD_SALMON',
-          'jurisdiction': 'US',
-          'source_family': 'USDA_FDC',
-          'source_food_code': 'food_salmon',
-          'is_authoritative_for_region': 1,
-        },
-      ],
-      'drug_product_variant': [
-        {
-          'drug_product_variant_id':
-              'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
-          'drug_concept_id': 'DRUG_LDOPA',
-          'jurisdiction': 'US',
-          'regulator': 'DAILYMED',
-          'external_product_code': 'drug_levodopa_carbidopa',
-          'route': 'oral',
-          'dosage_form': 'tablet',
-          'release_type': 'immediate',
-        },
-      ],
-    });
+    'historical meals outside the active digestion window do not create current high risk',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","NA","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_SALMON#US#USDA_FDC#food_salmon',
+            'food_concept_id': 'FOOD_SALMON',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_salmon',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id':
+                'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+            'drug_concept_id': 'DRUG_LDOPA',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_levodopa_carbidopa',
+            'route': 'oral',
+            'dosage_form': 'tablet',
+            'release_type': 'immediate',
+          },
+        ],
+      });
 
-    final compiler = RuleRegistryCompiler();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-    );
-    final now = DateTime.utc(2026, 4, 27, 19, 7);
+      final compiler = RuleRegistryCompiler();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
+        ),
+      );
+      final now = DateTime.utc(2026, 4, 27, 19, 7);
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_old_salmon',
-        eatenAt: now.subtract(const Duration(hours: 27)),
-        recordedAt: now,
-        occurredAt: now.subtract(const Duration(hours: 27)),
-        timeSource: 'user_exact',
-        title: 'Old salmon meal',
-        items: [
-          MealItem(
-            foodId: 'food_salmon',
-            foodName: 'Salmon',
-            foodCategory: FoodCategory.protein,
-            quantityFactor: 1,
-            foodTags: const [],
-            proteinPer100g: 27.4,
-            carbsPer100g: 39.0,
-            fatPer100g: 14.6,
-            fiberPer100g: 0,
-            sodiumPer100g: 70,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_old_salmon',
+          eatenAt: now.subtract(const Duration(hours: 27)),
+          recordedAt: now,
+          occurredAt: now.subtract(const Duration(hours: 27)),
+          timeSource: 'user_exact',
+          title: 'Old salmon meal',
+          items: [
+            MealItem(
+              foodId: 'food_salmon',
+              foodName: 'Salmon',
+              foodCategory: FoodCategory.protein,
+              quantityFactor: 1,
+              foodTags: const [],
+              proteinPer100g: 27.4,
+              carbsPer100g: 39.0,
+              fatPer100g: 14.6,
+              fiberPer100g: 0,
+              sodiumPer100g: 70,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_levodopa_carbidopa',
+            genericName: 'carbidopa/levodopa',
+            brandNames: ['Sinemet'],
+            tags: const [DrugTag.levodopaLike],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_levodopa_carbidopa',
-          genericName: 'carbidopa/levodopa',
-          brandNames: ['Sinemet'],
-          tags: const [DrugTag.levodopaLike],
-          notes: '',
-        ),
-      ],
-      intakes: const [],
-      userProfile: UserProfile.defaults(),
-      now: now,
-    );
+        intakes: const [],
+        userProfile: UserProfile.defaults(),
+        now: now,
+      );
 
-    expect(result.status, InteractionStatus.ok);
-    expect(result.score, 0);
-    expect(result.issues, isEmpty);
-    expect(result.summary, contains('outside'));
-    expect(result.analysisText, contains('historical meal'));
-  });
+      expect(result.status, InteractionStatus.ok);
+      expect(result.score, 0);
+      expect(result.issues, isEmpty);
+      expect(result.summary, contains('outside'));
+      expect(result.analysisText, contains('historical meal'));
+    },
+  );
 
-  test('meal check trace componentizes history with catalog enrichment',
-      () async {
-    final db = QueryBackedCdssDatabase(const {});
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final foodRepository = FoodRepository.createDefault()
-      ..replaceAll([
-        FoodItem(
-          id: 'food_enriched',
-          name: 'Enriched tofu',
-          category: FoodCategory.protein,
-          textureClass: 'solid',
-          proteinG: 10,
-          carbsG: 3,
-          fatG: 4,
-          fiberG: 2,
-          sodiumMg: 15,
-          energyKcal: 120,
-          aminoAcidProfile: const AminoAcidProfile(
-            leucine: 2,
-            valine: 1,
-            basis: 'per_100g',
+  test(
+    'meal check trace componentizes history with catalog enrichment',
+    () async {
+      final db = QueryBackedCdssDatabase(const {});
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final foodRepository = FoodRepository.createDefault()
+        ..replaceAll([
+          FoodItem(
+            id: 'food_enriched',
+            name: 'Enriched tofu',
+            category: FoodCategory.protein,
+            textureClass: 'solid',
+            proteinG: 10,
+            carbsG: 3,
+            fatG: 4,
+            fiberG: 2,
+            sodiumMg: 15,
+            energyKcal: 120,
+            aminoAcidProfile: const AminoAcidProfile(
+              leucine: 2,
+              valine: 1,
+              basis: 'per_100g',
+            ),
           ),
-        ),
-      ]);
-    final engine = RecordingMechanisticConflictEngine();
-    final useCase = DatabaseBackedMealCheckUseCase(
-      variantResolver: VariantResolver(database: db),
-      clinicalDecisionSupportService: service,
-      compiledRules: const [],
-      foodRepository: foodRepository,
-      mechanisticEngine: engine,
-    );
-    final mealTime = DateTime.utc(2026, 1, 1, 8, 30);
+        ]);
+      final engine = RecordingMechanisticConflictEngine();
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: const [],
+        foodRepository: foodRepository,
+        mechanisticEngine: engine,
+      );
+      final mealTime = DateTime.utc(2026, 1, 1, 8, 30);
 
-    final result = await useCase(
-      meal: Meal(
-        id: 'meal_componentized',
-        eatenAt: mealTime,
-        title: 'Mixed history meal',
-        items: [
-          MealItem(
-            foodId: 'food_enriched',
-            foodName: 'Enriched tofu',
-            foodCategory: FoodCategory.protein,
-            quantityFactor: 1.5,
-            foodTags: const [],
-            proteinPer100g: 10,
-            carbsPer100g: 3,
-            fatPer100g: 4,
-            fiberPer100g: 2,
-            sodiumPer100g: 15,
-          ),
-          MealItem(
-            foodId: 'food_uncatalogued',
-            foodName: 'Uncatalogued side',
-            foodCategory: FoodCategory.other,
-            quantityFactor: 0.5,
-            foodTags: const [],
-            proteinPer100g: 2,
-            carbsPer100g: 8,
-            fatPer100g: 1,
-            fiberPer100g: 1,
-            sodiumPer100g: 10,
+      final result = await useCase(
+        meal: Meal(
+          id: 'meal_componentized',
+          eatenAt: mealTime,
+          title: 'Mixed history meal',
+          items: [
+            MealItem(
+              foodId: 'food_enriched',
+              foodName: 'Enriched tofu',
+              foodCategory: FoodCategory.protein,
+              quantityFactor: 1.5,
+              foodTags: const [],
+              proteinPer100g: 10,
+              carbsPer100g: 3,
+              fatPer100g: 4,
+              fiberPer100g: 2,
+              sodiumPer100g: 15,
+            ),
+            MealItem(
+              foodId: 'food_uncatalogued',
+              foodName: 'Uncatalogued side',
+              foodCategory: FoodCategory.other,
+              quantityFactor: 0.5,
+              foodTags: const [],
+              proteinPer100g: 2,
+              carbsPer100g: 8,
+              fatPer100g: 1,
+              fiberPer100g: 1,
+              sodiumPer100g: 10,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_levodopa_carbidopa',
+            genericName: 'carbidopa/levodopa',
+            brandNames: const ['Sinemet'],
+            tags: const [DrugTag.levodopaLike],
+            notes: '',
           ),
         ],
-      ),
-      activeDrugs: [
-        DrugDefinition(
-          id: 'drug_levodopa_carbidopa',
-          genericName: 'carbidopa/levodopa',
-          brandNames: const ['Sinemet'],
-          tags: const [DrugTag.levodopaLike],
-          notes: '',
-        ),
-      ],
-      intakes: [
-        Intake(
-          id: 'intake_componentized',
-          drugId: 'drug_levodopa_carbidopa',
-          takenAt: DateTime.utc(2026, 1, 1, 8),
-          dosageNote: '100 mg',
-        ),
-      ],
-      userProfile: UserProfile.defaults(),
-    );
+        intakes: [
+          Intake(
+            id: 'intake_componentized',
+            drugId: 'drug_levodopa_carbidopa',
+            takenAt: DateTime.utc(2026, 1, 1, 8),
+            dosageNote: '100 mg',
+          ),
+        ],
+        userProfile: UserProfile.defaults(),
+      );
 
-    final components = engine.composition!.foodComponents;
-    expect(result.mechanisticTraceJson, isNotNull);
-    expect(components, hasLength(2));
-    expect(components.first.portionGrams, 150);
-    expect(components.first.calories, 180);
-    expect(components.first.physicalForm, MealPhysicalForm.solid);
-    expect(components.first.aminoAcidProfile!.leucine, 3);
-    expect(components.last.portionGrams, 50);
-    expect(components.last.calories, isNull);
-    expect(components.last.physicalForm, MealPhysicalForm.unknown);
-    expect(components.last.aminoAcidProfile, isNull);
-    expect(
-        engine.context!.mealEvents.single.physicalForm, MealPhysicalForm.solid);
-  });
+      final components = engine.composition!.foodComponents;
+      expect(result.mechanisticTraceJson, isNotNull);
+      expect(components, hasLength(2));
+      expect(components.first.portionGrams, 150);
+      expect(components.first.calories, 180);
+      expect(components.first.physicalForm, MealPhysicalForm.solid);
+      expect(components.first.aminoAcidProfile!.leucine, 3);
+      expect(components.last.portionGrams, 50);
+      expect(components.last.calories, isNull);
+      expect(components.last.physicalForm, MealPhysicalForm.unknown);
+      expect(components.last.aminoAcidProfile, isNull);
+      expect(
+        engine.context!.mealEvents.single.physicalForm,
+        MealPhysicalForm.solid,
+      );
+    },
+  );
 }

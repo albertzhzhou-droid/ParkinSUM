@@ -37,13 +37,13 @@ class EmptyingComponentProfile {
       1.0 - remainingFractionAt(minutesSinceMealStart);
 
   Map<String, dynamic> toJson() => {
-        'component_id': componentId,
-        'physical_form': physicalForm.name,
-        'lag_minutes': lagMinutes,
-        'half_emptying_minutes': halfEmptyingMinutes,
-        'fraction_of_meal': fractionOfMeal,
-        'applied_modifiers': appliedModifiers,
-      };
+    'component_id': componentId,
+    'physical_form': physicalForm.name,
+    'lag_minutes': lagMinutes,
+    'half_emptying_minutes': halfEmptyingMinutes,
+    'fraction_of_meal': fractionOfMeal,
+    'applied_modifiers': appliedModifiers,
+  };
 }
 
 /// A complete meal-level gastric emptying profile. Combines per-component
@@ -87,23 +87,25 @@ class GastricEmptyingProfile {
   /// central-difference of the emptied fraction. Deterministic.
   double intestinalArrivalRateAt(int minutesSinceMealStart) {
     const dt = 1;
-    final leftT =
-        minutesSinceMealStart - dt < 0 ? 0 : minutesSinceMealStart - dt;
+    final leftT = minutesSinceMealStart - dt < 0
+        ? 0
+        : minutesSinceMealStart - dt;
     final right = emptiedFractionAt(minutesSinceMealStart + dt);
     final left = emptiedFractionAt(leftT);
     return ((right - left) / (2.0 * dt)).clamp(0.0, 1.0);
   }
 
   Map<String, dynamic> toJson() => {
-        'meal_id': mealId,
-        'component_profiles':
-            componentProfiles.map((e) => e.toJson()).toList(growable: false),
-        'uncertainty_band': uncertaintyBand.name,
-        'assumptions': assumptions,
-        'missing_inputs': missingInputs,
-        'source_refs': sourceRefs,
-        'aggregate_lag_minutes': aggregateLagMinutes,
-        'peak_emptying_window': peakEmptyingWindow.toJson(),
-        'mostly_emptied_window': mostlyEmptiedWindow.toJson(),
-      };
+    'meal_id': mealId,
+    'component_profiles': componentProfiles
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'uncertainty_band': uncertaintyBand.name,
+    'assumptions': assumptions,
+    'missing_inputs': missingInputs,
+    'source_refs': sourceRefs,
+    'aggregate_lag_minutes': aggregateLagMinutes,
+    'peak_emptying_window': peakEmptyingWindow.toJson(),
+    'mostly_emptied_window': mostlyEmptiedWindow.toJson(),
+  };
 }

@@ -21,18 +21,17 @@ void main() {
     bool isGenerated = false,
     bool allowlisted = false,
     List<String> keywords = const [],
-  }) =>
-      ContributionChange(
-        path: path,
-        changeType: 'modified',
-        addedLines: 1,
-        addedContent: added,
-        matchedKeywords: keywords,
-        isDocs: isDocs,
-        isTest: isTest,
-        isGenerated: isGenerated,
-        allowlisted: allowlisted,
-      );
+  }) => ContributionChange(
+    path: path,
+    changeType: 'modified',
+    addedLines: 1,
+    addedContent: added,
+    matchedKeywords: keywords,
+    isDocs: isDocs,
+    isTest: isTest,
+    isGenerated: isGenerated,
+    allowlisted: allowlisted,
+  );
 
   ContributionSafetyReport route(List<ContributionChange> changes) =>
       router.route(changes, config);
@@ -52,27 +51,33 @@ void main() {
 
   // 2 — test-only change → low/medium risk.
   test('test-only change is low/medium risk', () {
-    final r = route(
-        [change('test/foo_test.dart', isTest: true, added: 'expect(1,1);')]);
+    final r = route([
+      change('test/foo_test.dart', isTest: true, added: 'expect(1,1);'),
+    ]);
     expect(
-        [ContributionRiskLevel.low, ContributionRiskLevel.medium]
-            .contains(r.riskLevel),
-        isTrue);
+      [
+        ContributionRiskLevel.low,
+        ContributionRiskLevel.medium,
+      ].contains(r.riskLevel),
+      isTrue,
+    );
     expect(hasCategory(r, ContributionRiskCategory.testOnly), isTrue);
   });
 
   // 3 — mechanistic model file → high risk.
   test('mechanistic model file is high risk', () {
-    final r =
-        route([change('lib/domain/usecases/mechanistic_conflict_engine.dart')]);
+    final r = route([
+      change('lib/domain/usecases/mechanistic_conflict_engine.dart'),
+    ]);
     expect(r.riskLevel, ContributionRiskLevel.high);
     expect(hasCategory(r, ContributionRiskCategory.mechanisticModel), isTrue);
   });
 
   // 4 — importer file → high risk.
   test('importer file is high risk', () {
-    final r = route(
-        [change('lib/data/datasources/remote/dailymed_p0_importer.dart')]);
+    final r = route([
+      change('lib/data/datasources/remote/dailymed_p0_importer.dart'),
+    ]);
     expect(r.riskLevel, ContributionRiskLevel.high);
     expect(hasCategory(r, ContributionRiskCategory.importer), isTrue);
   });
@@ -105,8 +110,11 @@ void main() {
   // 8 — medical advice phrase → blocker.
   test('medical advice phrase produces blocker', () {
     final r = route([
-      change('docs/x.md',
-          isDocs: true, added: 'You should adjust your dose at noon.'),
+      change(
+        'docs/x.md',
+        isDocs: true,
+        added: 'You should adjust your dose at noon.',
+      ),
     ]);
     expect(r.riskLevel, ContributionRiskLevel.blocker);
     expect(r.blockerCount, greaterThan(0));
@@ -116,8 +124,10 @@ void main() {
   // 9 — secret-like phrase → blocker.
   test('secret-like phrase produces blocker', () {
     final r = route([
-      change('config/x.json',
-          added: '"type": "service account", "private_key": "..."'),
+      change(
+        'config/x.json',
+        added: '"type": "service account", "private_key": "..."',
+      ),
     ]);
     expect(hasCategory(r, ContributionRiskCategory.secretRisk), isTrue);
     expect(r.pass, isFalse);
@@ -126,8 +136,11 @@ void main() {
   // 10 — PHI-like fixture phrase → blocker.
   test('PHI-like fixture phrase produces blocker', () {
     final r = route([
-      change('test/fixtures/x.json',
-          isTest: true, added: '{"patient name": "Jane Real", "mrn": "123"}'),
+      change(
+        'test/fixtures/x.json',
+        isTest: true,
+        added: '{"patient name": "Jane Real", "mrn": "123"}',
+      ),
     ]);
     expect(hasCategory(r, ContributionRiskCategory.phiRisk), isTrue);
     expect(r.pass, isFalse);
@@ -136,24 +149,32 @@ void main() {
   // 11 — allowlisted detector/scanner file downgrades keyword findings.
   test('allowlisted detector file downgrades keyword findings to info', () {
     final r = route([
-      change('lib/domain/usecases/local_privacy_preflight.dart',
-          allowlisted: true,
-          added: 'detect "begin private key" and "patient name"'),
+      change(
+        'lib/domain/usecases/local_privacy_preflight.dart',
+        allowlisted: true,
+        added: 'detect "begin private key" and "patient name"',
+      ),
     ]);
     expect(r.pass, isTrue);
     expect(
-        r.findings.every((f) => f.severity != ContributionRiskSeverity.blocker),
-        isTrue);
-    expect(r.findings.any((f) => f.severity == ContributionRiskSeverity.info),
-        isTrue);
+      r.findings.every((f) => f.severity != ContributionRiskSeverity.blocker),
+      isTrue,
+    );
+    expect(
+      r.findings.any((f) => f.severity == ContributionRiskSeverity.info),
+      isTrue,
+    );
   });
 
   // 12 — checklist includes mechanistic commands for a mechanistic change.
   test('checklist includes mechanistic commands', () {
-    final r = route(
-        [change('lib/domain/usecases/mechanistic_next_meal_scorer.dart')]);
-    expect(checklistHasCommand(r, 'dart run tool/run_mechanistic_replay.dart'),
-        isTrue);
+    final r = route([
+      change('lib/domain/usecases/mechanistic_next_meal_scorer.dart'),
+    ]);
+    expect(
+      checklistHasCommand(r, 'dart run tool/run_mechanistic_replay.dart'),
+      isTrue,
+    );
     expect(checklistHasCommand(r, 'npm run scenario:fuzz'), isTrue);
   });
 
@@ -163,16 +184,19 @@ void main() {
     expect(checklistHasCommand(r, 'npm run public:preflight'), isTrue);
     expect(checklistHasCommand(r, 'npm run privacy:preflight'), isTrue);
     expect(
-        checklistHasCommand(r, 'node tool/firestore_rules_contract_check.mjs'),
-        isTrue);
+      checklistHasCommand(r, 'node tool/firestore_rules_contract_check.mjs'),
+      isTrue,
+    );
   });
 
   // 14 — suggested labels are deterministic.
   test('suggested labels are deterministic', () {
-    final a =
-        route([change('lib/domain/usecases/mechanistic_conflict_engine.dart')]);
-    final b =
-        route([change('lib/domain/usecases/mechanistic_conflict_engine.dart')]);
+    final a = route([
+      change('lib/domain/usecases/mechanistic_conflict_engine.dart'),
+    ]);
+    final b = route([
+      change('lib/domain/usecases/mechanistic_conflict_engine.dart'),
+    ]);
     expect(a.suggestedLabels, equals(b.suggestedLabels));
     expect(a.suggestedLabels.contains('mechanistic-model'), isTrue);
     expect(a.suggestedLabels.contains('safety-review'), isTrue);
@@ -182,7 +206,7 @@ void main() {
   test('report JSON is deterministic', () {
     final changes = [
       change('docs/a.md', isDocs: true),
-      change('test/b_test.dart', isTest: true)
+      change('test/b_test.dart', isTest: true),
     ];
     final j1 = encodeContributionSafetyReport(route(changes));
     final j2 = encodeContributionSafetyReport(route(changes));
@@ -196,7 +220,8 @@ void main() {
   // 16 — markdown includes categories / labels / checklist.
   test('markdown includes categories, labels, and checklist', () {
     final md = renderContributionSafetyMarkdown(
-        route([change('config/source_access_registry.json')]));
+      route([change('config/source_access_registry.json')]),
+    );
     expect(md, contains('Contribution Safety Router'));
     expect(md, contains('categories:'));
     expect(md, contains('suggested labels:'));
@@ -221,19 +246,31 @@ void main() {
 
   // 19 — generated build output change → warning.
   test('generated build output produces warning', () {
-    final r = route(
-        [change('build/mechanistic_replay/latest.json', isGenerated: true)]);
+    final r = route([
+      change('build/mechanistic_replay/latest.json', isGenerated: true),
+    ]);
     expect(hasCategory(r, ContributionRiskCategory.generatedOutput), isTrue);
     expect(r.counts['warn'], greaterThan(0));
   });
 
   // 20 — no patient / subject / encounter keys emitted by the report.
   test('no PHI/patient/subject/encounter keys emitted', () {
-    final decoded = jsonDecode(encodeContributionSafetyReport(route([
-      change('test/fixtures/x.json',
-          isTest: true, added: '{"patient name": "Jane"}'),
-      change('lib/domain/usecases/mechanistic_conflict_engine.dart'),
-    ]))) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(
+              encodeContributionSafetyReport(
+                route([
+                  change(
+                    'test/fixtures/x.json',
+                    isTest: true,
+                    added: '{"patient name": "Jane"}',
+                  ),
+                  change(
+                    'lib/domain/usecases/mechanistic_conflict_engine.dart',
+                  ),
+                ]),
+              ),
+            )
+            as Map<String, dynamic>;
     scanNoPhiKeys(decoded);
   });
 }

@@ -7,7 +7,8 @@ class StubCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertCountryDietProfile(
-      CountryDietProfileRecord record) async {}
+    CountryDietProfileRecord record,
+  ) async {}
 
   @override
   Future<void> insertConflictAuditLog(ConflictAuditLogRecord record) async {}
@@ -28,7 +29,8 @@ class StubCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertDrugProductVariant(
-      DrugProductVariantRecord record) async {}
+    DrugProductVariantRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugLabelSection(DrugLabelSectionRecord record) async {}
@@ -38,14 +40,16 @@ class StubCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertDrugProductPackaging(
-      DrugProductPackagingRecord record) async {}
+    DrugProductPackagingRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugProductMedia(DrugProductMediaRecord record) async {}
 
   @override
   Future<void> insertLocaleResourceBundle(
-      LocaleResourceBundleRecord record) async {}
+    LocaleResourceBundleRecord record,
+  ) async {}
 
   @override
   Future<void> insertMealTemplate(MealTemplateRecord record) async {}
@@ -55,14 +59,16 @@ class StubCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record) async {}
+    RecommendationAuditLogRecord record,
+  ) async {}
 
   @override
   Future<void> insertIngestionRun(IngestionRunRecord record) async {}
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {}
+    SnapshotDistributionRecord record,
+  ) async {}
 
   @override
   Future<void> insertStagingRow(String table, Map<String, Object?> row) async {}
@@ -75,7 +81,8 @@ class StubCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRegionJurisdictionMap(
-      RegionJurisdictionMapRecord record) async {}
+    RegionJurisdictionMapRecord record,
+  ) async {}
 
   @override
   Future<void> insertRuleRegistry(Map<String, dynamic> row) async {}

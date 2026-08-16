@@ -53,11 +53,12 @@ class MetadataCompletenessGate {
     // imputed/unknown tier blocks the top `complete` grade — values derived
     // rather than measured are not treated as fully complete. A null tier
     // (no FDC provenance) is inert: existing behavior is unchanged.
-    final weakProvenance = nutrientConfidenceTier != null &&
+    final weakProvenance =
+        nutrientConfidenceTier != null &&
         tierWidensUncertainty(nutrientConfidenceTier);
     final blocksComplete =
         nutrientConfidenceTier == NutrientConfidenceTier.imputedOrAssumed ||
-            nutrientConfidenceTier == NutrientConfidenceTier.unknown;
+        nutrientConfidenceTier == NutrientConfidenceTier.unknown;
 
     if (meta == null) {
       // No provenance metadata; fall back to nutrient completeness only.

@@ -26,8 +26,9 @@ class FhirInspiredNutritionIntakeMapper {
     String? demoMealId,
     int? relativeTimeMinutes,
   }) {
-    final components =
-        composition.foodComponents.map(_componentEntry).toList(growable: false);
+    final components = composition.foodComponents
+        .map(_componentEntry)
+        .toList(growable: false);
 
     final nutrientSummary = _nutrientSummary(composition);
     final aminoAcidSummary = _aminoAcidSummary(composition);
@@ -36,8 +37,7 @@ class FhirInspiredNutritionIntakeMapper {
     final sourceRefs = <String>{
       for (final c in composition.foodComponents)
         ...?c.aminoAcidProfile?.sourceRefs,
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
 
     final provenanceSummary =
         'amino_acid_data_mode=${aminoAcidSummary.aminoAcidDataMode}; '

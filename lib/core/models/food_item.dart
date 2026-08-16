@@ -97,39 +97,39 @@ class FoodItem {
   /// - 这里服务于 UI 目录搜索，不替代数据库里的正式 crosswalk / concept-variant 解析。
   /// - 可以安全合并本地名称、别名、来源系统与简短描述，提升录餐搜索命中率。
   String get searchableText => [
-        id,
-        name,
-        ...aliases,
-        description,
-        sourceSystem,
-        jurisdiction,
-        sourceFoodCode ?? '',
-      ].join(' ').toLowerCase();
+    id,
+    name,
+    ...aliases,
+    description,
+    sourceSystem,
+    jurisdiction,
+    sourceFoodCode ?? '',
+  ].join(' ').toLowerCase();
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'category': category.name,
-        'aliases': aliases,
-        'description': description,
-        'sourceSystem': sourceSystem,
-        'sourceFoodCode': sourceFoodCode,
-        'jurisdiction': jurisdiction,
-        'textureClass': textureClass,
-        'iddsiLevel': iddsiLevel,
-        'proteinG': proteinG,
-        'carbsG': carbsG,
-        'fatG': fatG,
-        'fiberG': fiberG,
-        'sodiumMg': sodiumMg,
-        'missingNutrientFields': missingNutrientFields.toList(),
-        'energyKcal': energyKcal,
-        'waterG': waterG,
-        'aminoAcidProfile': aminoAcidProfile?.toJson(),
-        'basisType': basisType,
-        'preparationState': preparationState,
-        'qualifierKind': qualifierKind,
-      };
+    'id': id,
+    'name': name,
+    'category': category.name,
+    'aliases': aliases,
+    'description': description,
+    'sourceSystem': sourceSystem,
+    'sourceFoodCode': sourceFoodCode,
+    'jurisdiction': jurisdiction,
+    'textureClass': textureClass,
+    'iddsiLevel': iddsiLevel,
+    'proteinG': proteinG,
+    'carbsG': carbsG,
+    'fatG': fatG,
+    'fiberG': fiberG,
+    'sodiumMg': sodiumMg,
+    'missingNutrientFields': missingNutrientFields.toList(),
+    'energyKcal': energyKcal,
+    'waterG': waterG,
+    'aminoAcidProfile': aminoAcidProfile?.toJson(),
+    'basisType': basisType,
+    'preparationState': preparationState,
+    'qualifierKind': qualifierKind,
+  };
 
   static FoodItem fromJson(Map<String, dynamic> json) {
     final catName = (json['category'] as String?) ?? 'other';
@@ -164,7 +164,8 @@ class FoodItem {
       waterG: (json['waterG'] as num?)?.toDouble(),
       aminoAcidProfile: json['aminoAcidProfile'] is Map<String, dynamic>
           ? AminoAcidProfile.fromJson(
-              json['aminoAcidProfile'] as Map<String, dynamic>)
+              json['aminoAcidProfile'] as Map<String, dynamic>,
+            )
           : null,
       basisType: json['basisType'] as String?,
       preparationState: json['preparationState'] as String?,

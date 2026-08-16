@@ -98,12 +98,12 @@ class LocalPrivacyScanTarget {
   });
 
   Map<String, dynamic> toJson() => {
-        'path': path,
-        'kind': kind,
-        'size_bytes': sizeBytes,
-        'included': included,
-        'skip_reason': skipReason,
-      };
+    'path': path,
+    'kind': kind,
+    'size_bytes': sizeBytes,
+    'included': included,
+    'skip_reason': skipReason,
+  };
 }
 
 class LocalPrivacyFinding {
@@ -132,17 +132,17 @@ class LocalPrivacyFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'finding_type': findingType,
-        'file': file,
-        'line': line,
-        'message': message,
-        'matched_text': matchedText,
-        'category': category,
-        'suggested_fix': suggestedFix,
-        'allowlist_reason': allowlistReason,
-        'safety_boundary': safetyBoundary,
-      };
+    'severity': severity,
+    'finding_type': findingType,
+    'file': file,
+    'line': line,
+    'message': message,
+    'matched_text': matchedText,
+    'category': category,
+    'suggested_fix': suggestedFix,
+    'allowlist_reason': allowlistReason,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 class LocalPrivacyPreflightReport {
@@ -177,19 +177,19 @@ class LocalPrivacyPreflightReport {
   int get blockerCount => counts['blocker'] ?? 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'synthetic_demo_data_only': true,
-        'no_medical_advice': true,
-        'generated_at': generatedAt,
-        'root': root,
-        'scanned_files': scannedFiles,
-        'skipped_files': skippedFiles,
-        'counts': counts,
-        'pass': pass,
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'synthetic_demo_data_only': true,
+    'no_medical_advice': true,
+    'generated_at': generatedAt,
+    'root': root,
+    'scanned_files': scannedFiles,
+    'skipped_files': skippedFiles,
+    'counts': counts,
+    'pass': pass,
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }

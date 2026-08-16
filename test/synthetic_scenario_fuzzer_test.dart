@@ -15,8 +15,9 @@ void main() {
 
   // Default caseCount covers the full catalog (clamped to the available count).
   SyntheticScenarioFuzzerReport run({int seed = 1, int caseCount = 64}) =>
-      fuzzer
-          .run(SyntheticScenarioFuzzerConfig(seed: seed, caseCount: caseCount));
+      fuzzer.run(
+        SyntheticScenarioFuzzerConfig(seed: seed, caseCount: caseCount),
+      );
 
   SyntheticScenarioResult byId(SyntheticScenarioFuzzerReport r, String id) =>
       r.cases.firstWhere((c) => c.scenario.scenarioId == id);
@@ -25,8 +26,10 @@ void main() {
     final a = run();
     final b = run();
     expect(encodeSyntheticScenarioReport(a), encodeSyntheticScenarioReport(b));
-    expect(a.cases.map((c) => c.scenario.scenarioId).toList(),
-        b.cases.map((c) => c.scenario.scenarioId).toList());
+    expect(
+      a.cases.map((c) => c.scenario.scenarioId).toList(),
+      b.cases.map((c) => c.scenario.scenarioId).toList(),
+    );
   });
 
   test('2. different seed changes ordering, still deterministic', () {
@@ -36,8 +39,9 @@ void main() {
     expect(s1.toSet(), s2.toSet());
     expect(s1, isNot(s2));
     // Deterministic per seed.
-    final s2again =
-        run(seed: 7).cases.map((c) => c.scenario.scenarioId).toList();
+    final s2again = run(
+      seed: 7,
+    ).cases.map((c) => c.scenario.scenarioId).toList();
     expect(s2, s2again);
   });
 
@@ -55,12 +59,18 @@ void main() {
 
   test('5 + 6. missing nutrient distinct from true zero; missing lowers', () {
     final r = run();
-    expect(byId(r, 'meal_missingness__true_zero_protein').evaluation.passed,
-        isTrue);
     expect(
-        byId(r, 'meal_missingness__missing_protein').evaluation.passed, isTrue);
-    expect(byId(r, 'meal_missingness__missing_calories').evaluation.passed,
-        isTrue);
+      byId(r, 'meal_missingness__true_zero_protein').evaluation.passed,
+      isTrue,
+    );
+    expect(
+      byId(r, 'meal_missingness__missing_protein').evaluation.passed,
+      isTrue,
+    );
+    expect(
+      byId(r, 'meal_missingness__missing_calories').evaluation.passed,
+      isTrue,
+    );
   });
 
   test('7. unknown release type produces a limited/uncertain signal', () {
@@ -89,14 +99,20 @@ void main() {
   test('11. no-PHI scan catches a forbidden key but permits policy values', () {
     final r = run();
     expect(
-        byId(r, 'safety_copy_no_phi__nophi_clean').evaluation.passed, isTrue);
+      byId(r, 'safety_copy_no_phi__nophi_clean').evaluation.passed,
+      isTrue,
+    );
     expect(
-        byId(r, 'safety_copy_no_phi__nophi_catch').evaluation.passed, isTrue);
+      byId(r, 'safety_copy_no_phi__nophi_catch').evaluation.passed,
+      isTrue,
+    );
   });
 
   test('12. report JSON is deterministic', () {
-    expect(encodeSyntheticScenarioReport(run()),
-        encodeSyntheticScenarioReport(run()));
+    expect(
+      encodeSyntheticScenarioReport(run()),
+      encodeSyntheticScenarioReport(run()),
+    );
   });
 
   test('13. markdown report includes seed, case count, passed/failed', () {
@@ -137,11 +153,16 @@ void main() {
 
   test('every case is evaluated against real code (no missing_artifact)', () {
     for (final c in run().cases) {
-      expect(c.evaluation.observedSignals, isNotEmpty,
-          reason: '${c.scenario.scenarioId} produced no observed signal');
       expect(
-          c.evaluation.failedInvariants.contains('missing_artifact'), isFalse,
-          reason: '${c.scenario.scenarioId} was not really evaluated');
+        c.evaluation.observedSignals,
+        isNotEmpty,
+        reason: '${c.scenario.scenarioId} produced no observed signal',
+      );
+      expect(
+        c.evaluation.failedInvariants.contains('missing_artifact'),
+        isFalse,
+        reason: '${c.scenario.scenarioId} was not really evaluated',
+      );
     }
   });
 }

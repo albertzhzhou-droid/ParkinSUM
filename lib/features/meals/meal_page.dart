@@ -56,7 +56,7 @@ class MealPage extends StatelessWidget {
           ? Center(child: Text(i18n.tr('meal.empty')))
           : ListView.separated(
               itemCount: state.meals.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (_, i) {
                 final meal = state.meals[i];
                 final totals = meal.computeTotals();
@@ -69,9 +69,7 @@ class MealPage extends StatelessWidget {
                     'P=${totals.totalProteinG.toStringAsFixed(1)}g '
                     'C=${totals.totalCarbsG.toStringAsFixed(1)}g '
                     'F=${totals.totalFatG.toStringAsFixed(1)}g '
-                    '· ${i18n.tr('interaction.score', {
-                          'value': '${result.score}'
-                        })}',
+                    '· ${i18n.tr('interaction.score', {'value': '${result.score}'})}',
                   ),
                   leading: CircleAvatar(
                     backgroundColor: accent.withValues(alpha: 0.12),

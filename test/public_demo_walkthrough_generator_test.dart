@@ -34,11 +34,11 @@ void main() {
   };
 
   PublicDemoWalkthroughInputs fullInputs() => PublicDemoWalkthroughInputs(
-        replayReport: replayFixture,
-        sourceQualityReport: sourceQualityFixture,
-        evidenceBundle: evidenceBundleFixture,
-        capabilityMatrixSummary: 'see docs/CAPABILITY_MATRIX.md',
-      );
+    replayReport: replayFixture,
+    sourceQualityReport: sourceQualityFixture,
+    evidenceBundle: evidenceBundleFixture,
+    capabilityMatrixSummary: 'see docs/CAPABILITY_MATRIX.md',
+  );
 
   test('markdown is deterministic for identical inputs', () {
     final a = gen.build(fullInputs()).toMarkdown();

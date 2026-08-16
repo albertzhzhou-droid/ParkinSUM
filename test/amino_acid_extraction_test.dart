@@ -24,23 +24,29 @@ void main() {
   final validator = MedicationEntryValidator();
 
   NormalizedMedicationContext levodopa() => validator
-      .validate(const RawMedicationEntry(
-        activeIngredients: ['carbidopa', 'levodopa'],
-        drugProductVariant: 'synthetic:demo',
-        strength: 100,
-        unit: 'mg',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        jurisdiction: 'US',
-        sourceDocId: 'synthetic:demo',
-      ))
+      .validate(
+        const RawMedicationEntry(
+          activeIngredients: ['carbidopa', 'levodopa'],
+          drugProductVariant: 'synthetic:demo',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo',
+        ),
+      )
       .normalized!;
 
   AminoAcidProfile loadProfile() {
-    final payload = jsonDecode(
-        File('test/fixtures/importers/usda_fdc_amino_acids.json')
-            .readAsStringSync()) as Map<String, dynamic>;
+    final payload =
+        jsonDecode(
+              File(
+                'test/fixtures/importers/usda_fdc_amino_acids.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
     final p = extractor.extractFromFdcStyle(payload);
     expect(p, isNotNull);
     return p!;
@@ -56,9 +62,13 @@ void main() {
   });
 
   test('realistic FDC fixture with mg units normalizes to grams', () {
-    final payload = jsonDecode(
-        File('test/fixtures/importers/usda_fdc_amino_acids_realistic.json')
-            .readAsStringSync()) as Map<String, dynamic>;
+    final payload =
+        jsonDecode(
+              File(
+                'test/fixtures/importers/usda_fdc_amino_acids_realistic.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
     final p = extractor.extractFromFdcStyle(payload);
     expect(p, isNotNull);
     // 2100 mg leucine → 2.1 g.
@@ -68,29 +78,38 @@ void main() {
     expect(p.partial, isFalse);
   });
 
-  test('full FDC amino-acid block: captures lysine/cystine/arginine too (B2)',
-      () {
-    final payload = jsonDecode(
-        File('test/fixtures/importers/usda_fdc_amino_acids_full.json')
-            .readAsStringSync()) as Map<String, dynamic>;
-    final p = extractor.extractFromFdcStyle(payload);
-    expect(p, isNotNull);
-    // Fuller coverage: the non-competing indispensable AAs are now captured
-    // (mg → g), in addition to the six competing LNAAs.
-    expect(p!.lysine, closeTo(2.2, 1e-9)); // 2200 mg
-    expect(p.cystine, closeTo(0.35, 1e-9)); // 350 mg
-    expect(p.arginine, closeTo(1.6, 1e-9)); // 1600 mg
-    expect(p.histidine, closeTo(0.8, 1e-9));
-    // Competing-LNAA math is unchanged: only the six BCAA+aromatic AAs count.
-    const expectedCompeting =
-        2.1 + 1.2 + 1.3 + 1.0 + 0.9 + 0.3; // leu+ile+val+phe+tyr+trp
-    expect(p.competingLnaaGrams, closeTo(expectedCompeting, 1e-9));
-    // Lysine/cystine/arginine are NOT folded into the competing total.
-    expect(p.competingLnaaGrams, isNot(closeTo(expectedCompeting + 2.2, 1e-9)));
-    // Provenance from the full fixture (analytical) flows through.
-    expect(p.fdcDataType, 'Foundation');
-    expect(p.aggregateConfidenceTier, NutrientConfidenceTier.analytical);
-  });
+  test(
+    'full FDC amino-acid block: captures lysine/cystine/arginine too (B2)',
+    () {
+      final payload =
+          jsonDecode(
+                File(
+                  'test/fixtures/importers/usda_fdc_amino_acids_full.json',
+                ).readAsStringSync(),
+              )
+              as Map<String, dynamic>;
+      final p = extractor.extractFromFdcStyle(payload);
+      expect(p, isNotNull);
+      // Fuller coverage: the non-competing indispensable AAs are now captured
+      // (mg → g), in addition to the six competing LNAAs.
+      expect(p!.lysine, closeTo(2.2, 1e-9)); // 2200 mg
+      expect(p.cystine, closeTo(0.35, 1e-9)); // 350 mg
+      expect(p.arginine, closeTo(1.6, 1e-9)); // 1600 mg
+      expect(p.histidine, closeTo(0.8, 1e-9));
+      // Competing-LNAA math is unchanged: only the six BCAA+aromatic AAs count.
+      const expectedCompeting =
+          2.1 + 1.2 + 1.3 + 1.0 + 0.9 + 0.3; // leu+ile+val+phe+tyr+trp
+      expect(p.competingLnaaGrams, closeTo(expectedCompeting, 1e-9));
+      // Lysine/cystine/arginine are NOT folded into the competing total.
+      expect(
+        p.competingLnaaGrams,
+        isNot(closeTo(expectedCompeting + 2.2, 1e-9)),
+      );
+      // Provenance from the full fixture (analytical) flows through.
+      expect(p.fdcDataType, 'Foundation');
+      expect(p.aggregateConfidenceTier, NutrientConfidenceTier.analytical);
+    },
+  );
 
   test('only non-competing AAs present → null (proxy fallback) (B2)', () {
     // Lysine/arginine present but no competing LNAA → no competition to model.
@@ -98,13 +117,13 @@ void main() {
       'foodNutrients': [
         {
           'nutrient': {'number': '505', 'unitName': 'G'},
-          'amount': 2.0
+          'amount': 2.0,
         },
         {
           'nutrient': {'number': '511', 'unitName': 'G'},
-          'amount': 1.5
+          'amount': 1.5,
         },
-      ]
+      ],
     });
     expect(p, isNull); // no competing LNAA → caller uses protein-source proxy
   });
@@ -116,9 +135,9 @@ void main() {
           // 504 = leucine (a competing LNAA) with NO unitName → accepted
           // provisionally and the profile is flagged partial.
           'nutrient': {'number': '504', 'name': 'Leucine'},
-          'amount': 2.1
-        }
-      ]
+          'amount': 2.1,
+        },
+      ],
     });
     expect(p, isNotNull);
     expect(p!.partial, isTrue);
@@ -130,25 +149,25 @@ void main() {
       'foodNutrients': [
         {
           'nutrient': {'number': '504', 'unitName': 'G'},
-          'amount': 2.0
+          'amount': 2.0,
         },
         {
           'nutrient': {'number': '503', 'unitName': 'G'},
-          'amount': 1.0
+          'amount': 1.0,
         },
         {
           'nutrient': {'number': '510', 'unitName': 'G'},
-          'amount': 1.5
+          'amount': 1.5,
         },
         {
           'nutrient': {'number': '502', 'unitName': 'G'},
-          'amount': 0.9
+          'amount': 0.9,
         },
         {
           'nutrient': {'number': '506', 'unitName': 'G'},
-          'amount': 0.6
+          'amount': 0.6,
         },
-      ]
+      ],
     });
     expect(p, isNotNull);
     expect(p!.leucine, 2.0);
@@ -169,10 +188,10 @@ void main() {
           'foodNutrientDerivation': {
             'code': 'A',
             'description': 'Analytical',
-            'foodNutrientSource': {'code': '1'}
-          }
+            'foodNutrientSource': {'code': '1'},
+          },
         },
-      ]
+      ],
     });
     expect(p, isNotNull);
     expect(p!.fdcDataType, 'Foundation');
@@ -187,18 +206,22 @@ void main() {
         {
           'nutrient': {'number': '504', 'unitName': 'G'},
           'amount': 2.0,
-          'foodNutrientDerivation': {'code': 'A', 'description': 'Analytical'}
+          'foodNutrientDerivation': {'code': 'A', 'description': 'Analytical'},
         },
         {
           'nutrient': {'number': '510', 'unitName': 'G'},
           'amount': 1.3,
-          'foodNutrientDerivation': {'description': 'Imputed from similar food'}
+          'foodNutrientDerivation': {
+            'description': 'Imputed from similar food',
+          },
         },
-      ]
+      ],
     });
     expect(p, isNotNull);
-    expect(p!.aggregateConfidenceTier,
-        NutrientConfidenceTier.imputedOrAssumed); // weakest wins
+    expect(
+      p!.aggregateConfidenceTier,
+      NutrientConfidenceTier.imputedOrAssumed,
+    ); // weakest wins
   });
 
   test('absent derivation → no provenance (missing, never fabricated)', () {
@@ -206,9 +229,9 @@ void main() {
       'foodNutrients': [
         {
           'nutrient': {'number': '504', 'unitName': 'G'},
-          'amount': 2.0
+          'amount': 2.0,
         },
-      ]
+      ],
     });
     expect(p, isNotNull);
     expect(p!.derivations, isEmpty);
@@ -223,9 +246,9 @@ void main() {
       'foodNutrients': [
         {
           'nutrient': {'number': '504', 'name': 'Valine', 'unitName': 'G'},
-          'amount': 2.0
+          'amount': 2.0,
         },
-      ]
+      ],
     });
     expect(p, isNotNull);
     expect(p!.leucine, 2.0);
@@ -237,9 +260,9 @@ void main() {
       'foodNutrients': [
         {
           'nutrient': {'name': 'Valine', 'unitName': 'G'},
-          'amount': 1.3
-        }
-      ]
+          'amount': 1.3,
+        },
+      ],
     });
     expect(p, isNotNull);
     expect(p!.valine, 1.3);
@@ -251,9 +274,9 @@ void main() {
       'foodNutrients': [
         {
           'nutrient': {'number': '203', 'name': 'Protein', 'unitName': 'G'},
-          'amount': 20.0
-        }
-      ]
+          'amount': 20.0,
+        },
+      ],
     });
     expect(p, isNull);
   });
@@ -264,12 +287,20 @@ void main() {
       components: [component],
       declaredPhysicalForm: MealPhysicalForm.solid,
     );
-    final profile =
-        emptying.build(mealId: 'm', mealStartMinute: 0, composition: comp);
-    final med =
-        MedicationTimelineEvent(id: 'x', minute: 15, context: levodopa());
-    final window =
-        absorption.build(medication: med, overlappingMealProfile: profile);
+    final profile = emptying.build(
+      mealId: 'm',
+      mealStartMinute: 0,
+      composition: comp,
+    );
+    final med = MedicationTimelineEvent(
+      id: 'x',
+      minute: 15,
+      context: levodopa(),
+    );
+    final window = absorption.build(
+      medication: med,
+      overlappingMealProfile: profile,
+    );
     final c = competition.build(
       mealComposition: comp,
       mealEmptyingProfile: profile,
@@ -279,58 +310,66 @@ void main() {
     return c.lnaaSummary!;
   }
 
-  test('LNAA layer uses actual amino-acid fields over protein-source proxy',
-      () {
-    final withAa = summaryFor(FoodComponent(
-      id: 'aa',
-      name: 'high-protein food',
-      physicalForm: MealPhysicalForm.solid,
-      proteinGrams: 26,
-      fatGrams: 5,
-      fiberGrams: 0,
-      carbohydrateGrams: 0,
-      calories: 200,
-      portionGrams: 150,
-      sourceDocId: 'fdc',
-      proteinSource: ProteinSourceType.meat,
-      aminoAcidProfile: loadProfile(),
-    ));
-    expect(withAa.dataMode, AminoAcidDataMode.actualAminoAcidFields);
-    expect(withAa.aminoAcidNutrientIds, isNotEmpty);
-    expect(withAa.uncertaintyWidened, isFalse);
-  });
+  test(
+    'LNAA layer uses actual amino-acid fields over protein-source proxy',
+    () {
+      final withAa = summaryFor(
+        FoodComponent(
+          id: 'aa',
+          name: 'high-protein food',
+          physicalForm: MealPhysicalForm.solid,
+          proteinGrams: 26,
+          fatGrams: 5,
+          fiberGrams: 0,
+          carbohydrateGrams: 0,
+          calories: 200,
+          portionGrams: 150,
+          sourceDocId: 'fdc',
+          proteinSource: ProteinSourceType.meat,
+          aminoAcidProfile: loadProfile(),
+        ),
+      );
+      expect(withAa.dataMode, AminoAcidDataMode.actualAminoAcidFields);
+      expect(withAa.aminoAcidNutrientIds, isNotEmpty);
+      expect(withAa.uncertaintyWidened, isFalse);
+    },
+  );
 
   test('missing amino-acid fields falls back to protein-source proxy', () {
-    final proxy = summaryFor(const FoodComponent(
-      id: 'noaa',
-      name: 'meat no aa fields',
-      physicalForm: MealPhysicalForm.solid,
-      proteinGrams: 26,
-      fatGrams: 5,
-      fiberGrams: 0,
-      carbohydrateGrams: 0,
-      calories: 200,
-      portionGrams: 150,
-      sourceDocId: 'x',
-      proteinSource: ProteinSourceType.meat,
-    ));
+    final proxy = summaryFor(
+      const FoodComponent(
+        id: 'noaa',
+        name: 'meat no aa fields',
+        physicalForm: MealPhysicalForm.solid,
+        proteinGrams: 26,
+        fatGrams: 5,
+        fiberGrams: 0,
+        carbohydrateGrams: 0,
+        calories: 200,
+        portionGrams: 150,
+        sourceDocId: 'x',
+        proteinSource: ProteinSourceType.meat,
+      ),
+    );
     expect(proxy.dataMode, AminoAcidDataMode.proteinSourceProxy);
   });
 
   test('missing protein and amino acids → unknown mode', () {
-    final unknown = summaryFor(const FoodComponent(
-      id: 'unk',
-      name: 'unknown',
-      physicalForm: MealPhysicalForm.solid,
-      proteinGrams: null,
-      fatGrams: null,
-      fiberGrams: null,
-      carbohydrateGrams: null,
-      calories: null,
-      portionGrams: null,
-      sourceDocId: 'x',
-      proteinSource: ProteinSourceType.unknown,
-    ));
+    final unknown = summaryFor(
+      const FoodComponent(
+        id: 'unk',
+        name: 'unknown',
+        physicalForm: MealPhysicalForm.solid,
+        proteinGrams: null,
+        fatGrams: null,
+        fiberGrams: null,
+        carbohydrateGrams: null,
+        calories: null,
+        portionGrams: null,
+        sourceDocId: 'x',
+        proteinSource: ProteinSourceType.unknown,
+      ),
+    );
     expect(unknown.dataMode, AminoAcidDataMode.unknown);
   });
 }

@@ -27,40 +27,42 @@ void main() {
     double? strength = 100,
     String? unit = 'mg',
     List<String> refs = const ['src.dailymed.sinemet.label'],
-  }) =>
-      DrugProductVariantMetadata(
-        drugProductVariantId: 'v1',
-        sourceSystem: 'DailyMed',
-        jurisdiction: 'US',
-        language: 'en',
-        genericName: 'carbidopa/levodopa',
-        brandName: null,
-        activeIngredients: ingredients,
-        strengthValue: strength,
-        strengthUnit: unit,
-        doseForm: 'tablet',
-        route: 'oral',
-        releaseType: releaseType,
-        productIdentifier: 'NDC-0000',
-        labelSection: 'dosage',
-        translationStatus: ReferenceTranslationStatus.notTranslation,
-        extractionConfidence: 0.9,
-        sourceRefs: refs,
-        limitationText: 'educational',
-      );
+  }) => DrugProductVariantMetadata(
+    drugProductVariantId: 'v1',
+    sourceSystem: 'DailyMed',
+    jurisdiction: 'US',
+    language: 'en',
+    genericName: 'carbidopa/levodopa',
+    brandName: null,
+    activeIngredients: ingredients,
+    strengthValue: strength,
+    strengthUnit: unit,
+    doseForm: 'tablet',
+    route: 'oral',
+    releaseType: releaseType,
+    productIdentifier: 'NDC-0000',
+    labelSection: 'dosage',
+    translationStatus: ReferenceTranslationStatus.notTranslation,
+    extractionConfidence: 0.9,
+    sourceRefs: refs,
+    limitationText: 'educational',
+  );
 
   DrugLabelSectionRecord section() => const DrugLabelSectionRecord(
-        sectionId: 'sec-1',
-        drugProductVariantId: 'v1',
-        sourceDocId: 'spl:demo',
-        sectionKey: 'dosage_and_administration',
-        sectionTitle: 'Dosage and Administration',
-        sectionText: 'Synthetic demo section text.',
-      );
+    sectionId: 'sec-1',
+    drugProductVariantId: 'v1',
+    sourceDocId: 'spl:demo',
+    sectionKey: 'dosage_and_administration',
+    sectionTitle: 'Dosage and Administration',
+    sectionText: 'Synthetic demo section text.',
+  );
 
   test('cdss drug metadata bridge preserves label section refs', () {
     final m = adapter.fromCdssMetadata(
-        variant: variant(), sections: [section()], sourceDocVersion: 'v1.0');
+      variant: variant(),
+      sections: [section()],
+      sourceDocVersion: 'v1.0',
+    );
     expect(m.labelSectionRefs, hasLength(1));
     expect(m.labelSectionRefs.single.sectionKey, 'dosage_and_administration');
     expect(m.labelSectionRefs.single.sourceDocVersion, 'v1.0');
@@ -69,12 +71,15 @@ void main() {
 
   test('combination product preserves carbidopa and levodopa components', () {
     final m = adapter.fromCdssMetadata(variant: variant());
-    expect(m.components.map((c) => c.ingredientName),
-        containsAll(['carbidopa', 'levodopa']));
+    expect(
+      m.components.map((c) => c.ingredientName),
+      containsAll(['carbidopa', 'levodopa']),
+    );
     expect(m.levodopaComponent, isNotNull);
     expect(m.levodopaComponent!.role, 'active');
-    final carbidopa =
-        m.components.firstWhere((c) => c.ingredientName == 'carbidopa');
+    final carbidopa = m.components.firstWhere(
+      (c) => c.ingredientName == 'carbidopa',
+    );
     expect(carbidopa.role, 'decarboxylase_inhibitor');
     expect(carbidopa.isLevodopa, isFalse); // preserved but not levodopa
   });
@@ -90,26 +95,31 @@ void main() {
   });
 
   test(
-      'single-ingredient product carries the product strength on its component',
-      () {
-    final m = adapter.fromCdssMetadata(
-        variant: variant(ingredients: ['levodopa'], strength: 100, unit: 'mg'));
-    expect(m.components.single.strengthValue, 100);
-    expect(m.components.single.strengthUnit, 'mg');
-  });
+    'single-ingredient product carries the product strength on its component',
+    () {
+      final m = adapter.fromCdssMetadata(
+        variant: variant(ingredients: ['levodopa'], strength: 100, unit: 'mg'),
+      );
+      expect(m.components.single.strengthValue, 100);
+      expect(m.components.single.strengthUnit, 'mg');
+    },
+  );
 
   test('release type source is structured when known, unknown otherwise', () {
     final known = adapter.fromCdssMetadata(variant: variant());
     expect(known.releaseTypeSource, 'structured_variant_metadata');
-    final unknown =
-        adapter.fromCdssMetadata(variant: variant(releaseType: 'unknown'));
+    final unknown = adapter.fromCdssMetadata(
+      variant: variant(releaseType: 'unknown'),
+    );
     expect(unknown.releaseTypeSource, 'unknown');
     expect(unknown.missingFields, contains('release_type'));
   });
 
   test('missing section provenance lowers completeness, not a fake trace', () {
-    final withSec =
-        adapter.fromCdssMetadata(variant: variant(), sections: [section()]);
+    final withSec = adapter.fromCdssMetadata(
+      variant: variant(),
+      sections: [section()],
+    );
     final without = adapter.fromCdssMetadata(variant: variant());
     expect(without.hasLabelSectionProvenance, isFalse);
     expect(without.missingFields, contains('label_section_provenance'));
@@ -118,43 +128,51 @@ void main() {
     expect(without.metadataCompleteness == 'complete', isFalse);
   });
 
-  test('normalized context carries release type + components from metadata',
-      () {
-    final m =
-        adapter.fromCdssMetadata(variant: variant(), sections: [section()]);
-    final result = validator.validate(RawMedicationEntry(
-      activeIngredients: const ['carbidopa', 'levodopa'],
-      drugProductVariant: 'v1',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'spl:demo',
-      medicationMetadata: m,
-    ));
-    expect(result.validity, MedicationContextValidity.valid);
-    expect(result.normalized!.metadata, isNotNull);
-    expect(result.normalized!.metadata!.releaseType, 'immediate');
-    expect(result.normalized!.metadata!.labelSectionRefs, isNotEmpty);
-  });
+  test(
+    'normalized context carries release type + components from metadata',
+    () {
+      final m = adapter.fromCdssMetadata(
+        variant: variant(),
+        sections: [section()],
+      );
+      final result = validator.validate(
+        RawMedicationEntry(
+          activeIngredients: const ['carbidopa', 'levodopa'],
+          drugProductVariant: 'v1',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'spl:demo',
+          medicationMetadata: m,
+        ),
+      );
+      expect(result.validity, MedicationContextValidity.valid);
+      expect(result.normalized!.metadata, isNotNull);
+      expect(result.normalized!.metadata!.releaseType, 'immediate');
+      expect(result.normalized!.metadata!.labelSectionRefs, isNotEmpty);
+    },
+  );
 
   test('unitless user dosage stays insufficient despite product strength', () {
     // The metadata carries a product strength (100 mg) but the user entered a
     // unitless free-text dose. Product strength must NOT fill the intake dose.
     final m = adapter.fromCdssMetadata(variant: variant());
-    final result = validator.validate(RawMedicationEntry(
-      freeText: 'levodopa 100', // unitless
-      activeIngredients: const ['carbidopa', 'levodopa'],
-      drugProductVariant: 'v1',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'spl:demo',
-      medicationMetadata: m, // rich product strength attached
-    ));
+    final result = validator.validate(
+      RawMedicationEntry(
+        freeText: 'levodopa 100', // unitless
+        activeIngredients: const ['carbidopa', 'levodopa'],
+        drugProductVariant: 'v1',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'spl:demo',
+        medicationMetadata: m, // rich product strength attached
+      ),
+    );
     expect(result.validity, isNot(MedicationContextValidity.valid));
     expect(result.normalized, isNull); // no dose fabricated from metadata
   });
@@ -163,26 +181,33 @@ void main() {
     final absorption = LevodopaAbsorptionOpportunityModel();
 
     MedicationTimelineEvent med(String releaseType, {required int minute}) {
-      final v = validator.validate(RawMedicationEntry(
-        activeIngredients: const ['carbidopa', 'levodopa'],
-        drugProductVariant: 'v1',
-        strength: 100,
-        unit: 'mg',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: releaseType,
-        jurisdiction: 'US',
-        sourceDocId: 'spl:demo',
-      ));
+      final v = validator.validate(
+        RawMedicationEntry(
+          activeIngredients: const ['carbidopa', 'levodopa'],
+          drugProductVariant: 'v1',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: releaseType,
+          jurisdiction: 'US',
+          sourceDocId: 'spl:demo',
+        ),
+      );
       return MedicationTimelineEvent(
-          id: 'm', minute: minute, context: v.normalized!);
+        id: 'm',
+        minute: minute,
+        context: v.normalized!,
+      );
     }
 
     test('ER release gives a wider window than IR', () {
       final ir = absorption.build(medication: med('immediate', minute: 60));
       final er = absorption.build(medication: med('extended', minute: 60));
-      expect(er.window.endMinute - er.window.startMinute,
-          greaterThan(ir.window.endMinute - ir.window.startMinute));
+      expect(
+        er.window.endMinute - er.window.startMinute,
+        greaterThan(ir.window.endMinute - ir.window.startMinute),
+      );
     });
 
     test('unknown release type widens uncertainty', () {
@@ -194,11 +219,14 @@ void main() {
         UncertaintyBand.wide,
         UncertaintyBand.veryWide,
       ];
-      expect(order.indexOf(unknown.uncertaintyBand),
-          greaterThan(order.indexOf(known.uncertaintyBand)));
       expect(
-        unknown.assumptions
-            .any((a) => a.contains('release_type_unknown_limited')),
+        order.indexOf(unknown.uncertaintyBand),
+        greaterThan(order.indexOf(known.uncertaintyBand)),
+      );
+      expect(
+        unknown.assumptions.any(
+          (a) => a.contains('release_type_unknown_limited'),
+        ),
         isTrue,
       );
     });
@@ -209,19 +237,24 @@ void main() {
     final builder = TimeAxisBuilder();
     final engine = MechanisticConflictEngine();
     final m = adapter.fromCdssMetadata(
-        variant: variant(), sections: [section()], sourceDocVersion: 'v1.0');
-    final v = validator.validate(RawMedicationEntry(
-      activeIngredients: const ['carbidopa', 'levodopa'],
-      drugProductVariant: 'v1',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'spl:demo',
-      medicationMetadata: m,
-    ));
+      variant: variant(),
+      sections: [section()],
+      sourceDocVersion: 'v1.0',
+    );
+    final v = validator.validate(
+      RawMedicationEntry(
+        activeIngredients: const ['carbidopa', 'levodopa'],
+        drugProductVariant: 'v1',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'spl:demo',
+        medicationMetadata: m,
+      ),
+    );
     final now = DateTime.utc(2026, 1, 1, 8);
     final comp = normalizer.normalize(
       mealId: 'c',
@@ -244,20 +277,24 @@ void main() {
       now: now,
       medicationInputs: [
         MedicationTimelineInput(
-            id: 'm',
-            takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v),
+          id: 'm',
+          takenAt: now.add(const Duration(minutes: 30)),
+          medicationContext: v,
+        ),
       ],
       mealInputs: [
         MealTimelineInput(
-            id: 'meal',
-            startedAt: now,
-            compositionId: comp.id,
-            physicalForm: MealPhysicalForm.solid),
+          id: 'meal',
+          startedAt: now,
+          compositionId: comp.id,
+          physicalForm: MealPhysicalForm.solid,
+        ),
       ],
     );
-    final r =
-        engine.evaluate(context: ctx, mealCompositionsById: {comp.id: comp});
+    final r = engine.evaluate(
+      context: ctx,
+      mealCompositionsById: {comp.id: comp},
+    );
     expect(r.perEventTraces, isNotEmpty);
     final t = r.perEventTraces.first;
     expect(t.levodopaComponentPresent, isTrue);

@@ -871,37 +871,42 @@ const _p0FoodSeeds = <_P0FoodSeed>[
 /// - 这里会把 observation 级的限定语折叠为“可展示的近似数值”，仅用于录餐搜索与粗粒度展示。
 /// - 真正需要保留 `<x` / `trace` / missing 语义的地方，仍然是 observation / resolved_fact。
 List<FoodItem> buildP0FoodCatalog() {
-  return _p0FoodSeeds.map((seed) {
-    final protein = _catalogValue(seed.nutrients['protein_g']);
-    final carbs = _catalogValue(seed.nutrients['carbohydrate_g']);
-    final fat = _catalogValue(seed.nutrients['fat_g']);
-    final fiber = _catalogValue(seed.nutrients['fiber_g']);
-    final textureClass = inferTextureClassFromText(
-      name: seed.displayNameLocal,
-      description: seed.canonicalNameEn,
-      categoryName: seed.foodGroup,
-    );
+  return _p0FoodSeeds
+      .map((seed) {
+        final protein = _catalogValue(seed.nutrients['protein_g']);
+        final carbs = _catalogValue(seed.nutrients['carbohydrate_g']);
+        final fat = _catalogValue(seed.nutrients['fat_g']);
+        final fiber = _catalogValue(seed.nutrients['fiber_g']);
+        final textureClass = inferTextureClassFromText(
+          name: seed.displayNameLocal,
+          description: seed.canonicalNameEn,
+          categoryName: seed.foodGroup,
+        );
 
-    return FoodItem(
-      id: seed.appFoodId,
-      name: seed.displayNameLocal,
-      category: _foodCategoryFromGroup(seed.foodGroup),
-      aliases: _foodAliases(
-          seed.appFoodId, seed.canonicalNameEn, seed.canonicalNameZh),
-      description:
-          '${seed.canonicalNameZh} / ${seed.canonicalNameEn} · CIQUAL(FR) · per 100g edible portion',
-      sourceSystem: 'CIQUAL',
-      sourceFoodCode: seed.sourceFoodCode,
-      jurisdiction: 'FR',
-      textureClass: textureClass,
-      iddsiLevel: inferIddsiLevelFromTextureClass(textureClass),
-      proteinG: protein,
-      carbsG: carbs,
-      fatG: fat,
-      fiberG: fiber,
-      sodiumMg: 0,
-    );
-  }).toList(growable: false);
+        return FoodItem(
+          id: seed.appFoodId,
+          name: seed.displayNameLocal,
+          category: _foodCategoryFromGroup(seed.foodGroup),
+          aliases: _foodAliases(
+            seed.appFoodId,
+            seed.canonicalNameEn,
+            seed.canonicalNameZh,
+          ),
+          description:
+              '${seed.canonicalNameZh} / ${seed.canonicalNameEn} · CIQUAL(FR) · per 100g edible portion',
+          sourceSystem: 'CIQUAL',
+          sourceFoodCode: seed.sourceFoodCode,
+          jurisdiction: 'FR',
+          textureClass: textureClass,
+          iddsiLevel: inferIddsiLevelFromTextureClass(textureClass),
+          proteinG: protein,
+          carbsG: carbs,
+          fatG: fat,
+          fiberG: fiber,
+          sodiumMg: 0,
+        );
+      })
+      .toList(growable: false);
 }
 
 /// Builds a database seed from the currently verified P0 food subset.
@@ -1002,8 +1007,8 @@ KnowledgeBaseSeedBundle buildP0FoodKnowledgeBaseSeed() {
           entityKey: variantId,
           attributeCode: attributeCode,
           scopeHash: scopeHash,
-          resolutionStatus: qualifiedValue.qualifierKind ==
-                  QualifierKind.parsingUncertainty
+          resolutionStatus:
+              qualifiedValue.qualifierKind == QualifierKind.parsingUncertainty
               ? 'PARSING_UNCERTAINTY'
               // 这里暂时直接接受当前种子值。
               // 未来完整版本应由事实冲突解析器决定 SOURCE_ACCEPTED / COEXIST_VARIANT / CONTRADICTION。

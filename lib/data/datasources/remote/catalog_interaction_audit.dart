@@ -42,8 +42,8 @@ class CatalogInteractionAudit {
   /// Patterns describing PD-relevant interactions that the current DrugTag
   /// enum cannot express. Each entry: a substring of the generic name (lower
   /// case) → the human-readable interaction concern.
-  static const Map<String, String> _schemaCoverageGapPatterns =
-      <String, String>{
+  static const Map<String, String>
+  _schemaCoverageGapPatterns = <String, String>{
     // PPIs / H2 blockers — pH-dependent levodopa absorption.
     'omeprazole': 'PPI: alters gastric pH; may reduce levodopa absorption.',
     'pantoprazole': 'PPI: alters gastric pH; may reduce levodopa absorption.',
@@ -113,7 +113,8 @@ class CatalogInteractionAudit {
           'generic_name': drug.genericName,
           'expected_tag': inferred.name,
           'actual_tags': drug.tags.map((t) => t.name).toList(),
-          'reason': 'Heuristic inferDrugTag() would assign ${inferred.name}; '
+          'reason':
+              'Heuristic inferDrugTag() would assign ${inferred.name}; '
               'the interaction engine fires on this tag.',
         });
       }
@@ -128,9 +129,9 @@ class CatalogInteractionAudit {
             'concern': entry.value,
             'reason':
                 'Current DrugTag enum cannot represent this interaction class; '
-                    'the interaction engine cannot fire automatically. Reviewers '
-                    'must surface this through the rule registry or user-supplied '
-                    'meal-context tags.',
+                'the interaction engine cannot fire automatically. Reviewers '
+                'must surface this through the rule registry or user-supplied '
+                'meal-context tags.',
           });
         }
       }
@@ -141,8 +142,9 @@ class CatalogInteractionAudit {
         ironCheck.add({
           'drug_id': drug.id,
           'generic_name': drug.genericName,
-          'has_mineral_supplement_tag':
-              drug.tags.contains(DrugTag.mineralSupplement),
+          'has_mineral_supplement_tag': drug.tags.contains(
+            DrugTag.mineralSupplement,
+          ),
         });
       }
     }
@@ -178,7 +180,8 @@ class CatalogInteractionAudit {
           organization: 'ParkinSUM Companion (importer-side audit)',
           jurisdiction: 'GLOBAL',
           docType: 'catalog_interaction_audit_report',
-          title: 'Catalog ↔ interaction-engine reconciliation '
+          title:
+              'Catalog ↔ interaction-engine reconciliation '
               '(${drugs.length} drugs / ${foods.length} foods)',
           originUrl: 'app://catalog-interaction-audit/reconciliation_v1',
           licenseNote:
@@ -192,7 +195,8 @@ class CatalogInteractionAudit {
             'audit_gaps': <Map<String, Object?>>[
               ImporterAudit.auditGap(
                 fieldName: 'missing_tag',
-                reason: 'Catalog rows whose generic name implies a DrugTag but '
+                reason:
+                    'Catalog rows whose generic name implies a DrugTag but '
                     'the row is missing that tag. Each gap is a real gap the '
                     'reviewer should close by adding the tag.',
                 observedCount: (report['missing_tag_count'] as int?) ?? 0,
@@ -211,8 +215,8 @@ class CatalogInteractionAudit {
             ],
             'parser_limitation':
                 'Audit is a reconciliation report only. It does NOT add tags '
-                    'to catalog rows, does NOT add rules to the rule registry, '
-                    'and does NOT fabricate new DrugTag enum values.',
+                'to catalog rows, does NOT add rules to the rule registry, '
+                'and does NOT fabricate new DrugTag enum values.',
           }),
         ),
       ],

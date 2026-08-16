@@ -16,8 +16,9 @@ import 'helpers/local_ai_replay_harness.dart';
 /// synthetic fixtures; no PHI.
 void main() {
   test('replays the five archetypes with expected decision paths', () async {
-    final report = await buildLocalAiReplayRunner()
-        .run(dataset: localAiReplayScenarioDataset);
+    final report = await buildLocalAiReplayRunner().run(
+      dataset: localAiReplayScenarioDataset,
+    );
     expect(report.cases, hasLength(5));
 
     final byId = {for (final c in report.cases) c.benchmarkCase.caseId: c};
@@ -49,32 +50,42 @@ void main() {
     expect(catalog.aiUsed, isTrue);
   });
 
-  test('Local AI never changes the deterministic candidate set (safety)',
-      () async {
-    final report = await buildLocalAiReplayRunner()
-        .run(dataset: localAiReplayScenarioDataset);
-    expect(report.allPreservedCandidateSet, isTrue);
-    for (final c in report.cases) {
-      // Whatever the AI did, the resulting set of food ids equals the
-      // deterministic set (reorder-only; never invent or drop).
-      expect(c.aiRanking.toSet(), c.deterministicRanking.toSet(),
-          reason: '${c.benchmarkCase.caseId} changed the candidate set');
-      expect(c.aiPreservedCandidateSet, isTrue);
-    }
-  });
+  test(
+    'Local AI never changes the deterministic candidate set (safety)',
+    () async {
+      final report = await buildLocalAiReplayRunner().run(
+        dataset: localAiReplayScenarioDataset,
+      );
+      expect(report.allPreservedCandidateSet, isTrue);
+      for (final c in report.cases) {
+        // Whatever the AI did, the resulting set of food ids equals the
+        // deterministic set (reorder-only; never invent or drop).
+        expect(
+          c.aiRanking.toSet(),
+          c.deterministicRanking.toSet(),
+          reason: '${c.benchmarkCase.caseId} changed the candidate set',
+        );
+        expect(c.aiPreservedCandidateSet, isTrue);
+      }
+    },
+  );
 
-  test('structured JSON snapshot is byte-stable across runs (drift guard)',
-      () async {
-    final first = await buildLocalAiReplayRunner()
-        .run(dataset: localAiReplayScenarioDataset);
-    final second = await buildLocalAiReplayRunner()
-        .run(dataset: localAiReplayScenarioDataset);
-    final a = const JsonEncoder.withIndent('  ').convert(first.toJson());
-    final b = const JsonEncoder.withIndent('  ').convert(second.toJson());
-    expect(a, b, reason: 'Replay output drifted between identical runs.');
-    // Sanity: snapshot carries the dataset version and all five cases.
-    final decoded = jsonDecode(a) as Map<String, dynamic>;
-    expect(decoded['dataset_version'], localAiReplayScenarioDataset.version);
-    expect((decoded['cases'] as List), hasLength(5));
-  });
+  test(
+    'structured JSON snapshot is byte-stable across runs (drift guard)',
+    () async {
+      final first = await buildLocalAiReplayRunner().run(
+        dataset: localAiReplayScenarioDataset,
+      );
+      final second = await buildLocalAiReplayRunner().run(
+        dataset: localAiReplayScenarioDataset,
+      );
+      final a = const JsonEncoder.withIndent('  ').convert(first.toJson());
+      final b = const JsonEncoder.withIndent('  ').convert(second.toJson());
+      expect(a, b, reason: 'Replay output drifted between identical runs.');
+      // Sanity: snapshot carries the dataset version and all five cases.
+      final decoded = jsonDecode(a) as Map<String, dynamic>;
+      expect(decoded['dataset_version'], localAiReplayScenarioDataset.version);
+      expect((decoded['cases'] as List), hasLength(5));
+    },
+  );
 }

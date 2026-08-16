@@ -127,13 +127,15 @@ void main() {
       expect(result.normalized!.unit, 'mg');
     });
 
-    test('user enters "50 mg" -> validator receives 50 mg, NOT the old 100',
-        () {
-      final result = validator.validate(buildEntry('50 mg'));
-      expect(result.validity, MedicationContextValidity.valid);
-      expect(result.normalized!.strength, 50);
-      expect(result.normalized!.strength, isNot(100));
-    });
+    test(
+      'user enters "50 mg" -> validator receives 50 mg, NOT the old 100',
+      () {
+        final result = validator.validate(buildEntry('50 mg'));
+        expect(result.validity, MedicationContextValidity.valid);
+        expect(result.normalized!.strength, 50);
+        expect(result.normalized!.strength, isNot(100));
+      },
+    );
 
     test('user enters "levodopa 100" -> insufficient dose context', () {
       final result = validator.validate(buildEntry('levodopa 100'));
@@ -162,13 +164,19 @@ void main() {
         'levodopa 100',
         '25/100',
         'one tablet',
-        'take with food'
+        'take with food',
       ]) {
         final entry = buildEntry(note);
-        expect(entry.strength, isNull,
-            reason: 'strength must be null for non-explicit note: "$note"');
-        expect(entry.unit, isNull,
-            reason: 'unit must be null for non-explicit note: "$note"');
+        expect(
+          entry.strength,
+          isNull,
+          reason: 'strength must be null for non-explicit note: "$note"',
+        );
+        expect(
+          entry.unit,
+          isNull,
+          reason: 'unit must be null for non-explicit note: "$note"',
+        );
       }
     });
   });
