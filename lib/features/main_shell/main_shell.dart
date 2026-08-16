@@ -9,6 +9,7 @@ import 'dashboard_page.dart';
 import '../analytics/analytics_page.dart';
 import '../medications/medication_page.dart';
 import '../catalog/catalog_page.dart';
+import '../diagnostics/engineering_diagnostics_page.dart';
 import '../legal/privacy_disclaimer_page.dart';
 import '../next_meal/next_meal_page.dart';
 import '../timeline/timeline_page.dart';
@@ -37,7 +38,10 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final i18n = context.appI18n;
     final state = context.watch<AppState>();
-    final showAccountBar = FirebaseBackend.enabled;
+    // The bar used to render only in Firebase mode, which left the privacy &
+    // disclaimer page unreachable in local/public-demo mode once onboarding was
+    // done. It now always renders; only the account-specific bits are gated.
+    final showAccountActions = FirebaseBackend.enabled;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -47,32 +51,42 @@ class _MainShellState extends State<MainShell> {
       // the nav-bar height keeps the FAB visible; the BackdropFilter still
       // samples the static LiquidGlassBackground for the frosted look.
       extendBodyBehindAppBar: true,
-      appBar: showAccountBar
-          ? GlassAppBar(
-              title: Text(
-                state.currentUserEmail ?? state.currentUserId ?? 'Account',
-                overflow: TextOverflow.ellipsis,
+      appBar: GlassAppBar(
+        title: Text(
+          showAccountActions
+              ? (state.currentUserEmail ?? state.currentUserId ?? 'Account')
+              : i18n.tr('onboarding.appbar'),
+          overflow: TextOverflow.ellipsis,
+        ),
+        actions: [
+          IconButton(
+            tooltip: i18n.tr('diagnostics.title'),
+            icon: const Icon(Icons.science_outlined, size: 20),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const EngineeringDiagnosticsPage(),
               ),
-              actions: [
-                IconButton(
-                  tooltip: 'Privacy & Disclaimer',
-                  icon: const Icon(Icons.privacy_tip_outlined, size: 20),
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const PrivacyDisclaimerPage(),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: i18n.tr('common.sign_out'),
-                  icon: const Icon(Icons.logout, size: 20),
-                  onPressed: state.isAuthBusy
-                      ? null
-                      : () => context.read<AppState>().signOut(),
-                ),
-              ],
-            )
-          : null,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Privacy & Disclaimer',
+            icon: const Icon(Icons.privacy_tip_outlined, size: 20),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const PrivacyDisclaimerPage(),
+              ),
+            ),
+          ),
+          if (showAccountActions)
+            IconButton(
+              tooltip: i18n.tr('common.sign_out'),
+              icon: const Icon(Icons.logout, size: 20),
+              onPressed: state.isAuthBusy
+                  ? null
+                  : () => context.read<AppState>().signOut(),
+            ),
+        ],
+      ),
       body: _pages[_idx],
       bottomNavigationBar: GlassNavBar(
         selectedIndex: _idx,
