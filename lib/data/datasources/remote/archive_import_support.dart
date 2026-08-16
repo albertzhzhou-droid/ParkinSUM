@@ -63,9 +63,10 @@ class ArchiveImportSupport {
           '(${limits.maxTotalUncompressedBytes} bytes).',
         );
       }
-      files[name] = item.content is List<int>
-          ? List<int>.from(item.content as List<int>)
-          : utf8.encode('${item.content}');
+      // archive 4.x types `content` as List<int>, so the old dynamic branch is
+      // unreachable. Still copied defensively so callers cannot mutate the
+      // decoder's buffers.
+      files[name] = List<int>.from(item.content);
     }
     return files;
   }

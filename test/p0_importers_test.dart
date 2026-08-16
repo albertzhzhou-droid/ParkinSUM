@@ -105,7 +105,7 @@ void main() {
     test('rejects archive entries above the expanded-size limit', () {
       final archive = Archive()
         ..addFile(ArchiveFile('large.txt', 33, List<int>.filled(33, 65)));
-      final zipBytes = ZipEncoder().encode(archive)!;
+      final zipBytes = ZipEncoder().encode(archive);
 
       expect(
         () => ArchiveImportSupport.unzipFiles(zipBytes, limits: smallLimits),
@@ -116,7 +116,7 @@ void main() {
     test('rejects unsafe archive entry paths', () {
       final archive = Archive()
         ..addFile(ArchiveFile('../outside.txt', 1, const [65]));
-      final zipBytes = ZipEncoder().encode(archive)!;
+      final zipBytes = ZipEncoder().encode(archive);
 
       expect(
         () => ArchiveImportSupport.unzipFiles(zipBytes, limits: smallLimits),
@@ -233,7 +233,7 @@ void main() {
       ..addFile(
         ArchiveFile('foundationFoods.json', jsonBytes.length, jsonBytes),
       );
-    final zipBytes = ZipEncoder().encode(archive)!;
+    final zipBytes = ZipEncoder().encode(archive);
     final bundle = importer.importZipBytes(
       zipBytes,
       sourceLabel: 'foundation_zip',
@@ -3163,7 +3163,7 @@ void main() {
               fdcZipBytes,
             ),
           );
-        final zipBytes = ZipEncoder().encode(archive)!;
+        final zipBytes = ZipEncoder().encode(archive);
 
         // First call: stubCdss will fail promote on the first attempt and succeed
         // on the second attempt. Since both attempts are within one
@@ -3286,7 +3286,7 @@ void main() {
       // the medicines endpoint, and a no-op XLSX endpoint that returns empty
       // bytes (XLSX parser will then return an empty bundle, not throw).
       final fakeJson = jsonEncode(const <Map<String, dynamic>>[]);
-      final emptyXlsx = ZipEncoder().encode(Archive())!;
+      final emptyXlsx = ZipEncoder().encode(Archive());
       final emptyXlsxText = String.fromCharCodes(emptyXlsx);
       final fakeClient = FakeSourceFetchClient(
         textByUrl: {
@@ -3361,7 +3361,7 @@ void main() {
               fdcJsonBytes,
             ),
           );
-        final zipBytes = ZipEncoder().encode(archive)!;
+        final zipBytes = ZipEncoder().encode(archive);
 
         stubCdss.failPromoteOnce = true;
         await orchestrator.importOfflinePackagesDetailed(
@@ -3421,7 +3421,7 @@ void main() {
               fdcJsonBytes,
             ),
           );
-        final zipBytes = ZipEncoder().encode(archive)!;
+        final zipBytes = ZipEncoder().encode(archive);
         await orchestrator.importOfflinePackagesDetailed(
           fdcZipBytes: zipBytes,
           sourcePaths: const {'fdc': '/tmp/audit/fdc.zip'},
@@ -3541,7 +3541,7 @@ void main() {
               fdcJsonBytes,
             ),
           );
-        final zipBytes = ZipEncoder().encode(archive)!;
+        final zipBytes = ZipEncoder().encode(archive);
 
         final tokens = <String>{};
         for (var i = 0; i < 5; i++) {
@@ -3589,7 +3589,7 @@ void main() {
               fdcJsonBytes,
             ),
           );
-        final zipBytes = ZipEncoder().encode(archive)!;
+        final zipBytes = ZipEncoder().encode(archive);
 
         await orchestrator.importOfflinePackagesDetailed(
           fdcZipBytes: zipBytes,
@@ -3957,7 +3957,7 @@ ${sharedStrings.map((value) => '<si><t>${_escapeXml(value)}</t></si>').join()}
         worksheetBytes,
       ),
     );
-  return ZipEncoder().encode(archive)!;
+  return ZipEncoder().encode(archive);
 }
 
 String _buildSheetXml(int headerCount, int rowCount) {
