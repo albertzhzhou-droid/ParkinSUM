@@ -19,10 +19,10 @@ of this work — the additions are read-only derivations and checks.
 | W1 | Auditability — bridge the two explanation schemas | **done** |
 | W2 | Repeatability — committed goldens + `npm run verify:all` | **done** |
 | W3 | Truth fidelity — docs↔runtime ratchet, clock rename, ref coverage | **done** |
-| W4 | Transparency — surface `ModelAssumptionRegistry`, catalog inventory | in progress |
-| W5 | Features — diagnostics i18n, post-hoc "why" view | not started |
+| W4 | Transparency — surface `ModelAssumptionRegistry`, catalog inventory | **done** |
+| W5 | Features — diagnostics i18n, post-hoc "why" view | **done** |
 
-Verification at last checkpoint: `flutter analyze` clean, `flutter test` 797
+Verification at last checkpoint: `flutter analyze` clean, `flutter test` 874
 passing, `npm run verify:all` → all 10 gates pass.
 
 ---
@@ -83,7 +83,7 @@ Injection-verified: a 1 g protein change in one scenario surfaced as
 `interaction_score: 0.100 → 0.101` with the exact line; `verify:all` exits 1
 when any gate fails and 0 otherwise.
 
-## W3 — Truth fidelity (in progress)
+## W3 — Truth fidelity (done)
 
 **Correction to earlier notes:** an earlier pass reported that the docs promise
 `41/41` scenarios while the code ships 42. That was wrong — the count of 42 came
@@ -138,40 +138,46 @@ provenance and the list is not updated.
 
 **Closing it for real** means giving the legacy interaction engine source
 references, which is engine work rather than a flag flip. That is the natural
-next step after W5.
+next step now that W1-W5 have landed.
 
-## W4 — Transparency (not started)
+## W4 — Transparency (done)
 
-1. `lib/features/shared/mechanistic_trace_view.dart:212,255,320` renders bare
-   `sourceId` strings. Resolve each through `ModelAssumptionRegistry.byId()`
-   and render title + `limitation`. The registry holds 17 assumptions with
-   citations and plain-text limitations and currently has **zero** references
-   in `lib/features/` or `tool/` — this is the highest-leverage missing link.
-2. New `lib/domain/usecases/catalog_inventory_diagnostics.dart`, following the
-   shared-computation precedent of `explanation_copy_diagnostics.dart` so the
-   CLI and the in-app view cannot report different numbers. Roll up by source
-   family, jurisdiction, license, `sourceStatus`, and `SourceAuthorityTier`.
-3. Surface it as a diagnostics card (`_Check` #4 is already an inventory-only
-   precedent) using the `analytics_page.dart:435` monospace `SelectableText`
-   pattern, plus a `tool/run_catalog_inventory.dart` + `.mjs` twin writing
-   `build/catalog_inventory/latest.{json,md}`. Sanitize free text through the
-   `evidence_graph_mermaid_renderer.dart:44` pattern before it enters a
-   Markdown table cell.
-4. `_CatalogShowcaseCard` (`catalog_page.dart:168`) shows the **search-result**
-   count under a "Foods indexed" intent. Render `N of M shipped`.
+- **Source refs resolve to citations.** `mechanistic_trace_view.dart` renders
+  each ref through `ModelAssumptionRegistry.byId()` as title + `limitation`.
+  Unresolvable ids are shown as themselves with an "unresolved reference"
+  marker — a broken provenance link is information, and hiding it would look
+  identical to having no link.
+- **`catalog_inventory_diagnostics.dart`** — the aggregate that never existed:
+  20 foods, 21 medications, 43 source documents, 10 rules, 25 templates, 41
+  scenarios, 17 assumptions, with roll-ups by source family, jurisdiction,
+  licence, and status, plus two named gaps (6 documents declared but not live;
+  catalog entries still on placeholder external codes). Shared by the new
+  `npm run catalog:inventory` CLI and a diagnostics card, so the two cannot
+  disagree. Goldened.
+- **The mislabeled count is fixed.** `_CatalogShowcaseCard` showed the current
+  *search-result* count under a "Foods indexed" label; it now reads
+  `N of M shipped`.
 
-## W5 — Features (not started)
+That report caught a bug in its own first draft: an allowlist of
+`{active, active_reference}` classified all 22 `active_evidence` documents as
+stale and reported 28 of 43 non-live when the true figure is 6. Statuses are now
+classified in both directions and `catalog_inventory_test.dart` fails on any
+unclassified value.
 
-1. `diagnostics.*` i18n keys exist only in the inline `zh/en/fr/ja` maps;
-   `app_i18n_full_translations.dart` has zero coverage, so the 9 newer language
-   families fall back to English. Add them, keeping safety meaning identical
-   per `CLAUDE.md`.
-2. Post-hoc "why" view: `MechanisticConflictTraceCard` is live-only. Use the W1
-   read-back to render a past decision's trace read-only from the diagnostics
-   page. This surfaces already-compiled educational copy; it introduces no new
-   clinical surface.
+## W5 — Features (done)
 
----
+- **`diagnostics.*` localized for all 13 families.** The nine newer families had
+  zero coverage and silently fell back to English. `scope_body` is the
+  safety-critical string, so `diagnostics_i18n_coverage_test.dart` asserts the
+  substantive framing per locale and that the `{ms}` placeholder survived, not
+  merely that a key exists. Injection-verified.
+- **`RuleAuditTrailPage`** — the post-hoc "why" view, reachable from the
+  diagnostics app bar. Renders the W1 projection: every registry rule with its
+  outcome, inputs used, inputs missing, and provenance, plus the count of audit
+  records the run persisted (non-zero only because W1 stopped discarding them).
+  Its loader is injectable: the real evaluation awaits artifact-store I/O that
+  never resolves in `testWidgets`' fake-async zone, so the test computes genuine
+  engine output under `runAsync` and injects it.
 
 ## Explicitly out of scope
 
@@ -190,6 +196,16 @@ reviewers of the offline showcase never run.
 - Every new check must be **injection-verified**: prove it fails on a real
   defect before trusting that it passes. Two of this effort's most valuable
   findings came from distrusting green signals.
+
+## Reviewer artifact
+
+A shareable page telling this evidence story end to end — the four breaks, what
+enforces each now, the two errors this work made, and the one-command
+verification path:
+
+<https://claude.ai/code/artifact/e6f60a38-60c5-4069-b1f1-2034cb243c5e>
+
+It is private until shared from the page's own share menu.
 
 ## Verify
 
