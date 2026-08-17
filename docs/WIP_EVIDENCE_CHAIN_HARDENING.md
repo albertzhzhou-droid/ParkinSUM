@@ -190,8 +190,12 @@ reviewers of the offline showcase never run.
 
 - No clinical claims, diagnosis, treatment, dosing, timing, or dietary guidance.
 - Preferred wording: "not calibrated for real care", "educational prototype",
-  "synthetic/demo data only". Avoid "clinically validated",
-  "clinically calibrated", "safe for you", "recommended timing".
+  "synthetic/demo data only". The forbidden vocabulary is enumerated in
+  `CLAUDE.md` and in `bannedExplanationSubstrings`
+  (`lib/domain/entities/rule_explanation.dart`) — deliberately not restated here,
+  because `public:preflight` scans docs by substring and a doc that quotes the
+  banned phrases in order to forbid them trips its own gate. Those two lists are
+  the authority; this file defers to them.
 - No scoring or engine-behaviour change.
 - Every new check must be **injection-verified**: prove it fails on a real
   defect before trusting that it passes. Two of this effort's most valuable
