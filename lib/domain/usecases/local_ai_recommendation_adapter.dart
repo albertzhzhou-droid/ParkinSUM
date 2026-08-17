@@ -30,6 +30,7 @@ class LocalAiRecommendedModels {
 /// UI 和推荐编排器都用同一份状态，避免“页面显示可用、引擎实际不可用”的分叉。
 class LocalAiAvailability {
   final bool available;
+  final bool skipped;
   final String provider;
   final String endpoint;
   final String model;
@@ -39,6 +40,7 @@ class LocalAiAvailability {
 
   const LocalAiAvailability({
     required this.available,
+    this.skipped = false,
     required this.provider,
     required this.endpoint,
     required this.model,
@@ -119,6 +121,23 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     : _client = client ?? http.Client();
 
   Future<LocalAiAvailability> probe({required UserProfile userProfile}) async {
+    if (!userProfile.localAiConsentEnabled) {
+      final preferred = _normalizedProvider(
+        userProfile.localAiProviderPreference,
+      );
+      return LocalAiAvailability(
+        available: false,
+        skipped: true,
+        provider: preferred,
+        endpoint: preferred == LocalAiProviders.openAiCompat
+            ? userProfile.localAiOpenAiCompatEndpoint
+            : userProfile.localAiOllamaEndpoint,
+        model: _textModel(userProfile),
+        medicalModel: _medicalModel(userProfile),
+        message: 'Local AI probe skipped because consent is disabled.',
+      );
+    }
+
     final model = _textModel(userProfile);
     final medicalModel = _medicalModel(userProfile);
     final timeout = _timeout(userProfile);

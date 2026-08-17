@@ -155,11 +155,21 @@ class EngineRunOutput {
   final List<RuntimeAlert> alerts;
   final List<RuntimeAuditEntry> auditEntries;
 
+  /// The run projected into the documented `RuleExplanation` audit contract —
+  /// one row per registry rule, including the rules that did *not* fire.
+  ///
+  /// Serialized form only, so this entity file stays a dependency-free leaf.
+  /// Build it with `projectRuleExplanations` in
+  /// `lib/domain/usecases/rule_explanation_projection.dart`; each map is a
+  /// `RuleExplanation.toJson()`.
+  final List<Map<String, dynamic>> ruleExplanationsJson;
+
   const EngineRunOutput({
     required this.alertsJson,
     required this.humanReadableMarkdown,
     required this.auditLogJsonl,
     required this.alerts,
     required this.auditEntries,
+    this.ruleExplanationsJson = const <Map<String, dynamic>>[],
   });
 }

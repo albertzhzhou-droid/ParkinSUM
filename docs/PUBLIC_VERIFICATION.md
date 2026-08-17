@@ -30,6 +30,39 @@ the newer style and reformats ~269 files. That formatter migration should be its
 own commit rather than a side effect of a dependency bump — until then, treat
 this section as the authoritative minimum.
 
+## One command
+
+### `npm run verify:all`
+- **Checks:** every deterministic governance gate in one run — explanation copy
+  compile, localization safety lint, mechanistic replay, Local-AI scenario
+  replay, synthetic scenario fuzzer, local privacy preflight, source access
+  contract, source version drift, contribution safety router, and the
+  committed-golden drift check.
+- **Expected:** `All 10 gates passed.` plus `build/verify_all/latest.{json,md}`.
+- **Failure means:** at least one gate reported a blocker; the composed report
+  names which. The command exits non-zero, so it is a ratchet, not a summary.
+- **Network:** no. **Data:** synthetic only.
+- **Inventory:** `npm run verify:all -- --list` prints the gate list.
+
+CI runs this exact command, so local and CI verification cannot drift apart.
+The sections below document each gate individually for anyone who wants to run
+one in isolation.
+
+### Committed goldens (cross-commit drift)
+
+`test/goldens/` holds **committed expected output** for the deterministic
+generators. Every other determinism check in this repo builds an artifact twice
+in the same process and compares the two copies — that proves self-consistency,
+not stability across commits. The goldens are the baseline that makes a
+behaviour change at commit N show up as a reviewable diff against commit N-1.
+
+- **Run:** `flutter test test/goldens_test.dart` (also inside `verify:all`).
+- **Refresh (deliberately):** `UPDATE_GOLDENS=1 flutter test test/goldens_test.dart`,
+  then **read the diff before committing it**. Regenerating a golden without
+  reading it discards exactly the signal it exists to preserve.
+- A missing golden fails rather than being created silently: an absent baseline
+  must never read as a pass.
+
 ## Core checks
 
 ### `flutter analyze`

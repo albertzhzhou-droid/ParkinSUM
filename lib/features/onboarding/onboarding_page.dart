@@ -482,7 +482,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
       initialIntakeDoseNote: _doseController.text,
     );
     try {
-      final intake = draft.buildInitialIntake(intakeId: state.newId('intake'));
+      final initialDrugId = draft.initialIntakeDrugId;
+      final intake = draft.buildInitialIntake(
+        intakeId: state.newId('intake'),
+        drug: initialDrugId == null
+            ? null
+            : state.medRepo.getById(initialDrugId),
+      );
       await state.completeOnboarding(
         profile: draft.buildProfile(
           state.userProfile,

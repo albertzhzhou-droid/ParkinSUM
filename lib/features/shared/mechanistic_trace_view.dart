@@ -18,6 +18,7 @@ import '../../core/theme/liquid_glass_theme.dart';
 import '../../domain/entities/mechanistic_candidate_score.dart';
 import '../../domain/entities/mechanistic_conflict_result.dart';
 import '../../domain/usecases/explanation_copy_service.dart';
+import '../../domain/usecases/model_assumption_registry.dart';
 
 /// Renders a single `InteractionResult`'s mechanistic trace as a compact
 /// card. Pass the result; the card no-ops when `mechanisticTraceJson` is
@@ -215,7 +216,48 @@ class _TraceBody extends StatelessWidget {
             color: LiquidGlass.onSurfaceMuted,
           ),
         ),
+        // Each source's title and — crucially — what it does *not* establish.
+        // The registry has always carried this copy; nothing displayed it.
+        for (final source in view.resolvedSources)
+          _SourceRefLine(source: source),
       ],
+    );
+  }
+}
+
+class _SourceRefLine extends StatelessWidget {
+  final ResolvedSourceRef source;
+  const _SourceRefLine({required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '• ${source.title}'
+            '${source.resolved ? ' (${source.evidenceLevel})' : ' (unresolved reference)'}',
+            style: const TextStyle(
+              fontSize: 11,
+              color: LiquidGlass.onSurfaceMuted,
+            ),
+          ),
+          if (source.limitation.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(left: 10, top: 2),
+              child: Text(
+                'Limitation: ${source.limitation}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontStyle: FontStyle.italic,
+                  color: LiquidGlass.onSurfaceMuted,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -242,6 +284,57 @@ class _BandChip extends StatelessWidget {
 // View models. Pure Dart — no Flutter imports — so they're easy to test.
 // -----------------------------------------------------------------------------
 
+/// A `sourceRef` id resolved against [ModelAssumptionRegistry].
+///
+/// The trace used to render bare ids and a count ("Sources (3) available in
+/// model trace"), which told the reader provenance existed without showing any
+/// of it — while the registry already carried a title, a citation, and a
+/// plain-language limitation for each id.
+///
+/// An id that does not resolve is surfaced as itself with [resolved] false,
+/// never hidden: an unresolvable reference is information about the trace, not
+/// noise to suppress.
+class ResolvedSourceRef {
+  final String sourceRef;
+  final String title;
+
+  /// Plain-language statement of what this source does *not* establish.
+  /// Empty when the id did not resolve.
+  final String limitation;
+
+  final String evidenceLevel;
+  final bool resolved;
+
+  const ResolvedSourceRef({
+    required this.sourceRef,
+    required this.title,
+    required this.limitation,
+    required this.evidenceLevel,
+    required this.resolved,
+  });
+
+  /// Resolves [sourceRef] through the registry, preserving unknown ids.
+  factory ResolvedSourceRef.resolve(String sourceRef) {
+    final assumption = ModelAssumptionRegistry.byId(sourceRef);
+    if (assumption == null) {
+      return ResolvedSourceRef(
+        sourceRef: sourceRef,
+        title: sourceRef,
+        limitation: '',
+        evidenceLevel: 'unresolved',
+        resolved: false,
+      );
+    }
+    return ResolvedSourceRef(
+      sourceRef: sourceRef,
+      title: assumption.title,
+      limitation: assumption.limitation,
+      evidenceLevel: assumption.evidenceLevel.name,
+      resolved: true,
+    );
+  }
+}
+
 class MechanisticTraceViewModel {
   final String scoreText;
   final String severityLabel;
@@ -254,6 +347,10 @@ class MechanisticTraceViewModel {
   final String notAdviceText;
   final String sourceRefsLabel;
 
+  /// The trace's source refs resolved to titles + limitations. Order follows
+  /// the emitted `source_refs`, so the display is deterministic.
+  final List<ResolvedSourceRef> resolvedSources;
+
   const MechanisticTraceViewModel({
     required this.scoreText,
     required this.severityLabel,
@@ -265,6 +362,7 @@ class MechanisticTraceViewModel {
     required this.safetyBoundary,
     required this.notAdviceText,
     required this.sourceRefsLabel,
+    this.resolvedSources = const <ResolvedSourceRef>[],
   });
 
   factory MechanisticTraceViewModel.fromJson(Map<String, dynamic> json) {
@@ -304,10 +402,18 @@ class MechanisticTraceViewModel {
     final refs = (json['source_refs'] as List<dynamic>? ?? const [])
         .map((e) => e.toString())
         .toList(growable: false);
+    final resolvedSources = refs
+        .map(ResolvedSourceRef.resolve)
+        .toList(growable: false);
+    final unresolvedCount = resolvedSources.where((s) => !s.resolved).length;
+    // The count is still useful, but it is no longer the only thing shown —
+    // the resolved titles and limitations render below it.
     final refsLabel = refs.isEmpty
         ? 'Sources: none recorded.'
-        : 'Sources (${refs.length}) available in model trace.';
+        : 'Sources (${refs.length})'
+              '${unresolvedCount > 0 ? ', $unresolvedCount unresolved' : ''}:';
     return MechanisticTraceViewModel(
+      resolvedSources: resolvedSources,
       scoreText: score.toStringAsFixed(2),
       severityLabel: severity,
       confidenceLabel: confidence,

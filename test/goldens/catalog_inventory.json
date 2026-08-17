@@ -1,0 +1,147 @@
+{
+  "report_type": "parkinsum_catalog_inventory",
+  "counts": {
+    "foods": 20,
+    "drugs": 21,
+    "source_documents": 43,
+    "rules": 10,
+    "copy_templates": 25,
+    "replay_scenarios": 41,
+    "model_assumptions": 17
+  },
+  "source_documents_not_live": 6,
+  "catalog_entries_with_placeholder_source_code": 38,
+  "breakdowns": [
+    {
+      "dimension": "source family (documents)",
+      "distinct_values": 19,
+      "total": 43,
+      "counts": {
+        "PUBMED": 12,
+        "DAILYMED": 10,
+        "CHINA_DIET_GUIDANCE": 2,
+        "CIQUAL": 2,
+        "FAO_FBDG": 2,
+        "USDA_FDC": 2,
+        "CHINA_FCD_NETWORK": 1,
+        "CHINA_FCD_REFERENCE": 1,
+        "CHINA_FCD_STANDARD": 1,
+        "DRUGSATFDA": 1,
+        "EBASIS": 1,
+        "EMA": 1,
+        "FDA_LABEL": 1,
+        "FOODEXPLORER": 1,
+        "HEALTH_CANADA_DPD": 1,
+        "NMPA": 1,
+        "P3_FUTURE_REGISTRY": 1,
+        "P4_FUTURE_REGISTRY": 1,
+        "PMDA": 1
+      }
+    },
+    {
+      "dimension": "jurisdiction (documents)",
+      "distinct_values": 7,
+      "total": 43,
+      "counts": {
+        "GLOBAL": 15,
+        "US": 14,
+        "CN": 7,
+        "EU": 3,
+        "FR": 2,
+        "CA": 1,
+        "JP": 1
+      }
+    },
+    {
+      "dimension": "licence note (documents)",
+      "distinct_values": 20,
+      "total": 43,
+      "counts": {
+        "UNSPECIFIED": 12,
+        "Official label metadata reference for rule provenance.": 10,
+        "CC0 1.0": 2,
+        "Etalab Open License 2.0": 2,
+        "Internal planning placeholder only": 2,
+        "Access controlled; national licence may apply": 1,
+        "Access controlled; redistribution terms unspecified": 1,
+        "Bibliographic metadata only; do not treat article text as food composition data.": 1,
+        "Bibliographic metadata only; suitable for evidence/provenance, not nutrient fact ingestion.": 1,
+        "Bibliographic metadata only; supports behavioural swallowing intervention evidence cards.": 1,
+        "Bibliographic metadata only; supports constipation intervention evidence cards and audit.": 1,
+        "Bibliographic metadata only; supports constipation intervention evidence cards.": 1,
+        "Bibliographic metadata only; supports constipation-related rule explanation and audit.": 1,
+        "Bibliographic metadata only; supports dysphagia caution cards and audit.": 1,
+        "Bibliographic metadata only; supports dysphagia treatment evidence cards and audit.": 1,
+        "Bibliographic metadata only; supports dysphagia treatment evidence cards and rule explanations.": 1,
+        "Bibliographic metadata only; supports dysphagia-related clinical evidence referencing.": 1,
+        "Bibliographic metadata only; supports provenance and audit, not primary label replacement.": 1,
+        "Bibliographic metadata only; use for evidence registry and audit trails.": 1,
+        "English translation reference only; Japanese original prevails": 1
+      }
+    },
+    {
+      "dimension": "status (documents)",
+      "distinct_values": 7,
+      "total": 43,
+      "counts": {
+        "active_evidence": 22,
+        "active": 10,
+        "active_reference": 5,
+        "access_controlled": 2,
+        "planned": 2,
+        "pending_structured_endpoint": 1,
+        "reference_only": 1
+      }
+    },
+    {
+      "dimension": "source system (foods)",
+      "distinct_values": 1,
+      "total": 20,
+      "counts": {
+        "CIQUAL": 20
+      }
+    },
+    {
+      "dimension": "jurisdiction (foods)",
+      "distinct_values": 1,
+      "total": 20,
+      "counts": {
+        "FR": 20
+      }
+    },
+    {
+      "dimension": "source system (medications)",
+      "distinct_values": 2,
+      "total": 21,
+      "counts": {
+        "DAILYMED": 20,
+        "HEALTH_CANADA_DPD": 1
+      }
+    },
+    {
+      "dimension": "jurisdiction (medications)",
+      "distinct_values": 2,
+      "total": 21,
+      "counts": {
+        "US": 20,
+        "CA": 1
+      }
+    },
+    {
+      "dimension": "evidence level (model assumptions)",
+      "distinct_values": 4,
+      "total": 17,
+      "counts": {
+        "mechanism": 13,
+        "label": 2,
+        "prototypeHeuristic": 1,
+        "regulatoryGuidance": 1
+      }
+    }
+  ],
+  "not_clinically_calibrated": true,
+  "synthetic_demo_data_only": true,
+  "no_medical_advice": true,
+  "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+  "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions."
+}

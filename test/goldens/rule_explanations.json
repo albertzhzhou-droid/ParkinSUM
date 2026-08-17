@@ -1,0 +1,240 @@
+[
+  {
+    "rule_id": "pd.ldopa.protein.window.v1",
+    "triggered": true,
+    "triggered_conditions": [
+      "drug.active_ingredients",
+      "meal.protein_g",
+      "timestamps.drug_time",
+      "timestamps.meal_time"
+    ],
+    "user_facing_decision": "educational caution shown",
+    "input_fields_used": [
+      "drug.active_ingredients",
+      "meal.protein_g",
+      "timestamps.drug_time",
+      "timestamps.meal_time"
+    ],
+    "source_refs": [
+      "fda-dhivy-high-protein"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This is an educational prototype output from a deterministic rule. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:WARN",
+    "output_type": "educationalCaution"
+  },
+  {
+    "rule_id": "pd.ldopa.iron.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.active_ingredients",
+      "coevent.substance_tags",
+      "timestamps.drug_time",
+      "timestamps.coevent_time"
+    ],
+    "source_refs": [
+      "dailymed-carbidopa-levodopa-iron"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.rasagiline.tyramine.us.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.generic_name",
+      "drug.daily_dose_mg",
+      "meal.tyramine_mg_est"
+    ],
+    "source_refs": [
+      "dailymed-azilect-tyramine"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Some inputs were unavailable (dose), so the result is incomplete. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [
+      "dose"
+    ],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "low — educational only (evidence=official_label; missing_inputs=1)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.safinamide.tyramine.us.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.generic_name",
+      "drug.daily_dose_mg",
+      "meal.tyramine_mg_est"
+    ],
+    "source_refs": [
+      "dailymed-xadago-tyramine"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Some inputs were unavailable (dose), so the result is incomplete. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [
+      "dose"
+    ],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "low — educational only (evidence=official_label; missing_inputs=1)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.peg.starch_thickener.block.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.substance_tags",
+      "coevent.thickener_type"
+    ],
+    "source_refs": [
+      "dailymed-peg-thickener"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.ldopa.enteral.feed.review.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.active_ingredients",
+      "enteral_feed.mode",
+      "enteral_feed.protein_g_per_day"
+    ],
+    "source_refs": [
+      "ann-pharmacother-enteral-levodopa"
+    ],
+    "provenance_summary": "Declared evidence level \"primary_study\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "mechanism",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "low — educational only (evidence=primary_study)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.pramipexole.food.info.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.generic_name",
+      "meal.id"
+    ],
+    "source_refs": [
+      "dailymed-pramipexole-food"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.ropinirole.food.info.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.generic_name",
+      "meal.id"
+    ],
+    "source_refs": [
+      "dailymed-ropinirole-food"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.opicapone.meal.window.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.generic_name",
+      "meal.id",
+      "timestamps.drug_time",
+      "timestamps.meal_time"
+    ],
+    "source_refs": [
+      "dailymed-opicapone-food"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.rotigotine.food.independent.info.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.generic_name",
+      "meal.id"
+    ],
+    "source_refs": [
+      "dailymed-rotigotine-food"
+    ],
+    "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "label",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  }
+]
