@@ -201,7 +201,7 @@ class DatabaseBackedMealCheckUseCase {
             dosageForm: resolvedDrug.dosageForm,
             route: resolvedDrug.route,
             releaseType: resolvedDrug.releaseType,
-            dailyDoseMg: _parseDoseMg(intake?.dosageNote),
+            dailyDoseMg: _parseDoseMg(intake),
             jurisdiction: resolvedDrug.jurisdiction,
           ),
           meal: MealRuntimeContext(
@@ -584,6 +584,8 @@ class DatabaseBackedMealCheckUseCase {
         case DrugTag.laxative:
           tags.add('laxative');
           break;
+        case DrugTag.unknown:
+          break;
       }
     }
     // 对旧目录模型做最小语义增强：
@@ -713,8 +715,8 @@ class DatabaseBackedMealCheckUseCase {
   /// number from free text: "levodopa 100", bare "100", or a slashed combo
   /// yield null so the rule engine treats the dose as unknown instead of
   /// fabricating 100 mg.
-  double? _parseDoseMg(String? dosageNote) =>
-      _dosageNoteParser.milligrams(dosageNote);
+  double? _parseDoseMg(Intake? intake) =>
+      intake == null ? null : _dosageNoteParser.milligramsForIntake(intake);
 
   InteractionSeverity _mapSeverity(String decision) {
     switch (decision) {
@@ -761,18 +763,17 @@ class DatabaseBackedMealCheckUseCase {
         drug.genericName.toLowerCase(),
         ...drug.tags.map((t) => t.name.toLowerCase()),
       }.where((s) => s.isNotEmpty).toList(growable: false);
-      // Dose comes ONLY from the user-entered dosage note — never a private
-      // default. Non-explicit notes leave strength/unit null → insufficient
-      // dose context (no dose-dependent PK interpretation).
-      final dose = _dosageNoteParser.parse(intake.dosageNote);
+      // Structured values are user-note-derived and preferred when present;
+      // legacy records fall back to parsing dosageNote. No default is added.
+      final dose = _dosageNoteParser.parseIntake(intake);
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
         strength: dose.explicit ? dose.value : null,
         unit: dose.explicit ? dose.unit : null,
-        form: drug.dosageForm,
-        route: drug.route,
-        releaseType: drug.releaseType,
+        form: intake.dosageForm ?? drug.dosageForm,
+        route: intake.route ?? drug.route,
+        releaseType: intake.releaseType ?? drug.releaseType,
         jurisdiction: drug.jurisdiction,
         sourceDocId: 'synthetic:${drug.sourceSystem}',
       );

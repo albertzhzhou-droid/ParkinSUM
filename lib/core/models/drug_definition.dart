@@ -10,6 +10,22 @@ enum DrugTag {
   cholinesteraseInhibitor,
   pressorAgent,
   laxative,
+  unknown,
+}
+
+/// Parses persisted/catalog tag values without assigning clinical meaning to
+/// an unrecognized value. Both JSON and native-database deserialization use
+/// this single boundary so a future or malformed tag can never silently turn
+/// into [DrugTag.levodopaLike].
+List<DrugTag> parseDrugTags(Iterable<Object?> rawTags) {
+  return rawTags
+      .map(
+        (rawTag) => DrugTag.values.firstWhere(
+          (tag) => tag.name == rawTag?.toString(),
+          orElse: () => DrugTag.unknown,
+        ),
+      )
+      .toList(growable: false);
 }
 
 /// DrugDefinition：药物目录定义（非处方建议，只是结构化信息）
@@ -82,9 +98,7 @@ class DrugDefinition {
   };
 
   static DrugDefinition fromJson(Map<String, dynamic> json) {
-    final tagsRaw = (json['tags'] as List<dynamic>? ?? const [])
-        .map((e) => e.toString())
-        .toList(growable: false);
+    final tagsRaw = json['tags'] as List<dynamic>? ?? const <dynamic>[];
 
     return DrugDefinition(
       id: json['id'] as String,
@@ -95,14 +109,7 @@ class DrugDefinition {
       aliases: (json['aliases'] as List<dynamic>? ?? const [])
           .map((e) => e.toString())
           .toList(growable: false),
-      tags: tagsRaw
-          .map(
-            (t) => DrugTag.values.firstWhere(
-              (x) => x.name == t,
-              orElse: () => DrugTag.levodopaLike,
-            ),
-          )
-          .toList(),
+      tags: parseDrugTags(tagsRaw),
       notes: (json['notes'] as String?) ?? '',
       interactionSummary: (json['interactionSummary'] as String?) ?? '',
       sourceSystem: (json['sourceSystem'] as String?) ?? 'LOCAL_SEED',

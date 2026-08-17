@@ -12,12 +12,13 @@ import 'package:parkinsum_companion/domain/usecases/local_ai_recommendation_adap
 
 void main() {
   UserProfile buildProfile({
+    bool consentEnabled = true,
     String provider = LocalAiProviders.auto,
     String ollamaEndpoint = 'http://127.0.0.1:11434/api/chat',
     String openAiEndpoint = 'http://127.0.0.1:8080/v1/chat/completions',
   }) {
     return UserProfile.defaults().copyWith(
-      localAiConsentEnabled: true,
+      localAiConsentEnabled: consentEnabled,
       localAiProviderPreference: provider,
       localAiModel: 'llama3.2',
       localAiOllamaEndpoint: ollamaEndpoint,
@@ -66,8 +67,38 @@ void main() {
     );
   }
 
-  test('probe prefers Ollama in auto mode when Ollama responds', () async {
+  test(
+    'probe skips HTTP and reports unavailable when consent is disabled',
+    () async {
+      var requestCount = 0;
+      final client = MockClient((request) async {
+        requestCount += 1;
+        return http.Response('{}', 200);
+      });
+      final adapter = LocalAiRecommendationAdapter(client: client);
+
+      final result = await adapter.probe(
+        userProfile: buildProfile(
+          consentEnabled: false,
+          provider: LocalAiProviders.ollama,
+        ),
+      );
+
+      expect(requestCount, 0);
+      expect(result.available, isFalse);
+      expect(result.skipped, isTrue);
+      expect(result.provider, LocalAiProviders.ollama);
+      expect(
+        result.message,
+        'Local AI probe skipped because consent is disabled.',
+      );
+    },
+  );
+
+  test('probe prefers Ollama in auto mode when consent is enabled', () async {
+    var requestCount = 0;
     final client = MockClient((request) async {
+      requestCount += 1;
       expect(request.method, 'GET');
       expect(request.url.toString(), 'http://127.0.0.1:11434/api/tags');
       return http.Response(
@@ -84,7 +115,9 @@ void main() {
     final result = await adapter.probe(userProfile: buildProfile());
 
     expect(result.available, isTrue);
+    expect(result.skipped, isFalse);
     expect(result.provider, LocalAiProviders.ollama);
+    expect(requestCount, greaterThan(0));
   });
 
   test('probe rejects non-localhost endpoints', () async {

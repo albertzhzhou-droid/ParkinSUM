@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:archive/archive.dart';
 import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 
 import '../../../core/models/drug_definition.dart';
 import '../../../domain/entities/cdss_records.dart';
+import 'archive_import_support.dart';
 import 'crosswalk_builders.dart';
 import 'importer_audit.dart';
 import 'p0_import_models.dart';
@@ -17,9 +18,17 @@ import 'source_fetch_client.dart';
 /// - 当前落库的是产品元数据、来源文档、文档链接和目录投影；
 /// - 不伪装成完整 SmPC/leaflet 结构化解析器。
 class EmaP1Importer {
-  final SourceFetchClient fetchClient;
+  static const defaultMaxXlsxRowCount = 100000;
 
-  const EmaP1Importer({required this.fetchClient});
+  final SourceFetchClient fetchClient;
+  final ArchiveImportLimits xlsxArchiveLimits;
+  final int maxXlsxRowCount;
+
+  const EmaP1Importer({
+    required this.fetchClient,
+    this.xlsxArchiveLimits = ArchiveImportSupport.defaultLimits,
+    this.maxXlsxRowCount = defaultMaxXlsxRowCount,
+  }) : assert(maxXlsxRowCount > 0);
 
   /// 抓取 medicines 主表的 JSON + XLSX，两路都保留，便于后续对账。
   Future<P0ImportBundle> fetchAndImportMedicines() async {
@@ -524,28 +533,32 @@ class EmaP1Importer {
   }
 
   List<Map<String, dynamic>> _xlsxRowsToMaps(List<int> xlsxBytes) {
-    final archive = ZipDecoder().decodeBytes(xlsxBytes);
-    final sharedStrings = _loadSharedStrings(archive);
-    final worksheetFile =
-        archive.files
-            .where((file) => file.name.startsWith('xl/worksheets/sheet'))
+    final files = ArchiveImportSupport.unzipFiles(
+      xlsxBytes,
+      limits: xlsxArchiveLimits,
+    );
+    final worksheetNames =
+        files.keys
+            .where((name) => name.startsWith('xl/worksheets/sheet'))
             .toList(growable: false)
-          ..sort((a, b) => a.name.compareTo(b.name));
-    if (worksheetFile.isEmpty) return const <Map<String, dynamic>>[];
-    final sheetXml = utf8.decode(worksheetFile.first.content as List<int>);
-    final sheetDoc = XmlDocument.parse(sheetXml);
-    final rowNodes = sheetDoc.findAllElements('row').toList(growable: false);
-    if (rowNodes.isEmpty) return const <Map<String, dynamic>>[];
+          ..sort();
+    if (worksheetNames.isEmpty) return const <Map<String, dynamic>>[];
 
-    final grid = rowNodes
-        .map((row) => _extractRowValues(row, sharedStrings))
-        .toList();
-    if (grid.isEmpty) return const <Map<String, dynamic>>[];
-    final headers = grid.first
-        .map((value) => value.trim())
-        .toList(growable: false);
+    final sheetXml = utf8.decode(files[worksheetNames.first]!);
+    _validateXlsxRowCount(sheetXml);
+    final sheetDoc = XmlDocument.parse(sheetXml);
+
+    final rowIterator = sheetDoc.findAllElements('row').iterator;
+    if (!rowIterator.moveNext()) return const <Map<String, dynamic>>[];
+
+    final sharedStrings = _loadSharedStrings(files);
+    final headers = _extractRowValues(
+      rowIterator.current,
+      sharedStrings,
+    ).map((value) => value.trim()).toList(growable: false);
     final rows = <Map<String, dynamic>>[];
-    for (final row in grid.skip(1)) {
+    while (rowIterator.moveNext()) {
+      final row = _extractRowValues(rowIterator.current, sharedStrings);
       final mapped = <String, dynamic>{};
       for (var index = 0; index < headers.length; index++) {
         final header = headers[index];
@@ -561,15 +574,23 @@ class EmaP1Importer {
     return rows;
   }
 
-  List<String> _loadSharedStrings(Archive archive) {
-    // 有些 EMA xlsx 快照没有 sharedStrings.xml，或者 archive 包版本
-    // 对 `orElse` 的占位 ArchiveFile 支持不稳定，因此这里显式走 nullable 查找。
-    final matches = archive.files
-        .where((item) => item.name == 'xl/sharedStrings.xml')
-        .toList(growable: false);
-    if (matches.isEmpty) return const <String>[];
-    final file = matches.first;
-    final text = utf8.decode(file.content as List<int>);
+  void _validateXlsxRowCount(String sheetXml) {
+    var rowCount = 0;
+    for (final event in parseEvents(sheetXml)) {
+      if (event is! XmlStartElementEvent || event.name != 'row') continue;
+      rowCount += 1;
+      if (rowCount <= maxXlsxRowCount) continue;
+      throw FormatException(
+        'XLSX worksheet exceeds row-count limit '
+        '($maxXlsxRowCount rows, including the header).',
+      );
+    }
+  }
+
+  List<String> _loadSharedStrings(Map<String, List<int>> files) {
+    final bytes = files['xl/sharedStrings.xml'];
+    if (bytes == null) return const <String>[];
+    final text = utf8.decode(bytes);
     final doc = XmlDocument.parse(text);
     return doc
         .findAllElements('si')

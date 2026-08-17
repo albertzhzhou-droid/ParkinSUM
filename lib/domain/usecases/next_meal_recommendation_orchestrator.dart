@@ -1158,19 +1158,18 @@ class NextMealRecommendationOrchestrator {
       final drug = drugsById[intake.drugId];
       if (drug == null) continue;
       final ingredients = _drugActiveIngredients(drug);
-      // Dose MUST come from the user-entered dosage note — never a private
-      // default. If the note is not an explicit value+unit, strength/unit are
-      // left null and the validator marks the context insufficient for
-      // dose-dependent interpretation.
-      final dose = _dosageNoteParser.parse(intake.dosageNote);
+      // Structured values are user-note-derived and preferred when present;
+      // legacy records fall back to parsing dosageNote. Neither path injects
+      // a private default dose.
+      final dose = _dosageNoteParser.parseIntake(intake);
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
         strength: dose.explicit ? dose.value : null,
         unit: dose.explicit ? dose.unit : null,
-        form: drug.dosageForm,
-        route: drug.route,
-        releaseType: drug.releaseType,
+        form: intake.dosageForm ?? drug.dosageForm,
+        route: intake.route ?? drug.route,
+        releaseType: intake.releaseType ?? drug.releaseType,
         jurisdiction: drug.jurisdiction,
         sourceDocId: 'synthetic:${drug.sourceSystem}',
       );

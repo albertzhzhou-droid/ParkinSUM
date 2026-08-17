@@ -570,6 +570,164 @@ void main() {
     expect(bundle.projectedDrugs.single.brandNames.single, 'Patchmed');
   });
 
+  group('EMA XLSX resource limits', () {
+    List<int> buildFixture({int dataRowCount = 1}) {
+      return _buildMinimalXlsx(
+        headers: const [
+          'ema_product_number',
+          'medicine_name',
+          'active_substance',
+          'atc_code_human',
+        ],
+        rows: List.generate(
+          dataRowCount,
+          (index) => [
+            'EMEA-H-C-${index + 1}',
+            'Example $index',
+            'rotigotine',
+            'N04BC09',
+          ],
+        ),
+      );
+    }
+
+    P0ImportBundle importWithLimits(
+      List<int> bytes, {
+      ArchiveImportLimits limits = const ArchiveImportLimits(),
+      int maxRowCount = EmaP1Importer.defaultMaxXlsxRowCount,
+    }) {
+      final importer = EmaP1Importer(
+        fetchClient: const FakeSourceFetchClient(textByUrl: {}),
+        xlsxArchiveLimits: limits,
+        maxXlsxRowCount: maxRowCount,
+      );
+      return importer.importMedicinesXlsx(
+        bytes,
+        sourceLabel: 'ema_limit_test_xlsx',
+      );
+    }
+
+    Matcher throwsLimit(String messageFragment) => throwsA(
+      isA<FormatException>().having(
+        (error) => error.toString(),
+        'message',
+        contains(messageFragment),
+      ),
+    );
+
+    test('enforces the compressed-size boundary before decoding', () {
+      final bytes = buildFixture();
+
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(maxCompressedArchiveBytes: bytes.length),
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(
+            maxCompressedArchiveBytes: bytes.length - 1,
+          ),
+        ),
+        throwsLimit('compressed-size limit'),
+      );
+    });
+
+    test('enforces the archive file-count boundary', () {
+      final bytes = buildFixture();
+      final fileCount = ZipDecoder()
+          .decodeBytes(bytes)
+          .files
+          .where((file) => file.isFile)
+          .length;
+
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(maxFileCount: fileCount),
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(maxFileCount: fileCount - 1),
+        ),
+        throwsLimit('file-count limit'),
+      );
+    });
+
+    test('enforces the single-entry expanded-size boundary', () {
+      final bytes = buildFixture();
+      final largestEntry = ZipDecoder()
+          .decodeBytes(bytes)
+          .files
+          .where((file) => file.isFile)
+          .map((file) => file.size)
+          .fold<int>(0, (largest, size) => size > largest ? size : largest);
+
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(maxEntryUncompressedBytes: largestEntry),
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(
+            maxEntryUncompressedBytes: largestEntry - 1,
+          ),
+        ),
+        throwsLimit('entry exceeds expanded-size limit'),
+      );
+    });
+
+    test('enforces the total expanded-size boundary', () {
+      final bytes = buildFixture();
+      final totalExpandedBytes = ZipDecoder()
+          .decodeBytes(bytes)
+          .files
+          .where((file) => file.isFile)
+          .map((file) => file.size)
+          .fold<int>(0, (total, size) => total + size);
+
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(
+            maxTotalUncompressedBytes: totalExpandedBytes,
+          ),
+        ),
+        returnsNormally,
+      );
+      expect(
+        () => importWithLimits(
+          bytes,
+          limits: ArchiveImportLimits(
+            maxTotalUncompressedBytes: totalExpandedBytes - 1,
+          ),
+        ),
+        throwsLimit('total expanded-size limit'),
+      );
+    });
+
+    test('counts the header in the worksheet row boundary', () {
+      final bytes = buildFixture();
+      final bundle = importWithLimits(bytes, maxRowCount: 2);
+
+      expect(bundle.drugProductVariants, hasLength(1));
+      expect(
+        () => importWithLimits(bytes, maxRowCount: 1),
+        throwsLimit('row-count limit'),
+      );
+    });
+  });
+
   test(
     'EMA post-authorisation importer keeps document metadata without forcing projected drugs',
     () {

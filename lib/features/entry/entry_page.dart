@@ -6,6 +6,7 @@ import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';
+import '../../core/state/persisted_list_mutation.dart';
 import '../catalog/catalog_detail_pages.dart';
 import '../shared/interaction_result_view.dart';
 
@@ -181,14 +182,32 @@ class _EntryPageState extends State<EntryPage> {
         '[EntryPage] save:checkResult score=${result.score} severity=${result.overallSeverity.name}',
       );
 
+      final mutation = widget.isEditing
+          ? await appState.updateMeal(meal)
+          : await appState.addMeal(meal);
+      if (mutation.shouldReportSaveFailure ||
+          mutation.status == PersistedListMutationStatus.unchanged) {
+        _entryDebugLog(
+          '[EntryPage] save:not_committed status=${mutation.status.name}',
+        );
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              i18n.tr('entry.save_failed', {'error': i18n.tr('common.error')}),
+            ),
+          ),
+        );
+        return;
+      }
       if (widget.isEditing) {
         _entryDebugLog('[EntryPage] save:updateMeal start');
-        await appState.updateMeal(meal);
       } else {
         _entryDebugLog('[EntryPage] save:addMeal start');
-        await appState.addMeal(meal);
       }
-      _entryDebugLog('[EntryPage] save:persisted');
+      _entryDebugLog(
+        '[EntryPage] save:persisted status=${mutation.status.name}',
+      );
 
       if (!mounted) return;
 
@@ -228,7 +247,9 @@ class _EntryPageState extends State<EntryPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(i18n.tr('entry.save_failed', {'error': '$error'})),
+          content: Text(
+            i18n.tr('entry.save_failed', {'error': i18n.tr('common.error')}),
+          ),
         ),
       );
     } finally {

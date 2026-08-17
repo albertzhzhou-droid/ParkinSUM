@@ -30,6 +30,8 @@ import '../../domain/usecases/local_ai_recommendation_adapter.dart';
 import '../../data/datasources/remote/p0_import_models.dart';
 import '../../data/datasources/remote/p0_ingestion_orchestrator.dart';
 import '../utils/local_p0_import_locator.dart';
+import 'active_drug_selection_transaction.dart';
+import 'persisted_list_mutation.dart';
 
 void _debugLog(String message) {
   if (kDebugMode) {
@@ -182,8 +184,14 @@ class AppState extends ChangeNotifier {
   UserProfile _userProfile = UserProfile.defaults();
 
   List<String> _activeDrugIds = [];
+  final ActiveDrugSelectionCoordinator _activeDrugSelectionCoordinator =
+      ActiveDrugSelectionCoordinator();
   List<Meal> _meals = [];
+  final PersistedListMutationCoordinator<Meal> _mealMutationCoordinator =
+      PersistedListMutationCoordinator<Meal>();
   List<Intake> _intakes = [];
+  final PersistedListMutationCoordinator<Intake> _intakeMutationCoordinator =
+      PersistedListMutationCoordinator<Intake>();
   List<FoodRecommendation> _recommendations = [];
   Map<String, InteractionResult> _mealCheckCache = {};
   bool _isImportingP0 = false;
@@ -221,6 +229,9 @@ class AppState extends ChangeNotifier {
   String? get currentUserId => _authUserId;
   String? get currentUserEmail => _authUserEmail;
   UserProfile get userProfile => _userProfile;
+  bool get isUpdatingActiveDrugIds => _activeDrugSelectionCoordinator.isRunning;
+  bool get isUpdatingMeals => _mealMutationCoordinator.isRunning;
+  bool get isUpdatingIntakes => _intakeMutationCoordinator.isRunning;
 
   List<Meal> get meals => List.unmodifiable(_meals);
   List<Intake> get intakes => List.unmodifiable(_intakes);
@@ -510,72 +521,184 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setActiveDrugIds(List<String> ids) async {
-    _activeDrugIds = List<String>.from(ids);
-    await services.userDataService.saveActiveDrugIds(ids);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    notifyListeners();
+  Future<ActiveDrugSelectionResult> setActiveDrugIds(List<String> ids) async {
+    final requested = ids.toSet();
+    final nextIds = <String>[
+      for (final drug in medRepo.allDrugs)
+        if (requested.remove(drug.id)) drug.id,
+    ];
+    if (requested.isNotEmpty) {
+      _debugLog(
+        '[AppState] activeDrugs:ignored_unknown count=${requested.length}',
+      );
+    }
+    final previousIds = List<String>.from(_activeDrugIds);
+    final result = await _activeDrugSelectionCoordinator.commit(
+      previousIds: previousIds,
+      nextIds: nextIds,
+      persist: services.userDataService.saveActiveDrugIds,
+      apply: (committedIds) {
+        _activeDrugIds = List<String>.from(committedIds);
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] activeDrugs:running=$isRunning');
+        notifyListeners();
+      },
+      onError: (stage, error) {
+        _debugLog(
+          '[AppState] activeDrugs:${stage.name}_failed '
+          'type=${error.runtimeType}',
+        );
+      },
+    );
+    _debugLog('[AppState] activeDrugs:result=${result.status.name}');
+    return result;
   }
 
-  Future<void> addMeal(Meal meal) async {
+  Future<PersistedListMutationResult<Meal>> addMeal(Meal meal) async {
     _debugLog('[AppState] addMeal:start items=${meal.items.length}');
-    _meals = [meal, ..._meals];
-    await services.userDataService.saveMeals(_meals);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] addMeal:saved totalMeals=${_meals.length}');
-    notifyListeners();
+    final nextMeals = <Meal>[
+      meal,
+      ..._meals.where((item) => item.id != meal.id),
+    ];
+    return _commitMeals('addMeal', nextMeals);
   }
 
-  Future<void> updateMeal(Meal meal) async {
+  Future<PersistedListMutationResult<Meal>> updateMeal(Meal meal) async {
     _debugLog('[AppState] updateMeal:start items=${meal.items.length}');
-    _meals = _meals.map((m) => m.id == meal.id ? meal : m).toList();
-    await services.userDataService.saveMeals(_meals);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] updateMeal:saved totalMeals=${_meals.length}');
-    notifyListeners();
+    if (!_meals.any((item) => item.id == meal.id)) {
+      _debugLog('[AppState] updateMeal:unchanged missing_id');
+      return _mealMutationCoordinator.unchanged(_meals);
+    }
+    final nextMeals = _meals
+        .map((item) => item.id == meal.id ? meal : item)
+        .toList();
+    return _commitMeals('updateMeal', nextMeals);
   }
 
-  Future<void> deleteMeal(String mealId) async {
-    _meals = _meals.where((m) => m.id != mealId).toList();
-    await services.userDataService.saveMeals(_meals);
-    await _refreshRecommendations();
-    _mealCheckCache.remove(mealId);
-    notifyListeners();
+  Future<PersistedListMutationResult<Meal>> deleteMeal(String mealId) async {
+    if (!_meals.any((item) => item.id == mealId)) {
+      _debugLog('[AppState] deleteMeal:unchanged missing_id');
+      return _mealMutationCoordinator.unchanged(_meals);
+    }
+    final nextMeals = _meals.where((item) => item.id != mealId).toList();
+    return _commitMeals(
+      'deleteMeal',
+      nextMeals,
+      afterApply: () => _mealCheckCache.remove(mealId),
+    );
   }
 
-  Future<void> addIntake(Intake intake) async {
+  Future<PersistedListMutationResult<Intake>> addIntake(Intake intake) async {
     _debugLog('[AppState] addIntake:start');
-    _intakes = [intake, ..._intakes];
-    await services.userDataService.saveIntakes(_intakes);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] addIntake:saved totalIntakes=${_intakes.length}');
-    notifyListeners();
+    final nextIntakes = <Intake>[
+      intake,
+      ..._intakes.where((item) => item.id != intake.id),
+    ];
+    return _commitIntakes('addIntake', nextIntakes);
   }
 
-  Future<void> updateIntake(Intake intake) async {
+  Future<PersistedListMutationResult<Intake>> updateIntake(
+    Intake intake,
+  ) async {
     _debugLog('[AppState] updateIntake:start');
-    _intakes = _intakes
+    if (!_intakes.any((item) => item.id == intake.id)) {
+      _debugLog('[AppState] updateIntake:unchanged missing_id');
+      return _intakeMutationCoordinator.unchanged(_intakes);
+    }
+    final nextIntakes = _intakes
         .map((item) => item.id == intake.id ? intake : item)
         .toList();
-    await services.userDataService.saveIntakes(_intakes);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] updateIntake:saved totalIntakes=${_intakes.length}');
-    notifyListeners();
+    return _commitIntakes('updateIntake', nextIntakes);
   }
 
-  Future<void> deleteIntake(String intakeId) async {
+  Future<PersistedListMutationResult<Intake>> deleteIntake(
+    String intakeId,
+  ) async {
     _debugLog('[AppState] deleteIntake:start');
-    _intakes = _intakes.where((item) => item.id != intakeId).toList();
-    await services.userDataService.saveIntakes(_intakes);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] deleteIntake:saved totalIntakes=${_intakes.length}');
-    notifyListeners();
+    if (!_intakes.any((item) => item.id == intakeId)) {
+      _debugLog('[AppState] deleteIntake:unchanged missing_id');
+      return _intakeMutationCoordinator.unchanged(_intakes);
+    }
+    final nextIntakes = _intakes.where((item) => item.id != intakeId).toList();
+    return _commitIntakes('deleteIntake', nextIntakes);
+  }
+
+  Future<PersistedListMutationResult<Meal>> _commitMeals(
+    String operation,
+    List<Meal> nextMeals, {
+    VoidCallback? afterApply,
+  }) async {
+    final previousMeals = List<Meal>.from(_meals);
+    final result = await _mealMutationCoordinator.commit(
+      previousItems: previousMeals,
+      nextItems: nextMeals,
+      persist: services.userDataService.saveMeals,
+      apply: (committedMeals) {
+        _meals = List<Meal>.from(committedMeals);
+        afterApply?.call();
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] $operation:running=$isRunning');
+        notifyListeners();
+      },
+      onError: (stage, error) {
+        _debugLog(
+          '[AppState] $operation:${stage.name}_failed '
+          'type=${error.runtimeType}',
+        );
+      },
+    );
+    _debugLog(
+      '[AppState] $operation:result=${result.status.name} '
+      'totalMeals=${result.items.length}',
+    );
+    return result;
+  }
+
+  Future<PersistedListMutationResult<Intake>> _commitIntakes(
+    String operation,
+    List<Intake> nextIntakes,
+  ) async {
+    final previousIntakes = List<Intake>.from(_intakes);
+    final result = await _intakeMutationCoordinator.commit(
+      previousItems: previousIntakes,
+      nextItems: nextIntakes,
+      persist: services.userDataService.saveIntakes,
+      apply: (committedIntakes) {
+        _intakes = List<Intake>.from(committedIntakes);
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] $operation:running=$isRunning');
+        notifyListeners();
+      },
+      onError: (stage, error) {
+        _debugLog(
+          '[AppState] $operation:${stage.name}_failed '
+          'type=${error.runtimeType}',
+        );
+      },
+    );
+    _debugLog(
+      '[AppState] $operation:result=${result.status.name} '
+      'totalIntakes=${result.items.length}',
+    );
+    return result;
   }
 
   Future<InteractionResult> checkMeal(Meal meal) async {

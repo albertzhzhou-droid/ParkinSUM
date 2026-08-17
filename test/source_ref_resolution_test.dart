@@ -30,11 +30,16 @@ void main() {
   });
 
   test('an unknown ref is preserved, never silently dropped', () {
+    // Deliberately not `src.`-shaped: the source access gate treats every
+    // observed `src.*` as a claim that the id is registered, and this fixture
+    // exists precisely because it is not.
     // An unresolvable reference is information about the trace. Hiding it
     // would make a broken provenance link look like no link at all.
-    final resolved = ResolvedSourceRef.resolve('src.does.not.exist');
+    final resolved = ResolvedSourceRef.resolve(
+      'unregistered.reference.fixture',
+    );
     expect(resolved.resolved, isFalse);
-    expect(resolved.title, 'src.does.not.exist');
+    expect(resolved.title, 'unregistered.reference.fixture');
     expect(resolved.limitation, isEmpty);
     expect(resolved.evidenceLevel, 'unresolved');
   });
@@ -46,7 +51,7 @@ void main() {
       'confidence_band': 'moderate',
       'source_refs': [
         'src.dailymed.sinemet.label',
-        'src.does.not.exist',
+        'unregistered.reference.fixture',
         'src.apda.levodopa.food',
       ],
     });
@@ -56,7 +61,7 @@ void main() {
       view.resolvedSources.map((s) => s.sourceRef).toList(),
       const [
         'src.dailymed.sinemet.label',
-        'src.does.not.exist',
+        'unregistered.reference.fixture',
         'src.apda.levodopa.food',
       ],
       reason: 'Order must follow the emitted refs so display is deterministic.',

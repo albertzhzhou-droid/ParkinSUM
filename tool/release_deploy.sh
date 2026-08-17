@@ -24,6 +24,11 @@ Options:
   -h, --help          Show this help.
 
 Default behavior validates and builds only. It does not deploy.
+
+App Check defaults:
+  - stage/prod require App Check with a live reCAPTCHA v3 or Enterprise key.
+  - stage/prod reject the App Check debug provider.
+  - dev may opt out explicitly with PARKINSUM_FIREBASE_APP_CHECK=false.
 USAGE
 }
 
@@ -95,6 +100,26 @@ if [[ "$FIREBASE_PROJECT_ID" != "$EXPECTED_PROJECT_ID" ]]; then
   exit 2
 fi
 
+if ! APP_CHECK_DEFINE_OUTPUT="$(
+  node tool/release_app_check_config.mjs \
+    --env "$ENVIRONMENT" \
+    --format lines
+)"; then
+  exit 2
+fi
+
+APP_CHECK_BUILD_ARGS=()
+while IFS= read -r define_arg; do
+  if [[ -n "$define_arg" ]]; then
+    APP_CHECK_BUILD_ARGS+=("$define_arg")
+  fi
+done <<< "$APP_CHECK_DEFINE_OUTPUT"
+
+if [[ "${#APP_CHECK_BUILD_ARGS[@]}" -ne 4 ]]; then
+  echo "App Check configuration did not produce the four required Dart defines." >&2
+  exit 2
+fi
+
 if [[ "$ENVIRONMENT" == "prod" && "$DEPLOY_HOSTING" -eq 1 && "${CONFIRM_PROD_HOSTING:-}" != "$FIREBASE_PROJECT_ID" ]]; then
   echo "Prod Hosting deploy requires CONFIRM_PROD_HOSTING=$FIREBASE_PROJECT_ID" >&2
   exit 2
@@ -121,7 +146,8 @@ fi
 "$FLUTTER_BIN" build web \
   --dart-define=PARKINSUM_BACKEND=firebase \
   --dart-define=PARKINSUM_ENV="$ENVIRONMENT" \
-  --dart-define=PARKINSUM_FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID"
+  --dart-define=PARKINSUM_FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
+  "${APP_CHECK_BUILD_ARGS[@]}"
 
 ARTIFACT_DIR="build/release_artifacts/$RELEASE_ID"
 mkdir -p "$ARTIFACT_DIR"

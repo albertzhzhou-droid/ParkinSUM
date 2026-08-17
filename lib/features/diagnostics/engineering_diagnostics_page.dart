@@ -8,6 +8,7 @@ import '../../domain/usecases/explanation_copy_diagnostics.dart';
 import '../../domain/usecases/localization_lint_diagnostics.dart';
 import '../../domain/usecases/mechanistic_replay_runner.dart';
 import '../../domain/usecases/safe_copy_template_registry.dart';
+import 'rule_audit_trail_page.dart';
 
 /// Read-only engineering diagnostics.
 ///
@@ -161,6 +162,15 @@ class _EngineeringDiagnosticsPageState
       appBar: GlassAppBar(
         title: Text(i18n.tr('diagnostics.title')),
         actions: [
+          IconButton(
+            tooltip: 'Rule audit trail',
+            icon: const Icon(Icons.fact_check_outlined, size: 20),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const RuleAuditTrailPage(),
+              ),
+            ),
+          ),
           IconButton(
             tooltip: i18n.tr('diagnostics.rerun'),
             icon: const Icon(Icons.refresh, size: 20),
