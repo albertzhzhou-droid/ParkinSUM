@@ -273,4 +273,54 @@ void main() {
             as Map<String, dynamic>;
     scanNoPhiKeys(decoded);
   });
+
+  // --- Keyword matching precision -----------------------------------------
+  //
+  // Phrases are matched as whole tokens. A plain substring match flagged any
+  // identifier that merely embedded a phrase, which is how the scoring feature
+  // `medication_schedule_fit` was reported as PHI risk.
+
+  test('identifier embedding a PHI phrase is not flagged', () {
+    final r = route([
+      change(
+        'lib/domain/entities/food_recommendation.dart',
+        added: "'medication_schedule_fit': medicationScheduleFit,",
+      ),
+    ]);
+    expect(
+      hasCategory(r, ContributionRiskCategory.phiRisk),
+      isFalse,
+      reason: 'a scoring-feature key is not a medication schedule',
+    );
+  });
+
+  test('the real PHI phrase is still flagged', () {
+    for (final line in const [
+      "'medication_schedule': loadedSchedule,",
+      'the medication schedule for this user',
+      'mrn: 123456',
+    ]) {
+      final r = route([change('lib/data/example.dart', added: line)]);
+      expect(
+        hasCategory(r, ContributionRiskCategory.phiRisk),
+        isTrue,
+        reason: 'should still flag: $line',
+      );
+    }
+  });
+
+  test('short phrases do not match longer words', () {
+    // `mrn` previously matched `mrna`, plausible in this domain.
+    final r = route([
+      change('lib/data/example.dart', added: 'mrna transcript counts'),
+    ]);
+    expect(hasCategory(r, ContributionRiskCategory.phiRisk), isFalse);
+  });
+
+  test('phrase matching is case-insensitive', () {
+    final r = route([
+      change('lib/data/example.dart', added: 'Patient Name: synthetic'),
+    ]);
+    expect(hasCategory(r, ContributionRiskCategory.phiRisk), isTrue);
+  });
 }

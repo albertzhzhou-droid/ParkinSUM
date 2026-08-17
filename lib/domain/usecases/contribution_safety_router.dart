@@ -306,6 +306,29 @@ class ContributionSafetyRouter {
 
   // --- keyword scanning -----------------------------------------------------
 
+  /// Whole-token phrase match.
+  ///
+  /// A plain `contains` produced false positives on identifiers that merely
+  /// embed a phrase: the scoring feature `medication_schedule_fit` matched the
+  /// `medication_schedule` PHI phrase, and `mrna` matched `mrn`. Boundaries
+  /// treat `_` and alphanumerics as word characters, so snake_case identifiers
+  /// only match when the phrase is the complete token.
+  ///
+  /// Deliberately narrow: it removes substring noise without weakening any
+  /// real match — `medication_schedule: ...` and `mrn: ...` still fire.
+  static final Map<String, RegExp> _phraseMatchers = {};
+
+  bool _containsPhrase(String hay, String phrase) {
+    final matcher = _phraseMatchers.putIfAbsent(
+      phrase,
+      () => RegExp(
+        '(?<![A-Za-z0-9_])${RegExp.escape(phrase)}(?![A-Za-z0-9_])',
+        caseSensitive: false,
+      ),
+    );
+    return matcher.hasMatch(hay);
+  }
+
   void _scan(
     ContributionChange c,
     String hay,
@@ -317,7 +340,7 @@ class ContributionSafetyRouter {
     String review,
   ) {
     for (final phrase in phrases) {
-      if (hay.contains(phrase)) {
+      if (_containsPhrase(hay, phrase)) {
         categories.add(category);
         findings.add(
           _f(

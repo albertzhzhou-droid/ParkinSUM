@@ -40,8 +40,11 @@ jobs:
         run: flutter pub get
 
       # CI should report formatting drift without rewriting files in the runner.
+      # Scoped to source dirs: `dart format .` ignores analysis_options'
+      # analyzer excludes, so a stray build/ directory (platform SourcePackages,
+      # generated example code) would be formatted and fail the check.
       - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed .
+        run: dart format --output=none --set-exit-if-changed lib test tool
 
       - name: Analyze Flutter project
         run: flutter analyze
