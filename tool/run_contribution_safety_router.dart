@@ -63,10 +63,6 @@ const List<String> _allowlistedPaths = [
   // Injects adversarial prescriptive strings as fuzz inputs to prove the
   // deterministic gates reject them.
   'lib/domain/usecases/synthetic_scenario_fuzzer.dart',
-  // Scoring-feature key `medication_schedule_fit` substring-matches the
-  // medication_schedule PHI pattern; it is a ranking feature name, not a
-  // schedule. Detector precision could be tightened instead — see PR notes.
-  'lib/domain/entities/food_recommendation.dart',
 ];
 
 final RegExp _docExt = RegExp(r'\.(md|markdown)$');
