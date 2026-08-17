@@ -108,7 +108,7 @@ MockClient buildScriptedLocalAiClient() {
 /// offline Local AI and the in-memory CDSS database, wired exactly like the
 /// scenario replay tests expect.
 RecommendationReplayRunner buildLocalAiReplayRunner() {
-  const projection = CdssCatalogProjectionService(
+  final projection = CdssCatalogProjectionService(
     database: InMemoryCdssDatabase(),
   );
   final hybrid = NextMealRecommendationOrchestrator(

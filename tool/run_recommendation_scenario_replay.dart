@@ -29,7 +29,7 @@ import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orc
 import 'package:parkinsum_companion/domain/usecases/recommendation_replay_runner.dart';
 
 Future<void> main() async {
-  const projection = CdssCatalogProjectionService(
+  final projection = CdssCatalogProjectionService(
     database: InMemoryCdssDatabase(),
   );
   final hybrid = NextMealRecommendationOrchestrator(

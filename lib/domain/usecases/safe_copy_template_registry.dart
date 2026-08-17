@@ -9,8 +9,24 @@ library;
 import '../entities/rule_explanation.dart';
 import '../entities/safe_copy_template.dart';
 
+/// Output types whose copy asserts something about a food, drug, or modeled
+/// interaction, and therefore must carry provenance.
+///
+/// `boundary` and `policy` templates are pure disclaimers — they make no claim
+/// to source — so they are deliberately exempt rather than left unclassified.
+/// Enforced by `SafeCopyTemplateRegistry.claimBearingOutputTypes` +
+/// `ExplanationCopyCompiler`, and tested against an empty-refs context so the
+/// requirement cannot pass vacuously.
+const Set<String> kClaimBearingCopyOutputTypes = <String>{
+  'informational',
+  'mechanistic_explanation',
+};
+
 class SafeCopyTemplateRegistry {
   const SafeCopyTemplateRegistry();
+
+  /// See [kClaimBearingCopyOutputTypes].
+  Set<String> get claimBearingOutputTypes => kClaimBearingCopyOutputTypes;
 
   /// The initial representative templates (deterministic order).
   List<SafeCopyTemplate> get templates => const [

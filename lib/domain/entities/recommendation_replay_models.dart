@@ -180,9 +180,12 @@ class RecommendationReplayRunReport {
       )
       ..writeln(
         '- **Drift:** this artifact is timestamp-free and '
-        'deterministic. If a regenerated report differs from the committed '
-        'or previously reviewed one, engine/gate/scenario behaviour '
-        'changed and the diff should be reviewed, not regenerated away.',
+        'deterministic. The committed baseline is '
+        '`test/goldens/recommendation_scenario_replay.md`, checked on every '
+        'run by `flutter test test/goldens_test.dart` (also part of '
+        '`npm run verify:all`). If a regenerated report differs from it, '
+        'engine/gate/scenario behaviour changed and the diff should be '
+        'reviewed, not regenerated away.',
       )
       ..writeln()
       ..writeln(
