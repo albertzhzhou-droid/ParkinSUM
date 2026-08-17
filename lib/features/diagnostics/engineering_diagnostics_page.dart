@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../domain/entities/rule_explanation.dart';
+import '../../domain/usecases/catalog_inventory_diagnostics.dart';
 import '../../domain/usecases/explanation_copy_diagnostics.dart';
 import '../../domain/usecases/localization_lint_diagnostics.dart';
 import '../../domain/usecases/mechanistic_replay_runner.dart';
@@ -115,6 +116,32 @@ class _EngineeringDiagnosticsPageState
         blockers: 0,
       ),
     );
+    try {
+      // Inventory-only, like the registry card above: what the prototype
+      // actually ships. Computed by the same domain function the
+      // `catalog:inventory` CLI calls, so the two cannot disagree.
+      final inventory = buildCatalogInventory();
+      results.add(
+        _Check(
+          title: 'Catalog inventory',
+          summary:
+              '${inventory.foodCount} foods · ${inventory.drugCount} '
+              'medications · ${inventory.sourceDocumentCount} source documents '
+              '· ${inventory.ruleCount} rules',
+          detail:
+              '${inventory.modelAssumptionCount} model assumptions and '
+              '${inventory.replayScenarioCount} replay scenarios ship. '
+              '${inventory.nonLiveSourceDocumentCount} source documents are '
+              'declared but not carrying live data, and '
+              '${inventory.unspecifiedSourceCodeCount} catalog entries still '
+              'use a placeholder external code. Counting coverage is not a '
+              'claim that the coverage is adequate.',
+          blockers: 0,
+        ),
+      );
+    } catch (e) {
+      results.add(_Check.error('Catalog inventory', e));
+    }
 
     sw.stop();
     if (!mounted) return;

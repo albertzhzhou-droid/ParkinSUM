@@ -7,6 +7,7 @@ import 'package:parkinsum_companion/core/constants/local_ai_replay_scenarios.dar
 import 'package:parkinsum_companion/core/db/cdss_database_memory.dart';
 import 'package:parkinsum_companion/domain/entities/cdss_records.dart';
 import 'package:parkinsum_companion/domain/entities/runtime_context.dart';
+import 'package:parkinsum_companion/domain/usecases/catalog_inventory_diagnostics.dart';
 import 'package:parkinsum_companion/domain/usecases/clinical_decision_support_service.dart';
 import 'package:parkinsum_companion/domain/usecases/explanation_copy_compiler.dart';
 import 'package:parkinsum_companion/domain/usecases/explanation_copy_diagnostics.dart';
@@ -54,6 +55,14 @@ void main() {
         canonicalOf: prettyJson,
       ),
     );
+  });
+
+  test('catalog inventory matches its golden', () {
+    // Pins what the prototype claims to ship. A seed added or removed without
+    // intent shows up here as a diff.
+    final report = buildCatalogInventory();
+    expectGolden('catalog_inventory.md', report.toMarkdown());
+    expectGolden('catalog_inventory.json', encodeCatalogInventory(report));
   });
 
   test('explanation copy compile report matches its golden', () {
