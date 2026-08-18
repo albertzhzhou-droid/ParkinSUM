@@ -8,7 +8,7 @@
     "approvalScope": "Repository and locally built artifact facts only; this is not an App Store Connect or Play Console submission receipt."
   },
   "lockIdentities": {
-    "pubspec.lock": "658d6b4084a87ca74145984f1efbaf95736381424d0a638dd9d418a1a34e5b5c",
+    "pubspec.lock": "1d772ccc4e84cfcd6b9804e97760cc26a14e3fa193bf3b2d6a611ca8e709b5a8",
     "package-lock.json": "cf791de0c70e48a1f85e35e8de84a471020e1114d67ba42fe8a5c1d2e4d1217c",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"

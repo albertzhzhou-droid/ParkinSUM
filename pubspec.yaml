@@ -32,7 +32,7 @@ dependencies:
   http: ^1.2.1
   xml: ^7.0.1
   archive: ^4.0.9
-  csv: ^6.0.0
+  csv: ^8.0.0
   crypto: ^3.0.6
   firebase_core: ^4.7.0
   firebase_auth: ^6.4.0
