@@ -9,6 +9,7 @@ import '../../core/models/user_profile.dart';
 import '../entities/food_recommendation.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
+import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/ranker_eligibility.dart';
 import 'dosage_note_parser.dart';
 import '../entities/meal_composition.dart';
@@ -21,6 +22,7 @@ import '../entities/time_axis_events.dart';
 import 'catalog_food_to_candidate.dart';
 import 'cdss_catalog_projection_service.dart';
 import 'get_food_recommendations_usecase.dart';
+import 'intake_dose_context_builder.dart';
 import 'local_ai_recommendation_adapter.dart';
 import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
@@ -42,6 +44,10 @@ import 'time_axis_builder.dart';
 /// - 目前 AI 仍只做 rerank + 简短 explanation，不会生成全新候选；
 /// - 这里的药物/餐时窗口仍是 P0 operational scoring，不等于完整 PK/PD 模型。
 class NextMealRecommendationOrchestrator {
+  static const MechanisticMedicationApplicabilityPolicy
+  _mechanisticMedicationApplicabilityPolicy =
+      MechanisticMedicationApplicabilityPolicy();
+
   final GetFoodRecommendationsUseCase conservativeRecommender;
   final CdssCatalogProjectionService projectionService;
   final LocalAiRecommendationAdapter? localAiAdapter;
@@ -640,12 +646,10 @@ class NextMealRecommendationOrchestrator {
     return 0.2;
   }
 
-  // LEGACY HEURISTIC FALLBACK — superseded by `MechanisticConflictEngine`
-  // when the user-defined window is present and mechanistic context is
-  // sufficient. See `_enrichWithMechanistic` and the `rankerUsed` field on
-  // `NextMealRecommendationResult` for the promotion logic. Kept here so
-  // existing benchmark fixtures and tests continue to pass when no window
-  // is provided.
+  // CONSERVATIVE PRODUCTION HEURISTIC. The mechanistic engine may attach an
+  // educational trace, but it never supersedes or promotes over this order.
+  // A separately consented local-AI path may reorder only the already-safe
+  // whitelist and is reported explicitly through `rankerUsed`.
   double _levodopaWindowPenalty({
     required DateTime midpoint,
     required List<DrugDefinition> activeDrugs,
@@ -1044,6 +1048,10 @@ class NextMealRecommendationOrchestrator {
       mealInputs: mealInputs,
       userDefinedWindow: request.userDefinedWindow,
     );
+    final medicationApplicability = _mechanisticMedicationApplicabilityPolicy
+        .evaluateContexts(
+          context.medicationEvents.map((event) => event.context),
+        );
 
     final MechanisticConflictResult trace = mechanisticEngine.evaluate(
       context: context,
@@ -1072,16 +1080,20 @@ class NextMealRecommendationOrchestrator {
       );
     }
 
-    // ---- Mechanistic-primary ranking (Gap 2) -------------------------------
-    // Replace the heuristic ranking only when the mechanistic engine has
-    // sufficient context (user window + medium/high confidence + every
-    // candidate scored). Otherwise the existing heuristic ranking stays
-    // untouched and we record `rankerUsed = "heuristic_legacy_fallback"`.
+    // ---- Trace-only mechanistic evaluation ---------------------------------
+    // The current mechanistic prototype is inspectable educational trace only.
+    // It is not formulation-specifically validated or calibrated for candidate
+    // ranking, so it must never replace the conservative heuristic order.
     // Build an explicit eligibility record. The legacy heuristic can only
     // determine final order when `mechanisticPrimaryEligible == false`, and in
     // that case `fallbackReasons` is always populated and surfaced.
     final fallbackReasons = <String>[];
     final eligibilityReasons = <String>[];
+    if (medicationApplicability.applicable) {
+      eligibilityReasons.add('mechanistic_medication_applicable');
+    } else {
+      fallbackReasons.addAll(medicationApplicability.reasonCodes);
+    }
     if (request.userDefinedWindow == null) {
       fallbackReasons.add('missing_user_defined_window');
     } else {
@@ -1102,24 +1114,13 @@ class NextMealRecommendationOrchestrator {
         'insufficient_confidence_${trace.confidenceBand.name}',
       );
     }
+    fallbackReasons.add('mechanistic_trace_only_not_validated_for_ranking');
 
-    final canPromoteMechanistic = fallbackReasons.isEmpty;
-    var rankerUsed = 'heuristic_legacy_fallback';
-    var recommendations = base.recommendations;
-    if (canPromoteMechanistic) {
-      final orderById = <String, int>{};
-      for (var i = 0; i < candidateScores!.length; i++) {
-        orderById[candidateScores[i].candidateFoodId] = i;
-      }
-      final reordered = [...base.recommendations];
-      reordered.sort((a, b) {
-        final ia = orderById[a.food.id] ?? 1 << 30;
-        final ib = orderById[b.food.id] ?? 1 << 30;
-        return ia.compareTo(ib);
-      });
-      recommendations = List.unmodifiable(reordered);
-      rankerUsed = 'mechanistic_primary';
-    }
+    const canPromoteMechanistic = false;
+    final rankerUsed = base.aiRerankUsed
+        ? 'local_ai_safe_candidate_rerank'
+        : 'heuristic_legacy_fallback';
+    final recommendations = base.recommendations;
 
     final rankerEligibility = RankerEligibility(
       mechanisticPrimaryEligible: canPromoteMechanistic,
@@ -1162,14 +1163,18 @@ class NextMealRecommendationOrchestrator {
       // legacy records fall back to parsing dosageNote. Neither path injects
       // a private default dose.
       final dose = _dosageNoteParser.parseIntake(intake);
+      final formulation = resolveIntakeMechanisticFormulation(
+        intake: intake,
+        drug: drug,
+      );
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
         strength: dose.explicit ? dose.value : null,
         unit: dose.explicit ? dose.unit : null,
-        form: intake.dosageForm ?? drug.dosageForm,
-        route: intake.route ?? drug.route,
-        releaseType: intake.releaseType ?? drug.releaseType,
+        form: formulation.dosageForm,
+        route: formulation.route,
+        releaseType: formulation.releaseType,
         jurisdiction: drug.jurisdiction,
         sourceDocId: 'synthetic:${drug.sourceSystem}',
       );
@@ -1185,17 +1190,12 @@ class NextMealRecommendationOrchestrator {
     return inputs;
   }
 
-  /// DrugDefinition doesn't carry a structured `activeIngredients` list, so
-  /// the orchestrator inspects `tags` and `genericName` to derive the
-  /// synthetic list passed to the validator. Synthetic only; no clinical
-  /// inference.
+  /// DrugDefinition does not yet carry a structured `activeIngredients` list,
+  /// so the production bridge tokenizes only the generic-name components at a
+  /// shared exact boundary. Tags remain category metadata and are never
+  /// promoted into ingredient identity.
   List<String> _drugActiveIngredients(DrugDefinition drug) {
-    final out = <String>{};
-    out.add(drug.genericName.toLowerCase());
-    for (final t in drug.tags) {
-      out.add(t.name.toLowerCase());
-    }
-    return out.where((s) => s.isNotEmpty).toList(growable: false);
+    return CanonicalMedicationIngredientTokenizer.tokenize([drug.genericName]);
   }
 
   List<MealTimelineInput> _buildMechanisticMealInputs(
@@ -1224,7 +1224,8 @@ class NextMealRecommendationOrchestrator {
   /// (`catalogById`) to recover physical form, energy (calories), and
   /// amino-acid provenance. Logged macros come from the meal item itself;
   /// catalog data only ENRICHES. Missing source data stays null (never 0).
-  /// Falls back to a single aggregate component only when the meal has no items.
+  /// An empty item list is missing composition, never an observed zero-macro
+  /// meal. The normalizer receives no components and emits explicit missingness.
   Map<String, MealComposition> _buildMealCompositions(
     NextMealRecommendationRequest request,
     Map<String, FoodItem> catalogById,
@@ -1232,25 +1233,7 @@ class NextMealRecommendationOrchestrator {
     final result = <String, MealComposition>{};
     for (final meal in request.history) {
       final components = <FoodComponent>[];
-      if (meal.items.isEmpty) {
-        // No item structure available → keep the legacy aggregate (macros from
-        // totals; calories/portion unknown rather than fabricated).
-        final totals = meal.computeTotals();
-        components.add(
-          FoodComponent(
-            id: 'meal_aggregate_${meal.id}',
-            name: meal.title,
-            physicalForm: MealPhysicalForm.unknown,
-            proteinGrams: totals.totalProteinG,
-            fatGrams: totals.totalFatG,
-            fiberGrams: totals.totalFiberG,
-            carbohydrateGrams: totals.totalCarbsG,
-            calories: null,
-            portionGrams: null,
-            sourceDocId: 'meal_history',
-          ),
-        );
-      } else {
+      if (meal.items.isNotEmpty) {
         for (var i = 0; i < meal.items.length; i++) {
           components.add(
             mealItemToFoodComponent(

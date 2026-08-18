@@ -7,6 +7,7 @@
 library;
 
 import 'medication_entry_validation.dart';
+import 'mechanistic_medication_applicability.dart';
 
 /// Kind of timeline event.
 enum TimelineEventKind { medication, meal, foodComponent }
@@ -80,7 +81,10 @@ class MedicationTimelineEvent extends TimelineEvent {
   String get releaseType => context.releaseType;
   String get route => context.route;
   bool get isLevodopaContext =>
-      context.activeIngredients.any((i) => i.toLowerCase() == 'levodopa');
+      CanonicalMedicationIngredientTokenizer.containsExact(
+        context.activeIngredients,
+        'levodopa',
+      );
 
   @override
   Map<String, dynamic> toJson() => {
@@ -163,13 +167,15 @@ class TimeAxisConflictContext {
     this.userDefinedWindow,
     Set<String> missingFields = const {},
   }) : medicationEvents = List.unmodifiable(
-         [...medicationEvents]..sort((a, b) => a.minute.compareTo(b.minute)),
+         <MedicationTimelineEvent>[...medicationEvents]
+           ..sort(_compareTimelineEventOrder),
        ),
        mealEvents = List.unmodifiable(
-         [...mealEvents]..sort((a, b) => a.minute.compareTo(b.minute)),
+         <MealTimelineEvent>[...mealEvents]..sort(_compareTimelineEventOrder),
        ),
        foodComponentEvents = List.unmodifiable(
-         [...foodComponentEvents]..sort((a, b) => a.minute.compareTo(b.minute)),
+         <FoodComponentTimelineEvent>[...foodComponentEvents]
+           ..sort(_compareTimelineEventOrder),
        ),
        missingFields = Set.unmodifiable(missingFields);
 
@@ -185,6 +191,11 @@ class TimeAxisConflictContext {
     'user_defined_window': userDefinedWindow?.toJson(),
     'missing_fields': missingFields.toList(growable: false),
   };
+}
+
+int _compareTimelineEventOrder(TimelineEvent left, TimelineEvent right) {
+  final byMinute = left.minute.compareTo(right.minute);
+  return byMinute != 0 ? byMinute : left.id.compareTo(right.id);
 }
 
 /// Convert a `DateTime` to canonical minute resolution. Always UTC-stable.

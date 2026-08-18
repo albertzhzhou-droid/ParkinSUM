@@ -23,22 +23,21 @@ any check can run, and the error names `xml` rather than the SDK:
 Because xml 7.0.1 requires SDK version ^3.11.0 ... version solving failed.
 ```
 
-Note that `pubspec.yaml` still declares `sdk: ">=3.3.0 <4.0.0"`, which no longer
-matches this. Correcting it is a one-line change, but raising the declared floor
-also raises the package's **language version**, which switches `dart format` to
-the newer style and reformats ~269 files. That formatter migration should be its
-own commit rather than a side effect of a dependency bump — until then, treat
-this section as the authoritative minimum.
+`pubspec.yaml` now declares `sdk: ">=3.11.0 <4.0.0"`, matching this dependency
+floor. The accompanying formatter migration is part of the current worktree;
+review it separately from runtime and evidence changes rather than treating the
+large mechanical diff as a behavioral change.
 
 ## One command
 
 ### `npm run verify:all`
 - **Checks:** every deterministic governance gate in one run — explanation copy
   compile, localization safety lint, mechanistic replay, Local-AI scenario
-  replay, synthetic scenario fuzzer, local privacy preflight, source access
+  replay, synthetic scenario fuzzer, local privacy preflight, store privacy
+  declaration drift, open-source influence/license firewall, source access
   contract, source version drift, contribution safety router, and the
   committed-golden drift check.
-- **Expected:** `All 10 gates passed.` plus `build/verify_all/latest.{json,md}`.
+- **Expected:** `All 12 gates passed.` plus `build/verify_all/latest.{json,md}`.
 - **Failure means:** at least one gate reported a blocker; the composed report
   names which. The command exits non-zero, so it is a ratchet, not a summary.
 - **Network:** no. **Data:** synthetic only.
@@ -47,6 +46,37 @@ this section as the authoritative minimum.
 CI runs this exact command, so local and CI verification cannot drift apart.
 The sections below document each gate individually for anyone who wants to run
 one in isolation.
+
+### Store privacy declaration drift contract
+
+- **Run:** `npm run privacy:store`
+- **Checks:** the dated repository snapshot against runtime dependencies and
+  lock identities, Apple privacy manifests and macOS release entitlements,
+  Android source permissions, every literal Dart HTTP(S) host, data-flow
+  classifications, and draft Apple/Google store-answer snapshots.
+- **Artifact checks:** after an Android build, pass
+  `--android-manifest <merged-manifest>`; after an Apple build, pass
+  `--apple-bundle <Runner.app>`. `--require-store-approval` deliberately fails
+  until a dated App Store Connect/Play Console owner approval is recorded.
+- **Boundary:** a passing repository check is not legal advice, a store
+  submission, or evidence that current store answers have been approved.
+
+### Open-source influence and license firewall
+
+- **Run:** `npm run open-source:firewall`.
+- **Checks:** every GitHub repository cited in the upgrade queue or research
+  documentation has an exact inventory entry with a reviewed commit, license
+  evidence, concept-only or transfer disposition, and release-boundary
+  obligations. Unresolved licenses and `NOASSERTION` fail closed if any local
+  transfer or distribution is claimed.
+- **Expected:** all checker tests pass and the final line reports the pinned,
+  unresolved, and transferred counts.
+- **Failure means:** a cited upstream is unreviewed, a pin/license claim drifted,
+  an unreviewed vendored directory appeared, or transfer obligations are
+  incomplete.
+- **Network:** no; live upstream drift is a separate queued gate. **Data:**
+  repository metadata only. Passing is not legal advice, an artifact SBOM, or
+  proof that every platform NOTICE bundle is complete.
 
 ### Committed goldens (cross-commit drift)
 
@@ -245,7 +275,7 @@ calibrated for real care.
   missing window, unknown release type, synthetic vs official source, imputed
   provenance) and reports per-dimension context-completeness status.
 - **Expected:** `build/input_quality/latest.{json,md}` with one row per case
-  (overall status, mechanistic-primary eligibility, blocker count).
+  (overall status, backward-compatible trace-eligibility field, blocker count).
 - **Failure means:** a context-completeness invariant changed — e.g. a unitless
   dose validated, missing nutrient treated as zero, product strength rescued a
   missing dose, or synthetic source reached official confidence.

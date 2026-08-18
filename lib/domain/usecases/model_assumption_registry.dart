@@ -14,6 +14,8 @@ enum ModelEvidenceLevel {
 
 enum ModelSourceType {
   officialLabel,
+  primaryHumanStudy,
+  consensusStandard,
   review,
   modelPaper,
   regulatoryGuidance,
@@ -66,21 +68,26 @@ class ModelAssumptionRegistry {
     citationText:
         'U.S. NLM. SINEMET (carbidopa and levodopa) tablet label. DailyMed.',
     evidenceLevel: ModelEvidenceLevel.label,
-    lastReviewed: '2026-05-27',
+    lastReviewed: '2026-08-17',
   );
 
   static const ModelAssumption sinemetExtendedLabel = ModelAssumption(
     sourceId: 'src.dailymed.sinemet.extended.label',
-    title: 'DailyMed — Carbidopa/Levodopa extended-release tablet label',
+    title:
+        'DailyMed — Carbidopa/Levodopa extended-release capsule label (current product-specific labeling)',
     sourceType: ModelSourceType.officialLabel,
     mechanismSupported:
-        'Extended-release formulation alters release kinetics relative to '
-        'immediate-release; food effect documented.',
-    limitation: 'Label is descriptive; not patient-specific.',
+        'For the labeled extended-release capsule, a high-fat, high-calorie '
+        'meal may delay levodopa absorption by about two hours; high-protein '
+        'food may decrease absorption.',
+    limitation:
+        'Product-specific label evidence; the magnitude must not be transferred '
+        'to every extended-release tablet or capsule.',
     citationText:
-        'U.S. NLM. Carbidopa/levodopa extended-release tablet label. DailyMed.',
+        'U.S. NLM. Carbidopa and levodopa extended-release capsule label. '
+        'DailyMed setid 9ac804f1-7e15-48bc-8ae9-25181a629dd4.',
     evidenceLevel: ModelEvidenceLevel.label,
-    lastReviewed: '2026-05-27',
+    lastReviewed: '2026-08-17',
   );
 
   static const ModelAssumption apdaLevodopaFood = ModelAssumption(
@@ -119,17 +126,136 @@ class ModelAssumptionRegistry {
     title:
         'Influence of fluctuations of plasma LNAAs on the clinical response '
         'to levodopa',
-    sourceType: ModelSourceType.review,
+    sourceType: ModelSourceType.primaryHumanStudy,
     mechanismSupported:
-        'Plasma LNAA fluctuations from normal diets can modulate clinical '
-        'response to levodopa.',
-    limitation: 'Population-level finding; not a per-patient predictor.',
+        'Eleven participants were observed hourly on a normal hospital diet. '
+        'The study tested whether plasma LNAA variation explained fluctuating '
+        'levodopa response.',
+    limitation:
+        'Important negative finding: normal-diet LNAA fluctuations were not an '
+        'important contributor for most participants. Small observational '
+        'sample; it neither supports a universal penalty nor a patient predictor.',
     citationText:
         'Nutt J.G. et al. Influence of fluctuations of plasma LNAAs with '
         'normal diets on the clinical response to levodopa. J Neurol '
         'Neurosurg Psychiatry 52(4):481–487, 1989.',
     evidenceLevel: ModelEvidenceLevel.mechanism,
-    lastReviewed: '2026-05-27',
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption nuttOnOff = ModelAssumption(
+    sourceId: 'src.nutt.onoff.1984',
+    title: 'The on-off phenomenon: levodopa absorption and transport',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In nine patients with fluctuating motor state, meals reduced peak '
+        'plasma levodopa by 29% and delayed absorption by 34 minutes. Selected '
+        'large neutral amino acids reversed response to infused levodopa '
+        'without reducing plasma levodopa.',
+    limitation:
+        'Very small mechanistic study in selected fluctuating patients; group '
+        'effects do not calibrate an individual score or meal rule.',
+    citationText:
+        'Nutt JG et al. The on-off phenomenon in Parkinson\'s disease: '
+        'relation to levodopa absorption and transport. N Engl J Med '
+        '310:483–488, 1984. doi:10.1056/NEJM198402233100802.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption doiGastricLevodopa = ModelAssumption(
+    sourceId: 'src.doi.ge.levodopa.2012',
+    title: 'Plasma levodopa peak delay and impaired gastric emptying in PD',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Thirty-one patients underwent levodopa pharmacokinetic and '
+        '13C-octanoic-acid breath testing; delayed gastric emptying was more '
+        'common in the group with a later plasma levodopa peak.',
+    limitation:
+        'Association in a small cohort, not proof that a modeled meal curve '
+        'predicts an individual plasma peak or clinical response.',
+    citationText:
+        'Doi H et al. Plasma levodopa peak delay and impaired gastric emptying '
+        'in Parkinson\'s disease. J Neurol Sci 319:86–88, 2012. '
+        'doi:10.1016/j.jns.2012.05.010.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption hardoffGastricPd = ModelAssumption(
+    sourceId: 'src.hardoff.ge.pd.2001',
+    title: 'Gastric emptying time and motility in Parkinson\'s disease',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Scintigraphy in 51 participants with PD and 22 controls found slower '
+        'mean emptying and wide variability in the PD groups.',
+    limitation:
+        'Group means overlapped and clinical subgroups behaved differently; '
+        'the result supports visible uncertainty, not a disease-specific constant.',
+    citationText:
+        'Hardoff R et al. Gastric emptying time and gastric motility in '
+        'patients with Parkinson\'s disease. Mov Disord 16:1041–1047, 2001. '
+        'doi:10.1002/mds.1203.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption siebnerEarlyTreatedGastric = ModelAssumption(
+    sourceId: 'src.siebner.ge.earlypd.2022',
+    title: 'Gastric emptying in medicated early Parkinson disease',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Solid-meal scintigraphy in 15 people with early, treated Parkinson '
+        'disease and matched controls found no group-level delay; only one '
+        'participant with Parkinson disease met the delayed-emptying criterion.',
+    limitation:
+        'Small preliminary study in early disease while usual dopamine '
+        'replacement continued. It does not exclude delayed emptying in other '
+        'stages or contexts, but prevents treating a disease-wide delay as universal.',
+    citationText:
+        'Siebner TH et al. Gastric Emptying Is Not Delayed and Does Not '
+        'Correlate With Attenuated Postprandial Blood Flow Increase in '
+        'Medicated Patients With Early Parkinson\'s Disease. Front Neurol '
+        '13:828069, 2022. doi:10.3389/fneur.2022.828069.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption gastricScintigraphyConsensus = ModelAssumption(
+    sourceId: 'src.abell.ges.consensus.2008',
+    title: 'Consensus standard for gastric emptying scintigraphy',
+    sourceType: ModelSourceType.consensusStandard,
+    mechanismSupported:
+        'Standardizes a low-fat egg-white meal and measurements at 0, 1, 2, '
+        'and 4 hours; establishes how clinical gastric emptying is measured.',
+    limitation:
+        'A measurement protocol, not a formula for arbitrary meals and not a '
+        'basis for diagnosing delayed emptying from ParkinSUM inputs.',
+    citationText:
+        'Abell TL et al. Consensus recommendations for gastric emptying '
+        'scintigraphy. J Nucl Med Technol 36:44–54, 2008. '
+        'doi:10.2967/jnmt.107.048116.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption dualReleaseFoodPk = ModelAssumption(
+    sourceId: 'src.crevoisier.dualrelease.food.2003',
+    title: 'Food effect on dual-release levodopa pharmacokinetics',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In a randomized two-way crossover in 19 healthy volunteers, a '
+        'high-fat breakfast lowered mean Cmax and shifted mean Tmax from '
+        '1.0 to 3.1 hours for one levodopa/benserazide formulation.',
+    limitation:
+        'Healthy volunteers and one formulation; the magnitude must not be '
+        'generalized to other release products or individual patients.',
+    citationText:
+        'Crevoisier C et al. Effects of food on the pharmacokinetics of '
+        'levodopa in a dual-release formulation. Eur J Pharm Biopharm '
+        '55:71–76, 2003. PMID:12551706.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
   );
 
   static const ModelAssumption ceredaProteinRestricted = ModelAssumption(
@@ -183,7 +309,7 @@ class ModelAssumptionRegistry {
   );
 
   static const ModelAssumption gastricEmptyingHalfTime = ModelAssumption(
-    sourceId: 'src.camilleri.ge.halftime.2009',
+    sourceId: 'src.zinsmeister.ge.halftime.2012',
     title:
         'Calculations to estimate gastric emptying half-time of solids in '
         'humans',
@@ -193,11 +319,35 @@ class ModelAssumptionRegistry {
         'inter-subject variation.',
     limitation: 'Population-level; ParkinSUM uses for direction not exact PK.',
     citationText:
-        'Cremonini F. et al. Comparison of calculations to estimate gastric '
-        'emptying half-time of solids in humans. Neurogastroenterology & '
-        'Motility 21(3):247–254, 2009.',
+        'Zinsmeister A.R., Bharucha A.E., Camilleri M. Comparison of '
+        'calculations to estimate gastric emptying half-time of solids in '
+        'humans. Neurogastroenterol Motil 24(12):1142–1145, 2012. '
+        'doi:10.1111/j.1365-2982.2012.01982.x.',
     evidenceLevel: ModelEvidenceLevel.mechanism,
-    lastReviewed: '2026-05-27',
+    lastReviewed: '2026-08-17',
+  );
+
+  static const ModelAssumption
+  gastricEmptyingMeasurementVariation = ModelAssumption(
+    sourceId: 'src.camilleri.ge.variation.2012',
+    title:
+        'Performance characteristics of scintigraphic gastric emptying '
+        'measurement in healthy participants',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Measured solid-meal half-time showed 24.5% between-participant '
+        'and 23.8% within-participant coefficients of variation.',
+    limitation:
+        'Healthy-participant measurement variability is not a Parkinson '
+        'disease distribution and does not justify a patient interval. '
+        'ParkinSUM uses it only to motivate an illustrative sensitivity run.',
+    citationText:
+        'Camilleri M. et al. Performance characteristics of scintigraphic '
+        'measurement of gastric emptying of solids in healthy participants. '
+        'Neurogastroenterol Motil 24(12):1076-e562, 2012. '
+        'doi:10.1111/j.1365-2982.2012.01972.x.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-08-17',
   );
 
   static const ModelAssumption foodPhysicalProperties = ModelAssumption(
@@ -360,10 +510,17 @@ class ModelAssumptionRegistry {
     apdaLevodopaFood,
     npjParkinsonResistance,
     nuttLnaa,
+    nuttOnOff,
+    doiGastricLevodopa,
+    hardoffGastricPd,
+    siebnerEarlyTreatedGastric,
+    gastricScintigraphyConsensus,
+    dualReleaseFoodPk,
     ceredaProteinRestricted,
     advancesNutritionLevodopa,
     levodopaPk,
     gastricEmptyingHalfTime,
+    gastricEmptyingMeasurementVariation,
     foodPhysicalProperties,
     fdaCdsGuidance,
     lnaaPlantVsAnimal,

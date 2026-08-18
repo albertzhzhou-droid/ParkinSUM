@@ -95,7 +95,10 @@ class DailyMedP0Importer {
       sourceSystem: 'DAILYMED',
       externalProductCode: setId,
     );
-    final route = _firstCodeDisplayName(document, 'routeCode') ?? 'oral';
+    // A missing SPL route is not evidence of oral administration. Keep the
+    // metadata unknown so the runtime applicability gate abstains instead of
+    // authorizing an oral-only model from the product title alone.
+    final route = _firstCodeDisplayName(document, 'routeCode') ?? 'unspecified';
     final dosageForm =
         _firstCodeDisplayName(document, 'formCode') ?? 'unspecified';
     final releaseType = _inferReleaseType(title);
@@ -550,11 +553,25 @@ class DailyMedP0Importer {
 
   String _inferReleaseType(String title) {
     final lower = title.toLowerCase();
-    if (lower.contains('extended') || lower.contains('er')) {
+    if (RegExp(
+      r'\b(extended|controlled|sustained|prolonged)[ -]?release\b|\b(er|xr|cr|sr)\b',
+    ).hasMatch(lower)) {
       return 'extended_release';
     }
-    if (lower.contains('patch')) return 'continuous';
-    return 'immediate_release';
+    if (RegExp(r'\bdelayed[ -]?release\b|\bdr\b').hasMatch(lower)) {
+      return 'delayed_release';
+    }
+    if (lower.contains('patch') || lower.contains('continuous')) {
+      return 'continuous';
+    }
+    if (RegExp(r'\bimmediate[ -]?release\b|\bir\b').hasMatch(lower)) {
+      return 'immediate_release';
+    }
+    // A conventional-looking tablet title is not formulation evidence. In
+    // particular, never turn absence of release metadata into IR and never use
+    // an arbitrary "er" substring match. Unknown must reach the applicability
+    // gate as unknown and make the mechanistic provider abstain.
+    return 'unknown';
   }
 
   String _buildInteractionSummary(Map<String, String> sections) {

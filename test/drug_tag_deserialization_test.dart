@@ -17,6 +17,11 @@ void main() {
     expect(drug.tags, const <DrugTag>[DrugTag.unknown]);
     expect(drug.tags, isNot(contains(DrugTag.levodopaLike)));
     expect(drug.toJson()['tags'], const <String>['unknown']);
+    expect(
+      drug.route,
+      'unspecified',
+      reason: 'Missing route metadata must never be inferred as oral.',
+    );
   });
 
   test(

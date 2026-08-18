@@ -100,6 +100,35 @@ if [[ "$FIREBASE_PROJECT_ID" != "$EXPECTED_PROJECT_ID" ]]; then
   exit 2
 fi
 
+if ! SOURCE_CONTRACT_OUTPUT="$(
+  node tool/release_source_contract.mjs \
+    --env "$ENVIRONMENT"
+)"; then
+  exit 2
+fi
+
+SOURCE_CONTRACT_LINES=()
+while IFS= read -r source_line; do
+  if [[ -n "$source_line" ]]; then
+    SOURCE_CONTRACT_LINES+=("$source_line")
+  fi
+done <<< "$SOURCE_CONTRACT_OUTPUT"
+
+if [[ "${#SOURCE_CONTRACT_LINES[@]}" -ne 3 ]]; then
+  echo "Source contract did not produce the three required values." >&2
+  exit 2
+fi
+
+SOURCE_GIT_COMMIT="${SOURCE_CONTRACT_LINES[0]#SOURCE_GIT_COMMIT=}"
+SOURCE_GIT_TREE="${SOURCE_CONTRACT_LINES[1]#SOURCE_GIT_TREE=}"
+SOURCE_GIT_CLEAN="${SOURCE_CONTRACT_LINES[2]#SOURCE_GIT_CLEAN=}"
+if [[ ! "$SOURCE_GIT_COMMIT" =~ ^[a-f0-9]{40}$ ]] || \
+  [[ ! "$SOURCE_GIT_TREE" =~ ^[a-f0-9]{40}$ ]] || \
+  [[ ! "$SOURCE_GIT_CLEAN" =~ ^(true|false)$ ]]; then
+  echo "Source contract returned invalid Git metadata." >&2
+  exit 2
+fi
+
 if ! APP_CHECK_DEFINE_OUTPUT="$(
   node tool/release_app_check_config.mjs \
     --env "$ENVIRONMENT" \
@@ -134,6 +163,9 @@ echo "environment=$ENVIRONMENT"
 echo "firebase_project=${FIREBASE_PROJECT_ID:-not_set}"
 echo "deploy_firestore=$DEPLOY_FIRESTORE"
 echo "deploy_hosting=$DEPLOY_HOSTING"
+echo "source_git_commit=$SOURCE_GIT_COMMIT"
+echo "source_git_tree=$SOURCE_GIT_TREE"
+echo "source_git_clean=$SOURCE_GIT_CLEAN"
 
 "$FLUTTER_BIN" pub get
 "$FLUTTER_BIN" analyze
@@ -157,12 +189,10 @@ SOURCE_BUNDLE_SHA=""
 
 if [[ "$CREATE_SOURCE_BUNDLE" -eq 1 ]]; then
   SOURCE_BUNDLE="$ARTIFACT_DIR/${RELEASE_ID}_source.tar.gz"
-  tar \
-    --exclude ./build \
-    --exclude ./.dart_tool \
-    --exclude ./node_modules \
-    --exclude ./macos/Pods \
-    -czf "$SOURCE_BUNDLE" .
+  git archive \
+    --format=tar.gz \
+    --output="$SOURCE_BUNDLE" \
+    "$SOURCE_GIT_COMMIT"
   SOURCE_BUNDLE_SHA="$(shasum -a 256 "$SOURCE_BUNDLE" | awk '{print $1}')"
 fi
 
@@ -192,7 +222,10 @@ MANIFEST_PATH="$(node tool/release_manifest.mjs \
   --web-build-sha256 "$WEB_BUILD_SHA" \
   --source-bundle "$SOURCE_BUNDLE" \
   --source-bundle-sha256 "$SOURCE_BUNDLE_SHA" \
-  --source-bundle-id "$RELEASE_ID")"
+  --source-bundle-id "$RELEASE_ID" \
+  --source-commit "$SOURCE_GIT_COMMIT" \
+  --source-tree "$SOURCE_GIT_TREE" \
+  --source-clean "$SOURCE_GIT_CLEAN")"
 
 echo "Release deployment workflow completed."
 echo "release_manifest=$MANIFEST_PATH"

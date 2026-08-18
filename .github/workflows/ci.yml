@@ -52,6 +52,25 @@ jobs:
       - name: Run Flutter tests
         run: flutter test
 
+      - name: Verify initialized-user algorithm journey
+        run: flutter test test/registered_user_algorithm_journey_test.dart
+
+      - name: Build local-mode Web release
+        run: flutter build web --release --dart-define=PARKINSUM_BACKEND=local
+
+      - name: Build local-mode Android debug APK
+        run: flutter build apk --debug --dart-define=PARKINSUM_BACKEND=local
+
+      # The source contract is checked in verify:all, but only this job owns a
+      # real merged Android manifest. Comparing artifact permissions and the
+      # deny-backup attributes here prevents merge-time drift from bypassing
+      # the review.
+      - name: Validate built Android privacy facts
+        run: >-
+          node tool/store_privacy_contract_check.mjs
+          --android-manifest
+          build/app/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml
+
   node-preflight:
     name: Node public preflight
     runs-on: ubuntu-latest
@@ -60,20 +79,63 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      # The store-privacy contract resolves reviewed third-party Apple privacy
+      # manifests through .dart_tool/package_config.json. Keep this job
+      # fail-closed by materializing the pinned Flutter dependency graph before
+      # running the otherwise Node-driven contract checks.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.0'
+          cache: true
+
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
 
-      - name: Install Node dependencies
-        run: npm ci
+      - name: Set up Java for Firestore Emulator
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          npm ci
 
       - name: Run public repository preflight
         run: npm run public:preflight
 
       - name: Validate Firestore rules contract
         run: npm run rules:contract
+
+      - name: Validate Firestore emulator runtime selection
+        run: npm run rules:runner:test
+
+      - name: Validate versioned schema catalog
+        run: npm run schema:contract
+
+      - name: Validate complete-app research and delivery queue
+        run: npm run upgrade:queue
+
+      - name: Validate store privacy declaration contract
+        run: npm run privacy:store
+
+      - name: Validate open-source influence and license firewall
+        run: npm run open-source:firewall
+
+      - name: Validate release fail-closed contracts
+        run: npm run release:contract
+
+      - name: Audit production Node dependencies
+        run: npm run security:dependencies
+
+      - name: Validate Firestore rules behavior in Emulator
+        run: npm run rules:test
 
   governance-gates:
     name: Governance gates
@@ -112,9 +174,10 @@ jobs:
           npm ci
 
       # One command runs every gate — copy compile, localization lint, the two
-      # deterministic replays, the scenario fuzzer, privacy preflight, source
-      # access + drift, the contribution router, and the committed-golden drift
-      # check. It exits non-zero if any single gate does, and composes the
+      # deterministic replays, the scenario fuzzer, privacy preflight, the
+      # open-source influence firewall, source access + drift, the contribution
+      # router, and the committed-golden drift check. It exits non-zero if any
+      # single gate does, and composes the
       # results into build/verify_all/latest.{json,md}.
       #
       # This is the same command a reviewer runs locally, so CI and local

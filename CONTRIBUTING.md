@@ -45,14 +45,51 @@ Every pull request should state whether it touches:
 Run before submitting:
 
 ```sh
-npm run public:preflight
-node tool/firestore_rules_contract_check.mjs
+npm ci
+flutter pub get
+dart format --output=none --set-exit-if-changed lib test tool
 flutter analyze
-flutter test --concurrency=1
+flutter test
+npm run verify:all
+npm run public:preflight
+npm run rules:contract
+npm run rules:test
+npm run schema:contract
+npm run upgrade:queue
+npm run release:contract
+npm run security:dependencies
 ```
+
+The CI workflow separates these into Flutter build/test, Node/public-security,
+and deterministic governance jobs. `npm run rules:test` uses the Firestore
+Emulator and therefore needs Java 21 or newer; the repository runner checks an
+explicit ParkinSUM Java home, `JAVA_HOME`, standard Android Studio JBR
+locations, and `java` on `PATH` without changing the system Java setting.
+Expected rule-denial cases may print `PERMISSION_DENIED`; the command succeeds
+only when every allow and deny assertion reaches its expected result and all
+seven required semantic cases complete with no skipped or TODO result.
 
 If your change is documentation-only and local tooling is unavailable, say so in
 the PR and list the files you reviewed manually.
+
+## Open-Source Research Boundary
+
+Researching an upstream project does not authorize copying its code, assets,
+schemas, fixtures, or generated output. Before citing a new GitHub repository in
+the upgrade queue or research documentation, add its canonical repository URL,
+reviewed commit, license status, and concept-only or transfer disposition to
+`config/open_source_influence_inventory.json`, then run:
+
+```sh
+npm run open-source:firewall
+```
+
+`NOASSERTION`, a missing license, or an unresolved license keeps the influence
+concept-only. Any local transfer requires an explicit path, compatible
+copy/distribution authorization, applicable notice and source-disclosure
+obligations, and a matching release-boundary declaration. Passing the checker
+is an inventory and policy control; it is not legal advice, scientific
+validation, or a substitute for artifact-level SBOM and NOTICE verification.
 
 ## Secondary Creator Token Flow
 

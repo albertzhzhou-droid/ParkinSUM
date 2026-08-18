@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/domain/entities/cdss_records.dart';
-import 'package:parkinsum_companion/domain/entities/gastric_emptying_profile.dart';
 import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/medication_entry_validation.dart';
 import 'package:parkinsum_companion/domain/entities/source_metadata.dart';
@@ -145,7 +144,7 @@ void main() {
           route: 'oral',
           releaseType: 'immediate',
           jurisdiction: 'US',
-          sourceDocId: 'spl:demo',
+          sourceDocId: m.sourceDocId,
           medicationMetadata: m,
         ),
       );
@@ -169,12 +168,87 @@ void main() {
         route: 'oral',
         releaseType: 'immediate',
         jurisdiction: 'US',
-        sourceDocId: 'spl:demo',
+        sourceDocId: m.sourceDocId,
         medicationMetadata: m, // rich product strength attached
       ),
     );
     expect(result.validity, isNot(MedicationContextValidity.valid));
     expect(result.normalized, isNull); // no dose fabricated from metadata
+  });
+
+  test('contradictory product metadata cannot reach the IR engine', () {
+    final m = adapter.fromCdssMetadata(
+      variant: variant(
+        ingredients: const ['carbidopa', 'levodopa', 'entacapone'],
+        releaseType: 'extended',
+      ),
+    );
+    final validation = validator.validate(
+      RawMedicationEntry(
+        activeIngredients: const ['carbidopa', 'levodopa'],
+        drugProductVariant: 'v1',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: m.sourceDocId,
+        medicationMetadata: m,
+      ),
+    );
+    expect(validation.validity, MedicationContextValidity.invalid);
+    expect(validation.normalized, isNull);
+    expect(
+      validation.issues.map((issue) => issue.code),
+      containsAll(const [
+        'METADATA_ACTIVE_INGREDIENT_MISMATCH',
+        'METADATA_RELEASE_TYPE_MISMATCH',
+      ]),
+    );
+
+    final now = DateTime.utc(2026, 1, 1, 8);
+    final composition = MealCompositionNormalizer().normalize(
+      mealId: 'c',
+      components: const [
+        FoodComponent(
+          id: 'food',
+          name: 'synthetic food',
+          physicalForm: MealPhysicalForm.solid,
+          proteinGrams: 10,
+          fatGrams: 2,
+          fiberGrams: 2,
+          carbohydrateGrams: 20,
+          calories: 150,
+          portionGrams: 150,
+          sourceDocId: 'synthetic:test',
+        ),
+      ],
+    );
+    final context = TimeAxisBuilder().build(
+      now: now,
+      medicationInputs: [
+        MedicationTimelineInput(
+          id: 'm',
+          takenAt: now.add(const Duration(minutes: 30)),
+          medicationContext: validation,
+        ),
+      ],
+      mealInputs: [
+        MealTimelineInput(
+          id: 'meal',
+          startedAt: now,
+          compositionId: composition.id,
+        ),
+      ],
+    );
+    final result = MechanisticConflictEngine().evaluate(
+      context: context,
+      mealCompositionsById: {composition.id: composition},
+    );
+    expect(result.hasModeledOutput, isFalse);
+    expect(result.absorptionOpportunityWindow, isNull);
+    expect(result.toJson()['interaction_score'], isNull);
   });
 
   group('absorption uses source-backed release type', () {
@@ -201,33 +275,21 @@ void main() {
       );
     }
 
-    test('ER release gives a wider window than IR', () {
-      final ir = absorption.build(medication: med('immediate', minute: 60));
+    test('generic ER release abstains from the IR-only model', () {
       final er = absorption.build(medication: med('extended', minute: 60));
-      expect(
-        er.window.endMinute - er.window.startMinute,
-        greaterThan(ir.window.endMinute - ir.window.startMinute),
-      );
+      expect(er.modelApplicable, isFalse);
+      expect(er.window.durationMinutes, 0);
+      expect(er.opennessProfile, isEmpty);
     });
 
-    test('unknown release type widens uncertainty', () {
-      final known = absorption.build(medication: med('immediate', minute: 60));
+    test('unknown release type is explicitly not model-applicable', () {
       final unknown = absorption.build(medication: med('unknown', minute: 60));
-      const order = [
-        UncertaintyBand.narrow,
-        UncertaintyBand.moderate,
-        UncertaintyBand.wide,
-        UncertaintyBand.veryWide,
-      ];
+      expect(unknown.modelApplicable, isFalse);
+      expect(unknown.window.durationMinutes, 0);
+      expect(unknown.opennessProfile, isEmpty);
       expect(
-        order.indexOf(unknown.uncertaintyBand),
-        greaterThan(order.indexOf(known.uncertaintyBand)),
-      );
-      expect(
-        unknown.assumptions.any(
-          (a) => a.contains('release_type_unknown_limited'),
-        ),
-        isTrue,
+        unknown.applicabilityReasons,
+        contains('mechanistic_applicability.release_type_not_supported'),
       );
     });
   });
@@ -251,7 +313,7 @@ void main() {
         route: 'oral',
         releaseType: 'immediate',
         jurisdiction: 'US',
-        sourceDocId: 'spl:demo',
+        sourceDocId: m.sourceDocId,
         medicationMetadata: m,
       ),
     );

@@ -1,3 +1,4 @@
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/protein_distribution.dart';
 
 /// Deterministic, educational protein-redistribution model.
@@ -12,7 +13,7 @@ import '../entities/protein_distribution.dart';
 ///   overrides overlap.
 /// - Missing medication/timeline context → `unknownWindowRole`, optimization
 ///   off, no faked precision.
-class ProteinDistributionModel {
+class ProteinDistributionModel with RegisteredAlgorithmComponentIdentity {
   static const double highOverlapThreshold = 0.15;
   static const double lowOverlapThreshold = 0.05;
   static const int eveningHourStart = 18;
@@ -36,26 +37,41 @@ class ProteinDistributionModel {
     ];
 
     if (!ctx.medicationContextValid) {
-      return ProteinRedistributionScore(
-        windowRole: ProteinWindowRole.unknownWindowRole,
-        redistributionScore: 0.0,
-        overlapProteinPenalty: 0.0,
-        adequacy: const NutritionAdequacyProxy(
-          contribution: 0.0,
-          basis: 'medication_context_invalid',
-          sourceRefs: _sourceRefs,
-        ),
-        assumptions: List.unmodifiable([
-          ...assumptions,
-          'medication_context_invalid',
-        ]),
-        sourceRefs: _sourceRefs,
-        optimizationActive: false,
+      return _unavailable(
+        assumptions: assumptions,
+        reason: 'medication_context_invalid',
+      );
+    }
+    final protein = ctx.candidateProteinGrams;
+    if (protein == null) {
+      return _unavailable(
+        assumptions: assumptions,
+        reason: 'candidate_protein_grams_missing',
+      );
+    }
+    if (!protein.isFinite || protein < 0) {
+      return _unavailable(
+        assumptions: assumptions,
+        reason: 'candidate_protein_grams_invalid',
+      );
+    }
+    if (!ctx.modeledOverlap.isFinite ||
+        ctx.modeledOverlap < 0 ||
+        ctx.modeledOverlap > 1) {
+      return _unavailable(
+        assumptions: assumptions,
+        reason: 'modeled_overlap_invalid',
+      );
+    }
+    final hour = ctx.localHourHint;
+    if (hour != null && (hour < 0 || hour > 23)) {
+      return _unavailable(
+        assumptions: assumptions,
+        reason: 'local_hour_hint_invalid',
       );
     }
 
     final role = _windowRole(ctx);
-    final protein = ctx.candidateProteinGrams ?? 0.0;
     final proteinPresence = (protein / adequacyReferenceProteinG).clamp(
       0.0,
       1.0,
@@ -108,6 +124,23 @@ class ProteinDistributionModel {
       optimizationActive: true,
     );
   }
+
+  ProteinRedistributionScore _unavailable({
+    required List<String> assumptions,
+    required String reason,
+  }) => ProteinRedistributionScore(
+    windowRole: ProteinWindowRole.unknownWindowRole,
+    redistributionScore: 0.0,
+    overlapProteinPenalty: 0.0,
+    adequacy: NutritionAdequacyProxy(
+      contribution: 0.0,
+      basis: reason,
+      sourceRefs: _sourceRefs,
+    ),
+    assumptions: List.unmodifiable([...assumptions, reason]),
+    sourceRefs: _sourceRefs,
+    optimizationActive: false,
+  );
 
   ProteinWindowRole _windowRole(ProteinDistributionContext ctx) {
     if (ctx.modeledOverlap >= highOverlapThreshold) {

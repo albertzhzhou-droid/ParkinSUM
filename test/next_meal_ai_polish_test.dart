@@ -72,12 +72,18 @@ void main() {
 
     final result = await orchestrator.recommend(
       request: NextMealRecommendationRequest(
-        userProfile: UserProfile.defaults().copyWith(
-          localAiConsentEnabled: true,
-          localAiProviderPreference: LocalAiProviders.ollama,
-          localAiModel: 'gemma3n:e2b',
-          localAiMedicalModel: 'hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M',
-        ),
+        userProfile: UserProfile.defaults()
+            .copyWith(
+              localAiProviderPreference: LocalAiProviders.ollama,
+              localAiModel: 'gemma3n:e2b',
+              localAiMedicalModel:
+                  'hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M',
+            )
+            .withLocalAiConsentDecision(
+              enabled: true,
+              recordedAt: DateTime.utc(2026, 8, 18),
+              source: 'test_fixture',
+            ),
         history: const [],
         activeDrugs: const [],
         now: DateTime(2026, 5, 12),

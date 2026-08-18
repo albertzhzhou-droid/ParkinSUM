@@ -2,6 +2,38 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import 'dosage_note_parser.dart';
 
+typedef IntakeMechanisticFormulationContext = ({
+  String dosageForm,
+  String route,
+  String releaseType,
+});
+
+/// Resolves only formulation evidence that can be bound to this exact intake.
+///
+/// The current [MedicationProductSelection] snapshot intentionally contains
+/// package identity and strength display, but it does not yet carry governed
+/// ingredient/route/form/release metadata. Once a concrete package has been
+/// selected, catalog-level formulation fields can therefore no longer prove
+/// the selected package's model applicability. Keep all three predicates
+/// unknown until a versioned product-formulation snapshot is implemented.
+IntakeMechanisticFormulationContext resolveIntakeMechanisticFormulation({
+  required Intake intake,
+  required DrugDefinition drug,
+}) {
+  if (intake.productSelection != null) {
+    return (
+      dosageForm: 'unspecified',
+      route: 'unspecified',
+      releaseType: 'unspecified',
+    );
+  }
+  return (
+    dosageForm: intake.dosageForm ?? drug.dosageForm,
+    route: intake.route ?? drug.route,
+    releaseType: intake.releaseType ?? drug.releaseType,
+  );
+}
+
 /// Builds an intake event with a conservative snapshot of dose/formulation.
 ///
 /// Free text remains the source record for backward compatibility. Structured

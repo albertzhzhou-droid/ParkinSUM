@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
+import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_distribution.dart';
 import '../entities/rule_explanation.dart';
@@ -33,20 +35,36 @@ class CandidateFood {
 /// Optional provenance metadata for a candidate food, supplied by the
 /// catalog projection. All scores are 0..1; defaults are neutral (0.5) when
 /// metadata is unavailable so the scorer never fakes high confidence.
-class CandidateMetadata {
+final class CandidateMetadata {
   final double completeness;
   final double authorityScore;
   final double jurisdictionMatchScore;
   final double provenanceQuality;
   final String jurisdiction;
 
-  const CandidateMetadata({
+  CandidateMetadata({
     required this.completeness,
     required this.authorityScore,
     required this.jurisdictionMatchScore,
     required this.provenanceQuality,
     required this.jurisdiction,
-  });
+  }) {
+    final values = <String, double>{
+      'completeness': completeness,
+      'authorityScore': authorityScore,
+      'jurisdictionMatchScore': jurisdictionMatchScore,
+      'provenanceQuality': provenanceQuality,
+    };
+    for (final entry in values.entries) {
+      if (!entry.value.isFinite || entry.value < 0 || entry.value > 1) {
+        throw ArgumentError.value(
+          entry.value,
+          entry.key,
+          'Candidate metadata scores must be finite and in [0, 1].',
+        );
+      }
+    }
+  }
 }
 
 /// Evaluates next-meal candidates inside a user-defined time window.
@@ -60,7 +78,10 @@ class CandidateMetadata {
 /// candidate the worst-case overlap across samples is used as the
 /// conservative ranking score; best, average, and per-sample summaries are
 /// surfaced for trace/UI only.
-class MechanisticNextMealScorer {
+class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
+  static const MechanisticMedicationApplicabilityPolicy _applicabilityPolicy =
+      MechanisticMedicationApplicabilityPolicy();
+
   final MechanisticConflictEngine engine;
   final MealCompositionNormalizer normalizer;
   final ProteinDistributionModel proteinDistributionModel;
@@ -85,18 +106,17 @@ class MechanisticNextMealScorer {
        scoringParameters =
            scoringParameters ??
            NextMealScoringParameterSet.literatureInformedDefault() {
-    // Enforce the safety invariant: modeled conflict overlap must remain the
-    // dominant scoring term so provenance/metadata can never overpower a high
-    // modeled conflict overlap. A non-dominant weight set is rejected outright
-    // rather than silently degrading ranking safety.
-    if (!this.scoringParameters.conflictRemainsDominant) {
+    // Reject malformed custom parameter graphs before any candidate can be
+    // scored. This is a production boundary, not only an invariant-test helper:
+    // non-finite, negative, out-of-range, duplicate-id, non-normalized, or
+    // non-dominant weights cannot become an `available` numeric result.
+    final parameterErrors = this.scoringParameters.validationErrors;
+    if (parameterErrors.isNotEmpty) {
       throw ArgumentError.value(
         this.scoringParameters.id,
         'scoringParameters',
-        'Modeled conflict overlap must remain the dominant scoring term '
-            '(NextMealScoringParameterSet.conflictRemainsDominant). The '
-            'conflict-overlap weight must be >= the protein-redistribution '
-            'weight and >= the combined provenance/metadata weight.',
+        'Invalid next-meal scoring parameter set: '
+            '${parameterErrors.join(', ')}.',
       );
     }
   }
@@ -131,6 +151,27 @@ class MechanisticNextMealScorer {
           )
           .toList(growable: false);
     }
+    final medicationApplicability = _applicabilityPolicy.evaluateContexts(
+      baseContext.medicationEvents.map((event) => event.context),
+    );
+    if (!medicationApplicability.applicable) {
+      final reason = medicationApplicability.reasonCodes.join(',');
+      final availability =
+          medicationApplicability.status ==
+              MechanisticMedicationApplicabilityStatus.notApplicable
+          ? MechanisticResultAvailability.notApplicable
+          : MechanisticResultAvailability.insufficient;
+      return candidates
+          .map(
+            (candidate) => _insufficient(
+              candidate,
+              window: window,
+              reason: reason,
+              availability: availability,
+            ),
+          )
+          .toList(growable: false);
+    }
 
     final sampleOffsets = _sampleOffsets(window);
     final scores = <MechanisticCandidateScore>[];
@@ -147,11 +188,16 @@ class MechanisticNextMealScorer {
       );
     }
 
-    // Rank by composite finalCandidateScore DESC (higher = better educational
-    // match), then nutrition completeness DESC, then candidate id for
-    // deterministic order. The composite already folds in conflict overlap,
-    // protein-redistribution compatibility, adequacy, and provenance.
-    scores.sort((a, b) {
+    // Rank only candidates that produced modeled output. Abstentions retain
+    // caller order after the ranked results and are never compared through
+    // their legacy in-memory sentinel fields.
+    final availableScores = scores
+        .where((score) => !score.insufficientContext)
+        .toList(growable: false);
+    final abstainedScores = scores
+        .where((score) => score.insufficientContext)
+        .toList(growable: false);
+    availableScores.sort((a, b) {
       final byFinal = b.finalCandidateScore.compareTo(a.finalCandidateScore);
       if (byFinal != 0) return byFinal;
       final byCompleteness = b.nutritionDataCompleteness.compareTo(
@@ -160,7 +206,7 @@ class MechanisticNextMealScorer {
       if (byCompleteness != 0) return byCompleteness;
       return a.candidateFoodId.compareTo(b.candidateFoodId);
     });
-    return List.unmodifiable(scores);
+    return List.unmodifiable([...availableScores, ...abstainedScores]);
   }
 
   List<int> _sampleOffsets(UserDefinedMealWindow window) {
@@ -190,8 +236,22 @@ class MechanisticNextMealScorer {
     required List<int> sampleOffsets,
     Map<String, CandidateMetadata>? candidateMetadata,
   }) {
+    final candidateCompositionId = 'candidate_${candidate.id}';
+    final collidesWithBaseComposition =
+        baseMealCompositionsById.containsKey(candidateCompositionId) ||
+        baseContext.mealEvents.any(
+          (meal) => meal.compositionId == candidateCompositionId,
+        );
+    if (collidesWithBaseComposition) {
+      return _insufficient(
+        candidate,
+        window: userDefinedWindow,
+        availability: MechanisticResultAvailability.blockedIntegrity,
+        reason: 'candidate_composition_id_collision($candidateCompositionId)',
+      );
+    }
     final composition = normalizer.normalize(
-      mealId: 'candidate_${candidate.id}',
+      mealId: candidateCompositionId,
       components: candidate.components,
       declaredPhysicalForm: candidate.declaredPhysicalForm,
     );
@@ -218,12 +278,25 @@ class MechanisticNextMealScorer {
         resultId: 'cand_${candidate.id}_$offset',
         preferredMealId: candidateMealId,
       );
+      if (!result.hasModeledOutput) {
+        return _insufficient(
+          candidate,
+          window: userDefinedWindow,
+          availability: result.availability,
+          reason: result.uncertaintyReasons.isEmpty
+              ? 'upstream_${result.availability.name}'
+              : result.uncertaintyReasons.join(','),
+          upstreamResult: result,
+        );
+      }
+      final modeledScore = result.modeledInteractionScore!;
+      final modeledConfidence = result.modeledConfidenceBand!;
       perSampleResults.add(result);
       samples.add(
         MechanisticCandidateSampleSummary(
           offsetMinutes: offset - userDefinedWindow.window.startMinute,
-          conflictOverlap: result.interactionScore,
-          confidenceBand: result.confidenceBand.name,
+          conflictOverlap: modeledScore,
+          confidenceBand: modeledConfidence.name,
         ),
       );
     }
@@ -232,30 +305,30 @@ class MechanisticNextMealScorer {
     // score; capture best/average for trace.
     var worstIdx = 0;
     for (var i = 1; i < perSampleResults.length; i++) {
-      if (perSampleResults[i].interactionScore >
-          perSampleResults[worstIdx].interactionScore) {
+      if (perSampleResults[i].modeledInteractionScore! >
+          perSampleResults[worstIdx].modeledInteractionScore!) {
         worstIdx = i;
       }
     }
     var bestIdx = 0;
     for (var i = 1; i < perSampleResults.length; i++) {
-      if (perSampleResults[i].interactionScore <
-          perSampleResults[bestIdx].interactionScore) {
+      if (perSampleResults[i].modeledInteractionScore! <
+          perSampleResults[bestIdx].modeledInteractionScore!) {
         bestIdx = i;
       }
     }
     final worst = perSampleResults[worstIdx];
     final best = perSampleResults[bestIdx];
 
-    final overlap = worst.interactionScore;
-    final bestOverlap = best.interactionScore;
+    final overlap = worst.modeledInteractionScore!;
+    final bestOverlap = best.modeledInteractionScore!;
     final avgOverlap =
         perSampleResults
-            .map((r) => r.interactionScore)
+            .map((r) => r.modeledInteractionScore!)
             .fold<double>(0, (a, b) => a + b) /
         perSampleResults.length;
 
-    final uncertaintyPenalty = switch (worst.confidenceBand) {
+    final uncertaintyPenalty = switch (worst.modeledConfidenceBand!) {
       ConfidenceBand.high => 0.0,
       ConfidenceBand.medium => 0.1,
       ConfidenceBand.low => 0.25,
@@ -335,13 +408,12 @@ class MechanisticNextMealScorer {
       conflictOverlapScore: overlap,
       uncertaintyPenalty: uncertaintyPenalty,
       nutritionDataCompleteness: composition.compositionCompleteness,
-      confidenceBand: worst.confidenceBand,
+      confidenceBand: worst.modeledConfidenceBand!,
       explanation: List.unmodifiable(explanation),
       sourceRefs: worst.sourceRefs,
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,
       upstreamResult: worst,
-      insufficientContext: false,
       sampleCount: perSampleResults.length,
       bestSampledOffsetMinutes:
           sampleOffsets[bestIdx] - userDefinedWindow.window.startMinute,
@@ -368,29 +440,28 @@ class MechanisticNextMealScorer {
     CandidateFood candidate, {
     required UserDefinedMealWindow window,
     required String reason,
+    MechanisticResultAvailability availability =
+        MechanisticResultAvailability.insufficient,
+    MechanisticConflictResult? upstreamResult,
   }) {
-    return MechanisticCandidateScore(
+    return MechanisticCandidateScore.abstention(
       candidateFoodId: candidate.id,
       candidateName: candidate.name,
       regionalFoodLibraryRef: candidate.regionalFoodLibraryRef,
       userDefinedWindow: window,
-      modelCompatibilityScore: 0.0,
-      conflictOverlapScore: 0.0,
-      uncertaintyPenalty: 1.0,
-      nutritionDataCompleteness: 0.0,
-      confidenceBand: ConfidenceBand.insufficient,
+      availability: availability,
       explanation: [
         'The next-meal recommender does not produce a score for this '
             'candidate because: $reason.',
+        'Upstream model status: ${availability.name}.',
         'This is not dietary or clinical advice.',
       ],
-      sourceRefs: const [
-        'src.dailymed.sinemet.label',
-        'src.fda.cds.guidance.2022',
-      ],
+      sourceRefs:
+          upstreamResult?.sourceRefs ??
+          const ['src.dailymed.sinemet.label', 'src.fda.cds.guidance.2022'],
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,
-      insufficientContext: true,
+      upstreamResult: upstreamResult,
     );
   }
 

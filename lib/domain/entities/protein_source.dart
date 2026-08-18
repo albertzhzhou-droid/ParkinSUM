@@ -55,6 +55,7 @@ class LnaaLoadFactor {
 class ProteinSourceLnaaRegistry {
   static const List<String> _baseSourceRefs = [
     'src.nutt.lnaa.1989',
+    'src.nutt.onoff.1984',
     'src.cereda.protein.2017',
     'src.advances.nutrition.2021',
     'src.npj.peripheral.resistance.2022',

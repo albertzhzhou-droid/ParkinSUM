@@ -1,8 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
 import 'package:parkinsum_companion/domain/entities/synthetic_scenario_fuzzer.dart';
+import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_conflict_engine.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_next_meal_scorer.dart';
 import 'package:parkinsum_companion/domain/usecases/synthetic_scenario_fuzzer.dart';
 
 import 'helpers/no_phi_json_assertions.dart';
@@ -73,8 +78,8 @@ void main() {
     );
   });
 
-  test('7. unknown release type produces a limited/uncertain signal', () {
-    final c = byId(run(), 'release_timeline__unknown_widens');
+  test('7. unknown release type explicitly abstains', () {
+    final c = byId(run(), 'release_timeline__unknown_abstains');
     expect(c.evaluation.passed, isTrue);
   });
 
@@ -88,6 +93,39 @@ void main() {
     final c = byId(run(), 'window_ranking__no_window');
     expect(c.evaluation.passed, isTrue);
     expect(c.evaluation.unexpectedRankerSwitch, isFalse);
+    expect(
+      c.evaluation.observedSignals.join(' '),
+      contains('availability=insufficient modeled_final=null'),
+    );
+  });
+
+  test('unexpected window abstention is a failure, never a zero score', () {
+    final abstainingFuzzer = SyntheticScenarioFuzzer(
+      scorer: MechanisticNextMealScorer(engine: _AlwaysAbstainingEngine()),
+    );
+    final report = abstainingFuzzer.run(
+      const SyntheticScenarioFuzzerConfig(
+        caseCount: 64,
+        enabledFamilies: {SyntheticScenarioFamily.windowRanking},
+      ),
+    );
+    final valid = byId(report, 'window_ranking__valid_window');
+    final tiebreak = byId(report, 'window_ranking__provenance_tiebreak');
+
+    expect(valid.evaluation.passed, isFalse);
+    expect(valid.evaluation.failedInvariants, contains('window_scored'));
+    expect(valid.evaluation.unexpectedRankerSwitch, isTrue);
+    expect(
+      valid.evaluation.observedSignals.join(' '),
+      contains('availability=insufficient modeled_final=null'),
+    );
+    expect(tiebreak.evaluation.passed, isFalse);
+    expect(tiebreak.evaluation.failedInvariants, contains('tiebreak'));
+    expect(tiebreak.evaluation.unexpectedRankerSwitch, isTrue);
+    expect(
+      tiebreak.evaluation.observedSignals.join(' '),
+      isNot(contains('gap=')),
+    );
   });
 
   test('10. unsafe-phrase probe catches a banned phrase', () {
@@ -165,4 +203,19 @@ void main() {
       );
     }
   });
+}
+
+class _AlwaysAbstainingEngine extends MechanisticConflictEngine {
+  @override
+  MechanisticConflictResult evaluate({
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+    String resultId = 'mechanistic_result',
+    String? preferredMealId,
+  }) => MechanisticConflictResult.insufficientContext(
+    id: resultId,
+    reason: MechanisticInteractionType.insufficientMealContext,
+    missingInputs: const ['synthetic_forced_abstention'],
+    sourceRefs: const ['synthetic:test'],
+  );
 }

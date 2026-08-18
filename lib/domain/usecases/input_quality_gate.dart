@@ -5,8 +5,7 @@
 /// composition completeness, source/provenance quality, timing-window presence,
 /// localization readiness). It decides whether a meal + medication context is
 /// complete / sufficient / partial / insufficient / invalid for entering
-/// mechanistic scoring, and whether it is eligible for mechanistic-primary
-/// ranking.
+/// an educational mechanistic trace. It never authorizes model-driven ranking.
 ///
 /// It is an input/context-completeness gate, **NOT** a recommendation engine. It
 /// never tells the user what to eat, when to eat, when to take medication, how
@@ -57,7 +56,7 @@ class InputQualityGateInput {
   /// Whether candidate metadata was available to the ranker at all.
   final bool candidateMetadataPresent;
 
-  /// User-defined meal window (mechanistic-primary requires a valid one).
+  /// User-defined meal window (the candidate timing trace requires one).
   final UserDefinedMealWindow? userDefinedWindow;
 
   /// Optional localization readiness status.
@@ -157,7 +156,8 @@ class InputQualityGate {
           '${f.dimension}: ${f.findingId}',
     ];
 
-    // Mechanistic-primary eligibility.
+    // Backward-compatible field name; eligibility means trace availability,
+    // never permission to reorder recommendations.
     final windowDim = dims.firstWhere(
       (d) => d.dimension == InputQualityDimension.mealTimingWindow,
     );
@@ -646,15 +646,15 @@ class InputQualityGate {
     const dim = InputQualityDimension.mealTimingWindow;
     final findings = <InputQualityFinding>[];
     if (window == null) {
-      // Not invalid — just not eligible for mechanistic-primary. No advice.
+      // Not invalid — the candidate timing trace is simply unavailable.
       findings.add(
         _f(
           'window_missing',
           InputQualitySeverity.warn,
           dim,
-          'No user-defined meal window is present, so mechanistic-primary '
-              'ranking is not eligible. This is a context note, not a suggested '
-              'meal time.',
+          'No user-defined meal window is present, so the educational candidate '
+              'timing trace is unavailable. This is a context note, not a '
+              'suggested meal time or a ranking decision.',
           missing: 'user_defined_meal_window',
         ),
       );

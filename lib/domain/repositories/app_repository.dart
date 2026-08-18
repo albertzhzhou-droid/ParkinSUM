@@ -2,7 +2,9 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/atomic_onboarding_commit.dart';
 import '../../core/models/user_profile.dart';
+import '../../core/models/recoverable_user_event.dart';
 import '../../data/models/interaction_rule_record.dart';
 
 abstract class AppRepository {
@@ -16,6 +18,7 @@ abstract class AppRepository {
   Future<void> saveOnboarded(bool value);
   Future<UserProfile> loadUserProfile();
   Future<void> saveUserProfile(UserProfile profile);
+  Future<void> commitOnboarding(AtomicOnboardingCommit commit);
 
   Future<List<String>> loadActiveDrugIds();
   Future<void> saveActiveDrugIds(List<String> ids);
@@ -29,4 +32,12 @@ abstract class AppRepository {
   Future<List<FoodItem>> loadFoods();
   Future<List<DrugDefinition>> loadMedications();
   Future<List<InteractionRuleRecord>> loadInteractionRules();
+}
+
+abstract interface class RecoverableUserEventRepository {
+  Future<List<RecoverableUserEventRevision>> loadRecoverableUserEventHistory();
+
+  Future<void> commitRecoverableUserEventMutation(
+    RecoverableUserEventMutation mutation,
+  );
 }

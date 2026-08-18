@@ -65,17 +65,19 @@ Per-case report row (see `MechanisticReplayCaseReport`):
 | `mealContextCompleteness` | 0..1; reflects how many composition fields the normalizer was given. |
 | `gastricEmptyingProfileSummary` | One-line `lag=Xmin uncertainty=Y` summary. |
 | `absorptionOpportunityWindow` | Modeled window, when present. |
-| `aminoAcidCompetitionBand` | `none` / `low` / `moderate` / `high` / `unknown`. |
-| `interactionScore` | Engine's composite score (0..1). |
-| `severityBand` | `none` / `low` / `moderate` / `high` / `unknown`. |
-| `confidenceBand` | `high` / `medium` / `low` / `insufficient`. |
+| `resultAvailability` / `hasModeledOutput` | Typed modeled-output state. Any abstention has `hasModeledOutput=false`. |
+| `abstentionReasons` | Explicit reason codes for `notApplicable`, `insufficient`, or integrity-blocked output. |
+| `aminoAcidCompetitionBand` | `none` / `low` / `moderate` / `high` / `unknown` when modeled; null on abstention. |
+| `interactionScore` | Engine's composite score (0..1) when modeled; null on abstention. |
+| `severityBand` | `none` / `low` / `moderate` / `high` / `unknown` when modeled; null on abstention. |
+| `confidenceBand` | `high` / `medium` / `low` / `insufficient` when modeled; null on abstention. |
 | `triggeredMechanisms` | Engine-attributed drivers. |
 | `blockedMechanisms` | Mechanisms that were *not allowed* to fire (e.g. when context is invalid). |
 | `sourceRefs` | `model_assumption_registry.dart` source IDs. |
 | `bannedPhraseHits` | Always empty in a passing run. |
 | `nextMealRecommendationResult` | Candidate scores, when the scenario includes a user window + candidates. Each score carries `sampledWindowSummary` with per-sample offsets, overlap, and confidence. |
 | `competitionLnaaSummary` | LNAA load summary (effective load factor, protein sources present, whether uncertainty was widened) when a meal had protein. |
-| `rankerUsed` | Which ranker the orchestrator-equivalent path would use for this scenario (`mechanistic_engine_only` or `mechanistic_primary_window_sampled`). |
+| `rankerUsed` | Replay trace path only: `mechanistic_engine_only`, `mechanistic_trace_only_window_sampled`, or `none_model_abstained`. It does not claim that the product ranker was replaced. |
 | `sampledWindowOffsets` | Deterministic list of per-sample offsets (minutes within the user window). Empty when no candidates. |
 | `top_final_candidate_score` | Composite final score of the top-ranked candidate (0..1). |
 | `top_protein_redistribution_score` | Top candidate's protein-redistribution score. |
@@ -97,8 +99,8 @@ catalog-backed medication context, missing-field downgrades, invalid medication,
 daytime high-overlap vs evening low-overlap protein behavior, zero-vs-moderate
 protein in low-overlap windows, the no-window fallback, amino-acid
 actual-fields vs protein-source-proxy modes (s22/s23), additional invalid
-medication forms (s24/s25), mechanistic-primary overwriting the legacy
-order (s26), production-readiness coverage (s27–s31: amino-acid food in a
+medication forms (s24/s25), trace-only scoring that preserves legacy order
+(s26), production-readiness coverage (s27–s31: amino-acid food in a
 far window, mixed-mode candidate sets, invalid-with-window, no-window
 fallback visibility, daytime-overlap amino-acid food), missingness/uncertainty
 and enteral coverage (s32–s38), and **medication section-provenance bridging**

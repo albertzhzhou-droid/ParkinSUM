@@ -32,6 +32,8 @@ const GATES = [
   { id: 'recommendation_replay', script: 'recommend:replay', what: 'Local AI scenario replay (candidate-set invariant)' },
   { id: 'scenario_fuzz', script: 'scenario:fuzz', what: 'Synthetic scenario fuzzer' },
   { id: 'privacy_preflight', script: 'privacy:preflight', what: 'Local privacy preflight' },
+  { id: 'store_privacy_contract', script: 'privacy:store', what: 'Store privacy declaration drift contract' },
+  { id: 'open_source_influence', script: 'open-source:firewall', what: 'Open-source influence and license firewall' },
   { id: 'source_access', script: 'source:access', what: 'Source access contract check' },
   { id: 'source_drift', script: 'source:drift', what: 'Source version drift check' },
   { id: 'contribution_route', script: 'contribution:route', what: 'Contribution safety router' },

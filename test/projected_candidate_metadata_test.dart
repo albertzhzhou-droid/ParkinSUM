@@ -3,6 +3,7 @@ import 'package:parkinsum_companion/core/db/cdss_database.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
+import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/domain/entities/amino_acid_profile.dart';
 import 'package:parkinsum_companion/domain/entities/next_meal_recommendation_models.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
@@ -64,11 +65,23 @@ void main() {
         registrationRegion: 'US',
         contentJurisdictionOverride: const ['US'],
       ),
-      history: const [],
+      history: [
+        Meal(
+          id: 'dose_time_history',
+          eatenAt: now.subtract(const Duration(minutes: 60)),
+          title: 'Synthetic dose-time history',
+          items: [
+            MealItem.fromFood(
+              food: projectedUsda('history_food'),
+              quantityFactor: 1,
+            ),
+          ],
+        ),
+      ],
       activeDrugs: [
         DrugDefinition(
           id: 'drug_levodopa',
-          genericName: 'levodopa',
+          genericName: 'carbidopa/levodopa',
           brandNames: const ['Sinemet'],
           tags: const [DrugTag.levodopaLike],
           notes: '',

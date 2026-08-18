@@ -7,8 +7,8 @@ ParkinSUM is an educational research prototype. The sources below are used to
 *anchor mechanism explanations* in the simulation layer. They are not used to
 claim clinical validation, dosing accuracy, or patient applicability. Several
 quantitative model parameters are explicitly tagged **"prototype heuristic"** in
-`lib/domain/usecases/model_assumption_registry.dart` because they are not
-patient-calibrated.
+`lib/domain/usecases/model_assumption_registry.dart` because they have no
+individual clinical calibration.
 
 ## Bibliography (MLA)
 
@@ -57,10 +57,11 @@ patient-calibrated.
    https://link.springer.com/article/10.1007/s00415-006-3009-3.
    Accessed 27 May 2026.
 
-9. Cremonini, Filippo, et al. "Comparison of Calculations to Estimate Gastric
-   Emptying Half-Time of Solids in Humans." *Neurogastroenterology & Motility*,
-   vol. 21, no. 3, 2009, pp. 247–54. PMC,
-   https://pmc.ncbi.nlm.nih.gov/articles/PMC3484235/. Accessed 27 May 2026.
+9. Zinsmeister, Alan R., Adil E. Bharucha, and Michael Camilleri. "Comparison
+   of Calculations to Estimate Gastric Emptying Half-Time of Solids in Humans."
+   *Neurogastroenterology & Motility*, vol. 24, no. 12, 2012, pp. 1142–45.
+   doi:10.1111/j.1365-2982.2012.01982.x. PMC,
+   https://pmc.ncbi.nlm.nih.gov/articles/PMC3484235/. Accessed 17 Aug. 2026.
 
 10. Hens, Bart, et al. "Impact of Food Physical Properties on Oral Drug
     Absorption: A Comprehensive Review." *Pharmaceutics*, vol. 16, no. 12,
@@ -87,6 +88,31 @@ patient-calibrated.
 
 ## Model assumptions mapped to sources
 
+### 2026-08-17 primary-evidence update
+
+The runtime registry now also contains the following primary/consensus records:
+
+- `src.nutt.onoff.1984` — Nutt et al., *N Engl J Med* 310:483–488,
+  doi:10.1056/NEJM198402233100802.
+- `src.doi.ge.levodopa.2012` — Doi et al., *J Neurol Sci* 319:86–88,
+  doi:10.1016/j.jns.2012.05.010.
+- `src.hardoff.ge.pd.2001` — Hardoff et al., *Movement Disorders* 16:1041–1047,
+  doi:10.1002/mds.1203.
+- `src.siebner.ge.earlypd.2022` — Siebner et al., *Frontiers in Neurology*
+  13:828069, doi:10.3389/fneur.2022.828069.
+- `src.abell.ges.consensus.2008` — Abell et al., *J Nucl Med Technol*
+  36:44–54, doi:10.2967/jnmt.107.048116.
+- `src.crevoisier.dualrelease.food.2003` — Crevoisier et al., *Eur J Pharm
+  Biopharm* 55:71–76, PMID:12551706.
+- `src.zinsmeister.ge.halftime.2012` — Zinsmeister, Bharucha, and Camilleri,
+  *Neurogastroenterol Motil* 24:1142–1145, PMID:22812490.
+- `src.camilleri.ge.variation.2012` — Camilleri et al., *Neurogastroenterol
+  Motil* 24:1076-e562, PMID:22747676.
+
+The detailed evidence map, quantitative observations used, negative findings,
+and non-generalization boundaries are versioned in
+`docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md`.
+
 Each row maps a quantitative assumption used inside the educational model to
 its closest supporting source. Where the literature does not directly support
 the chosen numeric, the assumption is tagged **prototype_heuristic** and the
@@ -94,15 +120,15 @@ source is cited only for *mechanism direction*.
 
 | Assumption ID | Assumption (educational simulation) | Source refs | Confidence | Limitation |
 | --- | --- | --- | --- | --- |
-| `ge.solid.lag.10_30` | Solid meals have a gastric emptying lag of roughly 10–30 minutes before linear emptying begins. | [9], [10] | `mechanism` | Population variability; not patient-calibrated. |
-| `ge.solid.half.60_120` | Solid meals have a half-emptying time in the 60–120 minute range under reference conditions. | [9] | `mechanism` | Wide inter-subject variance reported (~24% CV). |
-| `ge.liquid.fast` | Liquids empty without a meaningful lag and faster than solids. | [9], [10] | `mechanism` | Mixed meals diverge from pure-liquid kinetics. |
+| `ge.solid.lag.10_30` | Solid meals are modeled with an illustrative gastric-emptying lag before the modeled residence curve begins to decline. | [9], [10] | `prototype_heuristic` selected value; literature-informed direction | Curve shape and selected lag have no individual calibration. |
+| `ge.solid.half.60_120` | The default solid component uses a 90-minute illustrative half-emptying anchor. | [9], [33] | `prototype_heuristic` selected value; `mechanism` measurement context | The cited 24.5% coefficient of variation is from healthy-participant scintigraphy and is not a Parkinson distribution. |
+| `ge.liquid.fast` | Liquids are represented with a shorter lag and half-time than solids. | [10] | `prototype_heuristic` selected values; literature-informed direction | Mixed meals diverge from pure-liquid kinetics. |
 | `ge.fat.slowdown.1_5x` | Meals with ≥30% kcal from fat are modeled with ~1.5× longer half-emptying. | [10] | `prototype_heuristic` | Multiplier is illustrative, not patient-fitted. |
 | `ge.fiber.uncertainty` | High-fiber meals widen the model's uncertainty band rather than asserting precision. | [10] | `prototype_heuristic` | Direction supported; magnitude is illustrative. |
 | `ge.size.linear_scale` | Half-emptying scales linearly with total kcal vs a 400 kcal reference. | [9] | `prototype_heuristic` | Real kinetics are non-linear; included only as monotonic direction. |
 | `ge.overlap.cumulate` | When a second meal arrives before the first is mostly emptied, model treats stomach load as cumulative and widens uncertainty. | [9], [10] | `mechanism` | No patient-fitted multi-meal model used. |
 | `ldopa.absorption.small_intestine` | Levodopa absorption opportunity depends on small-intestinal arrival; delayed gastric emptying delays opportunity. | [1], [2], [8] | `label` | Label-supported direction; magnitude not patient-specific. |
-| `ldopa.protein.lnaa_competition` | Dietary LNAAs from protein compete with levodopa for transport. | [1], [3], [4], [5], [6], [7] | `label` + `mechanism` | Competition magnitude varies by individual diet and PK state. |
+| `ldopa.protein.lnaa_competition` | Dietary LNAAs can compete with levodopa for transport, while ordinary-diet LNAA fluctuations were not an important contributor for most participants in one small observational study. | [1], [3], [4], [5], [6], [7]; `src.nutt.onoff.1984`; `src.nutt.lnaa.1989` | `label` + `mechanism` | Competition magnitude varies by individual diet and PK state; no universal penalty is supported. |
 | `ldopa.dose.mg_unit_required` | Carbidopa/levodopa strength is specified in mg; bare numbers are not analyzable doses. | [1], [2] | `label` | Direct label grounding. |
 | `cds.intended_use.non_clinical` | This software is an educational prototype and not a clinical decision tool; outputs are non-prescriptive and reviewable. | [11] | `regulatory_guidance` | Aligns with the spirit of CDS criterion 4. |
 | `aa.lnaa.source_type_load_factor` | The LNAA-competition proxy multiplies the protein amplitude by a coarse load factor that depends on the protein source type (animal protein generally carries higher LNAA per gram than plant protein). Direction is supported; magnitude is illustrative. This proxy is used **only as a fallback** when actual per-food amino-acid fields are absent; when `FoodComponent.aminoAcidProfile` is present the LNAA layer uses the actual fields instead (`AminoAcidDataMode.actualAminoAcidFields`). | [4], [5], [6], [7], [13] | `prototype_heuristic` | The load factors are direction-only educational approximations. Implemented in `lib/domain/entities/protein_source.dart`; actual-fields path in `amino_acid_competition_model.dart`. |
@@ -114,6 +140,7 @@ source is cited only for *mechanism direction*.
 | `metadata.completeness_gate` | No unit → no dose; no ingredient → no drug context; no dose-form/release → limited PK; no provenance → no evidence-linked explanation; no jurisdiction → unknown-jurisdiction behavior; incomplete → widen uncertainty. | [11], [14]–[19] | `regulatory_guidance` (direction) | Implemented: `metadata_completeness_gate.dart`. |
 | `meal_history.componentized_composition` | Historical meals are modeled as one `FoodComponent` per logged item (joined to catalog `FoodItem` for physical form, energy, and amino-acid provenance) instead of a single `unknown` aggregate. Missing catalog data stays null (never 0). | (implementation note) | `internal_safety_boundary` | Improves gastric/LNAA fidelity; no clinical claim. Implemented: `next_meal_recommendation_orchestrator.dart`, `catalog_food_to_candidate.dart`. |
 | `ge.highfat_highcal.uncertainty_widening` | High-fat (fat ≥ threshold fraction of kcal) and high-calorie (≥ `highcal.fraction_threshold` × reference kcal) meals widen the gastric-emptying uncertainty band, mirroring the fiber/overlap boosts. | [9], [10] | `prototype_heuristic` | Direction (fat + caloric load slow and disperse emptying) is supported; integer-step magnitudes are illustrative. Implemented: `gastric_emptying_parameters.dart`, `gastric_emptying_model.dart`. |
+| `ge.population.time_scale_sensitivity_fraction` | The observatory displays faster/slower gastric-residence curves by scaling the central time axis by −24% and +24%, respectively. | [33]; `src.hardoff.ge.pd.2001`; `src.siebner.ge.earlypd.2022` | `prototype_heuristic` transform; 24.5% healthy-participant measurement variation and heterogeneous PD findings provide context only | The symmetric lines are one-way sensitivity scenarios, not a confidence interval, reference range, gastric-emptying test, or patient prediction; a small early treated cohort found no group-level delay. |
 | `ldopa.absorption.openness_profile` | The levodopa absorption opportunity is sampled as a deterministic openness curve (0..1) over the window: IR rises sharply to a full-openness peak then decays; ER/controlled is flatter and longer. Incomplete meal context flattens the curve. Candidate competition overlap is openness-weighted. | [1], [2], [8] | `prototype_heuristic` | Educational shape only — NOT blood concentration, NOT PK/PD calibration. Implemented: `levodopa_absorption_opportunity_model.dart`, `absorption_opportunity.dart`. |
 | `lnaa.absolute_grams_and_dose_relative` | When actual amino-acid fields are present the model exposes absolute competing LNAA grams (and per-serving), and a dose-relative ratio (g LNAA per 100 mg levodopa) **only** when an explicit user-entered dose is available — never an invented dose. Partial amino-acid data (some of the six LNAA, or unit-ambiguous values) is flagged and widens uncertainty. Intestinal-absorption competition is distinguished from broader BBB transport competition (cited, not quantified). | [1], [3], [4], [5], [6], [7] | `mechanism` (direction); `prototype_heuristic` (magnitude) | No dose is fabricated; dose-relative ratio is unavailable when dose is missing/non-explicit. Implemented: `amino_acid_competition_model.dart`, `amino_acid_competition.dart`. |
 | `score.weights.parameter_set` | Next-meal candidate scoring weights are centralized in `NextMealScoringParameterSet` with per-weight `sourceRefs`, evidence level, and limitation. The invariant `conflictRemainsDominant` keeps modeled conflict overlap (and uncertainty) dominant so provenance/metadata can never outrank a high modeled conflict overlap; it is **enforced** — the `MechanisticNextMealScorer` constructor throws `ArgumentError` for a non-dominant weight set rather than silently degrading ranking safety. | [1], [3], [4], [5], [6], [7] | `mechanism` (conflict/redistribution direction); `prototype_heuristic` (weight magnitudes) | Weights are illustrative, not fitted coefficients. Surfaced in replay via `scoring_parameter_set_id`. Implemented: `next_meal_scoring_parameters.dart`, `mechanistic_next_meal_scorer.dart`. |
@@ -242,6 +269,12 @@ citation/implementation candidates; none enable live ingestion today.
     Learning Repository, 2010 (CC BY 4.0),
     https://archive.ics.uci.edu/dataset/245/daphnet+freezing+of+gait.
     Accessed 28 May 2026.
+
+33. Camilleri, Michael, et al. "Performance Characteristics of Scintigraphic
+    Measurement of Gastric Emptying of Solids in Healthy Participants."
+    *Neurogastroenterology & Motility*, vol. 24, no. 12, 2012, pp. 1076-e562.
+    doi:10.1111/j.1365-2982.2012.01972.x. PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC3465511/. Accessed 17 Aug. 2026.
 
 ## Potential future model/data-flow sources
 

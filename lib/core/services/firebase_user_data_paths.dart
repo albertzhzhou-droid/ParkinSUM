@@ -9,6 +9,8 @@ class FirebaseUserDataPaths {
   String activeDrug(String drugId) => 'users/$uid/active_drugs/$drugId';
   String appMeta(String key) => 'users/$uid/app_meta/$key';
   String clinicalAudit(String auditId) => 'users/$uid/clinical_audits/$auditId';
+  String recordHistory(String historyId) =>
+      'users/$uid/record_history/$historyId';
   String cdssRow(String table, String rowId) =>
       'users/$uid/cdss_tables/$table/rows/$rowId';
 

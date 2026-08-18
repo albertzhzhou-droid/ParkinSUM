@@ -2,6 +2,7 @@ import 'medication_product_pack.dart';
 
 /// Intake：一次“用药/补充剂摄入”记录
 class Intake {
+  static const int currentSchemaVersion = 1;
   final String id;
   final String drugId;
   final DateTime takenAt;
@@ -70,6 +71,7 @@ class Intake {
   }
 
   Map<String, dynamic> toJson() => {
+    'schemaVersion': currentSchemaVersion,
     'id': id,
     'drugId': drugId,
     'takenAt': takenAt.toIso8601String(),

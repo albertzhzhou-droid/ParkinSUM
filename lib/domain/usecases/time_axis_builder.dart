@@ -1,10 +1,11 @@
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/medication_entry_validation.dart';
 import '../entities/time_axis_events.dart';
 
 /// Pure builder for `TimeAxisConflictContext`. Deterministic, no I/O. The
 /// engine never invents missing timestamps — events without a timestamp are
 /// omitted and recorded in `missingFields`.
-class TimeAxisBuilder {
+class TimeAxisBuilder with RegisteredAlgorithmComponentIdentity {
   TimeAxisConflictContext build({
     required DateTime now,
     required List<MedicationTimelineInput> medicationInputs,
@@ -16,32 +17,77 @@ class TimeAxisBuilder {
     final mealEvents = <MealTimelineEvent>[];
     final foodCompEvents = <FoodComponentTimelineEvent>[];
 
-    for (final input in medicationInputs) {
+    String canonicalEventId(String id) => id.trim();
+    Map<String, int> idCounts(Iterable<String> ids) {
+      final counts = <String, int>{};
+      for (final id in ids.map(canonicalEventId).where((id) => id.isNotEmpty)) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+      return counts;
+    }
+
+    final medicationIdCounts = idCounts(
+      medicationInputs.map((input) => input.id),
+    );
+    final mealIdCounts = idCounts(mealInputs.map((input) => input.id));
+    final crossTypeCollisions = medicationIdCounts.keys
+        .where(mealIdCounts.containsKey)
+        .toSet();
+
+    for (var index = 0; index < medicationInputs.length; index += 1) {
+      final input = medicationInputs[index];
+      final eventId = canonicalEventId(input.id);
+      if (eventId.isEmpty) {
+        missingFields.add('medication.event_id_empty(index=$index)');
+        continue;
+      }
+      if ((medicationIdCounts[eventId] ?? 0) > 1) {
+        missingFields.add('medication.event_id_duplicate($eventId)');
+        continue;
+      }
+      if (crossTypeCollisions.contains(eventId)) {
+        missingFields.add('timeline.event_id_collision($eventId)');
+        continue;
+      }
       if (input.takenAt == null) {
-        missingFields.add('medication.taken_at(${input.id})');
+        missingFields.add('medication.taken_at($eventId)');
         continue;
       }
       if (!input.medicationContext.eligibleForRuleEvaluation) {
-        missingFields.add('medication.invalid_context(${input.id})');
+        missingFields.add('medication.invalid_context($eventId)');
         continue;
       }
       medEvents.add(
         MedicationTimelineEvent(
-          id: input.id,
+          id: eventId,
           minute: dateTimeToMinute(input.takenAt!),
           context: input.medicationContext.normalized!,
         ),
       );
     }
 
-    for (final input in mealInputs) {
+    for (var index = 0; index < mealInputs.length; index += 1) {
+      final input = mealInputs[index];
+      final eventId = canonicalEventId(input.id);
+      if (eventId.isEmpty) {
+        missingFields.add('meal.event_id_empty(index=$index)');
+        continue;
+      }
+      if ((mealIdCounts[eventId] ?? 0) > 1) {
+        missingFields.add('meal.event_id_duplicate($eventId)');
+        continue;
+      }
+      if (crossTypeCollisions.contains(eventId)) {
+        missingFields.add('timeline.event_id_collision($eventId)');
+        continue;
+      }
       if (input.startedAt == null) {
-        missingFields.add('meal.started_at(${input.id})');
+        missingFields.add('meal.started_at($eventId)');
         continue;
       }
       mealEvents.add(
         MealTimelineEvent(
-          id: input.id,
+          id: eventId,
           minute: dateTimeToMinute(input.startedAt!),
           compositionId: input.compositionId,
           durationMinutes: input.durationMinutes,

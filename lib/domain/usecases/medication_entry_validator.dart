@@ -1,3 +1,4 @@
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/medication_entry_validation.dart';
 import '../entities/medication_source_metadata.dart';
 
@@ -23,8 +24,10 @@ class RawMedicationEntry {
   final double? extractionConfidence;
 
   /// Optional engine-facing medication provenance bridged from the CDSS layer.
-  /// PROVENANCE ONLY — passed through to the normalized context untouched and
-  /// NEVER read as a dose source. Does not affect validity or the dose path.
+  /// PROVENANCE ONLY — NEVER read as a dose source. When present, its governed
+  /// product identity fields must agree with the top-level structured entry;
+  /// contradictions fail validation instead of letting one representation
+  /// disguise another formulation or ingredient set.
   final MechanisticMedicationMetadata? medicationMetadata;
 
   const RawMedicationEntry({
@@ -48,7 +51,7 @@ class RawMedicationEntry {
 /// Deterministic, side-effect-free validator. No I/O, no LLM, no inference of
 /// missing fields from free-text. If a field is missing the entry is rejected;
 /// it is never auto-completed.
-class MedicationEntryValidator {
+class MedicationEntryValidator with RegisteredAlgorithmComponentIdentity {
   static const String defaultLimitationText =
       'Synthetic catalog-backed metadata. Educational prototype only. '
       'Not medical advice. Do not use for medication decisions.';
@@ -176,7 +179,14 @@ class MedicationEntryValidator {
           message: 'Numeric strength is required alongside an explicit unit.',
         ),
       );
-    } else if ((entry.strength as num) <= 0) {
+    } else if (!entry.strength!.isFinite) {
+      issues.add(
+        const MedicationContextIssue(
+          code: 'NON_FINITE_STRENGTH',
+          message: 'Strength must be a finite numeric value.',
+        ),
+      );
+    } else if (entry.strength! <= 0) {
       issues.add(
         const MedicationContextIssue(
           code: 'NON_POSITIVE_STRENGTH',
@@ -237,13 +247,119 @@ class MedicationEntryValidator {
       );
     }
 
+    final extractionConfidence = entry.extractionConfidence;
+    if (extractionConfidence != null &&
+        (!extractionConfidence.isFinite ||
+            extractionConfidence < 0 ||
+            extractionConfidence > 1)) {
+      issues.add(
+        const MedicationContextIssue(
+          code: 'INVALID_EXTRACTION_CONFIDENCE',
+          message: 'Extraction confidence must be finite and within 0 to 1.',
+        ),
+      );
+    }
+
+    final metadata = entry.medicationMetadata;
+    if (metadata != null) {
+      final metadataConfidenceInvalid =
+          metadata.components.any(
+            (component) => _invalidConfidence(component.extractionConfidence),
+          ) ||
+          metadata.labelSectionRefs.any(
+            (section) => _invalidConfidence(section.extractionConfidence),
+          );
+      if (metadataConfidenceInvalid) {
+        issues.add(
+          const MedicationContextIssue(
+            code: 'INVALID_METADATA_EXTRACTION_CONFIDENCE',
+            message:
+                'Medication metadata extraction confidence must be finite '
+                'and within 0 to 1.',
+          ),
+        );
+      }
+
+      final topIngredientTokens = _canonicalIngredientTokens(ingredients);
+      final metadataIngredientTokens = _canonicalIngredientTokens(
+        metadata.components.map((component) => component.ingredientName),
+      );
+      final metadataIngredientsKnown =
+          metadataIngredientTokens.isNotEmpty &&
+          !metadataIngredientTokens.any(_isUnknownVocabularyToken);
+      if (metadataIngredientsKnown &&
+          !_sameTokenSet(topIngredientTokens, metadataIngredientTokens)) {
+        issues.add(
+          const MedicationContextIssue(
+            code: 'METADATA_ACTIVE_INGREDIENT_MISMATCH',
+            message:
+                'Medication metadata components contradict the structured '
+                'active-ingredient list.',
+          ),
+        );
+      }
+
+      _addIdentityMismatch(
+        issues: issues,
+        topLevelValue: entry.drugProductVariant,
+        metadataValue: metadata.drugProductVariantId,
+        fieldLabel: 'drug product variant',
+        codePrefix: 'METADATA_DRUG_PRODUCT_VARIANT',
+      );
+      _addIdentityMismatch(
+        issues: issues,
+        topLevelValue: entry.sourceDocId,
+        metadataValue: metadata.sourceDocId,
+        fieldLabel: 'source document',
+        codePrefix: 'METADATA_SOURCE_DOC',
+      );
+      _addIdentityMismatch(
+        issues: issues,
+        topLevelValue: entry.jurisdiction,
+        metadataValue: metadata.jurisdiction,
+        fieldLabel: 'jurisdiction',
+        codePrefix: 'METADATA_JURISDICTION',
+        canonicalize: _canonicalVocabularyToken,
+      );
+
+      _addVocabularyMismatch(
+        issues: issues,
+        topLevelValue: route,
+        metadataValue: metadata.route,
+        code: 'METADATA_ROUTE_MISMATCH',
+        message: 'Medication metadata route contradicts the structured route.',
+      );
+      _addVocabularyMismatch(
+        issues: issues,
+        topLevelValue: form,
+        metadataValue: metadata.doseForm,
+        code: 'METADATA_FORM_MISMATCH',
+        message:
+            'Medication metadata dosage form contradicts the structured form.',
+      );
+      _addVocabularyMismatch(
+        issues: issues,
+        topLevelValue: releaseType,
+        metadataValue: metadata.releaseType,
+        code: 'METADATA_RELEASE_TYPE_MISMATCH',
+        message:
+            'Medication metadata release type contradicts the structured '
+            'release type.',
+        canonicalize: _canonicalReleaseType,
+      );
+    }
+
     if (issues.isNotEmpty) {
       final hasInvalidatingIssue = issues.any(
         (i) =>
             i.code == 'BARE_NUMERIC_DOSE' ||
             i.code == 'UNSTRUCTURED_FREE_TEXT' ||
             i.code == 'UNKNOWN_UNIT' ||
-            i.code == 'NON_POSITIVE_STRENGTH',
+            i.code == 'NON_FINITE_STRENGTH' ||
+            i.code == 'NON_POSITIVE_STRENGTH' ||
+            i.code == 'INVALID_EXTRACTION_CONFIDENCE' ||
+            i.code == 'INVALID_METADATA_EXTRACTION_CONFIDENCE' ||
+            i.code.startsWith('METADATA_'),
       );
       return MedicationContextValidationResult(
         validity: hasInvalidatingIssue
@@ -261,7 +377,7 @@ class MedicationEntryValidator {
       form: form!,
       route: route!,
       releaseType: releaseType!,
-      strength: (entry.strength as num).toDouble(),
+      strength: entry.strength!.toDouble(),
       unit: entry.unit!.trim().toLowerCase(),
       jurisdiction: entry.jurisdiction!.trim(),
       sourceDocId: entry.sourceDocId!.trim(),
@@ -289,4 +405,98 @@ class MedicationEntryValidator {
     final lower = raw.toLowerCase();
     return _allowedUnits.any((u) => lower.contains(' $u') || lower.endsWith(u));
   }
+
+  static bool _invalidConfidence(double? value) =>
+      value != null && (!value.isFinite || value < 0 || value > 1);
+
+  static final RegExp _ingredientSeparator = RegExp(r'[/+,]');
+  static final RegExp _canonicalWhitespace = RegExp(r'\s+');
+
+  static Set<String> _canonicalIngredientTokens(Iterable<String> values) =>
+      values
+          .expand((value) => value.split(_ingredientSeparator))
+          .map(
+            (value) => value.trim().toLowerCase().replaceAll(
+              _canonicalWhitespace,
+              ' ',
+            ),
+          )
+          .where((value) => value.isNotEmpty)
+          .toSet();
+
+  static bool _sameTokenSet(Set<String> left, Set<String> right) =>
+      left.length == right.length && left.containsAll(right);
+
+  static String _canonicalVocabularyToken(String value) =>
+      value.trim().toLowerCase().replaceAll(RegExp(r'[\s-]+'), '_');
+
+  static bool _isUnknownVocabularyToken(String value) {
+    final canonical = _canonicalVocabularyToken(value);
+    return canonical.isEmpty ||
+        canonical == 'unknown' ||
+        canonical == 'unspecified' ||
+        canonical == 'not_reported' ||
+        canonical == 'n/a' ||
+        canonical == 'na';
+  }
+
+  static String _canonicalReleaseType(String value) {
+    final canonical = _canonicalVocabularyToken(value);
+    return switch (canonical) {
+      'immediate_release' => 'immediate',
+      'extended_release' => 'extended',
+      'controlled_release' => 'controlled',
+      'delayed_release' => 'delayed',
+      _ => canonical,
+    };
+  }
+
+  static void _addVocabularyMismatch({
+    required List<MedicationContextIssue> issues,
+    required String? topLevelValue,
+    required String metadataValue,
+    required String code,
+    required String message,
+    String Function(String) canonicalize = _canonicalVocabularyToken,
+  }) {
+    if (topLevelValue == null || topLevelValue.trim().isEmpty) return;
+    if (_isUnknownVocabularyToken(metadataValue)) return;
+    if (canonicalize(topLevelValue) == canonicalize(metadataValue)) return;
+    issues.add(MedicationContextIssue(code: code, message: message));
+  }
+
+  static void _addIdentityMismatch({
+    required List<MedicationContextIssue> issues,
+    required String? topLevelValue,
+    required String? metadataValue,
+    required String fieldLabel,
+    required String codePrefix,
+    String Function(String) canonicalize = _canonicalIdentity,
+  }) {
+    if (metadataValue == null ||
+        _isUnknownVocabularyToken(metadataValue) ||
+        metadataValue.trim().isEmpty) {
+      issues.add(
+        MedicationContextIssue(
+          code: '${codePrefix}_UNBOUND',
+          message:
+              'Medication metadata does not identify the governed $fieldLabel '
+              'needed to bind it to the structured entry.',
+        ),
+      );
+      return;
+    }
+    if (topLevelValue == null || topLevelValue.trim().isEmpty) return;
+    if (canonicalize(topLevelValue) == canonicalize(metadataValue)) return;
+    issues.add(
+      MedicationContextIssue(
+        code: '${codePrefix}_MISMATCH',
+        message:
+            'Medication metadata $fieldLabel contradicts the structured '
+            '$fieldLabel.',
+      ),
+    );
+  }
+
+  static String _canonicalIdentity(String value) => value.trim();
 }

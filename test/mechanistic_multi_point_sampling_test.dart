@@ -45,6 +45,11 @@ void main() {
       ),
     ],
   );
+  final doseTimeComposition = MealCompositionNormalizer().normalize(
+    mealId: 'dose_time_history',
+    components: banana.components,
+    declaredPhysicalForm: MealPhysicalForm.solid,
+  );
 
   TimeAxisConflictContext makeCtx(DateTime now, UserDefinedMealWindow? window) {
     final v = validator.validate(validLevodopa);
@@ -57,7 +62,14 @@ void main() {
           medicationContext: v,
         ),
       ],
-      mealInputs: const [],
+      mealInputs: [
+        MealTimelineInput(
+          id: 'dose_time_history',
+          startedAt: now.subtract(const Duration(minutes: 60)),
+          compositionId: doseTimeComposition.id,
+          physicalForm: MealPhysicalForm.solid,
+        ),
+      ],
       userDefinedWindow: window,
     );
   }
@@ -66,7 +78,7 @@ void main() {
     final ctx = makeCtx(DateTime.utc(2026, 1, 1, 8), null);
     final scores = scorer.score(
       baseContext: ctx,
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: {doseTimeComposition.id: doseTimeComposition},
       candidates: const [banana],
     );
     expect(scores.single.insufficientContext, isTrue);
@@ -84,12 +96,12 @@ void main() {
     final ctx = makeCtx(now, window);
     final a = scorer.score(
       baseContext: ctx,
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: {doseTimeComposition.id: doseTimeComposition},
       candidates: const [banana],
     );
     final b = scorer.score(
       baseContext: ctx,
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: {doseTimeComposition.id: doseTimeComposition},
       candidates: const [banana],
     );
     expect(a.single.sampleCount, b.single.sampleCount);
@@ -110,7 +122,9 @@ void main() {
     final s = scorer
         .score(
           baseContext: ctx,
-          baseMealCompositionsById: const {},
+          baseMealCompositionsById: {
+            doseTimeComposition.id: doseTimeComposition,
+          },
           candidates: const [banana],
         )
         .single;
@@ -138,7 +152,9 @@ void main() {
     final s = scorer
         .score(
           baseContext: ctx,
-          baseMealCompositionsById: const {},
+          baseMealCompositionsById: {
+            doseTimeComposition.id: doseTimeComposition,
+          },
           candidates: const [banana],
         )
         .single;
@@ -207,6 +223,11 @@ void main() {
             sourceDocId: 'synthetic',
             aminoAcidProfile: AminoAcidProfile(
               leucine: 8,
+              isoleucine: 2,
+              valine: 2,
+              phenylalanine: 1.5,
+              tyrosine: 1,
+              tryptophan: 0.5,
               basis: 'per_serving',
             ),
           ),

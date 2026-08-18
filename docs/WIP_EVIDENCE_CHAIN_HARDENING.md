@@ -23,7 +23,7 @@ of this work — the additions are read-only derivations and checks.
 | W5 | Features — diagnostics i18n, post-hoc "why" view | **done** |
 
 Verification at last checkpoint: `flutter analyze` clean, `flutter test` 874
-passing, `npm run verify:all` → all 10 gates pass.
+passing, `npm run verify:all` → all 11 gates pass.
 
 ---
 
@@ -71,7 +71,7 @@ Landed:
   JSON is ~900 KB, so it is goldened as a per-scenario digest instead).
 - `test/goldens_test.dart` — 6 golden groups. Refresh with
   `UPDATE_GOLDENS=1 flutter test test/goldens_test.dart`, then **read the diff**.
-- `tool/run_verify_all.mjs` + `npm run verify:all` — runs all 9 governance
+- `tool/run_verify_all.mjs` + `npm run verify:all` — runs all 10 governance
   gates plus the golden check, composes `build/verify_all/latest.{json,md}`,
   exits non-zero on any blocker. `-- --list` prints the inventory.
 - CI `governance-gates` job collapsed from ~10 steps to `npm run verify:all`
@@ -149,7 +149,7 @@ next step now that W1-W5 have landed.
   identical to having no link.
 - **`catalog_inventory_diagnostics.dart`** — the aggregate that never existed:
   20 foods, 21 medications, 43 source documents, 10 rules, 25 templates, 41
-  scenarios, 17 assumptions, with roll-ups by source family, jurisdiction,
+  scenarios and the current assumption registry, with roll-ups by source family, jurisdiction,
   licence, and status, plus two named gaps (6 documents declared but not live;
   catalog entries still on placeholder external codes). Shared by the new
   `npm run catalog:inventory` CLI and a diagnostics card, so the two cannot

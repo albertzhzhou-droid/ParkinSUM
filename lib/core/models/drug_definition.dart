@@ -55,7 +55,7 @@ class DrugDefinition {
     this.sourceSystem = 'LOCAL_SEED',
     this.sourceProductCode,
     this.jurisdiction = 'GLOBAL',
-    this.route = 'oral',
+    this.route = 'unspecified',
     this.dosageForm = 'unspecified',
     this.releaseType = 'unspecified',
   });
@@ -115,7 +115,7 @@ class DrugDefinition {
       sourceSystem: (json['sourceSystem'] as String?) ?? 'LOCAL_SEED',
       sourceProductCode: json['sourceProductCode'] as String?,
       jurisdiction: (json['jurisdiction'] as String?) ?? 'GLOBAL',
-      route: (json['route'] as String?) ?? 'oral',
+      route: (json['route'] as String?) ?? 'unspecified',
       dosageForm: (json['dosageForm'] as String?) ?? 'unspecified',
       releaseType: (json['releaseType'] as String?) ?? 'unspecified',
     );

@@ -200,7 +200,7 @@ class CdssCatalogProjectionService {
             sourceSystem: '${row['regulator'] ?? 'CDSS'}',
             sourceProductCode: row['external_product_code']?.toString(),
             jurisdiction: '${row['jurisdiction'] ?? 'GLOBAL'}',
-            route: '${row['route'] ?? 'oral'}',
+            route: '${row['route'] ?? 'unspecified'}',
             dosageForm: '${row['dosage_form'] ?? 'unspecified'}',
             releaseType: '${row['release_type'] ?? 'unspecified'}',
           );

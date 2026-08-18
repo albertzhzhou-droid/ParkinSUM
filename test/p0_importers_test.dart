@@ -295,6 +295,7 @@ void main() {
     expect(bundle.drugConcepts.single.genericName, 'levodopa/carbidopa');
     expect(bundle.projectedDrugs.single.tags, contains(DrugTag.levodopaLike));
     expect(bundle.projectedDrugs.single.route, 'oral');
+    expect(bundle.drugProductVariants.single.releaseType, 'unknown');
     expect(bundle.drugLabelSections, isNotEmpty);
     final payload = jsonDecode(bundle.sourceDocuments.single.rawPayload) as Map;
     final labelFacts = (payload['label_facts'] as List)
@@ -320,6 +321,71 @@ void main() {
             (item['payload'] as Map)['after_minutes'] == 120,
       ),
       isTrue,
+    );
+  });
+
+  test('DailyMed release type requires explicit title evidence', () {
+    const importer = DailyMedP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+
+    DrugProductVariantRecord variantFor(String title) => importer
+        .importSplXml('''
+<document>
+  <setId root="fixture-$title" />
+  <title>$title</title>
+  <ingredient><name>levodopa</name></ingredient>
+  <ingredient><name>carbidopa</name></ingredient>
+  <routeCode displayName="oral" />
+  <formCode displayName="tablet" />
+</document>
+''')
+        .drugProductVariants
+        .single;
+
+    expect(
+      variantFor(
+        'Carbidopa and Levodopa immediate-release tablets',
+      ).releaseType,
+      'immediate_release',
+    );
+    expect(
+      variantFor('Carbidopa and Levodopa ER tablets').releaseType,
+      'extended_release',
+    );
+    expect(
+      variantFor('Meridian carbidopa and levodopa tablets').releaseType,
+      'unknown',
+      reason: 'an arbitrary "er" substring is not release evidence',
+    );
+    expect(
+      variantFor('Carbidopa and Levodopa tablets').releaseType,
+      'unknown',
+      reason: 'absence of release wording must never default to IR',
+    );
+  });
+
+  test('DailyMed missing route remains unspecified', () {
+    const importer = DailyMedP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+
+    final bundle = importer.importSplXml('''
+<document>
+  <setId root="fixture-missing-route" />
+  <title>Carbidopa and Levodopa immediate-release tablets</title>
+  <ingredient><name>levodopa</name></ingredient>
+  <ingredient><name>carbidopa</name></ingredient>
+  <formCode displayName="tablet" />
+</document>
+''');
+
+    expect(bundle.projectedDrugs.single.route, 'unspecified');
+    expect(bundle.drugProductVariants.single.route, 'unspecified');
+    expect(
+      bundle.drugProductVariants.single.releaseType,
+      'immediate_release',
+      reason: 'known formulation metadata must not fabricate the route',
     );
   });
 
@@ -361,6 +427,38 @@ void main() {
 
     expect(bundle.projectedDrugs.single.jurisdiction, 'CA');
     expect(bundle.projectedDrugs.single.genericName, 'Levodopa/Benserazide');
+  });
+
+  test('DPD missing route mapping remains unspecified', () {
+    const importer = HealthCanadaDpdP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importFromPayloads(
+      drugProducts: [
+        {
+          'drug_code': '112',
+          'drug_identification_number': '22222223',
+          'brand_name': 'Unknown-route product',
+          'pharmaceutical_form_code': 'TAB',
+          'route_of_administration_code': 'UNMAPPED',
+        },
+      ],
+      activeIngredients: [
+        {'drug_code': '112', 'ingredient_name': 'Levodopa'},
+        {'drug_code': '112', 'ingredient_name': 'Carbidopa'},
+      ],
+      forms: [
+        {
+          'pharmaceutical_form_code': 'TAB',
+          'pharmaceutical_form_name': 'tablet',
+        },
+      ],
+      routes: const [],
+      statuses: const [],
+    );
+
+    expect(bundle.projectedDrugs.single.route, 'unspecified');
+    expect(bundle.drugProductVariants.single.route, 'unspecified');
   });
 
   test(
@@ -540,6 +638,11 @@ void main() {
     expect(bundle.drugProductVariants.single.regulator, 'EMA');
     expect(bundle.drugProductVariants.single.jurisdiction, 'EU');
     expect(bundle.drugProductVariants.single.releaseType, 'extended_release');
+    expect(
+      bundle.drugProductVariants.single.route,
+      'unspecified',
+      reason: 'dosage form alone must not be promoted into route evidence',
+    );
     expect(bundle.drugConcepts.single.genericName, 'levodopa/carbidopa');
     expect(bundle.projectedDrugs.single.sourceSystem, 'EMA');
     expect(bundle.drugProductMedias, isNotEmpty);
@@ -953,8 +1056,10 @@ void main() {
       );
       final result = await orchestrator.recommend(
         request: NextMealRecommendationRequest(
-          userProfile: UserProfile.defaults().copyWith(
-            localAiConsentEnabled: true,
+          userProfile: UserProfile.defaults().withLocalAiConsentDecision(
+            enabled: true,
+            recordedAt: DateTime.utc(2026, 8, 18),
+            source: 'test_fixture',
           ),
           history: [
             Meal(

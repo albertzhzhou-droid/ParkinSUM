@@ -27,12 +27,14 @@ import '../analysis/interaction_engine.dart';
 import '../analysis/medication_repository.dart';
 import '../analysis/nutrition_classifier.dart';
 import '../db/app_database.dart';
+import '../db/app_database_memory.dart';
 import '../db/app_database_firestore.dart';
 import '../constants/baseline_cdss_rules.dart';
 import '../constants/p0_food_source_seed.dart';
 import '../constants/regional_master_data.dart';
 import '../db/cdss_database.dart';
 import '../db/cdss_database_firestore.dart';
+import '../db/cdss_database_memory.dart';
 import '../db/cdss_database_factory.dart';
 import '../../data/datasources/remote/p0_ingestion_orchestrator.dart';
 import '../../data/datasources/remote/source_fetch_client.dart';
@@ -204,16 +206,37 @@ class Services {
         .toList(growable: false);
   }
 
-  factory Services.createDefault() {
-    final AuthService auth = FirebaseBackend.enabled
-        ? FirebaseAuthService()
-        : LocalAuthService();
-    final appDatabase = FirebaseBackend.enabled
-        ? FirestoreAppDatabase(authService: auth)
-        : createAppDatabase();
-    final cdssDatabase = FirebaseBackend.enabled
-        ? FirestoreCdssDatabase(authService: auth)
-        : createCdssDatabaseImpl();
+  factory Services.createDefault() => Services._configured();
+
+  /// Builds a complete, network-free service graph backed only by process
+  /// memory. This is intentionally opt-in: production startup keeps using
+  /// [createDefault], while device integration tests can run without reading
+  /// or overwriting the installed user's local or cloud records.
+  factory Services.createEphemeral({AppDatabase? appDatabase}) =>
+      Services._configured(
+        authOverride: LocalAuthService(),
+        appDatabaseOverride: appDatabase ?? InMemoryAppDatabase(),
+        cdssDatabaseOverride: InMemoryCdssDatabase(),
+      );
+
+  factory Services._configured({
+    AuthService? authOverride,
+    AppDatabase? appDatabaseOverride,
+    CdssDatabase? cdssDatabaseOverride,
+  }) {
+    final AuthService auth =
+        authOverride ??
+        (FirebaseBackend.enabled ? FirebaseAuthService() : LocalAuthService());
+    final appDatabase =
+        appDatabaseOverride ??
+        (FirebaseBackend.enabled
+            ? FirestoreAppDatabase(authService: auth)
+            : createAppDatabase());
+    final cdssDatabase =
+        cdssDatabaseOverride ??
+        (FirebaseBackend.enabled
+            ? FirestoreCdssDatabase(authService: auth)
+            : createCdssDatabaseImpl());
 
     final foodRepo = FoodRepository.createDefault();
     final medRepo = MedicationRepository.createDefault();

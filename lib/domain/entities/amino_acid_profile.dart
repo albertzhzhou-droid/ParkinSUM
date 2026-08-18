@@ -12,8 +12,14 @@ export 'nutrient_derivation.dart'
 
 /// Which data path produced the competition LNAA load.
 enum AminoAcidDataMode {
-  /// Actual per-food amino-acid nutrient fields were used.
+  /// Complete actual per-food amino-acid nutrient fields covered every
+  /// positive-protein component in the meal.
   actualAminoAcidFields,
+
+  /// Complete actual fields covered only part of the meal's known protein;
+  /// uncovered positive-protein components used the declared protein-source
+  /// proxy and structural uncertainty was widened.
+  hybridActualAndProteinSourceProxy,
 
   /// Fell back to the protein-source-type load-factor approximation.
   proteinSourceProxy,
@@ -24,7 +30,7 @@ enum AminoAcidDataMode {
 
 /// LNAA grams per serving/basis, plus provenance. Null fields are treated as
 /// missing (not zero) so the model never fabricates precision.
-class AminoAcidProfile {
+final class AminoAcidProfile {
   final double? leucine;
   final double? isoleucine;
   final double? valine;

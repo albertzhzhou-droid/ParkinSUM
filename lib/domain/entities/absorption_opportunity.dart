@@ -1,4 +1,5 @@
-import 'gastric_emptying_profile.dart' show UncertaintyBand;
+import 'gastric_emptying_profile.dart'
+    show MechanisticProviderAvailability, UncertaintyBand;
 import 'time_axis_events.dart';
 
 enum DelayedArrivalLikelihood { low, moderate, high, unknown }
@@ -32,6 +33,12 @@ class AbsorptionOpportunityWindow {
   final List<String> missingInputs;
   final List<String> sourceRefs;
 
+  /// Explicit four-state provider output contract. Consumers must not
+  /// interpret the zero-width compatibility window or empty curve as a
+  /// modeled zero when this is not [MechanisticProviderAvailability.available].
+  final MechanisticProviderAvailability _declaredAvailability;
+  final List<String> applicabilityReasons;
+
   /// Sampled openness curve over the window (additive; the flat `window`
   /// fields stay for compatibility). Deterministic shape from release type +
   /// gastric delay; empty when not computed.
@@ -46,11 +53,99 @@ class AbsorptionOpportunityWindow {
     required this.assumptions,
     required this.missingInputs,
     required this.sourceRefs,
+    MechanisticProviderAvailability availability =
+        MechanisticProviderAvailability.available,
+    this.applicabilityReasons = const [],
     this.opennessProfile = const [],
+  }) : _declaredAvailability = availability;
+
+  /// Resolves a caller-declared available state against the executable curve
+  /// structure. This is an engineering integrity gate, not a validity claim.
+  MechanisticProviderAvailability get availability {
+    if (_declaredAvailability == MechanisticProviderAvailability.available &&
+        structuralIntegrityReasons.isNotEmpty) {
+      return MechanisticProviderAvailability.blockedIntegrity;
+    }
+    return _declaredAvailability;
+  }
+
+  List<String> get effectiveApplicabilityReasons => List.unmodifiable({
+    ...applicabilityReasons,
+    if (_declaredAvailability == MechanisticProviderAvailability.available)
+      ...structuralIntegrityReasons,
   });
 
+  List<String> get structuralIntegrityReasons {
+    final reasons = <String>{};
+    if (medicationEventId.trim().isEmpty) {
+      reasons.add('absorption.profile_medication_event_id_empty');
+    }
+    if (window.durationMinutes <= 0) {
+      reasons.add('absorption.profile_window_invalid');
+    }
+    if (peakMinute < window.startMinute || peakMinute > window.endMinute) {
+      reasons.add('absorption.profile_peak_outside_window');
+    }
+    if (delayedArrivalLikelihood == DelayedArrivalLikelihood.unknown) {
+      reasons.add('absorption.profile_delay_likelihood_unknown');
+    }
+    if (opennessProfile.isEmpty) {
+      reasons.add('absorption.profile_samples_empty');
+      return List.unmodifiable(reasons);
+    }
+
+    int? previousMinute;
+    var maximumOpenness = double.negativeInfinity;
+    for (final sample in opennessProfile) {
+      if (!sample.openness.isFinite) {
+        reasons.add('absorption.profile_openness_nonfinite');
+      } else {
+        if (sample.openness < 0 || sample.openness > 1) {
+          reasons.add('absorption.profile_openness_out_of_range');
+        }
+        if (sample.openness > maximumOpenness) {
+          maximumOpenness = sample.openness;
+        }
+      }
+      if (sample.minute < window.startMinute ||
+          sample.minute > window.endMinute) {
+        reasons.add('absorption.profile_sample_outside_window');
+      }
+      if (previousMinute != null) {
+        if (sample.minute == previousMinute) {
+          reasons.add('absorption.profile_sample_minute_duplicate');
+        } else if (sample.minute < previousMinute) {
+          reasons.add('absorption.profile_sample_minutes_nonmonotonic');
+        }
+      }
+      previousMinute = sample.minute;
+    }
+    if (opennessProfile.first.minute != window.startMinute ||
+        opennessProfile.last.minute != window.endMinute) {
+      reasons.add('absorption.profile_window_coverage_incomplete');
+    }
+    if (!maximumOpenness.isFinite ||
+        !opennessProfile.any(
+          (sample) =>
+              sample.minute == peakMinute &&
+              sample.openness.isFinite &&
+              (sample.openness - maximumOpenness).abs() <= 1e-12,
+        )) {
+      reasons.add('absorption.profile_peak_inconsistent');
+    }
+    if (maximumOpenness.isFinite && maximumOpenness <= 0) {
+      reasons.add('absorption.profile_openness_mass_empty');
+    }
+    return List.unmodifiable(reasons);
+  }
+
+  bool get modelApplicable =>
+      availability == MechanisticProviderAvailability.available;
+
+  bool get hasModeledOutput => modelApplicable;
+
   /// Peak openness across the profile (0 when no profile).
-  double get peakOpenness => opennessProfile.isEmpty
+  double get peakOpenness => !modelApplicable || opennessProfile.isEmpty
       ? 0.0
       : opennessProfile.map((s) => s.openness).reduce((a, b) => a > b ? a : b);
 
@@ -58,7 +153,7 @@ class AbsorptionOpportunityWindow {
   /// samples. Returns 0 outside the sampled range (or when no profile exists),
   /// so an openness-weighted overlap naturally restricts to the window.
   double opennessAt(int minute) {
-    if (opennessProfile.isEmpty) return 0.0;
+    if (!modelApplicable || opennessProfile.isEmpty) return 0.0;
     if (minute <= opennessProfile.first.minute) {
       return minute == opennessProfile.first.minute
           ? opennessProfile.first.openness
@@ -83,16 +178,24 @@ class AbsorptionOpportunityWindow {
 
   Map<String, dynamic> toJson() => {
     'medication_event_id': medicationEventId,
-    'window': window.toJson(),
-    'peak_minute': peakMinute,
+    // The in-memory zero-width values are compatibility sentinels only. On
+    // the wire, null is the sole truthful representation of no modeled
+    // timeline/peak; otherwise callers could mistake abstention for a zero
+    // result at the dose minute.
+    'window': modelApplicable ? window.toJson() : null,
+    'peak_minute': modelApplicable ? peakMinute : null,
     'delayed_arrival_likelihood': delayedArrivalLikelihood.name,
     'uncertainty_band': uncertaintyBand.name,
     'assumptions': assumptions,
     'missing_inputs': missingInputs,
     'source_refs': sourceRefs,
-    'openness_profile': opennessProfile
-        .map((s) => s.toJson())
-        .toList(growable: false),
-    'peak_openness': peakOpenness,
+    'result_availability': availability.name,
+    'has_modeled_output': hasModeledOutput,
+    'model_applicable': modelApplicable,
+    'applicability_reasons': effectiveApplicabilityReasons,
+    'openness_profile': modelApplicable
+        ? opennessProfile.map((s) => s.toJson()).toList(growable: false)
+        : const <Map<String, dynamic>>[],
+    'peak_openness': modelApplicable ? peakOpenness : null,
   };
 }

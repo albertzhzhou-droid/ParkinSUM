@@ -214,6 +214,45 @@ void main() {
     expect(ids, contains('src.internal.prototype.heuristic'));
   });
 
+  test('structural and PK research sources stay documentation-only', () {
+    final registry = _loadRegistry();
+    const researchDoc =
+        'docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md';
+    for (final id in [
+      'src.elashoff.gastric.powerexp.1982',
+      'src.siegel.gastric.biphasic.1988',
+      'src.hou.gastric.modelcomparison.2010',
+      'src.burmen.gastric.pellets.2009',
+      'src.bertoli.gastric.linearexp.2023',
+      'src.guebila.levodopa.pbpk.2016',
+      'src.simon.levodopa.pkpd.2016',
+    ]) {
+      final source = registry.records[id];
+      expect(source, isNotNull, reason: id);
+      expect(source!.implementationStatus, 'documentation_only', reason: id);
+      expect(source.allowedForProduction, isFalse, reason: id);
+      expect(source.canSupportMechanismEvidenceAlone, isTrue, reason: id);
+      expect(source.documentationRefs, contains(researchDoc), reason: id);
+      expect(source.knownLimitations, isNotEmpty, reason: id);
+    }
+  });
+
+  test('model-governance guidance cannot stand in for mechanism evidence', () {
+    final registry = _loadRegistry();
+    for (final id in [
+      'src.ema.pbpk.reporting.guideline',
+      'src.fda.cms.credibility.guidance',
+    ]) {
+      final source = registry.records[id];
+      expect(source, isNotNull, reason: id);
+      expect(source!.sourceFamily, 'model_governance', reason: id);
+      expect(source.implementationStatus, 'documentation_only', reason: id);
+      expect(source.allowedForProduction, isFalse, reason: id);
+      expect(source.canSupportMechanismEvidenceAlone, isFalse, reason: id);
+      expect(source.knownLimitations, isNotEmpty, reason: id);
+    }
+  });
+
   test('current model-assumption source refs resolve', () {
     final registry = _loadRegistry();
     final source = File(

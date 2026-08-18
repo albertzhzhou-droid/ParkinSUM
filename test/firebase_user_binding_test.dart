@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/db/app_database_firestore.dart';
+import 'package:parkinsum_companion/core/models/atomic_onboarding_commit.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/interaction_result.dart';
@@ -14,6 +15,12 @@ import 'package:parkinsum_companion/core/services/user_clinical_audit_service.da
 class SignedOutAuthService implements AuthService {
   @override
   String? get currentUserEmail => null;
+
+  @override
+  bool get currentUserEmailVerified => false;
+
+  @override
+  List<String> get currentUserProviderIds => const <String>[];
 
   @override
   String? get currentUserId => null;
@@ -38,6 +45,30 @@ class SignedOutAuthService implements AuthService {
   Future<String> signInWithEmail({
     required String email,
     required String password,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> sendPasswordResetEmail({
+    required String email,
+    required String languageCode,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> sendEmailVerification({required String languageCode}) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<AuthUser?> reloadCurrentUser() async => null;
+
+  @override
+  Future<void> reauthenticateAndChangePassword({
+    required String currentPassword,
+    required String newPassword,
   }) async {
     throw UnimplementedError();
   }
@@ -83,6 +114,22 @@ void main() {
 
       await expectLater(
         database.saveMeals(<Meal>[]),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('not signed in'),
+          ),
+        ),
+      );
+      await expectLater(
+        database.commitOnboarding(
+          AtomicOnboardingCommit.create(
+            profile: UserProfile.defaults().copyWith(patientId: 'uid_a'),
+            activeDrugIds: const <String>[],
+            intakes: const <Intake>[],
+          ),
+        ),
         throwsA(
           isA<StateError>().having(
             (error) => error.message,

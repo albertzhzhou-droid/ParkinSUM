@@ -7,6 +7,8 @@ import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.d
 import 'package:parkinsum_companion/domain/usecases/source_authority_scorer.dart';
 import 'package:parkinsum_companion/domain/usecases/time_axis_builder.dart';
 
+import 'helpers/mechanistic_context_fixtures.dart';
+
 /// Guards Obj 5: real source authority/jurisdiction/provenance metadata flows
 /// into candidate ranking. Official-in-jurisdiction must outrank synthetic/seed
 /// when all else is equal; seed must never override official; out-of-
@@ -144,7 +146,9 @@ void main() {
               medicationContext: v,
             ),
           ],
-          mealInputs: const [],
+          mealInputs: [
+            fixtureDoseTimeMealInput(now.subtract(const Duration(minutes: 60))),
+          ],
           userDefinedWindow: UserDefinedMealWindow(
             window: TimelineWindow(
               startMinute: dateTimeToMinute(now) + 60,
@@ -155,9 +159,9 @@ void main() {
         );
         final scores = scorer.score(
           baseContext: ctx,
-          baseMealCompositionsById: const {},
+          baseMealCompositionsById: fixtureDoseTimeCompositions,
           candidates: const [a, b],
-          candidateMetadata: const {
+          candidateMetadata: {
             'a': CandidateMetadata(
               completeness: 1.0,
               authorityScore: 0.7,
@@ -176,7 +180,12 @@ void main() {
         );
         final sa = scores.firstWhere((s) => s.candidateFoodId == 'a');
         final sb = scores.firstWhere((s) => s.candidateFoodId == 'b');
-        expect(sa.finalCandidateScore, greaterThan(sb.finalCandidateScore));
+        expect(sa.hasModeledOutput, isTrue);
+        expect(sb.hasModeledOutput, isTrue);
+        expect(
+          sa.modeledFinalCandidateScore,
+          greaterThan(sb.modeledFinalCandidateScore!),
+        );
       },
     );
   });

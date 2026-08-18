@@ -4,16 +4,15 @@ import 'package:provider/provider.dart';
 import '../../core/services/firebase_backend.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
+import '../../core/state/app_state_slices.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import 'dashboard_page.dart';
 import '../analytics/analytics_page.dart';
 import '../medications/medication_page.dart';
 import '../catalog/catalog_page.dart';
-import '../diagnostics/engineering_diagnostics_page.dart';
-import '../diagnostics/data_integrity_page.dart';
-import '../legal/privacy_disclaimer_page.dart';
 import '../next_meal/next_meal_page.dart';
 import '../timeline/timeline_page.dart';
+import '../settings/settings_capability_page.dart';
 import 'lazy_indexed_stack.dart';
 import 'main_tab_route.dart';
 
@@ -42,7 +41,9 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final selectedIndex = MainTabRoute.fromId(widget.selectedTabId).index;
     final i18n = context.appI18n;
-    final state = context.watch<AppState>();
+    final shell = context.select<AppState, ShellStateSlice>(
+      ShellStateSlice.fromState,
+    );
     // The bar used to render only in Firebase mode, which left the privacy &
     // disclaimer page unreachable in local/public-demo mode once onboarding was
     // done. It now always renders; only the account-specific bits are gated.
@@ -59,35 +60,18 @@ class _MainShellState extends State<MainShell> {
       appBar: GlassAppBar(
         title: Text(
           showAccountActions
-              ? (state.currentUserEmail ?? state.currentUserId ?? 'Account')
-              : i18n.tr('onboarding.appbar'),
+              ? (shell.userEmail ?? shell.userId ?? 'Account')
+              : 'ParkinSUM',
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
           IconButton(
-            tooltip: i18n.tr('runtime.validation_source'),
-            icon: const Icon(Icons.data_thresholding_outlined, size: 20),
+            key: const ValueKey('main-settings'),
+            tooltip: i18n.tr('settings.title'),
+            icon: const Icon(Icons.settings_outlined, size: 20),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
-                builder: (_) => const DataIntegrityPage(),
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: i18n.tr('diagnostics.title'),
-            icon: const Icon(Icons.science_outlined, size: 20),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const EngineeringDiagnosticsPage(),
-              ),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Privacy & Disclaimer',
-            icon: const Icon(Icons.privacy_tip_outlined, size: 20),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const PrivacyDisclaimerPage(),
+                builder: (_) => const SettingsCapabilityPage(),
               ),
             ),
           ),
@@ -95,7 +79,7 @@ class _MainShellState extends State<MainShell> {
             IconButton(
               tooltip: i18n.tr('common.sign_out'),
               icon: const Icon(Icons.logout, size: 20),
-              onPressed: state.isAuthBusy
+              onPressed: shell.isAuthBusy
                   ? null
                   : () => context.read<AppState>().signOut(),
             ),
@@ -131,9 +115,17 @@ class _MainShellState extends State<MainShell> {
                       destinations: [
                         for (final destination in destinations)
                           NavigationRailDestination(
-                            icon: Icon(destination.icon),
+                            icon: Icon(
+                              destination.icon,
+                              key: ValueKey<String>(
+                                'main-tab-${destination.id}',
+                              ),
+                            ),
                             selectedIcon: Icon(
                               destination.selectedIcon ?? destination.icon,
+                              key: ValueKey<String>(
+                                'main-tab-${destination.id}-selected',
+                              ),
                             ),
                             label: Text(destination.label),
                           ),
@@ -167,6 +159,7 @@ class _MainShellState extends State<MainShell> {
   List<GlassNavDestination> _destinations(AppI18n i18n) {
     return [
       GlassNavDestination(
+        id: MainTabRoute.home.id,
         icon: Icons.home_outlined,
         selectedIcon: Icons.home_rounded,
         label: i18n.tr('nav.home'),
@@ -174,26 +167,31 @@ class _MainShellState extends State<MainShell> {
       // 下餐推荐：以前藏在「分析」页底部，现在作为独立的主导航条目，
       // 主要由冲突引擎驱动，可选用本地 AI 润色。
       GlassNavDestination(
+        id: MainTabRoute.nextMeal.id,
         icon: Icons.auto_awesome_outlined,
         selectedIcon: Icons.auto_awesome_rounded,
         label: i18n.tr('nav.next_meal'),
       ),
       GlassNavDestination(
+        id: MainTabRoute.timeline.id,
         icon: Icons.restaurant_outlined,
         selectedIcon: Icons.restaurant_rounded,
         label: i18n.tr('nav.timeline'),
       ),
       GlassNavDestination(
+        id: MainTabRoute.analytics.id,
         icon: Icons.show_chart_outlined,
         selectedIcon: Icons.show_chart_rounded,
         label: i18n.tr('nav.analytics'),
       ),
       GlassNavDestination(
+        id: MainTabRoute.medications.id,
         icon: Icons.medication_outlined,
         selectedIcon: Icons.medication_rounded,
         label: i18n.tr('nav.meds'),
       ),
       GlassNavDestination(
+        id: MainTabRoute.catalog.id,
         icon: Icons.search_outlined,
         selectedIcon: Icons.search_rounded,
         label: i18n.tr('nav.catalog'),

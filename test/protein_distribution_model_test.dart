@@ -17,6 +17,58 @@ void main() {
     );
     expect(s.windowRole, ProteinWindowRole.unknownWindowRole);
     expect(s.optimizationActive, isFalse);
+    expect(s.toJson()['redistribution_score'], isNull);
+    expect(
+      (s.toJson()['adequacy'] as Map<String, dynamic>)['contribution'],
+      isNull,
+    );
+  });
+
+  test('missing or invalid protein never becomes a known zero', () {
+    for (final protein in <double?>[null, -1, double.nan, double.infinity]) {
+      final s = model.evaluate(
+        ProteinDistributionContext(
+          modeledOverlap: 0.2,
+          localHourHint: 12,
+          medicationContextValid: true,
+          candidateProteinGrams: protein,
+        ),
+      );
+      expect(s.optimizationActive, isFalse, reason: '$protein');
+      expect(s.windowRole, ProteinWindowRole.unknownWindowRole);
+      expect(s.toJson()['redistribution_score'], isNull);
+      expect(s.toJson()['overlap_protein_penalty'], isNull);
+      final traceJson = model.toTrace(s).toJson();
+      expect(traceJson['redistribution_score'], isNull);
+      expect(traceJson['nutrition_adequacy_contribution'], isNull);
+    }
+  });
+
+  test('invalid overlap and hour fail closed', () {
+    for (final context in <ProteinDistributionContext>[
+      const ProteinDistributionContext(
+        modeledOverlap: -0.1,
+        localHourHint: 12,
+        medicationContextValid: true,
+        candidateProteinGrams: 10,
+      ),
+      const ProteinDistributionContext(
+        modeledOverlap: 1.1,
+        localHourHint: 12,
+        medicationContextValid: true,
+        candidateProteinGrams: 10,
+      ),
+      const ProteinDistributionContext(
+        modeledOverlap: 0.1,
+        localHourHint: 24,
+        medicationContextValid: true,
+        candidateProteinGrams: 10,
+      ),
+    ]) {
+      final s = model.evaluate(context);
+      expect(s.optimizationActive, isFalse);
+      expect(s.toJson()['redistribution_score'], isNull);
+    }
   });
 
   test('high overlap → sensitive window, protein penalized', () {

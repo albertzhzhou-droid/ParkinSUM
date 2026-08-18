@@ -35,6 +35,10 @@ const manifest = {
   },
   source: {
     gitReference: readGitReference(),
+    commit: args['source-commit'] ?? null,
+    tree: args['source-tree'] ?? null,
+    clean: parseBoolean(args['source-clean']),
+    archiveMode: 'git-archive',
     sourceBundle: args['source-bundle'] ?? null,
     sourceBundleSha256: args['source-bundle-sha256'] ?? null,
     sourceBundleId: args['source-bundle-id'] ?? null,
@@ -156,4 +160,10 @@ function parseList(value) {
     .split(',')
     .map((entry) => entry.trim())
     .filter(Boolean);
+}
+
+function parseBoolean(value) {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return null;
 }

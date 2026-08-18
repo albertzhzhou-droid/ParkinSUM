@@ -62,12 +62,13 @@ class NextMealRecommendationResult {
   final List<MechanisticCandidateScore>? mechanisticCandidateScores;
 
   /// Which ranker actually produced `recommendations` order.
-  /// Values: `mechanistic_primary` (mechanistic engine had sufficient
-  /// context and re-ordered the list) or `heuristic_legacy_fallback`
-  /// (the existing distance-based heuristic was used).
+  /// This is `heuristic_legacy_fallback` unless the separately consented local
+  /// AI safely reordered the approved whitelist, in which case it is
+  /// `local_ai_safe_candidate_rerank`. Mechanistic candidate scores are retained
+  /// as inspectable educational trace data and never reorder this list.
   final String? rankerUsed;
 
-  /// Explicit eligibility record (why mechanistic-primary ran or didn't).
+  /// Explicit record of why the model remained trace-only or abstained.
   final RankerEligibility? rankerEligibility;
 
   const NextMealRecommendationResult({

@@ -93,9 +93,18 @@ class ProteinRedistributionScore {
 
   Map<String, dynamic> toJson() => {
     'window_role': windowRole.name,
-    'redistribution_score': redistributionScore,
-    'overlap_protein_penalty': overlapProteinPenalty,
-    'adequacy': adequacy.toJson(),
+    'has_modeled_output': optimizationActive,
+    'redistribution_score': optimizationActive ? redistributionScore : null,
+    'overlap_protein_penalty': optimizationActive
+        ? overlapProteinPenalty
+        : null,
+    'adequacy': optimizationActive
+        ? adequacy.toJson()
+        : <String, dynamic>{
+            'contribution': null,
+            'basis': adequacy.basis,
+            'source_refs': adequacy.sourceRefs,
+          },
     'assumptions': assumptions,
     'source_refs': sourceRefs,
     'optimization_active': optimizationActive,
@@ -120,8 +129,11 @@ class ProteinDistributionTrace {
 
   Map<String, dynamic> toJson() => {
     'window_role': windowRole.name,
-    'redistribution_score': redistributionScore,
-    'nutrition_adequacy_contribution': nutritionAdequacyContribution,
+    'has_modeled_output': optimizationActive,
+    'redistribution_score': optimizationActive ? redistributionScore : null,
+    'nutrition_adequacy_contribution': optimizationActive
+        ? nutritionAdequacyContribution
+        : null,
     'optimization_active': optimizationActive,
     'objective_description': objectiveDescription,
   };

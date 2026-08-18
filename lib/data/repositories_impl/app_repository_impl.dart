@@ -2,12 +2,15 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/atomic_onboarding_commit.dart';
 import '../../core/models/user_profile.dart';
+import '../../core/models/recoverable_user_event.dart';
 import '../../domain/repositories/app_repository.dart';
 import '../datasources/local/app_local_datasource.dart';
 import '../models/interaction_rule_record.dart';
 
-class AppRepositoryImpl implements AppRepository {
+class AppRepositoryImpl
+    implements AppRepository, RecoverableUserEventRepository {
   final AppLocalDataSource local;
 
   AppRepositoryImpl({required this.local});
@@ -59,6 +62,10 @@ class AppRepositoryImpl implements AppRepository {
       local.saveUserProfile(profile);
 
   @override
+  Future<void> commitOnboarding(AtomicOnboardingCommit commit) =>
+      local.commitOnboarding(commit);
+
+  @override
   Future<void> saveIntakes(List<Intake> intakes) => local.saveIntakes(intakes);
 
   @override
@@ -66,4 +73,13 @@ class AppRepositoryImpl implements AppRepository {
 
   @override
   Future<void> saveOnboarded(bool value) => local.saveOnboarded(value);
+
+  @override
+  Future<List<RecoverableUserEventRevision>>
+  loadRecoverableUserEventHistory() => local.loadRecoverableUserEventHistory();
+
+  @override
+  Future<void> commitRecoverableUserEventMutation(
+    RecoverableUserEventMutation mutation,
+  ) => local.commitRecoverableUserEventMutation(mutation);
 }

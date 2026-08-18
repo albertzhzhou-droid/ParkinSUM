@@ -158,12 +158,17 @@ class RecommendationReplayRunner {
         .toList(growable: false);
 
     return NextMealRecommendationRequest(
-      userProfile: UserProfile.defaults().copyWith(
-        registrationRegion: benchmarkCase.registrationRegion,
-        displayLocale: benchmarkCase.displayLocale,
-        dietProfileRegion: benchmarkCase.dietProfileRegion,
-        localAiConsentEnabled: benchmarkCase.userConsentedToAi,
-      ),
+      userProfile: UserProfile.defaults()
+          .copyWith(
+            registrationRegion: benchmarkCase.registrationRegion,
+            displayLocale: benchmarkCase.displayLocale,
+            dietProfileRegion: benchmarkCase.dietProfileRegion,
+          )
+          .withLocalAiConsentDecision(
+            enabled: benchmarkCase.userConsentedToAi,
+            recordedAt: now.toUtc(),
+            source: 'replay_fixture',
+          ),
       history: [meal],
       activeDrugs: drugs,
       intakes: intakes,

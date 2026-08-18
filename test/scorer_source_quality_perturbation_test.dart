@@ -7,6 +7,8 @@ import 'package:parkinsum_companion/domain/usecases/next_meal_scoring_parameters
 import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.dart';
 import 'package:parkinsum_companion/domain/usecases/time_axis_builder.dart';
 
+import 'helpers/mechanistic_context_fixtures.dart';
+
 /// D1 — source-quality perturbation. Demonstrates graceful degradation: a
 /// candidate's score moves monotonically with its provenance/authority metadata
 /// (better provenance never *hurts*), AND — the safety invariant — provenance
@@ -41,7 +43,9 @@ void main() {
           medicationContext: v,
         ),
       ],
-      mealInputs: const [],
+      mealInputs: [
+        fixtureDoseTimeMealInput(now.subtract(const Duration(minutes: 60))),
+      ],
       userDefinedWindow: UserDefinedMealWindow(
         window: TimelineWindow(
           startMinute: dateTimeToMinute(now) + 60,
@@ -85,14 +89,21 @@ void main() {
     jurisdiction: 'US',
   );
 
-  double scoreOf(List<MechanisticCandidateScore> s, String id) =>
-      s.firstWhere((e) => e.candidateFoodId == id).finalCandidateScore;
+  double scoreOf(List<MechanisticCandidateScore> scores, String id) {
+    final score = scores.firstWhere((item) => item.candidateFoodId == id);
+    expect(
+      score.hasModeledOutput,
+      isTrue,
+      reason: '$id unexpectedly abstained',
+    );
+    return score.modeledFinalCandidateScore!;
+  }
 
   test('higher source quality never lowers a candidate score (monotonic)', () {
     final c = food('a', protein: 5);
     final low = scorer.score(
       baseContext: ctx(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: fixtureDoseTimeCompositions,
       candidates: [c],
       candidateMetadata: {
         'a': meta(authority: 0.1, provenance: 0.1, completeness: 0.3),
@@ -100,7 +111,7 @@ void main() {
     );
     final high = scorer.score(
       baseContext: ctx(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: fixtureDoseTimeCompositions,
       candidates: [c],
       candidateMetadata: {
         'a': meta(authority: 0.9, provenance: 0.9, completeness: 1.0),
@@ -120,7 +131,7 @@ void main() {
     final worst = food('worst', protein: 8); // identical composition
     final scores = scorer.score(
       baseContext: ctx(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: fixtureDoseTimeCompositions,
       candidates: [best, worst],
       candidateMetadata: {
         'best': meta(authority: 1.0, provenance: 1.0, completeness: 1.0),
@@ -142,13 +153,13 @@ void main() {
     final m = {'a': meta(authority: 0.5, provenance: 0.5, completeness: 0.8)};
     final r1 = scorer.score(
       baseContext: ctx(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: fixtureDoseTimeCompositions,
       candidates: [c],
       candidateMetadata: m,
     );
     final r2 = scorer.score(
       baseContext: ctx(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: fixtureDoseTimeCompositions,
       candidates: [c],
       candidateMetadata: m,
     );

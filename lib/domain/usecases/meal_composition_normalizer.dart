@@ -1,18 +1,21 @@
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/meal_composition.dart';
 import '../entities/time_axis_events.dart';
 
 /// Pure normalization: never invents nutrient values, never widens precision,
 /// records every missing field for the downstream uncertainty model.
-class MealCompositionNormalizer {
+class MealCompositionNormalizer with RegisteredAlgorithmComponentIdentity {
   /// Build a `MealComposition` from a set of food components and an optional
-  /// already-known physical form. The normalizer multiplies per-portion
-  /// nutrient values by component portion when present, otherwise records
-  /// the field as missing.
+  /// already-known physical form. Nutrient values on `FoodComponent` are
+  /// already per serving; this layer aggregates them and records missingness.
   MealComposition normalize({
     required String mealId,
     required List<FoodComponent> components,
     MealPhysicalForm? declaredPhysicalForm,
   }) {
+    final hasKnownDeclaredForm =
+        declaredPhysicalForm != null &&
+        declaredPhysicalForm != MealPhysicalForm.unknown;
     if (components.isEmpty) {
       return MealComposition(
         id: mealId,
@@ -29,46 +32,98 @@ class MealCompositionNormalizer {
         fiberAmountBand: AmountBand.unknown,
         calorieBand: AmountBand.unknown,
         compositionCompleteness: 0.0,
-        missingFields: const [
+        missingFields: [
           'food_components',
           'total_calories',
           'protein_grams',
           'fat_grams',
           'fiber_grams',
           'carbohydrate_grams',
+          'portion_grams',
           'liquid_fraction',
+          if (!hasKnownDeclaredForm) 'meal_physical_form',
         ],
         foodComponents: const [],
       );
     }
 
-    double? sumOrNull(Iterable<double?> xs) {
-      var any = false;
+    // A meal-level nutrient total is publishable only when every component is
+    // observed with a finite, nonnegative value. Partial sums would silently
+    // treat missing/invalid components as zero and feed false precision into
+    // competition, size, and uncertainty scoring. Known zero remains valid.
+    double? completeNonnegativeSum(Iterable<double?> xs) {
       var total = 0.0;
       for (final x in xs) {
-        if (x == null) continue;
-        any = true;
+        if (x == null || !x.isFinite || x < 0) return null;
         total += x;
+        if (!total.isFinite) return null;
       }
-      return any ? total : null;
+      return total;
     }
 
-    final protein = sumOrNull(components.map((c) => c.proteinGrams));
-    final fat = sumOrNull(components.map((c) => c.fatGrams));
-    final fiber = sumOrNull(components.map((c) => c.fiberGrams));
-    final carbs = sumOrNull(components.map((c) => c.carbohydrateGrams));
-    final calories = sumOrNull(components.map((c) => c.calories));
+    final protein = completeNonnegativeSum(
+      components.map((c) => c.proteinGrams),
+    );
+    final fat = completeNonnegativeSum(components.map((c) => c.fatGrams));
+    final fiber = completeNonnegativeSum(components.map((c) => c.fiberGrams));
+    final carbs = completeNonnegativeSum(
+      components.map((c) => c.carbohydrateGrams),
+    );
+    final calories = completeNonnegativeSum(components.map((c) => c.calories));
 
-    final liquidMass = components
-        .where((c) => c.physicalForm == MealPhysicalForm.liquid)
-        .map((c) => c.portionGrams ?? 0)
-        .fold<double>(0, (a, b) => a + b);
-    final totalMass = components
-        .map((c) => c.portionGrams ?? 0)
-        .fold<double>(0, (a, b) => a + b);
-    final liquidFraction = totalMass > 0 ? liquidMass / totalMass : null;
+    final hasUnknownComponentForm = components.any(
+      (component) => component.physicalForm == MealPhysicalForm.unknown,
+    );
 
-    final form = declaredPhysicalForm ?? _inferForm(components, liquidFraction);
+    final hasUnknownPortion = components.any(
+      (component) => component.portionGrams == null,
+    );
+    final hasInvalidPortion = components.any((component) {
+      final portion = component.portionGrams;
+      return portion != null && (!portion.isFinite || portion < 0);
+    });
+    double effectiveMass(FoodComponent component) {
+      final portion = component.portionGrams;
+      return portion != null && portion.isFinite && portion > 0 ? portion : 0.0;
+    }
+
+    var maximumEffectiveMass = 0.0;
+    for (final component in components) {
+      final mass = effectiveMass(component);
+      if (mass > maximumEffectiveMass) maximumEffectiveMass = mass;
+    }
+    final liquidMass = maximumEffectiveMass > 0
+        ? components
+              .where(
+                (component) =>
+                    component.physicalForm == MealPhysicalForm.liquid,
+              )
+              .map(
+                (component) => effectiveMass(component) / maximumEffectiveMass,
+              )
+              .fold<double>(0, (a, b) => a + b)
+        : 0.0;
+    final totalMass = maximumEffectiveMass > 0
+        ? components
+              .map(
+                (component) => effectiveMass(component) / maximumEffectiveMass,
+              )
+              .fold<double>(0, (a, b) => a + b)
+        : 0.0;
+
+    // A partial unknown portion makes the mass-derived fraction unknown; it
+    // must not be silently treated as zero. The gastric model may use its
+    // disclosed central imputation, while this normalized evidence field stays
+    // null and lowers completeness. Zero portions remain known zero mass.
+    final portionIncomplete = hasUnknownPortion || hasInvalidPortion;
+    final liquidFraction =
+        !portionIncomplete && !hasUnknownComponentForm && totalMass > 0
+        ? liquidMass / totalMass
+        : null;
+
+    final form = hasKnownDeclaredForm
+        ? declaredPhysicalForm
+        : _inferForm(components, liquidFraction);
 
     final missing = <String>[];
     if (protein == null) missing.add('protein_grams');
@@ -76,9 +131,13 @@ class MealCompositionNormalizer {
     if (fiber == null) missing.add('fiber_grams');
     if (carbs == null) missing.add('carbohydrate_grams');
     if (calories == null) missing.add('total_calories');
+    if (portionIncomplete) missing.add('portion_grams');
     if (liquidFraction == null) missing.add('liquid_fraction');
+    if (!hasKnownDeclaredForm && hasUnknownComponentForm) {
+      missing.add('meal_physical_form');
+    }
 
-    const possibleFields = 6;
+    const possibleFields = 8;
     final presentFields = possibleFields - missing.length;
     final completeness = presentFields / possibleFields;
 
@@ -106,6 +165,11 @@ class MealCompositionNormalizer {
     List<FoodComponent> components,
     double? liquidFraction,
   ) {
+    if (components.any(
+      (component) => component.physicalForm == MealPhysicalForm.unknown,
+    )) {
+      return MealPhysicalForm.unknown;
+    }
     if (liquidFraction == null) {
       final forms = components.map((c) => c.physicalForm).toSet();
       if (forms.length == 1) return forms.single;

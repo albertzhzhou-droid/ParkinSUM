@@ -1,11 +1,11 @@
 {
   "registry_type": "source_access_registry",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "not_clinically_calibrated": true,
   "not_legal_advice": true,
   "not_license_clearance": true,
   "no_production_ingestion_today": true,
-  "last_policy_reviewed": "2026-05-30",
+  "last_policy_reviewed": "2026-08-17",
   "safety_boundary": "Educational/research prototype. This registry is source governance / release hygiene metadata only. It is not legal advice, not license clearance, not clinical validation, performs no live ingestion, and does not make any fixture-tested source production-ready.",
   "companion_doc": "docs/SOURCE_ACCESS_AND_LICENSES.md",
   "sources": [
@@ -912,8 +912,8 @@
       "notes": "Informs the non-prescriptive, intended-use boundary."
     },
     {
-      "source_id": "src.camilleri.ge.halftime.2009",
-      "display_name": "Camilleri et al. \u2014 gastric emptying half-time (2009)",
+      "source_id": "src.zinsmeister.ge.halftime.2012",
+      "display_name": "Zinsmeister, Bharucha & Camilleri \u2014 gastric emptying half-time calculations (2012)",
       "owner": "Peer-reviewed literature",
       "jurisdiction": "Global",
       "source_family": "model_assumption",
@@ -939,10 +939,43 @@
         "Bibliographies.md"
       ],
       "bibliography_refs": [
-        "src.camilleri.ge.halftime.2009"
+        "src.zinsmeister.ge.halftime.2012"
       ],
-      "last_policy_reviewed": "2026-05-30",
-      "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 22812490; backs the measurement-method direction, not ParkinSUM's selected point values."
+    },
+    {
+      "source_id": "src.camilleri.ge.variation.2012",
+      "display_name": "Camilleri et al. \u2014 scintigraphic gastric-emptying measurement variation (2012)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Healthy-participant measurement variation is not a Parkinson disease distribution or an individual confidence interval."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.camilleri.ge.variation.2012"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 22747676; motivates only an illustrative one-way sensitivity transform."
     },
     {
       "source_id": "src.contin.levodopa.pk.2010",
@@ -1009,6 +1042,481 @@
       ],
       "last_policy_reviewed": "2026-05-30",
       "notes": "Backs a deterministic model assumption (see model_assumption_registry.dart)."
+    },
+    {
+      "source_id": "src.nutt.onoff.1984",
+      "display_name": "Nutt et al. — meal and LNAA effects on levodopa response (1984)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Small selected sample; supports direction and a reference-meal delay observation, not patient prediction or an unsupervised timing rule."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.nutt.onoff.1984"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Primary human study used only within an explicitly heuristic educational model."
+    },
+    {
+      "source_id": "src.doi.ge.levodopa.2012",
+      "display_name": "Doi et al. — gastric emptying and levodopa pharmacokinetics (2012)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Small observational patient study; supports association between delayed emptying and later levodopa peak, not causal patient-level calibration."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.doi.ge.levodopa.2012"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Primary human study used for qualitative model direction only."
+    },
+    {
+      "source_id": "src.hardoff.ge.pd.2001",
+      "display_name": "Hardoff et al. — gastric emptying in Parkinson's disease (2001)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Group-level scintigraphic findings show broad variability and cannot supply an individual gastric-emptying curve."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.hardoff.ge.pd.2001"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Primary human study supporting variability and uncertainty boundaries."
+    },
+    {
+      "source_id": "src.siebner.ge.earlypd.2022",
+      "display_name": "Siebner et al. — gastric emptying in medicated early Parkinson disease (2022)",
+      "owner": "Peer-reviewed open-access literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Small preliminary cohort in early, medicated Parkinson disease; the null group result constrains universal claims but does not exclude delayed emptying in other stages or contexts."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.siebner.ge.earlypd.2022"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Primary human null finding used to constrain disease-wide gastric-delay assumptions and surface heterogeneity."
+    },
+    {
+      "source_id": "src.abell.ges.consensus.2008",
+      "display_name": "Abell et al. — standardized gastric-emptying scintigraphy consensus (2008)",
+      "owner": "Peer-reviewed professional-society consensus",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Defines a standardized measurement protocol; it does not validate ParkinSUM's illustrative component curves."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.abell.ges.consensus.2008"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Consensus measurement boundary; not a patient-specific curve calibration source."
+    },
+    {
+      "source_id": "src.crevoisier.dualrelease.food.2003",
+      "display_name": "Crevoisier et al. — food effect on dual-release levodopa/benserazide (2003)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Healthy-volunteer, product-specific crossover study; food-effect magnitude must not be generalized to every formulation or patient."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.crevoisier.dualrelease.food.2003"
+      ],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Primary randomized crossover evidence used to constrain formulation-specific food-effect wording."
+    },
+    {
+      "source_id": "src.elashoff.gastric.powerexp.1982",
+      "display_name": "Elashoff, Reedy, and Meyer — analysis of gastric-emptying data (1982)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Primary methods paper supporting comparison of empirical gastric-emptying curves; it does not establish a transportable individual parameter set or validate ParkinSUM."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "DOI 10.1016/S0016-5085(82)80145-5; canonical power-exponential model lineage."
+    },
+    {
+      "source_id": "src.siegel.gastric.biphasic.1988",
+      "display_name": "Siegel et al. — biphasic nature of gastric emptying (1988)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Dual-labelled meal study in 24 healthy volunteers; meal-specific biphasic behavior and a fitted curve do not establish disease-wide or individual validity."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 3343018; modified power-exponential solid-meal model."
+    },
+    {
+      "source_id": "src.hou.gastric.modelcomparison.2010",
+      "display_name": "Hou et al. — Bayesian comparison of gastric-emptying models (2010)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Retrospective records with four hourly scintigraphic measurements and informative priors; relative fit does not prove universal structural choice or individual identifiability."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 20649756; supports explicit model-choice and lag-definition uncertainty."
+    },
+    {
+      "source_id": "src.burmen.gastric.pellets.2009",
+      "display_name": "Bürmen et al. — mathematical models of pellet gastric emptying (2009)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Fasting pellet profiles are dosage-form and state specific; the flexible five-parameter double-Weibull form creates substantial practical-identifiability and overfit risk with sparse observations."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 19337822; lag-exponential, Weibull, and double-Weibull comparison."
+    },
+    {
+      "source_id": "src.bertoli.gastric.linearexp.2023",
+      "display_name": "Bertoli et al. — MRI gastric-volume linear-exponential model (2023)",
+      "owner": "Peer-reviewed open-access literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Linear-exponential fitting applies to MRI-measured absolute gastric volume with possible early secretion-related increase; it is not interchangeable with normalized tracer retention."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Open-access primary study used to enforce observable-and-formula coupling."
+    },
+    {
+      "source_id": "src.guebila.levodopa.pbpk.2016",
+      "display_name": "Ben Guebila and Thiele — levodopa PBPK-COBRA model (2016)",
+      "owner": "Peer-reviewed open-access literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Mechanistic research model with many parameters and some kinetic fitting to averaged fasting healthy-volunteer plasma data; it does not validate individual, fed, Parkinson-disease, brain-exposure, or motor-response predictions in ParkinSUM.",
+        "The paper's access license must not be assumed to cover every underlying code, model, or dataset artifact."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 28725472; DOI 10.1038/npjsba.2016.13; PBPK architecture precedent only."
+    },
+    {
+      "source_id": "src.simon.levodopa.pkpd.2016",
+      "display_name": "Simon et al. — population levodopa PK/PD in peak-dose dyskinesia (2016)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Thirty selected patients with advanced Parkinson disease and peak-dose dyskinesia under a study-specific dose and endpoint; population variability and effect-site estimates are not individual predictions or broadly transportable parameters."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "PMID 26936272; population PK/effect-site boundary source."
+    },
+    {
+      "source_id": "src.ema.pbpk.reporting.guideline",
+      "display_name": "EMA — PBPK modelling and simulation reporting guideline",
+      "owner": "European Medicines Agency",
+      "jurisdiction": "EU",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Regulatory reporting guidance, not approval, qualification, clinical validation, or evidence that ParkinSUM satisfies an intended context of use."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Used for intended-purpose, platform, input, assumption, uncertainty, and predictive-performance reporting boundaries."
+    },
+    {
+      "source_id": "src.fda.cms.credibility.guidance",
+      "display_name": "FDA — assessing credibility of computational modeling and simulation",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Risk-informed credibility guidance for a defined context of use; it is not regulatory clearance, clinical validation, or a claim that ParkinSUM meets the guidance."
+      ],
+      "documentation_refs": [
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-17",
+      "notes": "Used to separate engineering verification from context-of-use model credibility."
     },
     {
       "source_id": "src.pare.protein.redistribution.1992",

@@ -1,0 +1,2030 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-08-18",
+  "productMode": "education_and_research_prototype",
+  "scoringFormula": "(impact + risk) * (6 - effort)",
+  "boundary": "Queue status reports engineering delivery only. It does not imply clinical validation, regulatory clearance, medical-device status, or fitness for patient care.",
+  "items": [
+    {
+      "id": "settings_capability_center",
+      "title": "Post-onboarding settings and capability center",
+      "area": "product",
+      "status": "shipped",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 4,
+      "effort": 2,
+      "score": 36,
+      "currentGap": "Profile choices and secondary engineering capabilities are scattered or available only during initialization.",
+      "evidenceUrls": [],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "A registered user can reopen and change every onboarding profile choice.",
+        "All secondary product capabilities have a discoverable in-app route.",
+        "Save failures leave the last durable profile visible."
+      ]
+    },
+    {
+      "id": "onboarding_medication_discovery",
+      "title": "Searchable bounded medication selection during onboarding",
+      "area": "accessibility",
+      "status": "shipped",
+      "priority": "P0",
+      "impact": 4,
+      "risk": 3,
+      "effort": 1,
+      "score": 35,
+      "currentGap": "The medication catalog expands the wizard by thousands of pixels and hides the primary action.",
+      "evidenceUrls": [],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Medication choices are searchable by localized, generic, source, and jurisdiction text.",
+        "The choice list has a bounded scroll area.",
+        "Changing wizard steps restores a predictable scroll position."
+      ]
+    },
+    {
+      "id": "profile_persistence_transaction",
+      "title": "Durable-first profile mutation transaction",
+      "area": "reliability",
+      "status": "shipped",
+      "priority": "P0",
+      "impact": 4,
+      "risk": 4,
+      "effort": 1,
+      "score": 40,
+      "currentGap": "Profile state changes in memory before storage succeeds, so a failed write can display data that was never saved.",
+      "evidenceUrls": [],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Persistence failure never applies the proposed value in memory.",
+        "Concurrent profile writes are serialized or rejected without corruption.",
+        "A post-commit refresh failure is distinguished from a save failure."
+      ]
+    },
+    {
+      "id": "algorithm_atlas_visual_contract",
+      "title": "Searchable visual contract and sensitivity comparison for every result-affecting algorithm",
+      "area": "algorithm_transparency",
+      "status": "shipped",
+      "priority": "P0",
+      "impact": 4,
+      "risk": 3,
+      "effort": 2,
+      "score": 28,
+      "currentGap": "Resolved in the current worktree: all 57 registered result-affecting algorithms have unique searchable, stage-filterable UI descriptors and algorithm-specific static visual contracts; six provider-backed algorithms additionally expose production-engine-derived fixed-scenario traces. A recursive contract partitions all 260 lib/**/*.dart sources into registered, reviewed exact exclusions, or a reasoned JSON allowlist with no overlap or stale paths, and three same-engine scenarios expose sensitivity and missing-data behavior. Static contracts remain explicitly non-executable and do not satisfy the separate live-provider coverage item.",
+      "evidenceUrls": [
+        "https://www.fda.gov/medical-devices/human-factors-and-medical-devices/human-factors-considerations"
+      ],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Every AlgorithmRegistry entry renders both a card and a visualization-contract widget.",
+        "Users can search by name, identifier, input, output, impact, or source path and filter by pipeline stage or live-trace availability.",
+        "Each representation states its input-to-output contract and interpretation boundary without implying patient-level prediction.",
+        "Fixed reference, high-fat/high-protein, and missing-data scenarios compare completeness, aggregate lag, conflict overlap, severity, and confidence through the same production model path."
+      ]
+    },
+    {
+      "id": "account_recovery_verification",
+      "title": "Privacy-preserving password recovery and email verification status",
+      "area": "identity",
+      "status": "shipped",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 2,
+      "score": 32,
+      "currentGap": "Resolved in the current worktree: Firebase mode now supports a neutral password-reset response plus user-visible verification send and refresh actions; local mode explicitly does not pretend to provide email workflows.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/auth/flutter/manage-users"
+      ],
+      "dependencies": ["settings_capability_center"],
+      "acceptanceCriteria": [
+        "Password-reset responses do not reveal whether an email address exists.",
+        "Signed-in users can send a localized verification email and refresh status.",
+        "Local mode reports email workflows as unsupported rather than simulating delivery."
+      ]
+    },
+    {
+      "id": "settings_full_locale_translation",
+      "title": "Native translation coverage for new settings and queue surfaces",
+      "area": "localization",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 2,
+      "effort": 2,
+      "score": 24,
+      "currentGap": "The four primary language families have native copy for the earlier settings surface, but the new portable-data package text is currently reviewed only in Chinese and English and falls back to English in French, Japanese, and other shipped locales. Browser review also surfaced a non-Latin catalog label as missing-glyph boxes, which still needs data-versus-font-fallback diagnosis.",
+      "evidenceUrls": [],
+      "dependencies": ["settings_capability_center"],
+      "acceptanceCriteria": [
+        "Every shipped locale has reviewed native copy for settings headings, status labels, save outcomes, and queue boundaries.",
+        "No medical, regulatory, or completion boundary changes meaning across locales.",
+        "Catalog and medication labels across the supported scripts render without missing-glyph boxes on web and supported mobile platforms, with screenshot or glyph-coverage regression evidence.",
+        "Localization lint and widget snapshots cover every shipped locale."
+      ]
+    },
+    {
+      "id": "wcag_22_aa_conformance",
+      "title": "Formal WCAG 2.2 AA interaction and semantics audit",
+      "area": "accessibility",
+      "status": "in_progress",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 3,
+      "score": 27,
+      "currentGap": "The current worktree now has executable 200% reflow, labeled-target, Android target-size, keyboard-only registration/meal/medication/recommendation/settings journeys, visible focus styling, password-manager hints, a 15-character registration minimum, and a non-animated decorative background. Target-device screen-reader output, contrast across every state, browser zoom at 400%, switch control, and focus-not-obscured evidence remain unproven.",
+      "evidenceUrls": [
+        "https://www.w3.org/TR/WCAG22/",
+        "https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/",
+        "https://www.w3.org/WAI/tutorials/images/complex/"
+      ],
+      "dependencies": ["settings_capability_center"],
+      "acceptanceCriteria": [
+        "Keyboard-only journeys pass for registration, meal entry, medication selection, recommendations, and settings.",
+        "Focus not obscured, target size, and accessible authentication checks have executable regressions.",
+        "Every complex chart has a short semantic label plus an equivalent visible long description and structured data-table view.",
+        "VoiceOver, TalkBack, and desktop screen-reader runs verify meaning and action announcements on supported release targets."
+      ]
+    },
+    {
+      "id": "account_lifecycle",
+      "title": "Provider linking and stronger authentication lifecycle",
+      "area": "identity",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 3,
+      "score": 27,
+      "currentGap": "Password recovery, email-verification status, and recent-login password rotation are now available; provider linking, collision recovery, and a phishing-resistant authenticator remain.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/auth",
+        "https://firebase.google.com/docs/auth/flutter/account-linking",
+        "https://firebase.google.com/docs/auth/flutter/multi-factor"
+      ],
+      "dependencies": [
+        "account_recovery_verification",
+        "phishing_resistant_authentication_strategy"
+      ],
+      "acceptanceCriteria": [
+        "Password-linked users reauthenticate with their current credential before a password change, with no password logging or raw provider errors.",
+        "Provider linking handles collision and reauthentication safely.",
+        "A stronger-factor decision is documented before enabling SMS MFA.",
+        "Sensitive account changes require a recent-login proof and recover safely from expiry."
+      ]
+    },
+    {
+      "id": "phishing_resistant_authentication_strategy",
+      "title": "Phishing-resistant authenticator and recovery strategy",
+      "area": "identity",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "The app now has a bounded password lifecycle, while current Firebase Flutter documentation exposes SMS MFA but explicitly advises avoiding it; passwords and manually entered OTPs are not phishing-resistant.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/auth/flutter/multi-factor",
+        "https://pages.nist.gov/800-63-4/sp800-63b.html"
+      ],
+      "dependencies": ["account_recovery_verification"],
+      "acceptanceCriteria": [
+        "An architecture decision compares WebAuthn/passkey-capable provider support across web, iOS, Android, and Windows and validates verifier-name binding and replay resistance.",
+        "Enrollment and recovery support more than one authenticator and avoid knowledge-based or SMS-only fallback that silently defeats the stronger factor.",
+        "Relying-party domain, device synchronization, provider capability, accessibility, and loss-of-device recovery are tested in emulator or staging before the UI claims availability."
+      ]
+    },
+    {
+      "id": "self_service_export_delete",
+      "title": "Self-service data export and account deletion",
+      "area": "privacy",
+      "status": "external_dependency",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "A self-service user-owned export of the currently loaded cross-backend state now exists, but it is not a recently reauthenticated complete cloud export and does not enumerate cloud-only audit, history, or storage records. Account and data deletion, reauthentication, progress and partial-failure reporting, configured-path enumeration, retention handling, removal of the local portable-owner token, and a deletion receipt remain operator or external work.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/extensions/official/delete-user-data"
+      ],
+      "dependencies": [
+        "account_lifecycle"
+      ],
+      "acceptanceCriteria": [
+        "Export is generated only after recent authentication and is scoped to the authenticated UID.",
+        "Deletion enumerates every configured database and storage path and reports partial failures.",
+        "The UI does not claim legal compliance from extension installation alone."
+      ]
+    },
+    {
+      "id": "offline_conflict_awareness",
+      "title": "Trusted-device offline mode and conflict awareness",
+      "area": "sync",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 4,
+      "score": 16,
+      "currentGap": "Cross-device last-write-wins behavior and web persistence trust are not surfaced to users.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/firestore/manage-data/enable-offline",
+        "https://firebase.google.com/docs/firestore/manage-data/transactions"
+      ],
+      "dependencies": [
+        "account_lifecycle",
+        "cross_backend_durable_mutation_protocol"
+      ],
+      "acceptanceCriteria": [
+        "Web persistence requires an explicit trusted-device choice.",
+        "Conflicting profile and meal edits expose resolution metadata instead of silently overwriting.",
+        "Offline transaction failure has a user-recoverable retry path."
+      ]
+    },
+    {
+      "id": "fhir_interoperability_sandbox",
+      "title": "SMART on FHIR sandbox interoperability",
+      "area": "interoperability",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "The app has internal clinical records but no standards-based launch, consent, scope, patient-context, or write-back boundary.",
+      "evidenceUrls": [
+        "https://build.fhir.org/ig/HL7/smart-app-launch/"
+      ],
+      "dependencies": [
+        "server_authoritative_provenance",
+        "account_lifecycle",
+        "versioned_clinical_nutrition_terminology_firewall"
+      ],
+      "acceptanceCriteria": [
+        "A sandbox-only SMART launch uses authorization code with PKCE and minimum scopes.",
+        "FHIR mappings preserve missingness, source, version, and jurisdiction.",
+        "No EHR write-back is enabled without an explicit reviewed policy and conformance suite."
+      ]
+    },
+    {
+      "id": "server_authoritative_provenance",
+      "title": "Server-authoritative provenance, audit event, and signature boundary",
+      "area": "governance",
+      "status": "external_dependency",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "Client and local audit evidence can support engineering review but cannot provide an independently authoritative clinical audit trail.",
+      "evidenceUrls": [
+        "https://hl7.org/fhir/provenance.html",
+        "https://www.hl7.org/fhir/R5/auditevent.html"
+      ],
+      "dependencies": ["account_lifecycle"],
+      "acceptanceCriteria": [
+        "Provenance records identify agent, activity, source entity, target, and version.",
+        "Security-relevant reads and writes produce server-side AuditEvent-compatible records.",
+        "Any signature is produced and verified outside the mutable client boundary."
+      ]
+    },
+    {
+      "id": "masvs_mobile_controls",
+      "title": "OWASP MASVS mobile security control closure",
+      "area": "security",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "Repository security gates do not yet constitute a device-level storage, authentication, network, platform, resilience, and privacy assessment.",
+      "evidenceUrls": [
+        "https://mas.owasp.org/MASVS/",
+        "https://mas.owasp.org/MASVS/05-MASVS-STORAGE/"
+      ],
+      "dependencies": ["account_lifecycle", "offline_conflict_awareness"],
+      "acceptanceCriteria": [
+        "Every applicable MASVS control maps to implementation evidence or an explicit non-applicable rationale.",
+        "Sensitive local storage and backup behavior are verified on release devices.",
+        "Network and authentication tests exercise failure and hostile-device assumptions."
+      ]
+    },
+    {
+      "id": "critical_task_human_factors",
+      "title": "Critical-task and use-error human-factors validation",
+      "area": "human_factors",
+      "status": "research_required",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "Engineering transparency does not show that intended users can interpret overlap, severity, confidence, missingness, and uncertainty without acting on the display as patient-specific advice.",
+      "evidenceUrls": [
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/applying-human-factors-and-usability-engineering-medical-devices",
+        "https://www.fda.gov/medical-devices/human-factors-and-medical-devices/human-factors-considerations",
+        "https://www.w3.org/WAI/tutorials/images/complex/"
+      ],
+      "dependencies": [
+        "algorithm_atlas_visual_contract",
+        "wcag_22_aa_conformance"
+      ],
+      "acceptanceCriteria": [
+        "A formative protocol defines intended users, use environments, critical interpretation tasks, foreseeable misuse, and stop rules.",
+        "Representative users distinguish modeled overlap, severity, confidence, missingness, and evidence strength without unsupported inference.",
+        "Any observed medication, diet, or timing change prompted without clinician review is treated as a critical use error and blocks progression."
+      ]
+    },
+    {
+      "id": "prospective_clinical_calibration",
+      "title": "Layer-specific prospective scientific calibration and human-factors protocol",
+      "area": "clinical_research",
+      "status": "external_dependency",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "Mechanistic plausibility, source traceability, synthetic replay, and a reproducible PBPK or PK/PD implementation do not establish patient-level accuracy, benefit, or safety. Existing gastric, fed/formulation PK, LNAA transport, PBPK, and PK/PD studies measure different links in the causal chain and do not supply one transportable universal food, protein, emptying, exposure, or motor-response coefficient.",
+      "evidenceUrls": [
+        "https://www.fda.gov/media/162880/download",
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/assessing-credibility-computational-modeling-and-simulation-medical-device-submissions",
+        "https://www.ema.europa.eu/en/reporting-physiologically-based-pharmacokinetic-pbpk-modelling-simulation-scientific-guideline",
+        "https://pubmed.ncbi.nlm.nih.gov/2494567/",
+        "https://pubmed.ncbi.nlm.nih.gov/2049250/",
+        "https://pubmed.ncbi.nlm.nih.gov/12551706/",
+        "https://pubmed.ncbi.nlm.nih.gov/28725472/",
+        "https://pubmed.ncbi.nlm.nih.gov/26936272/",
+        "https://github.com/Open-Systems-Pharmacology/PK-Sim",
+        "https://github.com/nlmixr2/rxode2"
+      ],
+      "dependencies": [
+        "calibration_dataset_governance",
+        "mechanistic_structural_uncertainty_shadow_models",
+        "wcag_22_aa_conformance"
+      ],
+      "acceptanceCriteria": [
+        "A preregistered protocol defines the intended context of use, population, formulation and route, fed state, comparator, measurement schedule, endpoints, error costs, sample-size rationale, and stop rules.",
+        "Gastric retention or volume, intestinal or plasma exposure, LNAA transport evidence, effect-site state, and motor endpoint are validated as separate claimed layers against matching observables; success at one layer never silently validates another.",
+        "Calibration, discrimination, predictive error, and uncertainty are reported on immutable held-out subject, site, or time splits with subgroup and transportability limits; pooled fit is not converted into a universal coefficient.",
+        "PBPK or joint PK/PD estimation reports platform and model version, parameter provenance, assumptions, identifiability and covariance diagnostics, predictive checks, and context-of-use credibility without treating optimizer convergence as validation.",
+        "Human-factors testing verifies that explanations do not induce medication or diet changes without clinician review."
+      ]
+    },
+    {
+      "id": "education_only_reminders",
+      "title": "Education-only local reminders",
+      "area": "engagement",
+      "status": "in_progress",
+      "priority": "P2",
+      "impact": 3,
+      "risk": 4,
+      "effort": 3,
+      "score": 21,
+      "currentGap": "The current worktree provides user-authored meal or intake logging plans with a non-prescribing boundary, collision-resistant user-scoped storage, random per-plan activation tokens rotated on edit/toggle, random reminder identifiers, generic lock-screen content, global reconciliation after bootstrap/resume/account change, and timezone-aware Android/iOS/macOS scheduling. Native schedule/cancel mutations share a scope-and-epoch-aware serial queue; same-scope durable writes also use a process-wide epoch coordinator, so an older controller cannot roll back over a newer saved plan. Superseded work cannot persist or claim success, cancellation dominates stale rollback, rollback failure becomes recovery-required/unverified, and failed sign-out cancellation is retried while signed out or before a new account reconciles. Linux, Web, and Windows degrade honestly to plan-only because flutter_local_notifications 22.3.0 does not supply equivalent recurring scheduling there. A local Android API 36.1 device-integration run exercised native scheduling and cancellation with a fixed valid v2 fixture token; the plugin registry API reported pending counts changing from seven to zero, which is not direct AlarmManager inspection or evidence of random-token generation. Visible delivery, runtime permission, actual timezone change, reboot restoration, iOS capacity, physical-device/OEM behavior, and assistive-technology evidence remain required.",
+      "evidenceUrls": [
+        "https://pub.dev/packages/flutter_local_notifications",
+        "https://pubmed.ncbi.nlm.nih.gov/28649602/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC7045248/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC8817212/",
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/general-wellness-policy-low-risk-devices",
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/example/lib/main.dart",
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md"
+      ],
+      "dependencies": ["wcag_22_aa_conformance"],
+      "acceptanceCriteria": [
+        "Only user-authored logging reminders are scheduled; the app never calculates or prescribes a dose time.",
+        "Permissions, timezone changes, recurrence, cancellation, load/resume/account reconciliation, and pending-request counts are tested on every platform that claims scheduled delivery.",
+        "System-visible content is generic and privacy-preserving; every notification carries the education-only boundary without exposing the user label, medication, meal, dose, or account identifier."
+      ]
+    },
+    {
+      "id": "notification_response_logging_route",
+      "title": "Notification-response routing to confirmation-first logging drafts",
+      "area": "engagement",
+      "status": "queued",
+      "priority": "P2",
+      "impact": 3,
+      "risk": 4,
+      "effort": 3,
+      "score": 21,
+      "currentGap": "The worktree now routes UI-presenting notification body taps and notification-launched cold starts through current-user-scoped reminder lookup to confirmation-first meal or intake drafts; production Firebase mode additionally requires sign-in. Payloads contain a random plan capability and random opaque ID only; stale revisions, disabled/deleted/cross-user/malformed payloads fail closed, one callback window is deduplicated, and intake requires explicit medication selection. A root account-owned route registry removes every page/dialog opened by A during A→null/B, ReminderCenter fails closed without a Firebase UID and rebinds a fresh controller, controller/scope leases prevent an old dialog from writing to B, and a new account waits for any unverified old-account cancellation recovery before scheduling. Widget evidence covers foreground, synthetic pre-bootstrap cold-start handling, journal recovery through a new coordinator, stacked routes, ordinary Settings entry, sign-out/account switch, failed-cancel resume retry, and zero writes. Locked-screen/warm/cold physical-device taps, killed-process capture, per-occurrence identity, background actions, and accessibility announcements remain unverified.",
+      "evidenceUrls": [
+        "https://pub.dev/documentation/flutter_local_notifications/22.3.0/",
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/example/lib/main.dart",
+        "https://github.com/MoazSalem/Flutter_Pills_Reminder"
+      ],
+      "dependencies": [
+        "education_only_reminders",
+        "cross_platform_integration_harness"
+      ],
+      "acceptanceCriteria": [
+        "UI-presenting foreground/warm response and notification-launched cold start resolve the authenticated user scope and current plan revision without putting sensitive labels, medication details, or account identifiers in payloads, routes, or logs.",
+        "A meal-log prompt opens an empty editable meal draft and an intake-log prompt opens an empty editable intake draft; neither route writes a record, infers a dose, or marks adherence before explicit confirmation.",
+        "Unknown, stale-revision, disabled, deleted, malformed, cross-user, and rapidly duplicated payloads fail closed with a neutral explanation; no claim of persistent replay prevention is made for a recurring notification payload.",
+        "Android and iOS device journeys cover locked-screen body tap, cold start, warm resume, back navigation, duplicate tap, sign-out/account switch, and accessibility announcements."
+      ]
+    },
+    {
+      "id": "notification_platform_truth_and_delivery_gate",
+      "title": "Notification platform truth and visible-delivery gate",
+      "area": "platform_reliability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 2,
+      "score": 36,
+      "currentGap": "A single plugin API does not imply equivalent recurring scheduling, permission, pending inspection, activation, or terminated-app behavior across Android, iOS, macOS, Linux, Windows, and Web. Current Android pending-count evidence does not prove a visible notification or user tap.",
+      "evidenceUrls": [
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md",
+        "https://developer.android.com/develop/ui/views/notifications/notification-permission",
+        "https://developer.android.com/develop/background-work/services/alarms",
+        "https://developer.apple.com/documentation/usernotifications/scheduling-a-notification-locally-from-your-app",
+        "https://developer.apple.com/documentation/usernotifications/handling-notifications-and-notification-related-actions"
+      ],
+      "dependencies": [
+        "education_only_reminders",
+        "cross_platform_integration_harness",
+        "artifact_level_black_box_journeys"
+      ],
+      "acceptanceCriteria": [
+        "One versioned capability matrix drives both UI claims and gateway behavior for scheduling, permission, pending inspection, body tap, cold start, and background action on every release platform.",
+        "Web, Windows, and Linux never report scheduled success while operating in plan-only mode; unsupported calls are not attempted.",
+        "Android, iOS, and macOS have signed or release-equivalent physical-device evidence for permission allow, deny, and revoke; schedule and reschedule; cancellation; visible delivery; body tap; duplicate activation; terminated-app behavior; and relaunch reconciliation.",
+        "The evidence manifest records commit, artifact checksum, reminder-configuration digest, device and manufacturer, OS version, locale, timezone, permission state, and power-management state; pending-request counts alone never satisfy visible-delivery acceptance.",
+        "Android journeys cover exact-alarm eligibility, Doze or battery policy, reboot, and app or OS update; every scheduled-delivery platform covers timezone and daylight-saving transitions, sign-out, and account switch."
+      ]
+    },
+    {
+      "id": "notification_privacy_content_controls",
+      "title": "Lock-screen notification privacy controls",
+      "area": "privacy_and_engagement",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 2,
+      "score": 36,
+      "currentGap": "The worktree now persists a schema-v3 per-reminder choice between two non-sensitive presentation modes. Minimal is the default, requests Android SECRET visibility, and uses the shortest copy; generic requests PRIVATE visibility and still excludes the authored label, reminder kind, medication, dose, meal, account, disease, and adherence state. The policy API cannot accept authored text, the editor displays the exact selected title/body plus an Android-versus-Darwin boundary, four reviewed language families are supported with explicit English fallback, and v1/v2 rows migrate to minimal English. The stored App-locale snapshot drives scheduling rather than the device locale. This remains queued because requested visibility is not effective-state attestation; physical locked/unlocked, notification-history, screen-sharing, wearable/vehicle/desktop mirroring, Darwin preview-setting, accessibility, every shipped locale, locale-change reconciliation, portable-export, and release-artifact evidence remain open.",
+      "evidenceUrls": [
+        "https://developer.android.com/develop/ui/compose/notifications/create-notification",
+        "https://developer.apple.com/documentation/usernotifications/unnotificationsettings/showpreviewssetting",
+        "https://support.signal.org/hc/en-us/articles/360043273491-In-App-Notification-Options"
+      ],
+      "dependencies": [
+        "education_only_reminders",
+        "settings_full_locale_translation",
+        "wcag_22_aa_conformance"
+      ],
+      "acceptanceCriteria": [
+        "Default lock-screen title/body contain no user label, medication, dose, meal, account, disease, or adherence status, and payload/routes/logs remain opaque.",
+        "Every mode is reversible and non-sensitive; UI, diagnostics, and evidence distinguish the application's requested Android visibility from effective system or user settings and never promise Darwin concealment.",
+        "Locked/unlocked, notification-history, screen-sharing, wearable, vehicle, and desktop-mirroring evidence covers supported locales, large text, TalkBack, and VoiceOver on release devices."
+      ]
+    },
+    {
+      "id": "notification_locale_snapshot_reconciliation",
+      "title": "Notification locale snapshot and pending-copy reconciliation",
+      "area": "localization_and_platform_reliability",
+      "status": "queued",
+      "priority": "P2",
+      "impact": 3,
+      "risk": 3,
+      "effort": 3,
+      "score": 18,
+      "currentGap": "Schema-v3 reminder plans now bind scheduling to a validated locale snapshot, so preview and installation use one source and v1/v2 rows migrate deterministically to English. A later App-locale change intentionally does not rewrite already installed recurring copy. There is no durable, rollback-safe user decision to retain the old language or update every pending request, and pending identity attestation does not yet bind the selected copy or locale.",
+      "evidenceUrls": [
+        "https://developer.android.com/develop/ui/compose/notifications/create-notification",
+        "https://developer.apple.com/documentation/usernotifications/unnotificationsettings/showpreviewssetting",
+        "https://pub.dev/packages/flutter_local_notifications"
+      ],
+      "dependencies": [
+        "notification_privacy_content_controls",
+        "notification_platform_truth_and_delivery_gate",
+        "settings_full_locale_translation"
+      ],
+      "acceptanceCriteria": [
+        "The persisted locale snapshot, in-app preview, planned manifest, and installed request share one canonical locale and copy digest; malformed or unsupported locale values fail closed and fallback is explicit.",
+        "Changing the App locale offers a clear retain-or-update decision and reconciles every affected recurring request with account, plan-revision, and native-mutation leases; partial installation rolls back or remains visibly unverified.",
+        "Pending identity attestation detects old-language, mixed-language, missing, and replaced requests without logging notification text or user-authored labels.",
+        "Release-device journeys cover locale change while running, backgrounded, and terminated; language fallback, bidirectional text, reboot, timezone change, account switch, accessibility, and mirrored surfaces never produce mixed or falsely verified copy."
+      ]
+    },
+    {
+      "id": "notification_occurrence_identity_and_schedule_ledger",
+      "title": "Per-occurrence notification identity and schedule ledger",
+      "area": "reliability_and_privacy",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "The current v2 weekly request reuses one plan payload across every selected weekday and later recurrence. The plugin callback exposes a notification response but no portable delivery timestamp, so a new callback nonce cannot prove that two warm/cold callbacks represent the same operating-system occurrence. Persisting the whole v2 payload as a replay key would incorrectly suppress a legitimate later week.",
+      "evidenceUrls": [
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md#notification-actions",
+        "https://developer.apple.com/documentation/usernotifications/unnotificationtrigger/repeats",
+        "https://developer.apple.com/documentation/usernotifications/unnotification/date",
+        "https://developer.android.com/guide/components/activities/process-lifecycle"
+      ],
+      "dependencies": [
+        "notification_platform_truth_and_delivery_gate",
+        "notification_capacity_and_identifier_budget"
+      ],
+      "acceptanceCriteria": [
+        "A versioned ADR selects either rolling one-shot requests with a unique random occurrence nonce or a tested native adapter that exposes a stable delivery identity; request capacity, refill horizon, DST, timezone change, reboot, and long periods without app launch are evaluated before selection.",
+        "Different legitimate recurrences always have different occurrence identities, while duplicate warm/cold callbacks for one delivery resolve to the same identity without placing account, medication, dose, meal, label, or adherence data in the envelope.",
+        "Unknown identities, invalid authenticators, expired occurrences, stale plan revisions, and duplicate claims fail closed on Android, iOS, and macOS target-device journeys without writing health records."
+      ]
+    },
+    {
+      "id": "notification_activation_inbox_and_idempotency",
+      "title": "Durable notification activation inbox and idempotent claim",
+      "area": "reliability_and_privacy",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 3,
+      "score": 27,
+      "currentGap": "The worktree now captures main-isolate response callbacks before authentication into a bounded local journal with random activation IDs, receipt/expiry metadata, UTF-8 and capacity limits, flushed atomic replacement, corrupt-file quarantine, account-transition gating, bootstrap/resume recovery, and claim-before-navigation. Real-file tests show that two independent store instances produce one successful claim and one replay result, and widget tests prove restart-like coordinator recovery with zero health-record writes. This is callback-envelope durability on Android/iOS/macOS, not per-occurrence OS identity, killed-process evidence, cross-engine SQLite CAS, or exactly-once navigation.",
+      "evidenceUrls": [
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md#notification-actions",
+        "https://developer.android.com/develop/ui/views/notifications/navigation",
+        "https://developer.android.com/topic/architecture/data-layer",
+        "https://pub.dev/packages/shared_preferences"
+      ],
+      "dependencies": [
+        "notification_occurrence_identity_and_schedule_ledger",
+        "notification_response_logging_route",
+        "account_lifecycle"
+      ],
+      "acceptanceCriteria": [
+        "A versioned activation envelope uses the schedule ledger's occurrence identity plus receipt/expiry time and source without health or account data; the journal is excluded from backups and uses release-platform file protection.",
+        "The authenticated main isolate atomically claims one received occurrence and revalidates scope, expiry, enabled state, plan revision, and draft kind before opening visible UI; a crash after claim may lose navigation but may not repeat a health-record effect.",
+        "Kill/restart at every transaction boundary, duplicate callback, sign-out, account switch, corrupt/full/locked storage, expired intent, deleted/disabled plan, and two-engine contention fail closed on target devices without writing meal, intake, or adherence data."
+      ]
+    },
+    {
+      "id": "notification_action_human_factors_gate",
+      "title": "Notification action human-factors safety gate",
+      "area": "clinical_human_factors",
+      "status": "research_required",
+      "priority": "P0",
+      "impact": 4,
+      "risk": 5,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "Adding Taken, Missed, Skipped, or dose-snooze actions would turn a low-risk logging prompt into a potentially ambiguous medication conclusion. Parkinson-related motor, visual, and cognitive use errors have not been studied for this interaction.",
+      "evidenceUrls": [
+        "https://www.nice.org.uk/guidance/cg76/chapter/Recommendations",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC8817212/",
+        "https://developer.apple.com/documentation/usernotifications/unnotificationactionoptions/foreground"
+      ],
+      "dependencies": [
+        "notification_response_logging_route",
+        "critical_task_human_factors",
+        "notification_privacy_content_controls"
+      ],
+      "acceptanceCriteria": [
+        "Until clinical and formative human-factors review passes, the only supported activation is tapping the notification body to open a blank, user-confirmed logging draft in visible UI; no action buttons are configured.",
+        "Lock-screen actions never directly assert Taken, Missed, Skipped, adherence, or dose timing, and never create or edit a record in a background isolate.",
+        "Representative motor, visual, and cognitive use-error testing demonstrates correct interpretation, accessible activation, safe back navigation, and no medication/diet change without clinician review."
+      ]
+    },
+    {
+      "id": "notification_capacity_and_identifier_budget",
+      "title": "Notification capacity and identifier budget",
+      "area": "platform_reliability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 3,
+      "risk": 4,
+      "effort": 2,
+      "score": 28,
+      "currentGap": "Each enabled weekday consumes one pending request: nine all-week plans require 63 requests and a tenth requires 70. The worktree now applies a conservative 64-request product budget on Android, iOS, and macOS before permission or native mutation, labels projected/limit/headroom as a ParkinSUM product safety budget rather than free operating-system capacity, and rejects a concrete pair of distinct opaque reminder IDs that maps to the same 31-bit FNV weekday identifier. Plan-only Web/Windows/Linux paths skip native hash/capacity checks while still validating local schema and duplicate IDs. Platform-specific budgets, installed-set drift, and target-device stress evidence remain open.",
+      "evidenceUrls": [
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md",
+        "https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/add(_:withcompletionhandler:)",
+        "https://developer.android.com/develop/background-work/services/alarms/schedule"
+      ],
+      "dependencies": [
+        "education_only_reminders",
+        "notification_platform_truth_and_delivery_gate"
+      ],
+      "acceptanceCriteria": [
+        "The scheduler enforces a platform-specific request budget or rolling horizon before the operating system silently evicts an existing plan.",
+        "Notification ID collisions, capacity exhaustion, and pending-count drift fail closed with a user-visible explanation and diagnostics that contain no private labels.",
+        "Stress tests cover many reminders, all-week recurrence, DST, edit/delete, upgrade/reinstall boundaries, and the documented iOS pending-request ceiling."
+      ]
+    },
+    {
+      "id": "notification_schedule_manifest_preflight",
+      "title": "Notification schedule manifest preflight and atomic install plan",
+      "area": "platform_reliability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 2,
+      "score": 32,
+      "currentGap": "The worktree now builds a deterministic, privacy-bounded enabled-plan-by-weekday manifest before permission, persistence, cancellation, or plugin initialization; it validates plan shape and capabilities, enforces a conservative 64-request product budget, detects real or injected 31-bit identifier collisions, and exposes app-policy projected/limit/headroom in the reminder UI. Controller commits use typed applied/superseded/unsupported results, a non-transferable native account lease, and a process-wide same-scope durable mutation lease across candidate install, persistence, and compensation; superseded work cannot save, roll back over a newer plan, or mark success. Cancellation dominates stale rollback, and rollback failure clears the completion timestamp and exposes recovery-required/unverified UI state. Compensation is still not an atomic native transaction. Identical-manifest no-op, DST property tests, target-device partial-failure evidence, cross-process persistence CAS, and installed identity attestation remain open.",
+      "evidenceUrls": [
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md",
+        "https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/add(_:withcompletionhandler:)",
+        "https://developer.android.com/develop/background-work/services/alarms/schedule"
+      ],
+      "dependencies": [
+        "notification_capacity_and_identifier_budget",
+        "notification_platform_truth_and_delivery_gate"
+      ],
+      "acceptanceCriteria": [
+        "A pure preflight manifest enumerates every plan-weekday request, canonical identity, local schedule, privacy-safe payload digest, and target-platform budget before any native mutation begins.",
+        "Identifier collision, duplicate identity, request-budget overflow, invalid timezone, or unsupported recurrence fails before cancellation and leaves the previously installed schedule intact with a user-visible, non-clinical explanation.",
+        "Property and fixture tests cover the known FNV collision pair, 63-versus-70 request boundary, edit/delete, DST folds/gaps, deterministic ordering, and identical-manifest no-op behavior."
+      ]
+    },
+    {
+      "id": "notification_pending_identity_attestation",
+      "title": "Planned-versus-installed notification identity attestation",
+      "area": "platform_reliability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The current worktree now compares the complete planned and plugin-reported pending identity sets by notification ID plus SHA-256 payload digest, distinguishes missing, extra, replaced, and uninspectable results, and keeps locally saved plans visibly unverified when drift exists while exposing privacy-safe count-only diagnostics. The core implementation exists, but platform evidence has not met acceptance, so this item remains queued. This attests the plugin registry rather than independent AlarmManager or UserNotifications state; macOS still returns from add before the native completion handler, and OS-level probes, asynchronous-add failure evidence, physical-device state inspection, and visible delivery remain open.",
+      "evidenceUrls": [
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md",
+        "https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/getpendingnotificationrequests(completionhandler:)",
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/android/src/main/java/com/dexterous/flutterlocalnotifications/FlutterLocalNotificationsPlugin.java"
+      ],
+      "dependencies": [
+        "notification_schedule_manifest_preflight",
+        "notification_platform_truth_and_delivery_gate"
+      ],
+      "acceptanceCriteria": [
+        "The plugin adapter returns privacy-safe request identities and the attestor compares complete planned and plugin-reported sets using notification ID plus payload digest rather than counts alone.",
+        "Missing, extra, replaced, stale, or uninspectable requests produce distinct truthful states; drift preserves the local plan but clears verified state, and no UI says operating-system verified when only the plugin registry was inspected.",
+        "Android, iOS, and macOS physical-device integration tests record planned identities, plugin versus native inspection boundary, cancellation result, platform/version, macOS asynchronous add completion or failure, and visible-delivery evidence without exposing labels or account data."
+      ]
+    },
+    {
+      "id": "desktop_web_reminder_adapter_strategy",
+      "title": "Desktop and Web reminder adapter strategy",
+      "area": "platform_research",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 3,
+      "risk": 3,
+      "effort": 4,
+      "score": 12,
+      "currentGap": "Linux, Windows, and Web correctly remain plan-only, but no validated adapter exists for Linux DBus activation/external scheduling, Windows packaged activation/rolling one-shot delivery, or browser push/service-worker coexistence.",
+      "evidenceUrls": [
+        "https://specifications.freedesktop.org/notification/latest-single/",
+        "https://learn.microsoft.com/en-us/windows/apps/develop/notifications/app-notifications/app-notifications-content",
+        "https://github.com/MaikuB/flutter_local_notifications/blob/flutter_local_notifications-v22.3.0/flutter_local_notifications/README.md"
+      ],
+      "dependencies": [
+        "notification_platform_truth_and_delivery_gate",
+        "artifact_level_black_box_journeys"
+      ],
+      "acceptanceCriteria": [
+        "Linux scheduling is enabled only after target-environment DBus activation and external-scheduler evidence; otherwise it remains explicitly plan-only.",
+        "Windows uses a packaged, tested activation/cancellation model and never describes rolling one-shot scheduling as native repeating support.",
+        "Web push is considered only after user-gesture permission, service-worker coexistence, browser matrix, backend consent, and honest no-local-schedule messaging are verified."
+      ]
+    },
+    {
+      "id": "caregiver_coordination_consent",
+      "title": "Consent-bound caregiver reminder coordination",
+      "area": "privacy_and_engagement",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 4,
+      "risk": 5,
+      "effort": 5,
+      "score": 9,
+      "currentGap": "Local reminder plans are device-only. Sharing a logging prompt or completion status with a caregiver would create delegation, sensitive-data, revocation, and audit obligations that are not yet designed or validated.",
+      "evidenceUrls": [
+        "https://pubmed.ncbi.nlm.nih.gov/28649602/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC7045248/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC8817212/"
+      ],
+      "dependencies": [
+        "account_lifecycle",
+        "server_authoritative_provenance",
+        "education_only_reminders"
+      ],
+      "acceptanceCriteria": [
+        "A user explicitly selects the caregiver, data fields, duration, and allowed actions before any sharing begins.",
+        "Revocation takes effect promptly and creates an auditable, user-visible record without exposing medication details by default.",
+        "Human-factors and legal review verify that shared prompts are not interpreted as prescribed dose timing or proof of adherence."
+      ]
+    },
+    {
+      "id": "android_build_toolchain_upgrade",
+      "title": "Android build toolchain forward-compatibility upgrade",
+      "area": "release_reliability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 3,
+      "risk": 3,
+      "effort": 2,
+      "score": 24,
+      "currentGap": "The verified Android reminder build succeeds, but Flutter reports that Gradle 8.14.0, Android Gradle Plugin 8.11.1, and Kotlin 2.2.20 are approaching the end of Flutter support.",
+      "evidenceUrls": [
+        "https://docs.gradle.org/current/userguide/gradle_wrapper.html",
+        "https://docs.flutter.dev/release/breaking-changes"
+      ],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Gradle, Android Gradle Plugin, and Kotlin meet the minimum versions supported by the active Flutter stable release.",
+        "Debug and release Android builds pass without dependency-validation deprecation warnings.",
+        "Notification scheduling, reboot receivers, desugaring, Firebase plugins, and existing Android tests are reverified after the upgrade."
+      ]
+    },
+    {
+      "id": "cross_platform_integration_harness",
+      "title": "Cross-platform critical-journey integration harness",
+      "area": "quality",
+      "status": "in_progress",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The current worktree now has a commit-tagged integration_test harness using the complete production state/repository/UI graph with process-memory persistence. The expanded onboarding, seeded medication selection, production next-meal/mechanistic generation, settings, and registered-state recovery journey passes on Android API 36.1, an iPhone 16e iOS 26.2 simulator, and a Chrome 151 profile WebDriver target; Android also has a local device-integration scheduling/cancellation path with plugin-registry-reported pending counts of seven then zero. An earlier macOS 800x600 journey passed before recommendation generation was added, while two expanded reruns were blocked by debug-host foreground instability. Physical devices, signed release artifacts, Windows/Linux, operating-system-delivered notification response routing, offline recovery, deep links, accessibility services, and upgrade migrations remain unproven.",
+      "evidenceUrls": [
+        "https://docs.flutter.dev/testing/integration-tests",
+        "https://github.com/flutter/flutter/wiki/Plugin-Tests",
+        "https://github.com/cucumberfalse/takeyourmeds"
+      ],
+      "dependencies": [
+        "wcag_22_aa_conformance",
+        "education_only_reminders"
+      ],
+      "acceptanceCriteria": [
+        "Android and iOS integration journeys cover registration, profile persistence, medication selection, meal logging, recommendation generation, and settings recovery; iOS simulator coverage alone does not satisfy physical-device acceptance.",
+        "Notification body-tap activation, timezone, reboot, cancellation, deep-link, and offline/reconnect paths are exercised on target operating systems rather than mocked as widget behavior.",
+        "Every run records app version, data schema, device/OS, locale, accessibility setting, and an artifact linked to the tested commit."
+      ]
+    },
+    {
+      "id": "darwin_swiftpm_migration",
+      "title": "Complete iOS and macOS Swift Package Manager migration",
+      "area": "platform",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 2,
+      "score": 32,
+      "currentGap": "Flutter 3.44 automatically added Swift Package Manager integration for both iOS and macOS, and the iOS registered-user algorithm journey passes after the generated migration. Both projects still retain CocoaPods integration and emit a mixed-manager warning on every build. CocoaPods is in maintenance mode and its trunk registry becomes read-only on 2026-12-02.",
+      "evidenceUrls": [
+        "https://docs.flutter.dev/packages-and-plugins/swift-package-manager/for-app-developers"
+      ],
+      "dependencies": ["cross_platform_integration_harness"],
+      "acceptanceCriteria": [
+        "Every iOS and macOS plugin is confirmed to resolve through Swift Package Manager before CocoaPods project references are removed.",
+        "Clean debug and release builds plus the registered-user integration journey pass on iOS and macOS without a mixed-manager warning.",
+        "Package resolution pins are reviewed and reproducible, and rollback instructions preserve the last known-good project configuration."
+      ]
+    },
+    {
+      "id": "assistive_technology_device_matrix",
+      "title": "Screen-reader and switch-control target-device certification matrix",
+      "area": "accessibility",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "Framework semantics and widget guidelines do not establish that VoiceOver, TalkBack, NVDA, keyboard, or switch-control users can complete and correctly interpret critical tasks on release devices.",
+      "evidenceUrls": [
+        "https://docs.flutter.dev/ui/accessibility/accessibility-testing",
+        "https://www.w3.org/TR/WCAG22/"
+      ],
+      "dependencies": ["wcag_22_aa_conformance"],
+      "acceptanceCriteria": [
+        "A maintained matrix covers VoiceOver on iOS and macOS, TalkBack on Android, and at least one supported desktop web screen reader plus keyboard and switch-control paths.",
+        "Registration, logging, medication selection, recommendations, uncertainty interpretation, reminders, export, and deletion have task-level spoken-output evidence.",
+        "No conformance claim is published while a supported release target or critical task remains untested."
+      ]
+    },
+    {
+      "id": "parkinson_sensor_biomarker_sandbox",
+      "title": "Validated Parkinson sensor-biomarker research sandbox",
+      "area": "clinical_research",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "ParkinSUM does not ingest wrist sensor data or implement validated gait, tremor, or pulse-rate pipelines; adding generic phone-sensor scores would create unsupported clinical meaning.",
+      "evidenceUrls": [
+        "https://github.com/ResearchKit/mPower",
+        "https://github.com/biomarkersParkinson/paradigma",
+        "https://github.com/the-momentum/open_wearables_health_sdk"
+      ],
+      "dependencies": [
+        "server_authoritative_provenance",
+        "critical_task_human_factors"
+      ],
+      "acceptanceCriteria": [
+        "A research-only adapter preserves device model, placement, sampling rate, firmware, timezone, missing segments, anchored incremental cursor, permission snapshot, provider, pipeline version, background-run status, and context-of-use metadata.",
+        "Only pipelines validated for the incoming device and protocol can run; unsupported data fails closed without a health score.",
+        "Outputs remain longitudinal research measurements with uncertainty and cannot diagnose Parkinson disease, predict treatment response, or alter medication or meal guidance."
+      ]
+    },
+    {
+      "id": "confirmation_first_multimodal_capture",
+      "title": "Confirmation-first natural-language and meal-photo capture",
+      "area": "data_capture",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 4,
+      "risk": 5,
+      "effort": 5,
+      "score": 9,
+      "currentGap": "Manual structured entry protects field meaning but is slow for motor-impaired users; direct AI-written medication or meal records would introduce silent extraction and portion-estimation errors.",
+      "evidenceUrls": [
+        "https://github.com/acara-app/plate"
+      ],
+      "dependencies": [
+        "wcag_22_aa_conformance",
+        "server_authoritative_provenance"
+      ],
+      "acceptanceCriteria": [
+        "Natural-language or photo input produces an editable draft and never writes a medication, dose, time, food, portion, or nutrient value before explicit field-by-field confirmation.",
+        "Reference-derived values, model estimates, user edits, confidence, model/version, and source image or text provenance remain distinguishable after save and export.",
+        "Allergen, medication, dose, and unit ambiguity blocks confirmation instead of being guessed, and the feature remains optional with a fully keyboard-accessible manual path."
+      ]
+    },
+    {
+      "id": "encrypted_backup_restore_drill",
+      "title": "Encrypted backup, restore, and migration recovery drill",
+      "area": "reliability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "Export and release evidence exist, but there is no user- or operator-verifiable encrypted backup and restore drill proving schema migration, integrity, key recovery, and rollback behavior.",
+      "evidenceUrls": [
+        "https://github.com/MBombeck/HealthLog"
+      ],
+      "dependencies": [
+        "self_service_export_delete",
+        "server_authoritative_provenance"
+      ],
+      "acceptanceCriteria": [
+        "Backups are encrypted with a documented key-rotation and recovery boundary and include a schema/app version manifest plus checksums.",
+        "Automated restore drills recover into an isolated environment, run every migration, and compare record counts, hashes, ownership, missingness, and audit links.",
+        "Partial restore, wrong key, corrupt archive, and newer-schema input fail safely without overwriting the last known-good dataset."
+      ]
+    },
+    {
+      "id": "user_owned_portable_data_package",
+      "title": "User-owned portable data package and migration preview",
+      "area": "data_portability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "The worktree now generates an account-bound schema-v1 JSON package over the currently loaded profile, preferences, active and historically referenced medication selections, intakes, meals, this-device reminders, missingness and provenance, and relationship audit links. Deterministic serialization, per-file and aggregate SHA-256, pre-decode byte/depth/string/number/object/node and duplicate-key limits, exact required scalar/domain checks, safe unique identifiers, secret exclusions, and a kind-bound random local-owner capability are implemented and tested. The local capability now uses a strict versioned platform-protected envelope with verified one-way SharedPreferences migration, key ID, revision, read-back, rotation, revocation, and visible protection status without claiming hardware attestation. Import preview is bound to the input hash, account epoch, a current record-id digest, and a read-back-confirmed process-local reminder revision; account or same-process repository changes invalidate stale results. Clipboard and sink calls recheck an account lease immediately before their side effect. Web can request a browser download, while desktop and mobile fail closed to Copy JSON for new files; desktop only recognizes an already-existing byte-identical file through a bounded read-only handle and never creates, overwrites, or deletes a path. Durable import commit and rollback, historical package migrations, complete cloud audit/history/storage enumeration, mobile document-provider or share-sheet delivery, package encryption and recovery, WebDAV or self-hosted sync, target-device secure-storage migration and loss drills, and cross-target round trips remain open. Reminder revision still cannot observe another isolate or an external preference writer. A global auth-transition barrier, native atomic no-replace publication before enabling desktop writes, structured fully localized findings, and broader assistive-technology evidence are also open. Status stays queued because durable import and migration, cross-target round-trip, and optional synchronization acceptance criteria remain unmet.",
+      "evidenceUrls": [
+        "https://github.com/FriesI23/mhabit",
+        "https://github.com/MBombeck/HealthLog"
+      ],
+      "dependencies": [
+        "encrypted_backup_restore_drill",
+        "offline_conflict_awareness"
+      ],
+      "acceptanceCriteria": [
+        "A user can export a versioned manifest plus structured profile, medication, intake, meal, missingness, provenance, preference, reminder, and audit-link data without embedding credentials or reversible identifiers.",
+        "Import first produces an isolated dry-run report covering schema compatibility, ownership, record counts, conflicts, unsupported fields, checksum failures, and proposed migrations; nothing durable changes before explicit confirmation.",
+        "Round-trip and historical-version fixtures preserve timestamps, units, null-versus-zero meaning, stable safe identifiers, and audit relationships across local desktop and mobile targets.",
+        "Optional WebDAV or self-hosted synchronization reuses the same package and conflict contracts and cannot silently overwrite a newer durable record."
+      ]
+    },
+    {
+      "id": "artifact_level_black_box_journeys",
+      "title": "Artifact-level black-box release journeys",
+      "area": "quality",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "Framework-driven integration journeys now pass on iOS simulator and Web profile targets, but they still start through Flutter tooling and do not prove that the signed mobile package or independently served release bundle launches, migrates, renders, and persists correctly.",
+      "evidenceUrls": [
+        "https://docs.flutter.dev/testing/integration-tests",
+        "https://github.com/flutter/flutter/wiki/Plugin-Tests",
+        "https://github.com/appium/appium-flutter-driver"
+      ],
+      "dependencies": [
+        "cross_platform_integration_harness",
+        "darwin_swiftpm_migration",
+        "android_build_toolchain_upgrade"
+      ],
+      "acceptanceCriteria": [
+        "A release-built Web bundle is served independently of Flutter tooling and driven through a normal browser automation boundary with no test-only storage or UI hooks.",
+        "Signed or release-equivalent Android and iOS packages are installed cleanly and over the prior schema, then complete registration, logging, recommendation, settings, restart, and migration journeys through device-level automation.",
+        "Every artifact run records full commit SHA, artifact checksum, product/schema/engine versions, target OS/browser, locale, accessibility profile, storage boundary, and explicit confirmation that production user data was not accessed.",
+        "Framework-host, browser-driver, application, and assertion failures remain distinct so an environment failure cannot be reported as a product pass or fail."
+      ]
+    },
+    {
+      "id": "ios_uiscene_lifecycle_migration",
+      "title": "iOS UIScene lifecycle migration and deep-link recovery",
+      "area": "platform",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 3,
+      "effort": 2,
+      "score": 28,
+      "currentGap": "The iOS 26.2 simulator journey passes, but Flutter reports that UIScene lifecycle support will be required on upcoming iOS versions. Scene creation, restoration, multi-window behavior, notification/deep-link routing, and background-to-foreground recovery are not explicitly modeled or tested.",
+      "evidenceUrls": [
+        "https://flutter.dev/to/uiscene-migration"
+      ],
+      "dependencies": [
+        "darwin_swiftpm_migration",
+        "cross_platform_integration_harness"
+      ],
+      "acceptanceCriteria": [
+        "The generated iOS project adopts Flutter's supported UIScene lifecycle without duplicating plugin registration, notification delegates, or app-state initialization.",
+        "Cold start, warm resume, state restoration, notification/deep-link launch, and repeated scene activation recover the intended registered-user route without exposing or duplicating records.",
+        "iPhone and iPad simulator journeys plus at least one physical-device run pass before the legacy lifecycle configuration is removed.",
+        "The migration has rollback instructions and clean debug/release build evidence linked to the tested commit."
+      ]
+    },
+    {
+      "id": "mechanistic_structural_uncertainty_shadow_models",
+      "title": "Observable-matched structural-uncertainty shadow ensemble for gastric emptying",
+      "area": "algorithm_truth",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "The production gastric-retention curve uses one lag-shifted exponential structure. Elashoff power-exponential, modified power-exponential, linear-exponential, explicit lag, and dual-phase or double-Weibull structures describe different observables and phases; fit quality alone cannot make them interchangeable or individually identifiable. Population studies support broad variability and some mechanism directions but do not establish one transportable individual curve.",
+      "evidenceUrls": [
+        "https://pubmed.ncbi.nlm.nih.gov/11748735/",
+        "https://pubmed.ncbi.nlm.nih.gov/22632782/",
+        "https://pubmed.ncbi.nlm.nih.gov/35280265/",
+        "https://www.sciencedirect.com/science/article/pii/S0016508582801455",
+        "https://pubmed.ncbi.nlm.nih.gov/3343018/",
+        "https://pubmed.ncbi.nlm.nih.gov/20649756/",
+        "https://pubmed.ncbi.nlm.nih.gov/19337822/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC10078211/"
+      ],
+      "dependencies": ["unit_aware_mechanistic_event_ledger"],
+      "acceptanceCriteria": [
+        "Each provider declares the exact formula and structure ID, measured observable, measurement modality, original and canonical units, fixed and free parameters, evidence source IDs, supported domain, and calibration or prior-fixed status; Elashoff power-exponential and modified power-exponential are never conflated.",
+        "The unchanged production model plus read-only Elashoff power-exponential, modified power-exponential, linear-exponential, explicit-lag, and dual-phase or double-Weibull shadows replay the same compatible synthetic ledgers deterministically without changing production score, rank, recommendation copy, or golden outputs.",
+        "A structure may be fit only when the observable matches, informative observations outnumber free parameters and span implicated early and late phases, and multistart plus profile-likelihood, posterior, condition-number, or equivalent diagnostics and held-out predictive checks reject unstable solutions; otherwise it remains prior-fixed or unavailable.",
+        "The Algorithm Observatory shows observable-matched trajectories and pairwise structural disagreement as model-form sensitivity, never as an ensemble accuracy gain, confidence interval, individual test, plasma concentration, symptom prediction, or clinical validation.",
+        "Positive, null, and heterogeneous human findings are represented together, including population and formulation limits, before any production-curve change is proposed."
+      ]
+    },
+    {
+      "id": "mechanistic_model_invariant_and_unit_gate",
+      "title": "Mathematical invariants, units, and threshold mutation gate",
+      "area": "algorithm_quality",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 2,
+      "score": 40,
+      "currentGap": "The local worktree now has a fail-closed mechanistic verification gate for finite and bounded production curves, monotone normalized retention, remaining-plus-emptied mass complementarity, arrival-rate integration, faster/central/slower envelopes, component-order invariance, and declared absolute-volume observable scoping. It exercises minute/hour, mg/g/mcg, fraction/percent, per-minute/per-hour, and mL/L metamorphic conversions; rejects dimension mismatch, ambiguity, non-finite values, invalid signs, and non-normalized weights; probes the production severity, competition, and delayed-arrival threshold neighborhoods; and kills time-scale, normalized-weight, term-order, sign, and threshold mutations. The gate remains queued rather than complete because it covers the current mechanistic stack rather than every registered result-affecting algorithm, and much of the verification still observes production components instead of using an independently governed mathematical specification and analytic or higher-precision oracle.",
+      "evidenceUrls": [
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/assessing-credibility-computational-modeling-and-simulation-medical-device-submissions",
+        "https://github.com/Open-Systems-Pharmacology/PK-Sim",
+        "https://nlmixr2.github.io/rxode2/reference/eventTable.html"
+      ],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Every model curve is finite and bounded, remaining mass is monotone non-increasing, component fractions sum to one, and remaining plus emptied mass equals one within declared numerical tolerance.",
+        "Discrete arrival-rate integration agrees with cumulative emptied mass, and faster, central, and slower sensitivity curves remain ordered for a deterministic input grid.",
+        "Component permutation and dimensionally equivalent unit conversions preserve results, while dimension mismatch, ambiguous conversion, NaN, non-normalized weights, invalid signs, and deliberately mutated formulas fail the gate.",
+        "An invariant is scoped to its declared observable and structure: an absolute-volume model may include an early secretion-related rise and cannot be rejected by a normalized-retention monotonicity rule applied out of domain.",
+        "Tests cover exact neighborhoods around every severity and delayed-arrival threshold without presenting engineering verification as clinical validation."
+      ]
+    },
+    {
+      "id": "algorithm_configuration_identity_digest",
+      "title": "Canonical configuration identity for deterministic algorithm replay",
+      "area": "algorithm_quality",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 2,
+      "score": 40,
+      "currentGap": "The current worktree now emits a deterministic schema-v1 parameter-provenance manifest with 67 records covering every explicitly canonicalized gastric, absorption-openness, LNAA-factor, protein-distribution, candidate-scoring, legacy-threshold, runtime-rule, and live-trace-provider field. Each record carries unique parameter and semantic IDs, formula ID, original/canonical unit and value or bounded distribution, supported engineering domain, transform, measured/literature-derived/fitted/prototype-heuristic status, source IDs, review date, and limitation. Fitted records fail closed unless they carry a calibration-dataset logical ID plus dataset-content SHA-256, a split logical ID plus split-manifest SHA-256, estimator ID and code SHA-256, environment-lock SHA-256, aggregate diagnostics, and raw-to-analysis-lineage SHA-256; these are required immutable-content identifiers only, not evidence that a governed registry or calibration asset exists. Non-fitted records reject fitted metadata, and duplicate IDs, invalid dates/ranges/distribution bounds, malformed JSON, NaN, and infinity fail before evaluation. SDK v4, Replay, and Observatory now validate their resolved production component graphs, including scorer-internal engine, normalizer, and protein-distribution components, against the supplied identity and reject custom subtypes because the current schema has no governed per-component identity; replay reports explicitly deny biological or clinical validation. Acceptance remains open because result-affecting branches/constants outside the explicitly canonicalized core families are still attested by source-bundle hashes rather than per-field records, there is no governed calibration-dataset/split registry or real fitted dataset and estimator run, and external runtime-rule source identifiers are not yet normalized into one reviewed source registry; status therefore remains queued.",
+      "evidenceUrls": [
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/assessing-credibility-computational-modeling-and-simulation-medical-device-submissions",
+        "https://github.com/Open-Systems-Pharmacology/PK-Sim"
+      ],
+      "dependencies": ["mechanistic_model_invariant_and_unit_gate"],
+      "acceptanceCriteria": [
+        "Every result-affecting constant and structural choice serializes into a deterministic, schema-versioned configuration manifest with semantic ID, structure/formula ID, original and canonical unit, value or distribution, supported range and transform, and measured, literature-derived, fitted, or prototype-heuristic status.",
+        "Literature-derived values carry source IDs and review date; fitted values additionally carry immutable calibration-dataset and split IDs, estimator, code and environment identity, diagnostics, and raw-to-analysis lineage without embedding participant data.",
+        "The SDK envelope carries engine version, manifest schema, and canonical configuration digest; changing any result-affecting value, unit transform, formula, provider, provenance status, dataset split, or estimator identity changes the digest and a replay fixture.",
+        "Custom engines and parameter sets cannot reuse the default identity silently, and malformed, duplicate, NaN, or non-finite configuration values fail before evaluation.",
+        "Golden replay reports record the digest while explicitly separating engineering reproducibility from biological or clinical validity."
+      ]
+    },
+    {
+      "id": "unit_aware_mechanistic_event_ledger",
+      "title": "Unit-aware immutable mechanistic event ledger",
+      "area": "algorithm_quality",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 3,
+      "score": 30,
+      "currentGap": "The worktree now has a schema-v1 immutable mechanistic ledger with dose, meal, observation, and context event kinds; explicit known, unknown, not-collected, below-quantification, and censored states; original and canonical values and units; bounded dimension-aware conversion; offset-bearing timestamps plus UTC instants; deterministic equal-time order; source, revision, formulation, route, compartment, synthetic provenance, strict round-trip parsing, and fail-closed shape, unit, timestamp, identity, ordering, finiteness, and tamper checks. A full audit SHA-256 preserves original representations while a second canonical replay SHA-256 excludes equivalent unit and offset representation choices but retains canonical values, the UTC instant, ordering, provenance, attributes, and configuration identity; metamorphic fixtures prove equivalent mg/g and offset/UTC inputs share replay identity while retaining different audit identity. The Observatory projects the same production fixture into an expandable read-only ledger bound to the exact algorithm configuration digest. Acceptance remains open because ordinary user meal and intake persistence does not yet preserve original pre-normalization units or named IANA timezone and tzdb version, no real observation or censoring importer feeds this ledger, the production scorer still consumes the legacy TimeAxisConflictContext rather than a ledger-derived verified view, and cross-platform/device serialization evidence is incomplete. The ledger never creates, infers, recommends, or reschedules a medication dose.",
+      "evidenceUrls": [
+        "https://github.com/nlmixr2/rxode2",
+        "https://nlmixr2.github.io/rxode2/reference/eventTable.html"
+      ],
+      "dependencies": [
+        "algorithm_configuration_identity_digest",
+        "mechanistic_model_invariant_and_unit_gate",
+        "versioned_clinical_nutrition_terminology_firewall"
+      ],
+      "acceptanceCriteria": [
+        "A schema-versioned append-only ledger distinguishes dose, meal, observation, and context events and preserves original value and unit, canonical value and unit, timestamp plus timezone or offset, stable equal-time ordering, source, revision, missingness or censoring, formulation, route, and compartment where applicable.",
+        "Dimensionally invalid conversions, ambiguous local times, duplicate immutable identities, non-finite values, and undefined same-time ordering fail before evaluation; null, zero, unknown, below-quantification, and not-collected states remain distinct.",
+        "A canonical ledger digest plus the algorithm-configuration digest reproduces the same shadow replay across supported platforms and serialization round trips, including equivalent-unit metamorphic fixtures.",
+        "The ledger never infers, creates, recommends, or reschedules a medication dose; synthetic events are visibly marked and cannot be represented as observed or clinically calibrated data."
+      ]
+    },
+    {
+      "id": "versioned_timezone_rule_provenance_and_dst_replay",
+      "title": "Versioned timezone-rule provenance and DST replay",
+      "area": "data_integrity",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "The schema-v1 mechanistic ledger preserves an explicit numeric UTC offset and rejects offset-free local timestamps, but it does not preserve an IANA timezone identifier, timezone-database release, local civil time, DST fold or gap resolution, or rule-drift decision. A historical instant remains replayable, but future local-time intentions and cross-device interpretation can change when governments or platform tzdb versions change.",
+      "evidenceUrls": [
+        "https://www.iana.org/time-zones",
+        "https://www.rfc-editor.org/rfc/rfc9557.html",
+        "https://pub.dev/packages/timezone"
+      ],
+      "dependencies": [
+        "unit_aware_mechanistic_event_ledger",
+        "notification_occurrence_identity_and_schedule_ledger"
+      ],
+      "acceptanceCriteria": [
+        "Every local-time intent binds the original civil time, explicit UTC offset, IANA timezone identifier, tzdb release identity, resolved UTC instant, resolution source, and an explicit earlier/later/reject decision for folds; gap times are rejected or require a visible user decision rather than automatic shifting.",
+        "RFC 9557-style critical timezone information is parsed with a strict allowlist; unknown critical tags, offset-zone inconsistency, unsupported calendar, malformed zone ID, and producer/consumer tzdb disagreement fail closed or enter an explicit reconciliation preview.",
+        "A versioned drift report replays DST folds, gaps, political offset changes, travel, device-zone changes, old tzdb, OS upgrades, and serialization across every supported platform without silently altering recorded instants or future reminder intent.",
+        "Timezone reconciliation never creates or reschedules a medication dose. Any future reminder adjustment is user-reviewed, account-scoped, idempotent, and kept separate from the immutable historical event ledger."
+      ]
+    },
+    {
+      "id": "calibration_dataset_governance",
+      "title": "Calibration dataset governance and immutable split lineage",
+      "area": "research_governance",
+      "status": "external_dependency",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "Synthetic fixtures and literature-derived parameters test software behavior but are not calibration data. There is no governed manifest for participant-data authority, population and measurement context, immutable leakage-resistant splits, raw-to-analysis lineage, withdrawal, or access controls, so fitted parameters could not be audited or reproduced responsibly.",
+      "evidenceUrls": [
+        "https://www.nature.com/articles/sdata201618",
+        "https://www.ema.europa.eu/en/reporting-physiologically-based-pharmacokinetic-pbpk-modelling-simulation-scientific-guideline",
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/assessing-credibility-computational-modeling-and-simulation-medical-device-submissions"
+      ],
+      "dependencies": [
+        "algorithm_configuration_identity_digest",
+        "server_authoritative_provenance",
+        "unit_aware_mechanistic_event_ledger"
+      ],
+      "acceptanceCriteria": [
+        "Every candidate dataset has a versioned manifest with stable identity and content hash, custodian, consent and ethics or other collection authority, data-use agreement and license boundary, population, site, formulation, fed state, meal or LNAA variables, gastric-measurement modality, units, observation schedule, missingness, censoring, and known exclusions.",
+        "Subject, site, and time-based calibration, validation, and test splits are immutable, leakage-audited, and identified in the parameter provenance manifest before fitting; split changes alter the configuration digest.",
+        "Raw-to-analysis transformations retain code and environment identity, source hashes, unit conversions, exclusions, quality findings, and reviewer sign-off; fitted outputs record estimator diagnostics and the exact analysis dataset lineage.",
+        "De-identification, least-privilege access, retention, withdrawal or deletion, incident handling, and export restrictions are approved before ingestion; raw participant data never enter the public repository, demo bundle, logs, fixtures, or golden artifacts.",
+        "Synthetic and literature-only replays remain explicitly non-calibration evidence and cannot move this item out of external_dependency."
+      ]
+    },
+    {
+      "id": "open_source_pattern_license_firewall",
+      "title": "Open-source model and visualization pattern license firewall",
+      "area": "release_governance",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 4,
+      "risk": 5,
+      "effort": 2,
+      "score": 36,
+      "currentGap": "The worktree now has a schema-v1 offline open-source influence firewall covering all 34 GitHub repositories discovered in the reviewed research docs and complete-app queue. Every influence binds a canonical repository URL, full pinned commit, declared and GitHub-detected SPDX evidence, source/documentation/UI/API/model/data/report/release artifact classes, reviewed concept, transfer disposition, authorization, local paths, and obligations. Thirty-two entries are concept-only; eight unresolved licenses remain NOASSERTION and cannot cross the release boundary. The existing Flutter framework and flutter_local_notifications dependency are the only linked entries and are bound to pubspec locks plus notice/generated-license-bundle obligations. CI and verify:all reject new undocumented repositories, duplicate or malformed identity, false license claims, concept-only local paths, unresolved transfer, missing reciprocal or permissive obligations, release-boundary mismatch, and unreviewed vendor/third_party/external/upstream directories. Acceptance remains open because dependency locks are not a deterministic artifact-level SPDX/CycloneDX SBOM, built Flutter license bundles and NOTICE/source-offer obligations are not checksum-attested on every platform, no external legal approval exists for reciprocal or unresolved transfer, and upstream semantic/license drift still requires manual network research.",
+      "evidenceUrls": [
+        "https://github.com/Open-Systems-Pharmacology/PK-Sim",
+        "https://github.com/Open-Systems-Pharmacology/Suite",
+        "https://github.com/Open-Systems-Pharmacology/OSP-PBPK-Model-Library",
+        "https://github.com/nlmixr2/rxode2",
+        "https://github.com/nlmixr2/nlmixr2",
+        "https://github.com/OHIF/Viewers"
+      ],
+      "dependencies": [],
+      "acceptanceCriteria": [
+        "Every upstream influence records official URL, release tag or commit, SPDX identifier, artifact type, and concept-only, copied, linked, vendored, or derived status; model, data, and report assets receive a license check distinct from the surrounding software repository.",
+        "PK-Sim or Open Systems Pharmacology GPL-2.0 and rxode2 or nlmixr2 GPL-3.0 code is not copied, linked, vendored, adapted, or distributed until a documented compatibility and legal review defines source, notice, and reciprocal-license obligations.",
+        "Any OHIF MIT code reuse preserves required copyright and license notices and is tracked in NOTICE or equivalent release evidence; current extension-lifecycle transfer remains concept-only until that decision exists.",
+        "Consumers that import an upstream artifact depend on this gate, and CI verifies the approved inventory, license texts, attribution, SBOM, and absence of unreviewed vendored or generated upstream code.",
+        "Passing this gate is release hygiene only and never establishes scientific validity, data-use permission, clinical effectiveness, or regulatory clearance."
+      ]
+    },
+    {
+      "id": "upstream_semantic_license_drift_revalidation",
+      "title": "Versioned upstream semantic and license drift revalidation",
+      "area": "release_governance",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The offline influence firewall pins reproducible upstream commits and dispositions, but it intentionally does not contact GitHub during CI. It therefore cannot report that a repository moved, archived, deleted or retargeted a tag, changed its license evidence, replaced a reviewed architecture, or published a security-relevant release after the review date. A networked refresh must propose a reviewable drift artifact without automatically rewriting the release boundary or importing upstream content.",
+      "evidenceUrls": [
+        "https://docs.github.com/en/rest/licenses/licenses",
+        "https://docs.github.com/en/code-security/concepts/supply-chain-security/dependency-review",
+        "https://spdx.dev/use/specifications/"
+      ],
+      "dependencies": [
+        "open_source_pattern_license_firewall",
+        "reproducible_release_sbom_attestation"
+      ],
+      "acceptanceCriteria": [
+        "A networked proposal job records the previous and observed repository identity, full commit, release or tag identity, archive or move state, declared and detected license evidence, review timestamp, API version, and rate-limit or retrieval status without mutating the committed inventory.",
+        "License disappearance, NOASSERTION, repository transfer, deleted or mutable tag, history rewrite, unavailable API, partial pagination, rate limit, malformed response, and inconsistent repository metadata produce unverified or blocker status rather than pass.",
+        "A reviewer classifies whether each changed upstream alters only an observed concept, a copied or linked artifact, an obligation, a NOTICE or source offer, an SBOM component, or a scientific/model/data claim; no code, model, data, or report is downloaded into the release by this workflow.",
+        "Accepted refreshes update the pinned inventory and an append-only drift record in one reviewed change, while rejected or deferred drift leaves current release consumers blocked if their approved transfer evidence is stale."
+      ]
+    },
+    {
+      "id": "algorithm_executable_trace_coverage",
+      "title": "Executable trace and visualization coverage for every algorithm claim",
+      "area": "algorithm_transparency",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The current worktree truthfully gives all 57 registered algorithms a searchable static visual contract, recursively inventories all 260 lib Dart sources, and marks only the six IDs mechanically emitted by every production-engine-derived fixed-scenario explanation tree as live: meal composition normalization, gastric emptying, levodopa absorption opportunity, amino-acid competition, mechanistic conflict, and mechanistic candidate scoring. Generic flow contracts do not count as live. A separately versioned provider/fixture/UI-route lifecycle manifest, deliberate executable coverage for the other 51 algorithms, and target-device accessibility evidence remain open.",
+      "evidenceUrls": [
+        "https://www.w3.org/WAI/tutorials/images/complex/",
+        "https://github.com/OHIF/Viewers",
+        "https://github.com/OHIF/Viewers/blob/master/platform/docs/docs/platform/extensions/index.md"
+      ],
+      "dependencies": [
+        "algorithm_atlas_visual_contract",
+        "open_source_pattern_license_firewall"
+      ],
+      "acceptanceCriteria": [
+        "Every live-trace registry claim resolves to a versioned production-engine provider with explicit identifier, registration and disposal lifecycle, fixture schema, algorithm-specific widget or structured table, source path, and executable test.",
+        "All registered algorithms have either a truthful executable representation or an explicit non-executable static reason; a generic icon-only contract never counts as a live trace.",
+        "Missing providers, dead UI routes, fixture drift, and source-path mismatches fail CI.",
+        "Every complex chart has a concise semantic label, an equivalent visible long description, and a structured data-table view."
+      ]
+    },
+    {
+      "id": "atomic_resumable_onboarding_commit",
+      "title": "Atomic, idempotent, and resumable onboarding commit",
+      "area": "data_integrity",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 3,
+      "score": 30,
+      "currentGap": "The current worktree now uses a versioned SHA-256-identified OnboardingCommit and publishes visible AppState only after persistence and account-scope revalidation. Memory swaps the complete snapshot without an await, native SQLite uses one transaction, browser storage serializes one aggregate envelope, and Firestore uses one owner-bound batch with a committed marker; conformance and injected write-before/lost-ack tests cover idempotent retry. The seven-case Firestore Emulator suite now runs locally through an auto-discovered JDK 21 and proves the owner-bound terminal onboarding marker plus adjacent allow/deny rules. Acceptance remains open because the production AppDatabase Firestore batch has not run end-to-end through Firebase Auth plus Firestore emulators or a real project, native SQLite has not run through a target-device plugin runtime, legacy partially written onboarding state has no explicit migration/repair path, browser storage has no cross-tab CAS, and simultaneous different Firestore operation IDs remain complete-state last-writer-wins rather than business-level compare-and-set.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/firestore/manage-data/transactions",
+        "https://www.sqlite.org/lang_transaction.html"
+      ],
+      "dependencies": ["profile_persistence_transaction"],
+      "acceptanceCriteria": [
+        "A versioned OnboardingCommit carries UID, schema version, and idempotency token and is applied atomically by each supported persistence backend.",
+        "Durable success precedes in-memory publication; post-commit refresh failure is reported separately from commit failure.",
+        "Injected failure at every write boundary never produces onboarded=true with required records missing, and retry never duplicates the initial intake.",
+        "Cold start and account switch can safely resume or roll back an interrupted commit, with an explicit migration strategy for existing partial states.",
+        "Cross-tab and cross-device submissions of different operation IDs have a declared conflict policy and executable CAS or intentionally reviewed last-writer behavior; a retry of the same operation never overwrites later user edits."
+      ]
+    },
+    {
+      "id": "registered_first_day_backend_conformance",
+      "title": "Registered-user first-day journey across real persistence backends",
+      "area": "product_quality",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "The existing registered-user journey uses an ephemeral in-process service graph and can substitute test repositories, so it does not yet prove production Auth and repository wiring, a meal and intake round trip, edit/delete, offline retry, cold recovery, ownership isolation, or field fidelity across SQLite, browser storage, and Firebase emulator backends. A central checker now inventories 25 required known schema or persistence surfaces (18 versioned and 7 explicitly unversioned) and auto-discovers Dart schema URIs and named version constants, including the portable package and owner-token boundary; it cannot infer an entirely new unmarked persistence write or prove migration and deployed-backend compatibility. The dashboard also lacks a state-derived, non-prescriptive first-day checklist.",
+      "evidenceUrls": [
+        "https://docs.flutter.dev/testing/integration-tests",
+        "https://firebase.google.com/docs/emulator-suite"
+      ],
+      "dependencies": [
+        "atomic_resumable_onboarding_commit",
+        "cross_platform_integration_harness"
+      ],
+      "acceptanceCriteria": [
+        "A dismissible checklist derived from durable state guides confirmation of selected medication, explicit intake and meal creation, trace viewing, edit, and delete without auto-writing records or prescribing medication, timing, or diet.",
+        "Canonical post-registration journeys run through production Auth and repository boundaries against temporary SQLite, real browser storage, and Firebase Auth plus Firestore emulators without test-only repository substitution, then recover through a cold new service graph.",
+        "Each backend journey covers registration, explicit meal and intake creation, trace view, edit, delete, offline or interrupted write and retry, restart, sign-out, and account switch, and distinguishes infrastructure failure from product failure.",
+        "Records restore only for the owning account and preserve timestamps, units, null-versus-zero meaning, provenance, reminder state, and audit links across backends.",
+        "The schema catalog enumerates every persisted boundary and its checker fails when a production persistence surface is missing from the catalog."
+      ]
+    },
+    {
+      "id": "runtime_model_applicability_abstention_gate",
+      "title": "Runtime model applicability and abstention gate",
+      "area": "algorithm_safety",
+      "status": "research_required",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "Public GitHub still contains the former first-non-levodopa fallback and unknown-release-to-IR behavior. The local uncommitted worktree now requires the exact ingredient set carbidopa plus levodopa, oral route, tablet form, immediate-release metadata, an explicit dose, a structured meal, and a causally prior dose-time meal context that is still inside its explicit gastric-residence horizon; rejects extra active components, known unsupported formulations and releases, non-finite strength, future-meal-as-past-residue, stale-meal-as-current-context, empty compositions, missing protein, and incomplete mixed timelines; and treats unknown or ambiguous predicates as insufficient. Until governed terminology exists, an unverified non-target medication string also blocks the whole mixed mechanistic provider instead of being silently discarded. Attached medication provenance must bind to the same product variant, source document, jurisdiction, component set, route, form, release type, and bounded extraction confidence as the structured entry; contradictions and missing identity bindings are invalid. DailyMed, Health Canada DPD, EMA, CDSS projection, variant resolution, and native legacy-row decoding no longer fabricate oral route from absence, and DailyMed emits IR only for explicit immediate-release wording. The generic carbidopa/levodopa seed remains formulation-unspecified, while any concrete package selection without a governed ingredient/route/form/release/label snapshot forces its model context back to unspecified even if the parent catalog row claims IR. Typed gastric, absorption, LNAA, conflict, candidate, Trace, replay, and Observatory boundaries propagate availability and suppress abstention scores, severities, windows, curves, and numeric charts; partial amino-acid coverage is explicit hybrid evidence with wider uncertainty and no pseudo-measured whole-meal total. The competition integral uses the full validated absorption-openness grid, and an empty or structurally invalid available curve is blocked instead of receiving a flat numeric fallback. Production recommendations keep their conservative order, and rankerUsed separately reports a consented safe-whitelist local-AI reorder only when one actually produced the final order. The item remains research_required because product-level formulation identity is not persisted end to end, there is no versioned digest-bound provider manifest covering verified product and component codes, label revision, jurisdiction, population, fasting or fed state, dose, time, units, terminology, observable, and review state; current synthetic or unspecified product provenance is not a governed production identity, blocked-integrity is not yet driven by a real manifest verifier, and live per-provider predicate matrices plus inside/outside/unknown/integrity fixtures are incomplete.",
+      "evidenceUrls": [
+        "https://www.fda.gov/media/154985/download",
+        "https://www.fda.gov/files/drugs/published/Physiologically-Based-Pharmacokinetic-Analyses-%E2%80%94-Format-and-Content-Guidance-for-Industry.pdf",
+        "https://www.ema.europa.eu/en/reporting-physiologically-based-pharmacokinetic-pbpk-modelling-simulation-scientific-guideline",
+        "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=9b17b028-964a-473c-823d-81423535bd66&version=5",
+        "https://dailymed.nlm.nih.gov/dailymed/lookup.cfm?setid=6c1f7cd4-de56-45c1-a734-5e77b4aeb6f7"
+      ],
+      "dependencies": ["algorithm_configuration_identity_digest"],
+      "acceptanceCriteria": [
+        "Every result-affecting provider has a versioned applicability manifest declaring context of use, observable and claim class, component identity, route, formulation and release type, fed state, time and unit bounds, evidence IDs, review state, and manifest digest.",
+        "Missing, unknown, out-of-domain, or digest-mismatched inputs return an explicit notApplicable result before model-driven severity, ranking, recommendation copy, or clinical-looking point estimates are emitted.",
+        "Trace and Observatory output identify every failed or unknown predicate and the exact applicability-manifest version without silently selecting an IR, ER, gastric, nutrition, or conflict fallback.",
+        "Inside-boundary, outside-boundary, unknown-boundary, and malicious-mismatch fixtures exist for every provider and release blocks when any registered provider lacks them."
+      ]
+    },
+    {
+      "id": "independent_numerical_verification_oracle",
+      "title": "Independent numerical verification oracle",
+      "area": "algorithm_quality",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 3,
+      "score": 30,
+      "currentGap": "A versioned Dart oracle now independently restates the reviewed equations for all six production-provider traces, compares 19 manufactured scalar truth vectors, rejects missing, extra, non-finite, time-scale, weight, sign, and threshold defects, emits verified/mismatch/notCovered/blocked status for every registry algorithm, and surfaces its manifest and configuration digests in the Observatory. The remaining 52 registered result-affecting algorithms have no independent numerical specification; the oracle still shares the Dart VM and binary64 runtime with production, uses one fixed fixture, and has no precision-diverse or cross-platform differential evidence. This is implementation and calculation verification only, not biological or clinical validation.",
+      "evidenceUrls": [
+        "https://www.fda.gov/media/154985/download",
+        "https://www.asme.org/codes-standards/find-codes-standards/assessing-credibility-of-computational-modeling-through-verification-and-validation-application-to-medical-devices"
+      ],
+      "dependencies": [
+        "runtime_model_applicability_abstention_gate",
+        "mechanistic_model_invariant_and_unit_gate"
+      ],
+      "acceptanceCriteria": [
+        "Each registered result-affecting algorithm has an independently written mathematical specification and analytic, manufactured, or justified higher-precision truth vectors that import no production function, constant, fixture output, or golden generator.",
+        "Numerical tolerances are derived from the method and cover equivalent units, lag signs, release classes, segmented thresholds, extreme inputs, invalid configurations, and independently recomputed conservation quantities.",
+        "Mutation tests prove rejection of invariant-preserving defects such as minute-versus-hour scale errors, wrong-but-normalized weights, reordered terms, sign flips, and off-by-one threshold branches.",
+        "A missing or drifted oracle blocks release and the report is labelled implementation and calculation verification, never biological validation or patient-level accuracy."
+      ]
+    },
+    {
+      "id": "cross_language_precision_diverse_numerical_reference",
+      "title": "Cross-language precision-diverse numerical reference",
+      "area": "algorithm_quality",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "The in-worktree numerical oracle independently restates equations but executes in the same Dart VM and binary64 environment as production and observes a single fixed scenario. A common compiler, runtime, serialization, precision, or fixture-extraction defect can therefore affect both sides. No neutral vector-exchange schema, separately maintained implementation, higher-precision reference, or platform-differential attestation exists.",
+      "evidenceUrls": [
+        "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/assessing-credibility-computational-modeling-and-simulation-medical-device-submissions",
+        "https://www.asme.org/codes-standards/find-codes-standards/assessing-credibility-of-computational-modeling-through-verification-and-validation-application-to-medical-devices",
+        "https://github.com/metrumresearchgroup/mrgsolve",
+        "https://github.com/ToxMCP/pbpk-mcp"
+      ],
+      "dependencies": [
+        "independent_numerical_verification_oracle",
+        "algorithm_configuration_identity_digest"
+      ],
+      "acceptanceCriteria": [
+        "A neutral, versioned vector-exchange schema binds units, applicability state, exact configuration and oracle identities, expected method, tolerance derivation, and canonical input and output digests; unknown or ambiguous fields fail closed.",
+        "A separately maintained implementation in a different language and runtime imports no Dart production function, constant, fixture output, or golden and uses analytic or higher-precision arithmetic where justified.",
+        "Differential fixtures cover supported domains, boundaries, equivalent-unit metamorphisms, invalid inputs, threshold neighborhoods, extreme values, serialization round trips, and at least two production target platforms; mutation tests prove the reference detects shared-runtime failure classes the Dart oracle cannot.",
+        "Release evidence binds source revisions, toolchains, platform and precision, vector-manifest digest, configuration digest, results, and limitations; passing is labelled engineering verification and never clinical calibration, validation, or regulatory qualification."
+      ]
+    },
+    {
+      "id": "versioned_clinical_nutrition_terminology_firewall",
+      "title": "Versioned clinical and nutrition terminology firewall",
+      "area": "interoperability",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "Drug definitions have no RxCUI or terminology-version identity, food components are not pinned to a reviewed INFOODS release, and units are locally shaped rather than validated against a licensed UCUM version. Existing FHIR views are intentionally inspired projections, so standard-shaped transport cannot make ambiguous local mappings result-safe.",
+      "evidenceUrls": [
+        "https://lhncbc.nlm.nih.gov/RxNav/APIs/RxNormAPIs.html",
+        "https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html",
+        "https://ucum.org/ucum",
+        "https://ucum.org/license",
+        "https://www.fao.org/infoods/infoods/standards-guidelines/food-component-identifiers-tagnames/en/",
+        "https://fhir.hl7.org/fhir/nutritionintake-definitions.html"
+      ],
+      "dependencies": [
+        "open_source_pattern_license_firewall",
+        "algorithm_configuration_identity_digest"
+      ],
+      "acceptanceCriteria": [
+        "Every result-affecting drug, ingredient, product, formulation, route, food component, and unit mapping records system URI, code, display, terminology version, source revision, mapping type, jurisdiction, review date, and license state.",
+        "Original and canonical UCUM units plus explicit conversion factors are preserved; dimensionally invalid, ambiguous, approximate, stale, or unlicensed mappings remain unmapped and cannot influence an algorithm.",
+        "RxNorm, RxClass, SNOMED, INFOODS, UCUM, and FHIR assets retain separate license and version boundaries; FHIR-inspired projections cannot be labelled conformant without a pinned profile and validator evidence.",
+        "Terminology and conversion versions enter portable exports, event-ledger identity, and canonical algorithm configuration; unknown never becomes zero or a guessed equivalent."
+      ]
+    },
+    {
+      "id": "store_privacy_declaration_drift_gate",
+      "title": "App-store privacy declaration drift gate",
+      "area": "release_security",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 3,
+      "score": 27,
+      "currentGap": "The worktree now has versioned iOS and macOS PrivacyInfo.xcprivacy resources, a macOS outbound-network entitlement, explicit Android 12+ deny-all cloud-backup and device-transfer rules, and a dated store-privacy contract. The fail-closed Node gate binds 20 direct runtime dependencies plus complete Dart, npm and SwiftPM lock identities, reviewed third-party required-reason manifests, Apple collected-data categories, Android source and merged permissions and merged backup attributes, 40 literal Dart HTTP(S) hosts, bounded dynamic destination classes, local/off-device data flows, and draft Apple/Google store snapshots. CI runs the source contract and compares the built Android debug merged manifest; local Apple bundle inspection requires the packaged manifest bytes to match the reviewed platform manifest. A release AAB report, pinned macOS archive aggregation across every embedded SDK, signed-artifact checksums, target-device egress evidence, and authorized App Store Connect and Play Console receipts remain open. `--require-store-approval` intentionally fails while either dated store-owner approval is pending, so repository green checks cannot be represented as store readiness.",
+      "evidenceUrls": [
+        "https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api",
+        "https://support.google.com/googleplay/android-developer/answer/10787469",
+        "https://developer.android.com/identity/data/autobackup"
+      ],
+      "dependencies": [
+        "masvs_mobile_controls",
+        "artifact_level_black_box_journeys"
+      ],
+      "acceptanceCriteria": [
+        "A versioned artifact-derived privacy inventory classifies every dependency, SDK, permission, entitlement, required-reason API, network destination, exported field, purpose, and local, off-device, or third-party data flow.",
+        "CI compares the aggregated Apple archive privacy report and approved required reasons plus the Android merged manifest and artifact facts against dated reviewed store-declaration snapshots.",
+        "Any unclassified SDK, permission, entitlement, endpoint, data field, purpose, or declaration drift blocks release with the exact artifact checksum and dependency lock identity.",
+        "Store answers require dated human approval; tooling never guesses, auto-submits, or treats an unchanged repository declaration as proof of current store compliance."
+      ]
+    },
+    {
+      "id": "cross_backend_durable_mutation_protocol",
+      "title": "Cross-backend durable mutation protocol",
+      "area": "data_integrity",
+      "status": "queued",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "The worktree now gives meal and intake create, update, delete, and restore a schema-v1 operation ID, canonical before/after payload digest, compare-and-set conflict, idempotent retry, and record-plus-revision atomic boundary in memory, the Web aggregate envelope, native SQLite, and Firestore transactions. Focused tests cover stale writes, restart restore, idempotency, legacy Web migration, SQLite rollback, and Firestore owner/schema/append-only semantics. The broader protocol remains open: profile, medication selection, preferences, reminders, and other ordinary mutations do not share this contract; owner scope is inherited from the selected backend rather than bound inside each revision; Web still uses SharedPreferences without critical-data, two-tab, or process-crash guarantees; and cold acknowledgement-loss plus real two-device conflicts are unproved.",
+      "evidenceUrls": [
+        "https://pub.dev/packages/shared_preferences",
+        "https://firebase.google.com/docs/firestore/manage-data/transactions",
+        "https://www.sqlite.org/atomiccommit.html",
+        "https://www.w3.org/TR/IndexedDB-3/"
+      ],
+      "dependencies": ["atomic_resumable_onboarding_commit"],
+      "acceptanceCriteria": [
+        "Every durable mutation carries owner scope, operation ID, expected revision or base digest, schema version, payload digest, and audit intent; same-operation retry is idempotent and a different-revision conflict is explicit.",
+        "SQLite uses a transaction, critical Web state uses transactional storage rather than SharedPreferences durability claims, and Firestore uses side-effect-free compare-and-set transactions with durable acknowledgement before success UI or in-memory publication.",
+        "Business state and success audit history commit in one atomic boundary, while failed, superseded, conflicted, and acknowledgement-lost outcomes remain distinguishable after a cold restart.",
+        "A shared fault matrix injects read, write, acknowledgement, quota, corruption, migration, process-kill, two-tab, and two-device interleavings and exposes only the complete old or complete new state."
+      ]
+    },
+    {
+      "id": "personal_log_handoff_summary",
+      "title": "Date-bounded, user-reviewed personal log handoff summary",
+      "area": "user_owned_data",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 3,
+      "score": 27,
+      "currentGap": "The portable package remains a machine-oriented JSON snapshot and explicitly not a clinical record. The worktree now adds an account-bound, date-bounded personal-log summary with user-selected sections and redaction, deterministic source/content digests, current-versus-historical medication separation, explicit missingness and units, the same fixed page widget for preview and PDF rendering, copy, print, and system save/share flows, and stale-source/account authorization checks. Focused service and widget tests cover same-ID content drift and A-to-B account interleavings. Acceptance remains open because the current PDF is a raster image rather than tagged/searchable accessible text, semantic content is English-only, Printing system-sheet completion is not durable proof that a file was saved or printed, complete terminology governance is still pending, and target-device print/share, cancellation, large-document, bidirectional-text, screen-reader, and recipient round-trip drills have not run.",
+      "evidenceUrls": [
+        "https://www.hl7.org/fhir/uv/ips/en/OperationDefinition-summary.html",
+        "https://pub.dev/packages/printing",
+        "https://pub.dev/packages/pdf",
+        "https://github.com/medplum/medplum/blob/main/packages/docs/docs/api/fhir/operations/index.mdx"
+      ],
+      "dependencies": [
+        "user_owned_portable_data_package",
+        "wcag_22_aa_conformance",
+        "versioned_clinical_nutrition_terminology_firewall"
+      ],
+      "acceptanceCriteria": [
+        "The user explicitly selects a date range, sections, and redaction level and previews the exact rendered output; current medications and medications referenced only by historical intakes remain distinct.",
+        "Null, zero, unknown, original timestamp and timezone, original and canonical units, source, provenance, and unsupported-field status remain explicit; the summary never fills missing data or adds a new algorithm ranking or recommendation.",
+        "Generation, preview, copy, print, and save are bound to one owner lease plus a record-revision digest, and any account or source-state change invalidates the artifact before an irreversible side effect.",
+        "Every artifact visibly states that it is a user-entered personal log, has not been clinically verified, and is not a medical record, diagnosis, treatment plan, or recommendation; incomplete rendering, unknown schema, budget failure, or sink failure produces no shareable artifact."
+      ]
+    },
+    {
+      "id": "accessible_searchable_multiscript_document_export",
+      "title": "Accessible, searchable, multilingual document export",
+      "area": "accessibility_localization",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 4,
+      "risk": 3,
+      "effort": 4,
+      "score": 14,
+      "currentGap": "The personal-log handoff deliberately renders the same Flutter page widget into a raster PDF so preview pixels and offline non-Latin glyph fallback stay aligned. That choice does not provide selectable/searchable text, a tagged structure tree, document language and bidirectional semantics, bookmarks, alt text, or PDF/UA evidence, and the semantic body is currently English-only. A visually matching image PDF must not be presented as an accessible document.",
+      "evidenceUrls": [
+        "https://www.w3.org/WAI/WCAG22/Techniques/pdf/",
+        "https://www.iso.org/standard/82278.html",
+        "https://pub.dev/packages/pdf",
+        "https://pub.dev/packages/printing"
+      ],
+      "dependencies": [
+        "personal_log_handoff_summary",
+        "settings_full_locale_translation",
+        "wcag_22_aa_conformance"
+      ],
+      "acceptanceCriteria": [
+        "A versioned document schema maps headings, paragraphs, lists, tables, language, reading order, bookmarks, links, and alternative text to a tagged PDF structure tree without rasterizing text or fetching fonts at runtime.",
+        "Reviewed, redistributable offline font subsets cover every supported script and bidirectional layout; missing glyphs, unsupported locale, shaping failure, fallback-font license ambiguity, or structure loss fails closed before a shareable artifact exists.",
+        "The exact-preview contract distinguishes semantic equivalence from pixel equivalence and verifies selectable/searchable text, copy order, screen-reader order, zoom and reflow, RTL, mixed-script, page breaks, and assistive-technology behavior on supported desktop and mobile targets.",
+        "An independent PDF/UA or equivalent accessibility validator plus human assistive-technology review binds the artifact checksum and reports conformance limits; a validator pass is never described as clinical, privacy, interoperability, or regulatory validation."
+      ]
+    },
+    {
+      "id": "privacy_safe_support_bundle",
+      "title": "User-reviewed privacy-safe technical support bundle",
+      "area": "diagnostics_privacy",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The current worktree now generates a schema-v1, user-reviewed support bundle from a fixed allowlist of build identity, coarse platform capabilities, stable diagnostic codes, and bounded governance counts. Unknown counts remain null; raw exceptions are discarded; exact-key validation, materialization budgets, privacy-pattern scanning, source-revision and account authorization leases, section selection, exact JSON preview, Copy, conservative Save or browser-download request, and checksum identity are implemented without an upload path. Acceptance remains open because signed release attestation, complete SBOM and OS inventory, physical-device and browser delivery evidence, native copy for every shipped locale, cross-isolate diagnostics revision, and a separately consented support-case workflow are not complete.",
+      "evidenceUrls": [
+        "https://support.signal.org/hc/en-us/articles/360007318591-Debug-Logs-and-Crash-Reports",
+        "https://support.mozilla.org/en-US/kb/use-troubleshooting-information-page-fix-firefox",
+        "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html",
+        "https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms"
+      ],
+      "dependencies": [
+        "user_owned_portable_data_package",
+        "store_privacy_declaration_drift_gate"
+      ],
+      "acceptanceCriteria": [
+        "Only versioned whitelist fields such as build identity, platform capability, dependency versions, and stable finding codes may enter the bundle; health records, UID, email, patient ID, activation tokens, endpoints, paths, raw exceptions, and free-form logs are mechanically excluded.",
+        "The user previews the exact bundle and can deselect sections; it stays local by default and is never uploaded, attached, copied, or saved automatically.",
+        "Secret scanning plus UTF-8 byte, node, field, and time budgets run before materialization, and unknown exception types map to stable generic codes; any failed privacy or integrity gate produces no artifact.",
+        "Account epoch or diagnostics revision drift invalidates the preview, copy or save rechecks authorization immediately before the side effect, and failed delivery never claims that a file was saved."
+      ]
+    },
+    {
+      "id": "user_controlled_support_case_workflow",
+      "title": "User-controlled reproducible support-case workflow",
+      "area": "support_operations_privacy",
+      "status": "research_required",
+      "priority": "P2",
+      "impact": 4,
+      "risk": 4,
+      "effort": 4,
+      "score": 16,
+      "currentGap": "The privacy-safe support bundle captures a bounded technical snapshot, not the user's reproduction sequence or problem report. There is no explicit start and stop session, structured problem category, privacy-reviewed coarse action-code timeline, local issue preview, retention control, or separately authorized off-device destination. GitHub issue forms produce a public issue body, while user-authored text, screenshots, and raw logs can contain health or account data and therefore cannot be folded into the machine-safe bundle or uploaded automatically.",
+      "evidenceUrls": [
+        "https://docs.github.com/en/communities/using-templates-to-encourage-useful-issues-and-pull-requests/syntax-for-issue-forms",
+        "https://github.com/signalapp/Signal-Android/wiki/Submitting-useful-bug-reports",
+        "https://support.mozilla.org/en-US/kb/use-troubleshooting-information-page-fix-firefox",
+        "https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html"
+      ],
+      "dependencies": [
+        "privacy_safe_support_bundle",
+        "purpose_bound_consent_receipts"
+      ],
+      "acceptanceCriteria": [
+        "A user must explicitly start and stop a bounded reproduction session; it records only reviewed coarse action codes and relative monotonic offsets, never record IDs, exact health timestamps, typed values, free text, screenshots, clipboard contents, raw logs, exceptions, paths, URLs, or account identifiers.",
+        "User-authored narrative, attachments, and screenshots remain a separate visibly sensitive section and are never reclassified as machine-safe, scanned as proof of anonymity, or merged into the privacy-safe support bundle.",
+        "The app renders an exact local issue preview containing a structured problem category, the bounded action-code sequence, and the support-bundle checksum; cancellation, account or source revision drift, budget failure, and unsupported schema produce no shareable artifact.",
+        "No destination opens and no data leaves the device automatically; any future email, issue tracker, or support endpoint requires a separate purpose-bound receipt, current account lease, second exact preview, explicit destination disclosure, tested cancel and race behavior, bounded local retention, and user-visible deletion evidence."
+      ]
+    },
+    {
+      "id": "recoverable_user_event_history",
+      "title": "Recoverable meal and intake event history",
+      "area": "data_integrity",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "The worktree now atomically appends canonical schema-v1 before/after revisions for meal and medication-intake creates, edits, deletes, and restores across memory, the Web aggregate envelope, native SQLite, and Firestore. A delete Snackbar offers immediate Undo and a filterable Settings history center restores only when the current content digest still matches, so a newer edit is never silently overwritten. Focused tests cover tamper rejection, idempotency, stale compare-and-set, restart recovery, Web v1-to-v2 migration, real SQLite commit/rollback, UI filtering and restore, and Firestore owner/schema/append-only rules. Acceptance remains open because revisions do not bind an opaque owner or relationship-impact graph, Web SharedPreferences is not a critical-data or cross-tab transaction store, Firestore offline and two-device acknowledgement conflicts are unproved, its history reader is capped at the newest 500 rows without pagination or a completeness receipt, history is excluded from portable export and complete account deletion, no retention or permanent-purge workflow exists, other locales use English fallback, and the append-style rows are not independently tamper-evident.",
+      "evidenceUrls": [
+        "https://api.flutter.dev/flutter/material/SnackBar/action.html",
+        "https://joplinapp.org/help/apps/trash/",
+        "https://joplinapp.org/help/apps/note_history/",
+        "https://docs.couchdb.org/en/stable/api/database/misc.html"
+      ],
+      "dependencies": [
+        "cross_backend_durable_mutation_protocol",
+        "offline_conflict_awareness",
+        "self_service_export_delete"
+      ],
+      "acceptanceCriteria": [
+        "Every edit or delete atomically records owner, operation ID, expected revision, schema and payload digest, relationship links, and an immutable prior version or tombstone before success is shown.",
+        "Undo or restore updates the original record only when its current revision still matches; otherwise the app presents a conflict preview or restores a new copy and never overwrites a newer version.",
+        "Account switches, concurrent writes, retries, offline recovery, and process restarts invalidate stale leases; tombstoned records are excluded from all algorithm inputs and ordinary exports unless the user explicitly includes history.",
+        "Permanent purge is a separate explicit action aligned with account deletion and retention policy, and incomplete synchronization, export, or acknowledgement prevents purge; crash, duplicate operation, two-device edit/delete, restore, and owner-isolation tests cover every backend."
+      ]
+    },
+    {
+      "id": "relationship_aware_restore_impact_preview",
+      "title": "Relationship-aware restore impact preview",
+      "area": "data_integrity_explainability",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The worktree now opens a read-only confirmation preview from the recoverable-history center and binds its content-addressed identity to the selected history revision, exact current-record digest, account scope, deterministic relationship-graph version, relevant food or medication catalog bytes, and current algorithm-configuration digest. It distinguishes byte-equivalent record restoration from removal, shows added and removed catalog relationships, preserves immutable revision evidence, identifies meal checks, recommendation explanations, mechanistic traces, handoff summaries, and portable-package relationships as derived outputs to regenerate, blocks unresolved target-catalog relationships, and recomputes the entire preview immediately before confirmation so concurrent record, account, catalog, relationship, or algorithm drift performs no write. The durable record plus new restore revision still commit atomically through existing backend adapters, while post-commit derived refresh failure is reported separately and never rolls back a committed record. Acceptance remains open because affected downstream artifact instances are not yet represented by a durable lineage graph, invalidation or re-derivation intents are not committed in the same backend transaction, handoff and portable artifacts are generated on demand rather than registered dependencies, cyclic graph input is not yet a production surface, and account-switch, backend acknowledgement-loss, cross-device concurrency, assistive-technology device evidence, failed re-derivation recovery, and portable-export round trips remain incomplete.",
+      "evidenceUrls": [
+        "https://hl7.org/fhir/provenance.html",
+        "https://www.w3.org/TR/prov-o/",
+        "https://developer.apple.com/design/human-interface-guidelines/undo-and-redo/",
+        "https://firebase.google.com/docs/firestore/manage-data/transactions",
+        "https://www.sqlite.org/lang_transaction.html",
+        "https://github.com/laurent22/joplin/blob/dev/readme/api/references/rest_api.md"
+      ],
+      "dependencies": [
+        "recoverable_user_event_history",
+        "unit_aware_mechanistic_event_ledger",
+        "user_owned_portable_data_package"
+      ],
+      "acceptanceCriteria": [
+        "A read-only preview binds the selected history ID, current record digest, relationship-graph version, algorithm configuration identity, and current account lease, and enumerates every affected meal, intake, recommendation explanation, mechanistic trace, handoff artifact, audit link, and portable relationship reference before confirmation.",
+        "The preview distinguishes records that can be restored byte-for-byte, derived artifacts that must be recomputed, historical evidence that must remain immutable, and unresolved relationships that force abstention; it never treats an old algorithm result as currently scientifically valid.",
+        "Any source, account, record, catalog, configuration, or relationship revision drift invalidates the preview and performs no write; confirmation commits the restore plus invalidation or re-derivation intents atomically and exposes partial or unavailable downstream work rather than silently dropping it.",
+        "Tests cover delete and update restoration, missing related records, cyclic or duplicate links, algorithm-version drift, stale preview, account switch, concurrent edit, failed re-derivation, portable export, and accessible keyboard and screen-reader review of the exact predicted result."
+      ]
+    },
+    {
+      "id": "derived_artifact_lineage_invalidation_ledger",
+      "title": "Durable derived-artifact lineage and invalidation ledger",
+      "area": "data_integrity_explainability",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "Restore impact preview now predicts derived-output categories and binds the prediction to current record, account, catalog, relationship, and algorithm identities, but recommendation explanations and meal checks remain mutable in-memory caches while mechanistic traces, handoff summaries, audit projections, and portable packages are generated through separate paths. There is no durable artifact-by-artifact dependency record or atomic invalidation intent proving which exact source revisions and algorithm configuration produced an output, whether a crash left it stale, or whether re-derivation completed.",
+      "evidenceUrls": [
+        "https://www.w3.org/TR/prov-o/",
+        "https://hl7.org/fhir/provenance.html",
+        "https://firebase.google.com/docs/firestore/manage-data/transactions",
+        "https://www.sqlite.org/transactional.html",
+        "https://github.com/SmartBear/automerge"
+      ],
+      "dependencies": [
+        "relationship_aware_restore_impact_preview",
+        "recoverable_user_event_history",
+        "algorithm_configuration_identity_digest",
+        "cross_backend_durable_mutation_protocol"
+      ],
+      "acceptanceCriteria": [
+        "A versioned owner-bound lineage record gives every persisted or exported derived artifact a stable identity, content digest, artifact type, source record IDs and revision digests, catalog and terminology identities, algorithm configuration identity, generation activity, status, and explicit limitations without storing an old result as current truth.",
+        "Every source mutation atomically commits a bounded invalidation or re-derivation intent with the source revision; idempotent workers can publish current output only when the account lease and every dependency digest still match, while crash, retry, duplicate work, cycles, oversized graphs, and partial failure remain stale or unavailable rather than silently current.",
+        "The UI distinguishes current, stale, recomputing, unavailable, and historical-only artifacts and explains the exact invalidating dependency. Historical evidence remains viewable but cannot drive current recommendation, conflict, handoff, audit, or export claims.",
+        "Conformance tests cover SQLite, Web, memory, and Firestore acknowledgement loss; concurrent edit, restore, catalog and algorithm drift; missing relationships; account switch; failed worker retry; portable round trip; retention and deletion; and deterministic graph traversal under explicit node and depth budgets."
+      ]
+    },
+    {
+      "id": "tamper_evident_user_event_history_checkpoints",
+      "title": "Tamper-evident user event history checkpoints",
+      "area": "data_integrity_security",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 4,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "Canonical revision hashes detect malformed or internally inconsistent rows but do not prove append-only history. A privileged backend operator, compromised local process, rollback to an older database, or split cloud view could remove or replace a self-consistent sequence without detection. Existing release attestations and server-authoritative provenance items concern software artifacts or external authority, not owner-verifiable consistency of this private event ledger.",
+      "evidenceUrls": [
+        "https://www.rfc-editor.org/rfc/rfc9162.html",
+        "https://hl7.org/fhir/provenance.html",
+        "https://hl7.org/fhir/R4/signatures.html"
+      ],
+      "dependencies": [
+        "recoverable_user_event_history",
+        "server_authoritative_provenance",
+        "device_bound_secret_storage_and_rotation"
+      ],
+      "acceptanceCriteria": [
+        "A versioned canonical leaf and tree contract binds owner capability, sequence, revision identity, previous checkpoint, algorithm suite, and retention epoch; malformed, reordered, missing, duplicated, future-schema, rollback, and forked histories fail verification before any restore or export claim.",
+        "Owner-visible checkpoints support inclusion and append-only consistency verification across local, export, backup, and cloud copies, while key rotation, device loss, recovery, and deliberate retention or account deletion produce explicit terminal evidence rather than an unexplained broken chain.",
+        "At least two independently stored or observed checkpoints are required before describing history as externally tamper-evident; one self-signed local chain is labeled local integrity evidence only, and split-view detection, monitor availability, privacy leakage, and metadata correlation are tested.",
+        "Documentation explicitly states that Merkle-tree or FHIR-signature patterns do not establish Certificate Transparency conformance, legal non-repudiation, clinician authorship, medical-record status, biological validity, or regulatory compliance."
+      ]
+    },
+    {
+      "id": "purpose_bound_consent_receipts",
+      "title": "Versioned purpose-bound optional-feature consent receipts",
+      "area": "privacy_governance",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "The worktree now replaces the effective Local AI boolean with a schema-v1 append-style receipt ledger bound to an exact feature, purpose, notice version and digest, grant or revoke decision, monotonic sequence, UTC evidence time, source, and canonical receipt ID. Missing receipts, a legacy true boolean, malformed or noncontiguous state, future schema, stale notice, and blocked integrity deny Local AI. A Settings consent center makes grant, withdrawal, notice identity, and receipt history reviewable; withdrawal and account clearing invalidate a process lease before persistence, and the adapter checks the same lease immediately before loopback requests and before accepting responses. Acceptance remains open because only Local AI uses the contract, owner scope is inherited from the profile rather than repeated in each receipt, receipts are not yet portable, Firestore only bounds the nested list instead of validating each field, and cross-device conflict, acknowledgement-loss, backend-failure, deletion, retention, caregiver-authority, translated-notice comprehension, and independent legal review are incomplete.",
+      "evidenceUrls": [
+        "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/consent/how-should-we-obtain-record-and-manage-consent/",
+        "https://eur-lex.europa.eu/eli/reg/2016/679/2016-05-04",
+        "https://kantarainitiative.org/download/consent-receipt-specification/",
+        "https://www.w3.org/community/dpvcg/wiki/Main_Page"
+      ],
+      "dependencies": [
+        "account_lifecycle",
+        "cross_backend_durable_mutation_protocol",
+        "caregiver_coordination_consent"
+      ],
+      "acceptanceCriteria": [
+        "Each optional feature defaults to denied and records owner scope, feature and purpose ID, notice version and digest, grant or revoke time, event source, operation ID, revision, and receipt schema without treating one receipt as a universal legal basis.",
+        "Missing, corrupt, future-schema, stale-purpose, stale-notice, or read-back-mismatched state is denied, and every optional side effect checks the current consent revision immediately before execution.",
+        "Revocation invalidates pending asynchronous work and is as discoverable as grant; a failed durable revoke is visible and cannot be represented as completed.",
+        "Receipts are reviewable and portable, and tests cover account switching, clock rollback, stale notice, revoke races, corrupted storage, acknowledgement loss, and backend failure; jurisdictional legal conclusions remain subject to independent review."
+      ]
+    },
+    {
+      "id": "consent_notice_comprehension_and_localization_gate",
+      "title": "Consent-notice comprehension and localization gate",
+      "area": "privacy_accessibility",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 4,
+      "score": 18,
+      "currentGap": "The current consent receipt binds one canonical English engineering notice while the UI provides only partial Chinese and English presentation copy. A matching digest proves which bytes were versioned, not that each shipped locale is semantically equivalent, understandable, accessible, appropriately timed, or meaningful for a person's language, age, capacity, and assistive-technology context.",
+      "evidenceUrls": [
+        "https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/lawful-basis/consent/how-should-we-obtain-record-and-manage-consent/",
+        "https://developer.apple.com/design/human-interface-guidelines/privacy/",
+        "https://www.w3.org/WAI/WCAG22/Understanding/consistent-help.html"
+      ],
+      "dependencies": [
+        "purpose_bound_consent_receipts",
+        "settings_full_locale_translation",
+        "critical_task_human_factors",
+        "assistive_technology_device_matrix"
+      ],
+      "acceptanceCriteria": [
+        "Every consent purpose has a versioned canonical semantic source plus reviewed native notice variants for every shipped locale; the receipt binds locale, notice version, canonical semantic digest, rendered-copy digest, controller, processing, exclusions, withdrawal path, and review identity without claiming translation equivalence from matching keys alone.",
+        "Grant is requested in the feature context rather than bundled at launch, denial leaves the core app usable, withdrawal is equally discoverable, and screen-reader order, large text, keyboard and switch access, bidirectional text, reduced motion, and narrow layouts are verified on target devices.",
+        "Representative comprehension and use-error studies test whether people can explain what data or context is used, where it goes, what the optional model may and may not change, and how to withdraw; misunderstanding, unavailable language, stale notice, failed rendering, or unreviewed copy defaults to denied.",
+        "Age, capacity, parental authority, caregiver authority, and jurisdictional lawful basis are not inferred from a checkbox or locale. Unsupported cases remain unavailable pending independent policy and legal review, and evidence records sampling and accessibility limits without converting usability success into legal validity."
+      ]
+    },
+    {
+      "id": "catalog_change_reconciliation_center",
+      "title": "Catalog-version impact and reconciliation center",
+      "area": "catalog_integrity",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "Data Integrity reports orphan counts but does not show which records changed when a medication or food catalog version deprecates, remaps, splits, merges, or loses an identifier. There is no old-snapshot comparison, evidence-linked candidate mapping, explicit user confirmation, rollback, or algorithm abstention while a mapping is unresolved.",
+      "evidenceUrls": [
+        "https://www.nlm.nih.gov/research/umls/rxnorm/overview.html",
+        "https://lhncbc.nlm.nih.gov/RxNav/APIs/RxNormAPIs.html",
+        "https://lhncbc.nlm.nih.gov/RxNav/news/HistoryStatus-Changes-202303.html",
+        "https://ohdsi.github.io/CommonDataModel/vocabulary.html"
+      ],
+      "dependencies": [
+        "versioned_clinical_nutrition_terminology_firewall",
+        "runtime_model_applicability_abstention_gate",
+        "cross_backend_durable_mutation_protocol"
+      ],
+      "acceptanceCriteria": [
+        "Every catalog update yields a deterministic signed diff of unchanged, deprecated, remapped, split, merged, ambiguous, and unresolved concepts while every historical record retains its original code, display, source, version, and mapping provenance.",
+        "Split, ambiguous, missing, stale, unlicensed, or weak-evidence mappings remain unresolved and force affected algorithms to abstain; name similarity alone can never rebind a record.",
+        "The UI shows the original value, each candidate, evidence, affected records, and algorithm impact before an owner-bound expected-revision transaction; source catalog or user-state drift invalidates the preview.",
+        "Confirmed changes preserve rollback and audit links, and tests cover split, merge, retirement, downgrade, future schema, offline missing catalog, conflicting same-account edits, and cross-account isolation."
+      ]
+    },
+    {
+      "id": "privacy_preserving_operational_observability",
+      "title": "Privacy-preserving operational observability",
+      "area": "operations_privacy",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 3,
+      "score": 30,
+      "currentGap": "The app has local engineering diagnostics and privacy-safe support-bundle work, but it has no governed production observability envelope that can diagnose startup, backend, notification, or abstention failures without exporting health records, identifiers, raw exceptions, or high-cardinality user behavior.",
+      "evidenceUrls": [
+        "https://opentelemetry.io/docs/security/handling-sensitive-data/",
+        "https://github.com/open-telemetry/opentelemetry-collector",
+        "https://csrc.nist.gov/pubs/sp/800/218/final"
+      ],
+      "dependencies": [
+        "purpose_bound_consent_receipts",
+        "privacy_safe_support_bundle",
+        "store_privacy_declaration_drift_gate"
+      ],
+      "acceptanceCriteria": [
+        "Off-device observability defaults to disabled and requires a versioned purpose-bound opt-in; local diagnostics remain usable without granting telemetry consent.",
+        "A machine-readable allowlist permits only coarse durations, bounded counters, release identities, capability state, and non-semantic error classes, and serialized-envelope tests reject medication, meal, free text, source document, raw exception, credential, notification payload, email, UID, stable account hash, exact user timestamp, and unknown fields.",
+        "Sampling, cardinality, retention, regional endpoint, access, deletion, and emergency-disable budgets are enforced before export, and corrupted, future-schema, stale-consent, or unreviewed instrumentation fails closed.",
+        "A user can inspect the categories collected and revoke future collection; dashboards and alerts use privacy-safe aggregates and never represent telemetry as clinical evidence."
+      ]
+    },
+    {
+      "id": "cross_platform_performance_energy_budget",
+      "title": "Cross-platform performance and energy release budgets",
+      "area": "performance_quality",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 3,
+      "score": 24,
+      "currentGap": "The repository has functional and artifact-level journey plans but no release gate for cold or warm startup, time to usable registered state, frame latency, jank, memory, package size, background work, or energy on representative physical devices and production-sized data.",
+      "evidenceUrls": [
+        "https://docs.flutter.dev/perf/best-practices",
+        "https://developer.android.com/topic/performance/baselineprofiles/measure-baselineprofile",
+        "https://developer.apple.com/documentation/metrickit"
+      ],
+      "dependencies": [
+        "artifact_level_black_box_journeys",
+        "cross_platform_integration_harness",
+        "assistive_technology_device_matrix"
+      ],
+      "acceptanceCriteria": [
+        "Reviewed budgets cover cold and warm startup, time to initial and full display, registered-state readiness, build and raster frame time, jank, memory peak, package size, network bytes, background wakeups, and an energy or battery proxy without converting one platform's metric into another.",
+        "Release or profile journeys exercise large catalogs, long timelines, locale, text scale, accessibility, offline, low-memory, and account-switch paths on representative physical Android and iOS devices plus supported desktop and independently served Web artifacts.",
+        "Every result records artifact checksum, full commit SHA, device and OS, build mode and defines, dataset identity, run count, raw measurements, variance, thermal or power context, and harness failure class; emulator numbers cannot satisfy physical-device acceptance.",
+        "A reviewed statistical and practical regression rule fails the release while preserving raw evidence and never presenting one device result as population-wide performance."
+      ]
+    },
+    {
+      "id": "signed_capability_rollout_kill_switch",
+      "title": "Signed capability rollout and emergency disable",
+      "area": "release_safety",
+      "status": "research_required",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "Optional capabilities are selected by local configuration and build-time defines. There is no signed, versioned, expiring capability manifest with a last-known-good atomic activation path, conservative offline defaults, privacy-safe targeting, operator visibility, or audited emergency rollback.",
+      "evidenceUrls": [
+        "https://openfeature.dev/specification/sections/flag-evaluation/",
+        "https://openfeature.dev/specification/sections/evaluation-context/",
+        "https://csrc.nist.gov/pubs/sp/800/218/final"
+      ],
+      "dependencies": [
+        "server_authoritative_provenance",
+        "algorithm_configuration_identity_digest",
+        "runtime_model_applicability_abstention_gate",
+        "purpose_bound_consent_receipts"
+      ],
+      "acceptanceCriteria": [
+        "Only a signed, versioned, unexpired manifest whose key, issuer, environment, capability ID, type, constraints, and rollback target match a local trust policy can change optional capability state; all verification or schema failures use the conservative local default.",
+        "Activation is atomic and last-known-good, and tests cover offline startup, partial download, clock skew, replay, downgrade, future schema, key rotation and revocation, concurrent updates, restart, and rollback.",
+        "Evaluation context cannot contain PHI, health state, medication, meal, account identity, or stable pseudonym, and rollout evidence is limited to reviewed privacy-safe aggregates.",
+        "Emergency disable may stop optional network or UI capabilities but cannot remotely alter clinical-algorithm formulas, parameters, applicability, evidence, or safety copy outside the governed promotion and configuration-digest process; operator UI shows source, signature status, expiry, reason, and rollback state."
+      ]
+    },
+    {
+      "id": "reproducible_release_sbom_attestation",
+      "title": "Reproducible release SBOM and signed attestation",
+      "area": "supply_chain",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 5,
+      "effort": 3,
+      "score": 27,
+      "currentGap": "Lockfiles, source hashes, and local release manifests do not yet produce a deterministic cross-artifact SBOM or a signed provenance statement binding the exact source, clean-tree state, toolchain, build configuration, evidence, and bytes distributed to users; ignored local build evidence is not independently verifiable.",
+      "evidenceUrls": [
+        "https://csrc.nist.gov/pubs/sp/800/218/final",
+        "https://cyclonedx.org/specification/overview/",
+        "https://docs.sigstore.dev/cosign/verifying/verify/"
+      ],
+      "dependencies": [
+        "open_source_pattern_license_firewall",
+        "artifact_level_black_box_journeys",
+        "store_privacy_declaration_drift_gate"
+      ],
+      "acceptanceCriteria": [
+        "Every Web, Android, Apple, desktop, npm, and source artifact carries a deterministic CycloneDX or SPDX SBOM covering direct and transitive dependencies, licenses, generated assets, and build tools, and the inventory agrees with lockfiles and the built artifact.",
+        "A signed provenance statement binds full commit SHA, explicit dirty-tree policy, source digest, lockfiles, toolchain and SDK versions, build defines, schema and algorithm identities, required gate results, and every artifact checksum without embedding credentials or sensitive paths.",
+        "Independent verification checks signature identity and issuer, subject digest, environment, required claims, SBOM schema, dependency inventory, and vulnerability policy; changed artifact bytes, missing claims, stale identity, future schema, or untrusted signer fail closed.",
+        "An offline verification bundle and documented drill cover signing-key rotation, revocation, compromised-runner response, and reproducibility variance, and a valid signature is never presented as scientific, clinical, privacy, or regulatory validation."
+      ]
+    },
+    {
+      "id": "device_bound_secret_storage_and_rotation",
+      "title": "Device-bound secret storage, migration, and rotation",
+      "area": "security_privacy",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "The local portable-owner capability now uses schema-v2 lookup and a strict schema-v1 protected envelope through flutter_secure_storage 10.3.1. Apple selects a non-synchronizing ThisDeviceOnly Data Protection Keychain policy, Android uses the package's RSA-OAEP-wrapped AES-GCM mode in an isolated namespace with silent reset disabled and manifest backup denied, Web requires a secure origin, Windows uses the package DPAPI adapter, and Linux uses Secret Service. The envelope carries a random capability, key ID, owner lookup digest, revision, UTC lifecycle timestamps, and exact protection class; verified migration, read-back after acknowledgement loss, rotation, revocation, malformed or conflicting-state failure, concurrency, account isolation, and UI clearing are tested. The UI exposes protection class and revision and explicitly warns that rotation invalidates older local-owner bindings. No platform is labeled hardware-backed because runtime attestation has not proved it. Acceptance remains open because there is no complete machine-readable secret inventory, reminder activation plans and other critical records are not encrypted envelopes, revocation is not yet wired to verified account deletion, no recovery state exists for platform-key invalidation, and reinstall, OS-upgrade, lock-state, backup/restore, browser-origin, real keychain/keystore, Windows, and Linux physical-target drills have not run.",
+      "evidenceUrls": [
+        "https://developer.apple.com/documentation/security/storing-keys-in-the-keychain",
+        "https://developer.apple.com/documentation/security/protecting-keys-with-the-secure-enclave",
+        "https://developer.android.com/privacy-and-security/keystore"
+      ],
+      "dependencies": [
+        "account_lifecycle",
+        "purpose_bound_consent_receipts",
+        "cross_backend_durable_mutation_protocol"
+      ],
+      "acceptanceCriteria": [
+        "A machine-readable inventory classifies every credential, capability, encryption key, recovery secret, and secret-like token by owner, purpose, lifetime, exportability, backup behavior, and current storage, and unknown secret fields fail release review.",
+        "Apple values use a reviewed Keychain accessibility and synchronization policy and Android values use a Keystore-protected envelope with an attested security level recorded only when the runtime proves it; unsupported, invalidated, unavailable, or downgraded protection fails closed without a hardware-backed claim.",
+        "A versioned per-account key ID supports creation, rotation, revocation, and one-way migration from legacy storage without logging or exporting plaintext; partial migration, corrupt ciphertext, lost acknowledgement, rollback, restore, clock change, and key invalidation expose a recoverable blocked state rather than silently regenerating identity.",
+        "Account switch and verified deletion revoke bindings and cancel stale leases, and physical-device tests cover reinstall, OS upgrade, backup and restore, lock-state access, biometry or passcode change, concurrent rotation, and cross-account isolation without treating secure storage as authentication or legal compliance."
+      ]
+    },
+    {
+      "id": "encrypted_critical_record_envelopes",
+      "title": "Authenticated encrypted envelopes for critical local records",
+      "area": "security_privacy",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 5,
+      "score": 10,
+      "currentGap": "Platform-protected storage now holds one local owner capability, but reminder plans, consent receipts, account-owned mutation journals, and other sensitive local records remain plaintext application storage. Secret storage protects key material; it does not by itself provide record confidentiality, authenticated owner/schema binding, atomic re-encryption, or corruption recovery.",
+      "evidenceUrls": [
+        "https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final",
+        "https://csrc.nist.gov/pubs/sp/800/38/d/final",
+        "https://developer.android.com/privacy-and-security/keystore",
+        "https://developer.apple.com/documentation/security/restricting-keychain-item-accessibility"
+      ],
+      "dependencies": [
+        "device_bound_secret_storage_and_rotation",
+        "cross_backend_durable_mutation_protocol",
+        "platform_data_protection_and_backup_attestation"
+      ],
+      "acceptanceCriteria": [
+        "A reviewed inventory selects which local records require authenticated encryption and binds every envelope to owner scope, record class and ID, schema, key ID, revision, algorithm suite, nonce, creation time, and payload digest without exposing health content in associated data.",
+        "Encryption uses a reviewed AEAD construction with unique nonces and platform-protected nonexportable key material; missing keys, duplicate nonces, unknown algorithms, invalid tags, future schemas, owner mismatch, rollback, and malformed ciphertext fail closed before plaintext is published.",
+        "Mutation and key rotation use an atomic old-or-new protocol with durable acknowledgement, resumable migration state, bounded rollback, crypto-shredding semantics, and no window where plaintext or a partially re-encrypted record is treated as current.",
+        "Fault and target-platform tests cover lost acknowledgement, process kill, concurrent writers, corrupted ciphertext, key invalidation, clock rollback, restore to another device, cross-account substitution, and recovery UX; encrypted-at-rest is never described as authentication, secure deletion proof, backup protection, or regulatory compliance."
+      ]
+    },
+    {
+      "id": "cryptographic_agility_and_deprecation_gate",
+      "title": "Cryptographic inventory, agility, and deprecation gate",
+      "area": "security_governance",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 4,
+      "risk": 4,
+      "effort": 4,
+      "score": 16,
+      "currentGap": "Dependency locks identify packages, but the product has no generated inventory of cryptographic primitives, protocol roles, key sizes, providers, platform versions, call sites, protected data, or migration owners. A future platform or dependency algorithm change could silently alter stored-envelope compatibility or leave deprecated primitives in release artifacts without a transition plan.",
+      "evidenceUrls": [
+        "https://csrc.nist.gov/pubs/sp/800/57/pt1/r5/final",
+        "https://pages.nist.gov/nccoe-migration-post-quantum-cryptography/",
+        "https://csrc.nist.gov/Projects/Block-Cipher-Techniques/BCM"
+      ],
+      "dependencies": [
+        "device_bound_secret_storage_and_rotation",
+        "encrypted_critical_record_envelopes",
+        "reproducible_release_sbom_attestation"
+      ],
+      "acceptanceCriteria": [
+        "A generated, versioned inventory maps every application and dependency cryptographic primitive to purpose, algorithm and parameters, provider and version, key owner, storage, protected data, protocol role, export or backup behavior, call sites, and replacement owner; unknown or newly discovered use blocks release review.",
+        "A reviewed policy classifies allowed, transitional, deprecated, and prohibited suites by platform and artifact, and release inspection proves the effective implementation rather than inferring it only from Dart source or an API name.",
+        "Stored and transmitted envelopes carry an algorithm-suite identifier and have tested forward migration, downgrade prevention, last-known-good recovery, key rotation and revocation, and mixed-version interoperability without accepting unknown suites or reusing nonces.",
+        "A dated transition drill covers dependency and OS algorithm changes, provider removal, corrupted legacy data, unavailable migration tooling, and emergency deprecation while preserving user access through an explicit recovery path; post-quantum planning is inventory-driven and does not claim present quantum resistance."
+      ]
+    },
+    {
+      "id": "platform_data_protection_and_backup_attestation",
+      "title": "Platform file-protection and implicit-backup attestation",
+      "area": "security_privacy",
+      "status": "queued",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 3,
+      "score": 30,
+      "currentGap": "Android source policy now denies cloud backup and device transfer, but the release does not yet prove the merged or packaged rules on target devices, inventory every persisted path, or attest iOS and macOS file-protection, Keychain synchronization, app-container backup, and restore behavior. This implicit platform channel is distinct from the explicit encrypted user backup workflow.",
+      "evidenceUrls": [
+        "https://developer.android.com/identity/data/autobackup",
+        "https://developer.apple.com/documentation/foundation/nsdata/writingoptions/completefileprotection",
+        "https://developer.apple.com/security/"
+      ],
+      "dependencies": [
+        "store_privacy_declaration_drift_gate",
+        "encrypted_backup_restore_drill",
+        "device_bound_secret_storage_and_rotation"
+      ],
+      "acceptanceCriteria": [
+        "A generated inventory binds every database, preference, cache, file, log, export, Keychain item, and Android storage domain to a reviewed sensitivity, file-protection class, backup and device-transfer policy, retention rule, owner, and artifact path; unclassified or newly discovered persistence fails the release.",
+        "Android release artifacts prove effective backup and extraction rules and Apple release artifacts prove container file protection, backup exclusion, and Keychain accessibility and synchronization without inferring runtime state from source configuration alone.",
+        "Physical-device backup, restore, device-transfer, reinstall, locked-device, OS-upgrade, corrupted-backup, and account-switch drills show that health records and secret material are not restored through an undeclared channel, while explicit user-owned export remains separately previewed and consented.",
+        "Evidence binds artifact checksum, OS and device, account state, source and destination, expected and observed path sets, and cleanup result; vendor-specific behavior, unavailable probes, or incomplete enumeration is reported as unverified and cannot satisfy acceptance."
+      ]
+    },
+    {
+      "id": "backend_location_retention_residency_contract",
+      "title": "Backend location, retention, and residency contract",
+      "area": "backend_privacy",
+      "status": "research_required",
+      "priority": "P1",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "The Firebase-capable product does not expose a versioned environment manifest that binds the provisioned Firestore location, Auth and service dependencies, storage and log regions, retention and deletion behavior, and deployment project identity. Firestore location is selected at provisioning and cannot later be changed, so a code-level region string or privacy notice is not evidence of actual residency.",
+      "evidenceUrls": [
+        "https://firebase.google.com/docs/firestore/locations",
+        "https://firebase.google.com/docs/auth/web/manage-users",
+        "https://firebase.google.com/docs/firestore/ttl"
+      ],
+      "dependencies": [
+        "server_authoritative_provenance",
+        "self_service_export_delete",
+        "store_privacy_declaration_drift_gate"
+      ],
+      "acceptanceCriteria": [
+        "A signed or independently verified environment manifest binds Firebase project and app IDs, Firestore database ID and provisioned location, Auth domain, Storage and Functions regions when present, logging and support processors, environment, manifest schema, review date, and deployment artifact; wrong, missing, future-schema, or cross-environment identity blocks production use.",
+        "Every persisted collection, document family, authentication record, audit event, storage object, operator export, backup, and service log has an enforced owner, purpose, location, retention trigger, deletion path, legal-hold state, and verification query; absent or unverified behavior remains unknown rather than being labeled compliant.",
+        "Provisioning and deployment gates query actual service state and compare it with the reviewed manifest before writes are enabled, preserve immutable evidence for irreversible location choices, and fail closed on multi-region ambiguity, emulator credentials, default-project fallback, or stale operator output.",
+        "Expiry, account deletion, recent-authentication failure, partial backend outage, retry, acknowledgement loss, orphaned subcollection or object, and restoration tests prove bounded outcomes across all configured environments; the UI and public copy distinguish observed technical location and retention from legal residency or regulatory conclusions."
+      ]
+    },
+    {
+      "id": "public_regulatory_review",
+      "title": "Independent public-release regulatory and legal review",
+      "area": "release",
+      "status": "external_dependency",
+      "priority": "P0",
+      "impact": 5,
+      "risk": 5,
+      "effort": 4,
+      "score": 20,
+      "currentGap": "Engineering controls cannot settle intended-use, jurisdictional, privacy, consumer-protection, or medical-device obligations.",
+      "evidenceUrls": [
+        "https://www.fda.gov/media/162880/download"
+      ],
+      "dependencies": ["prospective_clinical_calibration", "self_service_export_delete"],
+      "acceptanceCriteria": [
+        "Intended use, claims, labeling, privacy duties, and supported jurisdictions receive independent review.",
+        "Public copy matches the reviewed intended-use boundary.",
+        "Unresolved obligations block production promotion rather than being converted into disclaimers."
+      ]
+    }
+  ]
+}

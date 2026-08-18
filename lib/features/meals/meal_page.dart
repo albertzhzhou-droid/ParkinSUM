@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/recoverable_user_event.dart';
 import '../../core/state/app_state.dart';
 import '../entry/entry_page.dart';
 import '../shared/interaction_result_view.dart';
@@ -11,9 +12,30 @@ class MealPage extends StatelessWidget {
   const MealPage({super.key});
 
   Future<void> _deleteMeal(BuildContext context, String mealId) async {
-    final result = await context.read<AppState>().deleteMeal(mealId);
-    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final state = context.read<AppState>();
+    final result = await state.deleteMeal(mealId);
+    if (!context.mounted) return;
     final i18n = context.appI18n;
+    if (result.wasCommitted) {
+      final revision = state.latestRecoverableRevisionFor(
+        eventType: RecoverableUserEventType.meal,
+        recordId: mealId,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(i18n.tr('history.deleted_undo')),
+          action: revision == null
+              ? null
+              : SnackBarAction(
+                  label: i18n.tr('history.undo'),
+                  onPressed: () =>
+                      state.restoreRecoverableEvent(revision.historyId),
+                ),
+        ),
+      );
+      return;
+    }
+    if (!result.shouldReportSaveFailure) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

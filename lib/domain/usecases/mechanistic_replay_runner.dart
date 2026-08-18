@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import '../../algorithm_sdk/algorithm_component_graph_identity.dart';
+import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../../core/constants/mechanistic_replay_scenarios.dart';
 import '../entities/amino_acid_competition.dart';
 import '../entities/mechanistic_candidate_score.dart';
@@ -22,10 +24,13 @@ class MechanisticReplayCaseReport {
   final double mealContextCompleteness;
   final String gastricEmptyingProfileSummary;
   final TimelineWindow? absorptionOpportunityWindow;
-  final String aminoAcidCompetitionBand;
-  final double interactionScore;
-  final String severityBand;
-  final String confidenceBand;
+  final String resultAvailability;
+  final bool hasModeledOutput;
+  final List<String> abstentionReasons;
+  final String? aminoAcidCompetitionBand;
+  final double? interactionScore;
+  final String? severityBand;
+  final String? confidenceBand;
   final List<String> triggeredMechanisms;
   final List<String> blockedMechanisms;
   final List<String> sourceRefs;
@@ -61,8 +66,8 @@ class MechanisticReplayCaseReport {
   final bool dosageContextComplete;
   final int perEventCount;
   // Upgraded-chain transparency (#7): componentized meal composition, gastric
-  // phase assumptions, absorption openness-profile summary, LNAA actual-vs-proxy
-  // detail, and the active scoring parameter set.
+  // phase assumptions, absorption openness-profile summary, LNAA
+  // actual/hybrid/proxy detail, and the active scoring parameter set.
   final int mealComponentCount;
   final List<String> gastricEmptyingAssumptions;
   final int absorptionOpennessSampleCount;
@@ -98,6 +103,9 @@ class MechanisticReplayCaseReport {
     required this.mealContextCompleteness,
     required this.gastricEmptyingProfileSummary,
     required this.absorptionOpportunityWindow,
+    required this.resultAvailability,
+    required this.hasModeledOutput,
+    required this.abstentionReasons,
     required this.aminoAcidCompetitionBand,
     required this.interactionScore,
     required this.severityBand,
@@ -162,6 +170,9 @@ class MechanisticReplayCaseReport {
     'meal_context_completeness': mealContextCompleteness,
     'gastric_emptying_profile_summary': gastricEmptyingProfileSummary,
     'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
+    'result_availability': resultAvailability,
+    'has_modeled_output': hasModeledOutput,
+    'abstention_reasons': abstentionReasons,
     'amino_acid_competition_band': aminoAcidCompetitionBand,
     'interaction_score': interactionScore,
     'severity_band': severityBand,
@@ -232,10 +243,12 @@ class MechanisticReplayRunReport {
   /// consumers should read `deterministic_reference_time`.
   final String generatedAtIso;
 
+  final AlgorithmConfigurationIdentity configurationIdentity;
   final List<MechanisticReplayCaseReport> cases;
 
   const MechanisticReplayRunReport({
     required this.generatedAtIso,
+    required this.configurationIdentity,
     required this.cases,
   });
 
@@ -256,6 +269,15 @@ class MechanisticReplayRunReport {
     'generated_at_is_deterministic_reference': true,
     'passed': passedCount,
     'total': totalCount,
+    'algorithm_configuration': {
+      'manifest_schema': AlgorithmConfigurationIdentity.schema,
+      'id': configurationIdentity.id,
+      'version': configurationIdentity.version,
+      'sha256': configurationIdentity.sha256Digest,
+      'reproducibility_scope':
+          'engineering_replay_identity_not_biological_validation',
+      'biological_validity_status': 'not_clinically_calibrated',
+    },
     'cases': cases.map((c) => c.toJson()).toList(growable: false),
   };
 
@@ -271,15 +293,26 @@ class MechanisticReplayRunReport {
         '(fixed anchor, not the time this report was produced)',
       )
       ..writeln()
+      ..writeln(
+        'Algorithm configuration: `${configurationIdentity.id}` @ '
+        '`${configurationIdentity.version}` · '
+        '`${configurationIdentity.sha256Digest}`',
+      )
+      ..writeln(
+        'Scope: the digest proves engineering replay identity only; it does '
+        '**not** establish biological or clinical validity.',
+      )
+      ..writeln()
       ..writeln('**$passedCount / $totalCount scenarios passed.**')
       ..writeln();
     for (final c in cases) {
+      final interactionScore = c.interactionScore?.toStringAsFixed(3) ?? 'null';
       buf
         ..writeln('## ${c.scenarioId} — ${c.title}')
         ..writeln('- pass: ${c.pass}')
-        ..writeln(
-          '- interaction_score: ${c.interactionScore.toStringAsFixed(3)}',
-        )
+        ..writeln('- result_availability: ${c.resultAvailability}')
+        ..writeln('- has_modeled_output: ${c.hasModeledOutput}')
+        ..writeln('- interaction_score: $interactionScore')
         ..writeln('- severity_band: ${c.severityBand}')
         ..writeln('- confidence_band: ${c.confidenceBand}')
         ..writeln(
@@ -288,6 +321,11 @@ class MechanisticReplayRunReport {
         ..writeln('- gastric_emptying: ${c.gastricEmptyingProfileSummary}')
         ..writeln('- banned_phrase_hits: ${c.bannedPhraseHits.length}')
         ..writeln();
+      if (c.abstentionReasons.isNotEmpty) {
+        buf
+          ..writeln('- abstention_reasons: ${c.abstentionReasons.join(", ")}')
+          ..writeln();
+      }
       if (!c.pass) {
         buf.writeln('  *failure*: ${c.failureReason}');
         buf.writeln();
@@ -303,6 +341,7 @@ class MechanisticReplayRunner {
   final TimeAxisBuilder timeAxisBuilder;
   final MechanisticConflictEngine engine;
   final MechanisticNextMealScorer scorer;
+  late final AlgorithmConfigurationIdentity configurationIdentity;
 
   MechanisticReplayRunner({
     MedicationEntryValidator? validator,
@@ -310,11 +349,40 @@ class MechanisticReplayRunner {
     TimeAxisBuilder? timeAxisBuilder,
     MechanisticConflictEngine? engine,
     MechanisticNextMealScorer? scorer,
+    AlgorithmConfigurationIdentity? configurationIdentity,
   }) : validator = validator ?? MedicationEntryValidator(),
        normalizer = normalizer ?? MealCompositionNormalizer(),
        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
        engine = engine ?? MechanisticConflictEngine(),
-       scorer = scorer ?? MechanisticNextMealScorer();
+       scorer = scorer ?? MechanisticNextMealScorer(engine: engine) {
+    final hasInjectedComponent =
+        validator != null ||
+        normalizer != null ||
+        timeAxisBuilder != null ||
+        engine != null ||
+        scorer != null;
+    if (hasInjectedComponent && configurationIdentity == null) {
+      throw ArgumentError(
+        'Every injected replay component requires an explicit matching '
+        'AlgorithmConfigurationIdentity.',
+      );
+    }
+    this.configurationIdentity =
+        configurationIdentity ??
+        AlgorithmConfigurationIdentity.defaults(
+          gastricParameters: this.engine.gastricEmptyingModel.parameters,
+          scoringParameters: this.scorer.scoringParameters,
+        );
+    AlgorithmComponentGraphIdentityValidator.validateExecutionGraph(
+      medicationValidator: this.validator,
+      normalizer: this.normalizer,
+      timeAxisBuilder: this.timeAxisBuilder,
+      conflictEngine: this.engine,
+      candidateScorer: this.scorer,
+      identity: this.configurationIdentity,
+      graphLabel: 'mechanisticReplay',
+    );
+  }
 
   MechanisticReplayRunReport run({
     List<MechanisticReplayScenario> scenarios = mechanisticReplayScenarios,
@@ -327,6 +395,7 @@ class MechanisticReplayRunner {
     }
     return MechanisticReplayRunReport(
       generatedAtIso: now.toIso8601String(),
+      configurationIdentity: configurationIdentity,
       cases: List.unmodifiable(cases),
     );
   }
@@ -425,12 +494,14 @@ class MechanisticReplayRunner {
     final expectedType = scenario.expectedOutputType;
     final isInsufficient = scenario.expectInsufficientContext;
     if (isInsufficient) {
-      if (result.interactionType !=
-              MechanisticInteractionType.insufficientMedicationContext &&
-          result.interactionType !=
-              MechanisticInteractionType.insufficientMealContext) {
+      if (result.hasModeledOutput ||
+          (result.interactionType !=
+                  MechanisticInteractionType.insufficientMedicationContext &&
+              result.interactionType !=
+                  MechanisticInteractionType.insufficientMealContext)) {
         failures.add(
-          'expected insufficient_context but got ${result.interactionType.name}',
+          'expected typed abstention but got '
+          '${result.availability.name}/${result.interactionType.name}',
         );
       }
     } else {
@@ -441,30 +512,38 @@ class MechanisticReplayRunner {
       }
     }
 
-    if (scenario.expectedSeverityFloor != null &&
-        !_severityAtLeast(
-          result.severityBand,
-          scenario.expectedSeverityFloor!,
-        )) {
-      failures.add('severity below expected floor');
+    final modeledSeverity = result.modeledSeverityBand;
+    final modeledConfidence = result.modeledConfidenceBand;
+    if (scenario.expectedSeverityFloor != null) {
+      if (modeledSeverity == null ||
+          !_severityAtLeast(modeledSeverity, scenario.expectedSeverityFloor!)) {
+        failures.add('severity unavailable or below expected floor');
+      }
     }
-    if (scenario.expectedSeverityCeiling != null &&
-        !_severityAtMost(
-          result.severityBand,
-          scenario.expectedSeverityCeiling!,
-        )) {
-      failures.add('severity above expected ceiling');
+    if (scenario.expectedSeverityCeiling != null) {
+      if (modeledSeverity == null ||
+          !_severityAtMost(
+            modeledSeverity,
+            scenario.expectedSeverityCeiling!,
+          )) {
+        failures.add('severity unavailable or above expected ceiling');
+      }
     }
-    if (scenario.expectedConfidenceCeiling != null &&
-        !_confidenceAtMost(
-          result.confidenceBand,
-          scenario.expectedConfidenceCeiling!,
-        )) {
-      failures.add('confidence above expected ceiling');
+    if (scenario.expectedConfidenceCeiling != null) {
+      if (modeledConfidence == null ||
+          !_confidenceAtMost(
+            modeledConfidence,
+            scenario.expectedConfidenceCeiling!,
+          )) {
+        failures.add('confidence unavailable or above expected ceiling');
+      }
     }
     if (scenario.expectNonEmptyRecommendations &&
         (recommendations == null || recommendations.isEmpty)) {
-      failures.add('expected non-empty recommendations');
+      // This assertion is deliberately about row availability, not modeled
+      // scores. A candidate can be returned as a typed abstention so its
+      // missing predicates remain inspectable without leaking numeric output.
+      failures.add('expected non-empty recommendation records');
     }
     if (banned.isNotEmpty) {
       failures.add('banned phrases: ${banned.join(", ")}');
@@ -505,18 +584,30 @@ class MechanisticReplayRunner {
     // candidate's upstream competition (candidate-only scenarios have no meal).
     final emptying = result.primaryEmptyingProfile;
     final absorptionWindow = result.absorptionOpportunityWindow;
-    final lnaa =
-        result.competitionTimeline?.lnaaSummary ??
-        ((recommendations != null && recommendations.isNotEmpty)
-            ? recommendations
-                  .first
-                  .upstreamResult
-                  ?.competitionTimeline
-                  ?.lnaaSummary
-            : null);
-    final scoringParamId = (recommendations == null || recommendations.isEmpty)
-        ? 'none'
-        : recommendations.first.scoringParameterSetId;
+    final firstRecommendation =
+        recommendations != null && recommendations.isNotEmpty
+        ? recommendations.first
+        : null;
+    final modeledRecommendation =
+        firstRecommendation != null && firstRecommendation.hasModeledOutput
+        ? firstRecommendation
+        : null;
+    final candidateUpstreamResult = firstRecommendation?.upstreamResult;
+    final lnaa = result.hasModeledOutput
+        ? result.competitionTimeline?.lnaaSummary
+        : (modeledRecommendation != null &&
+              candidateUpstreamResult?.hasModeledOutput == true)
+        ? candidateUpstreamResult?.competitionTimeline?.lnaaSummary
+        : null;
+    final scoringParamId =
+        modeledRecommendation?.scoringParameterSetId ?? 'none';
+
+    final abstentionReasons = result.isAbstention
+        ? List<String>.unmodifiable(<String>{
+            ...result.uncertaintyReasons,
+            ...result.explanation.missingOrUncertainInputs,
+          })
+        : const <String>[];
 
     // Medication section provenance + release extraction, bridged from the
     // first validated medication context's CDSS metadata (when attached).
@@ -572,13 +663,17 @@ class MechanisticReplayRunner {
       mealContextCompleteness: firstMealCompleteness,
       gastricEmptyingProfileSummary: gastricSummary,
       absorptionOpportunityWindow: result.absorptionOpportunityWindow?.window,
-      aminoAcidCompetitionBand:
-          result.competitionTimeline?.competitionBand.name ?? 'unknown',
-      interactionScore: result.interactionScore,
-      severityBand: result.severityBand.name,
-      confidenceBand: result.confidenceBand.name,
+      resultAvailability: result.availability.name,
+      hasModeledOutput: result.hasModeledOutput,
+      abstentionReasons: abstentionReasons,
+      aminoAcidCompetitionBand: result.hasModeledOutput
+          ? result.competitionTimeline?.competitionBand.name ?? 'unknown'
+          : null,
+      interactionScore: result.modeledInteractionScore,
+      severityBand: result.modeledSeverityBand?.name,
+      confidenceBand: result.modeledConfidenceBand?.name,
       triggeredMechanisms: result.primaryDrivers,
-      blockedMechanisms: scenario.expectInsufficientContext
+      blockedMechanisms: result.isAbstention
           ? const [
               'food_levodopa_timing_overlap',
               'amino_acid_competition_proxy',
@@ -591,41 +686,28 @@ class MechanisticReplayRunner {
       bannedPhraseHits: banned,
       nextMealRecommendationResult: recommendations,
       competitionLnaaSummary: lnaa,
-      rankerUsed: recommendations == null
+      rankerUsed:
+          result.isAbstention ||
+              (recommendations != null && modeledRecommendation == null)
+          ? 'none_model_abstained'
+          : recommendations == null
           ? 'mechanistic_engine_only'
-          : 'mechanistic_primary_window_sampled',
-      sampledWindowOffsets: (recommendations == null || recommendations.isEmpty)
+          : 'mechanistic_trace_only_window_sampled',
+      sampledWindowOffsets: modeledRecommendation == null
           ? const []
-          : recommendations.first.sampledWindowSummary
+          : modeledRecommendation.sampledWindowSummary
                 .map((s) => s.offsetMinutes)
                 .toList(growable: false),
-      topFinalCandidateScore:
-          (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.finalCandidateScore,
+      topFinalCandidateScore: modeledRecommendation?.finalCandidateScore,
       topProteinRedistributionScore:
-          (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.proteinRedistributionScore,
-      topProteinWindowRole: (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.proteinDistribution?.windowRole.name,
+          modeledRecommendation?.proteinRedistributionScore,
+      topProteinWindowRole:
+          modeledRecommendation?.proteinDistribution?.windowRole.name,
       topNutritionAdequacyContribution:
-          (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.nutritionAdequacyContribution,
-      topSourceAuthorityScore:
-          (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.sourceAuthorityScore,
-      topJurisdictionMatchScore:
-          (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.jurisdictionMatchScore,
-      topCandidateSourceSystem:
-          (recommendations == null || recommendations.isEmpty)
-          ? null
-          : recommendations.first.sourceSystem,
+          modeledRecommendation?.nutritionAdequacyContribution,
+      topSourceAuthorityScore: modeledRecommendation?.sourceAuthorityScore,
+      topJurisdictionMatchScore: modeledRecommendation?.jurisdictionMatchScore,
+      topCandidateSourceSystem: modeledRecommendation?.sourceSystem,
       aminoAcidDataMode: lnaa?.dataMode.name,
       aminoAcidNutrientIds: lnaa?.aminoAcidNutrientIds ?? const [],
       pass: pass,
@@ -634,6 +716,9 @@ class MechanisticReplayRunner {
   }
 
   ScenarioExpectedOutputType _classifyOutputType(MechanisticConflictResult r) {
+    if (!r.hasModeledOutput) {
+      return ScenarioExpectedOutputType.insufficientContext;
+    }
     if (r.interactionType ==
             MechanisticInteractionType.insufficientMedicationContext ||
         r.interactionType ==
@@ -643,8 +728,8 @@ class MechanisticReplayRunner {
     if (r.interactionType == MechanisticInteractionType.noModeledInteraction) {
       return ScenarioExpectedOutputType.noModeledInteraction;
     }
-    if (r.severityBand == SeverityBand.moderate ||
-        r.severityBand == SeverityBand.high) {
+    final severity = r.modeledSeverityBand!;
+    if (severity == SeverityBand.moderate || severity == SeverityBand.high) {
       return ScenarioExpectedOutputType.educationalCaution;
     }
     return ScenarioExpectedOutputType.educationalInfo;

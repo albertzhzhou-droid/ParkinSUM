@@ -11,7 +11,7 @@ library;
 
 import 'dart:convert';
 
-import '../entities/gastric_emptying_profile.dart' show UncertaintyBand;
+import '../entities/gastric_emptying_profile.dart';
 import '../entities/meal_composition.dart';
 import '../entities/nutrient_derivation.dart' show NutrientConfidenceTier;
 import '../entities/rule_explanation.dart';
@@ -76,6 +76,53 @@ class SyntheticScenarioFuzzer {
   final LevodopaAbsorptionOpportunityModel _absorption;
   final MechanisticNextMealScorer _scorer;
   final TimeAxisBuilder _builder;
+
+  static const String _doseTimeMealId = 'dose_time_history';
+  late final MealComposition _doseTimeMealComposition = _normalizer.normalize(
+    mealId: _doseTimeMealId,
+    declaredPhysicalForm: MealPhysicalForm.solid,
+    components: const [
+      FoodComponent(
+        id: 'dose_time_history_component',
+        name: 'synthetic dose-time history',
+        physicalForm: MealPhysicalForm.solid,
+        proteinGrams: 4,
+        fatGrams: 3,
+        fiberGrams: 2,
+        carbohydrateGrams: 30,
+        calories: 180,
+        portionGrams: 150,
+        sourceDocId: 'synthetic:dose_time_history',
+      ),
+    ],
+  );
+
+  Map<String, MealComposition> get _baseMealCompositionsById => {
+    _doseTimeMealComposition.id: _doseTimeMealComposition,
+  };
+
+  static const GastricEmptyingProfile _doseTimeMealProfile =
+      GastricEmptyingProfile(
+        mealId: _doseTimeMealId,
+        componentProfiles: [
+          EmptyingComponentProfile(
+            componentId: 'dose_time_history_component',
+            physicalForm: MealPhysicalForm.solid,
+            lagMinutes: 10,
+            halfEmptyingMinutes: 60,
+            fractionOfMeal: 1,
+            appliedModifiers: ['synthetic_fixture'],
+          ),
+        ],
+        uncertaintyBand: UncertaintyBand.narrow,
+        assumptions: ['synthetic_dose_time_history'],
+        missingInputs: [],
+        sourceRefs: ['synthetic:test'],
+        aggregateLagMinutes: 10,
+        peakEmptyingWindow: TimelineWindow(startMinute: 10, endMinute: 100),
+        mostlyEmptiedWindow: TimelineWindow(startMinute: 10, endMinute: 250),
+        timeScaleSensitivityFraction: 0.2,
+      );
 
   static const List<String> _limitations = [
     'Synthetic regression/stress testing only; not a clinical simulator.',
@@ -282,27 +329,27 @@ class SyntheticScenarioFuzzer {
       ),
       _case(
         fam,
-        'er_wider',
-        'extended-release wider than IR',
+        'er_abstains',
+        'generic extended-release abstains',
         {'probe': 'release', 'release_type': 'extended'},
-        [_inv('er_wider', 'ER window is wider than the IR baseline')],
+        [_inv('er_not_applicable', 'Generic ER emits no modeled curve')],
       ),
       _case(
         fam,
-        'cr_wider',
-        'controlled-release wider than IR',
+        'cr_abstains',
+        'generic controlled-release abstains',
         {'probe': 'release', 'release_type': 'controlled'},
-        [_inv('cr_wider', 'CR window is wider than the IR baseline')],
+        [_inv('cr_not_applicable', 'Generic CR emits no modeled curve')],
       ),
       _case(
         fam,
-        'unknown_widens',
-        'unknown release widens uncertainty',
+        'unknown_abstains',
+        'unknown release abstains',
         {'probe': 'release', 'release_type': 'unknown'},
         [
           _inv(
-            'unknown_uncertain',
-            'Unknown release widens uncertainty + records limited interpretation',
+            'unknown_not_applicable',
+            'Unknown release emits no modeled absorption curve',
           ),
         ],
       ),
@@ -658,17 +705,21 @@ class SyntheticScenarioFuzzer {
     final nonLevodopa = c.inputSummary['non_levodopa'] == true;
     final ir = _absorption.build(
       medication: _medEvent('immediate', minute: 60),
+      overlappingMealProfile: _doseTimeMealProfile,
     );
     final irWidth = ir.window.endMinute - ir.window.startMinute;
 
     if (nonLevodopa) {
       final ev = _absorption.build(
         medication: _medEvent('immediate', minute: 60, nonLevodopa: true),
+        overlappingMealProfile: _doseTimeMealProfile,
       );
       final width = ev.window.endMinute - ev.window.startMinute;
       final flaggedNonLevodopa =
-          ev.missingInputs.contains('active_ingredient_is_levodopa') ||
-          ev.assumptions.contains('ldopa.absorption.non_levodopa_passthrough');
+          !ev.modelApplicable &&
+          ev.applicabilityReasons.contains(
+            'mechanistic_applicability.active_ingredient_not_levodopa',
+          );
       signals.add('non_levodopa width=$width flagged=$flaggedNonLevodopa');
       // A non-levodopa event must NOT receive a real levodopa absorption window:
       // the model returns a degenerate (zero-width) passthrough window flagged as
@@ -679,7 +730,10 @@ class SyntheticScenarioFuzzer {
       return;
     }
 
-    final w = _absorption.build(medication: _medEvent(rt, minute: 60));
+    final w = _absorption.build(
+      medication: _medEvent(rt, minute: 60),
+      overlappingMealProfile: _doseTimeMealProfile,
+    );
     final width = w.window.endMinute - w.window.startMinute;
     signals.add(
       'release=$rt width=$width ir_width=$irWidth '
@@ -688,25 +742,24 @@ class SyntheticScenarioFuzzer {
     switch (c.scenarioId.split('__').last) {
       case 'ir':
         if (irWidth <= 0) fail('ir_window', 'unexpected_signal');
-      case 'er_wider':
-        if (!(width > irWidth)) fail('er_wider', 'unexpected_signal');
-      case 'cr_wider':
-        if (!(width > irWidth)) fail('cr_wider', 'unexpected_signal');
-      case 'unknown_widens':
-        const order = [
-          UncertaintyBand.narrow,
-          UncertaintyBand.moderate,
-          UncertaintyBand.wide,
-          UncertaintyBand.veryWide,
-        ];
-        final wider =
-            order.indexOf(w.uncertaintyBand) >
-            order.indexOf(ir.uncertaintyBand);
-        final limited = w.assumptions.contains(
-          'ldopa.absorption.release_type_unknown_limited',
-        );
-        if (!wider && !limited) {
-          fail('unknown_uncertain', 'unexpected_signal');
+      case 'er_abstains':
+        if (!(width == 0 && !w.modelApplicable && w.opennessProfile.isEmpty)) {
+          fail('er_not_applicable', 'unexpected_signal');
+        }
+      case 'cr_abstains':
+        if (!(width == 0 && !w.modelApplicable && w.opennessProfile.isEmpty)) {
+          fail('cr_not_applicable', 'unexpected_signal');
+        }
+      case 'unknown_abstains':
+        final abstained =
+            !w.modelApplicable &&
+            width == 0 &&
+            w.opennessProfile.isEmpty &&
+            w.applicabilityReasons.contains(
+              'mechanistic_applicability.release_type_not_supported',
+            );
+        if (!abstained) {
+          fail('unknown_not_applicable', 'unexpected_signal');
         }
     }
   }
@@ -836,7 +889,14 @@ class SyntheticScenarioFuzzer {
           medicationContext: v,
         ),
       ],
-      mealInputs: const [],
+      mealInputs: [
+        MealTimelineInput(
+          id: _doseTimeMealId,
+          startedAt: now.subtract(const Duration(minutes: 60)),
+          compositionId: _doseTimeMealComposition.id,
+          physicalForm: MealPhysicalForm.solid,
+        ),
+      ],
       userDefinedWindow: withWindow
           ? UserDefinedMealWindow(
               window: TimelineWindow(
@@ -887,11 +947,15 @@ class SyntheticScenarioFuzzer {
     if (probe == 'no_window') {
       final scores = _scorer.score(
         baseContext: _baseContext(withWindow: false),
-        baseMealCompositionsById: const {},
+        baseMealCompositionsById: _baseMealCompositionsById,
         candidates: [_candidate('a')],
       );
-      signals.add('insufficient=${scores.first.insufficientContext}');
-      if (!scores.first.insufficientContext) {
+      final score = scores.first;
+      signals.add(
+        'availability=${score.availability.name} '
+        'modeled_final=${score.modeledFinalCandidateScore}',
+      );
+      if (score.hasModeledOutput || score.modeledFinalCandidateScore != null) {
         fail(
           'no_window_fallback',
           SyntheticScenarioFailureCategory.unexpectedRankerSwitch,
@@ -900,12 +964,16 @@ class SyntheticScenarioFuzzer {
     } else if (probe == 'valid_window') {
       final scores = _scorer.score(
         baseContext: _baseContext(withWindow: true),
-        baseMealCompositionsById: const {},
+        baseMealCompositionsById: _baseMealCompositionsById,
         candidates: [_candidate('a')],
         candidateMetadata: {'a': _candMeta(0.6)},
       );
-      signals.add('insufficient=${scores.first.insufficientContext}');
-      if (scores.first.insufficientContext) {
+      final score = scores.first;
+      final modeledFinal = score.modeledFinalCandidateScore;
+      signals.add(
+        'availability=${score.availability.name} modeled_final=$modeledFinal',
+      );
+      if (!score.hasModeledOutput || modeledFinal == null) {
         fail(
           'window_scored',
           SyntheticScenarioFailureCategory.unexpectedRankerSwitch,
@@ -915,13 +983,30 @@ class SyntheticScenarioFuzzer {
       // tiebreak: identical composition, differ only in provenance.
       final scores = _scorer.score(
         baseContext: _baseContext(withWindow: true),
-        baseMealCompositionsById: const {},
+        baseMealCompositionsById: _baseMealCompositionsById,
         candidates: [_candidate('best'), _candidate('worst')],
         candidateMetadata: {'best': _candMeta(1.0), 'worst': _candMeta(0.0)},
       );
-      double of(String id) =>
-          scores.firstWhere((e) => e.candidateFoodId == id).finalCandidateScore;
-      final gap = of('best') - of('worst');
+      double? modeledFinalScore(String id) {
+        final score = scores.firstWhere((e) => e.candidateFoodId == id);
+        final modeled = score.modeledFinalCandidateScore;
+        signals.add(
+          '$id availability=${score.availability.name} modeled_final=$modeled',
+        );
+        if (!score.hasModeledOutput || modeled == null) {
+          fail(
+            'tiebreak',
+            SyntheticScenarioFailureCategory.unexpectedRankerSwitch,
+          );
+          return null;
+        }
+        return modeled;
+      }
+
+      final best = modeledFinalScore('best');
+      final worst = modeledFinalScore('worst');
+      if (best == null || worst == null) return;
+      final gap = best - worst;
       final params = NextMealScoringParameterSet.literatureInformedDefault();
       signals.add(
         'gap=$gap provenanceWeightSum=${params.provenanceWeightSum} '
