@@ -53,6 +53,8 @@ class _CatalogPageState extends State<CatalogPage> {
             child: _CatalogShowcaseCard(
               foodCount: foods.length,
               drugCount: drugs.length,
+              totalFoodCount: engine.foodRepo.allFoods.length,
+              totalDrugCount: engine.medRepo.allDrugs.length,
               showingFoods: _showFoods,
             ),
           ),
@@ -166,13 +168,23 @@ class _CatalogPageState extends State<CatalogPage> {
 }
 
 class _CatalogShowcaseCard extends StatelessWidget {
+  /// Entries matching the current search — NOT the shipped catalog size.
   final int foodCount;
   final int drugCount;
+
+  /// Entries actually shipped. Rendered alongside the match count because
+  /// showing only the filtered number under a "Foods indexed" label read as a
+  /// claim about catalog size, and shrank as the user typed.
+  final int totalFoodCount;
+  final int totalDrugCount;
+
   final bool showingFoods;
 
   const _CatalogShowcaseCard({
     required this.foodCount,
     required this.drugCount,
+    required this.totalFoodCount,
+    required this.totalDrugCount,
     required this.showingFoods,
   });
 
@@ -180,7 +192,13 @@ class _CatalogShowcaseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final visibleCount = showingFoods ? foodCount : drugCount;
-    final visibleLabel = showingFoods ? 'Foods indexed' : 'Medication records';
+    final totalCount = showingFoods ? totalFoodCount : totalDrugCount;
+    final visibleLabel = showingFoods ? 'Foods' : 'Medication records';
+    // "N of M shipped" — the match count alone was labelled as the catalog
+    // size and silently disagreed with it whenever a search was active.
+    final countSummary = visibleCount == totalCount
+        ? '$visibleCount shipped'
+        : '$visibleCount of $totalCount shipped';
 
     return GlassSurface(
       borderRadius: 8,
@@ -338,7 +356,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        '$visibleLabel: $visibleCount',
+                        '$visibleLabel: $countSummary',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(

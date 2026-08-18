@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -41,6 +42,42 @@ class LocalCdssArtifactStore implements CdssArtifactStore {
     return CdssArtifactWriteResult(
       artifactPath: baseDir.path,
       files: written,
+      durable: true,
+    );
+  }
+
+  @override
+  Future<CdssArtifactReadResult?> readArtifactSet(String artifactId) async {
+    final databasePath = await _artifactBasePath();
+    final baseDir = Directory(
+      p.join(
+        databasePath,
+        'parkinsum_cdss_artifacts',
+        _safePathSegment(artifactId),
+      ),
+    );
+    if (!await baseDir.exists()) return null;
+
+    final files = <String, String>{};
+    Map<String, dynamic> manifest = const <String, dynamic>{};
+    for (final entity in await baseDir.list().toList()) {
+      if (entity is! File) continue;
+      final name = p.basename(entity.path);
+      final content = await entity.readAsString();
+      if (name == 'snapshot_manifest.json') {
+        final decoded = jsonDecode(content);
+        if (decoded is Map<String, dynamic>) manifest = decoded;
+        continue;
+      }
+      files[name] = content;
+    }
+    // A directory that exists but holds nothing is a corrupt/partial write,
+    // not a valid empty artifact — report absence rather than success.
+    if (files.isEmpty && manifest.isEmpty) return null;
+    return CdssArtifactReadResult(
+      artifactId: artifactId,
+      files: files,
+      manifest: manifest,
       durable: true,
     );
   }

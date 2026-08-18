@@ -223,7 +223,15 @@ class MechanisticReplayCaseReport {
 }
 
 class MechanisticReplayRunReport {
+  /// The fixed reference instant the replay was anchored to — **not** the time
+  /// the report was produced.
+  ///
+  /// Defaults to `DateTime.utc(2026, 1, 1, 8)`, which is what makes this
+  /// report byte-reproducible across runs. The name is retained for the
+  /// `generated_at` JSON key that `SourceVersionDriftChecker` requires; new
+  /// consumers should read `deterministic_reference_time`.
   final String generatedAtIso;
+
   final List<MechanisticReplayCaseReport> cases;
 
   const MechanisticReplayRunReport({
@@ -236,7 +244,16 @@ class MechanisticReplayRunReport {
   int get totalCount => cases.length;
 
   Map<String, dynamic> toJson() => {
+    // Kept under the original key because `SourceVersionDriftChecker` requires
+    // a valid ISO-8601 `generated_at` on generated artifacts. It is NOT a wall
+    // clock: it is the fixed reference instant the replay is anchored to
+    // (`DateTime.utc(2026, 1, 1, 8)` unless a caller overrides it), which is
+    // what makes this report byte-reproducible.
     'generated_at': generatedAtIso,
+    // Unambiguous alias. Consumers should prefer this one; a reader of the
+    // raw JSON should not have to infer that `generated_at` is a constant.
+    'deterministic_reference_time': generatedAtIso,
+    'generated_at_is_deterministic_reference': true,
     'passed': passedCount,
     'total': totalCount,
     'cases': cases.map((c) => c.toJson()).toList(growable: false),
@@ -246,7 +263,13 @@ class MechanisticReplayRunReport {
     final buf = StringBuffer()
       ..writeln('# Mechanistic Replay Report')
       ..writeln()
-      ..writeln('Generated: $generatedAtIso')
+      // Deliberately not labelled "Generated:". The value is a fixed
+      // determinism anchor, and presenting it as a production time showed
+      // readers a timestamp that was never true.
+      ..writeln(
+        'Deterministic reference instant: $generatedAtIso '
+        '(fixed anchor, not the time this report was produced)',
+      )
       ..writeln()
       ..writeln('**$passedCount / $totalCount scenarios passed.**')
       ..writeln();

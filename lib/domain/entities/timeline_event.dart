@@ -43,7 +43,7 @@ class TimelineEvent {
       entityId: intake.drugId,
       title: label,
       description:
-          'Medication · ${intake.dosageNote.isEmpty ? 'No dosage note' : intake.dosageNote}',
+          'Medication · ${intake.doseDisplayText.isEmpty ? 'No dosage note' : intake.doseDisplayText}',
     );
   }
 }

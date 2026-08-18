@@ -9,6 +9,8 @@
 /// for dose-dependent interpretation.
 library;
 
+import '../../core/models/intake.dart';
+
 class ParsedDose {
   final double? value;
   final String? unit;
@@ -69,7 +71,33 @@ class DosageNoteParser {
     final unitRaw = (m.group(2) ?? '').toLowerCase();
     if (value == null || value <= 0) return ParsedDose.none;
     if (!_allowedUnits.contains(unitRaw)) return ParsedDose.none;
-    return ParsedDose(value: value, unit: unitRaw, explicit: true);
+    return ParsedDose(
+      value: value,
+      unit: _canonicalUnit(unitRaw),
+      explicit: true,
+    );
+  }
+
+  /// Prefer a validated structured dose, then fall back to the legacy note.
+  ///
+  /// Structured values are still user-derived: [IntakeDoseContextBuilder]
+  /// records them only when this parser finds one unambiguous value+unit pair
+  /// in the user's note. This method never invents a private default dose.
+  ParsedDose parseIntake(Intake intake) {
+    final value = intake.doseAmount;
+    final unitRaw = intake.doseUnit?.trim().toLowerCase();
+    if (value != null &&
+        value.isFinite &&
+        value > 0 &&
+        unitRaw != null &&
+        _allowedUnits.contains(unitRaw)) {
+      return ParsedDose(
+        value: value,
+        unit: _canonicalUnit(unitRaw),
+        explicit: true,
+      );
+    }
+    return parse(intake.dosageNote);
   }
 
   /// Dose in milligrams derived ONLY from an explicit value + recognized MASS
@@ -79,6 +107,14 @@ class DosageNoteParser {
   /// `DrugRuntimeContext.dailyDoseMg`.
   double? milligrams(String? dosageNote) {
     final dose = parse(dosageNote);
+    return _milligrams(dose);
+  }
+
+  double? milligramsForIntake(Intake intake) {
+    return _milligrams(parseIntake(intake));
+  }
+
+  double? _milligrams(ParsedDose dose) {
     if (!dose.explicit || dose.value == null) return null;
     switch (dose.unit) {
       case 'mg':
@@ -99,6 +135,28 @@ class DosageNoteParser {
       default:
         // Non-mass units (e.g. ml) are not a mg dose → unknown.
         return null;
+    }
+  }
+
+  String _canonicalUnit(String unit) {
+    switch (unit) {
+      case 'milligram':
+      case 'milligrams':
+        return 'mg';
+      case 'gram':
+      case 'grams':
+        return 'g';
+      case 'ug':
+      case 'µg':
+      case 'μg':
+      case 'microgram':
+      case 'micrograms':
+        return 'mcg';
+      case 'milliliter':
+      case 'milliliters':
+        return 'mL';
+      default:
+        return unit;
     }
   }
 }

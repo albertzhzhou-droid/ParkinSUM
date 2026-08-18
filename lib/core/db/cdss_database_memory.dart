@@ -1,14 +1,34 @@
 import '../../domain/entities/cdss_records.dart';
 import 'cdss_database.dart';
 
-/// A no-op, empty [CdssDatabase] for deterministic offline use (replay tools,
-/// demos, and tests). Reads return empty tables; writes are discarded. It holds
-/// no data, performs no I/O, and reaches no network — so anything wired to it
-/// falls back to built-in synthetic seeds.
+/// An empty [CdssDatabase] for deterministic offline use (replay tools, demos,
+/// and tests). Reads return empty tables and catalog writes are discarded, so
+/// anything wired to it falls back to built-in synthetic seeds. It performs no
+/// I/O and reaches no network.
+///
+/// **Audit writes are the exception.** They are retained in process memory and
+/// exposed via [conflictAuditLog] / [recommendationAuditLog]. This is the
+/// backend the public demo and the replay tooling run on, so discarding audit
+/// records here would mean the app's audit trail does not exist precisely
+/// where reviewers look for it. Retention is deliberately non-durable: the
+/// records live for the lifetime of this instance and no longer.
 ///
 /// Educational prototype only; no PHI; not a storage backend for real data.
 class InMemoryCdssDatabase implements CdssDatabase {
-  const InMemoryCdssDatabase();
+  InMemoryCdssDatabase();
+
+  final List<ConflictAuditLogRecord> _conflictAuditLog =
+      <ConflictAuditLogRecord>[];
+  final List<RecommendationAuditLogRecord> _recommendationAuditLog =
+      <RecommendationAuditLogRecord>[];
+
+  /// Conflict audit records written to this instance, in write order.
+  List<ConflictAuditLogRecord> get conflictAuditLog =>
+      List<ConflictAuditLogRecord>.unmodifiable(_conflictAuditLog);
+
+  /// Recommendation audit records written to this instance, in write order.
+  List<RecommendationAuditLogRecord> get recommendationAuditLog =>
+      List<RecommendationAuditLogRecord>.unmodifiable(_recommendationAuditLog);
 
   @override
   Future<List<Map<String, Object?>>> queryTable(String table) async =>
@@ -91,12 +111,16 @@ class InMemoryCdssDatabase implements CdssDatabase {
   Future<void> insertRuntimeEvent(RuntimeEventRecord record) async {}
 
   @override
-  Future<void> insertConflictAuditLog(ConflictAuditLogRecord record) async {}
+  Future<void> insertConflictAuditLog(ConflictAuditLogRecord record) async {
+    _conflictAuditLog.add(record);
+  }
 
   @override
   Future<void> insertRecommendationAuditLog(
     RecommendationAuditLogRecord record,
-  ) async {}
+  ) async {
+    _recommendationAuditLog.add(record);
+  }
 
   @override
   Future<void> insertIngestionRun(IngestionRunRecord record) async {}

@@ -1,0 +1,155 @@
+{
+  "report_type": "recommendation_scenario_replay",
+  "dataset_version": "local-ai-replay.2026-06.v1",
+  "no_medical_advice": true,
+  "cases": [
+    {
+      "case_id": "replay_missing_medication_time_or_dose",
+      "title": "Missing medication time/dose keeps the conservative path",
+      "focus_tags": [
+        "missing_medication_time_or_dose"
+      ],
+      "deterministic_ranking": [
+        "food_oats",
+        "food_banana",
+        "food_apple"
+      ],
+      "ai_ranking": [
+        "food_oats",
+        "food_banana",
+        "food_apple"
+      ],
+      "ai_used": false,
+      "decision_path": "conservative_safety_gate",
+      "gate_reasons": [
+        "The expected next-meal time window is missing. Add the earliest and latest next-meal time in Add/Edit Meal."
+      ],
+      "ranking_diffs": [],
+      "matched_expected_top_food_ids": [
+        "food_banana"
+      ],
+      "missing_expected_top_food_ids": [
+        "food_apple"
+      ],
+      "ai_preserved_candidate_set": true
+    },
+    {
+      "case_id": "replay_low_risk_next_meal",
+      "title": "Low-risk next meal allows safe Local AI reranking",
+      "focus_tags": [
+        "low_risk_next_meal"
+      ],
+      "deterministic_ranking": [
+        "food_banana",
+        "food_blueberry",
+        "food_apple"
+      ],
+      "ai_ranking": [
+        "food_apple",
+        "food_blueberry",
+        "food_banana"
+      ],
+      "ai_used": true,
+      "decision_path": "hybrid_local_ai",
+      "gate_reasons": [],
+      "ranking_diffs": [
+        "food_banana moved down by 2",
+        "food_apple moved up by 2"
+      ],
+      "matched_expected_top_food_ids": [
+        "food_apple"
+      ],
+      "missing_expected_top_food_ids": [
+        "food_banana"
+      ],
+      "ai_preserved_candidate_set": true
+    },
+    {
+      "case_id": "replay_source_fallback_partial_provenance",
+      "title": "Source fallback keeps a transparent conservative ranking",
+      "focus_tags": [
+        "source_fallback_partial_provenance"
+      ],
+      "deterministic_ranking": [
+        "food_banana",
+        "food_tofu",
+        "food_brown_rice"
+      ],
+      "ai_ranking": [
+        "food_banana",
+        "food_tofu",
+        "food_brown_rice"
+      ],
+      "ai_used": false,
+      "decision_path": "conservative_cdss",
+      "gate_reasons": [
+        "用户尚未启用本地 AI 重排。"
+      ],
+      "ranking_diffs": [],
+      "matched_expected_top_food_ids": [
+        "food_banana"
+      ],
+      "missing_expected_top_food_ids": [],
+      "ai_preserved_candidate_set": true
+    },
+    {
+      "case_id": "replay_safety_gate_blocks_local_ai",
+      "title": "Low-quality meal time blocks Local AI reranking",
+      "focus_tags": [
+        "safety_gate_blocks_local_ai"
+      ],
+      "deterministic_ranking": [
+        "food_oats",
+        "food_banana",
+        "food_tofu"
+      ],
+      "ai_ranking": [
+        "food_oats",
+        "food_banana",
+        "food_tofu"
+      ],
+      "ai_used": false,
+      "decision_path": "conservative_safety_gate",
+      "gate_reasons": [
+        "The latest meal still uses migrated legacy timing; edit it to the real eating time."
+      ],
+      "ranking_diffs": [],
+      "matched_expected_top_food_ids": [],
+      "missing_expected_top_food_ids": [
+        "food_banana"
+      ],
+      "ai_preserved_candidate_set": true
+    },
+    {
+      "case_id": "replay_medication_catalog_selection_context",
+      "title": "Medication catalog selection flows into a safe AI path",
+      "focus_tags": [
+        "medication_catalog_selection_context"
+      ],
+      "deterministic_ranking": [
+        "food_banana",
+        "food_blueberry",
+        "food_apple"
+      ],
+      "ai_ranking": [
+        "food_apple",
+        "food_blueberry",
+        "food_banana"
+      ],
+      "ai_used": true,
+      "decision_path": "hybrid_local_ai",
+      "gate_reasons": [],
+      "ranking_diffs": [
+        "food_banana moved down by 2",
+        "food_apple moved up by 2"
+      ],
+      "matched_expected_top_food_ids": [
+        "food_apple"
+      ],
+      "missing_expected_top_food_ids": [
+        "food_banana"
+      ],
+      "ai_preserved_candidate_set": true
+    }
+  ]
+}

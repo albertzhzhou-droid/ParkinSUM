@@ -12,6 +12,7 @@ import '../../data/datasources/remote/p0_import_models.dart';
 import '../../data/datasources/remote/p0_import_support.dart';
 import 'cdss_artifact_store.dart';
 import 'fact_conflict_engine.dart';
+import 'rule_explanation_projection.dart';
 import 'rule_registry_compiler.dart';
 import 'runtime_rule_engine.dart';
 import 'runtime_rule_support.dart';
@@ -1117,6 +1118,15 @@ class ClinicalDecisionSupportService {
       jurisdictionChain: jurisdictionChain,
       regionJurisdictionMapSource: regionJurisdictionMapSource,
     );
+    // Pure, read-only projection of what the engine just computed into the
+    // documented RuleExplanation audit contract. Re-evaluates nothing.
+    final ruleExplanations = projectRuleExplanations(
+      auditEntries: auditEntries,
+      ruleHitTrace: ruleHitTrace,
+    );
+    final ruleExplanationsJson = ruleExplanations
+        .map((explanation) => explanation.toJson())
+        .toList(growable: false);
     final alertsJson = {
       'alerts': alerts.map((alert) => alert.toJson()).toList(growable: false),
       'jurisdiction_chain': jurisdictionChain,
@@ -1192,6 +1202,12 @@ class ClinicalDecisionSupportService {
           'rule_hit_trace': ruleHitTrace,
           'audit_entries': auditEntries.map((entry) => entry.toJson()).toList(),
         }),
+        // The documented audit contract, one row per registry rule (including
+        // rules that did not fire). Readable back via
+        // CdssArtifactStore.readArtifactSet.
+        'rule_explanations.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(ruleExplanationsJson),
       },
       manifest: {
         'kind': 'runtime',
@@ -1232,6 +1248,7 @@ class ClinicalDecisionSupportService {
       auditLogJsonl: auditJsonl,
       alerts: alerts,
       auditEntries: auditEntries,
+      ruleExplanationsJson: ruleExplanationsJson,
     );
   }
 

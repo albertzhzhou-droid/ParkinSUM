@@ -13,6 +13,19 @@ import '../shared/interaction_result_view.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
+  Future<void> _deleteMeal(BuildContext context, String mealId) async {
+    final result = await context.read<AppState>().deleteMeal(mealId);
+    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final i18n = context.appI18n;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          i18n.tr('entry.save_failed', {'error': i18n.tr('common.error')}),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showMealCheckDialog(BuildContext context, Meal meal) async {
     final result = await context.read<AppState>().checkMeal(meal);
     if (!context.mounted) return;
@@ -418,9 +431,9 @@ class DashboardPage extends StatelessWidget {
                               IconButton(
                                 tooltip: i18n.tr('dashboard.delete'),
                                 icon: const Icon(Icons.delete_outline),
-                                onPressed: () => context
-                                    .read<AppState>()
-                                    .deleteMeal(meal.id),
+                                onPressed: state.isUpdatingMeals
+                                    ? null
+                                    : () => _deleteMeal(context, meal.id),
                               ),
                             ],
                           ),
