@@ -62,7 +62,7 @@ See the [safety disclaimer](../../DISCLAIMER.md),
 
 ## Current Status
 
-The repository is prepared as a public alpha showcase. It includes release
+The repository is prepared as a public prototype showcase. It includes release
 notes, CI checks, synthetic demo scenarios, issue templates, repository metadata
 recommendations, and public-facing documentation.
 
@@ -71,7 +71,8 @@ code review, and discussion of local-first digital-health software patterns.
 
 ## Next Milestones
 
-- Capture synthetic screenshots and a short demo GIF.
+- Keep commit-identified synthetic runtime screenshots current; add a short
+  demo GIF only after the same pixel-level privacy review.
 - Continue improving accessibility and localization.
 - Expand copy-ready synthetic walkthroughs.
 - Keep deterministic rule tests and evidence mapping easy to inspect.

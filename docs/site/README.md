@@ -6,8 +6,32 @@ what the app does, what the core flow looks like, how the rule/explanation path
 works, and which demo/release formats are appropriate.
 
 It uses plain HTML and CSS only; no build system is required. The site reuses
-the app logo, wordmark, and redacted real-device screenshots from
+the app logo, wordmark, and bounded runtime browser captures from
 `docs/assets/`.
+
+## Runtime Capture Provenance
+
+The displayed runtime screenshots were captured from the local-mode browser
+build at `main@23619f1` using fixed, non-personal scenarios. They do not show a
+real account, personal profile, or health record.
+
+The capture set is:
+
+- `algorithm-observatory-overview-desktop.png` (1440 × 1000)
+- `algorithm-observatory-explanation-desktop.png` (1440 × 1000)
+- `algorithm-observatory-coverage-desktop.png` (1440 × 1000)
+- `capability-center-desktop.png` (1440 × 1000)
+- `algorithm-observatory-responsive.png` (390 × 844 browser viewport)
+
+The “58 algorithms” label is bound only to that captured commit. It is not a
+permanent inventory count. The responsive image demonstrates browser layout at
+one viewport size; it is not physical-device, native-runtime, accessibility-
+conformance, security, clinical-validation, or patient-outcome evidence.
+
+Deterministic rules remain authoritative for classifications, scores, gates,
+evidence, and traces. Optional AI is post-rule only: it may rerank candidates
+already admitted by the rule whitelist or polish copy, but it may not change
+rule-owned outputs.
 
 ## Local Preview
 
@@ -57,8 +81,10 @@ after checking that existing documentation links still work.
 ## Content Rules
 
 - Use synthetic or sample data only.
-- Do not add real patient data, real medication schedules, private user exports,
-  raw operator logs, Firebase tokens, service-account files, or signing keys.
+- Public screenshots, examples, and walkthroughs must exclude real account
+  identifiers and health data.
+- Do not add real medication schedules, private user exports, raw operator logs,
+  Firebase tokens, service-account files, or signing keys.
 - Keep all claims conservative: educational prototype, not medical advice, not a
   medical device, and no clinical validation is claimed.
 - Screenshot media should come from `docs/assets/screenshots/`.

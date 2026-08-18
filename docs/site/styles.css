@@ -247,8 +247,9 @@ h3 {
 
 .glass-device img {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
+  object-position: top center;
 }
 
 .quick-read {
@@ -324,7 +325,7 @@ h3 {
 
 .screen-grid {
   display: grid;
-  grid-template-columns: 1.15fr 0.85fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -335,14 +336,21 @@ h3 {
 }
 
 .screen-card.large {
-  grid-row: span 3;
+  grid-column: 1 / -1;
 }
 
 .screen-card img {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
+  object-position: top center;
   border-bottom: 1px solid var(--line);
+}
+
+.screen-card.responsive-capture img {
+  width: auto;
+  max-width: min(390px, 100%);
+  margin-inline: auto;
 }
 
 .screen-card figcaption {
@@ -467,7 +475,7 @@ h3 {
   }
 
   .screen-card.large {
-    grid-row: auto;
+    grid-column: auto;
   }
 
   .safety {
