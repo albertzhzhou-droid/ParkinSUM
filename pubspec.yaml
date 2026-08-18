@@ -34,6 +34,7 @@ dependencies:
   archive: ^4.0.9
   csv: ^6.0.0
   crypto: ^3.0.6
+  csv: ^8.0.0
   firebase_core: ^4.7.0
   firebase_auth: ^6.4.0
   cloud_firestore: ^6.8.0
