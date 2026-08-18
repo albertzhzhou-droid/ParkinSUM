@@ -91,10 +91,11 @@ class ArchiveImportSupport {
     if (lines.isEmpty) return const <Map<String, String>>[];
     final firstLine = lines.first;
     final effectiveDelimiter = delimiter ?? _detectDelimiter(firstLine) ?? ',';
-    final rows = const CsvToListConverter(
-      shouldParseNumbers: false,
-      eol: '\n',
-    ).convert(normalized, fieldDelimiter: effectiveDelimiter);
+    final rows = Csv(
+      fieldDelimiter: effectiveDelimiter,
+      autoDetect: false,
+      dynamicTyping: false,
+    ).decode(normalized);
     if (rows.isEmpty) return const <Map<String, String>>[];
     final headers = rows.first
         .map((cell) => '${cell ?? ''}'.trim())
