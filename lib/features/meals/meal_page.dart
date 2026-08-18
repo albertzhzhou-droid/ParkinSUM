@@ -28,9 +28,8 @@ class MealPage extends StatelessWidget {
               ? null
               : SnackBarAction(
                   label: i18n.tr('history.undo'),
-                  onPressed: () => state.restoreRecoverableEvent(
-                    revision.historyId,
-                  ),
+                  onPressed: () =>
+                      state.restoreRecoverableEvent(revision.historyId),
                 ),
         ),
       );

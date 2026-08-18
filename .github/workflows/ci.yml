@@ -79,6 +79,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      # The store-privacy contract resolves reviewed third-party Apple privacy
+      # manifests through .dart_tool/package_config.json. Keep this job
+      # fail-closed by materializing the pinned Flutter dependency graph before
+      # running the otherwise Node-driven contract checks.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.0'
+          cache: true
+
       - name: Set up Node.js
         uses: actions/setup-node@v7
         with:
@@ -91,8 +102,10 @@ jobs:
           distribution: temurin
           java-version: "21"
 
-      - name: Install Node dependencies
-        run: npm ci
+      - name: Install dependencies
+        run: |
+          flutter pub get
+          npm ci
 
       - name: Run public repository preflight
         run: npm run public:preflight

@@ -28,9 +28,7 @@ void main() {
         'all_candidates_scored',
         'confidence_high',
       ],
-      fallbackReasons: [
-        'mechanistic_trace_only_not_validated_for_ranking',
-      ],
+      fallbackReasons: ['mechanistic_trace_only_not_validated_for_ranking'],
     );
     expect(e.mechanisticPrimaryEligible, isFalse);
     expect(
