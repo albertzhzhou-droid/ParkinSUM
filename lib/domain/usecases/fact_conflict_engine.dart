@@ -43,19 +43,22 @@ class FactConflictEngine {
         needsManualReview: true,
       );
     }
-    final candidates = observations.map((observation) {
-      final source = sourceDocumentsById[observation.sourceDocId];
-      return _RankedObservation(
-        observation: observation,
-        scope: scopesByHash[observation.scopeHash],
-        authorityScore: _authorityScore(source),
-        freshnessScore: source?.effectiveAt?.millisecondsSinceEpoch ??
-            source?.publishedAt?.millisecondsSinceEpoch ??
-            0,
-        confidenceScore: observation.extractionConfidence,
-        scopeKey: _scopeKey(observation),
-      );
-    }).toList(growable: false);
+    final candidates = observations
+        .map((observation) {
+          final source = sourceDocumentsById[observation.sourceDocId];
+          return _RankedObservation(
+            observation: observation,
+            scope: scopesByHash[observation.scopeHash],
+            authorityScore: _authorityScore(source),
+            freshnessScore:
+                source?.effectiveAt?.millisecondsSinceEpoch ??
+                source?.publishedAt?.millisecondsSinceEpoch ??
+                0,
+            confidenceScore: observation.extractionConfidence,
+            scopeKey: _scopeKey(observation),
+          );
+        })
+        .toList(growable: false);
     final manualObservationId = manualOverrides['observation_id'];
     final chosen = manualObservationId == null
         ? ([...candidates]..sort(_compareRankedObservation)).first
@@ -90,7 +93,9 @@ class FactConflictEngine {
       final sameSource =
           candidate.observation.sourceDocId == chosen.observation.sourceDocId;
       final overlaps = intervalsOverlap(
-          candidate.observation.value, chosen.observation.value);
+        candidate.observation.value,
+        chosen.observation.value,
+      );
       final tolerance = _numericTolerance(
         candidate.observation.value,
         chosen.observation.value,
@@ -237,15 +242,18 @@ class FactConflictEngine {
   }
 
   int _compareRankedObservation(
-      _RankedObservation left, _RankedObservation right) {
+    _RankedObservation left,
+    _RankedObservation right,
+  ) {
     final authority = right.authorityScore.compareTo(left.authorityScore);
     if (authority != 0) return authority;
     final confidence = right.confidenceScore.compareTo(left.confidenceScore);
     if (confidence != 0) return confidence;
     final freshness = right.freshnessScore.compareTo(left.freshnessScore);
     if (freshness != 0) return freshness;
-    return left.observation.observationId
-        .compareTo(right.observation.observationId);
+    return left.observation.observationId.compareTo(
+      right.observation.observationId,
+    );
   }
 
   String _rankingExplanation(_RankedObservation accepted) {
@@ -328,8 +336,9 @@ class FactConflictEngine {
       };
     }
     final delta = (rejectedValue - acceptedValue).abs();
-    final denominator =
-        acceptedValue.abs() < 0.000001 ? 1.0 : acceptedValue.abs().toDouble();
+    final denominator = acceptedValue.abs() < 0.000001
+        ? 1.0
+        : acceptedValue.abs().toDouble();
     final relativeDelta = delta / denominator;
     return {
       'comparable': true,
@@ -342,12 +351,12 @@ class FactConflictEngine {
   }
 
   Map<String, dynamic> _valueIntervalJson(QualifiedValue value) => {
-        'low': value.low,
-        'high': value.high,
-        'value_num': value.valueNum,
-        'qualifier_kind': value.qualifierKind.wireValue,
-        'raw_value_text': value.rawValueText,
-      };
+    'low': value.low,
+    'high': value.high,
+    'value_num': value.valueNum,
+    'qualifier_kind': value.qualifierKind.wireValue,
+    'raw_value_text': value.rawValueText,
+  };
 
   Map<String, dynamic> _scopeComparison(
     VariantScopeRecord? rejected,
@@ -372,8 +381,11 @@ class FactConflictEngine {
     compare('dosage_form', rejected.dosageForm, accepted.dosageForm);
     compare('release_type', rejected.releaseType, accepted.releaseType);
     compare('route', rejected.route, accepted.route);
-    compare('preparation_state', rejected.preparationState,
-        accepted.preparationState);
+    compare(
+      'preparation_state',
+      rejected.preparationState,
+      accepted.preparationState,
+    );
     compare('cooking_state', rejected.cookingState, accepted.cookingState);
     compare('sampling_frame', rejected.samplingFrame, accepted.samplingFrame);
     return {
@@ -444,18 +456,18 @@ class _RankedObservation {
   });
 
   Map<String, dynamic> toRankingJson() => {
-        'authority': authorityScore,
-        'freshness': freshnessScore,
-        'extraction_confidence': confidenceScore,
-        'scope_key': scopeKey,
-        'scope': {
-          'jurisdiction': scope?.jurisdiction,
-          'dosage_form': scope?.dosageForm,
-          'release_type': scope?.releaseType,
-          'route': scope?.route,
-          'preparation_state': scope?.preparationState,
-          'cooking_state': scope?.cookingState,
-          'sampling_frame': scope?.samplingFrame,
-        },
-      };
+    'authority': authorityScore,
+    'freshness': freshnessScore,
+    'extraction_confidence': confidenceScore,
+    'scope_key': scopeKey,
+    'scope': {
+      'jurisdiction': scope?.jurisdiction,
+      'dosage_form': scope?.dosageForm,
+      'release_type': scope?.releaseType,
+      'route': scope?.route,
+      'preparation_state': scope?.preparationState,
+      'cooking_state': scope?.cookingState,
+      'sampling_frame': scope?.samplingFrame,
+    },
+  };
 }

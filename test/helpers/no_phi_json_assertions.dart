@@ -61,9 +61,13 @@ void scanNoPhiKeys(Object? node, {Set<String> extraForbiddenKeys = const {}}) {
     if (n is Map) {
       for (final entry in n.entries) {
         final key = entry.key.toString().toLowerCase();
-        expect(forbidden.contains(key), isFalse,
-            reason: 'forbidden patient-linkage/clinical-care key present: '
-                '${entry.key}');
+        expect(
+          forbidden.contains(key),
+          isFalse,
+          reason:
+              'forbidden patient-linkage/clinical-care key present: '
+              '${entry.key}',
+        );
         walk(entry.value);
       }
     } else if (n is List) {
@@ -78,8 +82,10 @@ void scanNoPhiKeys(Object? node, {Set<String> extraForbiddenKeys = const {}}) {
 
 /// Collect free-text string values for a banned-medical-advice-phrase scan,
 /// skipping known safety/policy fields (plus any [skipKeys]).
-List<String> collectFreeTextValues(Object? node,
-    {Set<String> skipKeys = const {}}) {
+List<String> collectFreeTextValues(
+  Object? node, {
+  Set<String> skipKeys = const {},
+}) {
   final skip = {...kSafetyCopyKeys, ...skipKeys};
   final out = <String>[];
   void walk(Object? n) {

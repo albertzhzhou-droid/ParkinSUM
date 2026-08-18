@@ -217,10 +217,12 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertDrugProductPackaging(
-      DrugProductPackagingRecord record) async {
+    DrugProductPackagingRecord record,
+  ) async {
     final rows = await _load('drug_product_packaging');
     rows.removeWhere(
-        (existing) => existing['packaging_id'] == record.packagingId);
+      (existing) => existing['packaging_id'] == record.packagingId,
+    );
     rows.add({
       'packaging_id': record.packagingId,
       'drug_product_variant_id': record.drugProductVariantId,
@@ -281,9 +283,7 @@ class WebCdssDatabase implements CdssDatabase {
   @override
   Future<void> insertVariantScope(VariantScopeRecord record) async {
     final rows = await _load('variant_scope');
-    rows.removeWhere(
-      (existing) => existing['scope_hash'] == record.scopeHash,
-    );
+    rows.removeWhere((existing) => existing['scope_hash'] == record.scopeHash);
     rows.add({
       'scope_hash': record.scopeHash,
       'jurisdiction': record.jurisdiction,
@@ -303,10 +303,12 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRegionJurisdictionMap(
-      RegionJurisdictionMapRecord record) async {
+    RegionJurisdictionMapRecord record,
+  ) async {
     final rows = await _load('region_jurisdiction_map');
     rows.removeWhere(
-        (existing) => existing['region_code'] == record.regionCode);
+      (existing) => existing['region_code'] == record.regionCode,
+    );
     rows.add({
       'region_code': record.regionCode,
       'jurisdiction_chain_json': record.jurisdictionChainJson,
@@ -319,7 +321,8 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertLocaleResourceBundle(
-      LocaleResourceBundleRecord record) async {
+    LocaleResourceBundleRecord record,
+  ) async {
     final rows = await _load('locale_resource_bundle');
     rows.removeWhere(
       (existing) =>
@@ -373,9 +376,7 @@ class WebCdssDatabase implements CdssDatabase {
   @override
   Future<void> insertResolvedFact(ResolvedFactRecord record) async {
     final rows = await _load('resolved_fact');
-    rows.removeWhere(
-      (existing) => existing['fact_id'] == record.factId,
-    );
+    rows.removeWhere((existing) => existing['fact_id'] == record.factId);
     final row = {
       'fact_id': record.factId,
       'entity_key': record.entityKey,
@@ -508,7 +509,8 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record) async {
+    RecommendationAuditLogRecord record,
+  ) async {
     final rows = await _load('recommendation_audit_log');
     rows.removeWhere(
       (existing) => existing['rec_audit_id'] == record.recAuditId,
@@ -549,10 +551,12 @@ class WebCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {
+    SnapshotDistributionRecord record,
+  ) async {
     final rows = await _load('snapshot_distribution');
     rows.removeWhere(
-        (existing) => existing['distribution_id'] == record.distributionId);
+      (existing) => existing['distribution_id'] == record.distributionId,
+    );
     final row = {
       'distribution_id': record.distributionId,
       'snapshot_id': record.snapshotId,
@@ -588,10 +592,12 @@ class WebCdssDatabase implements CdssDatabase {
     final rows = await _load('cdss_record_history');
     final now = DateTime.now().millisecondsSinceEpoch;
     final historyId = '$tableName:$recordId:$versionId:$now';
-    for (final existing in rows.where((item) =>
-        item['table_name'] == tableName &&
-        item['record_id'] == recordId &&
-        item['retired_at'] == null)) {
+    for (final existing in rows.where(
+      (item) =>
+          item['table_name'] == tableName &&
+          item['record_id'] == recordId &&
+          item['retired_at'] == null,
+    )) {
       existing['superseded_by'] = historyId;
       existing['retired_at'] = now;
     }

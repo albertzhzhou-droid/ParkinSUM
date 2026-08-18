@@ -88,56 +88,62 @@ class ContributionSafetyRouter {
       // Generated build output committed.
       if (c.isGenerated || c.path.startsWith('build/')) {
         categories.add(ContributionRiskCategory.generatedOutput);
-        findings.add(_f(
-          ContributionRiskSeverity.warn,
-          ContributionRiskCategory.generatedOutput,
-          c.path,
-          'Generated build output appears in the diff; confirm it should be '
-          'committed and contains no sensitive content.',
-          review: 'Generated artifacts are usually not committed.',
-        ));
+        findings.add(
+          _f(
+            ContributionRiskSeverity.warn,
+            ContributionRiskCategory.generatedOutput,
+            c.path,
+            'Generated build output appears in the diff; confirm it should be '
+            'committed and contains no sensitive content.',
+            review: 'Generated artifacts are usually not committed.',
+          ),
+        );
       }
 
       // Keyword risk scanning over added content + pre-matched keywords.
-      final hay =
-          ('${c.addedContent}\n${c.matchedKeywords.join('\n')}').toLowerCase();
+      final hay = ('${c.addedContent}\n${c.matchedKeywords.join('\n')}')
+          .toLowerCase();
       _scan(
-          c,
-          hay,
-          _clinicalAdvicePhrases,
-          ContributionRiskCategory.clinicalAdviceRisk,
-          categories,
-          findings,
-          'Possible clinical-advice phrasing.',
-          'Replace with non-prescriptive, scanner-safe boundary text.');
+        c,
+        hay,
+        _clinicalAdvicePhrases,
+        ContributionRiskCategory.clinicalAdviceRisk,
+        categories,
+        findings,
+        'Possible clinical-advice phrasing.',
+        'Replace with non-prescriptive, scanner-safe boundary text.',
+      );
       _scan(
-          c,
-          hay,
-          _medicalClaimPhrases,
-          ContributionRiskCategory.medicalClaimRisk,
-          categories,
-          findings,
-          'Possible unsupported medical/clinical claim.',
-          'Use "not clinically calibrated" / "carries no clinical-validation '
-              'claim" instead.');
+        c,
+        hay,
+        _medicalClaimPhrases,
+        ContributionRiskCategory.medicalClaimRisk,
+        categories,
+        findings,
+        'Possible unsupported medical/clinical claim.',
+        'Use "not clinically calibrated" / "carries no clinical-validation '
+            'claim" instead.',
+      );
       _scan(
-          c,
-          hay,
-          _secretPhrases,
-          ContributionRiskCategory.secretRisk,
-          categories,
-          findings,
-          'Possible secret/credential material.',
-          'Remove the secret; never commit credentials.');
+        c,
+        hay,
+        _secretPhrases,
+        ContributionRiskCategory.secretRisk,
+        categories,
+        findings,
+        'Possible secret/credential material.',
+        'Remove the secret; never commit credentials.',
+      );
       _scan(
-          c,
-          hay,
-          _phiPhrases,
-          ContributionRiskCategory.phiRisk,
-          categories,
-          findings,
-          'Possible PHI-like field/value.',
-          'Use synthetic/demo data only; never commit patient data.');
+        c,
+        hay,
+        _phiPhrases,
+        ContributionRiskCategory.phiRisk,
+        categories,
+        findings,
+        'Possible PHI-like field/value.',
+        'Use synthetic/demo data only; never commit patient data.',
+      );
       _scanSourceAccess(c, hay, categories, findings);
     }
 
@@ -148,15 +154,21 @@ class ContributionSafetyRouter {
     // Apply strict escalation (WARN → BLOCKER) deterministically.
     final escalated = config.strictMode
         ? findings
-            .map((f) => f.severity == ContributionRiskSeverity.warn
-                ? _f(ContributionRiskSeverity.blocker, f.category, f.path,
-                    f.message,
-                    line: f.line,
-                    matched: f.matchedText,
-                    review: f.suggestedReview,
-                    command: f.requiredCommand)
-                : f)
-            .toList()
+              .map(
+                (f) => f.severity == ContributionRiskSeverity.warn
+                    ? _f(
+                        ContributionRiskSeverity.blocker,
+                        f.category,
+                        f.path,
+                        f.message,
+                        line: f.line,
+                        matched: f.matchedText,
+                        review: f.suggestedReview,
+                        command: f.requiredCommand,
+                      )
+                    : f,
+              )
+              .toList()
         : findings;
 
     final counts = <String, int>{
@@ -173,8 +185,7 @@ class ContributionSafetyRouter {
     final requiredCommands = <String>{
       for (final item in checklist)
         if (item.required) ...item.relatedCommands,
-    }.toList()
-      ..sort();
+    }.toList()..sort();
     final labels = _labels(categories)..sort();
 
     return ContributionSafetyReport(
@@ -229,8 +240,9 @@ class ContributionSafetyRouter {
         p == 'lib/domain/usecases/gastric_emptying_model.dart' ||
         p == 'lib/domain/usecases/amino_acid_competition_model.dart' ||
         p == 'lib/domain/usecases/levodopa_absorption_opportunity_model.dart' ||
-        RegExp(r'lib/domain/entities/(gastric_|amino_acid_|absorption_)')
-            .hasMatch(p)) {
+        RegExp(
+          r'lib/domain/entities/(gastric_|amino_acid_|absorption_)',
+        ).hasMatch(p)) {
       cats.add(ContributionRiskCategory.mechanisticModel);
       // Replay runner / source-quality report also tagged below.
       if (p.contains('replay')) {
@@ -294,6 +306,29 @@ class ContributionSafetyRouter {
 
   // --- keyword scanning -----------------------------------------------------
 
+  /// Whole-token phrase match.
+  ///
+  /// A plain `contains` produced false positives on identifiers that merely
+  /// embed a phrase: the scoring feature `medication_schedule_fit` matched the
+  /// `medication_schedule` PHI phrase, and `mrna` matched `mrn`. Boundaries
+  /// treat `_` and alphanumerics as word characters, so snake_case identifiers
+  /// only match when the phrase is the complete token.
+  ///
+  /// Deliberately narrow: it removes substring noise without weakening any
+  /// real match — `medication_schedule: ...` and `mrn: ...` still fire.
+  static final Map<String, RegExp> _phraseMatchers = {};
+
+  bool _containsPhrase(String hay, String phrase) {
+    final matcher = _phraseMatchers.putIfAbsent(
+      phrase,
+      () => RegExp(
+        '(?<![A-Za-z0-9_])${RegExp.escape(phrase)}(?![A-Za-z0-9_])',
+        caseSensitive: false,
+      ),
+    );
+    return matcher.hasMatch(hay);
+  }
+
   void _scan(
     ContributionChange c,
     String hay,
@@ -305,20 +340,22 @@ class ContributionSafetyRouter {
     String review,
   ) {
     for (final phrase in phrases) {
-      if (hay.contains(phrase)) {
+      if (_containsPhrase(hay, phrase)) {
         categories.add(category);
-        findings.add(_f(
-          c.allowlisted
-              ? ContributionRiskSeverity.info
-              : ContributionRiskSeverity.blocker,
-          category,
-          c.path,
-          c.allowlisted
-              ? '$message (allowlisted detector/scanner file — informational).'
-              : message,
-          matched: phrase,
-          review: review,
-        ));
+        findings.add(
+          _f(
+            c.allowlisted
+                ? ContributionRiskSeverity.info
+                : ContributionRiskSeverity.blocker,
+            category,
+            c.path,
+            c.allowlisted
+                ? '$message (allowlisted detector/scanner file — informational).'
+                : message,
+            matched: phrase,
+            review: review,
+          ),
+        );
         return; // one finding per category per change is enough.
       }
     }
@@ -333,19 +370,22 @@ class ContributionSafetyRouter {
     for (final phrase in _sourceAccessPhrases) {
       if (hay.contains(phrase)) {
         categories.add(ContributionRiskCategory.sourceAccessRisk);
-        findings.add(_f(
-          ContributionRiskSeverity.warn,
-          ContributionRiskCategory.sourceAccessRisk,
-          c.path,
-          c.allowlisted
-              ? 'Possible source-access claim (allowlisted file — informational).'
-              : 'Possible source-access / production-readiness claim; confirm '
-                  'it matches the source-access registry.',
-          matched: phrase,
-          review: 'Fixture-only sources must not be described as '
-              'production-ready.',
-          command: 'npm run source:access',
-        ));
+        findings.add(
+          _f(
+            ContributionRiskSeverity.warn,
+            ContributionRiskCategory.sourceAccessRisk,
+            c.path,
+            c.allowlisted
+                ? 'Possible source-access claim (allowlisted file — informational).'
+                : 'Possible source-access / production-readiness claim; confirm '
+                      'it matches the source-access registry.',
+            matched: phrase,
+            review:
+                'Fixture-only sources must not be described as '
+                'production-ready.',
+            command: 'npm run source:access',
+          ),
+        );
         return;
       }
     }
@@ -354,7 +394,9 @@ class ContributionSafetyRouter {
   // --- risk level -----------------------------------------------------------
 
   String _riskLevel(
-      Set<String> categories, List<ContributionRiskFinding> findings) {
+    Set<String> categories,
+    List<ContributionRiskFinding> findings,
+  ) {
     var level = ContributionRiskLevel.low;
     if (findings.any((f) => f.severity == ContributionRiskSeverity.blocker)) {
       return ContributionRiskLevel.blocker;
@@ -408,156 +450,189 @@ class ContributionSafetyRouter {
     void add(ContributionReviewChecklistItem i) => items[i.id] = i;
 
     // Universal boundary item.
-    add(const ContributionReviewChecklistItem(
-      id: 'boundary_no_phi_no_advice',
-      category: 'all',
-      required: true,
-      text: 'Confirm no PHI, no real patient data, no medical advice, and no '
-          'clinical-calibration claim.',
-      blockingIfMissing: true,
-      relatedCommands: [
-        'npm run public:preflight',
-        'npm run privacy:preflight'
-      ],
-    ));
+    add(
+      const ContributionReviewChecklistItem(
+        id: 'boundary_no_phi_no_advice',
+        category: 'all',
+        required: true,
+        text:
+            'Confirm no PHI, no real patient data, no medical advice, and no '
+            'clinical-calibration claim.',
+        blockingIfMissing: true,
+        relatedCommands: [
+          'npm run public:preflight',
+          'npm run privacy:preflight',
+        ],
+      ),
+    );
 
     for (final cat in categories) {
       switch (cat) {
         case ContributionRiskCategory.docsOnly:
-          add(const ContributionReviewChecklistItem(
-            id: 'docs_no_unsupported_claim',
-            category: ContributionRiskCategory.docsOnly,
-            required: true,
-            text:
-                'Confirm no unsupported medical/clinical claim and that links '
-                'are accurate.',
-            relatedCommands: ['npm run public:preflight'],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'docs_no_unsupported_claim',
+              category: ContributionRiskCategory.docsOnly,
+              required: true,
+              text:
+                  'Confirm no unsupported medical/clinical claim and that links '
+                  'are accurate.',
+              relatedCommands: ['npm run public:preflight'],
+            ),
+          );
           break;
         case ContributionRiskCategory.testOnly:
-          add(const ContributionReviewChecklistItem(
-            id: 'tests_synthetic_only',
-            category: ContributionRiskCategory.testOnly,
-            required: true,
-            text: 'Confirm fixtures are synthetic only (no PHI, no secrets).',
-            relatedCommands: ['flutter test --concurrency=1'],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'tests_synthetic_only',
+              category: ContributionRiskCategory.testOnly,
+              required: true,
+              text: 'Confirm fixtures are synthetic only (no PHI, no secrets).',
+              relatedCommands: ['flutter test --concurrency=1'],
+            ),
+          );
           break;
         case ContributionRiskCategory.mechanisticModel:
-          add(const ContributionReviewChecklistItem(
-            id: 'mechanistic_assumptions_sourced',
-            category: ContributionRiskCategory.mechanisticModel,
-            required: true,
-            text: 'Confirm no clinical-calibration claim and that all '
-                'assumptions carry sourceRefs / limitations.',
-            blockingIfMissing: true,
-            relatedCommands: [
-              'flutter test --concurrency=1',
-              'dart run tool/run_mechanistic_replay.dart',
-              'npm run scenario:fuzz',
-            ],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'mechanistic_assumptions_sourced',
+              category: ContributionRiskCategory.mechanisticModel,
+              required: true,
+              text:
+                  'Confirm no clinical-calibration claim and that all '
+                  'assumptions carry sourceRefs / limitations.',
+              blockingIfMissing: true,
+              relatedCommands: [
+                'flutter test --concurrency=1',
+                'dart run tool/run_mechanistic_replay.dart',
+                'npm run scenario:fuzz',
+              ],
+            ),
+          );
           break;
         case ContributionRiskCategory.importer:
-          add(const ContributionReviewChecklistItem(
-            id: 'importer_status_honest',
-            category: ContributionRiskCategory.importer,
-            required: true,
-            text: 'Confirm fixture/live/production status is honest and no raw '
-                'private export is committed.',
-            relatedCommands: [
-              'npm run source:access',
-              'npm run privacy:preflight',
-            ],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'importer_status_honest',
+              category: ContributionRiskCategory.importer,
+              required: true,
+              text:
+                  'Confirm fixture/live/production status is honest and no raw '
+                  'private export is committed.',
+              relatedCommands: [
+                'npm run source:access',
+                'npm run privacy:preflight',
+              ],
+            ),
+          );
           break;
         case ContributionRiskCategory.localizationCopy:
-          add(const ContributionReviewChecklistItem(
-            id: 'localization_non_prescriptive',
-            category: ContributionRiskCategory.localizationCopy,
-            required: true,
-            text: 'Confirm localized text stays non-prescriptive and keeps the '
-                'safety meaning.',
-            relatedCommands: ['npm run localization:lint'],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'localization_non_prescriptive',
+              category: ContributionRiskCategory.localizationCopy,
+              required: true,
+              text:
+                  'Confirm localized text stays non-prescriptive and keeps the '
+                  'safety meaning.',
+              relatedCommands: ['npm run localization:lint'],
+            ),
+          );
           break;
         case ContributionRiskCategory.firebaseRules:
         case ContributionRiskCategory.securitySensitive:
-          add(const ContributionReviewChecklistItem(
-            id: 'security_gates',
-            category: ContributionRiskCategory.securitySensitive,
-            required: true,
-            text: 'Run the public + privacy preflights and the Firestore rules '
-                'contract.',
-            blockingIfMissing: true,
-            relatedCommands: [
-              'npm run public:preflight',
-              'npm run privacy:preflight',
-              'node tool/firestore_rules_contract_check.mjs',
-            ],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'security_gates',
+              category: ContributionRiskCategory.securitySensitive,
+              required: true,
+              text:
+                  'Run the public + privacy preflights and the Firestore rules '
+                  'contract.',
+              blockingIfMissing: true,
+              relatedCommands: [
+                'npm run public:preflight',
+                'npm run privacy:preflight',
+                'node tool/firestore_rules_contract_check.mjs',
+              ],
+            ),
+          );
           break;
         case ContributionRiskCategory.sourceMetadata:
-          add(const ContributionReviewChecklistItem(
-            id: 'source_metadata_checks',
-            category: ContributionRiskCategory.sourceMetadata,
-            required: true,
-            text: 'Confirm sourceRefs resolve; run source-quality and '
-                'source-access/drift checks.',
-            relatedCommands: [
-              'npm run source:quality',
-              'npm run source:access',
-              'npm run source:drift',
-            ],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'source_metadata_checks',
+              category: ContributionRiskCategory.sourceMetadata,
+              required: true,
+              text:
+                  'Confirm sourceRefs resolve; run source-quality and '
+                  'source-access/drift checks.',
+              relatedCommands: [
+                'npm run source:quality',
+                'npm run source:access',
+                'npm run source:drift',
+              ],
+            ),
+          );
           break;
         case ContributionRiskCategory.evidenceArtifact:
         case ContributionRiskCategory.replayScenario:
         case ContributionRiskCategory.releaseGovernance:
-          add(const ContributionReviewChecklistItem(
-            id: 'evidence_artifacts_regenerated',
-            category: ContributionRiskCategory.evidenceArtifact,
-            required: true,
-            text: 'Regenerate the release snapshot / evidence graph / demo '
-                'walkthrough as needed.',
-            relatedCommands: [
-              'npm run release:snapshot',
-              'npm run evidence:graph',
-              'npm run demo:walkthrough',
-            ],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'evidence_artifacts_regenerated',
+              category: ContributionRiskCategory.evidenceArtifact,
+              required: true,
+              text:
+                  'Regenerate the release snapshot / evidence graph / demo '
+                  'walkthrough as needed.',
+              relatedCommands: [
+                'npm run release:snapshot',
+                'npm run evidence:graph',
+                'npm run demo:walkthrough',
+              ],
+            ),
+          );
           break;
         case ContributionRiskCategory.secretRisk:
-          add(const ContributionReviewChecklistItem(
-            id: 'remove_secrets',
-            category: ContributionRiskCategory.secretRisk,
-            required: true,
-            text: 'Remove any secret/credential material before merge.',
-            blockingIfMissing: true,
-            relatedCommands: ['npm run privacy:preflight'],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'remove_secrets',
+              category: ContributionRiskCategory.secretRisk,
+              required: true,
+              text: 'Remove any secret/credential material before merge.',
+              blockingIfMissing: true,
+              relatedCommands: ['npm run privacy:preflight'],
+            ),
+          );
           break;
         case ContributionRiskCategory.phiRisk:
-          add(const ContributionReviewChecklistItem(
-            id: 'remove_phi',
-            category: ContributionRiskCategory.phiRisk,
-            required: true,
-            text: 'Remove any PHI-like fixture data; use synthetic data only.',
-            blockingIfMissing: true,
-            relatedCommands: ['npm run privacy:preflight'],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'remove_phi',
+              category: ContributionRiskCategory.phiRisk,
+              required: true,
+              text:
+                  'Remove any PHI-like fixture data; use synthetic data only.',
+              blockingIfMissing: true,
+              relatedCommands: ['npm run privacy:preflight'],
+            ),
+          );
           break;
         case ContributionRiskCategory.medicalClaimRisk:
         case ContributionRiskCategory.clinicalAdviceRisk:
-          add(const ContributionReviewChecklistItem(
-            id: 'remove_clinical_advice',
-            category: ContributionRiskCategory.clinicalAdviceRisk,
-            required: true,
-            text: 'Replace clinical-advice/claim phrasing with scanner-safe '
-                'boundary text.',
-            blockingIfMissing: true,
-            relatedCommands: ['npm run public:preflight'],
-          ));
+          add(
+            const ContributionReviewChecklistItem(
+              id: 'remove_clinical_advice',
+              category: ContributionRiskCategory.clinicalAdviceRisk,
+              required: true,
+              text:
+                  'Replace clinical-advice/claim phrasing with scanner-safe '
+                  'boundary text.',
+              blockingIfMissing: true,
+              relatedCommands: ['npm run public:preflight'],
+            ),
+          );
           break;
         default:
           break;
@@ -635,18 +710,17 @@ class ContributionSafetyRouter {
     String matched = '',
     String review = '',
     String command = '',
-  }) =>
-      ContributionRiskFinding(
-        severity: severity,
-        category: category,
-        path: path,
-        line: line,
-        message: message,
-        matchedText: matched,
-        suggestedReview: review,
-        requiredCommand: command,
-        safetyBoundary: _safetyBoundary,
-      );
+  }) => ContributionRiskFinding(
+    severity: severity,
+    category: category,
+    path: path,
+    line: line,
+    message: message,
+    matchedText: matched,
+    suggestedReview: review,
+    requiredCommand: command,
+    safetyBoundary: _safetyBoundary,
+  );
 }
 
 /// Deterministic JSON encoder.
@@ -658,16 +732,20 @@ String renderContributionSafetyMarkdown(ContributionSafetyReport r) {
   final b = StringBuffer()
     ..writeln('# ParkinSUM Contribution Safety Router')
     ..writeln()
-    ..writeln('Educational/research prototype. **Deterministic '
-        'repository-governance routing only — not AI code review, not a '
-        'medical/legal reviewer, and does not replace human review.**')
+    ..writeln(
+      'Educational/research prototype. **Deterministic '
+      'repository-governance routing only — not AI code review, not a '
+      'medical/legal reviewer, and does not replace human review.**',
+    )
     ..writeln()
     ..writeln('- changed files: ${r.changeCount}')
     ..writeln('- risk level: ${r.riskLevel}')
     ..writeln('- categories: ${r.categories.join(', ')}')
-    ..writeln('- info: ${r.counts['info'] ?? 0} · '
-        'warn: ${r.counts['warn'] ?? 0} · '
-        'blocker: ${r.blockerCount}')
+    ..writeln(
+      '- info: ${r.counts['info'] ?? 0} · '
+      'warn: ${r.counts['warn'] ?? 0} · '
+      'blocker: ${r.blockerCount}',
+    )
     ..writeln('- pass (0 blocker): ${r.pass}')
     ..writeln('- suggested labels: ${r.suggestedLabels.join(', ')}')
     ..writeln();

@@ -136,8 +136,9 @@ class Services {
         .map(
           (food) => FoodConceptRecord(
             foodConceptId: 'FOOD_${food.id.toUpperCase()}',
-            canonicalNameEn:
-                food.aliases.isEmpty ? food.name : food.aliases.first,
+            canonicalNameEn: food.aliases.isEmpty
+                ? food.name
+                : food.aliases.first,
             canonicalNameZh: food.name,
             foodGroup: food.category.name,
           ),
@@ -166,7 +167,8 @@ class Services {
   }
 
   static List<DrugConceptRecord> _buildDrugConcepts(
-      List<DrugDefinition> drugs) {
+    List<DrugDefinition> drugs,
+  ) {
     return drugs
         .map(
           (drug) => DrugConceptRecord(
@@ -179,7 +181,8 @@ class Services {
   }
 
   static List<DrugProductVariantRecord> _buildDrugVariants(
-      List<DrugDefinition> drugs) {
+    List<DrugDefinition> drugs,
+  ) {
     return drugs
         .map(
           (drug) => DrugProductVariantRecord(
@@ -202,8 +205,9 @@ class Services {
   }
 
   factory Services.createDefault() {
-    final AuthService auth =
-        FirebaseBackend.enabled ? FirebaseAuthService() : LocalAuthService();
+    final AuthService auth = FirebaseBackend.enabled
+        ? FirebaseAuthService()
+        : LocalAuthService();
     final appDatabase = FirebaseBackend.enabled
         ? FirestoreAppDatabase(authService: auth)
         : createAppDatabase();
@@ -215,8 +219,9 @@ class Services {
     final medRepo = MedicationRepository.createDefault();
 
     final localDataSource = AppLocalDataSource(database: appDatabase);
-    final AppRepository appRepository =
-        AppRepositoryImpl(local: localDataSource);
+    final AppRepository appRepository = AppRepositoryImpl(
+      local: localDataSource,
+    );
     final userData = UserDataService(repository: appRepository);
     final userClinicalAudit = UserClinicalAuditService(authService: auth);
 
@@ -251,14 +256,15 @@ class Services {
       importedLabelRuleProvider: importedLabelRuleProvider,
       foodRepository: foodRepo,
     );
-    final cdssCatalogProjectionService =
-        CdssCatalogProjectionService(database: cdssDatabase);
+    final cdssCatalogProjectionService = CdssCatalogProjectionService(
+      database: cdssDatabase,
+    );
     final nextMealRecommendationOrchestrator =
         NextMealRecommendationOrchestrator(
-      conservativeRecommender: GetFoodRecommendationsUseCase(),
-      projectionService: cdssCatalogProjectionService,
-      localAiAdapter: LocalAiRecommendationAdapter(),
-    );
+          conservativeRecommender: GetFoodRecommendationsUseCase(),
+          projectionService: cdssCatalogProjectionService,
+          localAiAdapter: LocalAiRecommendationAdapter(),
+        );
     final recommendationReplayRunner = RecommendationReplayRunner(
       hybridOrchestrator: nextMealRecommendationOrchestrator,
       deterministicOrchestrator: NextMealRecommendationOrchestrator(

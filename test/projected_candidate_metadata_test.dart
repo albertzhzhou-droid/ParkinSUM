@@ -18,44 +18,44 @@ import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orc
 void main() {
   // A rich, official-style projected food (USDA food-composition table).
   FoodItem projectedUsda(String id, {String jurisdiction = 'US'}) => FoodItem(
-        id: id,
-        name: 'projected official food',
-        category: FoodCategory.protein,
-        sourceSystem: 'USDA_FDC',
-        sourceFoodCode: '173688',
-        jurisdiction: jurisdiction,
-        proteinG: 26,
-        carbsG: 0,
-        fatG: 5,
-        fiberG: 0,
-        sodiumMg: 70,
-        energyKcal: 200,
-        basisType: 'per_100g',
-        aminoAcidProfile: const AminoAcidProfile(leucine: 2.1, valine: 1.3),
-      );
+    id: id,
+    name: 'projected official food',
+    category: FoodCategory.protein,
+    sourceSystem: 'USDA_FDC',
+    sourceFoodCode: '173688',
+    jurisdiction: jurisdiction,
+    proteinG: 26,
+    carbsG: 0,
+    fatG: 5,
+    fiberG: 0,
+    sodiumMg: 70,
+    energyKcal: 200,
+    basisType: 'per_100g',
+    aminoAcidProfile: const AminoAcidProfile(leucine: 2.1, valine: 1.3),
+  );
 
   // A poor seed food sharing the same id (would win under the old putIfAbsent).
   FoodItem seedDuplicate(String id) => FoodItem(
-        id: id,
-        name: 'seed food',
-        category: FoodCategory.protein,
-        sourceSystem: 'LOCAL_SEED',
-        jurisdiction: 'GLOBAL',
-        proteinG: 0,
-        carbsG: 0,
-        fatG: 0,
-        fiberG: 0,
-        sodiumMg: 0,
-        missingNutrientFields: const {
-          'proteinG',
-          'carbsG',
-          'fatG',
-          'fiberG',
-          'sodiumMg',
-          'energyKcal',
-          'waterG',
-        },
-      );
+    id: id,
+    name: 'seed food',
+    category: FoodCategory.protein,
+    sourceSystem: 'LOCAL_SEED',
+    jurisdiction: 'GLOBAL',
+    proteinG: 0,
+    carbsG: 0,
+    fatG: 0,
+    fiberG: 0,
+    sodiumMg: 0,
+    missingNutrientFields: const {
+      'proteinG',
+      'carbsG',
+      'fatG',
+      'fiberG',
+      'sodiumMg',
+      'energyKcal',
+      'waterG',
+    },
+  );
 
   NextMealRecommendationRequest requestWithWindow() {
     final now = DateTime.utc(2026, 1, 1, 8);
@@ -101,8 +101,9 @@ void main() {
   test('projected food metadata reaches MechanisticNextMealScorer', () async {
     final orchestrator = NextMealRecommendationOrchestrator(
       conservativeRecommender: GetFoodRecommendationsUseCase(),
-      projectionService:
-          _FakeProjectionService([projectedUsda('food_official')]),
+      projectionService: _FakeProjectionService([
+        projectedUsda('food_official'),
+      ]),
       localAiAdapter: null,
     );
 
@@ -113,8 +114,9 @@ void main() {
 
     final scores = result.mechanisticCandidateScores;
     expect(scores, isNotNull);
-    final official =
-        scores!.firstWhere((s) => s.candidateFoodId == 'food_official');
+    final official = scores!.firstWhere(
+      (s) => s.candidateFoodId == 'food_official',
+    );
     // The projected source system + real provenance/completeness reached the
     // scorer — NOT the neutral 0.5 defaults used when metadata is absent.
     expect(official.sourceSystem, 'USDA_FDC');
@@ -124,8 +126,7 @@ void main() {
     expect(official.sourceAuthorityScore, greaterThan(0.3));
   });
 
-  test(
-      'duplicate seed/projected food id prefers the richer official/projected '
+  test('duplicate seed/projected food id prefers the richer official/projected '
       'metadata for mechanistic scoring', () async {
     final orchestrator = NextMealRecommendationOrchestrator(
       conservativeRecommender: GetFoodRecommendationsUseCase(),

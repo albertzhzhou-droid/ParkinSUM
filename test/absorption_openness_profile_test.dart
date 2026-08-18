@@ -20,17 +20,19 @@ void main() {
   final competition = AminoAcidCompetitionModel();
 
   MedicationTimelineEvent medEvent(String releaseType) {
-    final v = validator.validate(RawMedicationEntry(
-      activeIngredients: const ['carbidopa', 'levodopa'],
-      drugProductVariant: 'synthetic:demo',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: releaseType,
-      jurisdiction: 'US',
-      sourceDocId: 'synthetic:demo',
-    ));
+    final v = validator.validate(
+      RawMedicationEntry(
+        activeIngredients: const ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: releaseType,
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    );
     return MedicationTimelineEvent(id: 'm', minute: 60, context: v.normalized!);
   }
 
@@ -50,8 +52,10 @@ void main() {
     expect(erLen, greaterThan(irLen)); // longer
 
     // Flatter: ER sustains a higher tail openness at the window end than IR.
-    expect(er.opennessProfile.last.openness,
-        greaterThan(ir.opennessProfile.last.openness));
+    expect(
+      er.opennessProfile.last.openness,
+      greaterThan(ir.opennessProfile.last.openness),
+    );
     // Sharper IR: its peak openness exceeds ER's peak openness.
     expect(ir.peakOpenness, greaterThan(er.peakOpenness));
   });
@@ -75,12 +79,20 @@ void main() {
         ),
       ],
     );
-    final profile =
-        emptying.build(mealId: 'c', mealStartMinute: 0, composition: comp);
+    final profile = emptying.build(
+      mealId: 'c',
+      mealStartMinute: 0,
+      composition: comp,
+    );
     final med = MedicationTimelineEvent(
-        id: 'm', minute: 30, context: medEvent('immediate').context);
-    final window =
-        absorption.build(medication: med, overlappingMealProfile: profile);
+      id: 'm',
+      minute: 30,
+      context: medEvent('immediate').context,
+    );
+    final window = absorption.build(
+      medication: med,
+      overlappingMealProfile: profile,
+    );
     expect(window.opennessProfile, isNotEmpty);
 
     final weighted = competition.build(
@@ -110,8 +122,10 @@ void main() {
       mealStartMinute: 0,
     );
 
-    expect(weighted.overlapWithAbsorptionWindow,
-        isNot(closeTo(flat.overlapWithAbsorptionWindow, 1e-6)));
+    expect(
+      weighted.overlapWithAbsorptionWindow,
+      isNot(closeTo(flat.overlapWithAbsorptionWindow, 1e-6)),
+    );
     expect(
       weighted.assumptions.any((a) => a.contains('openness_weighted_overlap')),
       isTrue,

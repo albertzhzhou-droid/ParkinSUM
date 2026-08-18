@@ -56,15 +56,15 @@ class EvidenceReferenceDetail {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_ref': sourceRef,
-        'title': title,
-        'pmid': pmid,
-        'doi': doi,
-        'source_url': sourceUrl,
-        'publication': publication,
-        'evidence_kind': evidenceKind,
-        'source_family': sourceFamily,
-      };
+    'source_ref': sourceRef,
+    'title': title,
+    'pmid': pmid,
+    'doi': doi,
+    'source_url': sourceUrl,
+    'publication': publication,
+    'evidence_kind': evidenceKind,
+    'source_family': sourceFamily,
+  };
 }
 
 class RuntimeAlert {
@@ -91,17 +91,16 @@ class RuntimeAlert {
   });
 
   Map<String, dynamic> toJson() => {
-        'target': target,
-        'decision': decision.wireValue,
-        'severity': severity,
-        'explanation': explanation,
-        'actions': actions,
-        'evidence_sources': evidenceSources,
-        'evidence_details': evidenceDetails,
-        'evidence_records':
-            evidenceRecords.map((item) => item.toJson()).toList(),
-        'rule_ids': ruleIds,
-      };
+    'target': target,
+    'decision': decision.wireValue,
+    'severity': severity,
+    'explanation': explanation,
+    'actions': actions,
+    'evidence_sources': evidenceSources,
+    'evidence_details': evidenceDetails,
+    'evidence_records': evidenceRecords.map((item) => item.toJson()).toList(),
+    'rule_ids': ruleIds,
+  };
 }
 
 class RuntimeAuditEntry {
@@ -134,20 +133,19 @@ class RuntimeAuditEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'target': target,
-        'decision': decision.wireValue,
-        'winning_rule_ids': winningRuleIds,
-        'suppressed_rule_ids': suppressedRuleIds,
-        'source_doc_refs': sourceDocRefs,
-        'evidence_details': evidenceDetails,
-        'evidence_records':
-            evidenceRecords.map((item) => item.toJson()).toList(),
-        'input_hash': inputHash,
-        'decision_reason': decisionReason,
-        'machine_actions': machineActions,
-        'human_message': humanMessage,
-        'needs_human_review': needsHumanReview,
-      };
+    'target': target,
+    'decision': decision.wireValue,
+    'winning_rule_ids': winningRuleIds,
+    'suppressed_rule_ids': suppressedRuleIds,
+    'source_doc_refs': sourceDocRefs,
+    'evidence_details': evidenceDetails,
+    'evidence_records': evidenceRecords.map((item) => item.toJson()).toList(),
+    'input_hash': inputHash,
+    'decision_reason': decisionReason,
+    'machine_actions': machineActions,
+    'human_message': humanMessage,
+    'needs_human_review': needsHumanReview,
+  };
 }
 
 class EngineRunOutput {
@@ -157,11 +155,21 @@ class EngineRunOutput {
   final List<RuntimeAlert> alerts;
   final List<RuntimeAuditEntry> auditEntries;
 
+  /// The run projected into the documented `RuleExplanation` audit contract —
+  /// one row per registry rule, including the rules that did *not* fire.
+  ///
+  /// Serialized form only, so this entity file stays a dependency-free leaf.
+  /// Build it with `projectRuleExplanations` in
+  /// `lib/domain/usecases/rule_explanation_projection.dart`; each map is a
+  /// `RuleExplanation.toJson()`.
+  final List<Map<String, dynamic>> ruleExplanationsJson;
+
   const EngineRunOutput({
     required this.alertsJson,
     required this.humanReadableMarkdown,
     required this.auditLogJsonl,
     required this.alerts,
     required this.auditEntries,
+    this.ruleExplanationsJson = const <Map<String, dynamic>>[],
   });
 }

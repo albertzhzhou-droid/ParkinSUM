@@ -36,18 +36,20 @@ void main() {
       );
 
   group('SourceAuthorityScorer policy', () {
-    test('official food-composition table in-jurisdiction outranks synthetic',
-        () {
-      final official = authority.score(
-        source(SourceAuthorityTier.foodCompositionTable, 'US'),
-        userJurisdictionChain: const ['US'],
-      );
-      final synthetic = authority.score(
-        source(SourceAuthorityTier.syntheticDemo, 'US'),
-        userJurisdictionChain: const ['US'],
-      );
-      expect(official, greaterThan(synthetic));
-    });
+    test(
+      'official food-composition table in-jurisdiction outranks synthetic',
+      () {
+        final official = authority.score(
+          source(SourceAuthorityTier.foodCompositionTable, 'US'),
+          userJurisdictionChain: const ['US'],
+        );
+        final synthetic = authority.score(
+          source(SourceAuthorityTier.syntheticDemo, 'US'),
+          userJurisdictionChain: const ['US'],
+        );
+        expect(official, greaterThan(synthetic));
+      },
+    );
 
     test('out-of-jurisdiction official is retained but downgraded', () {
       final inJur = authority.score(
@@ -117,62 +119,65 @@ void main() {
     );
 
     test(
-        'official-in-jurisdiction candidate scores >= synthetic, all else equal',
-        () {
-      final v = validator.validate(const RawMedicationEntry(
-        activeIngredients: ['carbidopa', 'levodopa'],
-        drugProductVariant: 'synthetic:demo',
-        strength: 100,
-        unit: 'mg',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        jurisdiction: 'US',
-        sourceDocId: 'synthetic:demo',
-      ));
-      final now = DateTime.utc(2026, 1, 1, 8);
-      final ctx = builder.build(
-        now: now,
-        medicationInputs: [
-          MedicationTimelineInput(
-            id: 'm',
-            takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v,
-          ),
-        ],
-        mealInputs: const [],
-        userDefinedWindow: UserDefinedMealWindow(
-          window: TimelineWindow(
-            startMinute: dateTimeToMinute(now) + 60,
-            endMinute: dateTimeToMinute(now) + 120,
-          ),
-          source: 'test',
-        ),
-      );
-      final scores = scorer.score(
-        baseContext: ctx,
-        baseMealCompositionsById: const {},
-        candidates: const [a, b],
-        candidateMetadata: const {
-          'a': CandidateMetadata(
-            completeness: 1.0,
-            authorityScore: 0.7,
-            jurisdictionMatchScore: 1.0,
-            provenanceQuality: 0.9,
+      'official-in-jurisdiction candidate scores >= synthetic, all else equal',
+      () {
+        final v = validator.validate(
+          const RawMedicationEntry(
+            activeIngredients: ['carbidopa', 'levodopa'],
+            drugProductVariant: 'synthetic:demo',
+            strength: 100,
+            unit: 'mg',
+            form: 'tablet',
+            route: 'oral',
+            releaseType: 'immediate',
             jurisdiction: 'US',
+            sourceDocId: 'synthetic:demo',
           ),
-          'b': CandidateMetadata(
-            completeness: 1.0,
-            authorityScore: 0.1,
-            jurisdictionMatchScore: 0.2,
-            provenanceQuality: 0.1,
-            jurisdiction: 'US',
+        );
+        final now = DateTime.utc(2026, 1, 1, 8);
+        final ctx = builder.build(
+          now: now,
+          medicationInputs: [
+            MedicationTimelineInput(
+              id: 'm',
+              takenAt: now.add(const Duration(minutes: 30)),
+              medicationContext: v,
+            ),
+          ],
+          mealInputs: const [],
+          userDefinedWindow: UserDefinedMealWindow(
+            window: TimelineWindow(
+              startMinute: dateTimeToMinute(now) + 60,
+              endMinute: dateTimeToMinute(now) + 120,
+            ),
+            source: 'test',
           ),
-        },
-      );
-      final sa = scores.firstWhere((s) => s.candidateFoodId == 'a');
-      final sb = scores.firstWhere((s) => s.candidateFoodId == 'b');
-      expect(sa.finalCandidateScore, greaterThan(sb.finalCandidateScore));
-    });
+        );
+        final scores = scorer.score(
+          baseContext: ctx,
+          baseMealCompositionsById: const {},
+          candidates: const [a, b],
+          candidateMetadata: const {
+            'a': CandidateMetadata(
+              completeness: 1.0,
+              authorityScore: 0.7,
+              jurisdictionMatchScore: 1.0,
+              provenanceQuality: 0.9,
+              jurisdiction: 'US',
+            ),
+            'b': CandidateMetadata(
+              completeness: 1.0,
+              authorityScore: 0.1,
+              jurisdictionMatchScore: 0.2,
+              provenanceQuality: 0.1,
+              jurisdiction: 'US',
+            ),
+          },
+        );
+        final sa = scores.firstWhere((s) => s.candidateFoodId == 'a');
+        final sb = scores.firstWhere((s) => s.candidateFoodId == 'b');
+        expect(sa.finalCandidateScore, greaterThan(sb.finalCandidateScore));
+      },
+    );
   });
 }

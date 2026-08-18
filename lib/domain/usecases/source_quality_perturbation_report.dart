@@ -82,29 +82,29 @@ class SourceQualityPerturbationRow {
   });
 
   Map<String, dynamic> toJson() => {
-        'case_id': caseId,
-        'input_changed': inputChanged,
-        'source_system': sourceSystem,
-        'jurisdiction_match': jurisdictionMatch,
-        'source_authority_score': sourceAuthorityScore,
-        'metadata_completeness': metadataCompleteness,
-        'metadata_completeness_score': metadataCompleteness,
-        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
-        'nutrient_confidence_tier': nutrientConfidenceTier,
-        'nutrient_provenance_quality': nutrientProvenanceQuality,
-        'provenance_quality_score': provenanceQualityScore,
-        'confidence_band': confidenceBand,
-        'nutrient_completeness': nutrientCompleteness,
-        'final_candidate_score': finalCandidateScore,
-        'conflict_overlap_score': conflictOverlapScore,
-        'uncertainty_penalty': uncertaintyPenalty,
-        'competition_uncertainty_band': competitionUncertaintyBand,
-        'lnaa_uncertainty_widened': lnaaUncertaintyWidened,
-        'ranker_used': rankerUsed,
-        'explanation': explanation,
-        'safety_boundary': safetyBoundary,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-      };
+    'case_id': caseId,
+    'input_changed': inputChanged,
+    'source_system': sourceSystem,
+    'jurisdiction_match': jurisdictionMatch,
+    'source_authority_score': sourceAuthorityScore,
+    'metadata_completeness': metadataCompleteness,
+    'metadata_completeness_score': metadataCompleteness,
+    'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+    'nutrient_confidence_tier': nutrientConfidenceTier,
+    'nutrient_provenance_quality': nutrientProvenanceQuality,
+    'provenance_quality_score': provenanceQualityScore,
+    'confidence_band': confidenceBand,
+    'nutrient_completeness': nutrientCompleteness,
+    'final_candidate_score': finalCandidateScore,
+    'conflict_overlap_score': conflictOverlapScore,
+    'uncertainty_penalty': uncertaintyPenalty,
+    'competition_uncertainty_band': competitionUncertaintyBand,
+    'lnaa_uncertainty_widened': lnaaUncertaintyWidened,
+    'ranker_used': rankerUsed,
+    'explanation': explanation,
+    'safety_boundary': safetyBoundary,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+  };
 }
 
 /// The full deterministic report.
@@ -117,50 +117,60 @@ class SourceQualityPerturbationReportResult {
       rows.firstWhere((r) => r.caseId == caseId);
 
   Map<String, dynamic> toJson() => {
-        'report_type': 'source_quality_perturbation',
-        'not_clinically_calibrated': true,
-        'not_advice_text': RuleExplanation.defaultNotAdvice,
-        'safety_boundary': RuleExplanation.defaultSafetyBoundary,
-        'description':
-            'Deterministic educational analysis: how candidate scoring moves '
-                'when ONLY source/provenance quality changes, holding the '
-                'meal/conflict/model input constant. Conflict overlap remains '
-                'the dominant scoring term by construction. Not a clinical '
-                'dashboard; no user-facing advice.',
-        'rows': rows.map((r) => r.toJson()).toList(growable: false),
-      };
+    'report_type': 'source_quality_perturbation',
+    'not_clinically_calibrated': true,
+    'not_advice_text': RuleExplanation.defaultNotAdvice,
+    'safety_boundary': RuleExplanation.defaultSafetyBoundary,
+    'description':
+        'Deterministic educational analysis: how candidate scoring moves '
+        'when ONLY source/provenance quality changes, holding the '
+        'meal/conflict/model input constant. Conflict overlap remains '
+        'the dominant scoring term by construction. Not a clinical '
+        'dashboard; no user-facing advice.',
+    'rows': rows.map((r) => r.toJson()).toList(growable: false),
+  };
 
   String toMarkdown() {
     final b = StringBuffer()
       ..writeln('# Source-Quality Perturbation Report')
       ..writeln()
-      ..writeln('Educational simulation. Synthetic inputs only. Not medical '
-          'advice. Not clinically calibrated.')
+      ..writeln(
+        'Educational simulation. Synthetic inputs only. Not medical '
+        'advice. Not clinically calibrated.',
+      )
       ..writeln()
-      ..writeln('Shows how candidate scoring moves when **only** '
-          'source/provenance quality changes, holding the meal/conflict/model '
-          'input constant. Conflict overlap remains the dominant term by '
-          'construction.')
+      ..writeln(
+        'Shows how candidate scoring moves when **only** '
+        'source/provenance quality changes, holding the meal/conflict/model '
+        'input constant. Conflict overlap remains the dominant term by '
+        'construction.',
+      )
       ..writeln()
-      ..writeln('| case | input changed | source | juris | authority | '
-          'meta cmpl | aa tier | nutrient prov q | prov q | conf band | '
-          'nutrient cmpl | final | overlap | uncert | comp band | widened |')
-      ..writeln('| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | '
-          '--- | --- | --- | --- | --- | --- |');
+      ..writeln(
+        '| case | input changed | source | juris | authority | '
+        'meta cmpl | aa tier | nutrient prov q | prov q | conf band | '
+        'nutrient cmpl | final | overlap | uncert | comp band | widened |',
+      )
+      ..writeln(
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | '
+        '--- | --- | --- | --- | --- | --- |',
+      );
     for (final r in rows) {
-      b.writeln('| ${r.caseId} | ${r.inputChanged} | ${r.sourceSystem} | '
-          '${r.jurisdictionMatch.toStringAsFixed(2)} | '
-          '${r.sourceAuthorityScore.toStringAsFixed(2)} | '
-          '${r.metadataCompleteness.toStringAsFixed(2)} | '
-          '${r.aminoAcidConfidenceTier} | '
-          '${r.nutrientProvenanceQuality.toStringAsFixed(2)} | '
-          '${r.provenanceQualityScore.toStringAsFixed(2)} | '
-          '${r.confidenceBand} | '
-          '${r.nutrientCompleteness.toStringAsFixed(2)} | '
-          '${r.finalCandidateScore.toStringAsFixed(4)} | '
-          '${r.conflictOverlapScore.toStringAsFixed(4)} | '
-          '${r.uncertaintyPenalty.toStringAsFixed(2)} | '
-          '${r.competitionUncertaintyBand} | ${r.lnaaUncertaintyWidened} |');
+      b.writeln(
+        '| ${r.caseId} | ${r.inputChanged} | ${r.sourceSystem} | '
+        '${r.jurisdictionMatch.toStringAsFixed(2)} | '
+        '${r.sourceAuthorityScore.toStringAsFixed(2)} | '
+        '${r.metadataCompleteness.toStringAsFixed(2)} | '
+        '${r.aminoAcidConfidenceTier} | '
+        '${r.nutrientProvenanceQuality.toStringAsFixed(2)} | '
+        '${r.provenanceQualityScore.toStringAsFixed(2)} | '
+        '${r.confidenceBand} | '
+        '${r.nutrientCompleteness.toStringAsFixed(2)} | '
+        '${r.finalCandidateScore.toStringAsFixed(4)} | '
+        '${r.conflictOverlapScore.toStringAsFixed(4)} | '
+        '${r.uncertaintyPenalty.toStringAsFixed(2)} | '
+        '${r.competitionUncertaintyBand} | ${r.lnaaUncertaintyWidened} |',
+      );
     }
     return b.toString();
   }
@@ -168,8 +178,8 @@ class SourceQualityPerturbationReportResult {
 
 /// Deterministic JSON encoder (stable key order via the model's `toJson`).
 String encodeSourceQualityReport(
-        SourceQualityPerturbationReportResult report) =>
-    const JsonEncoder.withIndent('  ').convert(report.toJson());
+  SourceQualityPerturbationReportResult report,
+) => const JsonEncoder.withIndent('  ').convert(report.toJson());
 
 /// Builds the report. Pure/deterministic: no I/O, no clock. Holds a fixed
 /// synthetic base context + candidate composition and sweeps source/provenance
@@ -183,25 +193,27 @@ class SourceQualityPerturbationReportRunner {
     MechanisticNextMealScorer? scorer,
     MedicationEntryValidator? validator,
     TimeAxisBuilder? builder,
-  })  : scorer = scorer ?? MechanisticNextMealScorer(),
-        validator = validator ?? MedicationEntryValidator(),
-        builder = builder ?? TimeAxisBuilder();
+  }) : scorer = scorer ?? MechanisticNextMealScorer(),
+       validator = validator ?? MedicationEntryValidator(),
+       builder = builder ?? TimeAxisBuilder();
 
   // Fixed reference instant for deterministic timelines (UTC).
   static final DateTime _now = DateTime.utc(2026, 1, 1, 8);
 
   TimeAxisConflictContext _baseContext() {
-    final v = validator.validate(const RawMedicationEntry(
-      activeIngredients: ['carbidopa', 'levodopa'],
-      drugProductVariant: 'synthetic:demo',
-      strength: 100,
-      unit: 'mg',
-      form: 'tablet',
-      route: 'oral',
-      releaseType: 'immediate',
-      jurisdiction: 'US',
-      sourceDocId: 'synthetic:demo',
-    ));
+    final v = validator.validate(
+      const RawMedicationEntry(
+        activeIngredients: ['carbidopa', 'levodopa'],
+        drugProductVariant: 'synthetic:demo',
+        strength: 100,
+        unit: 'mg',
+        form: 'tablet',
+        route: 'oral',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+        sourceDocId: 'synthetic:demo',
+      ),
+    );
     return builder.build(
       now: _now,
       medicationInputs: [
@@ -225,26 +237,26 @@ class SourceQualityPerturbationReportRunner {
   /// FDC derivation code per amino-acid confidence tier (used to build the
   /// candidate's amino-acid provenance for the tier sweep).
   static String _codeForTier(NutrientConfidenceTier tier) => switch (tier) {
-        NutrientConfidenceTier.analytical => 'A',
-        NutrientConfidenceTier.calculated => 'CAL',
-        NutrientConfidenceTier.imputedOrAssumed => 'I',
-        NutrientConfidenceTier.unknown => 'X',
-      };
+    NutrientConfidenceTier.analytical => 'A',
+    NutrientConfidenceTier.calculated => 'CAL',
+    NutrientConfidenceTier.imputedOrAssumed => 'I',
+    NutrientConfidenceTier.unknown => 'X',
+  };
 
   AminoAcidProfile _aaProfile(NutrientConfidenceTier tier) => AminoAcidProfile(
-        leucine: 1.8,
-        isoleucine: 1.0,
-        valine: 1.1,
-        phenylalanine: 0.9,
-        tyrosine: 0.7,
-        tryptophan: 0.3,
-        basis: 'per_serving',
-        nutrientIds: const ['504', '503', '510', '508', '509', '501'],
-        sourceRefs: const ['src.fdc.api.amino_acid_fields'],
-        derivations: {
-          'leucine': NutrientDerivation(derivationCode: _codeForTier(tier)),
-        },
-      );
+    leucine: 1.8,
+    isoleucine: 1.0,
+    valine: 1.1,
+    phenylalanine: 0.9,
+    tyrosine: 0.7,
+    tryptophan: 0.3,
+    basis: 'per_serving',
+    nutrientIds: const ['504', '503', '510', '508', '509', '501'],
+    sourceRefs: const ['src.fdc.api.amino_acid_fields'],
+    derivations: {
+      'leucine': NutrientDerivation(derivationCode: _codeForTier(tier)),
+    },
+  );
 
   CandidateFood _candidate(
     String id, {
@@ -253,42 +265,40 @@ class SourceQualityPerturbationReportRunner {
     double? portionGrams = 150,
     double? calories = 150,
     String sourceSystem = 'synthetic',
-  }) =>
-      CandidateFood(
+  }) => CandidateFood(
+    id: id,
+    name: id,
+    regionalFoodLibraryRef: sourceSystem,
+    declaredPhysicalForm: MealPhysicalForm.solid,
+    components: [
+      FoodComponent(
         id: id,
         name: id,
-        regionalFoodLibraryRef: sourceSystem,
-        declaredPhysicalForm: MealPhysicalForm.solid,
-        components: [
-          FoodComponent(
-            id: id,
-            name: id,
-            physicalForm: MealPhysicalForm.solid,
-            proteinGrams: protein,
-            fatGrams: 2,
-            fiberGrams: 1,
-            carbohydrateGrams: 20,
-            calories: calories,
-            portionGrams: portionGrams,
-            sourceDocId: sourceSystem,
-            aminoAcidProfile: aa,
-          ),
-        ],
-      );
+        physicalForm: MealPhysicalForm.solid,
+        proteinGrams: protein,
+        fatGrams: 2,
+        fiberGrams: 1,
+        carbohydrateGrams: 20,
+        calories: calories,
+        portionGrams: portionGrams,
+        sourceDocId: sourceSystem,
+        aminoAcidProfile: aa,
+      ),
+    ],
+  );
 
   CandidateMetadata _meta({
     required double authority,
     required double jurisdictionMatch,
     required double provenance,
     required double completeness,
-  }) =>
-      CandidateMetadata(
-        completeness: completeness,
-        authorityScore: authority,
-        jurisdictionMatchScore: jurisdictionMatch,
-        provenanceQuality: provenance,
-        jurisdiction: 'US',
-      );
+  }) => CandidateMetadata(
+    completeness: completeness,
+    authorityScore: authority,
+    jurisdictionMatchScore: jurisdictionMatch,
+    provenanceQuality: provenance,
+    jurisdiction: 'US',
+  );
 
   SourceQualityPerturbationRow _row({
     required String caseId,
@@ -346,74 +356,92 @@ class SourceQualityPerturbationReportRunner {
     CandidateFood provCandidate(String src) =>
         _candidate('prov_$src', protein: 8, aa: refAa, sourceSystem: src);
 
-    rows.add(_row(
-      caseId: 'prov_official_in_jurisdiction',
-      inputChanged: 'official_in_jurisdiction',
-      candidate: provCandidate('official_in_jurisdiction'),
-      metadata: _meta(
+    rows.add(
+      _row(
+        caseId: 'prov_official_in_jurisdiction',
+        inputChanged: 'official_in_jurisdiction',
+        candidate: provCandidate('official_in_jurisdiction'),
+        metadata: _meta(
           authority: 1.0,
           jurisdictionMatch: 1.0,
           provenance: 1.0,
-          completeness: 1.0),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
-    rows.add(_row(
-      caseId: 'prov_official_out_of_jurisdiction',
-      inputChanged: 'official_out_of_jurisdiction',
-      candidate: provCandidate('official_out_of_jurisdiction'),
-      metadata: _meta(
+          completeness: 1.0,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
+    rows.add(
+      _row(
+        caseId: 'prov_official_out_of_jurisdiction',
+        inputChanged: 'official_out_of_jurisdiction',
+        candidate: provCandidate('official_out_of_jurisdiction'),
+        metadata: _meta(
           authority: 0.6,
           jurisdictionMatch: 0.2,
           provenance: 0.8,
-          completeness: 1.0),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
-    rows.add(_row(
-      caseId: 'prov_synthetic_demo',
-      inputChanged: 'synthetic_demo',
-      candidate: provCandidate('synthetic_demo'),
-      metadata: _meta(
+          completeness: 1.0,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
+    rows.add(
+      _row(
+        caseId: 'prov_synthetic_demo',
+        inputChanged: 'synthetic_demo',
+        candidate: provCandidate('synthetic_demo'),
+        metadata: _meta(
           authority: 0.1,
           jurisdictionMatch: 0.1,
           provenance: 0.1,
-          completeness: 0.3),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
-    rows.add(_row(
-      caseId: 'prov_missing_source_refs',
-      inputChanged: 'missing_source_refs',
-      candidate: provCandidate('official_in_jurisdiction'),
-      // Same authority/jurisdiction as official, but missing sourceRefs drops
-      // provenance quality + completeness (recorded missing, not fabricated).
-      metadata: _meta(
+          completeness: 0.3,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
+    rows.add(
+      _row(
+        caseId: 'prov_missing_source_refs',
+        inputChanged: 'missing_source_refs',
+        candidate: provCandidate('official_in_jurisdiction'),
+        // Same authority/jurisdiction as official, but missing sourceRefs drops
+        // provenance quality + completeness (recorded missing, not fabricated).
+        metadata: _meta(
           authority: 1.0,
           jurisdictionMatch: 1.0,
           provenance: 0.0,
-          completeness: 0.5),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
-    rows.add(_row(
-      caseId: 'prov_complete_metadata',
-      inputChanged: 'complete_metadata',
-      candidate: provCandidate('official_in_jurisdiction'),
-      metadata: _meta(
+          completeness: 0.5,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
+    rows.add(
+      _row(
+        caseId: 'prov_complete_metadata',
+        inputChanged: 'complete_metadata',
+        candidate: provCandidate('official_in_jurisdiction'),
+        metadata: _meta(
           authority: 0.7,
           jurisdictionMatch: 0.7,
           provenance: 0.7,
-          completeness: 1.0),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
-    rows.add(_row(
-      caseId: 'prov_partial_metadata',
-      inputChanged: 'partial_metadata',
-      candidate: provCandidate('official_in_jurisdiction'),
-      metadata: _meta(
+          completeness: 1.0,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
+    rows.add(
+      _row(
+        caseId: 'prov_partial_metadata',
+        inputChanged: 'partial_metadata',
+        candidate: provCandidate('official_in_jurisdiction'),
+        metadata: _meta(
           authority: 0.7,
           jurisdictionMatch: 0.7,
           provenance: 0.7,
-          completeness: 0.4),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
+          completeness: 0.4,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
 
     // --- Family 2: amino-acid confidence tier (metadata held neutral) -------
     const neutralMeta = CandidateMetadata(
@@ -429,58 +457,80 @@ class SourceQualityPerturbationReportRunner {
       NutrientConfidenceTier.imputedOrAssumed,
       NutrientConfidenceTier.unknown,
     ]) {
-      rows.add(_row(
-        caseId: 'aa_${tier.name}',
-        inputChanged: 'amino_acid_tier_${tier.name}',
-        candidate:
-            _candidate('aa_${tier.name}', protein: 12, aa: _aaProfile(tier)),
-        metadata: neutralMeta,
-        aaTier: tier,
-      ));
+      rows.add(
+        _row(
+          caseId: 'aa_${tier.name}',
+          inputChanged: 'amino_acid_tier_${tier.name}',
+          candidate: _candidate(
+            'aa_${tier.name}',
+            protein: 12,
+            aa: _aaProfile(tier),
+          ),
+          metadata: neutralMeta,
+          aaTier: tier,
+        ),
+      );
     }
     // Missing nutrient basis: no amino-acid profile + missing portion/calories.
-    rows.add(_row(
-      caseId: 'aa_missing_nutrient_basis',
-      inputChanged: 'missing_nutrient_basis',
-      candidate: _candidate('aa_missing_nutrient_basis',
-          protein: 12, aa: null, portionGrams: null, calories: null),
-      metadata: neutralMeta,
-      aaTier: NutrientConfidenceTier.unknown,
-    ));
+    rows.add(
+      _row(
+        caseId: 'aa_missing_nutrient_basis',
+        inputChanged: 'missing_nutrient_basis',
+        candidate: _candidate(
+          'aa_missing_nutrient_basis',
+          protein: 12,
+          aa: null,
+          portionGrams: null,
+          calories: null,
+        ),
+        metadata: neutralMeta,
+        aaTier: NutrientConfidenceTier.unknown,
+      ),
+    );
 
     // --- Family 3: source authority × provenance tier move independently -----
     // A synthetic source with analytical nutrient provenance vs an official
     // source with imputed provenance: authority and nutrient-provenance tier are
     // distinct axes (one is who published it; the other is how the value was
     // derived). Neither collapses into the other.
-    rows.add(_row(
-      caseId: 'mix_synthetic_source_analytical_provenance',
-      inputChanged: 'synthetic_source_analytical_provenance',
-      candidate: _candidate('mix_synth_analytical',
+    rows.add(
+      _row(
+        caseId: 'mix_synthetic_source_analytical_provenance',
+        inputChanged: 'synthetic_source_analytical_provenance',
+        candidate: _candidate(
+          'mix_synth_analytical',
           protein: 8,
           aa: _aaProfile(NutrientConfidenceTier.analytical),
-          sourceSystem: 'synthetic_demo'),
-      metadata: _meta(
+          sourceSystem: 'synthetic_demo',
+        ),
+        metadata: _meta(
           authority: 0.1,
           jurisdictionMatch: 0.1,
           provenance: 0.1,
-          completeness: 0.3),
-      aaTier: NutrientConfidenceTier.analytical,
-    ));
-    rows.add(_row(
-      caseId: 'mix_official_source_imputed_provenance',
-      inputChanged: 'official_source_imputed_provenance',
-      candidate: _candidate('mix_official_imputed',
+          completeness: 0.3,
+        ),
+        aaTier: NutrientConfidenceTier.analytical,
+      ),
+    );
+    rows.add(
+      _row(
+        caseId: 'mix_official_source_imputed_provenance',
+        inputChanged: 'official_source_imputed_provenance',
+        candidate: _candidate(
+          'mix_official_imputed',
           protein: 8,
           aa: _aaProfile(NutrientConfidenceTier.imputedOrAssumed),
-          sourceSystem: 'official_in_jurisdiction'),
-      metadata: _meta(
+          sourceSystem: 'official_in_jurisdiction',
+        ),
+        metadata: _meta(
           authority: 1.0,
           jurisdictionMatch: 1.0,
           provenance: 1.0,
-          completeness: 1.0),
-      aaTier: NutrientConfidenceTier.imputedOrAssumed,
-    ));
+          completeness: 1.0,
+        ),
+        aaTier: NutrientConfidenceTier.imputedOrAssumed,
+      ),
+    );
 
     return SourceQualityPerturbationReportResult(List.unmodifiable(rows));
   }
@@ -498,15 +548,17 @@ class SourceQualityPerturbationReportRunner {
       candidates: [best, worst],
       candidateMetadata: {
         'tie_best': _meta(
-            authority: 1.0,
-            jurisdictionMatch: 1.0,
-            provenance: 1.0,
-            completeness: 1.0),
+          authority: 1.0,
+          jurisdictionMatch: 1.0,
+          provenance: 1.0,
+          completeness: 1.0,
+        ),
         'tie_worst': _meta(
-            authority: 0.0,
-            jurisdictionMatch: 0.0,
-            provenance: 0.0,
-            completeness: 0.0),
+          authority: 0.0,
+          jurisdictionMatch: 0.0,
+          provenance: 0.0,
+          completeness: 0.0,
+        ),
       },
     );
     return (

@@ -59,9 +59,7 @@ class FirebaseBackend {
           'Generate matching Firebase options before running this environment.',
         );
       }
-      await Firebase.initializeApp(
-        options: options,
-      );
+      await Firebase.initializeApp(options: options);
     }
     await _ensureAppCheckActivated();
   }
@@ -85,10 +83,10 @@ class FirebaseBackend {
     await FirebaseAppCheck.instance.activate(
       providerWeb: kIsWeb
           ? appCheckDebug
-              ? WebDebugProvider()
-              : enterpriseSiteKey.isNotEmpty
-                  ? ReCaptchaEnterpriseProvider(enterpriseSiteKey)
-                  : ReCaptchaV3Provider(webSiteKey)
+                ? WebDebugProvider()
+                : enterpriseSiteKey.isNotEmpty
+                ? ReCaptchaEnterpriseProvider(enterpriseSiteKey)
+                : ReCaptchaV3Provider(webSiteKey)
           : null,
       providerAndroid: appCheckDebug
           ? const AndroidDebugProvider()

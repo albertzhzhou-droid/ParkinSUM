@@ -33,8 +33,11 @@ void main() {
         '../escape',
         'name#frag',
       ]) {
-        expect(() => requireValidCdssTableName(bad), throwsArgumentError,
-            reason: '"$bad" must be rejected');
+        expect(
+          () => requireValidCdssTableName(bad),
+          throwsArgumentError,
+          reason: '"$bad" must be rejected',
+        );
       }
     });
   });

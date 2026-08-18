@@ -34,10 +34,7 @@ class ResponseCopyService {
   final AppI18n i18n;
   final LocalResponsePolisher? localPolisher;
 
-  const ResponseCopyService({
-    required this.i18n,
-    this.localPolisher,
-  });
+  const ResponseCopyService({required this.i18n, this.localPolisher});
 
   String recommendationPath(String path) {
     return i18n.recommendationPathLabel(path);
@@ -56,19 +53,15 @@ class ResponseCopyService {
       return interactionText(result.summary);
     }
     if (_hasMissingCriticalInputs(result)) {
-      return i18n.tr(
-        'copy.interaction_summary_missing_inputs',
-        {
-          'score': '${result.score}',
-          'missing': _joinLabels(_missingInputLabels(result)),
-        },
-      );
+      return i18n.tr('copy.interaction_summary_missing_inputs', {
+        'score': '${result.score}',
+        'missing': _joinLabels(_missingInputLabels(result)),
+      });
     }
     if (result.score >= 70) {
-      return i18n.tr(
-        'copy.interaction_summary_high',
-        {'score': '${result.score}'},
-      );
+      return i18n.tr('copy.interaction_summary_high', {
+        'score': '${result.score}',
+      });
     }
     return interactionText(result.summary);
   }
@@ -81,20 +74,14 @@ class ResponseCopyService {
     final parts = <String>[];
     if (_hasMissingCriticalInputs(result)) {
       parts.add(
-        i18n.tr(
-          'copy.interaction_analysis_missing_inputs',
-          {
-            'missing': _joinLabels(_missingInputLabels(result)),
-          },
-        ),
+        i18n.tr('copy.interaction_analysis_missing_inputs', {
+          'missing': _joinLabels(_missingInputLabels(result)),
+        }),
       );
     }
     if (protein != null) {
       parts.add(
-        i18n.tr(
-          'copy.interaction_analysis_protein',
-          {'protein': protein},
-        ),
+        i18n.tr('copy.interaction_analysis_protein', {'protein': protein}),
       );
     }
     if (_mentionsFallback(result)) {
@@ -109,10 +96,9 @@ class ResponseCopyService {
 
   String keyFinding(String text) {
     if (_containsMissingCriticalInputs(text)) {
-      return i18n.tr(
-        'copy.key_finding_missing_inputs',
-        {'missing': _joinLabels(_missingInputLabelsFromText(text))},
-      );
+      return i18n.tr('copy.key_finding_missing_inputs', {
+        'missing': _joinLabels(_missingInputLabelsFromText(text)),
+      });
     }
     return interactionText(text);
   }
@@ -142,10 +128,9 @@ class ResponseCopyService {
       return i18n.tr('copy.data_note_database');
     }
     if (lower.contains('missing critical input') || lower.contains('缺少关键')) {
-      return i18n.tr(
-        'copy.data_note_missing_input',
-        {'missing': _joinLabels(_missingInputLabelsFromText(text))},
-      );
+      return i18n.tr('copy.data_note_missing_input', {
+        'missing': _joinLabels(_missingInputLabelsFromText(text)),
+      });
     }
     return interactionText(text);
   }
@@ -156,10 +141,9 @@ class ResponseCopyService {
 
   String issueDetail(InteractionIssue issue) {
     if (_containsMissingCriticalInputs(issue.detail)) {
-      return i18n.tr(
-        'copy.issue_missing_inputs',
-        {'missing': _joinLabels(_missingInputLabelsFromText(issue.detail))},
-      );
+      return i18n.tr('copy.issue_missing_inputs', {
+        'missing': _joinLabels(_missingInputLabelsFromText(issue.detail)),
+      });
     }
     return interactionText(issue.detail);
   }
@@ -228,16 +212,26 @@ class ResponseCopyService {
           'Levodopa timing window is too sensitive for AI reranking.',
           i18n.tr('recommend.runtime.levodopa_ai_sensitive'),
         )
-        .replaceAll('conservative_safety_gate',
-            i18n.recommendationPathLabel('conservative_safety_gate'))
-        .replaceAll('conservative_gate_block',
-            i18n.recommendationPathLabel('conservative_gate_block'))
-        .replaceAll('fallback_invalid_ai',
-            i18n.recommendationPathLabel('fallback_invalid_ai'))
-        .replaceAll('conservative_cdss',
-            i18n.recommendationPathLabel('conservative_cdss'))
         .replaceAll(
-            'hybrid_local_ai', i18n.recommendationPathLabel('hybrid_local_ai'))
+          'conservative_safety_gate',
+          i18n.recommendationPathLabel('conservative_safety_gate'),
+        )
+        .replaceAll(
+          'conservative_gate_block',
+          i18n.recommendationPathLabel('conservative_gate_block'),
+        )
+        .replaceAll(
+          'fallback_invalid_ai',
+          i18n.recommendationPathLabel('fallback_invalid_ai'),
+        )
+        .replaceAll(
+          'conservative_cdss',
+          i18n.recommendationPathLabel('conservative_cdss'),
+        )
+        .replaceAll(
+          'hybrid_local_ai',
+          i18n.recommendationPathLabel('hybrid_local_ai'),
+        )
         .replaceAll('deterministic', i18n.tr('copy.deterministic_path'))
         .replaceAll('rerank', i18n.tr('copy.rerank'))
         .replaceAll('CDSS', i18n.tr('copy.cdss'));
@@ -288,8 +282,9 @@ class ResponseCopyService {
   }
 
   bool _hasMissingCriticalInputs(InteractionResult result) {
-    return result.issues
-            .any((issue) => _containsMissingCriticalInputs(issue.detail)) ||
+    return result.issues.any(
+          (issue) => _containsMissingCriticalInputs(issue.detail),
+        ) ||
         result.keyFindings.any(_containsMissingCriticalInputs) ||
         result.dataNotes.any(_containsMissingCriticalInputs);
   }
@@ -338,8 +333,8 @@ class ResponseCopyService {
 
   String? _extractProtein(String text) {
     final match = RegExp(
-            r'about\s+([0-9]+(?:\.[0-9]+)?)\s*g|约\s*([0-9]+(?:\.[0-9]+)?)\s*g')
-        .firstMatch(text);
+      r'about\s+([0-9]+(?:\.[0-9]+)?)\s*g|约\s*([0-9]+(?:\.[0-9]+)?)\s*g',
+    ).firstMatch(text);
     return match?.group(1) ?? match?.group(2);
   }
 

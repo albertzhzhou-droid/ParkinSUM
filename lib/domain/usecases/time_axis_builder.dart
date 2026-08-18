@@ -25,11 +25,13 @@ class TimeAxisBuilder {
         missingFields.add('medication.invalid_context(${input.id})');
         continue;
       }
-      medEvents.add(MedicationTimelineEvent(
-        id: input.id,
-        minute: dateTimeToMinute(input.takenAt!),
-        context: input.medicationContext.normalized!,
-      ));
+      medEvents.add(
+        MedicationTimelineEvent(
+          id: input.id,
+          minute: dateTimeToMinute(input.takenAt!),
+          context: input.medicationContext.normalized!,
+        ),
+      );
     }
 
     for (final input in mealInputs) {
@@ -37,13 +39,15 @@ class TimeAxisBuilder {
         missingFields.add('meal.started_at(${input.id})');
         continue;
       }
-      mealEvents.add(MealTimelineEvent(
-        id: input.id,
-        minute: dateTimeToMinute(input.startedAt!),
-        compositionId: input.compositionId,
-        durationMinutes: input.durationMinutes,
-        physicalForm: input.physicalForm,
-      ));
+      mealEvents.add(
+        MealTimelineEvent(
+          id: input.id,
+          minute: dateTimeToMinute(input.startedAt!),
+          compositionId: input.compositionId,
+          durationMinutes: input.durationMinutes,
+          physicalForm: input.physicalForm,
+        ),
+      );
       for (final c in input.componentEvents) {
         foodCompEvents.add(c);
       }

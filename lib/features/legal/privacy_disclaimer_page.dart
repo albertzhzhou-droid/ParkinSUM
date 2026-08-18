@@ -13,9 +13,7 @@ class PrivacyDisclaimerPage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: const GlassAppBar(
-        title: Text('Privacy & Disclaimer'),
-      ),
+      appBar: const GlassAppBar(title: Text('Privacy & Disclaimer')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
@@ -25,10 +23,7 @@ class PrivacyDisclaimerPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Medical disclaimer',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('Medical disclaimer', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 10),
                   const Text(
                     'ParkinSUM Companion provides decision-support information '
@@ -49,10 +44,7 @@ class PrivacyDisclaimerPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Privacy notice',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('Privacy notice', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 10),
                   const Text(
                     'In Firebase mode, user-specific records are intended to '
@@ -72,10 +64,7 @@ class PrivacyDisclaimerPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'User data rights',
-                    style: theme.textTheme.titleLarge,
-                  ),
+                  Text('User data rights', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 10),
                   const Text(
                     'Users may request export of their private app data, '
@@ -87,15 +76,9 @@ class PrivacyDisclaimerPage extends StatelessWidget {
                     'prior deletion requests.',
                   ),
                   const SizedBox(height: 14),
-                  const _ContactRow(
-                    label: 'Support',
-                    value: supportContact,
-                  ),
+                  const _ContactRow(label: 'Support', value: supportContact),
                   const SizedBox(height: 8),
-                  const _ContactRow(
-                    label: 'Privacy',
-                    value: privacyContact,
-                  ),
+                  const _ContactRow(label: 'Privacy', value: privacyContact),
                 ],
               ),
             ),
@@ -110,10 +93,7 @@ class _ContactRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _ContactRow({
-    required this.label,
-    required this.value,
-  });
+  const _ContactRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

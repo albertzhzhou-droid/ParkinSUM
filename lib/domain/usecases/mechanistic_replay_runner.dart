@@ -156,74 +156,82 @@ class MechanisticReplayCaseReport {
   });
 
   Map<String, dynamic> toJson() => {
-        'scenario_id': scenarioId,
-        'title': title,
-        'medication_context_validity': medicationContextValidity,
-        'meal_context_completeness': mealContextCompleteness,
-        'gastric_emptying_profile_summary': gastricEmptyingProfileSummary,
-        'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
-        'amino_acid_competition_band': aminoAcidCompetitionBand,
-        'interaction_score': interactionScore,
-        'severity_band': severityBand,
-        'confidence_band': confidenceBand,
-        'triggered_mechanisms': triggeredMechanisms,
-        'blocked_mechanisms': blockedMechanisms,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-        'safety_boundary': safetyBoundary,
-        'banned_phrase_hits': bannedPhraseHits,
-        'next_meal_recommendation_result':
-            nextMealRecommendationResult?.map((e) => e.toJson()).toList(),
-        'competition_lnaa_summary': competitionLnaaSummary?.toJson(),
-        'ranker_used': rankerUsed,
-        'sampled_window_offsets': sampledWindowOffsets,
-        'top_final_candidate_score': topFinalCandidateScore,
-        'top_protein_redistribution_score': topProteinRedistributionScore,
-        'top_protein_window_role': topProteinWindowRole,
-        'top_nutrition_adequacy_contribution': topNutritionAdequacyContribution,
-        'top_source_authority_score': topSourceAuthorityScore,
-        'top_jurisdiction_match_score': topJurisdictionMatchScore,
-        'top_candidate_source_system': topCandidateSourceSystem,
-        'amino_acid_data_mode': aminoAcidDataMode,
-        'amino_acid_nutrient_ids': aminoAcidNutrientIds,
-        'source_implementation_status': sourceImplementationStatus,
-        'live_fetch_enabled': liveFetchEnabled,
-        'license_review_status': licenseReviewStatus,
-        'can_support_mechanism_evidence_alone':
-            canSupportMechanismEvidenceAlone,
-        'clinical_calibration_status': clinicalCalibrationStatus,
-        'user_entered_dosage': userEnteredDosage,
-        'dosage_context_complete': dosageContextComplete,
-        'per_event_count': perEventCount,
-        'meal_component_count': mealComponentCount,
-        'gastric_emptying_assumptions': gastricEmptyingAssumptions,
-        'absorption_openness_sample_count': absorptionOpennessSampleCount,
-        'absorption_peak_openness': absorptionPeakOpenness,
-        'partial_amino_acid_data': partialAminoAcidData,
-        'competing_lnaa_grams': competingLnaaGrams,
-        'dose_relative_lnaa_available': doseRelativeLnaaAvailable,
-        'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
-        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
-        'scoring_parameter_set_id': scoringParameterSetId,
-        'medication_source_system': medicationSourceSystem,
-        'medication_source_doc_id': medicationSourceDocId,
-        'medication_source_version': medicationSourceVersion,
-        'medication_label_section_ref_count': medicationLabelSectionRefCount,
-        'medication_release_type': medicationReleaseType,
-        'medication_release_type_source': medicationReleaseTypeSource,
-        'medication_dose_form': medicationDoseForm,
-        'medication_route': medicationRoute,
-        'medication_combination_components': medicationCombinationComponents,
-        'dosage_source': dosageSource,
-        'medication_metadata_completeness': medicationMetadataCompleteness,
-        'medication_missing_fields': medicationMissingFields,
-        'pass': pass,
-        'failure_reason': failureReason,
-      };
+    'scenario_id': scenarioId,
+    'title': title,
+    'medication_context_validity': medicationContextValidity,
+    'meal_context_completeness': mealContextCompleteness,
+    'gastric_emptying_profile_summary': gastricEmptyingProfileSummary,
+    'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
+    'amino_acid_competition_band': aminoAcidCompetitionBand,
+    'interaction_score': interactionScore,
+    'severity_band': severityBand,
+    'confidence_band': confidenceBand,
+    'triggered_mechanisms': triggeredMechanisms,
+    'blocked_mechanisms': blockedMechanisms,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+    'safety_boundary': safetyBoundary,
+    'banned_phrase_hits': bannedPhraseHits,
+    'next_meal_recommendation_result': nextMealRecommendationResult
+        ?.map((e) => e.toJson())
+        .toList(),
+    'competition_lnaa_summary': competitionLnaaSummary?.toJson(),
+    'ranker_used': rankerUsed,
+    'sampled_window_offsets': sampledWindowOffsets,
+    'top_final_candidate_score': topFinalCandidateScore,
+    'top_protein_redistribution_score': topProteinRedistributionScore,
+    'top_protein_window_role': topProteinWindowRole,
+    'top_nutrition_adequacy_contribution': topNutritionAdequacyContribution,
+    'top_source_authority_score': topSourceAuthorityScore,
+    'top_jurisdiction_match_score': topJurisdictionMatchScore,
+    'top_candidate_source_system': topCandidateSourceSystem,
+    'amino_acid_data_mode': aminoAcidDataMode,
+    'amino_acid_nutrient_ids': aminoAcidNutrientIds,
+    'source_implementation_status': sourceImplementationStatus,
+    'live_fetch_enabled': liveFetchEnabled,
+    'license_review_status': licenseReviewStatus,
+    'can_support_mechanism_evidence_alone': canSupportMechanismEvidenceAlone,
+    'clinical_calibration_status': clinicalCalibrationStatus,
+    'user_entered_dosage': userEnteredDosage,
+    'dosage_context_complete': dosageContextComplete,
+    'per_event_count': perEventCount,
+    'meal_component_count': mealComponentCount,
+    'gastric_emptying_assumptions': gastricEmptyingAssumptions,
+    'absorption_openness_sample_count': absorptionOpennessSampleCount,
+    'absorption_peak_openness': absorptionPeakOpenness,
+    'partial_amino_acid_data': partialAminoAcidData,
+    'competing_lnaa_grams': competingLnaaGrams,
+    'dose_relative_lnaa_available': doseRelativeLnaaAvailable,
+    'dose_relative_lnaa_ratio': doseRelativeLnaaRatio,
+    'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+    'scoring_parameter_set_id': scoringParameterSetId,
+    'medication_source_system': medicationSourceSystem,
+    'medication_source_doc_id': medicationSourceDocId,
+    'medication_source_version': medicationSourceVersion,
+    'medication_label_section_ref_count': medicationLabelSectionRefCount,
+    'medication_release_type': medicationReleaseType,
+    'medication_release_type_source': medicationReleaseTypeSource,
+    'medication_dose_form': medicationDoseForm,
+    'medication_route': medicationRoute,
+    'medication_combination_components': medicationCombinationComponents,
+    'dosage_source': dosageSource,
+    'medication_metadata_completeness': medicationMetadataCompleteness,
+    'medication_missing_fields': medicationMissingFields,
+    'pass': pass,
+    'failure_reason': failureReason,
+  };
 }
 
 class MechanisticReplayRunReport {
+  /// The fixed reference instant the replay was anchored to — **not** the time
+  /// the report was produced.
+  ///
+  /// Defaults to `DateTime.utc(2026, 1, 1, 8)`, which is what makes this
+  /// report byte-reproducible across runs. The name is retained for the
+  /// `generated_at` JSON key that `SourceVersionDriftChecker` requires; new
+  /// consumers should read `deterministic_reference_time`.
   final String generatedAtIso;
+
   final List<MechanisticReplayCaseReport> cases;
 
   const MechanisticReplayRunReport({
@@ -236,17 +244,32 @@ class MechanisticReplayRunReport {
   int get totalCount => cases.length;
 
   Map<String, dynamic> toJson() => {
-        'generated_at': generatedAtIso,
-        'passed': passedCount,
-        'total': totalCount,
-        'cases': cases.map((c) => c.toJson()).toList(growable: false),
-      };
+    // Kept under the original key because `SourceVersionDriftChecker` requires
+    // a valid ISO-8601 `generated_at` on generated artifacts. It is NOT a wall
+    // clock: it is the fixed reference instant the replay is anchored to
+    // (`DateTime.utc(2026, 1, 1, 8)` unless a caller overrides it), which is
+    // what makes this report byte-reproducible.
+    'generated_at': generatedAtIso,
+    // Unambiguous alias. Consumers should prefer this one; a reader of the
+    // raw JSON should not have to infer that `generated_at` is a constant.
+    'deterministic_reference_time': generatedAtIso,
+    'generated_at_is_deterministic_reference': true,
+    'passed': passedCount,
+    'total': totalCount,
+    'cases': cases.map((c) => c.toJson()).toList(growable: false),
+  };
 
   String toMarkdown() {
     final buf = StringBuffer()
       ..writeln('# Mechanistic Replay Report')
       ..writeln()
-      ..writeln('Generated: $generatedAtIso')
+      // Deliberately not labelled "Generated:". The value is a fixed
+      // determinism anchor, and presenting it as a production time showed
+      // readers a timestamp that was never true.
+      ..writeln(
+        'Deterministic reference instant: $generatedAtIso '
+        '(fixed anchor, not the time this report was produced)',
+      )
       ..writeln()
       ..writeln('**$passedCount / $totalCount scenarios passed.**')
       ..writeln();
@@ -255,11 +278,13 @@ class MechanisticReplayRunReport {
         ..writeln('## ${c.scenarioId} — ${c.title}')
         ..writeln('- pass: ${c.pass}')
         ..writeln(
-            '- interaction_score: ${c.interactionScore.toStringAsFixed(3)}')
+          '- interaction_score: ${c.interactionScore.toStringAsFixed(3)}',
+        )
         ..writeln('- severity_band: ${c.severityBand}')
         ..writeln('- confidence_band: ${c.confidenceBand}')
         ..writeln(
-            '- amino_acid_competition_band: ${c.aminoAcidCompetitionBand}')
+          '- amino_acid_competition_band: ${c.aminoAcidCompetitionBand}',
+        )
         ..writeln('- gastric_emptying: ${c.gastricEmptyingProfileSummary}')
         ..writeln('- banned_phrase_hits: ${c.bannedPhraseHits.length}')
         ..writeln();
@@ -285,11 +310,11 @@ class MechanisticReplayRunner {
     TimeAxisBuilder? timeAxisBuilder,
     MechanisticConflictEngine? engine,
     MechanisticNextMealScorer? scorer,
-  })  : validator = validator ?? MedicationEntryValidator(),
-        normalizer = normalizer ?? MealCompositionNormalizer(),
-        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
-        engine = engine ?? MechanisticConflictEngine(),
-        scorer = scorer ?? MechanisticNextMealScorer();
+  }) : validator = validator ?? MedicationEntryValidator(),
+       normalizer = normalizer ?? MealCompositionNormalizer(),
+       timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
+       engine = engine ?? MechanisticConflictEngine(),
+       scorer = scorer ?? MechanisticNextMealScorer();
 
   MechanisticReplayRunReport run({
     List<MechanisticReplayScenario> scenarios = mechanisticReplayScenarios,
@@ -307,7 +332,9 @@ class MechanisticReplayRunner {
   }
 
   MechanisticReplayCaseReport _runOne(
-      MechanisticReplayScenario scenario, DateTime now) {
+    MechanisticReplayScenario scenario,
+    DateTime now,
+  ) {
     // Validate medications.
     final medValidations = scenario.medicationEntries
         .map(validator.validate)
@@ -317,11 +344,13 @@ class MechanisticReplayRunner {
     for (var i = 0; i < medValidations.length; i++) {
       final v = medValidations[i];
       final offset = scenario.medicationMinutesOffsets[i].minutes;
-      medicationInputs.add(MedicationTimelineInput(
-        id: 'med_${scenario.scenarioId}_$i',
-        takenAt: now.add(Duration(minutes: offset)),
-        medicationContext: v,
-      ));
+      medicationInputs.add(
+        MedicationTimelineInput(
+          id: 'med_${scenario.scenarioId}_$i',
+          takenAt: now.add(Duration(minutes: offset)),
+          medicationContext: v,
+        ),
+      );
     }
 
     // Normalize meal compositions.
@@ -334,12 +363,14 @@ class MechanisticReplayRunner {
         declaredPhysicalForm: m.physicalForm,
       );
       compositionsById[comp.id] = comp;
-      mealInputs.add(MealTimelineInput(
-        id: m.id,
-        startedAt: now.add(Duration(minutes: m.offset.minutes)),
-        compositionId: comp.id,
-        physicalForm: m.physicalForm,
-      ));
+      mealInputs.add(
+        MealTimelineInput(
+          id: m.id,
+          startedAt: now.add(Duration(minutes: m.offset.minutes)),
+          compositionId: comp.id,
+          physicalForm: m.physicalForm,
+        ),
+      );
     }
 
     final context = timeAxisBuilder.build(
@@ -350,9 +381,11 @@ class MechanisticReplayRunner {
           ? null
           : UserDefinedMealWindow(
               window: TimelineWindow(
-                startMinute: dateTimeToMinute(now) +
+                startMinute:
+                    dateTimeToMinute(now) +
                     scenario.userDefinedWindow!.window.startMinute,
-                endMinute: dateTimeToMinute(now) +
+                endMinute:
+                    dateTimeToMinute(now) +
                     scenario.userDefinedWindow!.window.endMinute,
               ),
               source: scenario.userDefinedWindow!.source,
@@ -397,7 +430,8 @@ class MechanisticReplayRunner {
           result.interactionType !=
               MechanisticInteractionType.insufficientMealContext) {
         failures.add(
-            'expected insufficient_context but got ${result.interactionType.name}');
+          'expected insufficient_context but got ${result.interactionType.name}',
+        );
       }
     } else {
       // Coarse check: align expected output type with engine output.
@@ -409,17 +443,23 @@ class MechanisticReplayRunner {
 
     if (scenario.expectedSeverityFloor != null &&
         !_severityAtLeast(
-            result.severityBand, scenario.expectedSeverityFloor!)) {
+          result.severityBand,
+          scenario.expectedSeverityFloor!,
+        )) {
       failures.add('severity below expected floor');
     }
     if (scenario.expectedSeverityCeiling != null &&
         !_severityAtMost(
-            result.severityBand, scenario.expectedSeverityCeiling!)) {
+          result.severityBand,
+          scenario.expectedSeverityCeiling!,
+        )) {
       failures.add('severity above expected ceiling');
     }
     if (scenario.expectedConfidenceCeiling != null &&
         !_confidenceAtMost(
-            result.confidenceBand, scenario.expectedConfidenceCeiling!)) {
+          result.confidenceBand,
+          scenario.expectedConfidenceCeiling!,
+        )) {
       failures.add('confidence above expected ceiling');
     }
     if (scenario.expectNonEmptyRecommendations &&
@@ -435,9 +475,9 @@ class MechanisticReplayRunner {
     final firstMealCompleteness = scenario.meals.isEmpty
         ? 0.0
         : (compositionsById.values.firstWhere(
-                (c) => c.id.startsWith('comp_${scenario.scenarioId}_'),
-                orElse: () => compositionsById.values.first))
-            .compositionCompleteness;
+            (c) => c.id.startsWith('comp_${scenario.scenarioId}_'),
+            orElse: () => compositionsById.values.first,
+          )).compositionCompleteness;
 
     final gastricSummary = result.primaryEmptyingProfile == null
         ? 'no_profile'
@@ -451,13 +491,13 @@ class MechanisticReplayRunner {
     final userEnteredDosage = firstEntry == null
         ? 'none'
         : (firstEntry.freeText != null &&
-                firstEntry.freeText!.trim().isNotEmpty)
-            ? firstEntry.freeText!.trim()
-            : (firstEntry.strength != null &&
-                    (firstEntry.unit ?? '').isNotEmpty)
-                ? '${firstEntry.strength} ${firstEntry.unit}'
-                : 'none';
-    final dosageContextComplete = medValidations.isNotEmpty &&
+              firstEntry.freeText!.trim().isNotEmpty)
+        ? firstEntry.freeText!.trim()
+        : (firstEntry.strength != null && (firstEntry.unit ?? '').isNotEmpty)
+        ? '${firstEntry.strength} ${firstEntry.unit}'
+        : 'none';
+    final dosageContextComplete =
+        medValidations.isNotEmpty &&
         medValidations.first.validity == MedicationContextValidity.valid;
 
     // Upgraded-chain transparency (#7). LNAA detail comes from the meal-level
@@ -465,10 +505,14 @@ class MechanisticReplayRunner {
     // candidate's upstream competition (candidate-only scenarios have no meal).
     final emptying = result.primaryEmptyingProfile;
     final absorptionWindow = result.absorptionOpportunityWindow;
-    final lnaa = result.competitionTimeline?.lnaaSummary ??
+    final lnaa =
+        result.competitionTimeline?.lnaaSummary ??
         ((recommendations != null && recommendations.isNotEmpty)
             ? recommendations
-                .first.upstreamResult?.competitionTimeline?.lnaaSummary
+                  .first
+                  .upstreamResult
+                  ?.competitionTimeline
+                  ?.lnaaSummary
             : null);
     final scoringParamId = (recommendations == null || recommendations.isEmpty)
         ? 'none'
@@ -503,7 +547,8 @@ class MechanisticReplayRunner {
       medicationReleaseTypeSource: medMeta?.releaseTypeSource,
       medicationDoseForm: medMeta?.doseForm,
       medicationRoute: medMeta?.route,
-      medicationCombinationComponents: medMeta?.components
+      medicationCombinationComponents:
+          medMeta?.components
               .map((c) => c.ingredientName)
               .toList(growable: false) ??
           const [],
@@ -521,8 +566,9 @@ class MechanisticReplayRunner {
       doseRelativeLnaaAvailable: lnaa?.doseRelativeAvailable ?? false,
       doseRelativeLnaaRatio: lnaa?.doseRelativeLnaaRatio,
       scoringParameterSetId: scoringParamId,
-      medicationContextValidity:
-          medValidations.isEmpty ? 'none' : medValidations.first.validity.name,
+      medicationContextValidity: medValidations.isEmpty
+          ? 'none'
+          : medValidations.first.validity.name,
       mealContextCompleteness: firstMealCompleteness,
       gastricEmptyingProfileSummary: gastricSummary,
       absorptionOpportunityWindow: result.absorptionOpportunityWindow?.window,
@@ -551,35 +597,35 @@ class MechanisticReplayRunner {
       sampledWindowOffsets: (recommendations == null || recommendations.isEmpty)
           ? const []
           : recommendations.first.sampledWindowSummary
-              .map((s) => s.offsetMinutes)
-              .toList(growable: false),
+                .map((s) => s.offsetMinutes)
+                .toList(growable: false),
       topFinalCandidateScore:
           (recommendations == null || recommendations.isEmpty)
-              ? null
-              : recommendations.first.finalCandidateScore,
+          ? null
+          : recommendations.first.finalCandidateScore,
       topProteinRedistributionScore:
           (recommendations == null || recommendations.isEmpty)
-              ? null
-              : recommendations.first.proteinRedistributionScore,
+          ? null
+          : recommendations.first.proteinRedistributionScore,
       topProteinWindowRole: (recommendations == null || recommendations.isEmpty)
           ? null
           : recommendations.first.proteinDistribution?.windowRole.name,
       topNutritionAdequacyContribution:
           (recommendations == null || recommendations.isEmpty)
-              ? null
-              : recommendations.first.nutritionAdequacyContribution,
+          ? null
+          : recommendations.first.nutritionAdequacyContribution,
       topSourceAuthorityScore:
           (recommendations == null || recommendations.isEmpty)
-              ? null
-              : recommendations.first.sourceAuthorityScore,
+          ? null
+          : recommendations.first.sourceAuthorityScore,
       topJurisdictionMatchScore:
           (recommendations == null || recommendations.isEmpty)
-              ? null
-              : recommendations.first.jurisdictionMatchScore,
+          ? null
+          : recommendations.first.jurisdictionMatchScore,
       topCandidateSourceSystem:
           (recommendations == null || recommendations.isEmpty)
-              ? null
-              : recommendations.first.sourceSystem,
+          ? null
+          : recommendations.first.sourceSystem,
       aminoAcidDataMode: lnaa?.dataMode.name,
       aminoAcidNutrientIds: lnaa?.aminoAcidNutrientIds ?? const [],
       pass: pass,

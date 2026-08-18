@@ -139,8 +139,8 @@ ResolvedFactRecord resolvedFactFromObservation({
     scopeHash: observation.scopeHash,
     resolutionStatus:
         observation.value.qualifierKind == QualifierKind.parsingUncertainty
-            ? 'PARSING_UNCERTAINTY'
-            : 'SOURCE_ACCEPTED',
+        ? 'PARSING_UNCERTAINTY'
+        : 'SOURCE_ACCEPTED',
     chosenObservationId: observation.observationId,
     resolvedValue: observation.value,
     resolvedUnit: observation.unit,

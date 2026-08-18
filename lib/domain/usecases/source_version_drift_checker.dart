@@ -75,7 +75,8 @@ class SourceVersionDriftChecker {
       String message, {
       String fix = '',
     }) {
-      final severity = (config.strictMode &&
+      final severity =
+          (config.strictMode &&
               baseSeverity == SourceVersionDriftSeverity.warn &&
               _strictEscalatable.contains(type))
           ? SourceVersionDriftSeverity.blocker
@@ -93,17 +94,21 @@ class SourceVersionDriftChecker {
     }
 
     final registryIds = <String>{};
-    for (final r in records.where((record) =>
-        record.recordType == SourceVersionRecordType.sourceAccessRegistry &&
-        record.sourceId.isNotEmpty)) {
+    for (final r in records.where(
+      (record) =>
+          record.recordType == SourceVersionRecordType.sourceAccessRegistry &&
+          record.sourceId.isNotEmpty,
+    )) {
       if (!registryIds.add(r.sourceId)) {
-        findings.add(f(
-          SourceVersionDriftSeverity.blocker,
-          SourceVersionDriftFindingType.duplicateSourceRegistryId,
-          r,
-          'Duplicate source-access registry id can overwrite authority state.',
-          fix: 'Keep exactly one reviewed registry record per source id.',
-        ));
+        findings.add(
+          f(
+            SourceVersionDriftSeverity.blocker,
+            SourceVersionDriftFindingType.duplicateSourceRegistryId,
+            r,
+            'Duplicate source-access registry id can overwrite authority state.',
+            fix: 'Keep exactly one reviewed registry record per source id.',
+          ),
+        );
       }
     }
 
@@ -119,12 +124,18 @@ class SourceVersionDriftChecker {
       if (idRequired.contains(r.recordType) && r.sourceId.isEmpty) {
         final sev =
             (r.recordType == SourceVersionRecordType.sourceAccessRegistry ||
-                    r.recordType == SourceVersionRecordType.sourceDocument)
-                ? SourceVersionDriftSeverity.blocker
-                : SourceVersionDriftSeverity.warn;
-        findings.add(f(sev, SourceVersionDriftFindingType.missingSourceId, r,
+                r.recordType == SourceVersionRecordType.sourceDocument)
+            ? SourceVersionDriftSeverity.blocker
+            : SourceVersionDriftSeverity.warn;
+        findings.add(
+          f(
+            sev,
+            SourceVersionDriftFindingType.missingSourceId,
+            r,
             'Record requires a source id but none is present.',
-            fix: 'Add an explicit sourceId to this record.'));
+            fix: 'Add an explicit sourceId to this record.',
+          ),
+        );
         // Without a source id the cross-checks below are not meaningful.
         continue;
       }
@@ -133,26 +144,32 @@ class SourceVersionDriftChecker {
       switch (r.recordType) {
         case SourceVersionRecordType.sourceAccessRegistry:
           if (r.lastPolicyReviewed.isEmpty) {
-            findings.add(f(
+            findings.add(
+              f(
                 SourceVersionDriftSeverity.warn,
                 SourceVersionDriftFindingType.missingPolicyReviewDate,
                 r,
                 'Source-access registry record lacks last_policy_reviewed.',
-                fix: 'Record the date this source policy was last reviewed.'));
+                fix: 'Record the date this source policy was last reviewed.',
+              ),
+            );
           }
           break;
         case SourceVersionRecordType.sourceDocument:
           if (r.effectiveDate.isEmpty &&
               r.version.isEmpty &&
               r.limitations.isEmpty) {
-            findings.add(f(
+            findings.add(
+              f(
                 SourceVersionDriftSeverity.warn,
                 SourceVersionDriftFindingType.missingEffectiveDate,
                 r,
                 'Source document lacks an effective date/version and has no '
                 'stated limitation.',
                 fix:
-                    'Add effectiveDate/version or an explicit limitation note.'));
+                    'Add effectiveDate/version or an explicit limitation note.',
+              ),
+            );
           }
           break;
         case SourceVersionRecordType.modelAssumption:
@@ -161,13 +178,16 @@ class SourceVersionDriftChecker {
               r.documentationRefs.isEmpty &&
               r.sourceRefs.isEmpty &&
               r.sourceId.isEmpty) {
-            findings.add(f(
+            findings.add(
+              f(
                 SourceVersionDriftSeverity.warn,
                 SourceVersionDriftFindingType.assumptionRegistryUnreferenced,
                 r,
                 'Model assumption has no bibliography/documentation/source '
                 'reference.',
-                fix: 'Link the assumption to a bibliography or source ref.'));
+                fix: 'Link the assumption to a bibliography or source ref.',
+              ),
+            );
           }
           break;
         default:
@@ -178,38 +198,50 @@ class SourceVersionDriftChecker {
       if (r.recordType == SourceVersionRecordType.generatedArtifact) {
         if (!r.exists) {
           // Missing optional artifacts are WARN, never a fabricated success.
-          findings.add(f(
+          findings.add(
+            f(
               SourceVersionDriftSeverity.warn,
               SourceVersionDriftFindingType.generatedArtifactMissing,
               r,
               'Expected generated artifact is missing (not fabricated).',
-              fix: 'Regenerate the artifact, or remove the expectation.'));
+              fix: 'Regenerate the artifact, or remove the expectation.',
+            ),
+          );
         } else if (r.generatedAt.isEmpty) {
-          findings.add(f(
+          findings.add(
+            f(
               SourceVersionDriftSeverity.warn,
               SourceVersionDriftFindingType.missingVersion,
               r,
               'Generated artifact is present but has no generated_at timestamp.',
-              fix: 'Emit a deterministic generated_at in the artifact.'));
+              fix: 'Emit a deterministic generated_at in the artifact.',
+            ),
+          );
         } else if (refTime != null) {
           final gen = _parseDate(r.generatedAt);
           if (gen == null) {
-            findings.add(f(
+            findings.add(
+              f(
                 SourceVersionDriftSeverity.warn,
                 SourceVersionDriftFindingType.invalidTimestamp,
                 r,
                 'Generated artifact has an invalid generated_at timestamp.',
-                fix: 'Emit a valid ISO-8601 generated_at timestamp.'));
+                fix: 'Emit a valid ISO-8601 generated_at timestamp.',
+              ),
+            );
           } else {
             final ageDays = refTime.difference(gen).inDays;
             if (ageDays > config.stalenessThresholdDays) {
-              findings.add(f(
+              findings.add(
+                f(
                   SourceVersionDriftSeverity.warn,
                   SourceVersionDriftFindingType.generatedArtifactStale,
                   r,
                   'Generated artifact is stale ($ageDays days old; threshold '
                   '${config.stalenessThresholdDays}).',
-                  fix: 'Regenerate the artifact from current inputs.'));
+                  fix: 'Regenerate the artifact from current inputs.',
+                ),
+              );
             }
           }
         }
@@ -231,14 +263,18 @@ class SourceVersionDriftChecker {
           !bibliographyIds.contains(r.sourceId) &&
           !registryById.containsKey(r.sourceId) &&
           r.bibliographyRefs.isEmpty) {
-        findings.add(f(
+        findings.add(
+          f(
             SourceVersionDriftSeverity.warn,
             SourceVersionDriftFindingType.bibliographyMissing,
             r,
             'Source id is used but has no bibliography entry, registry record, '
             'or bibliography reference.',
-            fix: 'Add a Bibliographies.md entry, a registry record, or a '
-                'bibliographyRef.'));
+            fix:
+                'Add a Bibliographies.md entry, a registry record, or a '
+                'bibliographyRef.',
+          ),
+        );
       }
 
       // F — source-access registry membership.
@@ -251,36 +287,47 @@ class SourceVersionDriftChecker {
           needsRegistry.contains(r.recordType) &&
           r.sourceId.isNotEmpty &&
           !registryById.containsKey(r.sourceId)) {
-        findings.add(f(
+        findings.add(
+          f(
             SourceVersionDriftSeverity.warn,
             SourceVersionDriftFindingType.sourceRegistryMismatch,
             r,
             'Source id is referenced but absent from the source-access '
             'registry.',
-            fix: 'Add the source to config/source_access_registry.json.'));
+            fix: 'Add the source to config/source_access_registry.json.',
+          ),
+        );
       }
 
       // G — fixture-vs-production status mismatch.
       if (r.claimsProductionReady) {
         final reg = registryById[r.sourceId];
         if (reg != null && reg.isFixtureOnly) {
-          findings.add(f(
+          findings.add(
+            f(
               SourceVersionDriftSeverity.blocker,
               SourceVersionDriftFindingType.fixtureStatusMismatch,
               r,
               'Record claims production-ready but the registry marks this '
               'source fixture-only.',
-              fix: 'Do not claim production readiness for a fixture-only '
-                  'source.'));
+              fix:
+                  'Do not claim production readiness for a fixture-only '
+                  'source.',
+            ),
+          );
         } else if (reg == null) {
-          findings.add(f(
+          findings.add(
+            f(
               SourceVersionDriftSeverity.blocker,
               SourceVersionDriftFindingType.fixtureStatusMismatch,
               r,
               'Record claims production-ready but no registry record supports '
               'that status.',
-              fix: 'Record and review the source before claiming production '
-                  'readiness.'));
+              fix:
+                  'Record and review the source before claiming production '
+                  'readiness.',
+            ),
+          );
         }
       }
 
@@ -288,13 +335,16 @@ class SourceVersionDriftChecker {
       if (r.metadata['doc_says_production'] == 'true') {
         final reg = registryById[r.sourceId];
         if (reg != null && reg.isFixtureOnly) {
-          findings.add(f(
+          findings.add(
+            f(
               SourceVersionDriftSeverity.blocker,
               SourceVersionDriftFindingType.documentationClaimMismatch,
               r,
               'Documentation implies production readiness but the registry '
               'marks this source fixture-only.',
-              fix: 'Align the documentation with the fixture-only status.'));
+              fix: 'Align the documentation with the fixture-only status.',
+            ),
+          );
         }
       }
 
@@ -307,25 +357,31 @@ class SourceVersionDriftChecker {
         SourceVersionRecordType.sourceDocument,
       };
       if (statusBearing.contains(r.recordType) && r.hasUnknownStatus) {
-        findings.add(f(
+        findings.add(
+          f(
             SourceVersionDriftSeverity.warn,
             SourceVersionDriftFindingType.unknownImplementationStatus,
             r,
             'Implementation status is unknown/empty.',
-            fix: 'Set an explicit implementation_status.'));
+            fix: 'Set an explicit implementation_status.',
+          ),
+        );
       }
 
       // H — deprecated source used.
       if (r.isDeprecated) {
         final mechanism = r.isMechanismRole;
-        findings.add(f(
+        findings.add(
+          f(
             mechanism
                 ? SourceVersionDriftSeverity.blocker
                 : SourceVersionDriftSeverity.warn,
             SourceVersionDriftFindingType.deprecatedSourceUsed,
             r,
             'Source is marked deprecated but is still referenced.',
-            fix: 'Replace or retire the deprecated source reference.'));
+            fix: 'Replace or retire the deprecated source reference.',
+          ),
+        );
       }
     }
 
@@ -370,22 +426,28 @@ String renderSourceVersionDriftMarkdown(SourceVersionDriftReport r) {
   final b = StringBuffer()
     ..writeln('# ParkinSUM Source Version Drift')
     ..writeln()
-    ..writeln('Educational/research prototype. **Provenance / release-hygiene '
-        'drift checking only — does not fetch or update live sources, is not '
-        'legal/license clearance, not clinical validation, not clinically '
-        'calibrated, and does not prove medical correctness.**')
+    ..writeln(
+      'Educational/research prototype. **Provenance / release-hygiene '
+      'drift checking only — does not fetch or update live sources, is not '
+      'legal/license clearance, not clinical validation, not clinically '
+      'calibrated, and does not prove medical correctness.**',
+    )
     ..writeln()
     ..writeln('- records: ${r.recordCount}')
-    ..writeln('- info: ${r.findingCounts['info'] ?? 0} · '
-        'warn: ${r.findingCounts['warn'] ?? 0} · '
-        'blocker: ${r.blockerCount}')
+    ..writeln(
+      '- info: ${r.findingCounts['info'] ?? 0} · '
+      'warn: ${r.findingCounts['warn'] ?? 0} · '
+      'blocker: ${r.blockerCount}',
+    )
     ..writeln('- pass (0 blocker): ${r.pass}')
     ..writeln()
     ..writeln('| severity | type | source_id | file | message |')
     ..writeln('| --- | --- | --- | --- | --- |');
   for (final f in r.findings) {
-    b.writeln('| ${f.severity} | ${f.findingType} | ${f.sourceId} | '
-        '${f.file} | ${f.message} |');
+    b.writeln(
+      '| ${f.severity} | ${f.findingType} | ${f.sourceId} | '
+      '${f.file} | ${f.message} |',
+    );
   }
   b
     ..writeln()

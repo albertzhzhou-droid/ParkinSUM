@@ -17,80 +17,44 @@
 
 import 'dart:io';
 
-import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
 import 'package:parkinsum_companion/domain/entities/localization_safety_lint.dart';
+import 'package:parkinsum_companion/domain/usecases/localization_lint_diagnostics.dart';
 import 'package:parkinsum_companion/domain/usecases/localization_safety_lint.dart';
-import 'package:parkinsum_companion/domain/usecases/safe_copy_template_registry.dart';
 
 void main(List<String> args) {
   final strict = args.contains('--strict');
-  const lint = LocalizationSafetyLint();
-  const registry = SafeCopyTemplateRegistry();
-
-  // Representative boundary copy (carries safety roles + placeholder
-  // contracts), plus every string the app can actually display.
-  final surfaces = <LocalizationSurface>[
-    for (final t in registry.templates) ...lint.surfacesFromTemplate(t),
-    ..._appDictionarySurfaces(),
-  ];
-
-  const config = LocalizationSafetyLintConfig(
-    requiredLocales: ['en', 'zh', 'fr', 'ja'],
-    sourceLocale: 'en',
-  );
-  final report = lint.lint(
-    surfaces,
-    strict
-        ? const LocalizationSafetyLintConfig(
-            requiredLocales: ['en', 'zh', 'fr', 'ja'],
+  // Surfaces + config live in the domain layer so this CLI and any in-app
+  // diagnostics view lint exactly the same set.
+  final report = strict
+      ? const LocalizationSafetyLint().lint(
+          allLocalizationSurfaces(),
+          const LocalizationSafetyLintConfig(
+            requiredLocales: kLocalizationLintRequiredLocales,
             sourceLocale: 'en',
             strictMode: true,
-          )
-        : config,
-    localeDictionaryAvailable: true,
-  );
+          ),
+          localeDictionaryAvailable: true,
+        )
+      : lintAllLocalizationSurfaces();
 
   final outDir = Directory('build/localization_safety_lint');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeLocalizationSafetyReport(report));
-  File('${outDir.path}/latest.md')
-      .writeAsStringSync(renderLocalizationSafetyMarkdown(report));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeLocalizationSafetyReport(report));
+  File(
+    '${outDir.path}/latest.md',
+  ).writeAsStringSync(renderLocalizationSafetyMarkdown(report));
 
   stdout
-    ..writeln('Localization safety lint: ${report.surfaceCount} surfaces, '
-        'info=${report.findingCounts['info'] ?? 0} '
-        'warn=${report.findingCounts['warn'] ?? 0} '
-        'blocker=${report.blockerCount} '
-        '(pass=${report.pass}).')
+    ..writeln(
+      'Localization safety lint: ${report.surfaceCount} surfaces, '
+      'info=${report.findingCounts['info'] ?? 0} '
+      'warn=${report.findingCounts['warn'] ?? 0} '
+      'blocker=${report.blockerCount} '
+      '(pass=${report.pass}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   exit(report.pass ? 0 : 1);
-}
-
-/// Every shipped translation as a lintable surface.
-///
-/// Keys are emitted in sorted order per family so the report stays
-/// deterministic run-to-run. Role is `plain`: the dictionary carries no
-/// per-key safety contract, so these are scanned for banned/prescriptive
-/// phrasing rather than required-term presence.
-List<LocalizationSurface> _appDictionarySurfaces() {
-  final out = <LocalizationSurface>[];
-  final dictionary = AppI18n.translationDictionary;
-  for (final family in AppI18n.translationFamilies) {
-    final entries = dictionary[family]!;
-    final keys = entries.keys.toList(growable: false)..sort();
-    for (final key in keys) {
-      final text = entries[key] ?? '';
-      if (text.trim().isEmpty) continue;
-      out.add(LocalizationSurface(
-        surfaceId: 'app_i18n.$family.$key',
-        locale: family,
-        key: key,
-        text: text,
-        source: 'app_i18n',
-      ));
-    }
-  }
-  return out;
 }

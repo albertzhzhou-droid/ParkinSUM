@@ -433,13 +433,15 @@ const _aminoAcidMealComponent = FoodComponent(
     fdcDataType: 'Foundation',
     derivations: {
       'leucine': NutrientDerivation(
-          derivationCode: 'A',
-          derivationDescription: 'Analytical',
-          dataPoints: 12),
+        derivationCode: 'A',
+        derivationDescription: 'Analytical',
+        dataPoints: 12,
+      ),
       'valine': NutrientDerivation(
-          derivationCode: 'A',
-          derivationDescription: 'Analytical',
-          dataPoints: 12),
+        derivationCode: 'A',
+        derivationDescription: 'Analytical',
+        dataPoints: 12,
+      ),
     },
   ),
 );
@@ -540,7 +542,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's04b_multidose_ir',
-    title: 'Two IR levodopa doses; the dose overlapping the high-protein meal '
+    title:
+        'Two IR levodopa doses; the dose overlapping the high-protein meal '
         'drives the score (max-overlap, not averaged)',
     expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
     expectedSeverityFloor: SeverityBand.moderate,
@@ -718,10 +721,7 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       window: TimelineWindow(startMinute: 60, endMinute: 120),
       source: 'synthetic_demo_fixture',
     ),
-    candidateFoods: [
-      _candidateBanana,
-      _candidateMissingNutrients,
-    ],
+    candidateFoods: [_candidateBanana, _candidateMissingNutrients],
   ),
   MechanisticReplayScenario(
     scenarioId: 's15_multi_point_window_variation',
@@ -749,7 +749,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   // --- Protein-redistribution + multi-source coverage (s16–s21) ---------
   MechanisticReplayScenario(
     scenarioId: 's16_daytime_high_overlap_high_protein',
-    title: 'Daytime high-overlap window + high-protein candidate → overlap '
+    title:
+        'Daytime high-overlap window + high-protein candidate → overlap '
         'penalty (NOT a "protein is bad" penalty)',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -764,7 +765,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's17_evening_low_overlap_high_protein',
-    title: 'Evening low-overlap window + high-protein candidate → not globally '
+    title:
+        'Evening low-overlap window + high-protein candidate → not globally '
         'penalized',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -779,7 +781,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's18_zero_vs_moderate_protein_low_overlap',
-    title: 'Zero-protein vs moderate-protein in a low-overlap window → '
+    title:
+        'Zero-protein vs moderate-protein in a low-overlap window → '
         'zero-protein does not automatically win',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -837,7 +840,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   // --- s22–s26: external-adapter + amino-acid + fallback coverage --------
   MechanisticReplayScenario(
     scenarioId: 's22_amino_acid_actual_fields_mode',
-    title: 'Candidate with actual amino-acid fields → LNAA uses actual-fields '
+    title:
+        'Candidate with actual amino-acid fields → LNAA uses actual-fields '
         'mode (preferred over protein-source proxy)',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -852,7 +856,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's23_amino_acid_proxy_mode',
-    title: 'Candidate without amino-acid fields → LNAA falls back to '
+    title:
+        'Candidate without amino-acid fields → LNAA falls back to '
         'protein-source proxy mode',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -893,7 +898,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's26_eligible_overwrites_legacy_order',
-    title: 'Mechanistic-primary eligible (window + scored candidates) → '
+    title:
+        'Mechanistic-primary eligible (window + scored candidates) → '
         'mechanistic ordering, not legacy heuristic',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -907,13 +913,14 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     candidateFoods: [
       _candidateProteinShake,
       _candidateBanana,
-      _candidateRiceCake
+      _candidateRiceCake,
     ],
   ),
   // --- s27–s31: production-readiness guardrail coverage ------------------
   MechanisticReplayScenario(
     scenarioId: 's27_amino_acid_food_far_window_actual_mode',
-    title: 'Amino-acid-profiled candidate in a far low-overlap window → actual '
+    title:
+        'Amino-acid-profiled candidate in a far low-overlap window → actual '
         'amino-acid mode, redistribution-compatible',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -948,7 +955,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's29_bare_numeric_invalid_with_window',
-    title: 'Bare numeric "100" with a window → invalid medication context, '
+    title:
+        'Bare numeric "100" with a window → invalid medication context, '
         'candidates insufficient (no pretended optimization)',
     expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
     expectInsufficientContext: true,
@@ -991,7 +999,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's32_partial_amino_acid_profile',
-    title: 'Candidate with a PARTIAL amino-acid profile → partial data flag + '
+    title:
+        'Candidate with a PARTIAL amino-acid profile → partial data flag + '
         'widened uncertainty (not treated as fully narrow)',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     expectNonEmptyRecommendations: true,
@@ -1006,7 +1015,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's33_high_calorie_high_fat_meal',
-    title: 'Large high-calorie/high-fat meal close to a dose → gastric '
+    title:
+        'Large high-calorie/high-fat meal close to a dose → gastric '
         'uncertainty widened (educational simulation; magnitudes heuristic)',
     expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
     medicationEntries: [_carbidopaLevodopaIr],
@@ -1041,7 +1051,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   // --- D2: missingness stress suite (missing ≠ zero) ---------------------
   MechanisticReplayScenario(
     scenarioId: 's35_missing_calories_and_portion',
-    title: 'Protein present but calories + portion missing → lower composition '
+    title:
+        'Protein present but calories + portion missing → lower composition '
         'completeness + capped confidence (missing ≠ zero)',
     expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
     expectedConfidenceCeiling: ConfidenceBand.medium,
@@ -1068,7 +1079,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         ],
       ),
     ],
-    notes: 'Asserts missing calories/portion lower completeness + cap '
+    notes:
+        'Asserts missing calories/portion lower completeness + cap '
         'confidence rather than fabricating 0.',
   ),
   MechanisticReplayScenario(
@@ -1101,14 +1113,16 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         ],
       ),
     ],
-    notes: 'Proves missing macros stay missing (unknown competition, lowered '
+    notes:
+        'Proves missing macros stay missing (unknown competition, lowered '
         'confidence), never silently 0.',
   ),
 
   // --- C1: enteral feeding educational scenarios (non-prescriptive) ------
   MechanisticReplayScenario(
     scenarioId: 's37_enteral_continuous_low_protein',
-    title: 'Continuous enteral-style feed (low-protein liquid, sustained) — '
+    title:
+        'Continuous enteral-style feed (low-protein liquid, sustained) — '
         'educational context only, no schedule or timing advice',
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     medicationEntries: [_carbidopaLevodopaIr],
@@ -1134,13 +1148,15 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         ],
       ),
     ],
-    notes: 'Enteral feeding changes protein delivery + gastric context. '
+    notes:
+        'Enteral feeding changes protein delivery + gastric context. '
         'Educational simulation only; not a feeding schedule or timing '
         'recommendation. Review with a qualified professional.',
   ),
   MechanisticReplayScenario(
     scenarioId: 's38_enteral_bolus_protein',
-    title: 'Bolus enteral-style feed (protein-containing liquid) near a dose — '
+    title:
+        'Bolus enteral-style feed (protein-containing liquid) near a dose — '
         'educational context only, no schedule or timing advice',
     // A liquid bolus empties quickly, so in this configuration the model finds
     // no modeled interaction by the time the absorption window opens.
@@ -1155,7 +1171,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         components: [_smoothieLiquidProtein],
       ),
     ],
-    notes: 'Bolus enteral feed modeled as a protein-containing liquid meal. '
+    notes:
+        'Bolus enteral feed modeled as a protein-containing liquid meal. '
         'Educational simulation only; not a feeding schedule or timing '
         'recommendation. Review with a qualified professional.',
   ),
@@ -1163,7 +1180,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   // --- A1/A2: CDSS→mechanistic medication section-provenance bridge -------
   MechanisticReplayScenario(
     scenarioId: 's39_spl_ir_section_provenance',
-    title: 'SPL-style IR carbidopa/levodopa with section provenance + 2 '
+    title:
+        'SPL-style IR carbidopa/levodopa with section provenance + 2 '
         'components bridged into the mechanistic context (educational)',
     expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
     expectedSeverityFloor: SeverityBand.moderate,
@@ -1177,13 +1195,15 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         components: [_chickenSteakProtein],
       ),
     ],
-    notes: 'Label section refs + combination components + release-type source '
+    notes:
+        'Label section refs + combination components + release-type source '
         'reach the per-event trace + report. Dose still from user/variant '
         'strength; product metadata never fabricates a dose.',
   ),
   MechanisticReplayScenario(
     scenarioId: 's40_spl_er_section_provenance',
-    title: 'SPL-style ER carbidopa/levodopa with section provenance → wider '
+    title:
+        'SPL-style ER carbidopa/levodopa with section provenance → wider '
         'absorption window from source-backed release type (educational)',
     expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
     medicationEntries: [_carbidopaLevodopaErWithMetadata],
@@ -1196,7 +1216,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
         components: [_chickenSteakProtein],
       ),
     ],
-    notes: 'Extended-release product metadata widens the modeled absorption '
+    notes:
+        'Extended-release product metadata widens the modeled absorption '
         'window; release-type source recorded as structured_variant_metadata.',
   ),
 ];

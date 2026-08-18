@@ -91,20 +91,20 @@ class NormalizedMedicationContext {
   });
 
   Map<String, dynamic> toJson() => {
-        'drug_product_variant': drugProductVariant,
-        'active_ingredients': activeIngredients,
-        'form': form,
-        'route': route,
-        'release_type': releaseType,
-        'strength': strength,
-        'unit': unit,
-        'jurisdiction': jurisdiction,
-        'source_doc_id': sourceDocId,
-        'label_section': labelSection,
-        'extraction_confidence': extractionConfidence,
-        'limitation_text': limitationText,
-        'metadata': metadata?.toJson(),
-      };
+    'drug_product_variant': drugProductVariant,
+    'active_ingredients': activeIngredients,
+    'form': form,
+    'route': route,
+    'release_type': releaseType,
+    'strength': strength,
+    'unit': unit,
+    'jurisdiction': jurisdiction,
+    'source_doc_id': sourceDocId,
+    'label_section': labelSection,
+    'extraction_confidence': extractionConfidence,
+    'limitation_text': limitationText,
+    'metadata': metadata?.toJson(),
+  };
 }
 
 /// Result of validating a raw medication entry.
@@ -125,9 +125,9 @@ class MedicationContextValidationResult {
       validity == MedicationContextValidity.valid && normalized != null;
 
   Map<String, dynamic> toJson() => {
-        'validity': validity.name,
-        'issues': issues.map((e) => e.toJson()).toList(),
-        'normalized': normalized?.toJson(),
-        'safe_user_copy': safeUserCopy,
-      };
+    'validity': validity.name,
+    'issues': issues.map((e) => e.toJson()).toList(),
+    'normalized': normalized?.toJson(),
+    'safe_user_copy': safeUserCopy,
+  };
 }

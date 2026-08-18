@@ -25,14 +25,14 @@ class LiveSmokeSummary {
 
   /// Skipped (opt-in not enabled) summary. No network.
   factory LiveSmokeSummary.skipped(String source) => LiveSmokeSummary(
-        source: source,
-        enabled: false,
-        status: 0,
-        contentType: null,
-        payloadBytes: 0,
-        parseShapeOk: false,
-        error: 'live_smoke_disabled',
-      );
+    source: source,
+    enabled: false,
+    status: 0,
+    contentType: null,
+    payloadBytes: 0,
+    parseShapeOk: false,
+    error: 'live_smoke_disabled',
+  );
 
   String toRedactedString() {
     if (!enabled) {

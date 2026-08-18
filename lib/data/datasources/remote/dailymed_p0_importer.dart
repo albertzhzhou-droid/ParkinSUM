@@ -34,8 +34,9 @@ class DailyMedP0Importer {
       // Set ids come from config/upstream indexes; encode them so a malformed
       // value cannot alter the request path.
       final setId = Uri.encodeComponent(rawSetId);
-      final xml = await fetchClient
-          .getText('${P0SourceUrls.dailymedSplXmlBase}/$setId.xml');
+      final xml = await fetchClient.getText(
+        '${P0SourceUrls.dailymedSplXmlBase}/$setId.xml',
+      );
       final ndcs = await _safeFetchJsonList(
         '${P0SourceUrls.dailymedSplXmlBase}/$setId/ndcs.json',
       );
@@ -78,13 +79,15 @@ class DailyMedP0Importer {
   }) {
     validateSplXmlLength(xml.length);
     final document = XmlDocument.parse(xml);
-    final setId = _firstAttr(document, 'setId', 'root') ??
+    final setId =
+        _firstAttr(document, 'setId', 'root') ??
         _firstAttr(document, 'id', 'root') ??
         'UNSPECIFIED_SETID';
     final title = _firstText(document, 'title') ?? 'DailyMed SPL';
     final ingredientNames = _ingredientNames(document);
-    final genericName =
-        ingredientNames.isEmpty ? title : ingredientNames.join('/');
+    final genericName = ingredientNames.isEmpty
+        ? title
+        : ingredientNames.join('/');
     final conceptId = buildDrugConceptId(genericName);
     final variantId = buildDrugVariantId(
       conceptId: conceptId,
@@ -190,7 +193,8 @@ class DailyMedP0Importer {
                 'Free-text package description not parsed into structured quantity/size fields.',
             observedCount: ndcs
                 .where(
-                    (row) => '${row['package_description'] ?? ''}'.isNotEmpty)
+                  (row) => '${row['package_description'] ?? ''}'.isNotEmpty,
+                )
                 .length,
           ),
           ImporterAudit.auditGap(
@@ -209,7 +213,7 @@ class DailyMedP0Importer {
       genericName: genericName,
       brandNames: [title],
       aliases: ingredientNames,
-      tags: [if (tag != null) tag],
+      tags: [?tag],
       notes: summaryText.isEmpty ? title : summaryText,
       interactionSummary: _buildInteractionSummary(sectionSummaries),
       sourceSystem: 'DAILYMED',
@@ -460,7 +464,8 @@ class DailyMedP0Importer {
     for (final section in document.findAllElements('section')) {
       final title =
           _directChildText(section, 'title') ?? 'Section ${ordinal + 1}';
-      final sectionText = _directChildText(section, 'text') ??
+      final sectionText =
+          _directChildText(section, 'text') ??
           section
               .findAllElements('text')
               .map((node) => node.innerText.trim())
@@ -472,11 +477,7 @@ class DailyMedP0Importer {
       }
       final rawCode =
           section.getAttribute('ID') ?? section.getAttribute('code');
-      final key = _buildSectionKey(
-        title: title,
-        index: ordinal,
-        code: rawCode,
-      );
+      final key = _buildSectionKey(title: title, index: ordinal, code: rawCode);
       sections.add(
         _SplSectionEntry(
           key: key,
@@ -492,7 +493,8 @@ class DailyMedP0Importer {
   }
 
   Map<String, String> _extractRelevantSections(
-      List<_SplSectionEntry> allSections) {
+    List<_SplSectionEntry> allSections,
+  ) {
     final sections = <String, String>{
       'food_effect': '',
       'iron': '',
@@ -576,7 +578,8 @@ class DailyMedP0Importer {
   }
 
   List<Map<String, dynamic>> _extractStructuredLabelFacts(
-      List<_SplSectionEntry> allSections) {
+    List<_SplSectionEntry> allSections,
+  ) {
     final facts = <Map<String, dynamic>>[];
     final seenTypes = <String>{};
 
@@ -658,9 +661,7 @@ class DailyMedP0Importer {
           label: 'High-fat or high-calorie meal may delay onset/absorption',
           section: section,
           valueText: hours == null ? null : '${hours.toString()} hours delay',
-          payload: {
-            if (hours != null) 'delay_hours': hours,
-          },
+          payload: {'delay_hours': ?hours},
         );
       }
 
@@ -691,9 +692,7 @@ class DailyMedP0Importer {
           label: 'Very high tyramine threshold warning',
           section: section,
           valueText: mg == null ? null : '$mg mg tyramine threshold',
-          payload: {
-            if (mg != null) 'threshold_mg': mg,
-          },
+          payload: {'threshold_mg': ?mg},
         );
       }
 

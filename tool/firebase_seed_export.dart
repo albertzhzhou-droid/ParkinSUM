@@ -19,16 +19,19 @@ const _factsVersion = 'p0_food_knowledge_seed_v1';
 const _snapshotId = 'firebase_seed_p0_core_v1';
 
 void main(List<String> args) {
-  final positionalArgs =
-      args.where((arg) => !arg.startsWith('--')).toList(growable: false);
+  final positionalArgs = args
+      .where((arg) => !arg.startsWith('--'))
+      .toList(growable: false);
   final outputPath = positionalArgs.isEmpty
       ? 'build/firebase_seed/official_core_seed.json'
       : positionalArgs.first;
-  final projectId = _argValue(args, '--project=') ??
+  final projectId =
+      _argValue(args, '--project=') ??
       Platform.environment['PARKINSUM_FIREBASE_PROJECT_ID'] ??
       'parkinsum-companion';
   final databaseId = _argValue(args, '--database-id=') ?? '(default)';
-  final userUid = _argValue(args, '--user-uid=') ??
+  final userUid =
+      _argValue(args, '--user-uid=') ??
       Platform.environment['PARKINSUM_FIREBASE_SEED_UID'];
   final docs = <Map<String, dynamic>>[];
   final counts = <String, int>{};
@@ -297,51 +300,51 @@ void main(List<String> args) {
 }
 
 Map<String, dynamic> _sourceDocument(SourceDocumentRecord record) => {
-      'source_doc_id': record.sourceDocId,
-      'source_family': record.sourceFamily,
-      'data_tier': record.dataTier,
-      'ingestion_strategy': record.ingestionStrategy,
-      'organization': record.organization,
-      'doc_type': record.docType,
-      'title': record.title,
-      'jurisdiction': record.jurisdiction,
-      'origin_url': record.originUrl,
-      'published_at': record.publishedAt?.millisecondsSinceEpoch,
-      'effective_at': record.effectiveAt?.millisecondsSinceEpoch,
-      'language': record.language,
-      'license_note': record.licenseNote,
-      'checksum': record.checksum,
-      'source_status': record.sourceStatus,
-      'raw_payload': record.rawPayload,
-    };
+  'source_doc_id': record.sourceDocId,
+  'source_family': record.sourceFamily,
+  'data_tier': record.dataTier,
+  'ingestion_strategy': record.ingestionStrategy,
+  'organization': record.organization,
+  'doc_type': record.docType,
+  'title': record.title,
+  'jurisdiction': record.jurisdiction,
+  'origin_url': record.originUrl,
+  'published_at': record.publishedAt?.millisecondsSinceEpoch,
+  'effective_at': record.effectiveAt?.millisecondsSinceEpoch,
+  'language': record.language,
+  'license_note': record.licenseNote,
+  'checksum': record.checksum,
+  'source_status': record.sourceStatus,
+  'raw_payload': record.rawPayload,
+};
 
 Map<String, dynamic> _ruleRegistryRow(RuleRegistryEntry rule) => {
-      'rule_id': rule.ruleId,
-      'rule_version': _rulesVersion,
-      'status': rule.status,
-      'rule_type': rule.ruleType.name,
-      'priority_band': rule.priorityBand,
-      'specificity_band': rule.specificityBand,
-      'jurisdiction_json': jsonEncode(rule.jurisdictions),
-      'applies_to_json': jsonEncode(rule.appliesTo),
-      'predicate_json': jsonEncode(rule.conditions),
-      'effect_json': jsonEncode({
-        'decision': rule.thenClause.decision.wireValue,
-        'severity': rule.thenClause.severity,
-        'messages': rule.thenClause.messages.asLocaleMap(),
-        'actions': rule.thenClause.actions,
-        'output_tags': rule.thenClause.outputTags,
-      }),
-      'provenance_json': jsonEncode({
-        'evidence_level': rule.provenance.evidenceLevel,
-        'source_refs': rule.provenance.sourceRefs,
-        'effective_from': rule.provenance.effectiveFrom?.toIso8601String(),
-        'effective_to': rule.provenance.effectiveTo?.toIso8601String(),
-      }),
-      'override_json': jsonEncode(rule.override),
-      'compiled_hash': '${rule.ruleId}_${rule.version}',
-      'updated_at': rule.provenance.effectiveFrom?.millisecondsSinceEpoch ?? 0,
-    };
+  'rule_id': rule.ruleId,
+  'rule_version': _rulesVersion,
+  'status': rule.status,
+  'rule_type': rule.ruleType.name,
+  'priority_band': rule.priorityBand,
+  'specificity_band': rule.specificityBand,
+  'jurisdiction_json': jsonEncode(rule.jurisdictions),
+  'applies_to_json': jsonEncode(rule.appliesTo),
+  'predicate_json': jsonEncode(rule.conditions),
+  'effect_json': jsonEncode({
+    'decision': rule.thenClause.decision.wireValue,
+    'severity': rule.thenClause.severity,
+    'messages': rule.thenClause.messages.asLocaleMap(),
+    'actions': rule.thenClause.actions,
+    'output_tags': rule.thenClause.outputTags,
+  }),
+  'provenance_json': jsonEncode({
+    'evidence_level': rule.provenance.evidenceLevel,
+    'source_refs': rule.provenance.sourceRefs,
+    'effective_from': rule.provenance.effectiveFrom?.toIso8601String(),
+    'effective_to': rule.provenance.effectiveTo?.toIso8601String(),
+  }),
+  'override_json': jsonEncode(rule.override),
+  'compiled_hash': '${rule.ruleId}_${rule.version}',
+  'updated_at': rule.provenance.effectiveFrom?.millisecondsSinceEpoch ?? 0,
+};
 
 List<InteractionRuleRecord> _defaultInteractionRules() {
   return const [
@@ -380,8 +383,9 @@ List<FoodConceptRecord> _buildFoodConcepts(List<FoodItem> foods) {
       .map(
         (food) => FoodConceptRecord(
           foodConceptId: 'FOOD_${food.id.toUpperCase()}',
-          canonicalNameEn:
-              food.aliases.isEmpty ? food.name : food.aliases.first,
+          canonicalNameEn: food.aliases.isEmpty
+              ? food.name
+              : food.aliases.first,
           canonicalNameZh: food.name,
           foodGroup: food.category.name,
         ),

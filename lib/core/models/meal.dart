@@ -88,23 +88,25 @@ class MealItem {
   }
 
   Map<String, dynamic> toJson() => {
-        'foodId': foodId,
-        'foodName': foodName,
-        'foodCategory': foodCategory.name,
-        'quantityFactor': quantityFactor,
-        'foodTags': foodTags,
-        'proteinPer100g': proteinPer100g,
-        'carbsPer100g': carbsPer100g,
-        'fatPer100g': fatPer100g,
-        'fiberPer100g': fiberPer100g,
-        'sodiumPer100g': sodiumPer100g,
-      };
+    'foodId': foodId,
+    'foodName': foodName,
+    'foodCategory': foodCategory.name,
+    'quantityFactor': quantityFactor,
+    'foodTags': foodTags,
+    'proteinPer100g': proteinPer100g,
+    'carbsPer100g': carbsPer100g,
+    'fatPer100g': fatPer100g,
+    'fiberPer100g': fiberPer100g,
+    'sodiumPer100g': sodiumPer100g,
+  };
 
   static MealItem fromJson(Map<String, dynamic> json) {
     final catName =
         (json['foodCategory'] as String?) ?? FoodCategory.other.name;
-    final cat = FoodCategory.values
-        .firstWhere((c) => c.name == catName, orElse: () => FoodCategory.other);
+    final cat = FoodCategory.values.firstWhere(
+      (c) => c.name == catName,
+      orElse: () => FoodCategory.other,
+    );
 
     return MealItem(
       foodId: json['foodId'] as String,
@@ -240,25 +242,25 @@ class Meal {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'eatenAt': eatenAt.toIso8601String(),
-        'recordedAt': recordedAt.toIso8601String(),
-        'occurredAt': occurredAt?.toIso8601String(),
-        'occurredRangeStart': occurredRangeStart?.toIso8601String(),
-        'occurredRangeEnd': occurredRangeEnd?.toIso8601String(),
-        'timeSource': timeSource,
-        'timePrecision': timePrecision,
-        'nextMealWindowStart': nextMealWindowStart?.toIso8601String(),
-        'nextMealWindowEnd': nextMealWindowEnd?.toIso8601String(),
-        'coeventTime': coeventTime?.toIso8601String(),
-        'coeventSubstanceTags': coeventSubstanceTags,
-        'thickenerType': thickenerType,
-        'enteralFeedMode': enteralFeedMode,
-        'enteralFeedFormula': enteralFeedFormula,
-        'enteralFeedProteinGPerDay': enteralFeedProteinGPerDay,
-        'title': title,
-        'items': items.map((e) => e.toJson()).toList(),
-      };
+    'id': id,
+    'eatenAt': eatenAt.toIso8601String(),
+    'recordedAt': recordedAt.toIso8601String(),
+    'occurredAt': occurredAt?.toIso8601String(),
+    'occurredRangeStart': occurredRangeStart?.toIso8601String(),
+    'occurredRangeEnd': occurredRangeEnd?.toIso8601String(),
+    'timeSource': timeSource,
+    'timePrecision': timePrecision,
+    'nextMealWindowStart': nextMealWindowStart?.toIso8601String(),
+    'nextMealWindowEnd': nextMealWindowEnd?.toIso8601String(),
+    'coeventTime': coeventTime?.toIso8601String(),
+    'coeventSubstanceTags': coeventSubstanceTags,
+    'thickenerType': thickenerType,
+    'enteralFeedMode': enteralFeedMode,
+    'enteralFeedFormula': enteralFeedFormula,
+    'enteralFeedProteinGPerDay': enteralFeedProteinGPerDay,
+    'title': title,
+    'items': items.map((e) => e.toJson()).toList(),
+  };
 
   static Meal fromJson(Map<String, dynamic> json) {
     final eatenAt = DateTime.parse(json['eatenAt'] as String);
@@ -295,8 +297,8 @@ class Meal {
       thickenerType: json['thickenerType'] as String?,
       enteralFeedMode: json['enteralFeedMode'] as String?,
       enteralFeedFormula: json['enteralFeedFormula'] as String?,
-      enteralFeedProteinGPerDay:
-          (json['enteralFeedProteinGPerDay'] as num?)?.toDouble(),
+      enteralFeedProteinGPerDay: (json['enteralFeedProteinGPerDay'] as num?)
+          ?.toDouble(),
       title: (json['title'] as String?) ?? '',
       items: (json['items'] as List<dynamic>? ?? const [])
           .map((e) => MealItem.fromJson(e as Map<String, dynamic>))

@@ -95,17 +95,17 @@ class ContributionChange {
   });
 
   Map<String, dynamic> toJson() => {
-        'path': path,
-        'change_type': changeType,
-        'added_lines': addedLines,
-        'removed_lines': removedLines,
-        'matched_keywords': matchedKeywords,
-        'source_refs': sourceRefs,
-        'is_generated': isGenerated,
-        'is_docs': isDocs,
-        'is_test': isTest,
-        'allowlisted': allowlisted,
-      };
+    'path': path,
+    'change_type': changeType,
+    'added_lines': addedLines,
+    'removed_lines': removedLines,
+    'matched_keywords': matchedKeywords,
+    'source_refs': sourceRefs,
+    'is_generated': isGenerated,
+    'is_docs': isDocs,
+    'is_test': isTest,
+    'allowlisted': allowlisted,
+  };
 }
 
 class ContributionRiskFinding {
@@ -132,16 +132,16 @@ class ContributionRiskFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'severity': severity,
-        'category': category,
-        'path': path,
-        'line': line,
-        'message': message,
-        'matched_text': matchedText,
-        'suggested_review': suggestedReview,
-        'required_command': requiredCommand,
-        'safety_boundary': safetyBoundary,
-      };
+    'severity': severity,
+    'category': category,
+    'path': path,
+    'line': line,
+    'message': message,
+    'matched_text': matchedText,
+    'suggested_review': suggestedReview,
+    'required_command': requiredCommand,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 class ContributionReviewChecklistItem {
@@ -162,13 +162,13 @@ class ContributionReviewChecklistItem {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'category': category,
-        'required': required,
-        'text': text,
-        'blocking_if_missing': blockingIfMissing,
-        'related_commands': relatedCommands,
-      };
+    'id': id,
+    'category': category,
+    'required': required,
+    'text': text,
+    'blocking_if_missing': blockingIfMissing,
+    'related_commands': relatedCommands,
+  };
 }
 
 class ContributionSafetyReport {
@@ -207,23 +207,23 @@ class ContributionSafetyReport {
   int get blockerCount => counts['blocker'] ?? 0;
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'not_ai_code_review': true,
-        'does_not_replace_human_review': true,
-        'generated_at': generatedAt,
-        'change_count': changeCount,
-        'risk_level': riskLevel,
-        'categories': categories,
-        'counts': counts,
-        'pass': pass,
-        'suggested_labels': suggestedLabels,
-        'required_commands': requiredCommands,
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'checklist': checklist.map((c) => c.toJson()).toList(growable: false),
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'not_ai_code_review': true,
+    'does_not_replace_human_review': true,
+    'generated_at': generatedAt,
+    'change_count': changeCount,
+    'risk_level': riskLevel,
+    'categories': categories,
+    'counts': counts,
+    'pass': pass,
+    'suggested_labels': suggestedLabels,
+    'required_commands': requiredCommands,
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'checklist': checklist.map((c) => c.toJson()).toList(growable: false),
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+  };
 }
 
 /// Optional configuration.

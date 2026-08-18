@@ -112,17 +112,17 @@ class InputQualityFinding {
   });
 
   Map<String, dynamic> toJson() => {
-        'finding_id': findingId,
-        'severity': severity,
-        'dimension': dimension,
-        'message': message,
-        'missing_field': missingField,
-        'observed_value': observedValue,
-        'expected_requirement': expectedRequirement,
-        'source_refs': sourceRefs,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'finding_id': findingId,
+    'severity': severity,
+    'dimension': dimension,
+    'message': message,
+    'missing_field': missingField,
+    'observed_value': observedValue,
+    'expected_requirement': expectedRequirement,
+    'source_refs': sourceRefs,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }
 
 class InputQualityDimensionScore {
@@ -139,11 +139,11 @@ class InputQualityDimensionScore {
   });
 
   Map<String, dynamic> toJson() => {
-        'dimension': dimension,
-        'status': status,
-        'score': score,
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-      };
+    'dimension': dimension,
+    'status': status,
+    'score': score,
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+  };
 }
 
 class MealMedicationInputQualityResult {
@@ -188,23 +188,24 @@ class MealMedicationInputQualityResult {
   }
 
   Map<String, dynamic> toJson() => {
-        'report_type': kReportType,
-        'not_clinically_calibrated': notClinicallyCalibrated,
-        'not_medical_advice': true,
-        'input_completeness_assessment_only': true,
-        'overall_status': overallStatus,
-        'overall_score': overallScore,
-        'mechanistic_primary_eligible': mechanisticPrimaryEligible,
-        'blocking_reasons': blockingReasons,
-        'fallback_reasons': fallbackReasons,
-        'dimension_scores':
-            dimensionScores.map((d) => d.toJson()).toList(growable: false),
-        'findings': findings.map((f) => f.toJson()).toList(growable: false),
-        'source_refs': sourceRefs,
-        'limitations': limitations,
-        'safety_boundary': safetyBoundary,
-        'not_advice_text': notAdviceText,
-      };
+    'report_type': kReportType,
+    'not_clinically_calibrated': notClinicallyCalibrated,
+    'not_medical_advice': true,
+    'input_completeness_assessment_only': true,
+    'overall_status': overallStatus,
+    'overall_score': overallScore,
+    'mechanistic_primary_eligible': mechanisticPrimaryEligible,
+    'blocking_reasons': blockingReasons,
+    'fallback_reasons': fallbackReasons,
+    'dimension_scores': dimensionScores
+        .map((d) => d.toJson())
+        .toList(growable: false),
+    'findings': findings.map((f) => f.toJson()).toList(growable: false),
+    'source_refs': sourceRefs,
+    'limitations': limitations,
+    'safety_boundary': safetyBoundary,
+    'not_advice_text': notAdviceText,
+  };
 }
 
 /// Optional, lightweight localization-readiness status (NOT a full lint run).

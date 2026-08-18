@@ -42,8 +42,8 @@ class ImporterAudit {
       'confidence_reason': reason,
       'promoted_fields': promotedFields,
       'non_promoted_fields': nonPromotedFields,
-      if (promotionDecision != null) 'promotion_decision': promotionDecision,
-      if (parserLimitation != null) 'parser_limitation': parserLimitation,
+      'promotion_decision': ?promotionDecision,
+      'parser_limitation': ?parserLimitation,
     };
   }
 
@@ -115,7 +115,7 @@ class ImporterAudit {
     return <String, Object?>{
       'field': fieldName,
       'reason': reason,
-      if (observedCount != null) 'observed_count': observedCount,
+      'observed_count': ?observedCount,
       if (observedKeys != null && observedKeys.isNotEmpty)
         'observed_keys': observedKeys,
     };

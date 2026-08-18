@@ -63,7 +63,9 @@ void main() {
       releaseTypeSource: 'structured_variant_metadata',
       components: [
         MedicationComponent(
-            ingredientName: 'carbidopa', role: 'decarboxylase_inhibitor'),
+          ingredientName: 'carbidopa',
+          role: 'decarboxylase_inhibitor',
+        ),
         MedicationComponent(ingredientName: 'levodopa', role: 'active'),
       ],
       labelSectionRefs: [
@@ -139,26 +141,28 @@ void main() {
 
   test('JSON is deterministic', () {
     EvidenceTraceBundle make() => builder.build(
-          bundleId: 'bundle-1',
-          createdAt: '2026-01-01',
-          nutritionView: nutritionView(),
-          medicationKnowledgeView: medicationView(),
-        );
+      bundleId: 'bundle-1',
+      createdAt: '2026-01-01',
+      nutritionView: nutritionView(),
+      medicationKnowledgeView: medicationView(),
+    );
     expect(jsonEncode(make().toJson()), jsonEncode(make().toJson()));
   });
 
-  test('recursive key-level no-PHI scan passes (incl. no FHIR-Bundle keys)',
-      () {
-    final json = builder
-        .build(
-          bundleId: 'bundle-1',
-          createdAt: '2026-01-01',
-          nutritionView: nutritionView(),
-          medicationKnowledgeView: medicationView(),
-        )
-        .toJson();
-    scanNoPhiKeys(json, extraForbiddenKeys: extraForbidden);
-  });
+  test(
+    'recursive key-level no-PHI scan passes (incl. no FHIR-Bundle keys)',
+    () {
+      final json = builder
+          .build(
+            bundleId: 'bundle-1',
+            createdAt: '2026-01-01',
+            nutritionView: nutritionView(),
+            medicationKnowledgeView: medicationView(),
+          )
+          .toJson();
+      scanNoPhiKeys(json, extraForbiddenKeys: extraForbidden);
+    },
+  );
 
   test('does not claim FHIR Bundle conformance', () {
     final json = builder.build(bundleId: 'b', createdAt: 'x').toJson();
@@ -179,23 +183,28 @@ void main() {
         )
         .toJson();
     for (final t in collectFreeTextValues(json)) {
-      expect(findBannedSubstrings(t), isEmpty,
-          reason: 'banned phrase in free text: "$t"');
+      expect(
+        findBannedSubstrings(t),
+        isEmpty,
+        reason: 'banned phrase in free text: "$t"',
+      );
     }
     expect(findBannedSubstrings(jsonEncode(json)), isEmpty);
   });
 
-  test('builds with either side null (partial pairing recorded, not faked)',
-      () {
-    final medOnly = builder.build(
-      bundleId: 'b',
-      createdAt: 'x',
-      medicationKnowledgeView: medicationView(),
-    );
-    expect(medOnly.nutritionView, isNull);
-    expect(medOnly.missingnessSummary['nutrition_view_present'], isFalse);
-    scanNoPhiKeys(medOnly.toJson(), extraForbiddenKeys: extraForbidden);
-  });
+  test(
+    'builds with either side null (partial pairing recorded, not faked)',
+    () {
+      final medOnly = builder.build(
+        bundleId: 'b',
+        createdAt: 'x',
+        medicationKnowledgeView: medicationView(),
+      );
+      expect(medOnly.nutritionView, isNull);
+      expect(medOnly.missingnessSummary['nutrition_view_present'], isFalse);
+      scanNoPhiKeys(medOnly.toJson(), extraForbiddenKeys: extraForbidden);
+    },
+  );
 
   // Task 6 (optional) — a replay-style trace summary attaches without modifying
   // the replay runner.

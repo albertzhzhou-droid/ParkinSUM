@@ -14,8 +14,7 @@ import 'package:parkinsum_companion/domain/usecases/local_ai_recommendation_adap
 import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orchestrator.dart';
 
 void main() {
-  test('AI copy polish stays on when rerank is blocked by safety gate',
-      () async {
+  test('AI copy polish stays on when rerank is blocked by safety gate', () async {
     var callCount = 0;
     final client = MockClient((request) async {
       callCount += 1;
@@ -27,16 +26,16 @@ void main() {
               {
                 'name': 'hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M',
                 'model': 'hf.co/unsloth/medgemma-1.5-4b-it-GGUF:Q4_K_M',
-              }
-            ]
+              },
+            ],
           }),
           200,
         );
       }
       final body = jsonDecode(request.body) as Map<String, dynamic>;
       final messages = body['messages'] as List<dynamic>;
-      final content =
-          (messages.first as Map<String, dynamic>)['content'].toString();
+      final content = (messages.first as Map<String, dynamic>)['content']
+          .toString();
 
       if (content.contains('polishing ParkinSUM next-meal')) {
         return http.Response(
@@ -50,7 +49,7 @@ void main() {
                       'A plain-language reason for the same banana recommendation.',
                 },
               }),
-            }
+            },
           }),
           200,
         );
@@ -58,7 +57,7 @@ void main() {
 
       return http.Response(
         jsonEncode({
-          'message': {'content': '{"ok":true}'}
+          'message': {'content': '{"ok":true}'},
         }),
         200,
       );
@@ -103,8 +102,10 @@ void main() {
     expect(result.aiUsed, isTrue);
     expect(result.aiRerankUsed, isFalse);
     expect(result.gateReasons, isNotEmpty);
-    expect(result.recommendations.single.reasons.first,
-        contains('plain-language'));
+    expect(
+      result.recommendations.single.reasons.first,
+      contains('plain-language'),
+    );
     expect(callCount, 3);
   });
 }
@@ -127,7 +128,8 @@ class _EmptyCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertCountryDietProfile(
-      CountryDietProfileRecord record) async {}
+    CountryDietProfileRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugConcept(DrugConceptRecord record) async {}
@@ -143,11 +145,13 @@ class _EmptyCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertDrugProductPackaging(
-      DrugProductPackagingRecord record) async {}
+    DrugProductPackagingRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugProductVariant(
-      DrugProductVariantRecord record) async {}
+    DrugProductVariantRecord record,
+  ) async {}
 
   @override
   Future<void> insertEngineSnapshot(EngineSnapshotRecord record) async {}
@@ -163,7 +167,8 @@ class _EmptyCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertLocaleResourceBundle(
-      LocaleResourceBundleRecord record) async {}
+    LocaleResourceBundleRecord record,
+  ) async {}
 
   @override
   Future<void> insertMealTemplate(MealTemplateRecord record) async {}
@@ -173,11 +178,13 @@ class _EmptyCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record) async {}
+    RecommendationAuditLogRecord record,
+  ) async {}
 
   @override
   Future<void> insertRegionJurisdictionMap(
-      RegionJurisdictionMapRecord record) async {}
+    RegionJurisdictionMapRecord record,
+  ) async {}
 
   @override
   Future<void> insertResolvedFact(ResolvedFactRecord record) async {}
@@ -190,7 +197,8 @@ class _EmptyCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {}
+    SnapshotDistributionRecord record,
+  ) async {}
 
   @override
   Future<void> insertSourceDocument(SourceDocumentRecord record) async {}

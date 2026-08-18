@@ -93,12 +93,12 @@ class AminoAcidProfile {
   /// when none are present.
   double? get competingLnaaGrams {
     final present = <double>[
-      if (leucine != null) leucine!,
-      if (isoleucine != null) isoleucine!,
-      if (valine != null) valine!,
-      if (phenylalanine != null) phenylalanine!,
-      if (tyrosine != null) tyrosine!,
-      if (tryptophan != null) tryptophan!,
+      ?leucine,
+      ?isoleucine,
+      ?valine,
+      ?phenylalanine,
+      ?tyrosine,
+      ?tryptophan,
     ];
     if (present.isEmpty) return null;
     return present.fold<double>(0, (a, b) => a + b);
@@ -109,13 +109,13 @@ class AminoAcidProfile {
   /// Count of the six competing LNAA fields that are present. Used to detect a
   /// partial LNAA profile (some but not all of the six present).
   int get presentLnaaFieldCount => [
-        leucine,
-        isoleucine,
-        valine,
-        phenylalanine,
-        tyrosine,
-        tryptophan,
-      ].where((v) => v != null).length;
+    leucine,
+    isoleucine,
+    valine,
+    phenylalanine,
+    tyrosine,
+    tryptophan,
+  ].where((v) => v != null).length;
 
   /// True when at least one but not all six competing LNAA fields are present.
   /// Such a profile is treated as partial (uncertainty widened), distinct from
@@ -158,28 +158,28 @@ class AminoAcidProfile {
   }
 
   Map<String, dynamic> toJson() => {
-        'leucine': leucine,
-        'isoleucine': isoleucine,
-        'valine': valine,
-        'phenylalanine': phenylalanine,
-        'tyrosine': tyrosine,
-        'tryptophan': tryptophan,
-        'histidine': histidine,
-        'methionine': methionine,
-        'threonine': threonine,
-        'lysine': lysine,
-        'cystine': cystine,
-        'arginine': arginine,
-        'unit': unit,
-        'basis': basis,
-        'nutrient_ids': nutrientIds,
-        'source_refs': sourceRefs,
-        'partial': partial,
-        'competing_lnaa_grams': competingLnaaGrams,
-        'fdc_data_type': fdcDataType,
-        'aggregate_confidence_tier': aggregateConfidenceTier?.name,
-        'derivations': derivations.map((k, v) => MapEntry(k, v.toJson())),
-      };
+    'leucine': leucine,
+    'isoleucine': isoleucine,
+    'valine': valine,
+    'phenylalanine': phenylalanine,
+    'tyrosine': tyrosine,
+    'tryptophan': tryptophan,
+    'histidine': histidine,
+    'methionine': methionine,
+    'threonine': threonine,
+    'lysine': lysine,
+    'cystine': cystine,
+    'arginine': arginine,
+    'unit': unit,
+    'basis': basis,
+    'nutrient_ids': nutrientIds,
+    'source_refs': sourceRefs,
+    'partial': partial,
+    'competing_lnaa_grams': competingLnaaGrams,
+    'fdc_data_type': fdcDataType,
+    'aggregate_confidence_tier': aggregateConfidenceTier?.name,
+    'derivations': derivations.map((k, v) => MapEntry(k, v.toJson())),
+  };
 
   /// Defensive deserialization. Absent numeric fields stay null (never coerced
   /// to 0), preserving the missing≠zero invariant through round-trips.
@@ -209,8 +209,12 @@ class AminoAcidProfile {
       partial: (json['partial'] as bool?) ?? false,
       fdcDataType: json['fdc_data_type'] as String?,
       derivations: (json['derivations'] as Map<String, dynamic>? ?? const {})
-          .map((k, v) => MapEntry(
-              k, NutrientDerivation.fromJson(v as Map<String, dynamic>))),
+          .map(
+            (k, v) => MapEntry(
+              k,
+              NutrientDerivation.fromJson(v as Map<String, dynamic>),
+            ),
+          ),
     );
   }
 }

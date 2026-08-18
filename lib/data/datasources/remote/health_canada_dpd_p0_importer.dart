@@ -23,10 +23,12 @@ class HealthCanadaDpdP0Importer {
   const HealthCanadaDpdP0Importer({required this.fetchClient});
 
   Future<P0ImportBundle> fetchAndImport() async {
-    final drugProducts =
-        await fetchClient.getJsonList(P0SourceUrls.dpdDrugProduct);
-    final activeIngredients =
-        await fetchClient.getJsonList(P0SourceUrls.dpdActiveIngredient);
+    final drugProducts = await fetchClient.getJsonList(
+      P0SourceUrls.dpdDrugProduct,
+    );
+    final activeIngredients = await fetchClient.getJsonList(
+      P0SourceUrls.dpdActiveIngredient,
+    );
     final forms = await fetchClient.getJsonList(P0SourceUrls.dpdForm);
     final packaging = await fetchClient.getJsonList(P0SourceUrls.dpdPackaging);
     final routes = await fetchClient.getJsonList(P0SourceUrls.dpdRoute);
@@ -132,13 +134,14 @@ class HealthCanadaDpdP0Importer {
 
     for (final row in drugProducts) {
       final drugCode = '${row['drug_code'] ?? ''}'.trim();
-      final din =
-          '${row['drug_identification_number'] ?? row['din'] ?? ''}'.trim();
+      final din = '${row['drug_identification_number'] ?? row['din'] ?? ''}'
+          .trim();
       final brandName = '${row['brand_name'] ?? ''}'.trim();
       if (drugCode.isEmpty || brandName.isEmpty) continue;
       final ingredients = ingredientByDrugCode[drugCode] ?? const <String>[];
-      final genericName =
-          ingredients.isEmpty ? brandName : ingredients.join('/');
+      final genericName = ingredients.isEmpty
+          ? brandName
+          : ingredients.join('/');
       final conceptId = buildDrugConceptId(genericName);
       final variantId = buildDrugVariantId(
         conceptId: conceptId,
@@ -146,7 +149,8 @@ class HealthCanadaDpdP0Importer {
         sourceSystem: 'HEALTH_CANADA_DPD',
         externalProductCode: din.isEmpty ? drugCode : '$din-$drugCode',
       );
-      final formName = formByCode['${row['pharmaceutical_form_code'] ?? ''}'] ??
+      final formName =
+          formByCode['${row['pharmaceutical_form_code'] ?? ''}'] ??
           'unspecified';
       final routeName =
           routeByCode['${row['route_of_administration_code'] ?? ''}'] ?? 'oral';
@@ -185,7 +189,7 @@ class HealthCanadaDpdP0Importer {
           genericName: genericName,
           brandNames: [brandName],
           aliases: [if (din.isNotEmpty) din, if (drugCode.isNotEmpty) drugCode],
-          tags: [if (tag != null) tag],
+          tags: [?tag],
           notes: statusName.isEmpty
               ? 'Imported from Health Canada DPD'
               : 'Imported from Health Canada DPD ($statusName)',
@@ -281,7 +285,8 @@ class HealthCanadaDpdP0Importer {
                 'pkg_${stableHash('$variantId:${packageRow.toString()}')}',
             drugProductVariantId: variantId,
             sourceDocId: sourceDocId,
-            packageCode: packageRow['upc']?.toString() ??
+            packageCode:
+                packageRow['upc']?.toString() ??
                 packageRow['package_code']?.toString(),
             description: description,
             marketingStatus: packageRow['status']?.toString(),
@@ -332,8 +337,9 @@ class HealthCanadaDpdP0Importer {
     P0ImportBundle current = bundle;
     for (final variant in bundle.drugProductVariants) {
       final productCode = variant.externalProductCode;
-      final drugCode =
-          productCode.contains('-') ? productCode.split('-').last : productCode;
+      final drugCode = productCode.contains('-')
+          ? productCode.split('-').last
+          : productCode;
       // The code is parsed from upstream data; encode it so it cannot inject
       // additional query parameters.
       final infoUrl =
@@ -451,8 +457,9 @@ class HealthCanadaDpdP0Importer {
               ),
               for (final resource in linkedResources)
                 buildCrosswalk(
-                  domain:
-                      resource.type == 'pdf' ? 'drug_monograph' : 'drug_media',
+                  domain: resource.type == 'pdf'
+                      ? 'drug_monograph'
+                      : 'drug_media',
                   conceptId: variant.drugConceptId,
                   variantId: variant.drugProductVariantId,
                   externalIdSystem: resource.type == 'pdf'
@@ -472,11 +479,7 @@ class HealthCanadaDpdP0Importer {
                           : ImporterAudit.sourceIdTypeRegulatorDocumentUrl,
                       reason:
                           'Resource href + visible caption extracted from product info HTML <a> tags only.',
-                      promotedFields: const [
-                        'resource_type',
-                        'caption',
-                        'url',
-                      ],
+                      promotedFields: const ['resource_type', 'caption', 'url'],
                       nonPromotedFields: const ['resource_body'],
                       promotionDecision:
                           'href_and_caption_only_no_body_extraction',
@@ -501,9 +504,13 @@ class HealthCanadaDpdP0Importer {
     // - 只截前几段文本，避免把整页 HTML 直接塞进 UI 说明。
     final text = html
         .replaceAll(
-            RegExp(r'<script[\s\S]*?</script>', caseSensitive: false), ' ')
+          RegExp(r'<script[\s\S]*?</script>', caseSensitive: false),
+          ' ',
+        )
         .replaceAll(
-            RegExp(r'<style[\s\S]*?</style>', caseSensitive: false), ' ')
+          RegExp(r'<style[\s\S]*?</style>', caseSensitive: false),
+          ' ',
+        )
         .replaceAll(RegExp(r'<[^>]+>'), ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
@@ -649,9 +656,7 @@ class HealthCanadaDpdP0Importer {
           label: 'High-fat or high-calorie meal may delay onset/absorption',
           entry: entry,
           valueText: hours == null ? null : '$hours hours delay',
-          payload: {
-            if (hours != null) 'delay_hours': hours,
-          },
+          payload: {'delay_hours': ?hours},
         );
       }
 
@@ -682,9 +687,7 @@ class HealthCanadaDpdP0Importer {
           label: 'Very high tyramine threshold warning',
           entry: entry,
           valueText: mg == null ? null : '$mg mg tyramine threshold',
-          payload: {
-            if (mg != null) 'threshold_mg': mg,
-          },
+          payload: {'threshold_mg': ?mg},
         );
       }
 
@@ -729,9 +732,13 @@ class HealthCanadaDpdP0Importer {
   String _stripHtml(String html) {
     return html
         .replaceAll(
-            RegExp(r'<script[\s\S]*?</script>', caseSensitive: false), ' ')
+          RegExp(r'<script[\s\S]*?</script>', caseSensitive: false),
+          ' ',
+        )
         .replaceAll(
-            RegExp(r'<style[\s\S]*?</style>', caseSensitive: false), ' ')
+          RegExp(r'<style[\s\S]*?</style>', caseSensitive: false),
+          ' ',
+        )
         .replaceAll(RegExp(r'<[^>]+>'), ' ')
         .replaceAll('&nbsp;', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
@@ -739,18 +746,15 @@ class HealthCanadaDpdP0Importer {
   }
 
   List<Map<String, String>> _loadRows(Map<String, String> files, String stem) {
-    final entry = files.entries.firstWhere(
-      (item) {
-        final lower = item.key.toLowerCase();
-        return lower.endsWith('/$stem.txt') ||
-            lower.endsWith('\\$stem.txt') ||
-            lower.endsWith('$stem.txt') ||
-            lower.endsWith('/$stem.csv') ||
-            lower.endsWith('\\$stem.csv') ||
-            lower.endsWith('$stem.csv');
-      },
-      orElse: () => const MapEntry('', ''),
-    );
+    final entry = files.entries.firstWhere((item) {
+      final lower = item.key.toLowerCase();
+      return lower.endsWith('/$stem.txt') ||
+          lower.endsWith('\\$stem.txt') ||
+          lower.endsWith('$stem.txt') ||
+          lower.endsWith('/$stem.csv') ||
+          lower.endsWith('\\$stem.csv') ||
+          lower.endsWith('$stem.csv');
+    }, orElse: () => const MapEntry('', ''));
     if (entry.key.isEmpty) return const <Map<String, String>>[];
     return ArchiveImportSupport.parseDelimitedRows(entry.value);
   }

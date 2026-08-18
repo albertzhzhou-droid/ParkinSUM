@@ -59,9 +59,11 @@ void main() {
 
     test('envEnabled reads the opt-in flag', () {
       expect(
-          LiveSourceFetchClient.envEnabled(
-              {'PARKINSUM_ENABLE_LIVE_SOURCE_SMOKE': '1'}),
-          isTrue);
+        LiveSourceFetchClient.envEnabled({
+          'PARKINSUM_ENABLE_LIVE_SOURCE_SMOKE': '1',
+        }),
+        isTrue,
+      );
       expect(LiveSourceFetchClient.envEnabled(const {}), isFalse);
     });
   });
@@ -74,28 +76,32 @@ void main() {
       expect(s.toRedactedString(), contains('SKIPPED'));
     });
 
-    test('fdc enabled requires api key → reports, no secret embedded',
-        () async {
-      final s = await runLiveSourceSmoke(source: 'fdc', enabled: true);
-      expect(s.error, 'requires_api_key_not_supplied');
-    });
+    test(
+      'fdc enabled requires api key → reports, no secret embedded',
+      () async {
+        final s = await runLiveSourceSmoke(source: 'fdc', enabled: true);
+        expect(s.error, 'requires_api_key_not_supplied');
+      },
+    );
 
-    test('enabled with injected fake client → shape summary, no raw payload',
-        () async {
-      final s = await runLiveSourceSmoke(
-        source: 'dailymed',
-        enabled: true,
-        client: const FakeSourceFetchClient(
-          textByUrl: {
-            'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?pagesize=1':
-                '{"data":[]}'
-          },
-        ),
-      );
-      expect(s.status, 200);
-      expect(s.parseShapeOk, isTrue);
-      // Redacted summary must not contain the raw payload body.
-      expect(s.toRedactedString(), isNot(contains('"data"')));
-    });
+    test(
+      'enabled with injected fake client → shape summary, no raw payload',
+      () async {
+        final s = await runLiveSourceSmoke(
+          source: 'dailymed',
+          enabled: true,
+          client: const FakeSourceFetchClient(
+            textByUrl: {
+              'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?pagesize=1':
+                  '{"data":[]}',
+            },
+          ),
+        );
+        expect(s.status, 200);
+        expect(s.parseShapeOk, isTrue);
+        // Redacted summary must not contain the raw payload body.
+        expect(s.toRedactedString(), isNot(contains('"data"')));
+      },
+    );
   });
 }

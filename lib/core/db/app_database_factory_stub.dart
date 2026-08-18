@@ -14,7 +14,8 @@ class UnsupportedAppDatabase implements AppDatabase {
     required List<InteractionRuleRecord> seedRules,
   }) {
     throw UnsupportedError(
-        'No database implementation available on this platform.');
+      'No database implementation available on this platform.',
+    );
   }
 
   @override

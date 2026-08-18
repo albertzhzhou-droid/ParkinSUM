@@ -13,59 +13,44 @@ import 'dart:io';
 
 import 'package:parkinsum_companion/domain/entities/explanation_copy.dart';
 import 'package:parkinsum_companion/domain/usecases/explanation_copy_compiler.dart';
+import 'package:parkinsum_companion/domain/usecases/explanation_copy_diagnostics.dart';
 import 'package:parkinsum_companion/domain/usecases/safe_copy_template_registry.dart';
 
 void main() {
   const registry = SafeCopyTemplateRegistry();
   const compiler = ExplanationCopyCompiler();
 
-  // Deterministic sample bindings (only where a template declares placeholders).
-  const bindings = <String, Map<String, String>>{
-    'mechanistic_explanation_boundary': {'overlap_percent': '42'},
-    'legacy_analysis': {'drugCount': '1', 'score': '42'},
-    'legacy_high_protein_strong_detail': {'protein': '40.0', 'drug': 'Sample'},
-    'legacy_high_protein_detail': {'protein': '25.0', 'drug': 'Sample'},
-    'legacy_tyramine_detail': {'drug': 'Sample'},
-    'legacy_summary': {'score': '42', 'severity': 'Moderate', 'count': '2'},
-    'legacy_analysis_protein': {'protein': '25.0'},
-  };
-
-  // Every template is compiled with a sample context that supplies the
-  // structural requirements (sourceRefs / limitation / not-advice) it declares.
-  const sampleContext = CopyCompileContext(
-    sourceRefs: ['src.demo'],
-    hasLimitationText: true,
-    hasNotAdviceText: true,
-  );
-  final contexts = <String, CopyCompileContext>{
-    for (final t in registry.templates) t.templateId: sampleContext,
-  };
-
-  final report = compiler.compileAll(
-    registry,
-    bindingsByTemplate: bindings,
-    contextByTemplate: contexts,
+  // Sample bindings + context live in the domain layer so this CLI, the
+  // tests, and any in-app diagnostics view compile the registry identically.
+  final report = compileRegistryWithSamples(
+    registry: registry,
+    compiler: compiler,
   );
 
   final outDir = Directory('build/explanation_copy');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(encodeCopyCompileReport(report));
-  File('${outDir.path}/latest.md')
-      .writeAsStringSync(renderCopyCompileMarkdown(report));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(encodeCopyCompileReport(report));
+  File(
+    '${outDir.path}/latest.md',
+  ).writeAsStringSync(renderCopyCompileMarkdown(report));
 
   stdout
-    ..writeln('Explanation copy compile: ${report.compiledCount}/'
-        '${report.templateCount} templates compiled — '
-        'info=${report.counts['info'] ?? 0} '
-        'warn=${report.counts['warn'] ?? 0} '
-        'blocker=${report.blockerCount} (pass=${report.pass}).')
+    ..writeln(
+      'Explanation copy compile: ${report.compiledCount}/'
+      '${report.templateCount} templates compiled — '
+      'info=${report.counts['info'] ?? 0} '
+      'warn=${report.counts['warn'] ?? 0} '
+      'blocker=${report.blockerCount} (pass=${report.pass}).',
+    )
     ..writeln('Report: ${outDir.path}/latest.json')
     ..writeln('Report: ${outDir.path}/latest.md');
   if (!report.pass) {
     stderr.writeln('BLOCKER findings:');
-    for (final f in report.findings
-        .where((x) => x.severity == CopyCompileSeverity.blocker)) {
+    for (final f in report.findings.where(
+      (x) => x.severity == CopyCompileSeverity.blocker,
+    )) {
       stderr.writeln('  - ${f.findingType} @ ${f.templateId} (${f.message})');
     }
   }

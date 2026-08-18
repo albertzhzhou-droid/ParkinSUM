@@ -109,36 +109,41 @@ void main() {
     expect(scores.every((s) => s.insufficientContext), isTrue);
   });
 
-  test('invalid medication context → every candidate is insufficient_context',
-      () {
-    final invalid =
-        validator.validate(const RawMedicationEntry(freeText: '100'));
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final ctx = builder.build(
-      now: now,
-      medicationInputs: [
-        MedicationTimelineInput(
-            id: 'm', takenAt: now, medicationContext: invalid)
-      ],
-      mealInputs: const [],
-      userDefinedWindow: UserDefinedMealWindow(
-        window: TimelineWindow(
-          startMinute: dateTimeToMinute(now) + 60,
-          endMinute: dateTimeToMinute(now) + 120,
-        ),
-        source: 'test',
-      ),
-    );
-    final scores = scorer.score(
-      baseContext: ctx,
-      baseMealCompositionsById: const {},
-      candidates: const [banana],
-    );
-    expect(scores.single.insufficientContext, isTrue);
-  });
-
   test(
-      'protein redistribution: high-protein candidate carries higher overlap '
+    'invalid medication context → every candidate is insufficient_context',
+    () {
+      final invalid = validator.validate(
+        const RawMedicationEntry(freeText: '100'),
+      );
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final ctx = builder.build(
+        now: now,
+        medicationInputs: [
+          MedicationTimelineInput(
+            id: 'm',
+            takenAt: now,
+            medicationContext: invalid,
+          ),
+        ],
+        mealInputs: const [],
+        userDefinedWindow: UserDefinedMealWindow(
+          window: TimelineWindow(
+            startMinute: dateTimeToMinute(now) + 60,
+            endMinute: dateTimeToMinute(now) + 120,
+          ),
+          source: 'test',
+        ),
+      );
+      final scores = scorer.score(
+        baseContext: ctx,
+        baseMealCompositionsById: const {},
+        candidates: const [banana],
+      );
+      expect(scores.single.insufficientContext, isTrue);
+    },
+  );
+
+  test('protein redistribution: high-protein candidate carries higher overlap '
       'penalty and lower redistribution score than low-protein in the same '
       'window (NOT global minimization)', () {
     final v = validator.validate(validLevodopa);
@@ -147,9 +152,10 @@ void main() {
       now: now,
       medicationInputs: [
         MedicationTimelineInput(
-            id: 'm',
-            takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v),
+          id: 'm',
+          takenAt: now.add(const Duration(minutes: 30)),
+          medicationContext: v,
+        ),
       ],
       mealInputs: const [],
       userDefinedWindow: UserDefinedMealWindow(
@@ -170,10 +176,14 @@ void main() {
     // The mechanism, not a naive "low protein always wins": the high-protein
     // candidate models at least as much conflict overlap and gets no higher
     // redistribution score than the low-protein candidate in this window.
-    expect(shakeScore.conflictOverlapScore,
-        greaterThanOrEqualTo(bananaScore.conflictOverlapScore));
-    expect(bananaScore.proteinRedistributionScore,
-        greaterThanOrEqualTo(shakeScore.proteinRedistributionScore));
+    expect(
+      shakeScore.conflictOverlapScore,
+      greaterThanOrEqualTo(bananaScore.conflictOverlapScore),
+    );
+    expect(
+      bananaScore.proteinRedistributionScore,
+      greaterThanOrEqualTo(shakeScore.proteinRedistributionScore),
+    );
     // Both candidates carry a protein-distribution trace and a final score.
     expect(bananaScore.proteinDistribution, isNotNull);
     expect(shakeScore.proteinDistribution, isNotNull);
@@ -186,9 +196,10 @@ void main() {
       now: now,
       medicationInputs: [
         MedicationTimelineInput(
-            id: 'm',
-            takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v),
+          id: 'm',
+          takenAt: now.add(const Duration(minutes: 30)),
+          medicationContext: v,
+        ),
       ],
       mealInputs: const [],
       userDefinedWindow: UserDefinedMealWindow(
@@ -204,59 +215,67 @@ void main() {
       baseMealCompositionsById: const {},
       candidates: const [banana, unknownNutrients],
     );
-    final unknownScore =
-        scores.firstWhere((s) => s.candidateFoodId == 'unknown');
-    expect(unknownScore.nutritionDataCompleteness, 0.0);
-    expect(
-      [ConfidenceBand.low, ConfidenceBand.insufficient],
-      contains(unknownScore.confidenceBand),
+    final unknownScore = scores.firstWhere(
+      (s) => s.candidateFoodId == 'unknown',
     );
+    expect(unknownScore.nutritionDataCompleteness, 0.0);
+    expect([
+      ConfidenceBand.low,
+      ConfidenceBand.insufficient,
+    ], contains(unknownScore.confidenceBand));
   });
 
-  test('final candidate score drives ordering (composite, not raw overlap)',
-      () {
-    final v = validator.validate(validLevodopa);
-    final now = DateTime.utc(2026, 1, 1, 8);
-    final ctx = builder.build(
-      now: now,
-      medicationInputs: [
-        MedicationTimelineInput(
+  test(
+    'final candidate score drives ordering (composite, not raw overlap)',
+    () {
+      final v = validator.validate(validLevodopa);
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final ctx = builder.build(
+        now: now,
+        medicationInputs: [
+          MedicationTimelineInput(
             id: 'm',
             takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v),
-      ],
-      mealInputs: const [],
-      userDefinedWindow: UserDefinedMealWindow(
-        window: TimelineWindow(
-          startMinute: dateTimeToMinute(now) + 60,
-          endMinute: dateTimeToMinute(now) + 120,
+            medicationContext: v,
+          ),
+        ],
+        mealInputs: const [],
+        userDefinedWindow: UserDefinedMealWindow(
+          window: TimelineWindow(
+            startMinute: dateTimeToMinute(now) + 60,
+            endMinute: dateTimeToMinute(now) + 120,
+          ),
+          source: 'test',
         ),
-        source: 'test',
-      ),
-    );
-    final scores = scorer.score(
-      baseContext: ctx,
-      baseMealCompositionsById: const {},
-      candidates: const [proteinShake, banana],
-    );
-    // Order must be non-increasing in finalCandidateScore.
-    for (var i = 1; i < scores.length; i++) {
-      expect(scores[i - 1].finalCandidateScore,
-          greaterThanOrEqualTo(scores[i].finalCandidateScore));
-    }
-    // Every scored candidate exposes the composite fields.
-    for (final s in scores) {
-      expect(s.proteinDistribution, isNotNull);
-      expect(s.finalCandidateScore, inInclusiveRange(0.0, 1.0));
-    }
-  });
+      );
+      final scores = scorer.score(
+        baseContext: ctx,
+        baseMealCompositionsById: const {},
+        candidates: const [proteinShake, banana],
+      );
+      // Order must be non-increasing in finalCandidateScore.
+      for (var i = 1; i < scores.length; i++) {
+        expect(
+          scores[i - 1].finalCandidateScore,
+          greaterThanOrEqualTo(scores[i].finalCandidateScore),
+        );
+      }
+      // Every scored candidate exposes the composite fields.
+      for (final s in scores) {
+        expect(s.proteinDistribution, isNotNull);
+        expect(s.finalCandidateScore, inInclusiveRange(0.0, 1.0));
+      }
+    },
+  );
 
   test('default scoring parameter set keeps conflict overlap dominant', () {
     final params = NextMealScoringParameterSet.literatureInformedDefault();
     expect(params.conflictRemainsDominant, isTrue);
     // Conflict weight must not be smaller than the combined provenance weight.
-    expect(params.conflictOverlap.value,
-        greaterThanOrEqualTo(params.provenanceWeightSum));
+    expect(
+      params.conflictOverlap.value,
+      greaterThanOrEqualTo(params.provenanceWeightSum),
+    );
     // Each candidate score records which weight set was active.
   });
 
@@ -267,9 +286,10 @@ void main() {
       now: now,
       medicationInputs: [
         MedicationTimelineInput(
-            id: 'm',
-            takenAt: now.add(const Duration(minutes: 30)),
-            medicationContext: v),
+          id: 'm',
+          takenAt: now.add(const Duration(minutes: 30)),
+          medicationContext: v,
+        ),
       ],
       mealInputs: const [],
       userDefinedWindow: UserDefinedMealWindow(
@@ -318,11 +338,14 @@ void main() {
       baseMealCompositionsById: const {},
       candidates: const [proteinShake, banana],
     );
-    final defShake =
-        defaultScores.firstWhere((s) => s.candidateFoodId == 'shake');
+    final defShake = defaultScores.firstWhere(
+      (s) => s.candidateFoodId == 'shake',
+    );
     final altShake = altScores.firstWhere((s) => s.candidateFoodId == 'shake');
-    expect(altShake.finalCandidateScore,
-        isNot(closeTo(defShake.finalCandidateScore, 1e-9)));
+    expect(
+      altShake.finalCandidateScore,
+      isNot(closeTo(defShake.finalCandidateScore, 1e-9)),
+    );
     expect(altShake.scoringParameterSetId, 'alt.v0');
   });
 

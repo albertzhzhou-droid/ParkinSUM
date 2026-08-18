@@ -250,141 +250,110 @@ class NativeCdssDatabase implements CdssDatabase {
   @override
   Future<void> insertFoodConcept(FoodConceptRecord record) async {
     final db = await _open();
-    await db.insert(
-      'food_concept',
-      {
-        'food_concept_id': record.foodConceptId,
-        'canonical_name_en': record.canonicalNameEn,
-        'canonical_name_zh': record.canonicalNameZh,
-        'food_group': record.foodGroup,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('food_concept', {
+      'food_concept_id': record.foodConceptId,
+      'canonical_name_en': record.canonicalNameEn,
+      'canonical_name_zh': record.canonicalNameZh,
+      'food_group': record.foodGroup,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertFoodVariant(FoodVariantRecord record) async {
     final db = await _open();
-    await db.insert(
-      'food_variant',
-      {
-        'food_variant_id': record.foodVariantId,
-        'food_concept_id': record.foodConceptId,
-        'jurisdiction': record.jurisdiction,
-        'source_family': record.sourceFamily,
-        'source_food_code': record.sourceFoodCode,
-        'display_name_local': record.displayNameLocal,
-        'is_authoritative_for_region': record.isAuthoritativeForRegion ? 1 : 0,
-        'is_authoritative_fallback': record.isAuthoritativeFallback ? 1 : 0,
-        'status': record.status,
-        'fallback_chain_json': record.fallbackChainJson,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('food_variant', {
+      'food_variant_id': record.foodVariantId,
+      'food_concept_id': record.foodConceptId,
+      'jurisdiction': record.jurisdiction,
+      'source_family': record.sourceFamily,
+      'source_food_code': record.sourceFoodCode,
+      'display_name_local': record.displayNameLocal,
+      'is_authoritative_for_region': record.isAuthoritativeForRegion ? 1 : 0,
+      'is_authoritative_fallback': record.isAuthoritativeFallback ? 1 : 0,
+      'status': record.status,
+      'fallback_chain_json': record.fallbackChainJson,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertDrugConcept(DrugConceptRecord record) async {
     final db = await _open();
-    await db.insert(
-      'drug_concept',
-      {
-        'drug_concept_id': record.drugConceptId,
-        'generic_name': record.genericName,
-        'atc_like_code': record.atcLikeCode,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('drug_concept', {
+      'drug_concept_id': record.drugConceptId,
+      'generic_name': record.genericName,
+      'atc_like_code': record.atcLikeCode,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertDrugProductVariant(DrugProductVariantRecord record) async {
     final db = await _open();
-    await db.insert(
-      'drug_product_variant',
-      {
-        'drug_product_variant_id': record.drugProductVariantId,
-        'drug_concept_id': record.drugConceptId,
-        'jurisdiction': record.jurisdiction,
-        'regulator': record.regulator,
-        'external_product_code': record.externalProductCode,
-        'route': record.route,
-        'dosage_form': record.dosageForm,
-        'release_type': record.releaseType,
-        'label_version': record.labelVersion,
-        'source_status': record.sourceStatus,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('drug_product_variant', {
+      'drug_product_variant_id': record.drugProductVariantId,
+      'drug_concept_id': record.drugConceptId,
+      'jurisdiction': record.jurisdiction,
+      'regulator': record.regulator,
+      'external_product_code': record.externalProductCode,
+      'route': record.route,
+      'dosage_form': record.dosageForm,
+      'release_type': record.releaseType,
+      'label_version': record.labelVersion,
+      'source_status': record.sourceStatus,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertDrugLabelSection(DrugLabelSectionRecord record) async {
     final db = await _open();
-    await db.insert(
-      'drug_label_section',
-      {
-        'section_id': record.sectionId,
-        'drug_product_variant_id': record.drugProductVariantId,
-        'source_doc_id': record.sourceDocId,
-        'section_key': record.sectionKey,
-        'section_title': record.sectionTitle,
-        'section_text': record.sectionText,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('drug_label_section', {
+      'section_id': record.sectionId,
+      'drug_product_variant_id': record.drugProductVariantId,
+      'source_doc_id': record.sourceDocId,
+      'section_key': record.sectionKey,
+      'section_title': record.sectionTitle,
+      'section_text': record.sectionText,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertDrugProductCode(DrugProductCodeRecord record) async {
     final db = await _open();
-    await db.insert(
-      'drug_product_code',
-      {
-        'product_code_id': record.productCodeId,
-        'drug_product_variant_id': record.drugProductVariantId,
-        'source_doc_id': record.sourceDocId,
-        'code_system': record.codeSystem,
-        'code_value': record.codeValue,
-        'display_text': record.displayText,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('drug_product_code', {
+      'product_code_id': record.productCodeId,
+      'drug_product_variant_id': record.drugProductVariantId,
+      'source_doc_id': record.sourceDocId,
+      'code_system': record.codeSystem,
+      'code_value': record.codeValue,
+      'display_text': record.displayText,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertDrugProductPackaging(
-      DrugProductPackagingRecord record) async {
+    DrugProductPackagingRecord record,
+  ) async {
     final db = await _open();
-    await db.insert(
-      'drug_product_packaging',
-      {
-        'packaging_id': record.packagingId,
-        'drug_product_variant_id': record.drugProductVariantId,
-        'source_doc_id': record.sourceDocId,
-        'package_code': record.packageCode,
-        'description': record.description,
-        'marketing_status': record.marketingStatus,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('drug_product_packaging', {
+      'packaging_id': record.packagingId,
+      'drug_product_variant_id': record.drugProductVariantId,
+      'source_doc_id': record.sourceDocId,
+      'package_code': record.packageCode,
+      'description': record.description,
+      'marketing_status': record.marketingStatus,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertDrugProductMedia(DrugProductMediaRecord record) async {
     final db = await _open();
-    await db.insert(
-      'drug_product_media',
-      {
-        'media_id': record.mediaId,
-        'drug_product_variant_id': record.drugProductVariantId,
-        'source_doc_id': record.sourceDocId,
-        'media_type': record.mediaType,
-        'media_url': record.mediaUrl,
-        'caption': record.caption,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('drug_product_media', {
+      'media_id': record.mediaId,
+      'drug_product_variant_id': record.drugProductVariantId,
+      'source_doc_id': record.sourceDocId,
+      'media_type': record.mediaType,
+      'media_url': record.mediaUrl,
+      'caption': record.caption,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
@@ -423,91 +392,73 @@ class NativeCdssDatabase implements CdssDatabase {
   @override
   Future<void> insertVariantScope(VariantScopeRecord record) async {
     final db = await _open();
-    await db.insert(
-      'variant_scope',
-      {
-        'scope_hash': record.scopeHash,
-        'jurisdiction': record.jurisdiction,
-        'brand': record.brand,
-        'dosage_form': record.dosageForm,
-        'release_type': record.releaseType,
-        'salt_form': record.saltForm,
-        'route': record.route,
-        'preparation_state': record.preparationState,
-        'cooking_state': record.cookingState,
-        'plant_part': record.plantPart,
-        'cultivar': record.cultivar,
-        'sampling_frame': record.samplingFrame,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('variant_scope', {
+      'scope_hash': record.scopeHash,
+      'jurisdiction': record.jurisdiction,
+      'brand': record.brand,
+      'dosage_form': record.dosageForm,
+      'release_type': record.releaseType,
+      'salt_form': record.saltForm,
+      'route': record.route,
+      'preparation_state': record.preparationState,
+      'cooking_state': record.cookingState,
+      'plant_part': record.plantPart,
+      'cultivar': record.cultivar,
+      'sampling_frame': record.samplingFrame,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertRegionJurisdictionMap(
-      RegionJurisdictionMapRecord record) async {
+    RegionJurisdictionMapRecord record,
+  ) async {
     final db = await _open();
-    await db.insert(
-      'region_jurisdiction_map',
-      {
-        'region_code': record.regionCode,
-        'jurisdiction_chain_json': record.jurisdictionChainJson,
-        'food_source_priority_json': record.foodSourcePriorityJson,
-        'drug_source_priority_json': record.drugSourcePriorityJson,
-        'diet_guideline_source': record.dietGuidelineSource,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('region_jurisdiction_map', {
+      'region_code': record.regionCode,
+      'jurisdiction_chain_json': record.jurisdictionChainJson,
+      'food_source_priority_json': record.foodSourcePriorityJson,
+      'drug_source_priority_json': record.drugSourcePriorityJson,
+      'diet_guideline_source': record.dietGuidelineSource,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertLocaleResourceBundle(
-      LocaleResourceBundleRecord record) async {
+    LocaleResourceBundleRecord record,
+  ) async {
     final db = await _open();
-    await db.insert(
-      'locale_resource_bundle',
-      {
-        'locale_tag': record.localeTag,
-        'namespace': record.namespace,
-        'key': record.key,
-        'text': record.text,
-        'plural_rule': record.pluralRule,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('locale_resource_bundle', {
+      'locale_tag': record.localeTag,
+      'namespace': record.namespace,
+      'key': record.key,
+      'text': record.text,
+      'plural_rule': record.pluralRule,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertCountryDietProfile(CountryDietProfileRecord record) async {
     final db = await _open();
-    await db.insert(
-      'country_diet_profile',
-      {
-        'country_code': record.countryCode,
-        'guideline_source': record.guidelineSource,
-        'meal_pattern_json': record.mealPatternJson,
-        'staple_foods_json': record.stapleFoodsJson,
-        'preferred_protein_sources_json': record.preferredProteinSourcesJson,
-        'avoidance_notes_json': record.avoidanceNotesJson,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('country_diet_profile', {
+      'country_code': record.countryCode,
+      'guideline_source': record.guidelineSource,
+      'meal_pattern_json': record.mealPatternJson,
+      'staple_foods_json': record.stapleFoodsJson,
+      'preferred_protein_sources_json': record.preferredProteinSourcesJson,
+      'avoidance_notes_json': record.avoidanceNotesJson,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertMealTemplate(MealTemplateRecord record) async {
     final db = await _open();
-    await db.insert(
-      'meal_template',
-      {
-        'meal_template_id': record.mealTemplateId,
-        'country_code': record.countryCode,
-        'meal_slot': record.mealSlot,
-        'template_json': record.templateJson,
-        'texture_level': record.textureLevel,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('meal_template', {
+      'meal_template_id': record.mealTemplateId,
+      'country_code': record.countryCode,
+      'meal_slot': record.mealSlot,
+      'template_json': record.templateJson,
+      'texture_level': record.textureLevel,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
@@ -564,8 +515,11 @@ class NativeCdssDatabase implements CdssDatabase {
       importRunId: row['import_run_id']?.toString(),
       effectiveAt: (row['updated_at'] as num?)?.toInt(),
     );
-    await db.insert('rule_registry', row,
-        conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'rule_registry',
+      row,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   @override
@@ -633,72 +587,62 @@ class NativeCdssDatabase implements CdssDatabase {
 
   Future<void> insertHumanReviewTicket(HumanReviewTicketRecord record) async {
     final db = await _open();
-    await db.insert(
-      'human_review_ticket',
-      {
-        'ticket_id': record.ticketId,
-        'reason_code': record.reasonCode,
-        'severity': record.severity,
-        'target_type': record.targetType,
-        'target_id': record.targetId,
-        'snapshot_id': record.snapshotId,
-        'run_id': record.runId,
-        'source_doc_refs_json': record.sourceDocRefsJson,
-        'suggested_action': record.suggestedAction,
-        'status': record.status,
-        'created_at': record.createdAt.millisecondsSinceEpoch,
-        'resolved_at': record.resolvedAt?.millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('human_review_ticket', {
+      'ticket_id': record.ticketId,
+      'reason_code': record.reasonCode,
+      'severity': record.severity,
+      'target_type': record.targetType,
+      'target_id': record.targetId,
+      'snapshot_id': record.snapshotId,
+      'run_id': record.runId,
+      'source_doc_refs_json': record.sourceDocRefsJson,
+      'suggested_action': record.suggestedAction,
+      'status': record.status,
+      'created_at': record.createdAt.millisecondsSinceEpoch,
+      'resolved_at': record.resolvedAt?.millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record) async {
+    RecommendationAuditLogRecord record,
+  ) async {
     final db = await _open();
-    await db.insert(
-      'recommendation_audit_log',
-      {
-        'rec_audit_id': record.recAuditId,
-        'user_id': record.userId,
-        'meal_slot': record.mealSlot,
-        'snapshot_id': record.snapshotId,
-        'jurisdiction_chain_json': record.jurisdictionChainJson,
-        'meal_candidates_json': record.mealCandidatesJson,
-        'rejected_by_rules_json': record.rejectedByRulesJson,
-        'accepted_choices_json': record.acceptedChoicesJson,
-        'score_breakdown_json': record.scoreBreakdownJson,
-        'fallback_used': record.fallbackUsed ? 1 : 0,
-        'created_at': record.createdAt.millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('recommendation_audit_log', {
+      'rec_audit_id': record.recAuditId,
+      'user_id': record.userId,
+      'meal_slot': record.mealSlot,
+      'snapshot_id': record.snapshotId,
+      'jurisdiction_chain_json': record.jurisdictionChainJson,
+      'meal_candidates_json': record.mealCandidatesJson,
+      'rejected_by_rules_json': record.rejectedByRulesJson,
+      'accepted_choices_json': record.acceptedChoicesJson,
+      'score_breakdown_json': record.scoreBreakdownJson,
+      'fallback_used': record.fallbackUsed ? 1 : 0,
+      'created_at': record.createdAt.millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertIngestionRun(IngestionRunRecord record) async {
     final db = await _open();
-    await db.insert(
-      'ingestion_run',
-      {
-        'run_id': record.runId,
-        'source_family': record.sourceFamily,
-        'stage': record.stage,
-        'status': record.status,
-        'snapshot_id': record.snapshotId,
-        'parent_snapshot_id': record.parentSnapshotId,
-        'notes_json': record.notesJson,
-        'created_at': record.createdAt.millisecondsSinceEpoch,
-        'completed_at': record.completedAt?.millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('ingestion_run', {
+      'run_id': record.runId,
+      'source_family': record.sourceFamily,
+      'stage': record.stage,
+      'status': record.status,
+      'snapshot_id': record.snapshotId,
+      'parent_snapshot_id': record.parentSnapshotId,
+      'notes_json': record.notesJson,
+      'created_at': record.createdAt.millisecondsSinceEpoch,
+      'completed_at': record.completedAt?.millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {
+    SnapshotDistributionRecord record,
+  ) async {
     final db = await _open();
     final row = {
       'distribution_id': record.distributionId,
@@ -746,55 +690,71 @@ class NativeCdssDatabase implements CdssDatabase {
       where: 'table_name = ? AND record_id = ? AND retired_at IS NULL',
       whereArgs: [tableName, recordId],
     );
-    await db.insert(
-      'cdss_record_history',
-      {
-        'history_id': historyId,
-        'table_name': tableName,
-        'record_id': recordId,
-        'version_id': versionId,
-        'payload_json': jsonEncode(row),
-        'superseded_by': null,
-        'effective_at': effectiveAt ?? now,
-        'retired_at': null,
-        'import_run_id': importRunId,
-        'snapshot_id': snapshotId ?? row['snapshot_id']?.toString(),
-        'created_at': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('cdss_record_history', {
+      'history_id': historyId,
+      'table_name': tableName,
+      'record_id': recordId,
+      'version_id': versionId,
+      'payload_json': jsonEncode(row),
+      'superseded_by': null,
+      'effective_at': effectiveAt ?? now,
+      'retired_at': null,
+      'import_run_id': importRunId,
+      'snapshot_id': snapshotId ?? row['snapshot_id']?.toString(),
+      'created_at': now,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> insertStagingRow(String table, Map<String, Object?> row) async {
     requireValidCdssTableName(table);
     final db = await _open();
-    await db.insert(
-      table,
-      row,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert(table, row, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   @override
   Future<void> clearStagingRun(String runId) async {
     final db = await _open();
-    await db.delete('staging_food_variant',
-        where: 'run_id = ?', whereArgs: [runId]);
-    await db.delete('staging_drug_product_variant',
-        where: 'run_id = ?', whereArgs: [runId]);
-    await db.delete('staging_variant_scope',
-        where: 'run_id = ?', whereArgs: [runId]);
-    await db
-        .delete('staging_observation', where: 'run_id = ?', whereArgs: [runId]);
-    await db.delete('staging_resolved_fact',
-        where: 'run_id = ?', whereArgs: [runId]);
-    await db.delete('staging_rule_registry',
-        where: 'run_id = ?', whereArgs: [runId]);
-    await db.delete('staging_runtime_event',
-        where: 'run_id = ?', whereArgs: [runId]);
-    await db.delete('staging_concept_variant_crosswalk',
-        where: 'run_id = ?', whereArgs: [runId]);
+    await db.delete(
+      'staging_food_variant',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_drug_product_variant',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_variant_scope',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_observation',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_resolved_fact',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_rule_registry',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_runtime_event',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
+    await db.delete(
+      'staging_concept_variant_crosswalk',
+      where: 'run_id = ?',
+      whereArgs: [runId],
+    );
   }
 
   @override

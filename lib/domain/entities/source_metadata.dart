@@ -88,21 +88,21 @@ class SourceDocumentMetadata {
       authorityTier == SourceAuthorityTier.syntheticDemo;
 
   Map<String, dynamic> toJson() => {
-        'source_doc_id': sourceDocId,
-        'source_system': sourceSystem,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'source_owner': sourceOwner,
-        'doc_type': docType,
-        'authority_tier': authorityTier.name,
-        'translation_status': translationStatus.name,
-        'published_at': publishedAt,
-        'effective_at': effectiveAt,
-        'last_updated': lastUpdated,
-        'license_or_use_limitations': licenseOrUseLimitations,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-      };
+    'source_doc_id': sourceDocId,
+    'source_system': sourceSystem,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'source_owner': sourceOwner,
+    'doc_type': docType,
+    'authority_tier': authorityTier.name,
+    'translation_status': translationStatus.name,
+    'published_at': publishedAt,
+    'effective_at': effectiveAt,
+    'last_updated': lastUpdated,
+    'license_or_use_limitations': licenseOrUseLimitations,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+  };
 }
 
 /// Canonical drug-product metadata (projection-surviving).
@@ -148,25 +148,25 @@ class DrugProductVariantMetadata {
   });
 
   Map<String, dynamic> toJson() => {
-        'drug_product_variant_id': drugProductVariantId,
-        'source_system': sourceSystem,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'generic_name': genericName,
-        'brand_name': brandName,
-        'active_ingredients': activeIngredients,
-        'strength_value': strengthValue,
-        'strength_unit': strengthUnit,
-        'dose_form': doseForm,
-        'route': route,
-        'release_type': releaseType,
-        'product_identifier': productIdentifier,
-        'label_section': labelSection,
-        'translation_status': translationStatus.name,
-        'extraction_confidence': extractionConfidence,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-      };
+    'drug_product_variant_id': drugProductVariantId,
+    'source_system': sourceSystem,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'generic_name': genericName,
+    'brand_name': brandName,
+    'active_ingredients': activeIngredients,
+    'strength_value': strengthValue,
+    'strength_unit': strengthUnit,
+    'dose_form': doseForm,
+    'route': route,
+    'release_type': releaseType,
+    'product_identifier': productIdentifier,
+    'label_section': labelSection,
+    'translation_status': translationStatus.name,
+    'extraction_confidence': extractionConfidence,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+  };
 }
 
 /// Canonical food-variant metadata (projection-surviving).
@@ -247,28 +247,28 @@ class FoodVariantMetadata {
   });
 
   Map<String, dynamic> toJson() => {
-        'food_variant_id': foodVariantId,
-        'source_system': sourceSystem,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'food_name': foodName,
-        'basis_type': basisType,
-        'serving_unit': servingUnit,
-        'preparation_state': preparationState,
-        'amino_acid_fields_present': aminoAcidFieldsPresent,
-        'extraction_confidence': extractionConfidence,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-        'nutrient_confidence_tier': nutrientConfidenceTier,
-        'amino_acid_confidence_tier': aminoAcidConfidenceTier,
-        'nutrient_data_type': nutrientDataType,
-        'nutrient_data_points': nutrientDataPoints,
-        'nutrient_derivation_source': nutrientDerivationSource,
-        'nutrient_provenance_quality': nutrientProvenanceQuality,
-        'uses_analytical_nutrient_values': usesAnalyticalNutrientValues,
-        'uses_calculated_nutrient_values': usesCalculatedNutrientValues,
-        'uses_imputed_or_assumed_nutrient_values':
-            usesImputedOrAssumedNutrientValues,
-        'nutrient_provenance_limitation_text': nutrientProvenanceLimitationText,
-      };
+    'food_variant_id': foodVariantId,
+    'source_system': sourceSystem,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'food_name': foodName,
+    'basis_type': basisType,
+    'serving_unit': servingUnit,
+    'preparation_state': preparationState,
+    'amino_acid_fields_present': aminoAcidFieldsPresent,
+    'extraction_confidence': extractionConfidence,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+    'nutrient_confidence_tier': nutrientConfidenceTier,
+    'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+    'nutrient_data_type': nutrientDataType,
+    'nutrient_data_points': nutrientDataPoints,
+    'nutrient_derivation_source': nutrientDerivationSource,
+    'nutrient_provenance_quality': nutrientProvenanceQuality,
+    'uses_analytical_nutrient_values': usesAnalyticalNutrientValues,
+    'uses_calculated_nutrient_values': usesCalculatedNutrientValues,
+    'uses_imputed_or_assumed_nutrient_values':
+        usesImputedOrAssumedNutrientValues,
+    'nutrient_provenance_limitation_text': nutrientProvenanceLimitationText,
+  };
 }

@@ -26,8 +26,8 @@ class ExplanationCopyService {
   const ExplanationCopyService({
     SafeCopyTemplateRegistry registry = const SafeCopyTemplateRegistry(),
     ExplanationCopyCompiler compiler = const ExplanationCopyCompiler(),
-  })  : _registry = registry,
-        _compiler = compiler;
+  }) : _registry = registry,
+       _compiler = compiler;
 
   /// Resolve a template to its compiler-validated text, or [fallback] when the
   /// template is missing or does not pass validation. Never returns empty.
@@ -77,33 +77,30 @@ class ExplanationCopyService {
   /// Shared not-advice boundary copy (compiler-validated; falls back to the
   /// canonical default text).
   String notAdvice({String locale = ''}) => resolve(
-        'not_advice_default',
-        locale: locale,
-        fallback: RuleExplanation.defaultNotAdvice,
-      );
+    'not_advice_default',
+    locale: locale,
+    fallback: RuleExplanation.defaultNotAdvice,
+  );
 
   /// Shared safety-boundary copy (compiler-validated; falls back to the
   /// canonical default text).
   String safetyBoundary({String locale = ''}) => resolve(
-        'safety_boundary_default',
-        locale: locale,
-        fallback: RuleExplanation.defaultSafetyBoundary,
-      );
+    'safety_boundary_default',
+    locale: locale,
+    fallback: RuleExplanation.defaultSafetyBoundary,
+  );
 
   String _validatedFallback(String fallback) {
-    final report = const LocalizationSafetyLint().lint(
-      [
-        LocalizationSurface(
-          surfaceId: 'runtime_fallback',
-          locale: '-',
-          key: 'runtime_fallback',
-          text: fallback,
-          source: 'runtime_fallback',
-          expectedSafetyRole: 'plain',
-        ),
-      ],
-      const LocalizationSafetyLintConfig(),
-    );
+    final report = const LocalizationSafetyLint().lint([
+      LocalizationSurface(
+        surfaceId: 'runtime_fallback',
+        locale: '-',
+        key: 'runtime_fallback',
+        text: fallback,
+        source: 'runtime_fallback',
+        expectedSafetyRole: 'plain',
+      ),
+    ], const LocalizationSafetyLintConfig());
     return report.blockerCount == 0
         ? fallback
         : RuleExplanation.defaultSafetyBoundary;

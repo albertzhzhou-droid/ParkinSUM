@@ -20,7 +20,7 @@ class TimelineWindow {
   final int endMinute;
 
   const TimelineWindow({required this.startMinute, required this.endMinute})
-      : assert(endMinute >= startMinute);
+    : assert(endMinute >= startMinute);
 
   int get durationMinutes => endMinute - startMinute;
 
@@ -30,9 +30,9 @@ class TimelineWindow {
       startMinute < other.endMinute && other.startMinute < endMinute;
 
   Map<String, dynamic> toJson() => {
-        'start_minute': startMinute,
-        'end_minute': endMinute,
-      };
+    'start_minute': startMinute,
+    'end_minute': endMinute,
+  };
 }
 
 /// A user-defined window inside which next-meal candidates may be scored.
@@ -47,9 +47,9 @@ class UserDefinedMealWindow {
   int get midpointMinute => (window.startMinute + window.endMinute) ~/ 2;
 
   Map<String, dynamic> toJson() => {
-        'window': window.toJson(),
-        'source': source,
-      };
+    'window': window.toJson(),
+    'source': source,
+  };
 }
 
 /// Base class for events placed on the model timeline.
@@ -84,11 +84,11 @@ class MedicationTimelineEvent extends TimelineEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'minute': minute,
-        'kind': kind.name,
-        'context': context.toJson(),
-      };
+    'id': id,
+    'minute': minute,
+    'kind': kind.name,
+    'context': context.toJson(),
+  };
 }
 
 /// Meal event placed on the timeline. Composition is normalized separately
@@ -111,13 +111,13 @@ class MealTimelineEvent extends TimelineEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'minute': minute,
-        'kind': kind.name,
-        'composition_id': compositionId,
-        'duration_minutes': durationMinutes,
-        'physical_form': physicalForm.name,
-      };
+    'id': id,
+    'minute': minute,
+    'kind': kind.name,
+    'composition_id': compositionId,
+    'duration_minutes': durationMinutes,
+    'physical_form': physicalForm.name,
+  };
 }
 
 /// A single food component inside a mixed meal, when caller wants to model
@@ -137,13 +137,13 @@ class FoodComponentTimelineEvent extends TimelineEvent {
 
   @override
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'minute': minute,
-        'kind': kind.name,
-        'parent_meal_id': parentMealId,
-        'food_component_id': foodComponentId,
-        'physical_form': physicalForm.name,
-      };
+    'id': id,
+    'minute': minute,
+    'kind': kind.name,
+    'parent_meal_id': parentMealId,
+    'food_component_id': foodComponentId,
+    'physical_form': physicalForm.name,
+  };
 }
 
 /// Full context handed to the mechanistic conflict engine.
@@ -162,25 +162,29 @@ class TimeAxisConflictContext {
     List<FoodComponentTimelineEvent> foodComponentEvents = const [],
     this.userDefinedWindow,
     Set<String> missingFields = const {},
-  })  : medicationEvents = List.unmodifiable([...medicationEvents]
-          ..sort((a, b) => a.minute.compareTo(b.minute))),
-        mealEvents = List.unmodifiable(
-            [...mealEvents]..sort((a, b) => a.minute.compareTo(b.minute))),
-        foodComponentEvents = List.unmodifiable([...foodComponentEvents]
-          ..sort((a, b) => a.minute.compareTo(b.minute))),
-        missingFields = Set.unmodifiable(missingFields);
+  }) : medicationEvents = List.unmodifiable(
+         [...medicationEvents]..sort((a, b) => a.minute.compareTo(b.minute)),
+       ),
+       mealEvents = List.unmodifiable(
+         [...mealEvents]..sort((a, b) => a.minute.compareTo(b.minute)),
+       ),
+       foodComponentEvents = List.unmodifiable(
+         [...foodComponentEvents]..sort((a, b) => a.minute.compareTo(b.minute)),
+       ),
+       missingFields = Set.unmodifiable(missingFields);
 
   Map<String, dynamic> toJson() => {
-        'reference_minute': referenceMinute,
-        'medication_events':
-            medicationEvents.map((e) => e.toJson()).toList(growable: false),
-        'meal_events':
-            mealEvents.map((e) => e.toJson()).toList(growable: false),
-        'food_component_events':
-            foodComponentEvents.map((e) => e.toJson()).toList(growable: false),
-        'user_defined_window': userDefinedWindow?.toJson(),
-        'missing_fields': missingFields.toList(growable: false),
-      };
+    'reference_minute': referenceMinute,
+    'medication_events': medicationEvents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'meal_events': mealEvents.map((e) => e.toJson()).toList(growable: false),
+    'food_component_events': foodComponentEvents
+        .map((e) => e.toJson())
+        .toList(growable: false),
+    'user_defined_window': userDefinedWindow?.toJson(),
+    'missing_fields': missingFields.toList(growable: false),
+  };
 }
 
 /// Convert a `DateTime` to canonical minute resolution. Always UTC-stable.

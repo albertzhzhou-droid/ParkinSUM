@@ -68,12 +68,14 @@ class LevodopaAbsorptionOpportunityModel {
     // Unknown/unspecified/empty → release-specific interpretation is limited;
     // we keep a default (IR-shaped) window but widen uncertainty and never
     // assert ER/IR specifics. Release type is NEVER inferred from dose.
-    final releaseTypeUnknown = releaseTypeRaw.isEmpty ||
+    final releaseTypeUnknown =
+        releaseTypeRaw.isEmpty ||
         releaseTypeRaw == 'unknown' ||
         releaseTypeRaw == 'unspecified';
     final lag = isWideRelease ? referenceErLagMinutes : referenceIrLagMinutes;
-    final duration =
-        isWideRelease ? referenceErDurationMinutes : referenceIrDurationMinutes;
+    final duration = isWideRelease
+        ? referenceErDurationMinutes
+        : referenceIrDurationMinutes;
 
     final assumptions = <String>[
       'ldopa.absorption.small_intestine',
@@ -90,32 +92,38 @@ class LevodopaAbsorptionOpportunityModel {
 
     if (overlappingMealProfile != null) {
       // Estimate residual stomach load at medication time.
-      final tSinceMealStart = medication.minute -
+      final tSinceMealStart =
+          medication.minute -
           overlappingMealProfile.peakEmptyingWindow.startMinute +
           overlappingMealProfile.aggregateLagMinutes.round();
-      final residual = overlappingMealProfile
-          .remainingFractionAt(tSinceMealStart < 0 ? 0 : tSinceMealStart);
+      final residual = overlappingMealProfile.remainingFractionAt(
+        tSinceMealStart < 0 ? 0 : tSinceMealStart,
+      );
 
       if (residual > 0.7) {
         startMinute += 30;
         endMinute += 60;
         peakMinute += 30;
         delayLikelihood = DelayedArrivalLikelihood.high;
-        assumptions
-            .add('ldopa.absorption.delayed_by_high_residual_stomach_load');
+        assumptions.add(
+          'ldopa.absorption.delayed_by_high_residual_stomach_load',
+        );
       } else if (residual > 0.4) {
         startMinute += 15;
         endMinute += 30;
         peakMinute += 15;
         delayLikelihood = DelayedArrivalLikelihood.moderate;
-        assumptions
-            .add('ldopa.absorption.shifted_by_moderate_residual_stomach_load');
+        assumptions.add(
+          'ldopa.absorption.shifted_by_moderate_residual_stomach_load',
+        );
       } else {
         delayLikelihood = DelayedArrivalLikelihood.low;
       }
 
       uncertainty = _combineUncertainty(
-          uncertainty, overlappingMealProfile.uncertaintyBand);
+        uncertainty,
+        overlappingMealProfile.uncertaintyBand,
+      );
     } else {
       delayLikelihood = DelayedArrivalLikelihood.unknown;
       assumptions.add('ldopa.absorption.no_overlapping_meal_profile');
@@ -135,12 +143,15 @@ class LevodopaAbsorptionOpportunityModel {
       extended: isWideRelease,
       incompleteContext: incompleteContext,
     );
-    assumptions.add(isWideRelease
-        ? 'ldopa.absorption.openness_profile_extended_flatter_longer'
-        : 'ldopa.absorption.openness_profile_immediate_sharper');
+    assumptions.add(
+      isWideRelease
+          ? 'ldopa.absorption.openness_profile_extended_flatter_longer'
+          : 'ldopa.absorption.openness_profile_immediate_sharper',
+    );
     if (incompleteContext) {
-      assumptions
-          .add('ldopa.absorption.openness_flattened_incomplete_meal_context');
+      assumptions.add(
+        'ldopa.absorption.openness_flattened_incomplete_meal_context',
+      );
     }
 
     return AbsorptionOpportunityWindow(
@@ -175,9 +186,11 @@ class LevodopaAbsorptionOpportunityModel {
     final peak = peakMinute.clamp(startMinute, endMinute);
 
     final samples = <AbsorptionOpennessSample>[];
-    for (var t = startMinute;
-        t <= endMinute;
-        t += _opennessSampleStrideMinutes) {
+    for (
+      var t = startMinute;
+      t <= endMinute;
+      t += _opennessSampleStrideMinutes
+    ) {
       double o;
       if (t <= peak) {
         final rise = peak == startMinute
@@ -188,17 +201,21 @@ class LevodopaAbsorptionOpportunityModel {
         final decay = endMinute == peak ? 0.0 : (t - peak) / (endMinute - peak);
         o = peakOpenness - decay * (peakOpenness - tailOpenness);
       }
-      samples.add(AbsorptionOpennessSample(
-        minute: t,
-        openness: (o * scale).clamp(0.0, 1.0),
-      ));
+      samples.add(
+        AbsorptionOpennessSample(
+          minute: t,
+          openness: (o * scale).clamp(0.0, 1.0),
+        ),
+      );
     }
     // Ensure the window end is represented as a sample.
     if (samples.isEmpty || samples.last.minute != endMinute) {
-      samples.add(AbsorptionOpennessSample(
-        minute: endMinute,
-        openness: (tailOpenness * scale).clamp(0.0, 1.0),
-      ));
+      samples.add(
+        AbsorptionOpennessSample(
+          minute: endMinute,
+          openness: (tailOpenness * scale).clamp(0.0, 1.0),
+        ),
+      );
     }
     return List.unmodifiable(samples);
   }
@@ -210,7 +227,8 @@ class LevodopaAbsorptionOpportunityModel {
       UncertaintyBand.wide,
       UncertaintyBand.veryWide,
     ];
-    final idx = (order.indexOf(a) + order.indexOf(b)) ~/ 2 +
+    final idx =
+        (order.indexOf(a) + order.indexOf(b)) ~/ 2 +
         ((order.indexOf(a) + order.indexOf(b)) % 2);
     return order[idx.clamp(0, order.length - 1)];
   }

@@ -40,8 +40,8 @@ void main() {
 
   // 5 — resolved boundary copy contains no banned prescriptive phrase.
   test('resolved boundary copy is banned-phrase free', () {
-    final blob =
-        '${service.notAdvice()} ${service.safetyBoundary()}'.toLowerCase();
+    final blob = '${service.notAdvice()} ${service.safetyBoundary()}'
+        .toLowerCase();
     for (final phrases in LocalizationSafetyLint.bannedFamilies.values) {
       for (final phrase in phrases) {
         if (phrase.runes.any((r) => r >= 0x3400)) {

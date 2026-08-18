@@ -1,5 +1,7 @@
+import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/user_profile.dart';
+import '../../domain/usecases/intake_dose_context_builder.dart';
 
 class OnboardingDraft {
   final String registrationRegion;
@@ -26,29 +28,33 @@ class OnboardingDraft {
     required this.initialIntakeDoseNote,
   });
 
-  UserProfile buildProfile(UserProfile baseProfile,
-      {required String patientId}) {
+  UserProfile buildProfile(
+    UserProfile baseProfile, {
+    required String patientId,
+  }) {
     return baseProfile.copyWith(
       patientId: patientId,
       registrationRegion: registrationRegion,
       displayLocale: displayLocale,
-      contentJurisdictionOverride:
-          parseJurisdictionOverride(contentJurisdictionOverrideText),
+      contentJurisdictionOverride: parseJurisdictionOverride(
+        contentJurisdictionOverrideText,
+      ),
       dietProfileRegion: dietProfileRegion ?? registrationRegion,
       swallowingTextureMode: swallowingTextureMode,
       localAiConsentEnabled: localAiConsentEnabled,
     );
   }
 
-  Intake? buildInitialIntake({required String intakeId}) {
+  Intake? buildInitialIntake({required String intakeId, DrugDefinition? drug}) {
     final drugId = initialIntakeDrugId;
     final takenAt = initialIntakeAt;
     if (drugId == null || takenAt == null) return null;
-    return Intake(
+    return IntakeDoseContextBuilder().build(
       id: intakeId,
       drugId: drugId,
       takenAt: takenAt,
       dosageNote: initialIntakeDoseNote.trim(),
+      drug: drug,
     );
   }
 

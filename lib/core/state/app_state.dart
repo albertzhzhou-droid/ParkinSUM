@@ -30,6 +30,8 @@ import '../../domain/usecases/local_ai_recommendation_adapter.dart';
 import '../../data/datasources/remote/p0_import_models.dart';
 import '../../data/datasources/remote/p0_ingestion_orchestrator.dart';
 import '../utils/local_p0_import_locator.dart';
+import 'active_drug_selection_transaction.dart';
+import 'persisted_list_mutation.dart';
 
 void _debugLog(String message) {
   if (kDebugMode) {
@@ -182,8 +184,14 @@ class AppState extends ChangeNotifier {
   UserProfile _userProfile = UserProfile.defaults();
 
   List<String> _activeDrugIds = [];
+  final ActiveDrugSelectionCoordinator _activeDrugSelectionCoordinator =
+      ActiveDrugSelectionCoordinator();
   List<Meal> _meals = [];
+  final PersistedListMutationCoordinator<Meal> _mealMutationCoordinator =
+      PersistedListMutationCoordinator<Meal>();
   List<Intake> _intakes = [];
+  final PersistedListMutationCoordinator<Intake> _intakeMutationCoordinator =
+      PersistedListMutationCoordinator<Intake>();
   List<FoodRecommendation> _recommendations = [];
   Map<String, InteractionResult> _mealCheckCache = {};
   bool _isImportingP0 = false;
@@ -221,6 +229,9 @@ class AppState extends ChangeNotifier {
   String? get currentUserId => _authUserId;
   String? get currentUserEmail => _authUserEmail;
   UserProfile get userProfile => _userProfile;
+  bool get isUpdatingActiveDrugIds => _activeDrugSelectionCoordinator.isRunning;
+  bool get isUpdatingMeals => _mealMutationCoordinator.isRunning;
+  bool get isUpdatingIntakes => _intakeMutationCoordinator.isRunning;
 
   List<Meal> get meals => List.unmodifiable(_meals);
   List<Intake> get intakes => List.unmodifiable(_intakes);
@@ -510,71 +521,184 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> setActiveDrugIds(List<String> ids) async {
-    _activeDrugIds = List<String>.from(ids);
-    await services.userDataService.saveActiveDrugIds(ids);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    notifyListeners();
+  Future<ActiveDrugSelectionResult> setActiveDrugIds(List<String> ids) async {
+    final requested = ids.toSet();
+    final nextIds = <String>[
+      for (final drug in medRepo.allDrugs)
+        if (requested.remove(drug.id)) drug.id,
+    ];
+    if (requested.isNotEmpty) {
+      _debugLog(
+        '[AppState] activeDrugs:ignored_unknown count=${requested.length}',
+      );
+    }
+    final previousIds = List<String>.from(_activeDrugIds);
+    final result = await _activeDrugSelectionCoordinator.commit(
+      previousIds: previousIds,
+      nextIds: nextIds,
+      persist: services.userDataService.saveActiveDrugIds,
+      apply: (committedIds) {
+        _activeDrugIds = List<String>.from(committedIds);
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] activeDrugs:running=$isRunning');
+        notifyListeners();
+      },
+      onError: (stage, error) {
+        _debugLog(
+          '[AppState] activeDrugs:${stage.name}_failed '
+          'type=${error.runtimeType}',
+        );
+      },
+    );
+    _debugLog('[AppState] activeDrugs:result=${result.status.name}');
+    return result;
   }
 
-  Future<void> addMeal(Meal meal) async {
+  Future<PersistedListMutationResult<Meal>> addMeal(Meal meal) async {
     _debugLog('[AppState] addMeal:start items=${meal.items.length}');
-    _meals = [meal, ..._meals];
-    await services.userDataService.saveMeals(_meals);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] addMeal:saved totalMeals=${_meals.length}');
-    notifyListeners();
+    final nextMeals = <Meal>[
+      meal,
+      ..._meals.where((item) => item.id != meal.id),
+    ];
+    return _commitMeals('addMeal', nextMeals);
   }
 
-  Future<void> updateMeal(Meal meal) async {
+  Future<PersistedListMutationResult<Meal>> updateMeal(Meal meal) async {
     _debugLog('[AppState] updateMeal:start items=${meal.items.length}');
-    _meals = _meals.map((m) => m.id == meal.id ? meal : m).toList();
-    await services.userDataService.saveMeals(_meals);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] updateMeal:saved totalMeals=${_meals.length}');
-    notifyListeners();
+    if (!_meals.any((item) => item.id == meal.id)) {
+      _debugLog('[AppState] updateMeal:unchanged missing_id');
+      return _mealMutationCoordinator.unchanged(_meals);
+    }
+    final nextMeals = _meals
+        .map((item) => item.id == meal.id ? meal : item)
+        .toList();
+    return _commitMeals('updateMeal', nextMeals);
   }
 
-  Future<void> deleteMeal(String mealId) async {
-    _meals = _meals.where((m) => m.id != mealId).toList();
-    await services.userDataService.saveMeals(_meals);
-    await _refreshRecommendations();
-    _mealCheckCache.remove(mealId);
-    notifyListeners();
+  Future<PersistedListMutationResult<Meal>> deleteMeal(String mealId) async {
+    if (!_meals.any((item) => item.id == mealId)) {
+      _debugLog('[AppState] deleteMeal:unchanged missing_id');
+      return _mealMutationCoordinator.unchanged(_meals);
+    }
+    final nextMeals = _meals.where((item) => item.id != mealId).toList();
+    return _commitMeals(
+      'deleteMeal',
+      nextMeals,
+      afterApply: () => _mealCheckCache.remove(mealId),
+    );
   }
 
-  Future<void> addIntake(Intake intake) async {
+  Future<PersistedListMutationResult<Intake>> addIntake(Intake intake) async {
     _debugLog('[AppState] addIntake:start');
-    _intakes = [intake, ..._intakes];
-    await services.userDataService.saveIntakes(_intakes);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] addIntake:saved totalIntakes=${_intakes.length}');
-    notifyListeners();
+    final nextIntakes = <Intake>[
+      intake,
+      ..._intakes.where((item) => item.id != intake.id),
+    ];
+    return _commitIntakes('addIntake', nextIntakes);
   }
 
-  Future<void> updateIntake(Intake intake) async {
+  Future<PersistedListMutationResult<Intake>> updateIntake(
+    Intake intake,
+  ) async {
     _debugLog('[AppState] updateIntake:start');
-    _intakes =
-        _intakes.map((item) => item.id == intake.id ? intake : item).toList();
-    await services.userDataService.saveIntakes(_intakes);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] updateIntake:saved totalIntakes=${_intakes.length}');
-    notifyListeners();
+    if (!_intakes.any((item) => item.id == intake.id)) {
+      _debugLog('[AppState] updateIntake:unchanged missing_id');
+      return _intakeMutationCoordinator.unchanged(_intakes);
+    }
+    final nextIntakes = _intakes
+        .map((item) => item.id == intake.id ? intake : item)
+        .toList();
+    return _commitIntakes('updateIntake', nextIntakes);
   }
 
-  Future<void> deleteIntake(String intakeId) async {
+  Future<PersistedListMutationResult<Intake>> deleteIntake(
+    String intakeId,
+  ) async {
     _debugLog('[AppState] deleteIntake:start');
-    _intakes = _intakes.where((item) => item.id != intakeId).toList();
-    await services.userDataService.saveIntakes(_intakes);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    _debugLog('[AppState] deleteIntake:saved totalIntakes=${_intakes.length}');
-    notifyListeners();
+    if (!_intakes.any((item) => item.id == intakeId)) {
+      _debugLog('[AppState] deleteIntake:unchanged missing_id');
+      return _intakeMutationCoordinator.unchanged(_intakes);
+    }
+    final nextIntakes = _intakes.where((item) => item.id != intakeId).toList();
+    return _commitIntakes('deleteIntake', nextIntakes);
+  }
+
+  Future<PersistedListMutationResult<Meal>> _commitMeals(
+    String operation,
+    List<Meal> nextMeals, {
+    VoidCallback? afterApply,
+  }) async {
+    final previousMeals = List<Meal>.from(_meals);
+    final result = await _mealMutationCoordinator.commit(
+      previousItems: previousMeals,
+      nextItems: nextMeals,
+      persist: services.userDataService.saveMeals,
+      apply: (committedMeals) {
+        _meals = List<Meal>.from(committedMeals);
+        afterApply?.call();
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] $operation:running=$isRunning');
+        notifyListeners();
+      },
+      onError: (stage, error) {
+        _debugLog(
+          '[AppState] $operation:${stage.name}_failed '
+          'type=${error.runtimeType}',
+        );
+      },
+    );
+    _debugLog(
+      '[AppState] $operation:result=${result.status.name} '
+      'totalMeals=${result.items.length}',
+    );
+    return result;
+  }
+
+  Future<PersistedListMutationResult<Intake>> _commitIntakes(
+    String operation,
+    List<Intake> nextIntakes,
+  ) async {
+    final previousIntakes = List<Intake>.from(_intakes);
+    final result = await _intakeMutationCoordinator.commit(
+      previousItems: previousIntakes,
+      nextItems: nextIntakes,
+      persist: services.userDataService.saveIntakes,
+      apply: (committedIntakes) {
+        _intakes = List<Intake>.from(committedIntakes);
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] $operation:running=$isRunning');
+        notifyListeners();
+      },
+      onError: (stage, error) {
+        _debugLog(
+          '[AppState] $operation:${stage.name}_failed '
+          'type=${error.runtimeType}',
+        );
+      },
+    );
+    _debugLog(
+      '[AppState] $operation:result=${result.status.name} '
+      'totalIntakes=${result.items.length}',
+    );
+    return result;
   }
 
   Future<InteractionResult> checkMeal(Meal meal) async {
@@ -595,10 +719,7 @@ class AppState extends ChangeNotifier {
             activeDrugs: _drugsForMealCheck(),
             intakes: _intakes,
           );
-    _mealCheckCache = {
-      ..._mealCheckCache,
-      meal.id: result,
-    };
+    _mealCheckCache = {..._mealCheckCache, meal.id: result};
     await services.userClinicalAuditService.recordMealCheck(
       meal: meal,
       result: result,
@@ -671,13 +792,11 @@ class AppState extends ChangeNotifier {
   /// Projection-only items are appended.
   Future<void> _augmentFoodRepoFromProjection() async {
     try {
-      final projected =
-          await services.cdssCatalogProjectionService.projectFoods();
+      final projected = await services.cdssCatalogProjectionService
+          .projectFoods();
       if (projected.isEmpty) return;
       final existing = services.foodRepository.allFoods;
-      final byId = <String, FoodItem>{
-        for (final f in existing) f.id: f,
-      };
+      final byId = <String, FoodItem>{for (final f in existing) f.id: f};
       for (final p in projected) {
         final current = byId[p.id];
         // Do NOT blindly let a seed/persisted food win over a projected CDSS
@@ -742,8 +861,9 @@ class AppState extends ChangeNotifier {
   /// (e.g. fresh DB on first boot) so we never block bootstrap on i18n.
   Future<void> _refreshLocaleResourceOverrides() async {
     try {
-      final rows =
-          await services.cdssDatabase.queryTable('locale_resource_bundle');
+      final rows = await services.cdssDatabase.queryTable(
+        'locale_resource_bundle',
+      );
       AppI18n.installRuntimeOverrides(
         rows.map(
           (row) => (
@@ -841,8 +961,8 @@ class AppState extends ChangeNotifier {
             message: result.aiRerankUsed
                 ? 'Local AI reranking succeeded.'
                 : result.aiUsed
-                    ? 'Local AI copy polish succeeded.'
-                    : 'Recommendation stayed on the conservative path.',
+                ? 'Local AI copy polish succeeded.'
+                : 'Recommendation stayed on the conservative path.',
           );
     if (!FirebaseBackend.enabled) {
       final activeSnapshot = await services.clinicalDecisionSupportService
@@ -904,13 +1024,13 @@ class AppState extends ChangeNotifier {
         dailyMedPath: dailyMedPath,
         dpdPath: dpdPath,
       );
-      final stepReports =
-          await services.p0IngestionOrchestrator.importOfflinePackagesDetailed(
-        ciqualArchiveBytes: selection.ciqualArchiveBytes,
-        fdcZipBytes: selection.fdcZipBytes,
-        dailyMedZipBytes: selection.dailyMedZipBytes,
-        dpdZipBytes: selection.dpdZipBytes,
-      );
+      final stepReports = await services.p0IngestionOrchestrator
+          .importOfflinePackagesDetailed(
+            ciqualArchiveBytes: selection.ciqualArchiveBytes,
+            fdcZipBytes: selection.fdcZipBytes,
+            dailyMedZipBytes: selection.dailyMedZipBytes,
+            dpdZipBytes: selection.dpdZipBytes,
+          );
       if (stepReports.any((item) => item.succeeded)) {
         await bootstrap();
       }
@@ -931,9 +1051,7 @@ class AppState extends ChangeNotifier {
               attempts: report.attempts,
               checkpoint: report.checkpoint,
               resumeToken: report.resumeToken,
-              runs: await _loadImportRunsFor(
-                runId: report.report?.runId,
-              ),
+              runs: await _loadImportRunsFor(runId: report.report?.runId),
               sourceDocuments: await _loadImportSourceDocumentsForBundle(
                 report.bundle ?? const P0ImportBundle(),
               ),
@@ -998,8 +1116,9 @@ class AppState extends ChangeNotifier {
     _isImportingP0 = true;
     notifyListeners();
     try {
-      final report =
-          await services.p0IngestionOrchestrator.resumeImportTask(resumeToken);
+      final report = await services.p0IngestionOrchestrator.resumeImportTask(
+        resumeToken,
+      );
       if (report.succeeded) {
         await bootstrap();
       }
@@ -1119,7 +1238,8 @@ class AppState extends ChangeNotifier {
     String? sourceLabelOverride,
   }) async {
     final bundle = report.bundle ?? const P0ImportBundle();
-    final sourceFamily = report.report?.sourceFamily ??
+    final sourceFamily =
+        report.report?.sourceFamily ??
         sourceLabelOverride ??
         report.sourceLabel;
     return ImportStepResult(
@@ -1165,20 +1285,20 @@ class AppState extends ChangeNotifier {
     String sourceFamily,
   ) async {
     final rows = await services.cdssDatabase.queryTable('ingestion_run');
-    final matched = rows
-        .where((row) => '${row['source_family'] ?? ''}' == sourceFamily)
-        .toList(growable: false)
-      ..sort(
-        (a, b) => ((b['created_at'] as num?)?.toInt() ?? 0)
-            .compareTo((a['created_at'] as num?)?.toInt() ?? 0),
-      );
+    final matched =
+        rows
+            .where((row) => '${row['source_family'] ?? ''}' == sourceFamily)
+            .toList(growable: false)
+          ..sort(
+            (a, b) => ((b['created_at'] as num?)?.toInt() ?? 0).compareTo(
+              (a['created_at'] as num?)?.toInt() ?? 0,
+            ),
+          );
     return matched.take(4).map(_mapImportRunDrilldown).toList(growable: false);
   }
 
   Future<List<ImportSourceDocumentDrilldown>>
-      _loadImportSourceDocumentsForBundle(
-    P0ImportBundle bundle,
-  ) async {
+  _loadImportSourceDocumentsForBundle(P0ImportBundle bundle) async {
     final docs = bundle.sourceDocuments
         .map(
           (item) => ImportSourceDocumentDrilldown(
@@ -1209,18 +1329,21 @@ class AppState extends ChangeNotifier {
       observationCount: (notes['observation_count'] as num?)?.toInt(),
       resolvedFactCount: (notes['resolved_fact_count'] as num?)?.toInt(),
       errorMessage: notes['error_message']?.toString(),
-      retryAttempt: (notes['attempt'] as num?)?.toInt() ??
+      retryAttempt:
+          (notes['attempt'] as num?)?.toInt() ??
           ((notes['retry'] is Map)
               ? ((notes['retry'] as Map)['attempt'] as num?)?.toInt()
               : null),
-      maxAttempts: (notes['max_attempts'] as num?)?.toInt() ??
+      maxAttempts:
+          (notes['max_attempts'] as num?)?.toInt() ??
           ((notes['retry'] is Map)
               ? ((notes['retry'] as Map)['max_attempts'] as num?)?.toInt()
               : null),
       checkpoint: notes['checkpoint'] is Map
           ? ((notes['checkpoint'] as Map)['phase']?.toString())
           : notes['checkpoint']?.toString(),
-      resumeToken: notes['resume_token']?.toString() ??
+      resumeToken:
+          notes['resume_token']?.toString() ??
           ((notes['checkpoint'] is Map)
               ? ((notes['checkpoint'] as Map)['resume_run_id']?.toString())
               : null),
@@ -1263,14 +1386,14 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> refreshCdssOpsOverview() async {
-    _snapshotSummaries =
-        await services.knowledgeBaseReleaseService.listSnapshotSummaries();
-    _importMonitorSummaries =
-        await services.knowledgeBaseReleaseService.listImportSummaries();
-    _snapshotDistributions =
-        await services.knowledgeBaseReleaseService.listSnapshotDistributions();
-    _reviewTickets =
-        await services.knowledgeBaseReleaseService.listReviewTickets();
+    _snapshotSummaries = await services.knowledgeBaseReleaseService
+        .listSnapshotSummaries();
+    _importMonitorSummaries = await services.knowledgeBaseReleaseService
+        .listImportSummaries();
+    _snapshotDistributions = await services.knowledgeBaseReleaseService
+        .listSnapshotDistributions();
+    _reviewTickets = await services.knowledgeBaseReleaseService
+        .listReviewTickets();
     notifyListeners();
   }
 
@@ -1307,11 +1430,8 @@ class AppState extends ChangeNotifier {
     _lastSnapshotOperationMessage = null;
     notifyListeners();
     try {
-      final record =
-          await services.knowledgeBaseReleaseService.updateReviewTicketStatus(
-        ticketId: ticketId,
-        status: status,
-      );
+      final record = await services.knowledgeBaseReleaseService
+          .updateReviewTicketStatus(ticketId: ticketId, status: status);
       _lastSnapshotOperationMessage =
           'Review ticket ${record.ticketId} marked ${record.status}.';
       await refreshCdssOpsOverview();
@@ -1331,11 +1451,8 @@ class AppState extends ChangeNotifier {
     _lastSnapshotOperationMessage = null;
     notifyListeners();
     try {
-      final record =
-          await services.knowledgeBaseReleaseService.exportSnapshotBundle(
-        snapshotId: snapshotId,
-        channel: channel,
-      );
+      final record = await services.knowledgeBaseReleaseService
+          .exportSnapshotBundle(snapshotId: snapshotId, channel: channel);
       _lastSnapshotOperationMessage = record.artifactPath == null
           ? 'Snapshot export finished.'
           : 'Snapshot export finished: ${record.artifactPath}';
@@ -1356,11 +1473,8 @@ class AppState extends ChangeNotifier {
     _lastSnapshotOperationMessage = null;
     notifyListeners();
     try {
-      final record =
-          await services.knowledgeBaseReleaseService.importSnapshotBundle(
-        filePath: filePath,
-        channel: channel,
-      );
+      final record = await services.knowledgeBaseReleaseService
+          .importSnapshotBundle(filePath: filePath, channel: channel);
       _lastSnapshotOperationMessage =
           'Snapshot bundle imported: ${record.snapshotId}.';
       await bootstrap();
@@ -1381,12 +1495,12 @@ class AppState extends ChangeNotifier {
     _lastSnapshotOperationMessage = null;
     notifyListeners();
     try {
-      final rollbackSnapshotId =
-          await services.knowledgeBaseReleaseService.rollbackAndRepublish(
-        snapshotId: snapshotId,
-        reason: reason,
-        channel: channel,
-      );
+      final rollbackSnapshotId = await services.knowledgeBaseReleaseService
+          .rollbackAndRepublish(
+            snapshotId: snapshotId,
+            reason: reason,
+            channel: channel,
+          );
       _lastSnapshotOperationMessage =
           'Rollback created and published snapshot $rollbackSnapshotId.';
       await bootstrap();

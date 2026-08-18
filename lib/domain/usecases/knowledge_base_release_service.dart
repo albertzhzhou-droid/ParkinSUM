@@ -103,41 +103,41 @@ class ReleaseReadinessReport {
   });
 
   Map<String, dynamic> toJson() => {
-        'readiness_profile': readinessProfile,
-        'snapshot_id': snapshotId,
-        'is_ready': isReady,
-        'blocking_issues': blockingIssues,
-        'warnings': warnings,
-        'source_document_count': sourceDocumentCount,
-        'observation_count': observationCount,
-        'resolved_fact_count': resolvedFactCount,
-        'rule_count': ruleCount,
-        'drug_variant_count': drugVariantCount,
-        'drug_label_section_count': drugLabelSectionCount,
-        'orphan_resolved_fact_count': orphanResolvedFactCount,
-        'crosswalk_count': crosswalkCount,
-        'artifact_count': artifactCount,
-        'unresolved_conflict_count': unresolvedConflictCount,
-        'invalid_rule_count': invalidRuleCount,
-        'missing_crosswalk_count': missingCrosswalkCount,
-        'non_durable_artifact_count': nonDurableArtifactCount,
-        'failed_import_count': failedImportCount,
-        'resumable_import_count': resumableImportCount,
-        'stale_rule_version_count': staleRuleVersionCount,
-        'fallback_variant_resolution_warning_count':
-            fallbackVariantResolutionWarningCount,
-        'open_review_ticket_count': openReviewTicketCount,
-        'high_severity_review_ticket_count': highSeverityReviewTicketCount,
-        'blocking_reason_summary': blockingReasonSummary,
-        'warning_summary': warningSummary,
-        'artifact_durability_status': artifactDurabilityStatus,
-        'rollback_target': rollbackTarget,
-        'missing_crosswalk_sample_ids': missingCrosswalkSampleIds,
-        'sample_review_ticket_ids': sampleReviewTicketIds,
-        'backend_capability_warnings': backendCapabilityWarnings,
-        'review_ticket_summaries': reviewTicketSummaries,
-        'issue_counts': issueCounts,
-      };
+    'readiness_profile': readinessProfile,
+    'snapshot_id': snapshotId,
+    'is_ready': isReady,
+    'blocking_issues': blockingIssues,
+    'warnings': warnings,
+    'source_document_count': sourceDocumentCount,
+    'observation_count': observationCount,
+    'resolved_fact_count': resolvedFactCount,
+    'rule_count': ruleCount,
+    'drug_variant_count': drugVariantCount,
+    'drug_label_section_count': drugLabelSectionCount,
+    'orphan_resolved_fact_count': orphanResolvedFactCount,
+    'crosswalk_count': crosswalkCount,
+    'artifact_count': artifactCount,
+    'unresolved_conflict_count': unresolvedConflictCount,
+    'invalid_rule_count': invalidRuleCount,
+    'missing_crosswalk_count': missingCrosswalkCount,
+    'non_durable_artifact_count': nonDurableArtifactCount,
+    'failed_import_count': failedImportCount,
+    'resumable_import_count': resumableImportCount,
+    'stale_rule_version_count': staleRuleVersionCount,
+    'fallback_variant_resolution_warning_count':
+        fallbackVariantResolutionWarningCount,
+    'open_review_ticket_count': openReviewTicketCount,
+    'high_severity_review_ticket_count': highSeverityReviewTicketCount,
+    'blocking_reason_summary': blockingReasonSummary,
+    'warning_summary': warningSummary,
+    'artifact_durability_status': artifactDurabilityStatus,
+    'rollback_target': rollbackTarget,
+    'missing_crosswalk_sample_ids': missingCrosswalkSampleIds,
+    'sample_review_ticket_ids': sampleReviewTicketIds,
+    'backend_capability_warnings': backendCapabilityWarnings,
+    'review_ticket_summaries': reviewTicketSummaries,
+    'issue_counts': issueCounts,
+  };
 }
 
 /// Repeatable dry-run checklist for release drills.
@@ -185,25 +185,24 @@ class ReleaseReadinessDrillReport {
   });
 
   Map<String, dynamic> toJson() => {
-        'snapshot_id': snapshotId,
-        'production_candidate_ready': productionCandidateReady,
-        'publish_would_be_blocked': publishWouldBeBlocked,
-        'override_would_allow_publish': overrideWouldAllowPublish,
-        'override_reason': overrideReason,
-        'open_review_ticket_count': openReviewTicketCount,
-        'open_high_severity_review_ticket_count':
-            openHighSeverityReviewTicketCount,
-        'warning_count': warningCount,
-        'blocking_reason_summary': blockingReasonSummary,
-        'warning_summary': warningSummary,
-        'artifact_durability_status': artifactDurabilityStatus,
-        'rollback_target': rollbackTarget,
-        'blocking_issues': blockingIssues,
-        'warnings': warnings,
-        'sample_review_ticket_ids': sampleReviewTicketIds,
-        'issue_counts': issueCounts,
-        'human_readable_summary': humanReadableSummary,
-      };
+    'snapshot_id': snapshotId,
+    'production_candidate_ready': productionCandidateReady,
+    'publish_would_be_blocked': publishWouldBeBlocked,
+    'override_would_allow_publish': overrideWouldAllowPublish,
+    'override_reason': overrideReason,
+    'open_review_ticket_count': openReviewTicketCount,
+    'open_high_severity_review_ticket_count': openHighSeverityReviewTicketCount,
+    'warning_count': warningCount,
+    'blocking_reason_summary': blockingReasonSummary,
+    'warning_summary': warningSummary,
+    'artifact_durability_status': artifactDurabilityStatus,
+    'rollback_target': rollbackTarget,
+    'blocking_issues': blockingIssues,
+    'warnings': warnings,
+    'sample_review_ticket_ids': sampleReviewTicketIds,
+    'issue_counts': issueCounts,
+    'human_readable_summary': humanReadableSummary,
+  };
 }
 
 /// 后端快照 bundle 导入前校验：
@@ -226,12 +225,12 @@ class SnapshotBundleValidationReport {
   });
 
   Map<String, dynamic> toJson() => {
-        'snapshot_id': snapshotId,
-        'is_valid': isValid,
-        'blocking_issues': blockingIssues,
-        'warnings': warnings,
-        'table_counts': tableCounts,
-      };
+    'snapshot_id': snapshotId,
+    'is_valid': isValid,
+    'blocking_issues': blockingIssues,
+    'warnings': warnings,
+    'table_counts': tableCounts,
+  };
 }
 
 /// 导入监控摘要：
@@ -282,10 +281,12 @@ class KnowledgeBaseReleaseService {
     final ruleRows = await database.queryTable('rule_registry');
     final foodVariantRows = await database.queryTable('food_variant');
     final drugVariantRows = await database.queryTable('drug_product_variant');
-    final drugLabelSectionRows =
-        await database.queryTable('drug_label_section');
-    final crosswalkRows =
-        await database.queryTable('concept_variant_crosswalk');
+    final drugLabelSectionRows = await database.queryTable(
+      'drug_label_section',
+    );
+    final crosswalkRows = await database.queryTable(
+      'concept_variant_crosswalk',
+    );
     final distributionRows = await database.queryTable('snapshot_distribution');
     final conflictRows = await database.queryTable('conflict_audit_log');
     final ingestionRows = await database.queryTable('ingestion_run');
@@ -296,59 +297,66 @@ class KnowledgeBaseReleaseService {
     for (final row in factRows) {
       final snapshotId = '${row['snapshot_id'] ?? ''}';
       if (snapshotId.isEmpty) continue;
-      factCountBySnapshot.update(snapshotId, (count) => count + 1,
-          ifAbsent: () => 1);
+      factCountBySnapshot.update(
+        snapshotId,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
     }
 
-    final summaries = snapshotRows.map((row) {
-      final snapshot = EngineSnapshotRecord(
-        snapshotId: '${row['snapshot_id'] ?? ''}',
-        factsVersion: '${row['facts_version'] ?? ''}',
-        rulesVersion: '${row['rules_version'] ?? ''}',
-        createdAt: DateTime.fromMillisecondsSinceEpoch(
-          (row['created_at'] as num?)?.toInt() ?? 0,
-        ),
-        promotedAt: row['promoted_at'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                (row['promoted_at'] as num).toInt(),
-              ),
-        rollbackParent: row['rollback_parent']?.toString(),
-        inputHash: '${row['input_hash'] ?? ''}',
-      );
-      return SnapshotOperationalSummary(
-        snapshot: snapshot,
-        factCount: factCountBySnapshot[snapshot.snapshotId] ?? 0,
-        versionHistoryCount: historyRows
-            .where(
-                (row) => '${row['snapshot_id'] ?? ''}' == snapshot.snapshotId)
-            .length,
-        releaseReadiness: _buildReadinessReport(
-          snapshotId: snapshot.snapshotId,
-          snapshotRows: snapshotRows,
-          sourceDocumentRows: sourceDocumentRows,
-          observationRows: observationRows,
-          resolvedFactRows: factRows,
-          ruleRows: ruleRows,
-          foodVariantRows: foodVariantRows,
-          drugVariantRows: drugVariantRows,
-          drugLabelSectionRows: drugLabelSectionRows,
-          crosswalkRows: crosswalkRows,
-          distributionRows: distributionRows,
-          conflictRows: conflictRows,
-          ingestionRows: ingestionRows,
-          reviewTicketRows: reviewTicketRows,
-          regionRows: regionRows,
-        ),
-      );
-    }).toList(growable: false)
-      ..sort(
-        (left, right) {
-          final rightTs = right.snapshot.promotedAt ?? right.snapshot.createdAt;
-          final leftTs = left.snapshot.promotedAt ?? left.snapshot.createdAt;
-          return rightTs.compareTo(leftTs);
-        },
-      );
+    final summaries =
+        snapshotRows
+            .map((row) {
+              final snapshot = EngineSnapshotRecord(
+                snapshotId: '${row['snapshot_id'] ?? ''}',
+                factsVersion: '${row['facts_version'] ?? ''}',
+                rulesVersion: '${row['rules_version'] ?? ''}',
+                createdAt: DateTime.fromMillisecondsSinceEpoch(
+                  (row['created_at'] as num?)?.toInt() ?? 0,
+                ),
+                promotedAt: row['promoted_at'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        (row['promoted_at'] as num).toInt(),
+                      ),
+                rollbackParent: row['rollback_parent']?.toString(),
+                inputHash: '${row['input_hash'] ?? ''}',
+              );
+              return SnapshotOperationalSummary(
+                snapshot: snapshot,
+                factCount: factCountBySnapshot[snapshot.snapshotId] ?? 0,
+                versionHistoryCount: historyRows
+                    .where(
+                      (row) =>
+                          '${row['snapshot_id'] ?? ''}' == snapshot.snapshotId,
+                    )
+                    .length,
+                releaseReadiness: _buildReadinessReport(
+                  snapshotId: snapshot.snapshotId,
+                  snapshotRows: snapshotRows,
+                  sourceDocumentRows: sourceDocumentRows,
+                  observationRows: observationRows,
+                  resolvedFactRows: factRows,
+                  ruleRows: ruleRows,
+                  foodVariantRows: foodVariantRows,
+                  drugVariantRows: drugVariantRows,
+                  drugLabelSectionRows: drugLabelSectionRows,
+                  crosswalkRows: crosswalkRows,
+                  distributionRows: distributionRows,
+                  conflictRows: conflictRows,
+                  ingestionRows: ingestionRows,
+                  reviewTicketRows: reviewTicketRows,
+                  regionRows: regionRows,
+                ),
+              );
+            })
+            .toList(growable: false)
+          ..sort((left, right) {
+            final rightTs =
+                right.snapshot.promotedAt ?? right.snapshot.createdAt;
+            final leftTs = left.snapshot.promotedAt ?? left.snapshot.createdAt;
+            return rightTs.compareTo(leftTs);
+          });
     return summaries;
   }
 
@@ -364,40 +372,41 @@ class KnowledgeBaseReleaseService {
           .add(row);
     }
 
-    final summaries = grouped.entries.map((entry) {
-      final rows = entry.value.toList(growable: false)
-        ..sort(
-          (left, right) => ((right['created_at'] as num?)?.toInt() ?? 0)
-              .compareTo((left['created_at'] as num?)?.toInt() ?? 0),
-        );
-      final latest = rows.first;
-      final notes = _safeDecodeMap('${latest['notes_json'] ?? '{}'}');
-      return ImportOperationalSummary(
-        sourceFamily: entry.key,
-        totalRuns: rows.length,
-        lastStage: '${latest['stage'] ?? ''}',
-        lastStatus: '${latest['status'] ?? ''}',
-        lastSnapshotId: '${latest['snapshot_id'] ?? ''}',
-        lastCompletedAt: latest['completed_at'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                (latest['completed_at'] as num).toInt(),
-              ),
-        lastSourceDocumentCount:
-            (notes['source_document_count'] as num?)?.toInt() ?? 0,
-        lastObservationCount:
-            (notes['observation_count'] as num?)?.toInt() ?? 0,
-      );
-    }).toList(growable: false)
-      ..sort(
-        (left, right) {
-          final rightTs =
-              right.lastCompletedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          final leftTs =
-              left.lastCompletedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
-          return rightTs.compareTo(leftTs);
-        },
-      );
+    final summaries =
+        grouped.entries
+            .map((entry) {
+              final rows = entry.value.toList(growable: false)
+                ..sort(
+                  (left, right) => ((right['created_at'] as num?)?.toInt() ?? 0)
+                      .compareTo((left['created_at'] as num?)?.toInt() ?? 0),
+                );
+              final latest = rows.first;
+              final notes = _safeDecodeMap('${latest['notes_json'] ?? '{}'}');
+              return ImportOperationalSummary(
+                sourceFamily: entry.key,
+                totalRuns: rows.length,
+                lastStage: '${latest['stage'] ?? ''}',
+                lastStatus: '${latest['status'] ?? ''}',
+                lastSnapshotId: '${latest['snapshot_id'] ?? ''}',
+                lastCompletedAt: latest['completed_at'] == null
+                    ? null
+                    : DateTime.fromMillisecondsSinceEpoch(
+                        (latest['completed_at'] as num).toInt(),
+                      ),
+                lastSourceDocumentCount:
+                    (notes['source_document_count'] as num?)?.toInt() ?? 0,
+                lastObservationCount:
+                    (notes['observation_count'] as num?)?.toInt() ?? 0,
+              );
+            })
+            .toList(growable: false)
+          ..sort((left, right) {
+            final rightTs =
+                right.lastCompletedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final leftTs =
+                left.lastCompletedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            return rightTs.compareTo(leftTs);
+          });
     return summaries;
   }
 
@@ -405,9 +414,7 @@ class KnowledgeBaseReleaseService {
     await database.initialize();
     final rows = await database.queryTable('snapshot_distribution');
     final records = rows.map(_mapDistributionRecord).toList(growable: false)
-      ..sort(
-        (left, right) => right.createdAt.compareTo(left.createdAt),
-      );
+      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
     return records;
   }
 
@@ -417,13 +424,19 @@ class KnowledgeBaseReleaseService {
   }) async {
     await database.initialize();
     final rows = await database.queryTable('human_review_ticket');
-    final records = rows
-        .where((row) =>
-            snapshotId == null || '${row['snapshot_id'] ?? ''}' == snapshotId)
-        .where((row) => status == null || '${row['status'] ?? ''}' == status)
-        .map(_mapReviewTicketRecord)
-        .toList(growable: false)
-      ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
+    final records =
+        rows
+            .where(
+              (row) =>
+                  snapshotId == null ||
+                  '${row['snapshot_id'] ?? ''}' == snapshotId,
+            )
+            .where(
+              (row) => status == null || '${row['status'] ?? ''}' == status,
+            )
+            .map(_mapReviewTicketRecord)
+            .toList(growable: false)
+          ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
     return records;
   }
 
@@ -478,8 +491,9 @@ class KnowledgeBaseReleaseService {
       (item) => '${item['ticket_id'] ?? ''}' == ticketId,
       orElse: () => throw StateError('Review ticket not found: $ticketId'),
     );
-    final nextResolvedAt =
-        status == 'open' ? null : (resolvedAt ?? DateTime.now());
+    final nextResolvedAt = status == 'open'
+        ? null
+        : (resolvedAt ?? DateTime.now());
     final record = HumanReviewTicketRecord(
       ticketId: '${row['ticket_id'] ?? ''}',
       reasonCode: '${row['reason_code'] ?? ''}',
@@ -535,12 +549,10 @@ class KnowledgeBaseReleaseService {
           manifestJson: jsonEncode({
             'snapshot_id': snapshotId,
             'release_readiness': readiness.toJson(),
-            'publish_guard': {
-              'blocked': true,
-              'override_used': false,
-            },
+            'publish_guard': {'blocked': true, 'override_used': false},
           }),
-          errorMessage: 'Snapshot $snapshotId is not release-ready: '
+          errorMessage:
+              'Snapshot $snapshotId is not release-ready: '
               '${readiness.blockingIssues.join('; ')}',
           createdAt: now,
           completedAt: now,
@@ -566,25 +578,26 @@ class KnowledgeBaseReleaseService {
         }),
         'human_readable.md':
             '# Snapshot Publish\n\nSnapshot `$snapshotId` is ready for `$channel`.\n',
-        'audit.jsonl': '${jsonEncode({
+        'audit.jsonl':
+            '${jsonEncode({
               'event': 'snapshot_publish',
               'snapshot_id': snapshotId,
               'channel': channel,
               'readiness': readiness.toJson(),
-              if (override.isNotEmpty)
-                'publish_override': {
-                  'reason': override,
-                  'used': true,
-                },
+              if (override.isNotEmpty) 'publish_override': {'reason': override, 'used': true},
             })}\n',
-        'snapshot_manifest.json':
-            const JsonEncoder.withIndent('  ').convert(manifest),
-        'release_readiness.json':
-            const JsonEncoder.withIndent('  ').convert(readiness.toJson()),
-        'rule_trace.json':
-            const JsonEncoder.withIndent('  ').convert(ruleTrace),
-        'version_diff.json':
-            const JsonEncoder.withIndent('  ').convert(versionDiff),
+        'snapshot_manifest.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(manifest),
+        'release_readiness.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(readiness.toJson()),
+        'rule_trace.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(ruleTrace),
+        'version_diff.json': const JsonEncoder.withIndent(
+          '  ',
+        ).convert(versionDiff),
         'conflict_rationale.json': const JsonEncoder.withIndent('  ').convert(
           conflictRows
               .where((row) => '${row['snapshot_id'] ?? ''}' == snapshotId)
@@ -599,10 +612,7 @@ class KnowledgeBaseReleaseService {
         'durable': true,
         'version_diff': versionDiff,
         if (override.isNotEmpty)
-          'publish_override': {
-            'reason': override,
-            'used': true,
-          },
+          'publish_override': {'reason': override, 'used': true},
       },
     );
     final record = SnapshotDistributionRecord(
@@ -611,8 +621,9 @@ class KnowledgeBaseReleaseService {
       snapshotId: snapshotId,
       channel: channel,
       distributionType: 'publish',
-      status:
-          artifactResult.durable ? 'completed' : 'completed_inline_fallback',
+      status: artifactResult.durable
+          ? 'completed'
+          : 'completed_inline_fallback',
       artifactPath: artifactResult.artifactPath,
       manifestJson: jsonEncode({
         ...manifest,
@@ -780,8 +791,9 @@ class KnowledgeBaseReleaseService {
         notesJson: jsonEncode({
           'artifact_path': filePath,
           'bundle_validation': validation.toJson(),
-          'source_document_count':
-              _coerceRows(bundle['source_document']).length,
+          'source_document_count': _coerceRows(
+            bundle['source_document'],
+          ).length,
           'observation_count': _coerceRows(bundle['observation']).length,
           'resolved_fact_count': _coerceRows(bundle['resolved_fact']).length,
         }),
@@ -832,10 +844,12 @@ class KnowledgeBaseReleaseService {
     final ruleRows = await database.queryTable('rule_registry');
     final foodVariantRows = await database.queryTable('food_variant');
     final drugVariantRows = await database.queryTable('drug_product_variant');
-    final drugLabelSectionRows =
-        await database.queryTable('drug_label_section');
-    final crosswalkRows =
-        await database.queryTable('concept_variant_crosswalk');
+    final drugLabelSectionRows = await database.queryTable(
+      'drug_label_section',
+    );
+    final crosswalkRows = await database.queryTable(
+      'concept_variant_crosswalk',
+    );
     final distributionRows = await database.queryTable('snapshot_distribution');
     final conflictRows = await database.queryTable('conflict_audit_log');
     final ingestionRows = await database.queryTable('ingestion_run');
@@ -897,8 +911,9 @@ class KnowledgeBaseReleaseService {
     final factRows = await database.queryTable('resolved_fact');
     final sourceDocumentRows = await database.queryTable('source_document');
     final ruleRows = await database.queryTable('rule_registry');
-    final crosswalkRows =
-        await database.queryTable('concept_variant_crosswalk');
+    final crosswalkRows = await database.queryTable(
+      'concept_variant_crosswalk',
+    );
     final distributionRows = await database.queryTable('snapshot_distribution');
     final readiness = await validateReleaseCandidate(snapshotId);
     final versionDiff = await _buildVersionDiff(snapshotId);
@@ -915,9 +930,11 @@ class KnowledgeBaseReleaseService {
       'rule_count': ruleRows.length,
       'crosswalk_count': crosswalkRows.length,
       'artifact_count': distributionRows
-          .where((row) =>
-              '${row['snapshot_id'] ?? ''}' == snapshotId &&
-              (row['artifact_path'] ?? '').toString().trim().isNotEmpty)
+          .where(
+            (row) =>
+                '${row['snapshot_id'] ?? ''}' == snapshotId &&
+                (row['artifact_path'] ?? '').toString().trim().isNotEmpty,
+          )
           .length,
       'release_readiness': readiness.toJson(),
       'version_diff': versionDiff,
@@ -957,11 +974,13 @@ class KnowledgeBaseReleaseService {
       'drug_product_variant': await database.queryTable('drug_product_variant'),
       'drug_label_section': await database.queryTable('drug_label_section'),
       'drug_product_code': await database.queryTable('drug_product_code'),
-      'drug_product_packaging':
-          await database.queryTable('drug_product_packaging'),
+      'drug_product_packaging': await database.queryTable(
+        'drug_product_packaging',
+      ),
       'drug_product_media': await database.queryTable('drug_product_media'),
-      'concept_variant_crosswalk':
-          await database.queryTable('concept_variant_crosswalk'),
+      'concept_variant_crosswalk': await database.queryTable(
+        'concept_variant_crosswalk',
+      ),
       'variant_scope': await database.queryTable('variant_scope'),
       'observation': await database.queryTable('observation'),
       'resolved_fact': facts
@@ -974,25 +993,33 @@ class KnowledgeBaseReleaseService {
   }
 
   Future<List<Map<String, dynamic>>> _buildReleaseRuleTrace(
-      String snapshotId) async {
+    String snapshotId,
+  ) async {
     final conflictRows = await database.queryTable('conflict_audit_log');
     return conflictRows
-        .where((row) =>
-            '${row['snapshot_id'] ?? ''}' == snapshotId &&
-            '${row['audit_type'] ?? ''}' == 'RUNTIME_ALERT')
-        .map((row) => {
-              'audit_id': row['audit_id'],
-              'target': row['target'],
-              'decision': row['decision'],
-              'winning_rule_ids':
-                  _safeDecodeList('${row['winning_rule_ids_json'] ?? '[]'}'),
-              'suppressed_rule_ids':
-                  _safeDecodeList('${row['suppressed_rule_ids_json'] ?? '[]'}'),
-              'source_refs':
-                  _safeDecodeList('${row['source_doc_refs_json'] ?? '[]'}'),
-              'decision_reason': row['decision_reason'],
-              'needs_human_review': row['needs_human_review'],
-            })
+        .where(
+          (row) =>
+              '${row['snapshot_id'] ?? ''}' == snapshotId &&
+              '${row['audit_type'] ?? ''}' == 'RUNTIME_ALERT',
+        )
+        .map(
+          (row) => {
+            'audit_id': row['audit_id'],
+            'target': row['target'],
+            'decision': row['decision'],
+            'winning_rule_ids': _safeDecodeList(
+              '${row['winning_rule_ids_json'] ?? '[]'}',
+            ),
+            'suppressed_rule_ids': _safeDecodeList(
+              '${row['suppressed_rule_ids_json'] ?? '[]'}',
+            ),
+            'source_refs': _safeDecodeList(
+              '${row['source_doc_refs_json'] ?? '[]'}',
+            ),
+            'decision_reason': row['decision_reason'],
+            'needs_human_review': row['needs_human_review'],
+          },
+        )
         .toList(growable: false);
   }
 
@@ -1019,9 +1046,10 @@ class KnowledgeBaseReleaseService {
     final added = <Map<String, dynamic>>[];
     final changed = <Map<String, dynamic>>[];
     final retired = <Map<String, dynamic>>[];
-    final active = _historyRowsByStatus(targetRows, 'active')
-        .map(_versionDiffRow)
-        .toList(growable: false);
+    final active = _historyRowsByStatus(
+      targetRows,
+      'active',
+    ).map(_versionDiffRow).toList(growable: false);
     for (final entry in targetByKey.entries) {
       final base = baseByKey[entry.key];
       final target = entry.value;
@@ -1053,12 +1081,15 @@ class KnowledgeBaseReleaseService {
       'active': active,
       'rollback_summary': {
         'rollback_parent': targetSnapshot['rollback_parent'],
-        'restored_fact_count':
-            active.where((row) => row['table_name'] == 'resolved_fact').length,
-        'restored_rule_count':
-            active.where((row) => row['table_name'] == 'rule_registry').length,
-        'restored_runtime_event_count':
-            active.where((row) => row['table_name'] == 'runtime_event').length,
+        'restored_fact_count': active
+            .where((row) => row['table_name'] == 'resolved_fact')
+            .length,
+        'restored_rule_count': active
+            .where((row) => row['table_name'] == 'rule_registry')
+            .length,
+        'restored_runtime_event_count': active
+            .where((row) => row['table_name'] == 'runtime_event')
+            .length,
         'retired_record_count': retired.length,
         'active_record_count_after_rollback': active.length,
       },
@@ -1109,10 +1140,12 @@ class KnowledgeBaseReleaseService {
     String snapshotId, {
     String? status,
   }) {
-    return rows.where((row) {
-      if ('${row['snapshot_id'] ?? ''}' != snapshotId) return false;
-      return status == null || _historyStatus(row) == status;
-    }).toList(growable: false);
+    return rows
+        .where((row) {
+          if ('${row['snapshot_id'] ?? ''}' != snapshotId) return false;
+          return status == null || _historyStatus(row) == status;
+        })
+        .toList(growable: false);
   }
 
   List<Map<String, Object?>> _historyRowsByStatus(
@@ -1125,18 +1158,18 @@ class KnowledgeBaseReleaseService {
   }
 
   Map<String, dynamic> _versionDiffRow(Map<String, Object?> row) => {
-        'table_name': row['table_name'],
-        'record_id': row['record_id'],
-        'version_id': row['version_id'],
-        'status': _historyStatus(row),
-        'history_id': row['history_id'],
-        'history_status': _historyStatus(row),
-        'effective_at': row['effective_at'],
-        'retired_at': row['retired_at'],
-        'superseded_by': row['superseded_by'],
-        'import_run_id': row['import_run_id'],
-        'snapshot_id': row['snapshot_id'],
-      };
+    'table_name': row['table_name'],
+    'record_id': row['record_id'],
+    'version_id': row['version_id'],
+    'status': _historyStatus(row),
+    'history_id': row['history_id'],
+    'history_status': _historyStatus(row),
+    'effective_at': row['effective_at'],
+    'retired_at': row['retired_at'],
+    'superseded_by': row['superseded_by'],
+    'import_run_id': row['import_run_id'],
+    'snapshot_id': row['snapshot_id'],
+  };
 
   String _historyStatus(Map<String, Object?> row) {
     if (row['superseded_by'] != null) return 'superseded';
@@ -1165,35 +1198,36 @@ class KnowledgeBaseReleaseService {
     required List<Map<String, dynamic>> changed,
     required List<Map<String, dynamic>> retired,
     required List<Map<String, dynamic>> active,
-  }) =>
-      {
-        'added': added
-            .where((row) => row['table_name'] == tableName)
-            .toList(growable: false),
-        'changed': changed
-            .where((row) => row['table_name'] == tableName)
-            .toList(growable: false),
-        'retired': retired
-            .where((row) => row['table_name'] == tableName)
-            .toList(growable: false),
-        'active': active
-            .where((row) => row['table_name'] == tableName)
-            .toList(growable: false),
-      };
+  }) => {
+    'added': added
+        .where((row) => row['table_name'] == tableName)
+        .toList(growable: false),
+    'changed': changed
+        .where((row) => row['table_name'] == tableName)
+        .toList(growable: false),
+    'retired': retired
+        .where((row) => row['table_name'] == tableName)
+        .toList(growable: false),
+    'active': active
+        .where((row) => row['table_name'] == tableName)
+        .toList(growable: false),
+  };
 
   String? _previousPromotedSnapshotId(
     List<Map<String, Object?>> snapshotRows,
     String snapshotId,
   ) {
-    final promoted = snapshotRows
-        .where((row) => row['promoted_at'] != null)
-        .toList(growable: false)
-      ..sort(
-        (left, right) => ((left['promoted_at'] as num?)?.toInt() ?? 0)
-            .compareTo((right['promoted_at'] as num?)?.toInt() ?? 0),
-      );
-    final targetIndex = promoted
-        .indexWhere((row) => '${row['snapshot_id'] ?? ''}' == snapshotId);
+    final promoted =
+        snapshotRows
+            .where((row) => row['promoted_at'] != null)
+            .toList(growable: false)
+          ..sort(
+            (left, right) => ((left['promoted_at'] as num?)?.toInt() ?? 0)
+                .compareTo((right['promoted_at'] as num?)?.toInt() ?? 0),
+          );
+    final targetIndex = promoted.indexWhere(
+      (row) => '${row['snapshot_id'] ?? ''}' == snapshotId,
+    );
     if (targetIndex <= 0) return null;
     return '${promoted[targetIndex - 1]['snapshot_id'] ?? ''}';
   }
@@ -1218,8 +1252,9 @@ class KnowledgeBaseReleaseService {
   }) {
     final issues = <String>[];
     final warnings = <String>[];
-    final snapshotExists =
-        snapshotRows.any((row) => '${row['snapshot_id'] ?? ''}' == snapshotId);
+    final snapshotExists = snapshotRows.any(
+      (row) => '${row['snapshot_id'] ?? ''}' == snapshotId,
+    );
     final snapshotRow = snapshotRows.firstWhere(
       (row) => '${row['snapshot_id'] ?? ''}' == snapshotId,
       orElse: () => const <String, Object?>{},
@@ -1249,15 +1284,19 @@ class KnowledgeBaseReleaseService {
       }
     }
     final artifactCount = distributionRows
-        .where((row) =>
-            '${row['snapshot_id'] ?? ''}' == snapshotId &&
-            (row['artifact_path'] ?? '').toString().trim().isNotEmpty)
+        .where(
+          (row) =>
+              '${row['snapshot_id'] ?? ''}' == snapshotId &&
+              (row['artifact_path'] ?? '').toString().trim().isNotEmpty,
+        )
         .length;
     final unresolvedConflicts = conflictRows
-        .where((row) =>
-            '${row['snapshot_id'] ?? ''}' == snapshotId &&
-            ((row['needs_human_review'] == 1) ||
-                row['needs_human_review'] == true))
+        .where(
+          (row) =>
+              '${row['snapshot_id'] ?? ''}' == snapshotId &&
+              ((row['needs_human_review'] == 1) ||
+                  row['needs_human_review'] == true),
+        )
         .length;
     final invalidRuleCount = ruleRows.where(_isInvalidRuleRegistryRow).length;
     final crosswalkVariantIds = crosswalkRows
@@ -1285,12 +1324,16 @@ class KnowledgeBaseReleaseService {
       return durable == false ||
           '${row['status'] ?? ''}'.contains('inline_fallback');
     }).length;
-    final backendCapabilityWarnings =
-        _backendCapabilityWarnings(distributionRows, snapshotId);
+    final backendCapabilityWarnings = _backendCapabilityWarnings(
+      distributionRows,
+      snapshotId,
+    );
     final failedImportCount = ingestionRows
-        .where((row) =>
-            '${row['snapshot_id'] ?? ''}' == snapshotId &&
-            '${row['status'] ?? ''}' == 'failed')
+        .where(
+          (row) =>
+              '${row['snapshot_id'] ?? ''}' == snapshotId &&
+              '${row['status'] ?? ''}' == 'failed',
+        )
         .length;
     final staleRuleVersionCount = ruleRows.where((row) {
       if ('${row['status'] ?? ''}' != 'active') return false;
@@ -1306,15 +1349,22 @@ class KnowledgeBaseReleaseService {
       nonDurableArtifactCount,
       artifactCount,
     );
-    final openTickets = reviewTicketRows
-        .where((row) =>
-            '${row['snapshot_id'] ?? ''}' == snapshotId &&
-            '${row['status'] ?? 'open'}' == 'open')
-        .toList(growable: false)
-      ..sort((left, right) => '${left['ticket_id'] ?? ''}'
-          .compareTo('${right['ticket_id'] ?? ''}'));
-    final openHighSeverityTicketCount =
-        openTickets.where((row) => '${row['severity'] ?? ''}' == 'high').length;
+    final openTickets =
+        reviewTicketRows
+            .where(
+              (row) =>
+                  '${row['snapshot_id'] ?? ''}' == snapshotId &&
+                  '${row['status'] ?? 'open'}' == 'open',
+            )
+            .toList(growable: false)
+          ..sort(
+            (left, right) => '${left['ticket_id'] ?? ''}'.compareTo(
+              '${right['ticket_id'] ?? ''}',
+            ),
+          );
+    final openHighSeverityTicketCount = openTickets
+        .where((row) => '${row['severity'] ?? ''}' == 'high')
+        .length;
     final resumableImportCount = ingestionRows.where((row) {
       if ('${row['snapshot_id'] ?? ''}' != snapshotId) return false;
       final notes = _coerceMap(row['notes_json']);
@@ -1430,8 +1480,9 @@ class KnowledgeBaseReleaseService {
       warningSummary: warnings.isEmpty ? 'none' : warnings.join('; '),
       artifactDurabilityStatus: artifactDurabilityStatus,
       rollbackTarget: snapshotRow['rollback_parent']?.toString(),
-      missingCrosswalkSampleIds:
-          missingCrosswalkIds.take(10).toList(growable: false),
+      missingCrosswalkSampleIds: missingCrosswalkIds
+          .take(10)
+          .toList(growable: false),
       sampleReviewTicketIds: openTickets
           .map((row) => '${row['ticket_id'] ?? ''}')
           .where((id) => id.isNotEmpty)
@@ -1550,19 +1601,21 @@ class KnowledgeBaseReleaseService {
       });
     }
 
-    for (final row in conflictRows.where((row) =>
-        '${row['snapshot_id'] ?? ''}' == snapshotId &&
-        ((row['needs_human_review'] == 1) ||
-            row['needs_human_review'] == true))) {
+    for (final row in conflictRows.where(
+      (row) =>
+          '${row['snapshot_id'] ?? ''}' == snapshotId &&
+          ((row['needs_human_review'] == 1) ||
+              row['needs_human_review'] == true),
+    )) {
       await addTicket(
         reasonCode: 'unresolved_conflict',
         severity: 'high',
         targetType: '${row['audit_type'] ?? 'conflict'}',
         targetId: '${row['target'] ?? row['audit_id'] ?? ''}',
         runId: row['run_id']?.toString(),
-        sourceDocRefs: _safeDecodeList('${row['source_doc_refs_json'] ?? '[]'}')
-            .map((value) => value.toString())
-            .toList(growable: false),
+        sourceDocRefs: _safeDecodeList(
+          '${row['source_doc_refs_json'] ?? '[]'}',
+        ).map((value) => value.toString()).toList(growable: false),
         suggestedAction:
             'Review accepted/rejected rationale and resolve or ignore the conflict before production promotion.',
       );
@@ -1602,14 +1655,14 @@ class KnowledgeBaseReleaseService {
   }
 
   Map<String, dynamic> _reviewTicketSummary(Map<String, Object?> row) => {
-        'ticket_id': row['ticket_id'],
-        'reason_code': row['reason_code'],
-        'severity': row['severity'],
-        'target_type': row['target_type'],
-        'target_id': row['target_id'],
-        'status': row['status'],
-        'suggested_action': row['suggested_action'],
-      };
+    'ticket_id': row['ticket_id'],
+    'reason_code': row['reason_code'],
+    'severity': row['severity'],
+    'target_type': row['target_type'],
+    'target_id': row['target_id'],
+    'status': row['status'],
+    'suggested_action': row['suggested_action'],
+  };
 
   SnapshotBundleValidationReport _validateSnapshotBundlePayload(
     Map<String, dynamic> bundle,
@@ -1655,8 +1708,8 @@ class KnowledgeBaseReleaseService {
     if (manifestFactCount != null && manifestFactCount != facts.length) {
       issues.add('fact_count_mismatch');
     }
-    final manifestSourceDocCount =
-        (manifest['source_document_count'] as num?)?.toInt();
+    final manifestSourceDocCount = (manifest['source_document_count'] as num?)
+        ?.toInt();
     if (manifestSourceDocCount != null &&
         manifestSourceDocCount != sourceDocuments.length) {
       issues.add('source_document_count_mismatch');
@@ -1741,8 +1794,9 @@ class KnowledgeBaseReleaseService {
         distributionType: 'import_bundle',
         status: 'failed',
         artifactPath: filePath,
-        manifestJson:
-            validation == null ? '{}' : jsonEncode(validation.toJson()),
+        manifestJson: validation == null
+            ? '{}'
+            : jsonEncode(validation.toJson()),
         errorMessage: errorMessage,
         createdAt: now,
         completedAt: now,
@@ -1986,7 +2040,8 @@ class KnowledgeBaseReleaseService {
   }
 
   DrugProductPackagingRecord _mapDrugProductPackaging(
-      Map<String, dynamic> row) {
+    Map<String, dynamic> row,
+  ) {
     return DrugProductPackagingRecord(
       packagingId: '${row['packaging_id'] ?? ''}',
       drugProductVariantId: '${row['drug_product_variant_id'] ?? ''}',
@@ -2093,7 +2148,8 @@ class KnowledgeBaseReleaseService {
       snapshotId: '${row['snapshot_id'] ?? ''}',
       factsVersion: '${row['facts_version'] ?? ''}',
       rulesVersion: '${row['rules_version'] ?? ''}',
-      createdAt: _epochToDateTime(row['created_at']) ??
+      createdAt:
+          _epochToDateTime(row['created_at']) ??
           DateTime.fromMillisecondsSinceEpoch(0),
       promotedAt: _epochToDateTime(row['promoted_at']),
       rollbackParent: row['rollback_parent']?.toString(),

@@ -16,20 +16,19 @@ void main() {
     Set<String> missing = const <String>{},
     double? energyKcal,
     AminoAcidProfile? aa,
-  }) =>
-      FoodItem(
-        id: 'f1',
-        name: 'projected food',
-        category: FoodCategory.protein,
-        proteinG: 0, // legacy non-nullable default — must NOT leak as a true 0
-        carbsG: 0,
-        fatG: 0,
-        fiberG: 0,
-        sodiumMg: 0,
-        missingNutrientFields: missing,
-        energyKcal: energyKcal,
-        aminoAcidProfile: aa,
-      );
+  }) => FoodItem(
+    id: 'f1',
+    name: 'projected food',
+    category: FoodCategory.protein,
+    proteinG: 0, // legacy non-nullable default — must NOT leak as a true 0
+    carbsG: 0,
+    fatG: 0,
+    fiberG: 0,
+    sodiumMg: 0,
+    missingNutrientFields: missing,
+    energyKcal: energyKcal,
+    aminoAcidProfile: aa,
+  );
 
   test('missing protein -> component protein is null (not 0)', () {
     final candidate = foodItemToCandidateFood(
@@ -52,22 +51,25 @@ void main() {
   });
 
   test(
-      'missing fields flow to MealComposition.missingFields + lower completeness',
-      () {
-    final candidate = foodItemToCandidateFood(
-      itemWith(missing: {'proteinG', 'fatG', 'fiberG', 'carbsG', 'energyKcal'}),
-    );
-    final comp = normalizer.normalize(
-      mealId: 'm',
-      components: candidate.components,
-      declaredPhysicalForm: candidate.declaredPhysicalForm,
-    );
-    expect(comp.missingFields, contains('protein_grams'));
-    expect(comp.missingFields, contains('total_calories'));
-    expect(comp.compositionCompleteness, lessThan(1.0));
-    expect(comp.proteinGrams, isNull);
-    expect(comp.totalCalories, isNull);
-  });
+    'missing fields flow to MealComposition.missingFields + lower completeness',
+    () {
+      final candidate = foodItemToCandidateFood(
+        itemWith(
+          missing: {'proteinG', 'fatG', 'fiberG', 'carbsG', 'energyKcal'},
+        ),
+      );
+      final comp = normalizer.normalize(
+        mealId: 'm',
+        components: candidate.components,
+        declaredPhysicalForm: candidate.declaredPhysicalForm,
+      );
+      expect(comp.missingFields, contains('protein_grams'));
+      expect(comp.missingFields, contains('total_calories'));
+      expect(comp.compositionCompleteness, lessThan(1.0));
+      expect(comp.proteinGrams, isNull);
+      expect(comp.totalCalories, isNull);
+    },
+  );
 
   test('energyKcal carried through to component calories when present', () {
     final candidate = foodItemToCandidateFood(

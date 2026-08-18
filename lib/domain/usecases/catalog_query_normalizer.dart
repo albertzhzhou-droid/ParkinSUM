@@ -48,13 +48,13 @@ class NormalizedCatalogQuery {
   bool get isEmpty => normalized.isEmpty;
 
   Map<String, dynamic> toJson() => {
-        'original': original,
-        'normalized': normalized,
-        'tokens': tokens,
-        'dose_like_tokens': doseLikeTokens,
-        'release_type_hint': releaseTypeHint,
-        'domain_hint': domainHint,
-      };
+    'original': original,
+    'normalized': normalized,
+    'tokens': tokens,
+    'dose_like_tokens': doseLikeTokens,
+    'release_type_hint': releaseTypeHint,
+    'domain_hint': domainHint,
+  };
 }
 
 class CatalogQueryNormalizer {
@@ -62,8 +62,10 @@ class CatalogQueryNormalizer {
 
   static final RegExp _ws = RegExp(r'\s+');
   static final RegExp _doseSlash = RegExp(r'\d+\s*/\s*\d+');
-  static final RegExp _doseUnit =
-      RegExp(r'\d+(?:\.\d+)?\s*(?:mg|mcg|µg|g|ml)\b', caseSensitive: false);
+  static final RegExp _doseUnit = RegExp(
+    r'\d+(?:\.\d+)?\s*(?:mg|mcg|µg|g|ml)\b',
+    caseSensitive: false,
+  );
 
   // Conservative keyword hints (NOT medical inference — only routing hints).
   static const List<String> _drugHintTokens = [
@@ -134,8 +136,9 @@ class CatalogQueryNormalizer {
     if (RegExp(r'\b(cr|controlled[ -]?release)\b').hasMatch(s)) {
       return 'controlled';
     }
-    if (RegExp(r'\b(er|xr|sr|extended[ -]?release|sustained[ -]?release)\b')
-        .hasMatch(s)) {
+    if (RegExp(
+      r'\b(er|xr|sr|extended[ -]?release|sustained[ -]?release)\b',
+    ).hasMatch(s)) {
       return 'extended';
     }
     if (RegExp(r'\b(ir|immediate[ -]?release)\b').hasMatch(s)) {
@@ -145,7 +148,8 @@ class CatalogQueryNormalizer {
   }
 
   String _domainHint(String s, List<String> doseLike, String releaseHint) {
-    final drugLike = doseLike.isNotEmpty ||
+    final drugLike =
+        doseLike.isNotEmpty ||
         releaseHint.isNotEmpty ||
         _drugHintTokens.any((t) => s.contains(t));
     final foodLike = _foodHintTokens.any((t) => s.contains(t));

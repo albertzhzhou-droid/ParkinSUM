@@ -4,58 +4,52 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
+import '../../core/models/medication_product_pack.dart';
 import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';
+import '../../core/state/persisted_list_mutation.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import '../../domain/entities/timeline_event.dart';
+import '../../domain/usecases/intake_dose_context_builder.dart';
+import '../../domain/usecases/medication_package_dose_calculator.dart';
 import '../entry/entry_page.dart';
+import '../medications/medication_product_picker.dart';
 import '../shared/interaction_result_view.dart';
+import 'timeline_lookup_index.dart';
 
 class TimelinePage extends StatelessWidget {
   const TimelinePage({super.key});
 
-  Meal? _mealForEvent(AppState state, TimelineEvent event) {
-    for (final meal in state.meals) {
-      if (meal.id == event.recordId) return meal;
-    }
-    return null;
+  Future<void> _deleteMeal(BuildContext context, String mealId) async {
+    final result = await context.read<AppState>().deleteMeal(mealId);
+    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final i18n = context.appI18n;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          i18n.tr('entry.save_failed', {'error': i18n.tr('common.error')}),
+        ),
+      ),
+    );
   }
 
-  Intake? _intakeForEvent(AppState state, TimelineEvent event) {
-    for (final intake in state.intakes) {
-      if (intake.id == event.recordId) return intake;
-    }
-    return null;
+  Future<void> _deleteIntake(BuildContext context, String intakeId) async {
+    final result = await context.read<AppState>().deleteIntake(intakeId);
+    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final i18n = context.appI18n;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          i18n.tr('timeline.save_intake_failed', {
+            'error': i18n.tr('common.error'),
+          }),
+        ),
+      ),
+    );
   }
 
   DrugDefinition? _drugForIntake(AppState state, Intake intake) {
     return state.medRepo.getById(intake.drugId);
-  }
-
-  Meal? _nearestMeal(AppState state, DateTime time) {
-    Meal? nearest;
-    var nearestDistance = const Duration(days: 100000);
-    for (final meal in state.meals) {
-      final distance = meal.effectiveOccurredAt.difference(time).abs();
-      if (distance < nearestDistance) {
-        nearest = meal;
-        nearestDistance = distance;
-      }
-    }
-    return nearest;
-  }
-
-  Intake? _nearestIntake(AppState state, DateTime time) {
-    Intake? nearest;
-    var nearestDistance = const Duration(days: 100000);
-    for (final intake in state.intakes) {
-      final distance = intake.takenAt.difference(time).abs();
-      if (distance < nearestDistance) {
-        nearest = intake;
-        nearestDistance = distance;
-      }
-    }
-    return nearest;
   }
 
   String _formatDateTime(DateTime value) {
@@ -98,13 +92,13 @@ class TimelinePage extends StatelessWidget {
       parts.add(i18n.tr('dashboard.meal_context_xanthan_thickener'));
     }
     if (meal.enteralFeedMode == 'continuous') {
-      parts.add(i18n.tr(
-        'dashboard.meal_context_enteral_feed_continuous',
-        {
-          'protein': meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
+      parts.add(
+        i18n.tr('dashboard.meal_context_enteral_feed_continuous', {
+          'protein':
+              meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
               i18n.tr('common.not_available'),
-        },
-      ));
+        }),
+      );
     } else if (meal.enteralFeedMode == 'bolus') {
       parts.add(i18n.tr('dashboard.meal_context_enteral_feed_bolus'));
     }
@@ -113,91 +107,86 @@ class TimelinePage extends StatelessWidget {
         : parts.join(' · ');
   }
 
-  String _mealSubtitle(AppState state, AppI18n i18n, Meal meal) {
+  String _mealSubtitle(
+    AppState state,
+    AppI18n i18n,
+    TimelineLookupIndex lookup,
+    Meal meal,
+  ) {
     final totals = meal.computeTotals();
     final result = state.cachedMealCheck(meal);
-    final nearestIntake = _nearestIntake(state, meal.effectiveOccurredAt);
+    final nearestIntake = lookup.nearestIntakeForMeal(meal);
     final parts = <String>[
-      i18n.tr(
-        'timeline.meal_macro_line',
-        {
-          'protein': totals.totalProteinG.toStringAsFixed(1),
-          'carbs': totals.totalCarbsG.toStringAsFixed(1),
-          'fat': totals.totalFatG.toStringAsFixed(1),
-        },
-      ),
-      i18n.tr(
-        'timeline.conflict_line',
-        {
-          'severity': i18n.severityLabel(result.overallSeverity.name),
-          'score': '${result.score}',
-        },
-      ),
+      i18n.tr('timeline.meal_macro_line', {
+        'protein': totals.totalProteinG.toStringAsFixed(1),
+        'carbs': totals.totalCarbsG.toStringAsFixed(1),
+        'fat': totals.totalFatG.toStringAsFixed(1),
+      }),
+      i18n.tr('timeline.conflict_line', {
+        'severity': i18n.severityLabel(result.overallSeverity.name),
+        'score': '${result.score}',
+      }),
       _mealContextSummary(i18n, meal),
       if (meal.timePrecision == 'interval' &&
           meal.occurredRangeStart != null &&
           meal.occurredRangeEnd != null)
-        i18n.tr(
-          'timeline.meal_window_line',
-          {
-            'start': _formatDateTime(meal.occurredRangeStart!),
-            'end': _formatDateTime(meal.occurredRangeEnd!),
-          },
-        ),
+        i18n.tr('timeline.meal_window_line', {
+          'start': _formatDateTime(meal.occurredRangeStart!),
+          'end': _formatDateTime(meal.occurredRangeEnd!),
+        }),
       if (meal.nextMealWindowStart != null && meal.nextMealWindowEnd != null)
-        i18n.tr(
-          'timeline.next_meal_window_line',
-          {
-            'start': _formatDateTime(meal.nextMealWindowStart!),
-            'end': _formatDateTime(meal.nextMealWindowEnd!),
-          },
-        ),
+        i18n.tr('timeline.next_meal_window_line', {
+          'start': _formatDateTime(meal.nextMealWindowStart!),
+          'end': _formatDateTime(meal.nextMealWindowEnd!),
+        }),
       if (nearestIntake != null)
-        i18n.tr(
-          'timeline.nearest_medication_line',
-          {
-            'name': i18n.medicationName(
-              nearestIntake.drugId,
-              state.medRepo.getById(nearestIntake.drugId)?.displayName ??
-                  nearestIntake.drugId,
-            ),
-            'distance': _formatTimeDistance(
-              i18n,
-              nearestIntake.takenAt,
-              meal.effectiveOccurredAt,
-            ),
-          },
-        ),
+        i18n.tr('timeline.nearest_medication_line', {
+          'name': i18n.medicationName(
+            nearestIntake.drugId,
+            state.medRepo.getById(nearestIntake.drugId)?.displayName ??
+                nearestIntake.drugId,
+          ),
+          'distance': _formatTimeDistance(
+            i18n,
+            nearestIntake.takenAt,
+            meal.effectiveOccurredAt,
+          ),
+        }),
     ];
     return parts.join('\n');
   }
 
-  String _intakeSubtitle(AppState state, AppI18n i18n, Intake intake) {
+  String _intakeSubtitle(
+    AppState state,
+    AppI18n i18n,
+    TimelineLookupIndex lookup,
+    Intake intake,
+  ) {
     final drug = _drugForIntake(state, intake);
-    final nearestMeal = _nearestMeal(state, intake.takenAt);
+    final nearestMeal = lookup.nearestMealForIntake(intake);
     final details = <String>[
-      i18n.tr(
-        'timeline.dosage_line',
-        {
-          'value': intake.dosageNote.trim().isEmpty
-              ? i18n.tr('common.not_available')
-              : intake.dosageNote.trim(),
-        },
-      ),
+      i18n.tr('timeline.dosage_line', {
+        'value': intake.doseDisplayText.isEmpty
+            ? i18n.tr('common.not_available')
+            : intake.doseDisplayText,
+      }),
       if (drug != null)
         '${i18n.sourceSystemLabel(drug.sourceSystem)} · ${i18n.regionLabel(drug.jurisdiction)} · ${i18n.routeLabel(drug.route)} · ${i18n.dosageFormLabel(drug.dosageForm)}',
+      if (intake.productSelection != null)
+        <String>[
+          intake.productSelection!.identifierValue,
+          intake.productSelection!.labelerName ?? '',
+          intake.productSelection!.strengthDisplay,
+        ].where((item) => item.trim().isNotEmpty).join(' · '),
       if (nearestMeal != null)
-        i18n.tr(
-          'timeline.nearest_meal_line',
-          {
-            'title': nearestMeal.title,
-            'distance': _formatTimeDistance(
-              i18n,
-              intake.takenAt,
-              nearestMeal.effectiveOccurredAt,
-            ),
-          },
-        ),
+        i18n.tr('timeline.nearest_meal_line', {
+          'title': nearestMeal.title,
+          'distance': _formatTimeDistance(
+            i18n,
+            intake.takenAt,
+            nearestMeal.effectiveOccurredAt,
+          ),
+        }),
     ];
     return details.join('\n');
   }
@@ -242,6 +231,11 @@ class TimelinePage extends StatelessWidget {
     final state = context.watch<AppState>();
     final i18n = context.appI18n;
     final events = state.timeline;
+    final lookup = TimelineLookupIndex(
+      events: events,
+      meals: state.meals,
+      intakes: state.intakes,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -255,9 +249,9 @@ class TimelinePage extends StatelessWidget {
           IconButton(
             tooltip: i18n.tr('timeline.add_meal'),
             icon: const Icon(Icons.restaurant_outlined),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EntryPage()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const EntryPage())),
           ),
         ],
       ),
@@ -266,18 +260,19 @@ class TimelinePage extends StatelessWidget {
           : ListView.separated(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
               itemCount: events.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final event = events[index];
-                final previous =
-                    index == 0 ? null : _formatDate(events[index - 1].time);
+                final previous = index == 0
+                    ? null
+                    : _formatDate(events[index - 1].time);
                 final current = _formatDate(event.time);
                 final showHeader = previous != current;
                 final meal = event.type == TimelineEventType.meal
-                    ? _mealForEvent(state, event)
+                    ? lookup.mealForEvent(event)
                     : null;
                 final intake = event.type == TimelineEventType.medication
-                    ? _intakeForEvent(state, event)
+                    ? lookup.intakeForEvent(event)
                     : null;
 
                 return Column(
@@ -295,8 +290,9 @@ class TimelinePage extends StatelessWidget {
                     Card(
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: _timelineColor(event.type)
-                              .withValues(alpha: 0.12),
+                          backgroundColor: _timelineColor(
+                            event.type,
+                          ).withValues(alpha: 0.12),
                           foregroundColor: _timelineColor(event.type),
                           child: Icon(_timelineIcon(event.type)),
                         ),
@@ -304,15 +300,18 @@ class TimelinePage extends StatelessWidget {
                           event.type == TimelineEventType.medication &&
                                   event.entityId != null
                               ? i18n.medicationName(
-                                  event.entityId!, event.title)
+                                  event.entityId!,
+                                  event.title,
+                                )
                               : event.title,
                         ),
                         subtitle: Text(
                           [
                             _formatDateTime(event.time),
-                            if (meal != null) _mealSubtitle(state, i18n, meal),
+                            if (meal != null)
+                              _mealSubtitle(state, i18n, lookup, meal),
                             if (intake != null)
-                              _intakeSubtitle(state, i18n, intake),
+                              _intakeSubtitle(state, i18n, lookup, intake),
                           ].join('\n'),
                         ),
                         isThreeLine: true,
@@ -324,30 +323,31 @@ class TimelinePage extends StatelessWidget {
                               icon: const Icon(Icons.edit_outlined),
                               onPressed: meal != null
                                   ? () => Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              EntryPage(initialMeal: meal),
-                                        ),
-                                      )
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            EntryPage(initialMeal: meal),
+                                      ),
+                                    )
                                   : intake != null
-                                      ? () => _openIntakeEditor(
-                                            context,
-                                            initialIntake: intake,
-                                          )
-                                      : null,
+                                  ? () => _openIntakeEditor(
+                                      context,
+                                      initialIntake: intake,
+                                    )
+                                  : null,
                             ),
                             IconButton(
                               tooltip: i18n.tr('dashboard.delete'),
                               icon: const Icon(Icons.delete_outline),
                               onPressed: meal != null
-                                  ? () => context
-                                      .read<AppState>()
-                                      .deleteMeal(meal.id)
+                                  ? state.isUpdatingMeals
+                                        ? null
+                                        : () => _deleteMeal(context, meal.id)
                                   : intake != null
-                                      ? () => context
-                                          .read<AppState>()
-                                          .deleteIntake(intake.id)
-                                      : null,
+                                  ? state.isUpdatingIntakes
+                                        ? null
+                                        : () =>
+                                              _deleteIntake(context, intake.id)
+                                  : null,
                             ),
                           ],
                         ),
@@ -369,9 +369,9 @@ class TimelinePage extends StatelessWidget {
             heroTag: 'timeline_add_meal_fab',
             icon: const Icon(Icons.restaurant_rounded),
             label: Text(i18n.tr('timeline.add_meal')),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EntryPage()),
-            ),
+            onPressed: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const EntryPage())),
           ),
           const SizedBox(height: 12),
           FloatingActionButton.extended(
@@ -419,6 +419,9 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
   late DateTime _takenAt;
   String? _drugId;
   late final TextEditingController _dosageCtrl;
+  MedicationProductSelection? _productSelection;
+  MedicationProductPack? _selectedProduct;
+  static const _packageDoseCalculator = MedicationPackageDoseCalculator();
   bool _isSaving = false;
 
   @override
@@ -428,6 +431,7 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
     _takenAt = initial?.takenAt ?? DateTime.now();
     _drugId = initial?.drugId;
     _dosageCtrl = TextEditingController(text: initial?.dosageNote ?? '');
+    _productSelection = initial?.productSelection;
   }
 
   @override
@@ -474,14 +478,53 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
     });
   }
 
+  Future<void> _pickProduct() async {
+    final state = context.read<AppState>();
+    final drug = state.medRepo.getById(_drugId ?? '');
+    final product = await showMedicationProductPicker(
+      context,
+      initialQuery: drug?.genericName ?? '',
+    );
+    if (product == null || !mounted) return;
+    setState(() {
+      _selectedProduct = product;
+      _productSelection = MedicationProductSelection.fromPack(product);
+    });
+  }
+
+  MedicationIngredientStrength? _quickDoseIngredient() {
+    final product = _selectedProduct;
+    if (product == null) return null;
+    return _packageDoseCalculator.preferredIngredient(product);
+  }
+
+  void _applyPackageUnitQuantity(double quantity) {
+    final product = _selectedProduct;
+    if (product == null) return;
+    final dose = _packageDoseCalculator.fromConfirmedQuantity(
+      product,
+      quantity,
+    );
+    if (dose == null) return;
+    _dosageCtrl.text = dose.dosageNote;
+    setState(() {
+      _productSelection = MedicationProductSelection.fromPack(product)
+          .withConfirmedQuantity(
+            doseBasisIngredient: dose.ingredientName,
+            unitQuantity: dose.packageUnitQuantity,
+            unitLabel: dose.packageUnitLabel,
+          );
+    });
+  }
+
   Future<void> _save() async {
     final i18n = context.appI18n;
     final medications = context.read<AppState>().medRepo.allDrugs;
     final drugId = medications.any((drug) => drug.id == _drugId)
         ? _drugId
         : medications.isEmpty
-            ? null
-            : medications.first.id;
+        ? null
+        : medications.first.id;
     if (_isSaving) return;
     if (drugId == null || drugId.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -493,17 +536,32 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
       _isSaving = true;
     });
     final state = context.read<AppState>();
-    final intake = Intake(
-      id: widget.initialIntake?.id ?? state.newId('intake'),
-      drugId: drugId,
-      takenAt: _takenAt,
-      dosageNote: _dosageCtrl.text.trim(),
-    );
+    final intake = IntakeDoseContextBuilder()
+        .build(
+          id: widget.initialIntake?.id ?? state.newId('intake'),
+          drugId: drugId,
+          takenAt: _takenAt,
+          dosageNote: _dosageCtrl.text.trim(),
+          drug: state.medRepo.getById(drugId),
+        )
+        .copyWith(productSelection: _productSelection);
     try {
-      if (widget.isEditing) {
-        await state.updateIntake(intake);
-      } else {
-        await state.addIntake(intake);
+      final mutation = widget.isEditing
+          ? await state.updateIntake(intake)
+          : await state.addIntake(intake);
+      if (mutation.shouldReportSaveFailure ||
+          mutation.status == PersistedListMutationStatus.unchanged) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              i18n.tr('timeline.save_intake_failed', {
+                'error': i18n.tr('common.error'),
+              }),
+            ),
+          ),
+        );
+        return;
       }
       if (!mounted) return;
       Navigator.of(context).pop();
@@ -511,9 +569,11 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(i18n.tr('timeline.save_intake_failed', {
-            'error': '$error',
-          })),
+          content: Text(
+            i18n.tr('timeline.save_intake_failed', {
+              'error': i18n.tr('common.error'),
+            }),
+          ),
         ),
       );
     } finally {
@@ -534,8 +594,8 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
     final selectedDrugId = medications.any((drug) => drug.id == _drugId)
         ? _drugId
         : medications.isEmpty
-            ? null
-            : medications.first.id;
+        ? null
+        : medications.first.id;
 
     return Scaffold(
       appBar: AppBar(
@@ -559,23 +619,77 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
                         GlassSelectOption<String>(
                           value: drug.id,
                           label: activeIds.contains(drug.id)
-                              ? i18n.tr(
-                                  'timeline.active_medication_option',
-                                  {
-                                    'name': i18n.medicationName(
-                                      drug.id,
-                                      drug.displayName,
-                                    ),
-                                  },
-                                )
+                              ? i18n.tr('timeline.active_medication_option', {
+                                  'name': i18n.medicationName(
+                                    drug.id,
+                                    drug.displayName,
+                                  ),
+                                })
                               : i18n.medicationName(drug.id, drug.displayName),
                           icon: activeIds.contains(drug.id)
                               ? Icons.medication_rounded
                               : Icons.medication_outlined,
                         ),
                     ],
-                    onChanged: (value) => setState(() => _drugId = value),
+                    onChanged: (value) => setState(() {
+                      _drugId = value;
+                      _selectedProduct = null;
+                      _productSelection = null;
+                    }),
                   ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const ValueKey<String>('select-medication-product'),
+                  onPressed: _pickProduct,
+                  icon: const Icon(Icons.qr_code_scanner),
+                  label: Text(i18n.tr('catalog.title')),
+                ),
+                if (_productSelection != null) ...[
+                  const SizedBox(height: 8),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _productSelection!.displayName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            <String>[
+                                  _productSelection!.strengthDisplay,
+                                  _productSelection!.labelerName ?? '',
+                                  _productSelection!.identifierValue,
+                                  _productSelection!.packageDescription,
+                                ]
+                                .where((item) => item.trim().isNotEmpty)
+                                .join('\n'),
+                          ),
+                          if (_quickDoseIngredient() != null) ...[
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: <double>[0.5, 1, 1.5, 2]
+                                  .map(
+                                    (quantity) => ActionChip(
+                                      label: Text(
+                                        '${quantity % 1 == 0 ? quantity.toInt() : quantity} ×',
+                                      ),
+                                      onPressed: () =>
+                                          _applyPackageUnitQuantity(quantity),
+                                    ),
+                                  )
+                                  .toList(growable: false),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 12),
                 TextField(
                   controller: _dosageCtrl,

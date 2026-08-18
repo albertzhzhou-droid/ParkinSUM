@@ -37,7 +37,9 @@
     "source:drift": "node tool/run_source_version_drift_check.mjs",
     "contribution:route": "node tool/run_contribution_safety_router.mjs",
     "copy:compile": "node tool/run_explanation_copy_compile.mjs",
-    "live:smoke": "node tool/run_live_source_smoke.mjs"
+    "verify:all": "node tool/run_verify_all.mjs",
+    "live:smoke": "node tool/run_live_source_smoke.mjs",
+    "catalog:inventory": "node tool/run_catalog_inventory.mjs"
   },
   "dependencies": {
     "firebase-admin": "^14.2.0"

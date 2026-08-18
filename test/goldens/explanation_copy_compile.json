@@ -1,0 +1,244 @@
+{
+  "report_type": "explanation_copy_compile",
+  "not_clinically_calibrated": true,
+  "no_medical_advice": true,
+  "not_wired_into_ui_or_scoring": true,
+  "generated_at": "synthetic-demo",
+  "template_count": 25,
+  "compiled_count": 25,
+  "counts": {
+    "info": 0,
+    "warn": 0,
+    "blocker": 0
+  },
+  "pass": true,
+  "compiled": [
+    {
+      "template_id": "mechanistic_explanation_boundary",
+      "output_type": "mechanistic_explanation",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This educational prototype shows a modeled, source-linked overlap estimate of 42%. It is not medical advice and is not clinically calibrated.",
+      "bound_placeholders": {
+        "overlap_percent": "42"
+      }
+    },
+    {
+      "template_id": "source_quality_boundary",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Source-quality signals describe how a value was sourced, not its clinical accuracy. Educational only; not clinically calibrated.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "missing_context_boundary",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "The source coverage is incomplete, so this result is shown with reduced confidence and is not medical advice.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "evidence_trace_boundary",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This is a local educational evidence trace. It is not a patient record and is not clinical validation.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "not_advice_default",
+      "output_type": "policy",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "not_clinically_calibrated_default",
+      "output_type": "policy",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This prototype is not clinically calibrated and carries no clinical-validation claim.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "safety_boundary_default",
+      "output_type": "policy",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "onboarding_safety_education_title",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Rule guidance is not medical advice",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_no_conflict",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "No significant rule conflicts were detected (based only on built-in rules; not medical advice).",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "onboarding_safety_education_body",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "ParkinSUM gives conservative prompts from medication, meal, and regional rules. Medication changes, stopping therapy, or clinical diet decisions still need a physician or pharmacist.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "onboarding_account_scope_title",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Account data stays user-scoped",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "onboarding_account_scope_body",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "After onboarding, profile, medications, intakes, and later audit records are saved under the current account user space.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_analysis",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Built-in rules checked this meal against 1 medication(s), producing a heuristic screening score of 42/100.",
+      "bound_placeholders": {
+        "drugCount": "1",
+        "score": "42"
+      }
+    },
+    {
+      "template_id": "legacy_analysis_followup",
+      "output_type": "boundary",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Treat this as a lightweight screening result and confirm exact medication timing when you need more specific guidance.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_high_protein_strong",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "High protein timing may strongly affect levodopa absorption",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_high_protein_strong_detail",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This meal contains about 40.0 g of protein, which is in a higher-risk range. Taking it close to Sample may compete more strongly for absorption.",
+      "bound_placeholders": {
+        "protein": "40.0",
+        "drug": "Sample"
+      }
+    },
+    {
+      "template_id": "legacy_high_protein",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Protein may affect medication absorption",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_high_protein_detail",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This meal contains about 25.0 g of protein and may compete with Sample during absorption. Consider scheduling higher-protein meals away from dosing time.",
+      "bound_placeholders": {
+        "protein": "25.0",
+        "drug": "Sample"
+      }
+    },
+    {
+      "template_id": "legacy_tyramine",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Possible high-tyramine food risk",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_tyramine_detail",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This meal includes foods marked as high tyramine. Combined with Sample, it may increase adverse-effect risk.",
+      "bound_placeholders": {
+        "drug": "Sample"
+      }
+    },
+    {
+      "template_id": "legacy_mineral",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Meal timing note for mineral supplements",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_mineral_detail",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This meal includes dairy and may suggest higher calcium content. Some mineral supplements can have different absorption or GI tolerance when taken with food.",
+      "bound_placeholders": {}
+    },
+    {
+      "template_id": "legacy_summary",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "Overall score 42/100 (Moderate), with 2 possible food-drug or nutrition-related alerts.",
+      "bound_placeholders": {
+        "score": "42",
+        "severity": "Moderate",
+        "count": "2"
+      }
+    },
+    {
+      "template_id": "legacy_analysis_protein",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "The current meal estimate contains about 25.0 g of protein.",
+      "bound_placeholders": {
+        "protein": "25.0"
+      }
+    },
+    {
+      "template_id": "legacy_analysis_tyramine",
+      "output_type": "informational",
+      "locale": "en",
+      "used_default_locale_fallback": false,
+      "text": "This meal also contains foods tagged as higher tyramine risk in the built-in catalog.",
+      "bound_placeholders": {}
+    }
+  ],
+  "findings": [],
+  "limitations": [
+    "Compiles + validates copy templates; it does not migrate UI strings or change scoring.",
+    "Banned-phrase matching reuses the conservative LocalizationSafetyLint families; not a clinical-safety guarantee.",
+    "Required safety/evidence terms are enforced on the default-locale render; other locales are covered by localization:lint.",
+    "Synthetic/demo data only; not clinically calibrated; carries no clinical-validation claim."
+  ],
+  "safety_boundary": "Deterministic copy compilation + validation only. It adds no medical advice, no dose/timing/diet guidance, and no clinical-calibration claim, and is not wired into the UI or scoring."
+}

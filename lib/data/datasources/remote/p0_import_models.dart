@@ -72,25 +72,25 @@ class P0ImportBundle {
       sourceDocuments: [...sourceDocuments, ...other.sourceDocuments],
       countryDietProfiles: [
         ...countryDietProfiles,
-        ...other.countryDietProfiles
+        ...other.countryDietProfiles,
       ],
       foodConcepts: [...foodConcepts, ...other.foodConcepts],
       foodVariants: [...foodVariants, ...other.foodVariants],
       drugConcepts: [...drugConcepts, ...other.drugConcepts],
       drugProductVariants: [
         ...drugProductVariants,
-        ...other.drugProductVariants
+        ...other.drugProductVariants,
       ],
       drugLabelSections: [...drugLabelSections, ...other.drugLabelSections],
       drugProductCodes: [...drugProductCodes, ...other.drugProductCodes],
       drugProductPackagings: [
         ...drugProductPackagings,
-        ...other.drugProductPackagings
+        ...other.drugProductPackagings,
       ],
       drugProductMedias: [...drugProductMedias, ...other.drugProductMedias],
       conceptVariantCrosswalks: [
         ...conceptVariantCrosswalks,
-        ...other.conceptVariantCrosswalks
+        ...other.conceptVariantCrosswalks,
       ],
       variantScopes: [...variantScopes, ...other.variantScopes],
       observations: [...observations, ...other.observations],

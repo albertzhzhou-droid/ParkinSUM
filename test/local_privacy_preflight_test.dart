@@ -25,11 +25,10 @@ void main() {
   LocalPrivacyPreflightReport scan(
     List<LocalPrivacyScanTarget> targets, {
     bool strict = false,
-  }) =>
-      scanner.scan(
-        targets,
-        LocalPrivacyPreflightConfig(rootPath: '.', strictMode: strict),
-      );
+  }) => scanner.scan(
+    targets,
+    LocalPrivacyPreflightConfig(rootPath: '.', strictMode: strict),
+  );
 
   bool hasType(LocalPrivacyPreflightReport r, String type) =>
       r.findings.any((f) => f.findingType == type);
@@ -58,11 +57,17 @@ void main() {
       // Split across adjacent string literals so the test SOURCE does not match
       // the public preflight's literal pattern; Dart concatenates them at compile
       // time, so the runtime content still contains the full marker.
-      file('config/key.txt', '-----BEGIN ' 'PRIVATE KEY-----\nMII...\n'),
+      file(
+        'config/key.txt',
+        '-----BEGIN '
+            'PRIVATE KEY-----\nMII...\n',
+      ),
     ]);
     expect(hasType(r, 'secret_private_key'), isTrue);
     expect(
-        find(r, 'secret_private_key')!.severity, LocalPrivacySeverity.blocker);
+      find(r, 'secret_private_key')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
     expect(r.pass, isFalse);
   });
 
@@ -71,8 +76,10 @@ void main() {
     final r = scan([
       file('sa.json', '{ "client_email": "x@y.iam.gserviceaccount.com" }\n'),
     ]);
-    expect(find(r, 'secret_service_account')!.severity,
-        LocalPrivacySeverity.blocker);
+    expect(
+      find(r, 'secret_service_account')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
   });
 
   // 4 — bearer / oauth token is a BLOCKER.
@@ -80,18 +87,21 @@ void main() {
     final r = scan([
       file('h.txt', 'Authorization: Bearer abcdefghijklmnopqrstuvwxyz0123\n'),
     ]);
-    expect(find(r, 'secret_bearer_or_oauth')!.severity,
-        LocalPrivacySeverity.blocker);
+    expect(
+      find(r, 'secret_bearer_or_oauth')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
   });
 
   // 5 — Google API key inside a known Firebase client config → WARN (allowed).
   test('firebase web API key in known config path → WARN', () {
     final r = scan([
       file(
-          'lib/firebase_options.dart',
-          "  apiKey: '"
-              'AIza'
-              "SyA1234567890123456789012345678901234',\n"),
+        'lib/firebase_options.dart',
+        "  apiKey: '"
+            'AIza'
+            "SyA1234567890123456789012345678901234',\n",
+      ),
     ]);
     final f = find(r, 'firebase_web_api_key_present');
     expect(f, isNotNull);
@@ -104,13 +114,16 @@ void main() {
   test('API-key-like value outside firebase config → BLOCKER', () {
     final r = scan([
       file(
-          'lib/leak.dart',
-          "  const k = '"
-              'AIza'
-              "SyA1234567890123456789012345678901234';\n"),
+        'lib/leak.dart',
+        "  const k = '"
+            'AIza'
+            "SyA1234567890123456789012345678901234';\n",
+      ),
     ]);
     expect(
-        find(r, 'api_key_like_secret')!.severity, LocalPrivacySeverity.blocker);
+      find(r, 'api_key_like_secret')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
   });
 
   // 7 — concrete password / api-key assignment → BLOCKER.
@@ -127,17 +140,23 @@ void main() {
   // 8 — DB URL with embedded credentials: real → BLOCKER, localhost → INFO.
   test('db url credentials: real BLOCKER, localhost INFO', () {
     final real = scan([
-      file('lib/db.dart',
-          "const u = 'postgres://admin:hunter2@db.prod.net/x';\n"),
+      file(
+        'lib/db.dart',
+        "const u = 'postgres://admin:hunter2@db.prod.net/x';\n",
+      ),
     ]);
-    expect(find(real, 'secret_db_url_credentials')!.severity,
-        LocalPrivacySeverity.blocker);
+    expect(
+      find(real, 'secret_db_url_credentials')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
 
     final local = scan([
       file('test/x.dart', "const u = 'http://user:pass@localhost:11434';\n"),
     ]);
-    expect(find(local, 'secret_db_url_credentials')!.severity,
-        LocalPrivacySeverity.info);
+    expect(
+      find(local, 'secret_db_url_credentials')!.severity,
+      LocalPrivacySeverity.info,
+    );
     expect(local.pass, isTrue);
   });
 
@@ -177,47 +196,61 @@ void main() {
     final src = scan([
       file('android/local.properties', 'flutter.sdk=/Users/realname/flutter\n'),
     ]);
-    expect(find(src, 'local_machine_path')!.severity,
-        LocalPrivacySeverity.blocker);
+    expect(
+      find(src, 'local_machine_path')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
 
     final doc = scan([
       file('docs/SETUP.md', 'Example: `/Users/you/flutter` (replace).\n'),
     ]);
     expect(
-        find(doc, 'local_machine_path')!.severity, LocalPrivacySeverity.info);
+      find(doc, 'local_machine_path')!.severity,
+      LocalPrivacySeverity.info,
+    );
     expect(doc.pass, isTrue);
   });
 
   // 13 — raw private export filename: source → BLOCKER, doc → INFO.
   test('raw export filename: source BLOCKER, doc INFO', () {
-    final exp = scan([
-      file('data/firestore_export.json', '{}\n'),
-    ]);
-    expect(find(exp, 'raw_private_export_file')!.severity,
-        LocalPrivacySeverity.blocker);
+    final exp = scan([file('data/firestore_export.json', '{}\n')]);
+    expect(
+      find(exp, 'raw_private_export_file')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
 
     final doc = scan([
       file('docs/patient_export.md', 'Never commit a patient_export.json\n'),
     ]);
-    expect(find(doc, 'raw_private_export_file')!.severity,
-        LocalPrivacySeverity.info);
+    expect(
+      find(doc, 'raw_private_export_file')!.severity,
+      LocalPrivacySeverity.info,
+    );
   });
 
   // 14 — real health narrative: fixture → BLOCKER, doc/guidance → INFO.
   test('health narrative: fixture BLOCKER, doc INFO', () {
     final fix = scan([
-      file('test/fixtures/story_sample.json',
-          '{ "note": "my patient was diagnosed with PD" }\n'),
+      file(
+        'test/fixtures/story_sample.json',
+        '{ "note": "my patient was diagnosed with PD" }\n',
+      ),
     ]);
-    expect(find(fix, 'real_health_narrative')!.severity,
-        LocalPrivacySeverity.blocker);
+    expect(
+      find(fix, 'real_health_narrative')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
 
     final doc = scan([
-      file('.github/ISSUE_TEMPLATE/bug.yml',
-          'Do not paste your real medication schedule here.\n'),
+      file(
+        '.github/ISSUE_TEMPLATE/bug.yml',
+        'Do not paste your real medication schedule here.\n',
+      ),
     ]);
-    expect(find(doc, 'real_health_narrative')!.severity,
-        LocalPrivacySeverity.info);
+    expect(
+      find(doc, 'real_health_narrative')!.severity,
+      LocalPrivacySeverity.info,
+    );
     expect(doc.pass, isTrue);
   });
 
@@ -241,8 +274,10 @@ void main() {
         skipReason: 'generated_or_local_dir',
       ),
     ]);
-    expect(find(r, 'generated_or_local_dir_present')!.severity,
-        LocalPrivacySeverity.warn);
+    expect(
+      find(r, 'generated_or_local_dir_present')!.severity,
+      LocalPrivacySeverity.warn,
+    );
     expect(r.pass, isTrue);
     expect(r.skippedFiles, 1);
   });
@@ -254,8 +289,10 @@ void main() {
     expect(lenient.pass, isTrue);
 
     final strict = scan([file('data/x.json', content)], strict: true);
-    expect(find(strict, 'phi_like_weak_field')!.severity,
-        LocalPrivacySeverity.blocker);
+    expect(
+      find(strict, 'phi_like_weak_field')!.severity,
+      LocalPrivacySeverity.blocker,
+    );
     expect(strict.pass, isFalse);
   });
 
@@ -269,11 +306,16 @@ void main() {
     ];
     for (final v in values) {
       final r = scan([
-        file('data/p.json',
-            '{ "patient_name": "$v", "password": "$v", "api_key": "$v" }\n'),
+        file(
+          'data/p.json',
+          '{ "patient_name": "$v", "password": "$v", "api_key": "$v" }\n',
+        ),
       ]);
-      expect(r.blockerCount, 0,
-          reason: 'allowlist value "$v" must never produce a BLOCKER');
+      expect(
+        r.blockerCount,
+        0,
+        reason: 'allowlist value "$v" must never produce a BLOCKER',
+      );
       expect(r.pass, isTrue);
     }
   });
@@ -281,7 +323,7 @@ void main() {
   // 19 — report shape: deterministic JSON + no PHI keys + boundary fields.
   test('report JSON is deterministic, no-PHI-key, with safety boundary', () {
     final targets = [
-      file('lib/foo.dart', 'final x = "synthetic_demo_only";\n')
+      file('lib/foo.dart', 'final x = "synthetic_demo_only";\n'),
     ];
     final r1 = scan(targets);
     final r2 = scan(targets);

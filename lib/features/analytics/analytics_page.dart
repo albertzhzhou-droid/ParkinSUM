@@ -81,30 +81,27 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     if (region == null || mealSlot == null || texture == null) {
       return null;
     }
-    return i18n.tr(
-      'dashboard.recommendation_template',
-      {
-        'region': i18n.regionLabel(region),
-        'mealSlot': i18n.mealSlotLabel(mealSlot),
-        'texture': i18n.textureClassLabel(texture),
-      },
-    );
+    return i18n.tr('dashboard.recommendation_template', {
+      'region': i18n.regionLabel(region),
+      'mealSlot': i18n.mealSlotLabel(mealSlot),
+      'texture': i18n.textureClassLabel(texture),
+    });
   }
 
   Future<void> _saveLocalAiSettings(BuildContext context) async {
     final timeoutMs = int.tryParse(_timeoutController.text.trim()) ?? 4000;
     await context.read<AppState>().saveLocalAiSettings(
-          providerPreference: _providerPreference,
-          model: _modelController.text.trim().isEmpty
-              ? LocalAiRecommendedModels.gemmaText
-              : _modelController.text.trim(),
-          medicalModel: _medicalModelController.text.trim().isEmpty
-              ? LocalAiRecommendedModels.medGemmaText
-              : _medicalModelController.text.trim(),
-          ollamaEndpoint: _ollamaEndpointController.text.trim(),
-          openAiCompatEndpoint: _openAiCompatEndpointController.text.trim(),
-          timeoutMs: timeoutMs,
-        );
+      providerPreference: _providerPreference,
+      model: _modelController.text.trim().isEmpty
+          ? LocalAiRecommendedModels.gemmaText
+          : _modelController.text.trim(),
+      medicalModel: _medicalModelController.text.trim().isEmpty
+          ? LocalAiRecommendedModels.medGemmaText
+          : _medicalModelController.text.trim(),
+      ollamaEndpoint: _ollamaEndpointController.text.trim(),
+      openAiCompatEndpoint: _openAiCompatEndpointController.text.trim(),
+      timeoutMs: timeoutMs,
+    );
     if (!context.mounted) return;
     await context.read<AppState>().refreshLocalAiAvailability();
   }
@@ -138,55 +135,44 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    i18n.tr(
-                      'analytics.localization_language',
-                      {
-                        'value':
-                            i18n.localeLabel(state.userProfile.displayLocale),
-                      },
-                    ),
+                    i18n.tr('analytics.localization_language', {
+                      'value': i18n.localeLabel(
+                        state.userProfile.displayLocale,
+                      ),
+                    }),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    i18n.tr(
-                      'analytics.localization_region',
-                      {
-                        'value': i18n.regionLabel(
-                          state.userProfile.registrationRegion,
-                        ),
-                      },
-                    ),
+                    i18n.tr('analytics.localization_region', {
+                      'value': i18n.regionLabel(
+                        state.userProfile.registrationRegion,
+                      ),
+                    }),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    i18n.tr(
-                      'analytics.localization_timezone',
-                      {'value': state.userProfile.timezone},
-                    ),
+                    i18n.tr('analytics.localization_timezone', {
+                      'value': state.userProfile.timezone,
+                    }),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    i18n.tr(
-                      'analytics.localization_override',
-                      {
-                        'value': state
-                                .userProfile.contentJurisdictionOverride.isEmpty
-                            ? i18n.tr('analytics.localization_override_none')
-                            : state.userProfile.contentJurisdictionOverride
-                                .join(', '),
-                      },
-                    ),
+                    i18n.tr('analytics.localization_override', {
+                      'value':
+                          state.userProfile.contentJurisdictionOverride.isEmpty
+                          ? i18n.tr('analytics.localization_override_none')
+                          : state.userProfile.contentJurisdictionOverride.join(
+                              ', ',
+                            ),
+                    }),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    i18n.tr(
-                      'analytics.localization_texture_mode',
-                      {
-                        'value': i18n.textureModeLabel(
-                          state.userProfile.swallowingTextureMode,
-                        ),
-                      },
-                    ),
+                    i18n.tr('analytics.localization_texture_mode', {
+                      'value': i18n.textureModeLabel(
+                        state.userProfile.swallowingTextureMode,
+                      ),
+                    }),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -236,8 +222,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       ),
                       GlassSelectOption(
                         value: LocalAiProviders.openAiCompat,
-                        label:
-                            _providerLabel(i18n, LocalAiProviders.openAiCompat),
+                        label: _providerLabel(
+                          i18n,
+                          LocalAiProviders.openAiCompat,
+                        ),
                         icon: Icons.api_rounded,
                       ),
                     ],
@@ -326,9 +314,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     ),
                     if (localAiStatus.endpoint.trim().isNotEmpty)
                       Text(localAiStatus.endpoint),
-                    Text(
-                      copy.recommendationMessage(localAiStatus.message),
-                    ),
+                    Text(copy.recommendationMessage(localAiStatus.message)),
                   ],
                   if (state.recommendationExplanations.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -353,9 +339,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                           const SizedBox(height: 4),
                           for (final reason
                               in state.recommendationGateReasons.take(4))
-                            Text(
-                              '• ${copy.recommendationMessage(reason)}',
-                            ),
+                            Text('• ${copy.recommendationMessage(reason)}'),
                         ],
                       ),
                     ),
@@ -402,8 +386,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     onPressed: state.isRunningReplayBenchmark
                         ? null
                         : () => context
-                            .read<AppState>()
-                            .runRecommendationReplayBenchmark(),
+                              .read<AppState>()
+                              .runRecommendationReplayBenchmark(),
                     icon: const Icon(Icons.play_circle_outline),
                     label: Text(
                       state.isRunningReplayBenchmark
@@ -414,10 +398,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   if (state.latestReplayBenchmarkError != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      i18n.tr(
-                        'analytics.replay_report_error',
-                        {'error': state.latestReplayBenchmarkError!},
-                      ),
+                      i18n.tr('analytics.replay_report_error', {
+                        'error': state.latestReplayBenchmarkError!,
+                      }),
                       style: const TextStyle(color: Colors.redAccent),
                     ),
                   ],
@@ -433,10 +416,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      i18n.tr(
-                        'analytics.replay_cases',
-                        {'count': '${replayReport.cases.length}'},
-                      ),
+                      i18n.tr('analytics.replay_cases', {
+                        'count': '${replayReport.cases.length}',
+                      }),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -473,7 +455,9 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   Text(
                     i18n.tr('analytics.import_tools'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(i18n.tr('analytics.import_tools_help')),
@@ -502,11 +486,16 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                   Text(
                     i18n.tr('analytics.protein_trend'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  Text(i18n.tr('analytics.average_protein',
-                      {'value': state.averageProtein.toStringAsFixed(1)})),
+                  Text(
+                    i18n.tr('analytics.average_protein', {
+                      'value': state.averageProtein.toStringAsFixed(1),
+                    }),
+                  ),
                   const SizedBox(height: 8),
                   if (trend.isEmpty) Text(i18n.tr('analytics.no_trend')),
                   for (final point in trend.reversed)

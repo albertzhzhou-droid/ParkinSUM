@@ -41,13 +41,13 @@ class MedicationComponent {
       strengthValue == null || (strengthUnit ?? '').isEmpty;
 
   Map<String, dynamic> toJson() => {
-        'ingredient_name': ingredientName,
-        'role': role,
-        'strength_value': strengthValue,
-        'strength_unit': strengthUnit,
-        'source_refs': sourceRefs,
-        'extraction_confidence': extractionConfidence,
-      };
+    'ingredient_name': ingredientName,
+    'role': role,
+    'strength_value': strengthValue,
+    'strength_unit': strengthUnit,
+    'source_refs': sourceRefs,
+    'extraction_confidence': extractionConfidence,
+  };
 }
 
 /// A reference to a specific labeled section of an official product-information
@@ -94,23 +94,23 @@ class LabelSectionRef {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_system': sourceSystem,
-        'source_doc_id': sourceDocId,
-        'source_doc_version': sourceDocVersion,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'section_id': sectionId,
-        'section_key': sectionKey,
-        'section_title': sectionTitle,
-        'section_path': sectionPath,
-        'effective_date': effectiveDate,
-        'extracted_field': extractedField,
-        'extracted_value': extractedValue,
-        'extraction_confidence': extractionConfidence,
-        'parser_name': parserName,
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-      };
+    'source_system': sourceSystem,
+    'source_doc_id': sourceDocId,
+    'source_doc_version': sourceDocVersion,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'section_id': sectionId,
+    'section_key': sectionKey,
+    'section_title': sectionTitle,
+    'section_path': sectionPath,
+    'effective_date': effectiveDate,
+    'extracted_field': extractedField,
+    'extracted_value': extractedValue,
+    'extraction_confidence': extractionConfidence,
+    'parser_name': parserName,
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+  };
 }
 
 /// Engine-facing medication provenance attached to a normalized medication
@@ -183,32 +183,32 @@ class MechanisticMedicationMetadata {
 
   /// Provenance fields that are absent (recorded as missing, never fabricated).
   List<String> get missingFields => <String>[
-        if (!releaseTypeKnown) 'release_type',
-        if (labelSectionRefs.isEmpty) 'label_section_provenance',
-        if (sourceRefs.isEmpty) 'source_refs',
-        if ((sourceDocVersion ?? '').isEmpty) 'source_doc_version',
-        if (components.any((c) => c.hasMissingStrength))
-          'component_strength_unit',
-      ];
+    if (!releaseTypeKnown) 'release_type',
+    if (labelSectionRefs.isEmpty) 'label_section_provenance',
+    if (sourceRefs.isEmpty) 'source_refs',
+    if ((sourceDocVersion ?? '').isEmpty) 'source_doc_version',
+    if (components.any((c) => c.hasMissingStrength)) 'component_strength_unit',
+  ];
 
   Map<String, dynamic> toJson() => {
-        'source_system': sourceSystem,
-        'source_doc_id': sourceDocId,
-        'source_doc_version': sourceDocVersion,
-        'effective_date': effectiveDate,
-        'jurisdiction': jurisdiction,
-        'language': language,
-        'drug_product_variant_id': drugProductVariantId,
-        'dose_form': doseForm,
-        'route': route,
-        'release_type': releaseType,
-        'release_type_source': releaseTypeSource,
-        'components': components.map((c) => c.toJson()).toList(growable: false),
-        'label_section_refs':
-            labelSectionRefs.map((s) => s.toJson()).toList(growable: false),
-        'source_refs': sourceRefs,
-        'limitation_text': limitationText,
-        'metadata_completeness': metadataCompleteness,
-        'missing_fields': missingFields,
-      };
+    'source_system': sourceSystem,
+    'source_doc_id': sourceDocId,
+    'source_doc_version': sourceDocVersion,
+    'effective_date': effectiveDate,
+    'jurisdiction': jurisdiction,
+    'language': language,
+    'drug_product_variant_id': drugProductVariantId,
+    'dose_form': doseForm,
+    'route': route,
+    'release_type': releaseType,
+    'release_type_source': releaseTypeSource,
+    'components': components.map((c) => c.toJson()).toList(growable: false),
+    'label_section_refs': labelSectionRefs
+        .map((s) => s.toJson())
+        .toList(growable: false),
+    'source_refs': sourceRefs,
+    'limitation_text': limitationText,
+    'metadata_completeness': metadataCompleteness,
+    'missing_fields': missingFields,
+  };
 }

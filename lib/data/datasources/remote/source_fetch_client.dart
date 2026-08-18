@@ -13,10 +13,7 @@ abstract class SourceFetchClient {
     String url, {
     Map<String, String>? headers,
   });
-  Future<List<dynamic>> getJsonList(
-    String url, {
-    Map<String, String>? headers,
-  });
+  Future<List<dynamic>> getJsonList(String url, {Map<String, String>? headers});
 
   /// Optional cache-coordination metadata for the most recent fetch of [url].
   ///
@@ -71,9 +68,7 @@ class HttpSourceFetchClient implements SourceFetchClient {
     final streamed = await _client.send(request);
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       await streamed.stream.drain<void>();
-      throw StateError(
-        'Failed to fetch $safeUrl: HTTP ${streamed.statusCode}',
-      );
+      throw StateError('Failed to fetch $safeUrl: HTTP ${streamed.statusCode}');
     }
     final declaredLength = streamed.contentLength;
     if (declaredLength != null && declaredLength > responseByteLimit) {
@@ -196,7 +191,7 @@ class SourceFetchResult {
   final String requestedId;
   final DateTime fetchedAt;
   final int
-      status; // HTTP-like status; 0 = not attempted, 200 = ok, 404 = missing
+  status; // HTTP-like status; 0 = not attempted, 200 = ok, 404 = missing
   final String? contentType;
   final String? rawPayload;
   final String? error;
@@ -214,14 +209,14 @@ class SourceFetchResult {
   bool get ok => error == null && rawPayload != null && status == 200;
 
   Map<String, dynamic> toJson() => {
-        'source_system': sourceSystem,
-        'requested_id': requestedId,
-        'fetched_at': fetchedAt.toIso8601String(),
-        'status': status,
-        'content_type': contentType,
-        'raw_payload': rawPayload,
-        'error': error,
-      };
+    'source_system': sourceSystem,
+    'requested_id': requestedId,
+    'fetched_at': fetchedAt.toIso8601String(),
+    'status': status,
+    'content_type': contentType,
+    'raw_payload': rawPayload,
+    'error': error,
+  };
 }
 
 /// Deterministic, offline fixture fetch client. Resolves an in-memory map of
@@ -285,7 +280,8 @@ class LiveSourceFetchClient {
   final Future<({int status, String? contentType, String? payload})> Function(
     String url, {
     Duration timeout,
-  }) fetcher;
+  })
+  fetcher;
 
   final DateTime Function() clock;
 

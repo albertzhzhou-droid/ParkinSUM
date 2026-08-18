@@ -41,10 +41,9 @@ class FirestoreDataService implements DataService {
 
   @override
   Future<void> setString(String key, String value) async {
-    await (await _doc(key)).set({
-      'value': value,
-      'updated_at': FieldValue.serverTimestamp(),
-    });
+    await (await _doc(
+      key,
+    )).set({'value': value, 'updated_at': FieldValue.serverTimestamp()});
   }
 
   @override

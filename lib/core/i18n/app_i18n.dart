@@ -68,7 +68,7 @@ class AppI18n {
   /// the DB explicitly declares that namespace.
   static void installRuntimeOverrides(
     Iterable<({String localeTag, String namespace, String key, String text})>
-        rows,
+    rows,
   ) {
     _runtimeOverride.clear();
     for (final row in rows) {
@@ -801,6 +801,12 @@ final Map<String, Map<String, String>> _strings = {
         '类别={category}  蛋白/碳水/脂肪={protein}/{carbs}/{fat}（每 100g）',
     'catalog.drug_subtitle': '标签={tags}',
     'catalog.view_detail': '查看详情',
+    'diagnostics.title': '工程自检',
+    'diagnostics.rerun': '重新运行检查',
+    'diagnostics.scope_title': '仅供工程审阅',
+    'diagnostics.scope_body':
+        '这些是确定性的治理检查（文案编译、本地化安全检查、合成场景回放）。它们只反映工程状态，不改变任何评分、严重度、证据或规则结果，也不是健康建议。数据均为合成/演示数据。',
+    'diagnostics.elapsed': '本次检查耗时 {ms} 毫秒。',
     'catalog.selected_active': '已选为当前用药',
     'medications.view_detail': '查看药品详情',
     'detail.variant_source': '变体 / 来源',
@@ -1478,6 +1484,12 @@ final Map<String, Map<String, String>> _strings = {
         'Category={category}  P/C/F={protein}/{carbs}/{fat} (per 100g)',
     'catalog.drug_subtitle': 'Tags={tags}',
     'catalog.view_detail': 'View details',
+    'diagnostics.title': 'Engineering diagnostics',
+    'diagnostics.rerun': 'Re-run checks',
+    'diagnostics.scope_title': 'Engineering review only',
+    'diagnostics.scope_body':
+        'These are deterministic governance checks (copy compilation, localization safety lint, synthetic scenario replay). They report engineering status only: they change no score, severity, evidence, or rule outcome, and they are not health guidance. Synthetic/demo data only.',
+    'diagnostics.elapsed': 'Checks completed in {ms} ms.',
     'catalog.selected_active': 'Selected as active medication',
     'medications.view_detail': 'View medication details',
     'detail.variant_source': 'Variant / source',
@@ -2138,6 +2150,12 @@ final Map<String, Map<String, String>> _strings = {
         'Categorie={category}  P/C/F={protein}/{carbs}/{fat} (par 100g)',
     'catalog.drug_subtitle': 'Etiquettes={tags}',
     'catalog.view_detail': 'Voir les details',
+    'diagnostics.title': 'Diagnostics techniques',
+    'diagnostics.rerun': 'Relancer les verifications',
+    'diagnostics.scope_title': 'Revue technique uniquement',
+    'diagnostics.scope_body':
+        'Verifications de gouvernance deterministes (compilation des textes, controle de securite de localisation, rejeu de scenarios synthetiques). Elles indiquent uniquement un etat technique : elles ne modifient aucun score, gravite, preuve ou resultat de regle, et ne constituent pas un conseil de sante. Donnees synthetiques uniquement.',
+    'diagnostics.elapsed': 'Verifications terminees en {ms} ms.',
     'catalog.selected_active': 'Selectionne comme medicament actif',
     'medications.view_detail': 'Voir le detail du medicament',
     'detail.variant_source': 'Variante / source',
@@ -2783,6 +2801,12 @@ final Map<String, Map<String, String>> _strings = {
         'カテゴリ={category}  P/C/F={protein}/{carbs}/{fat}（100gあたり）',
     'catalog.drug_subtitle': 'タグ={tags}',
     'catalog.view_detail': '詳細を見る',
+    'diagnostics.title': 'エンジニアリング診断',
+    'diagnostics.rerun': '再実行',
+    'diagnostics.scope_title': 'エンジニアリング確認専用',
+    'diagnostics.scope_body':
+        'これらは決定論的なガバナンス検査（文言のコンパイル、ローカライズ安全検査、合成シナリオの再生）です。エンジニアリング上の状態のみを示し、スコア・重大度・根拠・ルール結果を変更しません。健康に関する助言でもありません。合成/デモデータのみを使用します。',
+    'diagnostics.elapsed': '検査は {ms} ミリ秒で完了しました。',
     'catalog.selected_active': '服用中の薬として選択済み',
     'medications.view_detail': '薬の詳細を見る',
     'detail.variant_source': 'バリアント / ソース',

@@ -17,15 +17,18 @@ class EvidenceGraphMermaidRenderer {
     final b = StringBuffer()
       ..writeln('%% ParkinSUM local evidence graph (synthetic/demo).')
       ..writeln(
-          '%% Not a FHIR Provenance resource, not W3C PROV, not a patient '
-          'record, not clinical validation.')
+        '%% Not a FHIR Provenance resource, not W3C PROV, not a patient '
+        'record, not clinical validation.',
+      )
       ..writeln('flowchart TD');
 
     // Node declarations: `id["label (type)"]`, sanitized + deterministic.
     for (final node in graph.nodes) {
       final missing = node.isMissing ? ' [missing_artifact]' : '';
-      b.writeln('  ${node.id}["${_sanitize(node.label)} '
-          '(${_sanitize(node.type)})$missing"]');
+      b.writeln(
+        '  ${node.id}["${_sanitize(node.label)} '
+        '(${_sanitize(node.type)})$missing"]',
+      );
     }
 
     // Edges: `from -->|type| to` in graph order.

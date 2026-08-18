@@ -32,7 +32,9 @@ void main() {
   final sourceQualityFixture = {
     'report_type': 'source_quality_perturbation',
     'rows': List.generate(
-        13, (i) => {'case_id': 'c$i', 'source_system': 'synthetic_demo'}),
+      13,
+      (i) => {'case_id': 'c$i', 'source_system': 'synthetic_demo'},
+    ),
   };
   final releaseSnapshotFixture = {
     'snapshot_type': 'parkinsum_release_snapshot',
@@ -57,12 +59,12 @@ void main() {
   };
 
   EvidenceGraphInputs fullInputs() => EvidenceGraphInputs(
-        replayReport: replayFixture,
-        sourceQualityReport: sourceQualityFixture,
-        releaseSnapshot: releaseSnapshotFixture,
-        evidenceBundle: evidenceBundleFixture,
-        recommendationScenarioReport: recommendationScenarioFixture,
-      );
+    replayReport: replayFixture,
+    sourceQualityReport: sourceQualityFixture,
+    releaseSnapshot: releaseSnapshotFixture,
+    evidenceBundle: evidenceBundleFixture,
+    recommendationScenarioReport: recommendationScenarioFixture,
+  );
 
   EvidenceGraphNode nodeById(EvidenceGraph g, String id) =>
       g.nodes.firstWhere((n) => n.id == id);
@@ -88,8 +90,11 @@ void main() {
       'safety_boundary',
       'limitation',
     ]) {
-      expect(nodeById(g, id).isMissing, isFalse,
-          reason: '$id should be present');
+      expect(
+        nodeById(g, id).isMissing,
+        isFalse,
+        reason: '$id should be present',
+      );
     }
   });
 
@@ -102,62 +107,84 @@ void main() {
     expect(node.metadata['scope'], 'synthetic_local_ai_replay');
     // Edges: summarized by the release snapshot; supports AI-boundary review;
     // limited by the safety boundary.
-    expect(hasEdge(g, 'release_snapshot', 'recommendation_scenario_replay'),
-        isTrue);
-    expect(hasEdge(g, 'recommendation_scenario_replay', 'mechanistic_layer'),
-        isTrue);
-    expect(hasEdge(g, 'safety_boundary', 'recommendation_scenario_replay'),
-        isTrue);
+    expect(
+      hasEdge(g, 'release_snapshot', 'recommendation_scenario_replay'),
+      isTrue,
+    );
+    expect(
+      hasEdge(g, 'recommendation_scenario_replay', 'mechanistic_layer'),
+      isTrue,
+    );
+    expect(
+      hasEdge(g, 'safety_boundary', 'recommendation_scenario_replay'),
+      isTrue,
+    );
   });
 
   test('missing Local-AI scenario replay artifact creates a missing node', () {
-    final g = builder.build(EvidenceGraphInputs(
-      replayReport: replayFixture,
-      sourceQualityReport: sourceQualityFixture,
-      releaseSnapshot: releaseSnapshotFixture,
-      evidenceBundle: evidenceBundleFixture,
-    ));
+    final g = builder.build(
+      EvidenceGraphInputs(
+        replayReport: replayFixture,
+        sourceQualityReport: sourceQualityFixture,
+        releaseSnapshot: releaseSnapshotFixture,
+        evidenceBundle: evidenceBundleFixture,
+      ),
+    );
     final node = nodeById(g, 'recommendation_scenario_replay');
     expect(node.status, kEvidenceGraphMissingArtifact);
     expect(node.missingness['artifact_present'], isFalse);
   });
 
   test('2. missing replay artifact creates a missing_artifact node', () {
-    final g = builder.build(EvidenceGraphInputs(
-      sourceQualityReport: sourceQualityFixture,
-      releaseSnapshot: releaseSnapshotFixture,
-      evidenceBundle: evidenceBundleFixture,
-    ));
+    final g = builder.build(
+      EvidenceGraphInputs(
+        sourceQualityReport: sourceQualityFixture,
+        releaseSnapshot: releaseSnapshotFixture,
+        evidenceBundle: evidenceBundleFixture,
+      ),
+    );
     final node = nodeById(g, 'replay_report');
     expect(node.status, kEvidenceGraphMissingArtifact);
     expect(node.missingness['artifact_present'], isFalse);
   });
 
-  test('3. missing source-quality artifact creates a missing_artifact node',
-      () {
-    final g = builder.build(EvidenceGraphInputs(
-      replayReport: replayFixture,
-      releaseSnapshot: releaseSnapshotFixture,
-      evidenceBundle: evidenceBundleFixture,
-    ));
-    expect(nodeById(g, 'source_quality_report').status,
-        kEvidenceGraphMissingArtifact);
-  });
+  test(
+    '3. missing source-quality artifact creates a missing_artifact node',
+    () {
+      final g = builder.build(
+        EvidenceGraphInputs(
+          replayReport: replayFixture,
+          releaseSnapshot: releaseSnapshotFixture,
+          evidenceBundle: evidenceBundleFixture,
+        ),
+      );
+      expect(
+        nodeById(g, 'source_quality_report').status,
+        kEvidenceGraphMissingArtifact,
+      );
+    },
+  );
 
   test('4. missing release snapshot creates a missing_artifact node', () {
-    final g = builder.build(EvidenceGraphInputs(
-      replayReport: replayFixture,
-      sourceQualityReport: sourceQualityFixture,
-      evidenceBundle: evidenceBundleFixture,
-    ));
+    final g = builder.build(
+      EvidenceGraphInputs(
+        replayReport: replayFixture,
+        sourceQualityReport: sourceQualityFixture,
+        evidenceBundle: evidenceBundleFixture,
+      ),
+    );
     expect(
-        nodeById(g, 'release_snapshot').status, kEvidenceGraphMissingArtifact);
+      nodeById(g, 'release_snapshot').status,
+      kEvidenceGraphMissingArtifact,
+    );
   });
 
   test('5. graph preserves sourceRefs (replay + bundle unioned)', () {
     final g = builder.build(fullInputs());
-    expect(nodeById(g, 'replay_report').sourceRefs,
-        containsAll(['src.nutt.lnaa.1989', 'src.contin.levodopa.pk.2010']));
+    expect(
+      nodeById(g, 'replay_report').sourceRefs,
+      containsAll(['src.nutt.lnaa.1989', 'src.contin.levodopa.pk.2010']),
+    );
     expect(g.sourceRefs, contains('src.spl.identity'));
     expect(g.sourceRefs, contains('src.nutt.lnaa.1989'));
     // Deterministic (sorted) ordering.
@@ -167,8 +194,10 @@ void main() {
 
   test('6. graph includes safety boundary + limitation nodes', () {
     final g = builder.build(fullInputs());
-    expect(nodeById(g, 'safety_boundary').safetyBoundary,
-        RuleExplanation.defaultSafetyBoundary);
+    expect(
+      nodeById(g, 'safety_boundary').safetyBoundary,
+      RuleExplanation.defaultSafetyBoundary,
+    );
     expect(nodeById(g, 'limitation').type, 'limitation');
     expect(g.limitations, isNotEmpty);
   });
@@ -194,7 +223,9 @@ void main() {
     final json = builder.build(fullInputs()).toJson();
     expect(json['graph_type'], 'parkinsum_local_evidence_graph');
     expect(
-        json['conformance_status'], 'local_not_fhir_provenance_not_w3c_prov');
+      json['conformance_status'],
+      'local_not_fhir_provenance_not_w3c_prov',
+    );
     final encoded = jsonEncode(json);
     expect(encoded.contains('"resourceType"'), isFalse);
     expect(encoded.toLowerCase().contains('"resourcetype"'), isFalse);
@@ -214,16 +245,22 @@ void main() {
   });
 
   test('11. JSON output is deterministic', () {
-    expect(encodeEvidenceGraph(builder.build(fullInputs())),
-        encodeEvidenceGraph(builder.build(fullInputs())));
+    expect(
+      encodeEvidenceGraph(builder.build(fullInputs())),
+      encodeEvidenceGraph(builder.build(fullInputs())),
+    );
   });
 
   test('12. links source-quality report to both gates', () {
     final g = builder.build(fullInputs());
     expect(
-        hasEdge(g, 'source_quality_report', 'source_authority_gate'), isTrue);
-    expect(hasEdge(g, 'source_quality_report', 'metadata_completeness_gate'),
-        isTrue);
+      hasEdge(g, 'source_quality_report', 'source_authority_gate'),
+      isTrue,
+    );
+    expect(
+      hasEdge(g, 'source_quality_report', 'metadata_completeness_gate'),
+      isTrue,
+    );
   });
 
   test('13. links replay report to the mechanistic layer', () {
@@ -252,7 +289,8 @@ void main() {
 
   test('no banned phrases in the full serialized graph', () {
     expect(
-        findBannedSubstrings(encodeEvidenceGraph(builder.build(fullInputs()))),
-        isEmpty);
+      findBannedSubstrings(encodeEvidenceGraph(builder.build(fullInputs()))),
+      isEmpty,
+    );
   });
 }

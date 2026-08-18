@@ -9,11 +9,7 @@ import 'ranker_eligibility.dart';
 import 'recommendation_benchmark_models.dart';
 import 'time_axis_events.dart';
 
-enum RecommendationMode {
-  conservativeOnly,
-  hybridLocalLlm,
-  auto,
-}
+enum RecommendationMode { conservativeOnly, hybridLocalLlm, auto }
 
 class NextMealRecommendationRequest {
   final UserProfile userProfile;

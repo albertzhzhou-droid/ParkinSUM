@@ -67,15 +67,17 @@ class EvidenceGraphBuilder {
     final sourceQuality = _sourceQualityNode(inputs.sourceQualityReport);
     final releaseSnapshot = _releaseSnapshotNode(inputs.releaseSnapshot);
     final bundle = _evidenceBundleNode(inputs.evidenceBundle);
-    final recommendationScenario =
-        _recommendationScenarioNode(inputs.recommendationScenarioReport);
+    final recommendationScenario = _recommendationScenarioNode(
+      inputs.recommendationScenarioReport,
+    );
 
     // --- Derived / structural nodes (always present) -----------------------
     const mechanisticLayer = EvidenceGraphNode(
       id: 'mechanistic_layer',
       type: 'mechanistic_layer',
       label: 'Mechanistic layer',
-      summary: 'Deterministic, literature-informed educational conflict '
+      summary:
+          'Deterministic, literature-informed educational conflict '
           'simulation (not calibrated for real care; no PK/PD prediction).',
       status: 'present',
     );
@@ -83,7 +85,8 @@ class EvidenceGraphBuilder {
       id: 'metadata_completeness_gate',
       type: 'metadata_completeness_gate',
       label: 'Metadata completeness gate',
-      summary: 'Grades completeness; widens uncertainty rather than faking '
+      summary:
+          'Grades completeness; widens uncertainty rather than faking '
           'precision. Missing is recorded, never coerced to zero.',
       status: 'present',
     );
@@ -91,7 +94,8 @@ class EvidenceGraphBuilder {
       id: 'source_authority_gate',
       type: 'source_authority_gate',
       label: 'Source authority gate',
-      summary: 'Official-in-jurisdiction outranks synthetic/seed; seed never '
+      summary:
+          'Official-in-jurisdiction outranks synthetic/seed; seed never '
           'overrides official. Source-quality signal only.',
       status: 'present',
     );
@@ -107,7 +111,8 @@ class EvidenceGraphBuilder {
       id: 'limitation',
       type: 'limitation',
       label: 'Limitations',
-      summary: 'Local evidence graph; synthetic/demo only; not FHIR/PROV '
+      summary:
+          'Local evidence graph; synthetic/demo only; not FHIR/PROV '
           'conformant; not clinical validation; not calibrated for real care.',
       status: 'present',
     );
@@ -124,7 +129,7 @@ class EvidenceGraphBuilder {
       mechanisticLayer,
       metadataGate,
       authorityGate,
-      if (walkthrough != null) walkthrough,
+      ?walkthrough,
       safetyBoundary,
       limitation,
     ]);
@@ -133,40 +138,81 @@ class EvidenceGraphBuilder {
     var n = 0;
     EvidenceGraphEdge edge(String from, String to, String type, String label) =>
         EvidenceGraphEdge(
-            id: 'e${(++n).toString().padLeft(2, '0')}',
-            from: from,
-            to: to,
-            type: type,
-            label: label);
+          id: 'e${(++n).toString().padLeft(2, '0')}',
+          from: from,
+          to: to,
+          type: type,
+          label: label,
+        );
 
     edges.addAll([
       // source-quality report → the two gates it exercises.
-      edge('source_quality_report', 'source_authority_gate', 'checks',
-          'perturbs source authority'),
-      edge('source_quality_report', 'metadata_completeness_gate', 'checks',
-          'perturbs metadata completeness'),
+      edge(
+        'source_quality_report',
+        'source_authority_gate',
+        'checks',
+        'perturbs source authority',
+      ),
+      edge(
+        'source_quality_report',
+        'metadata_completeness_gate',
+        'checks',
+        'perturbs metadata completeness',
+      ),
       // replay report → mechanistic layer.
-      edge('replay_report', 'mechanistic_layer', 'reports',
-          'deterministic replay of the engine'),
+      edge(
+        'replay_report',
+        'mechanistic_layer',
+        'reports',
+        'deterministic replay of the engine',
+      ),
       // evidence bundle → mechanistic layer (pairs the inspired views).
-      edge('evidence_trace_bundle', 'mechanistic_layer', 'links_to',
-          'pairs inspired views over the same context'),
+      edge(
+        'evidence_trace_bundle',
+        'mechanistic_layer',
+        'links_to',
+        'pairs inspired views over the same context',
+      ),
       // release snapshot → summarizes the reports + reports the boundary.
-      edge('release_snapshot', 'replay_report', 'summarizes',
-          'counts replay status'),
-      edge('release_snapshot', 'source_quality_report', 'summarizes',
-          'counts source-quality rows'),
-      edge('release_snapshot', 'safety_boundary', 'reports',
-          'carries the safety boundary'),
+      edge(
+        'release_snapshot',
+        'replay_report',
+        'summarizes',
+        'counts replay status',
+      ),
+      edge(
+        'release_snapshot',
+        'source_quality_report',
+        'summarizes',
+        'counts source-quality rows',
+      ),
+      edge(
+        'release_snapshot',
+        'safety_boundary',
+        'reports',
+        'carries the safety boundary',
+      ),
       // Local-AI scenario replay → supports release-evidence review of AI
       // boundary behavior (candidate-set invariant; synthetic replay only).
-      edge('release_snapshot', 'recommendation_scenario_replay', 'summarizes',
-          'counts Local-AI scenario replay status'),
-      edge('recommendation_scenario_replay', 'mechanistic_layer', 'links_to',
-          'supports release-evidence review of AI boundary behavior'),
+      edge(
+        'release_snapshot',
+        'recommendation_scenario_replay',
+        'summarizes',
+        'counts Local-AI scenario replay status',
+      ),
+      edge(
+        'recommendation_scenario_replay',
+        'mechanistic_layer',
+        'links_to',
+        'supports release-evidence review of AI boundary behavior',
+      ),
       if (walkthrough != null)
-        edge('public_demo_walkthrough', 'release_snapshot', 'summarizes',
-            'narrates the snapshot'),
+        edge(
+          'public_demo_walkthrough',
+          'release_snapshot',
+          'summarizes',
+          'narrates the snapshot',
+        ),
     ]);
 
     // safety_boundary limits every major artifact (fixed order).
@@ -178,8 +224,14 @@ class EvidenceGraphBuilder {
       'evidence_trace_bundle',
       'mechanistic_layer',
     ]) {
-      edges.add(edge('safety_boundary', target, 'limits',
-          'non-prescriptive educational boundary'));
+      edges.add(
+        edge(
+          'safety_boundary',
+          target,
+          'limits',
+          'non-prescriptive educational boundary',
+        ),
+      );
     }
     // limitation limits the reports (fixed order).
     for (final target in const [
@@ -193,8 +245,7 @@ class EvidenceGraphBuilder {
     // Graph-level sourceRefs: union of node sourceRefs (sorted, deduped).
     final sourceRefs = <String>{
       for (final node in nodes) ...node.sourceRefs,
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
 
     return EvidenceGraph(
       graphId: graphId,
@@ -238,13 +289,13 @@ class EvidenceGraphBuilder {
       for (final c in cases)
         if (c is Map && c['source_refs'] is List)
           ...(c['source_refs'] as List).whereType<String>(),
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
     return EvidenceGraphNode(
       id: 'replay_report',
       type: 'replay_report',
       label: 'Mechanistic replay report',
-      summary: '$passed/$total deterministic synthetic scenarios passed '
+      summary:
+          '$passed/$total deterministic synthetic scenarios passed '
           '(banned-phrase scanned).',
       sourceRefs: refs,
       metadata: {'passed': passed, 'total': total, 'scenarios': cases.length},
@@ -258,7 +309,8 @@ class EvidenceGraphBuilder {
         id: 'recommendation_scenario_replay',
         type: 'recommendation_scenario_replay',
         label: 'Local AI scenario replay',
-        summary: 'missing_artifact: '
+        summary:
+            'missing_artifact: '
             'build/recommendation_scenario_replay/latest.json not found.',
         missingness: {'artifact_present': false},
         status: kEvidenceGraphMissingArtifact,
@@ -279,13 +331,15 @@ class EvidenceGraphBuilder {
         status: kEvidenceGraphMissingArtifact,
       );
     }
-    final allPreserved =
-        cases.every((c) => c is Map && c['ai_preserved_candidate_set'] == true);
+    final allPreserved = cases.every(
+      (c) => c is Map && c['ai_preserved_candidate_set'] == true,
+    );
     return EvidenceGraphNode(
       id: 'recommendation_scenario_replay',
       type: 'recommendation_scenario_replay',
       label: 'Local AI scenario replay',
-      summary: '${cases.length} synthetic Local-AI replay scenarios; '
+      summary:
+          '${cases.length} synthetic Local-AI replay scenarios; '
           'candidate-set invariant ${allPreserved ? 'held' : 'VIOLATED'} '
           '(synthetic replay; not calibrated for real care).',
       metadata: {
@@ -325,13 +379,13 @@ class EvidenceGraphBuilder {
       for (final r in rows)
         if (r is Map && r['source_system'] is String)
           r['source_system'] as String,
-    }.toList(growable: false)
-      ..sort();
+    }.toList(growable: false)..sort();
     return EvidenceGraphNode(
       id: 'source_quality_report',
       type: 'source_quality_report',
       label: 'Source-quality perturbation report',
-      summary: '${rows.length} rows: how scoring moves when only '
+      summary:
+          '${rows.length} rows: how scoring moves when only '
           'source/provenance quality changes (conflict overlap stays dominant).',
       metadata: {'rows': rows.length, 'source_systems': systems},
       status: 'present',
@@ -356,7 +410,8 @@ class EvidenceGraphBuilder {
       id: 'release_snapshot',
       type: 'release_snapshot',
       label: 'Release snapshot',
-      summary: 'Composed verification evidence '
+      summary:
+          'Composed verification evidence '
           '(${complete == true ? 'all required checks resolved' : 'incomplete / missing_artifact present'}).',
       metadata: {
         if (checks is Map) 'checks': checks,
@@ -384,7 +439,8 @@ class EvidenceGraphBuilder {
       id: 'evidence_trace_bundle',
       type: 'evidence_trace_bundle',
       label: 'Evidence trace bundle',
-      summary: 'Local, non-FHIR bundle pairing the inspired views (synthetic/'
+      summary:
+          'Local, non-FHIR bundle pairing the inspired views (synthetic/'
           'demo; no patient/subject/encounter linkage).',
       sourceRefs: refs,
       metadata: {
@@ -402,7 +458,8 @@ class EvidenceGraphBuilder {
       id: 'public_demo_walkthrough',
       type: 'public_demo_walkthrough',
       label: 'Public demo walkthrough',
-      summary: 'Synthetic reviewer walkthrough composed from the other '
+      summary:
+          'Synthetic reviewer walkthrough composed from the other '
           'artifacts (no advice; no PHI).',
       metadata: {'doc_type': report['doc_type']},
       status: 'present',

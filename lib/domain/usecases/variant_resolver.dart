@@ -65,20 +65,22 @@ class VariantResolver {
     final crosswalkMatches = crosswalk == null
         ? const <Map<String, Object?>>[]
         : rows
-            .where((row) =>
-                row['food_variant_id']?.toString() ==
-                crosswalk['variant_id']?.toString())
-            .toList(growable: false);
+              .where(
+                (row) =>
+                    row['food_variant_id']?.toString() ==
+                    crosswalk['variant_id']?.toString(),
+              )
+              .toList(growable: false);
     final directMatches = rows
         .where((row) => row['source_food_code']?.toString() == foodId)
         .toList(growable: false);
     final candidates = crosswalkMatches.isNotEmpty
         ? crosswalkMatches
         : directMatches.isNotEmpty
-            ? directMatches
-            : rows
-                .where((row) => row['food_concept_id']?.toString() == conceptId)
-                .toList(growable: false);
+        ? directMatches
+        : rows
+              .where((row) => row['food_concept_id']?.toString() == conceptId)
+              .toList(growable: false);
 
     if (candidates.isEmpty) {
       // 明确返回缺失态，方便上游把它标成 fallback，而不是伪装成已命中权威记录。
@@ -94,7 +96,9 @@ class VariantResolver {
       );
     }
 
-    final ranked = [...candidates]..sort((left, right) => _compareFoodRows(
+    final ranked = [...candidates]
+      ..sort(
+        (left, right) => _compareFoodRows(
           left,
           right,
           chain: chain,
@@ -103,7 +107,8 @@ class VariantResolver {
             tableRows: regionRows,
             kind: 'food',
           ),
-        ));
+        ),
+      );
     final winner = ranked.first;
     final jurisdiction = winner['jurisdiction']?.toString() ?? 'GLOBAL';
     final authoritative = _toBool(winner['is_authoritative_for_region']);
@@ -113,7 +118,8 @@ class VariantResolver {
       conceptId: winner['food_concept_id']?.toString() ?? conceptId,
       jurisdiction: jurisdiction,
       sourceFamily: winner['source_family']?.toString() ?? 'UNSPECIFIED',
-      fallbackUsed: !authoritative ||
+      fallbackUsed:
+          !authoritative ||
           jurisdiction != chain.first &&
               !chain.contains(jurisdiction.toUpperCase()),
       authoritativeForRegion: authoritative,
@@ -135,15 +141,18 @@ class VariantResolver {
     final crosswalkMatches = crosswalk == null
         ? const <Map<String, Object?>>[]
         : rows
-            .where((row) =>
-                row['drug_product_variant_id']?.toString() ==
-                crosswalk['variant_id']?.toString())
-            .toList(growable: false);
+              .where(
+                (row) =>
+                    row['drug_product_variant_id']?.toString() ==
+                    crosswalk['variant_id']?.toString(),
+              )
+              .toList(growable: false);
     final directMatches = rows
         .where((row) => row['external_product_code']?.toString() == drugId)
         .toList(growable: false);
-    final candidates =
-        crosswalkMatches.isNotEmpty ? crosswalkMatches : directMatches;
+    final candidates = crosswalkMatches.isNotEmpty
+        ? crosswalkMatches
+        : directMatches;
 
     if (candidates.isEmpty) {
       // 若官方 crosswalk 与 external_product_code 都没有命中，明确返回缺失态。
@@ -151,7 +160,8 @@ class VariantResolver {
         drugId: drugId,
         selectedVariantId:
             'DRUG_${drugId.toUpperCase()}#GLOBAL#MISSING#$drugId',
-        conceptId: crosswalk?['concept_id']?.toString() ??
+        conceptId:
+            crosswalk?['concept_id']?.toString() ??
             'DRUG_${drugId.toUpperCase()}',
         jurisdiction: 'GLOBAL',
         regulator: 'UNSPECIFIED',
@@ -162,7 +172,9 @@ class VariantResolver {
       );
     }
 
-    final ranked = [...candidates]..sort((left, right) => _compareDrugRows(
+    final ranked = [...candidates]
+      ..sort(
+        (left, right) => _compareDrugRows(
           left,
           right,
           chain: chain,
@@ -171,7 +183,8 @@ class VariantResolver {
             tableRows: regionRows,
             kind: 'drug',
           ),
-        ));
+        ),
+      );
     final winner = ranked.first;
     final jurisdiction = winner['jurisdiction']?.toString() ?? 'GLOBAL';
 
@@ -179,7 +192,8 @@ class VariantResolver {
       drugId: drugId,
       selectedVariantId:
           winner['drug_product_variant_id']?.toString() ?? drugId,
-      conceptId: winner['drug_concept_id']?.toString() ??
+      conceptId:
+          winner['drug_concept_id']?.toString() ??
           crosswalk?['concept_id']?.toString() ??
           'DRUG_${drugId.toUpperCase()}',
       jurisdiction: jurisdiction,
@@ -255,8 +269,9 @@ class VariantResolver {
     if (leftRank != rightRank) {
       return leftRank.compareTo(rightRank);
     }
-    return (left[variantIdKey]?.toString() ?? '')
-        .compareTo(right[variantIdKey]?.toString() ?? '');
+    return (left[variantIdKey]?.toString() ?? '').compareTo(
+      right[variantIdKey]?.toString() ?? '',
+    );
   }
 
   List<String> _mappedChain(
@@ -304,11 +319,13 @@ class VariantResolver {
   }) async {
     final rows = await database.queryTable('concept_variant_crosswalk');
     final candidates = rows
-        .where((row) =>
-            row['domain']?.toString() == domain &&
-            row['status']?.toString() == 'active' &&
-            (row['app_entity_id']?.toString() == appEntityId ||
-                row['external_id_value']?.toString() == appEntityId))
+        .where(
+          (row) =>
+              row['domain']?.toString() == domain &&
+              row['status']?.toString() == 'active' &&
+              (row['app_entity_id']?.toString() == appEntityId ||
+                  row['external_id_value']?.toString() == appEntityId),
+        )
         .toList(growable: false);
     if (candidates.isEmpty) return null;
     candidates.sort((left, right) {
@@ -318,8 +335,9 @@ class VariantResolver {
           right['jurisdiction']?.toString().toUpperCase() ?? '';
       final leftRank = chain.indexOf(leftJurisdiction);
       final rightRank = chain.indexOf(rightJurisdiction);
-      final jurisdictionCompare = (leftRank == -1 ? 999 : leftRank)
-          .compareTo(rightRank == -1 ? 999 : rightRank);
+      final jurisdictionCompare = (leftRank == -1 ? 999 : leftRank).compareTo(
+        rightRank == -1 ? 999 : rightRank,
+      );
       if (jurisdictionCompare != 0) return jurisdictionCompare;
       final confidenceCompare = ((right['confidence'] as num?)?.toDouble() ?? 0)
           .compareTo((left['confidence'] as num?)?.toDouble() ?? 0);

@@ -45,7 +45,8 @@ class ArchiveImportSupport {
       final name = _validatedEntryName(item.name);
       if (item.isSymbolicLink) {
         throw FormatException(
-            'Archive symbolic links are not supported: $name');
+          'Archive symbolic links are not supported: $name',
+        );
       }
       if (files.containsKey(name)) {
         throw FormatException('Archive contains duplicate file name: $name');
@@ -62,9 +63,10 @@ class ArchiveImportSupport {
           '(${limits.maxTotalUncompressedBytes} bytes).',
         );
       }
-      files[name] = item.content is List<int>
-          ? List<int>.from(item.content as List<int>)
-          : utf8.encode('${item.content}');
+      // archive 4.x types `content` as List<int>, so the old dynamic branch is
+      // unreachable. Still copied defensively so callers cannot mutate the
+      // decoder's buffers.
+      files[name] = List<int>.from(item.content);
     }
     return files;
   }
@@ -92,10 +94,7 @@ class ArchiveImportSupport {
     final rows = const CsvToListConverter(
       shouldParseNumbers: false,
       eol: '\n',
-    ).convert(
-      normalized,
-      fieldDelimiter: effectiveDelimiter,
-    );
+    ).convert(normalized, fieldDelimiter: effectiveDelimiter);
     if (rows.isEmpty) return const <Map<String, String>>[];
     final headers = rows.first
         .map((cell) => '${cell ?? ''}'.trim())
@@ -104,9 +103,11 @@ class ArchiveImportSupport {
         .skip(1)
         .map((row) {
           final map = <String, String>{};
-          for (var index = 0;
-              index < headers.length && index < row.length;
-              index++) {
+          for (
+            var index = 0;
+            index < headers.length && index < row.length;
+            index++
+          ) {
             final header = headers[index];
             if (header.isEmpty) continue;
             map[header] = '${row[index] ?? ''}'.trim();

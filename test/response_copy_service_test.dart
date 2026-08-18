@@ -5,9 +5,7 @@ import 'package:parkinsum_companion/core/models/interaction_result.dart';
 
 void main() {
   test('response copy hides machine recommendation path codes', () {
-    final copy = ResponseCopyService(
-      i18n: AppI18n.fromLocaleTag('zh-CN'),
-    );
+    final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('zh-CN'));
 
     expect(
       copy.recommendationPath('conservative_safety_gate'),
@@ -22,9 +20,7 @@ void main() {
   });
 
   test('response copy translates common raw interaction fragments', () {
-    final copy = ResponseCopyService(
-      i18n: AppI18n.fromLocaleTag('zh-CN'),
-    );
+    final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('zh-CN'));
 
     final text = copy.interactionText(
       'Imported label: official label requires separation from meals. '
@@ -37,9 +33,7 @@ void main() {
   });
 
   test('response copy translates stale recommendation reason text', () {
-    final copy = ResponseCopyService(
-      i18n: AppI18n.fromLocaleTag('zh-CN'),
-    );
+    final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('zh-CN'));
 
     final text = copy.recommendationMessage(
       'Candidate still depends on local seed metadata instead of richer database-backed observations. '
@@ -61,11 +55,8 @@ void main() {
     );
   });
 
-  test('response copy builds user-facing interaction explanation from result',
-      () {
-    final copy = ResponseCopyService(
-      i18n: AppI18n.fromLocaleTag('zh-CN'),
-    );
+  test('response copy builds user-facing interaction explanation from result', () {
+    final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('zh-CN'));
     final result = InteractionResult(
       mealId: 'meal_1',
       status: InteractionStatus.warning,
@@ -106,12 +97,8 @@ void main() {
     expect(copy.issueDetail(result.issues.first), contains('不能安全判断'));
   });
 
-  test(
-      'English response copy hides runtime warning ids and names missing inputs',
-      () {
-    final copy = ResponseCopyService(
-      i18n: AppI18n.fromLocaleTag('en-US'),
-    );
+  test('English response copy hides runtime warning ids and names missing inputs', () {
+    final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('en-US'));
     final result = InteractionResult(
       mealId: 'meal_1',
       status: InteractionStatus.warning,
@@ -140,14 +127,20 @@ void main() {
     );
 
     expect(
-        copy.interactionSummary(result),
-        contains(
-            'required medication information is missing: medication time and dose'));
+      copy.interactionSummary(result),
+      contains(
+        'required medication information is missing: medication time and dose',
+      ),
+    );
     expect(copy.interactionSummary(result), isNot(contains('drug time')));
-    expect(copy.keyFinding(result.keyFindings.first),
-        'Timing check cannot be completed because required medication information is missing: medication time and dose.');
     expect(
-        copy.dataNote(result.dataNotes.first), isNot(contains('cdss_warning')));
+      copy.keyFinding(result.keyFindings.first),
+      'Timing check cannot be completed because required medication information is missing: medication time and dose.',
+    );
+    expect(
+      copy.dataNote(result.dataNotes.first),
+      isNot(contains('cdss_warning')),
+    );
     expect(copy.dataNote(result.dataNotes.first), isNot(contains('selected=')));
   });
 }

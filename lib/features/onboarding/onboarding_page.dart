@@ -110,9 +110,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final steps = _buildSteps(state, i18n);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.tr('onboarding.appbar')),
-      ),
+      appBar: AppBar(title: Text(i18n.tr('onboarding.appbar'))),
       body: SafeArea(
         child: Stepper(
           controller: _scrollController,
@@ -129,8 +127,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     onPressed: _isSubmitting
                         ? null
                         : isLast
-                            ? _finish
-                            : _next,
+                        ? _finish
+                        : _next,
                     icon: _isSubmitting && isLast
                         ? const SizedBox.square(
                             dimension: 18,
@@ -223,8 +221,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 setState(() {
                   _registrationRegion = value;
                   _dietProfileRegion ??= value;
-                  _displayLocale =
-                      defaultLocaleForRegion(value, _displayLocale);
+                  _displayLocale = defaultLocaleForRegion(
+                    value,
+                    _displayLocale,
+                  );
                 });
               },
             ),
@@ -265,8 +265,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 contentPadding: EdgeInsets.zero,
                 value: _recordInitialIntake,
                 title: Text(i18n.tr('onboarding.record_initial_intake')),
-                subtitle:
-                    Text(i18n.tr('onboarding.record_initial_intake_help')),
+                subtitle: Text(
+                  i18n.tr('onboarding.record_initial_intake_help'),
+                ),
                 onChanged: (value) => setState(() {
                   _recordInitialIntake = value;
                   _initialIntakeDrugId ??= _activeDrugIds.first;
@@ -285,10 +286,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       .map(
                         (drug) => GlassSelectOption<String>(
                           value: drug.id,
-                          label: i18n.medicationName(
-                            drug.id,
-                            drug.displayName,
-                          ),
+                          label: i18n.medicationName(drug.id, drug.displayName),
                         ),
                       )
                       .toList(),
@@ -439,8 +437,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
               } else {
                 _activeDrugIds.remove(drug.id);
                 if (_initialIntakeDrugId == drug.id) {
-                  _initialIntakeDrugId =
-                      _activeDrugIds.isEmpty ? null : _activeDrugIds.first;
+                  _initialIntakeDrugId = _activeDrugIds.isEmpty
+                      ? null
+                      : _activeDrugIds.first;
                 }
                 if (_activeDrugIds.isEmpty) {
                   _recordInitialIntake = false;
@@ -483,8 +482,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
       initialIntakeDoseNote: _doseController.text,
     );
     try {
+      final initialDrugId = draft.initialIntakeDrugId;
       final intake = draft.buildInitialIntake(
         intakeId: state.newId('intake'),
+        drug: initialDrugId == null
+            ? null
+            : state.medRepo.getById(initialDrugId),
       );
       await state.completeOnboarding(
         profile: draft.buildProfile(
@@ -499,8 +502,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppI18n.fromLocaleTag(_displayLocale)
-                .tr('onboarding.finish_failed', {'error': '$error'}),
+            AppI18n.fromLocaleTag(
+              _displayLocale,
+            ).tr('onboarding.finish_failed', {'error': '$error'}),
           ),
         ),
       );
@@ -583,10 +587,7 @@ class _IconLine extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
               const SizedBox(height: 4),
               Text(body),
             ],
@@ -601,10 +602,7 @@ class _SummaryRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SummaryRow({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -619,12 +617,7 @@ class _SummaryRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-            ),
-          ),
+          Flexible(child: Text(value, textAlign: TextAlign.end)),
         ],
       ),
     );

@@ -12,11 +12,7 @@ class FoodDetailPage extends StatelessWidget {
   final FoodItem food;
   final Future<ProjectedFoodDetail?> future;
 
-  const FoodDetailPage({
-    super.key,
-    required this.food,
-    required this.future,
-  });
+  const FoodDetailPage({super.key, required this.food, required this.future});
 
   @override
   Widget build(BuildContext context) {
@@ -47,16 +43,13 @@ class FoodDetailPage extends StatelessWidget {
                       Text(food.description),
                       const SizedBox(height: 8),
                       Text(
-                        i18n.tr(
-                          'detail.macro_summary',
-                          {
-                            'protein': '${food.proteinG.toStringAsFixed(1)} g',
-                            'carbs': '${food.carbsG.toStringAsFixed(1)} g',
-                            'fat': '${food.fatG.toStringAsFixed(1)} g',
-                            'fiber': '${food.fiberG.toStringAsFixed(1)} g',
-                            'sodium': '${food.sodiumMg.toStringAsFixed(0)} mg',
-                          },
-                        ),
+                        i18n.tr('detail.macro_summary', {
+                          'protein': '${food.proteinG.toStringAsFixed(1)} g',
+                          'carbs': '${food.carbsG.toStringAsFixed(1)} g',
+                          'fat': '${food.fatG.toStringAsFixed(1)} g',
+                          'fiber': '${food.fiberG.toStringAsFixed(1)} g',
+                          'sodium': '${food.sodiumMg.toStringAsFixed(0)} mg',
+                        }),
                       ),
                       Text(
                         '${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}',
@@ -91,9 +84,7 @@ class FoodDetailPage extends StatelessWidget {
                       children: [
                         Text(
                           i18n.tr('detail.variant_source'),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         for (final source in detail.sourceTitles) Text(source),
@@ -112,9 +103,7 @@ class FoodDetailPage extends StatelessWidget {
                       children: [
                         Text(
                           i18n.tr('detail.imported_nutrients'),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         if (detail.nutrientLines.isEmpty)
@@ -148,18 +137,15 @@ class DrugDetailPage extends StatelessWidget {
   final DrugDefinition drug;
   final Future<ProjectedDrugDetail?> future;
 
-  const DrugDetailPage({
-    super.key,
-    required this.drug,
-    required this.future,
-  });
+  const DrugDetailPage({super.key, required this.drug, required this.future});
 
   @override
   Widget build(BuildContext context) {
     final i18n = context.appI18n;
     return Scaffold(
-      appBar:
-          AppBar(title: Text(i18n.medicationName(drug.id, drug.displayName))),
+      appBar: AppBar(
+        title: Text(i18n.medicationName(drug.id, drug.displayName)),
+      ),
       body: FutureBuilder<ProjectedDrugDetail?>(
         future: future,
         builder: (context, snapshot) {
@@ -186,7 +172,8 @@ class DrugDetailPage extends StatelessWidget {
                       ),
                       if (drug.sourceProductCode != null)
                         Text(
-                            '${i18n.tr('detail.product_code')}: ${drug.sourceProductCode}'),
+                          '${i18n.tr('detail.product_code')}: ${drug.sourceProductCode}',
+                        ),
                       const SizedBox(height: 8),
                       Text(i18n.medicationNote(drug.id, drug.notes)),
                       if (drug.interactionSummary.trim().isNotEmpty) ...[
@@ -239,16 +226,18 @@ class DrugDetailPage extends StatelessWidget {
                                       .isNotEmpty)
                                     Text(
                                       fact.sourceDocTitle!,
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                   if ((fact.sourceSectionTitle ?? '')
                                       .trim()
                                       .isNotEmpty)
                                     Text(
                                       '${i18n.tr('detail.source_label')}: ${fact.sourceSectionTitle}',
-                                      style:
-                                          Theme.of(context).textTheme.bodySmall,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
                                     ),
                                   if ((fact.sourceExcerpt ?? '')
                                       .trim()
@@ -275,8 +264,9 @@ class DrugDetailPage extends StatelessWidget {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
-                          for (final item
-                              in detail.packagingDescriptions.take(10))
+                          for (final item in detail.packagingDescriptions.take(
+                            10,
+                          ))
                             Padding(
                               padding: const EdgeInsets.only(bottom: 6),
                               child: Text(item),
@@ -317,8 +307,9 @@ class DrugDetailPage extends StatelessWidget {
                                     .isNotEmpty)
                                   Text(
                                     section.sourceDocTitle!,
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
                                   ),
                                 const SizedBox(height: 4),
                                 Text(section.sectionText),

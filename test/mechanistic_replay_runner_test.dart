@@ -7,27 +7,35 @@ void main() {
 
   test('all default scenarios pass', () {
     final report = runner.run();
-    expect(report.allPassed, isTrue,
-        reason: report.cases
-            .where((c) => !c.pass)
-            .map((c) => '${c.scenarioId}: ${c.failureReason}')
-            .join('\n'));
+    expect(
+      report.allPassed,
+      isTrue,
+      reason: report.cases
+          .where((c) => !c.pass)
+          .map((c) => '${c.scenarioId}: ${c.failureReason}')
+          .join('\n'),
+    );
   });
 
   test('every case has zero banned-phrase hits', () {
     final report = runner.run();
     for (final c in report.cases) {
-      expect(c.bannedPhraseHits, isEmpty,
-          reason: '${c.scenarioId} leaked: ${c.bannedPhraseHits}');
+      expect(
+        c.bannedPhraseHits,
+        isEmpty,
+        reason: '${c.scenarioId} leaked: ${c.bannedPhraseHits}',
+      );
     }
   });
 
   test('insufficient-context scenarios attach no conflict result', () {
     final report = runner.run();
-    for (final c in report.cases.where((c) =>
-        c.scenarioId.startsWith('s08') ||
-        c.scenarioId.startsWith('s09') ||
-        c.scenarioId.startsWith('s10'))) {
+    for (final c in report.cases.where(
+      (c) =>
+          c.scenarioId.startsWith('s08') ||
+          c.scenarioId.startsWith('s09') ||
+          c.scenarioId.startsWith('s10'),
+    )) {
       expect(c.interactionScore, 0.0);
       expect(c.confidenceBand, 'insufficient');
       expect(c.blockedMechanisms, isNotEmpty);
@@ -36,39 +44,49 @@ void main() {
 
   test('user-window scenarios produce non-empty recommendations', () {
     final report = runner.run();
-    final s13 = report.cases
-        .firstWhere((c) => c.scenarioId == 's13_user_window_candidates');
+    final s13 = report.cases.firstWhere(
+      (c) => c.scenarioId == 's13_user_window_candidates',
+    );
     expect(s13.nextMealRecommendationResult, isNotNull);
     expect(s13.nextMealRecommendationResult!, isNotEmpty);
   });
 
-  test('multi-dose scenario reports per-event count and user-entered dosage',
-      () {
-    final report = runner.run();
-    final md =
-        report.cases.firstWhere((c) => c.scenarioId == 's04b_multidose_ir');
-    expect(md.perEventCount, 2);
-    // The user-entered dose is surfaced exactly (100 mg), never a default.
-    expect(md.userEnteredDosage, '100 mg');
-    expect(md.dosageContextComplete, isTrue);
-  });
+  test(
+    'multi-dose scenario reports per-event count and user-entered dosage',
+    () {
+      final report = runner.run();
+      final md = report.cases.firstWhere(
+        (c) => c.scenarioId == 's04b_multidose_ir',
+      );
+      expect(md.perEventCount, 2);
+      // The user-entered dose is surfaced exactly (100 mg), never a default.
+      expect(md.userEnteredDosage, '100 mg');
+      expect(md.dosageContextComplete, isTrue);
+    },
+  );
 
   test('ambiguous/empty dosage scenarios report incomplete dose context', () {
     final report = runner.run();
-    for (final c in report.cases.where((c) =>
-        c.scenarioId.startsWith('s08') ||
-        c.scenarioId.startsWith('s09') ||
-        c.scenarioId.startsWith('s10'))) {
+    for (final c in report.cases.where(
+      (c) =>
+          c.scenarioId.startsWith('s08') ||
+          c.scenarioId.startsWith('s09') ||
+          c.scenarioId.startsWith('s10'),
+    )) {
       // No private default dose may be injected: these stay incomplete.
-      expect(c.dosageContextComplete, isFalse,
-          reason: '${c.scenarioId} must not claim a complete dose context');
+      expect(
+        c.dosageContextComplete,
+        isFalse,
+        reason: '${c.scenarioId} must not claim a complete dose context',
+      );
     }
   });
 
   test('actual amino-acid scenario surfaces absolute competing LNAA grams', () {
     final report = runner.run();
-    final c = report.cases
-        .firstWhere((c) => c.scenarioId == 's22_amino_acid_actual_fields_mode');
+    final c = report.cases.firstWhere(
+      (c) => c.scenarioId == 's22_amino_acid_actual_fields_mode',
+    );
     expect(c.aminoAcidDataMode, 'actualAminoAcidFields');
     expect(c.competingLnaaGrams, isNotNull);
     expect(c.partialAminoAcidData, isFalse);
@@ -78,18 +96,21 @@ void main() {
 
   test('partial amino-acid scenario flags partial data', () {
     final report = runner.run();
-    final c = report.cases
-        .firstWhere((c) => c.scenarioId == 's32_partial_amino_acid_profile');
+    final c = report.cases.firstWhere(
+      (c) => c.scenarioId == 's32_partial_amino_acid_profile',
+    );
     expect(c.partialAminoAcidData, isTrue);
   });
 
   test('high-calorie meal scenario widens gastric uncertainty', () {
     final report = runner.run();
-    final c = report.cases
-        .firstWhere((c) => c.scenarioId == 's33_high_calorie_high_fat_meal');
+    final c = report.cases.firstWhere(
+      (c) => c.scenarioId == 's33_high_calorie_high_fat_meal',
+    );
     expect(
-      c.gastricEmptyingAssumptions
-          .any((a) => a.contains('ge.highcal.uncertainty_boost')),
+      c.gastricEmptyingAssumptions.any(
+        (a) => a.contains('ge.highcal.uncertainty_boost'),
+      ),
       isTrue,
     );
     expect(c.mealComponentCount, greaterThanOrEqualTo(1));
@@ -101,22 +122,26 @@ void main() {
   test('explicit-dose + actual-AA meal exposes dose-relative LNAA proxy', () {
     final report = runner.run();
     final c = report.cases.firstWhere(
-        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa');
+      (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa',
+    );
     expect(c.doseRelativeLnaaAvailable, isTrue);
     expect(c.doseRelativeLnaaRatio, isNotNull);
   });
 
-  test('FDC analytical provenance surfaces confidence tier in the report (B1)',
-      () {
-    final report = runner.run();
-    final c = report.cases.firstWhere(
-        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa');
-    // The amino-acid meal carries FDC analytical derivations → tier surfaced,
-    // and analytical provenance does not widen uncertainty.
-    expect(c.aminoAcidConfidenceTier, 'analytical');
-    final encoded = encodeReplayReport(report);
-    expect(encoded, contains('"amino_acid_confidence_tier"'));
-  });
+  test(
+    'FDC analytical provenance surfaces confidence tier in the report (B1)',
+    () {
+      final report = runner.run();
+      final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's34_explicit_dose_dose_relative_lnaa',
+      );
+      // The amino-acid meal carries FDC analytical derivations → tier surfaced,
+      // and analytical provenance does not widen uncertainty.
+      expect(c.aminoAcidConfidenceTier, 'analytical');
+      final encoded = encodeReplayReport(report);
+      expect(encoded, contains('"amino_acid_confidence_tier"'));
+    },
+  );
 
   test('serialized report is valid JSON and contains no banned phrases', () {
     final report = runner.run();
@@ -130,19 +155,23 @@ void main() {
   // D2 — missingness stress suite. Proves missing ≠ zero end-to-end: missing
   // nutrient inputs lower composition completeness and confidence rather than
   // being silently treated as 0.
-  test('missing calories/portion lowers completeness, never fabricated (D2)',
-      () {
-    final report = runner.run();
-    final c = report.cases
-        .firstWhere((c) => c.scenarioId == 's35_missing_calories_and_portion');
-    expect(c.mealContextCompleteness, lessThan(1.0));
-    expect(c.confidenceBand, isNot('high'));
-  });
+  test(
+    'missing calories/portion lowers completeness, never fabricated (D2)',
+    () {
+      final report = runner.run();
+      final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's35_missing_calories_and_portion',
+      );
+      expect(c.mealContextCompleteness, lessThan(1.0));
+      expect(c.confidenceBand, isNot('high'));
+    },
+  );
 
   test('all-macros-missing → unknown competition + insufficient/low (D2)', () {
     final report = runner.run();
     final c = report.cases.firstWhere(
-        (c) => c.scenarioId == 's36_missing_all_macros_unknown_competition');
+      (c) => c.scenarioId == 's36_missing_all_macros_unknown_competition',
+    );
     expect(c.aminoAcidCompetitionBand, 'unknown');
     expect(['insufficient', 'low'], contains(c.confidenceBand));
   });
@@ -151,8 +180,10 @@ void main() {
   test('enteral scenarios run and stay non-prescriptive (C1)', () {
     final report = runner.run();
     final enteral = report.cases
-        .where((c) =>
-            c.scenarioId.startsWith('s37') || c.scenarioId.startsWith('s38'))
+        .where(
+          (c) =>
+              c.scenarioId.startsWith('s37') || c.scenarioId.startsWith('s38'),
+        )
         .toList();
     expect(enteral.length, 2);
     for (final c in enteral) {
@@ -164,28 +195,34 @@ void main() {
   // A1/A2 — medication section provenance reaches the replay report.
   test('SPL IR scenario exposes section provenance + components (A1/A2)', () {
     final report = runner.run();
-    final c = report.cases
-        .firstWhere((c) => c.scenarioId == 's39_spl_ir_section_provenance');
+    final c = report.cases.firstWhere(
+      (c) => c.scenarioId == 's39_spl_ir_section_provenance',
+    );
     expect(c.medicationSourceSystem, 'DailyMed');
     expect(c.medicationLabelSectionRefCount, greaterThan(0));
     expect(c.medicationReleaseType, 'immediate');
     expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
-    expect(c.medicationCombinationComponents,
-        containsAll(['carbidopa', 'levodopa']));
+    expect(
+      c.medicationCombinationComponents,
+      containsAll(['carbidopa', 'levodopa']),
+    );
     // Dose still came from the user/variant strength, never fabricated.
     expect(c.dosageSource, 'user_or_variant_strength');
     expect(c.dosageContextComplete, isTrue);
   });
 
-  test('SPL ER scenario records extended release from source metadata (A1/A2)',
-      () {
-    final report = runner.run();
-    final c = report.cases
-        .firstWhere((c) => c.scenarioId == 's40_spl_er_section_provenance');
-    expect(c.medicationReleaseType, 'extended');
-    expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
-    expect(c.medicationLabelSectionRefCount, greaterThan(0));
-  });
+  test(
+    'SPL ER scenario records extended release from source metadata (A1/A2)',
+    () {
+      final report = runner.run();
+      final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's40_spl_er_section_provenance',
+      );
+      expect(c.medicationReleaseType, 'extended');
+      expect(c.medicationReleaseTypeSource, 'structured_variant_metadata');
+      expect(c.medicationLabelSectionRefCount, greaterThan(0));
+    },
+  );
 
   // Clinical-calibration guardrail regression (OPP-D4 / backlog #12). Locks in
   // the non-device educational boundary: every replay case must report it is
@@ -196,18 +233,35 @@ void main() {
     final report = runner.run();
     expect(report.cases, isNotEmpty);
     for (final c in report.cases) {
-      expect(c.clinicalCalibrationStatus, 'not_clinically_calibrated',
-          reason: '${c.scenarioId} must not claim clinical calibration');
-      expect(c.liveFetchEnabled, isFalse,
-          reason: '${c.scenarioId} must not enable live fetch by default');
-      expect(c.canSupportMechanismEvidenceAlone, isFalse,
-          reason: '${c.scenarioId} must not assert standalone mechanism '
-              'evidence in the educational build');
-      expect(c.licenseReviewStatus, 'future_work',
-          reason: '${c.scenarioId} source license review remains future work');
-      expect(c.sourceImplementationStatus, 'fixture_tested',
-          reason: '${c.scenarioId} must remain fixture-tested (no production '
-              'ingestion)');
+      expect(
+        c.clinicalCalibrationStatus,
+        'not_clinically_calibrated',
+        reason: '${c.scenarioId} must not claim clinical calibration',
+      );
+      expect(
+        c.liveFetchEnabled,
+        isFalse,
+        reason: '${c.scenarioId} must not enable live fetch by default',
+      );
+      expect(
+        c.canSupportMechanismEvidenceAlone,
+        isFalse,
+        reason:
+            '${c.scenarioId} must not assert standalone mechanism '
+            'evidence in the educational build',
+      );
+      expect(
+        c.licenseReviewStatus,
+        'future_work',
+        reason: '${c.scenarioId} source license review remains future work',
+      );
+      expect(
+        c.sourceImplementationStatus,
+        'fixture_tested',
+        reason:
+            '${c.scenarioId} must remain fixture-tested (no production '
+            'ingestion)',
+      );
     }
   });
 }

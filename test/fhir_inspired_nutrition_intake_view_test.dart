@@ -52,27 +52,30 @@ void main() {
   }
 
   AminoAcidProfile analyticalProfile() => const AminoAcidProfile(
-        leucine: 2.1,
-        isoleucine: 1.2,
-        valine: 1.3,
-        phenylalanine: 1.0,
-        tyrosine: 0.9,
-        tryptophan: 0.3,
-        basis: 'per_serving',
-        nutrientIds: ['504', '503', '510', '508', '509', '501'],
-        sourceRefs: ['src.fdc.api.amino_acid_fields'],
-        fdcDataType: 'Foundation',
-        derivations: {
-          'leucine': NutrientDerivation(
-              derivationCode: 'A', derivationDescription: 'Analytical'),
-        },
-      );
+    leucine: 2.1,
+    isoleucine: 1.2,
+    valine: 1.3,
+    phenylalanine: 1.0,
+    tyrosine: 0.9,
+    tryptophan: 0.3,
+    basis: 'per_serving',
+    nutrientIds: ['504', '503', '510', '508', '509', '501'],
+    sourceRefs: ['src.fdc.api.amino_acid_fields'],
+    fdcDataType: 'Foundation',
+    derivations: {
+      'leucine': NutrientDerivation(
+        derivationCode: 'A',
+        derivationDescription: 'Analytical',
+      ),
+    },
+  );
 
   test('1. maps meal composition into the FHIR-inspired view', () {
     final view = mapper.fromMealComposition(
-        buildComposition(aa: analyticalProfile()),
-        demoMealId: 'demo-meal-1',
-        relativeTimeMinutes: 30);
+      buildComposition(aa: analyticalProfile()),
+      demoMealId: 'demo-meal-1',
+      relativeTimeMinutes: 30,
+    );
     expect(view.foodComponents, hasLength(1));
     expect(view.foodComponents.single.foodName, contains('chicken'));
     expect(view.foodComponents.single.amount, 150);
@@ -81,22 +84,26 @@ void main() {
     expect(view.relativeTimeMinutes, 30);
   });
 
-  test('2. omits subject/patient/encounter and asserts phi_policy (key-level)',
-      () {
-    final view =
-        mapper.fromMealComposition(buildComposition(aa: analyticalProfile()));
-    final json = view.toJson();
-    scanKeys(json); // recursive: no forbidden patient-linkage/clinical keys
-    expect(json['phi_policy'], 'subject_omitted_no_phi');
-    // No top-level patient-linkage keys.
-    expect(json.containsKey('subject'), isFalse);
-    expect(json.containsKey('patient'), isFalse);
-    expect(json.containsKey('encounter'), isFalse);
-  });
+  test(
+    '2. omits subject/patient/encounter and asserts phi_policy (key-level)',
+    () {
+      final view = mapper.fromMealComposition(
+        buildComposition(aa: analyticalProfile()),
+      );
+      final json = view.toJson();
+      scanKeys(json); // recursive: no forbidden patient-linkage/clinical keys
+      expect(json['phi_policy'], 'subject_omitted_no_phi');
+      // No top-level patient-linkage keys.
+      expect(json.containsKey('subject'), isFalse);
+      expect(json.containsKey('patient'), isFalse);
+      expect(json.containsKey('encounter'), isFalse);
+    },
+  );
 
   test('3. preserves missing nutrient fields (null stays null)', () {
     final view = mapper.fromMealComposition(
-        buildComposition(aa: null, calories: null, portion: null));
+      buildComposition(aa: null, calories: null, portion: null),
+    );
     expect(view.nutrientSummary.energyKcal, isNull);
     expect(view.nutrientSummary.missingness['energy_kcal'], isTrue);
     final c = view.foodComponents.single;
@@ -106,8 +113,9 @@ void main() {
   });
 
   test('4. preserves amino-acid data mode + confidence tier', () {
-    final view =
-        mapper.fromMealComposition(buildComposition(aa: analyticalProfile()));
+    final view = mapper.fromMealComposition(
+      buildComposition(aa: analyticalProfile()),
+    );
     expect(view.aminoAcidSummary.aminoAcidDataMode, 'actualAminoAcidFields');
     expect(view.aminoAcidSummary.aminoAcidConfidenceTier, 'analytical');
     expect(view.aminoAcidSummary.competingLnaaGrams, isNotNull);
@@ -119,8 +127,9 @@ void main() {
   });
 
   test('5. preserves sourceRefs + derivation/provenance', () {
-    final view =
-        mapper.fromMealComposition(buildComposition(aa: analyticalProfile()));
+    final view = mapper.fromMealComposition(
+      buildComposition(aa: analyticalProfile()),
+    );
     expect(view.sourceRefs, contains('src.fdc.api.amino_acid_fields'));
     expect(view.aminoAcidSummary.aminoAcidNutrientIds, contains('504'));
     expect(view.aminoAcidSummary.fdcDataType, 'Foundation');
@@ -129,23 +138,31 @@ void main() {
 
   test('6. JSON output is deterministic', () {
     final comp = buildComposition(aa: analyticalProfile());
-    final a =
-        jsonEncode(mapper.fromMealComposition(comp, demoMealId: 'm').toJson());
-    final b =
-        jsonEncode(mapper.fromMealComposition(comp, demoMealId: 'm').toJson());
+    final a = jsonEncode(
+      mapper.fromMealComposition(comp, demoMealId: 'm').toJson(),
+    );
+    final b = jsonEncode(
+      mapper.fromMealComposition(comp, demoMealId: 'm').toJson(),
+    );
     expect(a, b);
   });
 
-  test('7. safety copy is non-prescriptive (banned-phrase scan, skip policy)',
-      () {
-    final view =
-        mapper.fromMealComposition(buildComposition(aa: analyticalProfile()));
-    final texts = freeTextValues(view.toJson());
-    for (final t in texts) {
-      expect(findBannedSubstrings(t), isEmpty,
-          reason: 'banned medical-advice phrase in free text: "$t"');
-    }
-  });
+  test(
+    '7. safety copy is non-prescriptive (banned-phrase scan, skip policy)',
+    () {
+      final view = mapper.fromMealComposition(
+        buildComposition(aa: analyticalProfile()),
+      );
+      final texts = freeTextValues(view.toJson());
+      for (final t in texts) {
+        expect(
+          findBannedSubstrings(t),
+          isEmpty,
+          reason: 'banned medical-advice phrase in free text: "$t"',
+        );
+      }
+    },
+  );
 
   test('8. does not claim FHIR conformance', () {
     final json = mapper.fromMealComposition(buildComposition()).toJson();
@@ -161,9 +178,11 @@ void main() {
   test('10. emits no banned medical-advice phrases anywhere in free text', () {
     // Stronger: scan the full serialized JSON for banned phrases (these phrases
     // do not appear in the allowed safety-copy fields either).
-    final encoded = jsonEncode(mapper
-        .fromMealComposition(buildComposition(aa: analyticalProfile()))
-        .toJson());
+    final encoded = jsonEncode(
+      mapper
+          .fromMealComposition(buildComposition(aa: analyticalProfile()))
+          .toJson(),
+    );
     expect(findBannedSubstrings(encoded), isEmpty);
   });
 

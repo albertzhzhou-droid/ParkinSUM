@@ -18,43 +18,47 @@ import 'package:parkinsum_companion/domain/usecases/catalog_resolution_engine.da
 
 const _engine = CatalogResolutionEngine();
 
-FoodItem _food(String id, String name,
-        {List<String> aliases = const [],
-        FoodCategory category = FoodCategory.beverage,
-        String? code = 'F-CODE'}) =>
-    FoodItem(
-      id: id,
-      name: name,
-      category: category,
-      aliases: aliases,
-      sourceSystem: 'CIQUAL',
-      sourceFoodCode: code,
-      jurisdiction: 'GLOBAL',
-      basisType: 'per_100g',
-      proteinG: 1,
-      carbsG: 10,
-      fatG: 1,
-      fiberG: 0,
-      sodiumMg: 5,
-    );
+FoodItem _food(
+  String id,
+  String name, {
+  List<String> aliases = const [],
+  FoodCategory category = FoodCategory.beverage,
+  String? code = 'F-CODE',
+}) => FoodItem(
+  id: id,
+  name: name,
+  category: category,
+  aliases: aliases,
+  sourceSystem: 'CIQUAL',
+  sourceFoodCode: code,
+  jurisdiction: 'GLOBAL',
+  basisType: 'per_100g',
+  proteinG: 1,
+  carbsG: 10,
+  fatG: 1,
+  fiberG: 0,
+  sodiumMg: 5,
+);
 
-DrugDefinition _drug(String id, String generic,
-        {List<String> brands = const [],
-        String releaseType = 'immediate',
-        String code = 'SPL'}) =>
-    DrugDefinition(
-      id: id,
-      genericName: generic,
-      brandNames: brands,
-      tags: const [DrugTag.levodopaLike],
-      notes: '',
-      sourceSystem: 'DAILYMED',
-      sourceProductCode: code,
-      jurisdiction: 'US',
-      route: 'oral',
-      dosageForm: 'tablet',
-      releaseType: releaseType,
-    );
+DrugDefinition _drug(
+  String id,
+  String generic, {
+  List<String> brands = const [],
+  String releaseType = 'immediate',
+  String code = 'SPL',
+}) => DrugDefinition(
+  id: id,
+  genericName: generic,
+  brandNames: brands,
+  tags: const [DrugTag.levodopaLike],
+  notes: '',
+  sourceSystem: 'DAILYMED',
+  sourceProductCode: code,
+  jurisdiction: 'US',
+  route: 'oral',
+  dosageForm: 'tablet',
+  releaseType: releaseType,
+);
 
 void main() {
   final foods = [
@@ -64,12 +68,20 @@ void main() {
   ];
   final drugs = [
     _drug('d-ldopa', 'levodopa', code: 'SPL-001'),
-    _drug('d-sinemet-ir', 'carbidopa/levodopa',
-        brands: const ['Sinemet'], releaseType: 'immediate', code: 'SPL-002'),
-    _drug('d-sinemet-cr', 'carbidopa/levodopa',
-        brands: const ['Sinemet CR'],
-        releaseType: 'controlled',
-        code: 'SPL-003'),
+    _drug(
+      'd-sinemet-ir',
+      'carbidopa/levodopa',
+      brands: const ['Sinemet'],
+      releaseType: 'immediate',
+      code: 'SPL-002',
+    ),
+    _drug(
+      'd-sinemet-cr',
+      'carbidopa/levodopa',
+      brands: const ['Sinemet CR'],
+      releaseType: 'controlled',
+      code: 'SPL-003',
+    ),
   ];
 
   const queries = <String>[
@@ -99,17 +111,21 @@ void main() {
 
   final outDir = Directory('build/catalog_resolution');
   if (!outDir.existsSync()) outDir.createSync(recursive: true);
-  File('${outDir.path}/latest.json')
-      .writeAsStringSync(const JsonEncoder.withIndent('  ').convert(jsonDoc));
+  File(
+    '${outDir.path}/latest.json',
+  ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(jsonDoc));
   File('${outDir.path}/latest.md').writeAsStringSync(_markdown(results));
 
-  stdout
-      .writeln('Catalog resolution demo: ${results.length} synthetic queries.');
+  stdout.writeln(
+    'Catalog resolution demo: ${results.length} synthetic queries.',
+  );
   for (final r in results) {
     final best = r.bestCandidate;
-    stdout.writeln('  - "${r.query}": ${r.status} / ${r.domain}'
-        '${best == null ? '' : ' → ${best.displayName} '
-            '(${best.matchType}, ${best.confidenceBand})'}');
+    stdout.writeln(
+      '  - "${r.query}": ${r.status} / ${r.domain}'
+      '${best == null ? '' : ' → ${best.displayName} '
+                '(${best.matchType}, ${best.confidenceBand})'}',
+    );
   }
   stdout
     ..writeln('Report: ${outDir.path}/latest.json')
@@ -120,18 +136,22 @@ String _markdown(List<CatalogResolutionResult> rs) {
   final b = StringBuffer()
     ..writeln('# ParkinSUM Catalog Resolution — synthetic demo')
     ..writeln()
-    ..writeln('Educational/research prototype. Catalog resolution returns '
-        '**candidates + uncertainty**, never a recommendation. It does not tell '
-        'the user what to eat or take, infers no user dose, and does not '
-        'silently guess. Synthetic data only; not clinically calibrated.')
+    ..writeln(
+      'Educational/research prototype. Catalog resolution returns '
+      '**candidates + uncertainty**, never a recommendation. It does not tell '
+      'the user what to eat or take, infers no user dose, and does not '
+      'silently guess. Synthetic data only; not clinically calibrated.',
+    )
     ..writeln()
     ..writeln('| query | domain | status | best candidate | match | band |')
     ..writeln('| --- | --- | --- | --- | --- | --- |');
   for (final r in rs) {
     final c = r.bestCandidate;
-    b.writeln('| ${r.query} | ${r.domain} | ${r.status} | '
-        '${c?.displayName ?? '—'} | ${c?.matchType ?? '—'} | '
-        '${c?.confidenceBand ?? '—'} |');
+    b.writeln(
+      '| ${r.query} | ${r.domain} | ${r.status} | '
+      '${c?.displayName ?? '—'} | ${c?.matchType ?? '—'} | '
+      '${c?.confidenceBand ?? '—'} |',
+    );
   }
   b
     ..writeln()

@@ -25,9 +25,9 @@ class RankerEligibility {
   });
 
   Map<String, dynamic> toJson() => {
-        'mechanistic_primary_eligible': mechanisticPrimaryEligible,
-        'ranker_used': rankerUsed,
-        'ranker_eligibility_reasons': rankerEligibilityReasons,
-        'fallback_reasons': fallbackReasons,
-      };
+    'mechanistic_primary_eligible': mechanisticPrimaryEligible,
+    'ranker_used': rankerUsed,
+    'ranker_eligibility_reasons': rankerEligibilityReasons,
+    'fallback_reasons': fallbackReasons,
+  };
 }

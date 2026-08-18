@@ -80,8 +80,9 @@ FoodComponent mealItemToFoodComponent(
 
   // Actual amino-acid profile (per_100g) scaled to the logged serving so
   // absolute competing LNAA grams reflect what was eaten. Null → proxy.
-  final aminoAcidProfile =
-      catalogMatch?.aminoAcidProfile?.scaledToGrams(portionGrams);
+  final aminoAcidProfile = catalogMatch?.aminoAcidProfile?.scaledToGrams(
+    portionGrams,
+  );
 
   final proteinSource = inferProteinSourceFromNameAndCategory(
     name: item.foodName,

@@ -26,14 +26,25 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned deliberately. An unpinned `channel: stable` silently tracks
+          # whatever Flutter is current, which produced three surprise CI
+          # failures with no code change on our side: a new `unawaited_return_
+          # in_try_block` warning, a repo-wide `dart format` style change, and
+          # two new lint rules. Pinning makes a toolchain move an explicit,
+          # reviewable commit. Dependabot does not bump this; raise it
+          # intentionally alongside a green run.
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Install Flutter dependencies
         run: flutter pub get
 
       # CI should report formatting drift without rewriting files in the runner.
+      # Scoped to source dirs: `dart format .` ignores analysis_options'
+      # analyzer excludes, so a stray build/ directory (platform SourcePackages,
+      # generated example code) would be formatted and fail the check.
       - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed .
+        run: dart format --output=none --set-exit-if-changed lib test tool
 
       - name: Analyze Flutter project
         run: flutter analyze
@@ -79,6 +90,14 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          # Pinned deliberately. An unpinned `channel: stable` silently tracks
+          # whatever Flutter is current, which produced three surprise CI
+          # failures with no code change on our side: a new `unawaited_return_
+          # in_try_block` warning, a repo-wide `dart format` style change, and
+          # two new lint rules. Pinning makes a toolchain move an explicit,
+          # reviewable commit. Dependabot does not bump this; raise it
+          # intentionally alongside a green run.
+          flutter-version: '3.47.0'
           cache: true
 
       - name: Set up Node.js
@@ -92,32 +111,24 @@ jobs:
           flutter pub get
           npm ci
 
-      # --- Copy / localization safety -------------------------------------
-      - name: Explanation copy compiles (0 blocker)
-        run: npm run copy:compile
+      # One command runs every gate — copy compile, localization lint, the two
+      # deterministic replays, the scenario fuzzer, privacy preflight, source
+      # access + drift, the contribution router, and the committed-golden drift
+      # check. It exits non-zero if any single gate does, and composes the
+      # results into build/verify_all/latest.{json,md}.
+      #
+      # This is the same command a reviewer runs locally, so CI and local
+      # verification cannot drift apart. `npm run verify:all -- --list` prints
+      # the gate inventory.
+      - name: All governance gates + committed-golden drift check
+        run: npm run verify:all
 
-      - name: Localization safety lint (full i18n dictionary)
-        run: npm run localization:lint
-
-      # --- Deterministic replays ------------------------------------------
-      - name: Mechanistic replay
-        run: npm run mechanistic:replay
-
-      - name: Local AI scenario replay (candidate-set invariant)
-        run: npm run recommend:replay
-
-      - name: Synthetic scenario fuzzer
-        run: npm run scenario:fuzz
-
-      # --- Privacy / source governance ------------------------------------
-      - name: Local privacy preflight
-        run: npm run privacy:preflight
-
-      - name: Source access contract check
-        run: npm run source:access
-
-      - name: Source version drift check
-        run: npm run source:drift
-
-      - name: Contribution safety router
-        run: npm run contribution:route
+      # Uploaded so a failing run is diagnosable without re-running the gates
+      # locally. The report is timestamp-free and diffs cleanly.
+      - name: Upload verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-all-report
+          path: build/verify_all/
+          if-no-files-found: warn

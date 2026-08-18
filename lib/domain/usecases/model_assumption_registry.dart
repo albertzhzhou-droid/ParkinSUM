@@ -42,15 +42,15 @@ class ModelAssumption {
   });
 
   Map<String, dynamic> toJson() => {
-        'source_id': sourceId,
-        'title': title,
-        'source_type': sourceType.name,
-        'mechanism_supported': mechanismSupported,
-        'limitation': limitation,
-        'citation_text': citationText,
-        'evidence_level': evidenceLevel.name,
-        'last_reviewed': lastReviewed,
-      };
+    'source_id': sourceId,
+    'title': title,
+    'source_type': sourceType.name,
+    'mechanism_supported': mechanismSupported,
+    'limitation': limitation,
+    'citation_text': citationText,
+    'evidence_level': evidenceLevel.name,
+    'last_reviewed': lastReviewed,
+  };
 }
 
 /// Static in-memory registry.
@@ -116,7 +116,8 @@ class ModelAssumptionRegistry {
 
   static const ModelAssumption nuttLnaa = ModelAssumption(
     sourceId: 'src.nutt.lnaa.1989',
-    title: 'Influence of fluctuations of plasma LNAAs on the clinical response '
+    title:
+        'Influence of fluctuations of plasma LNAAs on the clinical response '
         'to levodopa',
     sourceType: ModelSourceType.review,
     mechanismSupported:
@@ -151,7 +152,8 @@ class ModelAssumptionRegistry {
 
   static const ModelAssumption advancesNutritionLevodopa = ModelAssumption(
     sourceId: 'src.advances.nutrition.2021',
-    title: 'Dietary approaches to improve efficacy and control side effects of '
+    title:
+        'Dietary approaches to improve efficacy and control side effects of '
         'levodopa therapy',
     sourceType: ModelSourceType.review,
     mechanismSupported:
@@ -182,7 +184,8 @@ class ModelAssumptionRegistry {
 
   static const ModelAssumption gastricEmptyingHalfTime = ModelAssumption(
     sourceId: 'src.camilleri.ge.halftime.2009',
-    title: 'Calculations to estimate gastric emptying half-time of solids in '
+    title:
+        'Calculations to estimate gastric emptying half-time of solids in '
         'humans',
     sourceType: ModelSourceType.modelPaper,
     mechanismSupported:
@@ -199,7 +202,8 @@ class ModelAssumptionRegistry {
 
   static const ModelAssumption foodPhysicalProperties = ModelAssumption(
     sourceId: 'src.hens.foodphysical.2024',
-    title: 'Impact of food physical properties on oral drug absorption '
+    title:
+        'Impact of food physical properties on oral drug absorption '
         '(comprehensive review)',
     sourceType: ModelSourceType.review,
     mechanismSupported:
@@ -241,7 +245,8 @@ class ModelAssumptionRegistry {
     limitation:
         'Population-level direction; not a per-patient predictor and not '
         'used to claim clinical pharmacokinetics.',
-    citationText: 'Virmani T. et al. To restrict or not to restrict? Practical '
+    citationText:
+        'Virmani T. et al. To restrict or not to restrict? Practical '
         'considerations for optimizing dietary protein interactions on '
         'levodopa absorption in PD. npj Parkinson\'s Disease 9:87, 2023.',
     evidenceLevel: ModelEvidenceLevel.mechanism,
@@ -312,7 +317,8 @@ class ModelAssumptionRegistry {
 
   static const ModelAssumption fdcFoundationDocs = ModelAssumption(
     sourceId: 'src.usda.fdc.foundation_docs',
-    title: 'USDA FoodData Central — Foundation Foods documentation + '
+    title:
+        'USDA FoodData Central — Foundation Foods documentation + '
         'FoodNutrient derivation/provenance schema',
     sourceType: ModelSourceType.officialLabel,
     mechanismSupported:

@@ -98,15 +98,17 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertDrugProductPackaging(
-      DrugProductPackagingRecord record) async {}
+    DrugProductPackagingRecord record,
+  ) async {}
 
   @override
   Future<void> insertDrugProductMedia(DrugProductMediaRecord record) async {}
 
   @override
   Future<void> insertDrugProductVariant(DrugProductVariantRecord record) async {
-    _add('drug_product_variant',
-        {'drug_product_variant_id': record.drugProductVariantId});
+    _add('drug_product_variant', {
+      'drug_product_variant_id': record.drugProductVariantId,
+    });
   }
 
   @override
@@ -134,7 +136,8 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertLocaleResourceBundle(
-      LocaleResourceBundleRecord record) async {}
+    LocaleResourceBundleRecord record,
+  ) async {}
 
   @override
   Future<void> insertMealTemplate(MealTemplateRecord record) async {
@@ -148,7 +151,8 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRecommendationAuditLog(
-      RecommendationAuditLogRecord record) async {
+    RecommendationAuditLogRecord record,
+  ) async {
     _add('recommendation_audit_log', {
       'rec_audit_id': record.recAuditId,
       'fallback_used': record.fallbackUsed,
@@ -158,7 +162,8 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertRegionJurisdictionMap(
-      RegionJurisdictionMapRecord record) async {
+    RegionJurisdictionMapRecord record,
+  ) async {
     _add('region_jurisdiction_map', {'region_code': record.regionCode});
   }
 
@@ -205,7 +210,8 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertSnapshotDistribution(
-      SnapshotDistributionRecord record) async {
+    SnapshotDistributionRecord record,
+  ) async {
     _add('snapshot_distribution', {
       'distribution_id': record.distributionId,
       'snapshot_id': record.snapshotId,
@@ -227,9 +233,10 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> clearStagingRun(String runId) async {
-    for (final rows in tables.entries
-        .where((entry) => entry.key.startsWith('staging_'))
-        .map((entry) => entry.value)) {
+    for (final rows
+        in tables.entries
+            .where((entry) => entry.key.startsWith('staging_'))
+            .map((entry) => entry.value)) {
       rows.removeWhere((row) => row['run_id'] == runId);
     }
   }
@@ -256,159 +263,163 @@ class RecordingCdssDatabase implements CdssDatabase {
 
 void main() {
   test(
-      'engine does not escalate when missing dose is irrelevant to matched levodopa protein rule',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    await service.initializeKnowledgeBase(
-      sourceDocuments: clinicalEvidenceSourceDocuments,
-      variantScopes: const <VariantScopeRecord>[],
-      observations: const <ObservationRecord>[],
-      resolvedFacts: const <ResolvedFactRecord>[],
-    );
+    'engine does not escalate when missing dose is irrelevant to matched levodopa protein rule',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      await service.initializeKnowledgeBase(
+        sourceDocuments: clinicalEvidenceSourceDocuments,
+        variantScopes: const <VariantScopeRecord>[],
+        observations: const <ObservationRecord>[],
+        resolvedFacts: const <ResolvedFactRecord>[],
+      );
 
-    final output = await service.run(
-      context: UnifiedRuntimeContext(
-        userProfile: const UserProfileRuntimeContext(
-          patientId: 'patient_1',
-          registrationRegion: 'US',
-          displayLocale: 'en-US',
-          contentJurisdictionOverride: [],
-          dietProfileRegion: 'US',
-          timezone: 'America/Toronto',
+      final output = await service.run(
+        context: UnifiedRuntimeContext(
+          userProfile: const UserProfileRuntimeContext(
+            patientId: 'patient_1',
+            registrationRegion: 'US',
+            displayLocale: 'en-US',
+            contentJurisdictionOverride: [],
+            dietProfileRegion: 'US',
+            timezone: 'America/Toronto',
+          ),
+          drug: const DrugRuntimeContext(
+            id: 'drug_1',
+            genericName: 'carbidopa/levodopa',
+            brandName: 'Sinemet',
+            activeIngredients: ['carbidopa', 'levodopa'],
+            substanceTags: ['levodopa'],
+            formulation: 'tablet',
+            dosageForm: 'tablet',
+            route: 'oral',
+            releaseType: 'immediate',
+            dailyDoseMg: null,
+            jurisdiction: 'US',
+          ),
+          meal: const MealRuntimeContext(
+            id: 'meal_1',
+            totalProteinG: 25,
+            tyramineMgEstimate: 0,
+            highFatHighCalorie: false,
+            itemIds: ['food_1'],
+          ),
+          coevent: null,
+          enteralFeed: null,
+          timestamps: TimestampRuntimeContext(
+            drugTime: DateTime.utc(2026, 1, 1, 8),
+            mealTime: DateTime.utc(2026, 1, 1, 9),
+            coeventTime: null,
+          ),
         ),
-        drug: const DrugRuntimeContext(
-          id: 'drug_1',
-          genericName: 'carbidopa/levodopa',
-          brandName: 'Sinemet',
-          activeIngredients: ['carbidopa', 'levodopa'],
-          substanceTags: ['levodopa'],
-          formulation: 'tablet',
-          dosageForm: 'tablet',
-          route: 'oral',
-          releaseType: 'immediate',
-          dailyDoseMg: null,
-          jurisdiction: 'US',
+        rules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
         ),
-        meal: const MealRuntimeContext(
-          id: 'meal_1',
-          totalProteinG: 25,
-          tyramineMgEstimate: 0,
-          highFatHighCalorie: false,
-          itemIds: ['food_1'],
-        ),
-        coevent: null,
-        enteralFeed: null,
-        timestamps: TimestampRuntimeContext(
-          drugTime: DateTime.utc(2026, 1, 1, 8),
-          mealTime: DateTime.utc(2026, 1, 1, 9),
-          coeventTime: null,
-        ),
-      ),
-      rules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-      factsVersion: 'facts_v1',
-      rulesVersion: 'rules_v1',
-    );
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+      );
 
-    expect(
-      output.alerts.any(
-        (alert) => alert.decision == RuntimeDecisionType.warn,
-      ),
-      isTrue,
-    );
-    expect(
-      output.alerts.any(
-        (alert) => alert.decision == RuntimeDecisionType.requireReview,
-      ),
-      isFalse,
-    );
-    expect(output.alertsJson['jurisdiction_chain'], isNotNull);
-    expect(output.humanReadableMarkdown, contains('Runtime Decision'));
-    expect(output.humanReadableMarkdown,
-        contains('Dhivy label food effect reference'));
-    expect(output.auditLogJsonl, contains('needs_human_review'));
-    expect(output.auditLogJsonl, contains('evidence_details'));
-  });
+      expect(
+        output.alerts.any(
+          (alert) => alert.decision == RuntimeDecisionType.warn,
+        ),
+        isTrue,
+      );
+      expect(
+        output.alerts.any(
+          (alert) => alert.decision == RuntimeDecisionType.requireReview,
+        ),
+        isFalse,
+      );
+      expect(output.alertsJson['jurisdiction_chain'], isNotNull);
+      expect(output.humanReadableMarkdown, contains('Runtime Decision'));
+      expect(
+        output.humanReadableMarkdown,
+        contains('Dhivy label food effect reference'),
+      );
+      expect(output.auditLogJsonl, contains('needs_human_review'));
+      expect(output.auditLogJsonl, contains('evidence_details'));
+    },
+  );
 
   test(
-      'engine escalates to REQUIRE_REVIEW when a dose-dependent rule lacks dose',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    await service.initializeKnowledgeBase(
-      sourceDocuments: clinicalEvidenceSourceDocuments,
-      variantScopes: const <VariantScopeRecord>[],
-      observations: const <ObservationRecord>[],
-      resolvedFacts: const <ResolvedFactRecord>[],
-    );
+    'engine escalates to REQUIRE_REVIEW when a dose-dependent rule lacks dose',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      await service.initializeKnowledgeBase(
+        sourceDocuments: clinicalEvidenceSourceDocuments,
+        variantScopes: const <VariantScopeRecord>[],
+        observations: const <ObservationRecord>[],
+        resolvedFacts: const <ResolvedFactRecord>[],
+      );
 
-    final output = await service.run(
-      context: UnifiedRuntimeContext(
-        userProfile: const UserProfileRuntimeContext(
-          patientId: 'patient_2',
-          registrationRegion: 'US',
-          displayLocale: 'en-US',
-          contentJurisdictionOverride: [],
-          dietProfileRegion: 'US',
-          timezone: 'America/Toronto',
+      final output = await service.run(
+        context: UnifiedRuntimeContext(
+          userProfile: const UserProfileRuntimeContext(
+            patientId: 'patient_2',
+            registrationRegion: 'US',
+            displayLocale: 'en-US',
+            contentJurisdictionOverride: [],
+            dietProfileRegion: 'US',
+            timezone: 'America/Toronto',
+          ),
+          drug: const DrugRuntimeContext(
+            id: 'drug_2',
+            genericName: 'rasagiline',
+            brandName: 'Azilect',
+            activeIngredients: ['rasagiline'],
+            substanceTags: ['maob_inhibitor'],
+            formulation: 'tablet',
+            dosageForm: 'tablet',
+            route: 'oral',
+            releaseType: 'immediate',
+            dailyDoseMg: null,
+            jurisdiction: 'US',
+          ),
+          meal: const MealRuntimeContext(
+            id: 'meal_2',
+            totalProteinG: 10,
+            tyramineMgEstimate: 180,
+            highFatHighCalorie: false,
+            itemIds: ['food_2'],
+          ),
+          coevent: null,
+          enteralFeed: null,
+          timestamps: TimestampRuntimeContext(
+            drugTime: DateTime.utc(2026, 1, 1, 8),
+            mealTime: DateTime.utc(2026, 1, 1, 9),
+            coeventTime: null,
+          ),
         ),
-        drug: const DrugRuntimeContext(
-          id: 'drug_2',
-          genericName: 'rasagiline',
-          brandName: 'Azilect',
-          activeIngredients: ['rasagiline'],
-          substanceTags: ['maob_inhibitor'],
-          formulation: 'tablet',
-          dosageForm: 'tablet',
-          route: 'oral',
-          releaseType: 'immediate',
-          dailyDoseMg: null,
-          jurisdiction: 'US',
+        rules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
         ),
-        meal: const MealRuntimeContext(
-          id: 'meal_2',
-          totalProteinG: 10,
-          tyramineMgEstimate: 180,
-          highFatHighCalorie: false,
-          itemIds: ['food_2'],
-        ),
-        coevent: null,
-        enteralFeed: null,
-        timestamps: TimestampRuntimeContext(
-          drugTime: DateTime.utc(2026, 1, 1, 8),
-          mealTime: DateTime.utc(2026, 1, 1, 9),
-          coeventTime: null,
-        ),
-      ),
-      rules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-      factsVersion: 'facts_v1',
-      rulesVersion: 'rules_v1',
-    );
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+      );
 
-    expect(
-      output.alerts.any(
-        (alert) => alert.decision == RuntimeDecisionType.requireReview,
-      ),
-      isTrue,
-    );
-    expect(output.humanReadableMarkdown, contains('dose'));
-  });
+      expect(
+        output.alerts.any(
+          (alert) => alert.decision == RuntimeDecisionType.requireReview,
+        ),
+        isTrue,
+      );
+      expect(output.humanReadableMarkdown, contains('dose'));
+    },
+  );
 
   test('blocked PEG combinations keep machine actions structured', () async {
     final compiler = RuleRegistryCompiler();
@@ -470,78 +481,82 @@ void main() {
     expect(output.alerts.first.actions.first['type'], isNotEmpty);
   });
 
-  test('info-level administration rules surface richer evidence metadata',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    await service.initializeKnowledgeBase(
-      sourceDocuments: clinicalEvidenceSourceDocuments,
-      variantScopes: const <VariantScopeRecord>[],
-      observations: const <ObservationRecord>[],
-      resolvedFacts: const <ResolvedFactRecord>[],
-    );
+  test(
+    'info-level administration rules surface richer evidence metadata',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      await service.initializeKnowledgeBase(
+        sourceDocuments: clinicalEvidenceSourceDocuments,
+        variantScopes: const <VariantScopeRecord>[],
+        observations: const <ObservationRecord>[],
+        resolvedFacts: const <ResolvedFactRecord>[],
+      );
 
-    final output = await service.run(
-      context: UnifiedRuntimeContext(
-        userProfile: const UserProfileRuntimeContext(
-          patientId: 'patient_3',
-          registrationRegion: 'US',
-          displayLocale: 'en-US',
-          contentJurisdictionOverride: [],
-          dietProfileRegion: 'US',
-          timezone: 'America/Toronto',
+      final output = await service.run(
+        context: UnifiedRuntimeContext(
+          userProfile: const UserProfileRuntimeContext(
+            patientId: 'patient_3',
+            registrationRegion: 'US',
+            displayLocale: 'en-US',
+            contentJurisdictionOverride: [],
+            dietProfileRegion: 'US',
+            timezone: 'America/Toronto',
+          ),
+          drug: const DrugRuntimeContext(
+            id: 'drug_4',
+            genericName: 'pramipexole',
+            brandName: 'Mirapex',
+            activeIngredients: ['pramipexole'],
+            substanceTags: ['dopamine_agonist'],
+            formulation: 'tablet',
+            dosageForm: 'tablet',
+            route: 'oral',
+            releaseType: 'immediate',
+            dailyDoseMg: 1.5,
+            jurisdiction: 'US',
+          ),
+          meal: const MealRuntimeContext(
+            id: 'meal_3',
+            totalProteinG: 12,
+            tyramineMgEstimate: 0,
+            highFatHighCalorie: false,
+            itemIds: ['food_3'],
+          ),
+          coevent: null,
+          enteralFeed: null,
+          timestamps: TimestampRuntimeContext(
+            drugTime: DateTime.utc(2026, 1, 1, 8),
+            mealTime: DateTime.utc(2026, 1, 1, 8, 30),
+            coeventTime: null,
+          ),
         ),
-        drug: const DrugRuntimeContext(
-          id: 'drug_4',
-          genericName: 'pramipexole',
-          brandName: 'Mirapex',
-          activeIngredients: ['pramipexole'],
-          substanceTags: ['dopamine_agonist'],
-          formulation: 'tablet',
-          dosageForm: 'tablet',
-          route: 'oral',
-          releaseType: 'immediate',
-          dailyDoseMg: 1.5,
-          jurisdiction: 'US',
+        rules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
         ),
-        meal: const MealRuntimeContext(
-          id: 'meal_3',
-          totalProteinG: 12,
-          tyramineMgEstimate: 0,
-          highFatHighCalorie: false,
-          itemIds: ['food_3'],
-        ),
-        coevent: null,
-        enteralFeed: null,
-        timestamps: TimestampRuntimeContext(
-          drugTime: DateTime.utc(2026, 1, 1, 8),
-          mealTime: DateTime.utc(2026, 1, 1, 8, 30),
-          coeventTime: null,
-        ),
-      ),
-      rules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-      factsVersion: 'facts_v1',
-      rulesVersion: 'rules_v1',
-    );
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+      );
 
-    expect(
-      output.alerts.any((alert) => alert.decision == RuntimeDecisionType.info),
-      isTrue,
-    );
-    expect(
-      output.humanReadableMarkdown,
-      contains('Pramipexole food administration label reference'),
-    );
-    expect(output.humanReadableMarkdown, contains('official_label'));
-  });
+      expect(
+        output.alerts.any(
+          (alert) => alert.decision == RuntimeDecisionType.info,
+        ),
+        isTrue,
+      );
+      expect(
+        output.humanReadableMarkdown,
+        contains('Pramipexole food administration label reference'),
+      );
+      expect(output.humanReadableMarkdown, contains('official_label'));
+    },
+  );
 
   test('regional master data seed writes modular tables', () async {
     final db = RecordingCdssDatabase();
@@ -604,216 +619,231 @@ void main() {
     expect((await db.queryTable('region_jurisdiction_map')).isNotEmpty, isTrue);
     expect((await db.queryTable('country_diet_profile')).isNotEmpty, isTrue);
     expect((await db.queryTable('meal_template')).isNotEmpty, isTrue);
-    expect((await db.queryTable('food_concept')).single['food_concept_id'],
-        'FOOD_APPLE');
-    expect((await db.queryTable('drug_concept')).single['drug_concept_id'],
-        'DRUG_LDOPA');
+    expect(
+      (await db.queryTable('food_concept')).single['food_concept_id'],
+      'FOOD_APPLE',
+    );
+    expect(
+      (await db.queryTable('drug_concept')).single['drug_concept_id'],
+      'DRUG_LDOPA',
+    );
   });
 
-  test('P0 food source seed writes source documents and resolved food facts',
-      () async {
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final seed = buildP0FoodKnowledgeBaseSeed();
+  test(
+    'P0 food source seed writes source documents and resolved food facts',
+    () async {
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final seed = buildP0FoodKnowledgeBaseSeed();
 
-    await service.initializeKnowledgeBase(
-      sourceDocuments: seed.sourceDocuments,
-      variantScopes: seed.variantScopes,
-      observations: seed.observations,
-      resolvedFacts: seed.resolvedFacts,
-    );
+      await service.initializeKnowledgeBase(
+        sourceDocuments: seed.sourceDocuments,
+        variantScopes: seed.variantScopes,
+        observations: seed.observations,
+        resolvedFacts: seed.resolvedFacts,
+      );
 
-    expect((await db.queryTable('source_document')).isNotEmpty, isTrue);
-    expect((await db.queryTable('variant_scope')).isNotEmpty, isTrue);
-    expect((await db.queryTable('observation')).isNotEmpty, isTrue);
-    expect((await db.queryTable('resolved_fact')).isNotEmpty, isTrue);
-  });
+      expect((await db.queryTable('source_document')).isNotEmpty, isTrue);
+      expect((await db.queryTable('variant_scope')).isNotEmpty, isTrue);
+      expect((await db.queryTable('observation')).isNotEmpty, isTrue);
+      expect((await db.queryTable('resolved_fact')).isNotEmpty, isTrue);
+    },
+  );
 
-  test('official import stages and promotes rule registry and runtime events',
-      () async {
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
+  test(
+    'official import stages and promotes rule registry and runtime events',
+    () async {
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
 
-    final report = await service.importBundle(
-      P0ImportBundle(
-        sourceDocuments: [
-          const SourceDocumentRecord(
-            sourceDocId: 'doc_rule_runtime',
-            sourceFamily: 'DAILYMED',
-            organization: 'Regulator',
-            docType: 'official_label',
-            title: 'Official rule source',
-            jurisdiction: 'US',
-            originUrl: 'https://example.test/rule',
-            publishedAt: null,
-            effectiveAt: null,
-            language: 'en',
-            licenseNote: 'test',
-            checksum: 'checksum_rule_runtime',
-            sourceStatus: 'active',
-            rawPayload: '{}',
-          ),
-        ],
-        drugConcepts: const [
-          DrugConceptRecord(
-            drugConceptId: 'DRUG_LDOPA',
-            genericName: 'levodopa',
-            atcLikeCode: 'levodopa_like',
-          ),
-        ],
-        drugProductVariants: const [
-          DrugProductVariantRecord(
-            drugProductVariantId: 'DRUG_LDOPA#US#DAILYMED#setid_1',
-            drugConceptId: 'DRUG_LDOPA',
-            jurisdiction: 'US',
-            regulator: 'DAILYMED',
-            externalProductCode: 'setid_1',
-            route: 'oral',
-            dosageForm: 'tablet',
-            releaseType: 'immediate',
-            labelVersion: 'v1',
-            sourceStatus: 'active',
-          ),
-        ],
-        ruleRegistryRows: [
-          {
-            'rule_id': 'official_rule_1',
-            'rule_version': '2026.04',
-            'status': 'active',
-            'rule_type': 'official_label',
-            'priority_band': 10,
-            'specificity_band': 5,
-            'jurisdiction_json': '["US"]',
-            'applies_to_json': '{"drug":"levodopa"}',
-            'predicate_json': '{"meal_protein_g":{">":30}}',
-            'effect_json': '{"decision":"warn"}',
-            'provenance_json': '{"source_refs":["doc_rule_runtime"]}',
-            'override_json': '{}',
-            'compiled_hash': 'official_rule_1_2026_04',
-            'updated_at': 1777334400000,
-          },
-        ],
-        runtimeEvents: [
-          RuntimeEventRecord(
-            eventId: 'import_runtime_event_1',
-            patientId: 'import_audit',
-            eventType: 'official_import_validation',
-            snapshotId: 'pre_promote_snapshot',
-            contextJson: '{"source":"OFFICIAL_TEST"}',
-            machineReadableJson: '{"status":"validated"}',
-            humanReadableMarkdown: 'Official import validation passed.',
-            jurisdiction: 'US',
+      final report = await service.importBundle(
+        P0ImportBundle(
+          sourceDocuments: [
+            const SourceDocumentRecord(
+              sourceDocId: 'doc_rule_runtime',
+              sourceFamily: 'DAILYMED',
+              organization: 'Regulator',
+              docType: 'official_label',
+              title: 'Official rule source',
+              jurisdiction: 'US',
+              originUrl: 'https://example.test/rule',
+              publishedAt: null,
+              effectiveAt: null,
+              language: 'en',
+              licenseNote: 'test',
+              checksum: 'checksum_rule_runtime',
+              sourceStatus: 'active',
+              rawPayload: '{}',
+            ),
+          ],
+          drugConcepts: const [
+            DrugConceptRecord(
+              drugConceptId: 'DRUG_LDOPA',
+              genericName: 'levodopa',
+              atcLikeCode: 'levodopa_like',
+            ),
+          ],
+          drugProductVariants: const [
+            DrugProductVariantRecord(
+              drugProductVariantId: 'DRUG_LDOPA#US#DAILYMED#setid_1',
+              drugConceptId: 'DRUG_LDOPA',
+              jurisdiction: 'US',
+              regulator: 'DAILYMED',
+              externalProductCode: 'setid_1',
+              route: 'oral',
+              dosageForm: 'tablet',
+              releaseType: 'immediate',
+              labelVersion: 'v1',
+              sourceStatus: 'active',
+            ),
+          ],
+          ruleRegistryRows: [
+            {
+              'rule_id': 'official_rule_1',
+              'rule_version': '2026.04',
+              'status': 'active',
+              'rule_type': 'official_label',
+              'priority_band': 10,
+              'specificity_band': 5,
+              'jurisdiction_json': '["US"]',
+              'applies_to_json': '{"drug":"levodopa"}',
+              'predicate_json': '{"meal_protein_g":{">":30}}',
+              'effect_json': '{"decision":"warn"}',
+              'provenance_json': '{"source_refs":["doc_rule_runtime"]}',
+              'override_json': '{}',
+              'compiled_hash': 'official_rule_1_2026_04',
+              'updated_at': 1777334400000,
+            },
+          ],
+          runtimeEvents: [
+            RuntimeEventRecord(
+              eventId: 'import_runtime_event_1',
+              patientId: 'import_audit',
+              eventType: 'official_import_validation',
+              snapshotId: 'pre_promote_snapshot',
+              contextJson: '{"source":"OFFICIAL_TEST"}',
+              machineReadableJson: '{"status":"validated"}',
+              humanReadableMarkdown: 'Official import validation passed.',
+              jurisdiction: 'US',
+              timezone: 'America/Toronto',
+              createdAt: DateTime.fromMillisecondsSinceEpoch(1777334400000),
+            ),
+          ],
+        ),
+      );
+
+      expect(report.ruleRegistryCount, 1);
+      expect(report.runtimeEventCount, 1);
+      expect(
+        (await db.queryTable('rule_registry')).single['rule_id'],
+        'official_rule_1',
+      );
+      expect(
+        (await db.queryTable('runtime_event')).single['event_id'],
+        'import_runtime_event_1',
+      );
+      final crosswalks = await db.queryTable('concept_variant_crosswalk');
+      expect(crosswalks.single['external_id_system'], 'DailyMed setid');
+      expect(crosswalks.single['source_doc_id'], 'doc_rule_runtime');
+      final distributions = await db.queryTable('snapshot_distribution');
+      expect(
+        distributions.any(
+          (row) => row['distribution_type'] == 'import_artifacts',
+        ),
+        isTrue,
+      );
+      expect(await db.queryTable('staging_rule_registry'), isEmpty);
+      expect(await db.queryTable('staging_runtime_event'), isEmpty);
+
+      final promoteRun = (await db.queryTable('ingestion_run')).last;
+      expect(promoteRun['stage'], 'promote');
+      expect('${promoteRun['notes_json']}', contains('rule_registry_count'));
+      expect('${promoteRun['notes_json']}', contains('runtime_event_count'));
+    },
+  );
+
+  test(
+    'opicapone meal-window rule warns when meal is too close to dose',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      await service.initializeKnowledgeBase(
+        sourceDocuments: clinicalEvidenceSourceDocuments,
+        variantScopes: const <VariantScopeRecord>[],
+        observations: const <ObservationRecord>[],
+        resolvedFacts: const <ResolvedFactRecord>[],
+      );
+
+      final output = await service.run(
+        context: UnifiedRuntimeContext(
+          userProfile: const UserProfileRuntimeContext(
+            patientId: 'patient_opicapone',
+            registrationRegion: 'US',
+            displayLocale: 'en-US',
+            contentJurisdictionOverride: [],
+            dietProfileRegion: 'US',
             timezone: 'America/Toronto',
-            createdAt: DateTime.fromMillisecondsSinceEpoch(1777334400000),
           ),
-        ],
-      ),
-    );
-
-    expect(report.ruleRegistryCount, 1);
-    expect(report.runtimeEventCount, 1);
-    expect((await db.queryTable('rule_registry')).single['rule_id'],
-        'official_rule_1');
-    expect((await db.queryTable('runtime_event')).single['event_id'],
-        'import_runtime_event_1');
-    final crosswalks = await db.queryTable('concept_variant_crosswalk');
-    expect(crosswalks.single['external_id_system'], 'DailyMed setid');
-    expect(crosswalks.single['source_doc_id'], 'doc_rule_runtime');
-    final distributions = await db.queryTable('snapshot_distribution');
-    expect(
-      distributions
-          .any((row) => row['distribution_type'] == 'import_artifacts'),
-      isTrue,
-    );
-    expect(await db.queryTable('staging_rule_registry'), isEmpty);
-    expect(await db.queryTable('staging_runtime_event'), isEmpty);
-
-    final promoteRun = (await db.queryTable('ingestion_run')).last;
-    expect(promoteRun['stage'], 'promote');
-    expect('${promoteRun['notes_json']}', contains('rule_registry_count'));
-    expect('${promoteRun['notes_json']}', contains('runtime_event_count'));
-  });
-
-  test('opicapone meal-window rule warns when meal is too close to dose',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    await service.initializeKnowledgeBase(
-      sourceDocuments: clinicalEvidenceSourceDocuments,
-      variantScopes: const <VariantScopeRecord>[],
-      observations: const <ObservationRecord>[],
-      resolvedFacts: const <ResolvedFactRecord>[],
-    );
-
-    final output = await service.run(
-      context: UnifiedRuntimeContext(
-        userProfile: const UserProfileRuntimeContext(
-          patientId: 'patient_opicapone',
-          registrationRegion: 'US',
-          displayLocale: 'en-US',
-          contentJurisdictionOverride: [],
-          dietProfileRegion: 'US',
-          timezone: 'America/Toronto',
+          drug: const DrugRuntimeContext(
+            id: 'drug_ongentys',
+            genericName: 'opicapone',
+            brandName: 'ONGENTYS',
+            activeIngredients: ['opicapone'],
+            substanceTags: ['comt_inhibitor'],
+            formulation: 'capsule',
+            dosageForm: 'capsule',
+            route: 'oral',
+            releaseType: 'immediate',
+            dailyDoseMg: 50,
+            jurisdiction: 'US',
+          ),
+          meal: const MealRuntimeContext(
+            id: 'meal_close',
+            totalProteinG: 8,
+            tyramineMgEstimate: 0,
+            highFatHighCalorie: false,
+            itemIds: ['food_1'],
+          ),
+          coevent: null,
+          enteralFeed: null,
+          timestamps: TimestampRuntimeContext(
+            drugTime: DateTime.utc(2026, 1, 1, 22, 0),
+            mealTime: DateTime.utc(2026, 1, 1, 21, 30),
+            coeventTime: null,
+          ),
         ),
-        drug: const DrugRuntimeContext(
-          id: 'drug_ongentys',
-          genericName: 'opicapone',
-          brandName: 'ONGENTYS',
-          activeIngredients: ['opicapone'],
-          substanceTags: ['comt_inhibitor'],
-          formulation: 'capsule',
-          dosageForm: 'capsule',
-          route: 'oral',
-          releaseType: 'immediate',
-          dailyDoseMg: 50,
-          jurisdiction: 'US',
+        rules: compiler.compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
         ),
-        meal: const MealRuntimeContext(
-          id: 'meal_close',
-          totalProteinG: 8,
-          tyramineMgEstimate: 0,
-          highFatHighCalorie: false,
-          itemIds: ['food_1'],
-        ),
-        coevent: null,
-        enteralFeed: null,
-        timestamps: TimestampRuntimeContext(
-          drugTime: DateTime.utc(2026, 1, 1, 22, 0),
-          mealTime: DateTime.utc(2026, 1, 1, 21, 30),
-          coeventTime: null,
-        ),
-      ),
-      rules: compiler.compileJsonList(
-        baselineCdssRules,
-        rulesVersion: 'test_rules',
-      ),
-      factsVersion: 'facts_v1',
-      rulesVersion: 'rules_v1',
-    );
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+      );
 
-    expect(
-      output.alerts.any(
-        (alert) =>
-            alert.ruleIds.contains('pd.opicapone.meal.window.v1') &&
-            alert.decision == RuntimeDecisionType.warn,
-      ),
-      isTrue,
-    );
-    expect(output.humanReadableMarkdown, contains('ONGENTYS food timing'));
-  });
+      expect(
+        output.alerts.any(
+          (alert) =>
+              alert.ruleIds.contains('pd.opicapone.meal.window.v1') &&
+              alert.decision == RuntimeDecisionType.warn,
+        ),
+        isTrue,
+      );
+      expect(output.humanReadableMarkdown, contains('ONGENTYS food timing'));
+    },
+  );
 
   test('rotigotine meal-independent rule emits low-risk info', () async {
     final compiler = RuleRegistryCompiler();
@@ -908,8 +938,10 @@ void main() {
 ''',
       },
     ];
-    final provider =
-        ImportedLabelRuleProvider(database: db, compiler: compiler);
+    final provider = ImportedLabelRuleProvider(
+      database: db,
+      compiler: compiler,
+    );
     final rules = await provider.loadRules();
     final service = ClinicalDecisionSupportService(
       database: db,
@@ -992,8 +1024,10 @@ void main() {
 ''',
       },
     ];
-    final provider =
-        ImportedLabelRuleProvider(database: db, compiler: compiler);
+    final provider = ImportedLabelRuleProvider(
+      database: db,
+      compiler: compiler,
+    );
     final rules = await provider.loadRules();
     final service = ClinicalDecisionSupportService(
       database: db,
@@ -1052,222 +1086,232 @@ void main() {
     );
   });
 
-  test('imported label thickener incompatibility fact emits block alert',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    db.tables['drug_label_section'] = [
-      {
-        'drug_product_variant_id': 'DRUG_PEG#US#DAILYMED#drug_peg',
-        'source_doc_id': 'doc_peg',
-        'section_key': 'administration',
-        'section_title': 'Administration',
-        'section_text': 'Do not mix with starch-based thickener.',
-      },
-    ];
-    db.tables['source_document'] = [
-      {
-        'source_doc_id': 'doc_peg',
-        'title': 'Imported PEG label fact',
-        'raw_payload': '''
+  test(
+    'imported label thickener incompatibility fact emits block alert',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      db.tables['drug_label_section'] = [
+        {
+          'drug_product_variant_id': 'DRUG_PEG#US#DAILYMED#drug_peg',
+          'source_doc_id': 'doc_peg',
+          'section_key': 'administration',
+          'section_title': 'Administration',
+          'section_text': 'Do not mix with starch-based thickener.',
+        },
+      ];
+      db.tables['source_document'] = [
+        {
+          'source_doc_id': 'doc_peg',
+          'title': 'Imported PEG label fact',
+          'raw_payload': '''
 {"label_facts":[{"fact_type":"starch_thickener_incompatibility","label":"Do not mix with starch-based thickener","payload":{}}]}
 ''',
-      },
-    ];
-    final provider =
-        ImportedLabelRuleProvider(database: db, compiler: compiler);
-    final rules = await provider.loadRules();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
+        },
+      ];
+      final provider = ImportedLabelRuleProvider(
+        database: db,
+        compiler: compiler,
+      );
+      final rules = await provider.loadRules();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
 
-    final output = await service.run(
-      context: const UnifiedRuntimeContext(
-        userProfile: UserProfileRuntimeContext(
-          patientId: 'patient_peg',
-          registrationRegion: 'US',
-          displayLocale: 'en-US',
-          contentJurisdictionOverride: [],
-          dietProfileRegion: 'US',
-          timezone: 'America/Toronto',
+      final output = await service.run(
+        context: const UnifiedRuntimeContext(
+          userProfile: UserProfileRuntimeContext(
+            patientId: 'patient_peg',
+            registrationRegion: 'US',
+            displayLocale: 'en-US',
+            contentJurisdictionOverride: [],
+            dietProfileRegion: 'US',
+            timezone: 'America/Toronto',
+          ),
+          drug: DrugRuntimeContext(
+            id: 'DRUG_PEG#US#DAILYMED#drug_peg',
+            genericName: 'peg 3350',
+            brandName: null,
+            activeIngredients: ['peg_3350'],
+            substanceTags: ['peg_3350'],
+            formulation: 'solution',
+            dosageForm: 'powder',
+            route: 'oral',
+            releaseType: 'immediate',
+            dailyDoseMg: 17,
+            jurisdiction: 'US',
+          ),
+          meal: null,
+          coevent: CoeventRuntimeContext(
+            substanceTags: ['hydration'],
+            supplements: {},
+            thickenerType: 'starch_based',
+          ),
+          enteralFeed: null,
+          timestamps: TimestampRuntimeContext(
+            drugTime: null,
+            mealTime: null,
+            coeventTime: null,
+          ),
         ),
-        drug: DrugRuntimeContext(
-          id: 'DRUG_PEG#US#DAILYMED#drug_peg',
-          genericName: 'peg 3350',
-          brandName: null,
-          activeIngredients: ['peg_3350'],
-          substanceTags: ['peg_3350'],
-          formulation: 'solution',
-          dosageForm: 'powder',
-          route: 'oral',
-          releaseType: 'immediate',
-          dailyDoseMg: 17,
-          jurisdiction: 'US',
-        ),
-        meal: null,
-        coevent: CoeventRuntimeContext(
-          substanceTags: ['hydration'],
-          supplements: {},
-          thickenerType: 'starch_based',
-        ),
-        enteralFeed: null,
-        timestamps: TimestampRuntimeContext(
-          drugTime: null,
-          mealTime: null,
-          coeventTime: null,
-        ),
-      ),
-      rules: rules,
-      factsVersion: 'facts_v1',
-      rulesVersion: 'imported_label_rules_v1',
-    );
+        rules: rules,
+        factsVersion: 'facts_v1',
+        rulesVersion: 'imported_label_rules_v1',
+      );
 
-    expect(
-      output.alerts.any(
-        (alert) =>
-            alert.ruleIds.any(
-              (id) => id.endsWith('.starch_thickener_incompatibility'),
-            ) &&
-            alert.decision == RuntimeDecisionType.block,
-      ),
-      isTrue,
-    );
-  });
+      expect(
+        output.alerts.any(
+          (alert) =>
+              alert.ruleIds.any(
+                (id) => id.endsWith('.starch_thickener_incompatibility'),
+              ) &&
+              alert.decision == RuntimeDecisionType.block,
+        ),
+        isTrue,
+      );
+    },
+  );
 
-  test('imported label enteral feeding fact emits require-review alert',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    db.tables['drug_label_section'] = [
-      {
-        'drug_product_variant_id': 'DRUG_LDOPA#US#DAILYMED#drug_ldopa',
-        'source_doc_id': 'doc_ldopa_enteral',
-        'section_key': 'warnings',
-        'section_title': 'Warnings',
-        'section_text': 'Enteral feeding requires review.',
-      },
-    ];
-    db.tables['source_document'] = [
-      {
-        'source_doc_id': 'doc_ldopa_enteral',
-        'title': 'Imported levodopa enteral label fact',
-        'raw_payload': '''
+  test(
+    'imported label enteral feeding fact emits require-review alert',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      db.tables['drug_label_section'] = [
+        {
+          'drug_product_variant_id': 'DRUG_LDOPA#US#DAILYMED#drug_ldopa',
+          'source_doc_id': 'doc_ldopa_enteral',
+          'section_key': 'warnings',
+          'section_title': 'Warnings',
+          'section_text': 'Enteral feeding requires review.',
+        },
+      ];
+      db.tables['source_document'] = [
+        {
+          'source_doc_id': 'doc_ldopa_enteral',
+          'title': 'Imported levodopa enteral label fact',
+          'raw_payload': '''
 {"label_facts":[{"fact_type":"enteral_feed_review","label":"Enteral feeding requires review","payload":{}}]}
 ''',
-      },
-    ];
-    final provider =
-        ImportedLabelRuleProvider(database: db, compiler: compiler);
-    final rules = await provider.loadRules();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
+        },
+      ];
+      final provider = ImportedLabelRuleProvider(
+        database: db,
+        compiler: compiler,
+      );
+      final rules = await provider.loadRules();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
 
-    final output = await service.run(
-      context: const UnifiedRuntimeContext(
-        userProfile: UserProfileRuntimeContext(
-          patientId: 'patient_enteral',
-          registrationRegion: 'US',
-          displayLocale: 'en-US',
+      final output = await service.run(
+        context: const UnifiedRuntimeContext(
+          userProfile: UserProfileRuntimeContext(
+            patientId: 'patient_enteral',
+            registrationRegion: 'US',
+            displayLocale: 'en-US',
+            contentJurisdictionOverride: [],
+            dietProfileRegion: 'US',
+            timezone: 'America/Toronto',
+          ),
+          drug: DrugRuntimeContext(
+            id: 'DRUG_LDOPA#US#DAILYMED#drug_ldopa',
+            genericName: 'carbidopa/levodopa',
+            brandName: null,
+            activeIngredients: ['carbidopa', 'levodopa'],
+            substanceTags: ['levodopa'],
+            formulation: 'tablet',
+            dosageForm: 'tablet',
+            route: 'oral',
+            releaseType: 'immediate',
+            dailyDoseMg: 300,
+            jurisdiction: 'US',
+          ),
+          meal: null,
+          coevent: null,
+          enteralFeed: EnteralFeedRuntimeContext(
+            mode: 'continuous',
+            formula: 'standard_feed',
+            proteinGPerDay: 80,
+          ),
+          timestamps: TimestampRuntimeContext(
+            drugTime: null,
+            mealTime: null,
+            coeventTime: null,
+          ),
+        ),
+        rules: rules,
+        factsVersion: 'facts_v1',
+        rulesVersion: 'imported_label_rules_v1',
+      );
+
+      expect(
+        output.alerts.any(
+          (alert) =>
+              alert.ruleIds.any((id) => id.endsWith('.enteral_feed_review')) &&
+              alert.decision == RuntimeDecisionType.requireReview,
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'recommendation audit is written for regional recommendations',
+    () async {
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final recommendations = GetFoodRecommendationsUseCase().call(
+        history: const [],
+        drugs: const [],
+        allFoods: [
+          FoodItem(
+            id: 'banana',
+            name: '香蕉',
+            category: FoodCategory.fruit,
+            proteinG: 1.0,
+            carbsG: 20,
+            fatG: 0.3,
+            fiberG: 2.0,
+            sodiumMg: 1.0,
+          ),
+        ],
+        userProfile: UserProfile.defaults().copyWith(
+          registrationRegion: 'JP',
+          displayLocale: 'ja-JP',
+          dietProfileRegion: 'JP',
+        ),
+      );
+
+      await service.writeRecommendationAudit(
+        userProfile: const UserProfileRuntimeContext(
+          patientId: 'patient_1',
+          registrationRegion: 'JP',
+          displayLocale: 'ja-JP',
           contentJurisdictionOverride: [],
-          dietProfileRegion: 'US',
+          dietProfileRegion: 'JP',
           timezone: 'America/Toronto',
         ),
-        drug: DrugRuntimeContext(
-          id: 'DRUG_LDOPA#US#DAILYMED#drug_ldopa',
-          genericName: 'carbidopa/levodopa',
-          brandName: null,
-          activeIngredients: ['carbidopa', 'levodopa'],
-          substanceTags: ['levodopa'],
-          formulation: 'tablet',
-          dosageForm: 'tablet',
-          route: 'oral',
-          releaseType: 'immediate',
-          dailyDoseMg: 300,
-          jurisdiction: 'US',
-        ),
-        meal: null,
-        coevent: null,
-        enteralFeed: EnteralFeedRuntimeContext(
-          mode: 'continuous',
-          formula: 'standard_feed',
-          proteinGPerDay: 80,
-        ),
-        timestamps: TimestampRuntimeContext(
-          drugTime: null,
-          mealTime: null,
-          coeventTime: null,
-        ),
-      ),
-      rules: rules,
-      factsVersion: 'facts_v1',
-      rulesVersion: 'imported_label_rules_v1',
-    );
+        mealSlot: 'dashboard',
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+        recommendations: recommendations,
+      );
 
-    expect(
-      output.alerts.any(
-        (alert) =>
-            alert.ruleIds.any((id) => id.endsWith('.enteral_feed_review')) &&
-            alert.decision == RuntimeDecisionType.requireReview,
-      ),
-      isTrue,
-    );
-  });
-
-  test('recommendation audit is written for regional recommendations',
-      () async {
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final recommendations = GetFoodRecommendationsUseCase().call(
-      history: const [],
-      drugs: const [],
-      allFoods: [
-        FoodItem(
-          id: 'banana',
-          name: '香蕉',
-          category: FoodCategory.fruit,
-          proteinG: 1.0,
-          carbsG: 20,
-          fatG: 0.3,
-          fiberG: 2.0,
-          sodiumMg: 1.0,
-        ),
-      ],
-      userProfile: UserProfile.defaults().copyWith(
-        registrationRegion: 'JP',
-        displayLocale: 'ja-JP',
-        dietProfileRegion: 'JP',
-      ),
-    );
-
-    await service.writeRecommendationAudit(
-      userProfile: const UserProfileRuntimeContext(
-        patientId: 'patient_1',
-        registrationRegion: 'JP',
-        displayLocale: 'ja-JP',
-        contentJurisdictionOverride: [],
-        dietProfileRegion: 'JP',
-        timezone: 'America/Toronto',
-      ),
-      mealSlot: 'dashboard',
-      factsVersion: 'facts_v1',
-      rulesVersion: 'rules_v1',
-      recommendations: recommendations,
-    );
-
-    final rows = await db.queryTable('recommendation_audit_log');
-    expect(rows, hasLength(1));
-    expect(rows.single['meal_slot'], 'dashboard');
-    expect(rows.single['fallback_used'], isTrue);
-  });
+      final rows = await db.queryTable('recommendation_audit_log');
+      expect(rows, hasLength(1));
+      expect(rows.single['meal_slot'], 'dashboard');
+      expect(rows.single['fallback_used'], isTrue);
+    },
+  );
 
   test('official import writes cluster conflict rationale artifacts', () async {
     final db = RecordingCdssDatabase();
@@ -1368,52 +1412,70 @@ void main() {
     expect(audits.single['audit_type'], 'FACT_CLUSTER_RESOLUTION');
     expect('${audits.single['decision_reason']}', contains('accepted'));
     expect('${audits.single['decision_reason']}', contains('rejected'));
-    expect('${audits.single['decision_reason']}',
-        contains('accepted_highest_ranked_candidate'));
-    expect('${audits.single['decision_reason']}', contains('out_of_tolerance'));
-    expect('${audits.single['decision_reason']}',
-        contains('cross_source_contradiction'));
     expect(
-        '${audits.single['decision_reason']}', contains('ranking_explanation'));
+      '${audits.single['decision_reason']}',
+      contains('accepted_highest_ranked_candidate'),
+    );
+    expect('${audits.single['decision_reason']}', contains('out_of_tolerance'));
+    expect(
+      '${audits.single['decision_reason']}',
+      contains('cross_source_contradiction'),
+    );
+    expect(
+      '${audits.single['decision_reason']}',
+      contains('ranking_explanation'),
+    );
 
     final distributions = await db.queryTable('snapshot_distribution');
     final importArtifact = distributions.firstWhere(
       (row) => row['distribution_type'] == 'import_artifacts',
     );
     expect(
-        '${importArtifact['manifest_json']}', contains('conflict_rationale'));
+      '${importArtifact['manifest_json']}',
+      contains('conflict_rationale'),
+    );
   });
 
-  test('runtime loads matching database rule version before caller seed rules',
-      () async {
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    await db.insertRuleRegistry(_runtimeRuleRow(
-      ruleId: 'db.rule.versioned',
-      version: 'db_rules_v2',
-      decision: 'INFO',
-    ));
+  test(
+    'runtime loads matching database rule version before caller seed rules',
+    () async {
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      await db.insertRuleRegistry(
+        _runtimeRuleRow(
+          ruleId: 'db.rule.versioned',
+          version: 'db_rules_v2',
+          decision: 'INFO',
+        ),
+      );
 
-    final output = await service.run(
-      context: _runtimeContextForDbRule(),
-      rules: const [],
-      factsVersion: 'facts_v1',
-      rulesVersion: 'db_rules_v2',
-    );
+      final output = await service.run(
+        context: _runtimeContextForDbRule(),
+        rules: const [],
+        factsVersion: 'facts_v1',
+        rulesVersion: 'db_rules_v2',
+      );
 
-    expect(output.alertsJson['compiled_rule_source'],
-        'database_rule_registry_snapshot');
-    expect(output.alerts.map((alert) => alert.ruleIds).expand((ids) => ids),
-        contains('db.rule.versioned'));
-    expect(output.alertsJson['rule_hit_trace'], isNotEmpty);
-    final runtimeEvent = (await db.queryTable('runtime_event')).single;
-    expect('${runtimeEvent['machine_readable_json']}',
-        contains('db.rule.versioned'));
-  });
+      expect(
+        output.alertsJson['compiled_rule_source'],
+        'database_rule_registry_snapshot',
+      );
+      expect(
+        output.alerts.map((alert) => alert.ruleIds).expand((ids) => ids),
+        contains('db.rule.versioned'),
+      );
+      expect(output.alertsJson['rule_hit_trace'], isNotEmpty);
+      final runtimeEvent = (await db.queryTable('runtime_event')).single;
+      expect(
+        '${runtimeEvent['machine_readable_json']}',
+        contains('db.rule.versioned'),
+      );
+    },
+  );
 
   test('database rule version switch changes runtime result', () async {
     final db = RecordingCdssDatabase();
@@ -1422,16 +1484,20 @@ void main() {
       factConflictEngine: FactConflictEngine(),
       runtimeRuleEngine: RuntimeRuleEngine(),
     );
-    await db.insertRuleRegistry(_runtimeRuleRow(
-      ruleId: 'db.rule.switch',
-      version: 'db_rules_v1',
-      decision: 'INFO',
-    ));
-    await db.insertRuleRegistry(_runtimeRuleRow(
-      ruleId: 'db.rule.switch',
-      version: 'db_rules_v2',
-      decision: 'WARN',
-    ));
+    await db.insertRuleRegistry(
+      _runtimeRuleRow(
+        ruleId: 'db.rule.switch',
+        version: 'db_rules_v1',
+        decision: 'INFO',
+      ),
+    );
+    await db.insertRuleRegistry(
+      _runtimeRuleRow(
+        ruleId: 'db.rule.switch',
+        version: 'db_rules_v2',
+        decision: 'WARN',
+      ),
+    );
 
     final v1 = await service.run(
       context: _runtimeContextForDbRule(),
@@ -1450,202 +1516,223 @@ void main() {
     expect(v2.alerts.single.decision, RuntimeDecisionType.warn);
   });
 
-  test('runtime trace includes matched suppressed and missing-field reasons',
-      () async {
-    final compiler = RuleRegistryCompiler();
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    final output = await service.run(
-      context: _runtimeContextForDbRule(dailyDoseMg: null),
-      rules: compiler.compileJsonList([
-        _runtimeRuleJson(
-          ruleId: 'trace.warn',
-          decision: 'WARN',
-          priorityBand: 5,
+  test(
+    'runtime trace includes matched suppressed and missing-field reasons',
+    () async {
+      final compiler = RuleRegistryCompiler();
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      final output = await service.run(
+        context: _runtimeContextForDbRule(dailyDoseMg: null),
+        rules: compiler.compileJsonList([
+          _runtimeRuleJson(
+            ruleId: 'trace.warn',
+            decision: 'WARN',
+            priorityBand: 5,
+          ),
+          _runtimeRuleJson(
+            ruleId: 'trace.info',
+            decision: 'INFO',
+            priorityBand: 5,
+          ),
+          _runtimeRuleJson(
+            ruleId: 'trace.missing.dose',
+            decision: 'WARN',
+            priorityBand: 4,
+            when: {
+              'dose_band': {
+                'path': 'drug.daily_dose_mg',
+                'threshold': 200,
+                'op': 'gte',
+              },
+            },
+          ),
+        ], rulesVersion: 'trace_rules'),
+        factsVersion: 'facts_v1',
+        rulesVersion: 'trace_rules',
+      );
+
+      final trace = (output.alertsJson['rule_hit_trace'] as List<dynamic>)
+          .cast<Map>();
+      final suppressed = trace.firstWhere(
+        (row) => row['rule_id'] == 'trace.info',
+      );
+      final missing = trace.firstWhere(
+        (row) => row['rule_id'] == 'trace.missing.dose',
+      );
+      expect(suppressed['matched'], isTrue);
+      expect(suppressed['suppressed'], isTrue);
+      expect(
+        suppressed['tie_break_reason'],
+        'same_band_warn_permissive_conflict',
+      );
+      final provenanceScore = suppressed['provenance_score'] as Map;
+      expect(provenanceScore['source_authority'], 100);
+      expect(provenanceScore['source_status'], 'active');
+      expect(provenanceScore['jurisdiction_specificity'], greaterThan(0));
+      expect(suppressed['source_refs'], isNotEmpty);
+      expect(suppressed['priority'], suppressed['priority_band']);
+      expect(suppressed['specificity'], suppressed['specificity_band']);
+      expect(missing['matched'], isFalse);
+      expect(missing['missing_field_reason'], 'missing_dose');
+      final traceMetadata = output.alertsJson['trace_metadata'] as Map;
+      expect(traceMetadata['region_jurisdiction_source'], 'runtime_static_map');
+      expect(
+        (traceMetadata['warnings'] as List),
+        contains('region_jurisdiction_map_static_fallback_possible'),
+      );
+      expect(output.auditLogJsonl, contains('"event_type":"rule_trace"'));
+    },
+  );
+
+  test(
+    'invalid database rule is audited and skipped without crashing',
+    () async {
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+      await db.insertRuleRegistry({
+        'rule_id': 'db.rule.invalid',
+        'rule_version': 'db_rules_v2',
+        'status': 'active',
+        'rule_type': 'soft_rule',
+        'priority_band': 1,
+        'specificity_band': 1,
+        'jurisdiction_json': '["GLOBAL"]',
+        'applies_to_json': '{"subject_types":["drug"]}',
+        'predicate_json': '{bad json',
+        'effect_json': '{}',
+        'provenance_json': '{}',
+      });
+
+      final output = await service.run(
+        context: _runtimeContextForDbRule(),
+        rules: const [],
+        factsVersion: 'facts_v1',
+        rulesVersion: 'db_rules_v2',
+      );
+
+      expect(output.alertsJson['compiled_rule_source'], isNotNull);
+      final audits = await db.queryTable('conflict_audit_log');
+      expect(
+        audits.map((row) => row['audit_type']),
+        contains('RULE_COMPILE_FAILURE'),
+      );
+    },
+  );
+
+  test(
+    'variant resolver prefers concept crosswalk over legacy food code',
+    () async {
+      final db = RecordingCdssDatabase();
+      await db.insertStagingRow('food_variant', {
+        'food_variant_id': 'variant_crosswalk',
+        'food_concept_id': 'FOOD_CANONICAL',
+        'jurisdiction': 'US',
+        'source_family': 'FDC',
+        'source_food_code': 'official_123',
+        'display_name_local': 'Crosswalk food',
+        'is_authoritative_for_region': 1,
+        'is_authoritative_fallback': 0,
+        'status': 'active',
+        'fallback_chain_json': '[]',
+      });
+      await db.insertStagingRow('food_variant', {
+        'food_variant_id': 'variant_legacy',
+        'food_concept_id': 'FOOD_LEGACY',
+        'jurisdiction': 'US',
+        'source_family': 'LEGACY',
+        'source_food_code': 'banana',
+        'display_name_local': 'Legacy banana',
+        'is_authoritative_for_region': 1,
+        'is_authoritative_fallback': 0,
+        'status': 'active',
+        'fallback_chain_json': '[]',
+      });
+      await db.insertStagingRow('concept_variant_crosswalk', {
+        'crosswalk_id': 'xwalk_banana',
+        'domain': 'food',
+        'app_entity_id': 'banana',
+        'concept_id': 'FOOD_CANONICAL',
+        'variant_id': 'variant_crosswalk',
+        'external_id_system': 'FDC id',
+        'external_id_value': 'official_123',
+        'jurisdiction': 'US',
+        'source_doc_id': 'doc_fdc',
+        'import_run_id': 'run_fdc',
+        'confidence': 0.99,
+        'status': 'active',
+        'mapping_payload_json': '{}',
+        'created_at': 1000,
+      });
+
+      final resolver = VariantResolver(database: db);
+      final resolved = await resolver.resolveFoodVariant(
+        foodId: 'banana',
+        userProfile: const UserProfileRuntimeContext(
+          patientId: 'patient_1',
+          registrationRegion: 'US',
+          displayLocale: 'en-US',
+          contentJurisdictionOverride: [],
+          dietProfileRegion: 'US',
+          timezone: 'America/Toronto',
         ),
-        _runtimeRuleJson(
-          ruleId: 'trace.info',
-          decision: 'INFO',
-          priorityBand: 5,
+      );
+
+      expect(resolved.selectedVariantId, 'variant_crosswalk');
+      expect(resolved.conceptId, 'FOOD_CANONICAL');
+    },
+  );
+
+  test(
+    'catalog projection marks legacy id fallback when crosswalk is missing',
+    () async {
+      final db = RecordingCdssDatabase();
+      await db.insertFoodConcept(
+        const FoodConceptRecord(
+          foodConceptId: 'FOOD_LEGACY',
+          canonicalNameEn: 'legacy food',
+          canonicalNameZh: '旧食品',
+          foodGroup: 'grain',
         ),
-        _runtimeRuleJson(
-          ruleId: 'trace.missing.dose',
-          decision: 'WARN',
-          priorityBand: 4,
-          when: {
-            'dose_band': {
-              'path': 'drug.daily_dose_mg',
-              'threshold': 200,
-              'op': 'gte',
-            }
-          },
+      );
+      await db.insertFoodVariant(
+        const FoodVariantRecord(
+          foodVariantId: 'FOOD_LEGACY#US#LEGACY#001',
+          foodConceptId: 'FOOD_LEGACY',
+          jurisdiction: 'US',
+          sourceFamily: 'LEGACY',
+          sourceFoodCode: '001',
+          displayNameLocal: 'Legacy food',
+          isAuthoritativeForRegion: true,
+          isAuthoritativeFallback: false,
+          status: 'active',
+          fallbackChainJson: '[]',
         ),
-      ], rulesVersion: 'trace_rules'),
-      factsVersion: 'facts_v1',
-      rulesVersion: 'trace_rules',
-    );
+      );
 
-    final trace =
-        (output.alertsJson['rule_hit_trace'] as List<dynamic>).cast<Map>();
-    final suppressed =
-        trace.firstWhere((row) => row['rule_id'] == 'trace.info');
-    final missing =
-        trace.firstWhere((row) => row['rule_id'] == 'trace.missing.dose');
-    expect(suppressed['matched'], isTrue);
-    expect(suppressed['suppressed'], isTrue);
-    expect(
-        suppressed['tie_break_reason'], 'same_band_warn_permissive_conflict');
-    final provenanceScore = suppressed['provenance_score'] as Map;
-    expect(provenanceScore['source_authority'], 100);
-    expect(provenanceScore['source_status'], 'active');
-    expect(provenanceScore['jurisdiction_specificity'], greaterThan(0));
-    expect(suppressed['source_refs'], isNotEmpty);
-    expect(suppressed['priority'], suppressed['priority_band']);
-    expect(suppressed['specificity'], suppressed['specificity_band']);
-    expect(missing['matched'], isFalse);
-    expect(missing['missing_field_reason'], 'missing_dose');
-    final traceMetadata = output.alertsJson['trace_metadata'] as Map;
-    expect(traceMetadata['region_jurisdiction_source'], 'runtime_static_map');
-    expect((traceMetadata['warnings'] as List),
-        contains('region_jurisdiction_map_static_fallback_possible'));
-    expect(output.auditLogJsonl, contains('"event_type":"rule_trace"'));
-  });
+      final projected = await CdssCatalogProjectionService(
+        database: db,
+      ).projectFoods();
 
-  test('invalid database rule is audited and skipped without crashing',
-      () async {
-    final db = RecordingCdssDatabase();
-    final service = ClinicalDecisionSupportService(
-      database: db,
-      factConflictEngine: FactConflictEngine(),
-      runtimeRuleEngine: RuntimeRuleEngine(),
-    );
-    await db.insertRuleRegistry({
-      'rule_id': 'db.rule.invalid',
-      'rule_version': 'db_rules_v2',
-      'status': 'active',
-      'rule_type': 'soft_rule',
-      'priority_band': 1,
-      'specificity_band': 1,
-      'jurisdiction_json': '["GLOBAL"]',
-      'applies_to_json': '{"subject_types":["drug"]}',
-      'predicate_json': '{bad json',
-      'effect_json': '{}',
-      'provenance_json': '{}',
-    });
-
-    final output = await service.run(
-      context: _runtimeContextForDbRule(),
-      rules: const [],
-      factsVersion: 'facts_v1',
-      rulesVersion: 'db_rules_v2',
-    );
-
-    expect(output.alertsJson['compiled_rule_source'], isNotNull);
-    final audits = await db.queryTable('conflict_audit_log');
-    expect(audits.map((row) => row['audit_type']),
-        contains('RULE_COMPILE_FAILURE'));
-  });
-
-  test('variant resolver prefers concept crosswalk over legacy food code',
-      () async {
-    final db = RecordingCdssDatabase();
-    await db.insertStagingRow('food_variant', {
-      'food_variant_id': 'variant_crosswalk',
-      'food_concept_id': 'FOOD_CANONICAL',
-      'jurisdiction': 'US',
-      'source_family': 'FDC',
-      'source_food_code': 'official_123',
-      'display_name_local': 'Crosswalk food',
-      'is_authoritative_for_region': 1,
-      'is_authoritative_fallback': 0,
-      'status': 'active',
-      'fallback_chain_json': '[]',
-    });
-    await db.insertStagingRow('food_variant', {
-      'food_variant_id': 'variant_legacy',
-      'food_concept_id': 'FOOD_LEGACY',
-      'jurisdiction': 'US',
-      'source_family': 'LEGACY',
-      'source_food_code': 'banana',
-      'display_name_local': 'Legacy banana',
-      'is_authoritative_for_region': 1,
-      'is_authoritative_fallback': 0,
-      'status': 'active',
-      'fallback_chain_json': '[]',
-    });
-    await db.insertStagingRow('concept_variant_crosswalk', {
-      'crosswalk_id': 'xwalk_banana',
-      'domain': 'food',
-      'app_entity_id': 'banana',
-      'concept_id': 'FOOD_CANONICAL',
-      'variant_id': 'variant_crosswalk',
-      'external_id_system': 'FDC id',
-      'external_id_value': 'official_123',
-      'jurisdiction': 'US',
-      'source_doc_id': 'doc_fdc',
-      'import_run_id': 'run_fdc',
-      'confidence': 0.99,
-      'status': 'active',
-      'mapping_payload_json': '{}',
-      'created_at': 1000,
-    });
-
-    final resolver = VariantResolver(database: db);
-    final resolved = await resolver.resolveFoodVariant(
-      foodId: 'banana',
-      userProfile: const UserProfileRuntimeContext(
-        patientId: 'patient_1',
-        registrationRegion: 'US',
-        displayLocale: 'en-US',
-        contentJurisdictionOverride: [],
-        dietProfileRegion: 'US',
-        timezone: 'America/Toronto',
-      ),
-    );
-
-    expect(resolved.selectedVariantId, 'variant_crosswalk');
-    expect(resolved.conceptId, 'FOOD_CANONICAL');
-  });
-
-  test('catalog projection marks legacy id fallback when crosswalk is missing',
-      () async {
-    final db = RecordingCdssDatabase();
-    await db.insertFoodConcept(
-      const FoodConceptRecord(
-        foodConceptId: 'FOOD_LEGACY',
-        canonicalNameEn: 'legacy food',
-        canonicalNameZh: '旧食品',
-        foodGroup: 'grain',
-      ),
-    );
-    await db.insertFoodVariant(
-      const FoodVariantRecord(
-        foodVariantId: 'FOOD_LEGACY#US#LEGACY#001',
-        foodConceptId: 'FOOD_LEGACY',
-        jurisdiction: 'US',
-        sourceFamily: 'LEGACY',
-        sourceFoodCode: '001',
-        displayNameLocal: 'Legacy food',
-        isAuthoritativeForRegion: true,
-        isAuthoritativeFallback: false,
-        status: 'active',
-        fallbackChainJson: '[]',
-      ),
-    );
-
-    final projected =
-        await CdssCatalogProjectionService(database: db).projectFoods();
-
-    expect(projected.single.id, startsWith('food_projected_'));
-    expect(projected.single.description,
-        contains('missing_concept_variant_crosswalk'));
-    expect(
-        projected.single.description, contains('legacy_variant_id_projection'));
-  });
+      expect(projected.single.id, startsWith('food_projected_'));
+      expect(
+        projected.single.description,
+        contains('missing_concept_variant_crosswalk'),
+      );
+      expect(
+        projected.single.description,
+        contains('legacy_variant_id_projection'),
+      );
+    },
+  );
 
   test('fact conflict rationale reports tolerance and scope mismatch', () {
     final engine = FactConflictEngine();
@@ -1714,8 +1801,10 @@ void main() {
     expect(resolution.chosenObservation?.observationId, 'obs_official');
     final rejected = resolution.rejectedRationales.single;
     expect(rejected['rationale'], 'scope_mismatch');
-    expect((rejected['scope_mismatch_dimensions'] as List),
-        containsAll(['jurisdiction', 'dosage_form', 'release_type']));
+    expect(
+      (rejected['scope_mismatch_dimensions'] as List),
+      containsAll(['jurisdiction', 'dosage_form', 'release_type']),
+    );
     expect(rejected['scope_match_details'], isA<Map>());
     expect(rejected['numeric_overlap_result'], isA<Map>());
     expect((rejected['tolerance_result'] as Map)['result'], 'out_of_tolerance');
@@ -1731,34 +1820,33 @@ Map<String, dynamic> _runtimeRuleRow({
   required String ruleId,
   required String version,
   required String decision,
-}) =>
-    {
-      'rule_id': ruleId,
-      'rule_version': version,
-      'status': 'active',
-      'rule_type': 'soft_rule',
-      'priority_band': 9,
-      'specificity_band': 9,
-      'jurisdiction_json': jsonEncode(['GLOBAL']),
-      'applies_to_json': jsonEncode({
-        'subject_types': ['drug'],
-      }),
-      'predicate_json': jsonEncode({
-        'exists': {'path': 'drug.id'},
-      }),
-      'effect_json': jsonEncode({
-        'decision': decision,
-        'severity': 'low',
-        'messages': {'zh': '数据库规则命中', 'en': 'DB rule matched'},
-        'actions': [],
-        'output_tags': ['db_rule'],
-      }),
-      'provenance_json': jsonEncode({
-        'evidence_level': 'official_label',
-        'source_refs': ['doc_db_rule'],
-        'effective_from': '2026-01-01T00:00:00Z',
-      }),
-    };
+}) => {
+  'rule_id': ruleId,
+  'rule_version': version,
+  'status': 'active',
+  'rule_type': 'soft_rule',
+  'priority_band': 9,
+  'specificity_band': 9,
+  'jurisdiction_json': jsonEncode(['GLOBAL']),
+  'applies_to_json': jsonEncode({
+    'subject_types': ['drug'],
+  }),
+  'predicate_json': jsonEncode({
+    'exists': {'path': 'drug.id'},
+  }),
+  'effect_json': jsonEncode({
+    'decision': decision,
+    'severity': 'low',
+    'messages': {'zh': '数据库规则命中', 'en': 'DB rule matched'},
+    'actions': [],
+    'output_tags': ['db_rule'],
+  }),
+  'provenance_json': jsonEncode({
+    'evidence_level': 'official_label',
+    'source_refs': ['doc_db_rule'],
+    'effective_from': '2026-01-01T00:00:00Z',
+  }),
+};
 
 ObservationRecord _testObservation({
   required String id,
@@ -1766,54 +1854,52 @@ ObservationRecord _testObservation({
   required String sourceDocId,
   required String scopeHash,
   required double confidence,
-}) =>
-    ObservationRecord(
-      observationId: id,
-      domain: 'drug',
-      entityType: 'drug_product_variant',
-      entityKey: 'drug_variant_1',
-      attributeCode: 'dose_mg',
-      valueType: 'numeric',
-      value: QualifiedValue(
-        rawValueText: '$value',
-        qualifierKind: QualifierKind.exact,
-        low: value,
-        high: value,
-        valueNum: value,
-      ),
-      unit: 'mg',
-      basisType: 'per_dose',
-      basisAmount: null,
-      scopeHash: scopeHash,
-      sourceDocId: sourceDocId,
-      recordLocator: id,
-      methodCode: null,
-      extractionConfidence: confidence,
-    );
+}) => ObservationRecord(
+  observationId: id,
+  domain: 'drug',
+  entityType: 'drug_product_variant',
+  entityKey: 'drug_variant_1',
+  attributeCode: 'dose_mg',
+  valueType: 'numeric',
+  value: QualifiedValue(
+    rawValueText: '$value',
+    qualifierKind: QualifierKind.exact,
+    low: value,
+    high: value,
+    valueNum: value,
+  ),
+  unit: 'mg',
+  basisType: 'per_dose',
+  basisAmount: null,
+  scopeHash: scopeHash,
+  sourceDocId: sourceDocId,
+  recordLocator: id,
+  methodCode: null,
+  extractionConfidence: confidence,
+);
 
 SourceDocumentRecord _testSourceDocument({
   required String id,
   required String tier,
   required DateTime effectiveAt,
-}) =>
-    SourceDocumentRecord(
-      sourceDocId: id,
-      sourceFamily: 'TEST',
-      dataTier: tier,
-      ingestionStrategy: SourceIngestionStrategy.authoritativeDirect,
-      organization: 'Test Org',
-      docType: 'label',
-      title: id,
-      jurisdiction: 'US',
-      originUrl: 'https://example.test/$id',
-      publishedAt: effectiveAt,
-      effectiveAt: effectiveAt,
-      language: 'en',
-      licenseNote: 'test',
-      checksum: id,
-      sourceStatus: 'active',
-      rawPayload: '{}',
-    );
+}) => SourceDocumentRecord(
+  sourceDocId: id,
+  sourceFamily: 'TEST',
+  dataTier: tier,
+  ingestionStrategy: SourceIngestionStrategy.authoritativeDirect,
+  organization: 'Test Org',
+  docType: 'label',
+  title: id,
+  jurisdiction: 'US',
+  originUrl: 'https://example.test/$id',
+  publishedAt: effectiveAt,
+  effectiveAt: effectiveAt,
+  language: 'en',
+  licenseNote: 'test',
+  checksum: id,
+  sourceStatus: 'active',
+  rawPayload: '{}',
+);
 
 UnifiedRuntimeContext _runtimeContextForDbRule({double? dailyDoseMg = 100}) =>
     UnifiedRuntimeContext(
@@ -1853,31 +1939,31 @@ Map<String, dynamic> _runtimeRuleJson({
   required String decision,
   int priorityBand = 9,
   Map<String, dynamic>? when,
-}) =>
-    {
-      'rule_id': ruleId,
-      'version': '1.0.0',
-      'status': 'active',
-      'rule_type': 'soft_rule',
-      'priority_band': priorityBand,
-      'specificity_band': priorityBand,
-      'jurisdiction': ['GLOBAL'],
-      'applies_to': {
-        'subject_types': ['drug'],
+}) => {
+  'rule_id': ruleId,
+  'version': '1.0.0',
+  'status': 'active',
+  'rule_type': 'soft_rule',
+  'priority_band': priorityBand,
+  'specificity_band': priorityBand,
+  'jurisdiction': ['GLOBAL'],
+  'applies_to': {
+    'subject_types': ['drug'],
+  },
+  'when':
+      when ??
+      {
+        'exists': {'path': 'drug.id'},
       },
-      'when': when ??
-          {
-            'exists': {'path': 'drug.id'},
-          },
-      'then': {
-        'decision': decision,
-        'severity': 'low',
-        'messages': {'zh': 'trace rule'},
-        'actions': [],
-        'output_tags': [],
-      },
-      'provenance': {
-        'evidence_level': 'official_label',
-        'source_refs': ['doc_$ruleId'],
-      },
-    };
+  'then': {
+    'decision': decision,
+    'severity': 'low',
+    'messages': {'zh': 'trace rule'},
+    'actions': [],
+    'output_tags': [],
+  },
+  'provenance': {
+    'evidence_level': 'official_label',
+    'source_refs': ['doc_$ruleId'],
+  },
+};

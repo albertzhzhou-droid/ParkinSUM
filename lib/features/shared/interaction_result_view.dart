@@ -17,7 +17,9 @@ Color interactionSeverityColor(InteractionSeverity severity) {
 }
 
 String interactionSeverityLabel(
-    BuildContext context, InteractionSeverity severity) {
+  BuildContext context,
+  InteractionSeverity severity,
+) {
   final i18n = context.appI18n;
   switch (severity) {
     case InteractionSeverity.low:
@@ -32,10 +34,7 @@ String interactionSeverityLabel(
 class InteractionSummaryCard extends StatelessWidget {
   final InteractionResult result;
 
-  const InteractionSummaryCard({
-    super.key,
-    required this.result,
-  });
+  const InteractionSummaryCard({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
@@ -60,18 +59,12 @@ class InteractionSummaryCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 interactionSeverityLabel(context, result.overallSeverity),
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: accent, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Text(
                 i18n.tr('interaction.score', {'value': '${result.score}'}),
-                style: TextStyle(
-                  color: accent,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: accent, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -200,24 +193,17 @@ class _IssueTile extends StatelessWidget {
         children: [
           Text(
             '${interactionSeverityLabel(context, issue.severity)} · ${copy.issueTitle(issue.title)}',
-            style: TextStyle(
-              color: accent,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: accent, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(copy.issueDetail(issue)),
           if (issue.evidence.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
-              i18n.tr(
-                'interaction.evidence_count',
-                {'count': '${issue.evidence.length}'},
-              ),
-              style: TextStyle(
-                color: accent,
-                fontWeight: FontWeight.w600,
-              ),
+              i18n.tr('interaction.evidence_count', {
+                'count': '${issue.evidence.length}',
+              }),
+              style: TextStyle(color: accent, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 6),
             for (final evidence in issue.evidence)

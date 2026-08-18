@@ -26,38 +26,36 @@ void main() {
     String? tier,
     double? provenanceQuality,
     String? limitation,
-  }) =>
-      FoodVariantMetadata(
-        foodVariantId: 'f1',
-        sourceSystem: 'usda_fdc',
-        jurisdiction: 'US',
-        language: 'und',
-        foodName: 'demo food (synthetic)',
-        basisType: 'per_100g',
-        servingUnit: 'g',
-        preparationState: 'raw',
-        aminoAcidFieldsPresent: true,
-        extractionConfidence: null,
-        sourceRefs: const ['src.usda.fdc.foundation_docs'],
-        limitationText: 'educational',
-        nutrientConfidenceTier: tier,
-        aminoAcidConfidenceTier: tier,
-        nutrientProvenanceQuality: provenanceQuality,
-        nutrientProvenanceLimitationText: limitation,
-      );
+  }) => FoodVariantMetadata(
+    foodVariantId: 'f1',
+    sourceSystem: 'usda_fdc',
+    jurisdiction: 'US',
+    language: 'und',
+    foodName: 'demo food (synthetic)',
+    basisType: 'per_100g',
+    servingUnit: 'g',
+    preparationState: 'raw',
+    aminoAcidFieldsPresent: true,
+    extractionConfidence: null,
+    sourceRefs: const ['src.usda.fdc.foundation_docs'],
+    limitationText: 'educational',
+    nutrientConfidenceTier: tier,
+    aminoAcidConfidenceTier: tier,
+    nutrientProvenanceQuality: provenanceQuality,
+    nutrientProvenanceLimitationText: limitation,
+  );
 
   group('FoodVariantMetadata provenance fields', () {
     test('new fields serialize deterministically; null stays null', () {
-      final meta = foodMeta(
-        tier: 'analytical',
-        provenanceQuality: 1.0,
-      );
+      final meta = foodMeta(tier: 'analytical', provenanceQuality: 1.0);
       final json = meta.toJson();
       expect(json['nutrient_confidence_tier'], 'analytical');
       expect(json['amino_acid_confidence_tier'], 'analytical');
       expect(json['nutrient_provenance_quality'], 1.0);
       expect(
-          json['uses_analytical_nutrient_values'], false); // default unless set
+        json['uses_analytical_nutrient_values'],
+        false,
+      ); // default unless set
       expect(json['nutrient_provenance_limitation_text'], isNull);
       expect(jsonEncode(meta.toJson()), jsonEncode(meta.toJson()));
       // A metadata with no provenance keeps the fields null/false (inert).
@@ -71,8 +69,9 @@ void main() {
     test('quality is ordered analytical > calculated > imputed > unknown', () {
       final a = nutrientProvenanceQualityFor(NutrientConfidenceTier.analytical);
       final c = nutrientProvenanceQualityFor(NutrientConfidenceTier.calculated);
-      final i =
-          nutrientProvenanceQualityFor(NutrientConfidenceTier.imputedOrAssumed);
+      final i = nutrientProvenanceQualityFor(
+        NutrientConfidenceTier.imputedOrAssumed,
+      );
       final u = nutrientProvenanceQualityFor(NutrientConfidenceTier.unknown);
       expect(a, greaterThan(c));
       expect(c, greaterThan(i));
@@ -80,10 +79,13 @@ void main() {
     });
 
     test('limitation is null for analytical, mentions the tier otherwise', () {
-      expect(nutrientProvenanceLimitationFor(NutrientConfidenceTier.analytical),
-          isNull);
+      expect(
+        nutrientProvenanceLimitationFor(NutrientConfidenceTier.analytical),
+        isNull,
+      );
       final imputed = nutrientProvenanceLimitationFor(
-          NutrientConfidenceTier.imputedOrAssumed);
+        NutrientConfidenceTier.imputedOrAssumed,
+      );
       expect(imputed, isNotNull);
       expect(imputed, contains('imputedOrAssumed'));
       // Source-quality framing, not a clinical claim.
@@ -93,12 +95,13 @@ void main() {
   });
 
   group('completeness gate ordering', () {
-    double w(NutrientConfidenceTier? t) =>
-        gate.toWeight(gate.scoreCandidateFood(
-          foodMeta(),
-          nutrientCompleteness: 1.0,
-          nutrientConfidenceTier: t,
-        ));
+    double w(NutrientConfidenceTier? t) => gate.toWeight(
+      gate.scoreCandidateFood(
+        foodMeta(),
+        nutrientCompleteness: 1.0,
+        nutrientConfidenceTier: t,
+      ),
+    );
 
     test('analytical >= calculated >= imputed/assumed >= unknown', () {
       final a = w(NutrientConfidenceTier.analytical);
@@ -115,16 +118,20 @@ void main() {
       // Hold the provenance tier equal (imputed) and vary ONLY nutrient
       // completeness: a candidate missing most nutrients scores below one whose
       // nutrients are fully present, even though both have weak provenance.
-      final weakButPresent = gate.toWeight(gate.scoreCandidateFood(
-        foodMeta(),
-        nutrientCompleteness: 1.0,
-        nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed,
-      ));
-      final missingNutrients = gate.toWeight(gate.scoreCandidateFood(
-        foodMeta(),
-        nutrientCompleteness: 0.2,
-        nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed,
-      ));
+      final weakButPresent = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed,
+        ),
+      );
+      final missingNutrients = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
+          nutrientCompleteness: 0.2,
+          nutrientConfidenceTier: NutrientConfidenceTier.imputedOrAssumed,
+        ),
+      );
       expect(missingNutrients, lessThan(weakButPresent));
     });
 
@@ -133,24 +140,39 @@ void main() {
       // (see missing_not_zero_test.dart). At the gate, full completeness (all
       // fields present, which may include legitimate zeros) grades strictly
       // above low completeness (fields actually missing), holding tier equal.
-      final present = gate.toWeight(gate.scoreCandidateFood(foodMeta(),
+      final present = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
           nutrientCompleteness: 1.0,
-          nutrientConfidenceTier: NutrientConfidenceTier.analytical));
-      final missing = gate.toWeight(gate.scoreCandidateFood(foodMeta(),
+          nutrientConfidenceTier: NutrientConfidenceTier.analytical,
+        ),
+      );
+      final missing = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
           nutrientCompleteness: 0.2,
-          nutrientConfidenceTier: NutrientConfidenceTier.analytical));
+          nutrientConfidenceTier: NutrientConfidenceTier.analytical,
+        ),
+      );
       expect(present, greaterThan(missing));
     });
 
     test('missing derivation (null tier) does not raise confidence', () {
-      final nullTier = gate.scoreCandidateFood(foodMeta(),
-          nutrientCompleteness: 1.0, nutrientConfidenceTier: null);
-      final analytical = gate.scoreCandidateFood(foodMeta(),
-          nutrientCompleteness: 1.0,
-          nutrientConfidenceTier: NutrientConfidenceTier.analytical);
+      final nullTier = gate.scoreCandidateFood(
+        foodMeta(),
+        nutrientCompleteness: 1.0,
+        nutrientConfidenceTier: null,
+      );
+      final analytical = gate.scoreCandidateFood(
+        foodMeta(),
+        nutrientCompleteness: 1.0,
+        nutrientConfidenceTier: NutrientConfidenceTier.analytical,
+      );
       // A null tier is inert (never better than analytical).
-      expect(gate.toWeight(nullTier),
-          lessThanOrEqualTo(gate.toWeight(analytical)));
+      expect(
+        gate.toWeight(nullTier),
+        lessThanOrEqualTo(gate.toWeight(analytical)),
+      );
     });
   });
 
@@ -162,63 +184,69 @@ void main() {
     final now = DateTime.utc(2026, 1, 1, 8);
 
     TimeAxisConflictContext ctx() {
-      final v = validator.validate(const RawMedicationEntry(
-        activeIngredients: ['carbidopa', 'levodopa'],
-        drugProductVariant: 's',
-        strength: 100,
-        unit: 'mg',
-        form: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-        jurisdiction: 'US',
-        sourceDocId: 's',
-      ));
+      final v = validator.validate(
+        const RawMedicationEntry(
+          activeIngredients: ['carbidopa', 'levodopa'],
+          drugProductVariant: 's',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 's',
+        ),
+      );
       return builder.build(
         now: now,
         medicationInputs: [
           MedicationTimelineInput(
-              id: 'm',
-              takenAt: now.add(const Duration(minutes: 30)),
-              medicationContext: v),
+            id: 'm',
+            takenAt: now.add(const Duration(minutes: 30)),
+            medicationContext: v,
+          ),
         ],
         mealInputs: const [],
         userDefinedWindow: UserDefinedMealWindow(
           window: TimelineWindow(
-              startMinute: dateTimeToMinute(now) + 60,
-              endMinute: dateTimeToMinute(now) + 120),
+            startMinute: dateTimeToMinute(now) + 60,
+            endMinute: dateTimeToMinute(now) + 120,
+          ),
           source: 'test',
         ),
       );
     }
 
     CandidateFood food(String id) => CandidateFood(
+      id: id,
+      name: id,
+      regionalFoodLibraryRef: 'usda_fdc',
+      declaredPhysicalForm: MealPhysicalForm.solid,
+      components: [
+        FoodComponent(
           id: id,
           name: id,
-          regionalFoodLibraryRef: 'usda_fdc',
-          declaredPhysicalForm: MealPhysicalForm.solid,
-          components: [
-            FoodComponent(
-              id: id,
-              name: id,
-              physicalForm: MealPhysicalForm.solid,
-              proteinGrams: 8,
-              fatGrams: 2,
-              fiberGrams: 1,
-              carbohydrateGrams: 20,
-              calories: 150,
-              portionGrams: 150,
-              sourceDocId: 'usda_fdc',
-            ),
-          ],
-        );
+          physicalForm: MealPhysicalForm.solid,
+          proteinGrams: 8,
+          fatGrams: 2,
+          fiberGrams: 1,
+          carbohydrateGrams: 20,
+          calories: 150,
+          portionGrams: 150,
+          sourceDocId: 'usda_fdc',
+        ),
+      ],
+    );
 
     // Completeness derived through the real gate from the nutrient tier.
     CandidateMetadata metaForTier(NutrientConfidenceTier tier) {
-      final completeness = gate.toWeight(gate.scoreCandidateFood(
-        foodMeta(),
-        nutrientCompleteness: 1.0,
-        nutrientConfidenceTier: tier,
-      ));
+      final completeness = gate.toWeight(
+        gate.scoreCandidateFood(
+          foodMeta(),
+          nutrientCompleteness: 1.0,
+          nutrientConfidenceTier: tier,
+        ),
+      );
       return CandidateMetadata(
         completeness: completeness,
         authorityScore: 0.6,
@@ -241,8 +269,10 @@ void main() {
           'imputed': metaForTier(NutrientConfidenceTier.imputedOrAssumed),
         },
       );
-      expect(scoreOf(scores, 'analytical'),
-          greaterThanOrEqualTo(scoreOf(scores, 'imputed')));
+      expect(
+        scoreOf(scores, 'analytical'),
+        greaterThanOrEqualTo(scoreOf(scores, 'imputed')),
+      );
     });
 
     test('tier difference cannot break conflict-overlap dominance', () {

@@ -126,11 +126,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       registrationRegion: 'US',
       displayLocale: 'en-US',
       dietProfileRegion: 'US',
-      candidateFoodIds: <String>[
-        'food_banana',
-        'food_brown_rice',
-        'food_tofu',
-      ],
+      candidateFoodIds: <String>['food_banana', 'food_brown_rice', 'food_tofu'],
       historyFoodIds: <String>['food_brown_rice'],
       activeDrugIds: <String>['drug_levodopa_carbidopa', 'drug_iron'],
       intakeSpecs: <RecommendationBenchmarkIntakeSpec>[
@@ -160,11 +156,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       registrationRegion: 'CN',
       displayLocale: 'zh-CN',
       dietProfileRegion: 'CN',
-      candidateFoodIds: <String>[
-        'food_tofu',
-        'food_banana',
-        'food_brown_rice',
-      ],
+      candidateFoodIds: <String>['food_tofu', 'food_banana', 'food_brown_rice'],
       historyFoodIds: <String>['food_brown_rice'],
       nextMealWindowStartMinutesAfterMeal: 240,
       nextMealWindowEndMinutesAfterMeal: 300,
@@ -181,10 +173,7 @@ const defaultRecommendationBenchmarkDataset = RecommendationBenchmarkDataset(
       registrationRegion: 'US',
       displayLocale: 'en-US',
       dietProfileRegion: 'US',
-      candidateFoodIds: <String>[
-        'food_banana',
-        'food_apple',
-      ],
+      candidateFoodIds: <String>['food_banana', 'food_apple'],
       historyFoodIds: <String>['food_apple'],
       includeNextMealWindow: false,
       activeDrugIds: <String>['drug_levodopa_carbidopa'],

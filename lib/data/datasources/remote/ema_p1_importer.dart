@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:archive/archive.dart';
 import 'package:xml/xml.dart';
+import 'package:xml/xml_events.dart';
 
 import '../../../core/models/drug_definition.dart';
 import '../../../domain/entities/cdss_records.dart';
+import 'archive_import_support.dart';
 import 'crosswalk_builders.dart';
 import 'importer_audit.dart';
 import 'p0_import_models.dart';
@@ -17,16 +18,26 @@ import 'source_fetch_client.dart';
 /// - 当前落库的是产品元数据、来源文档、文档链接和目录投影；
 /// - 不伪装成完整 SmPC/leaflet 结构化解析器。
 class EmaP1Importer {
-  final SourceFetchClient fetchClient;
+  static const defaultMaxXlsxRowCount = 100000;
 
-  const EmaP1Importer({required this.fetchClient});
+  final SourceFetchClient fetchClient;
+  final ArchiveImportLimits xlsxArchiveLimits;
+  final int maxXlsxRowCount;
+
+  const EmaP1Importer({
+    required this.fetchClient,
+    this.xlsxArchiveLimits = ArchiveImportSupport.defaultLimits,
+    this.maxXlsxRowCount = defaultMaxXlsxRowCount,
+  }) : assert(maxXlsxRowCount > 0);
 
   /// 抓取 medicines 主表的 JSON + XLSX，两路都保留，便于后续对账。
   Future<P0ImportBundle> fetchAndImportMedicines() async {
-    final medicinesJson =
-        await fetchClient.getText(P0SourceUrls.emaMedicinesJson);
-    final medicinesXlsx =
-        await fetchClient.getBytes(P0SourceUrls.emaMedicinesXlsx);
+    final medicinesJson = await fetchClient.getText(
+      P0SourceUrls.emaMedicinesJson,
+    );
+    final medicinesXlsx = await fetchClient.getBytes(
+      P0SourceUrls.emaMedicinesXlsx,
+    );
     final medicinesBundle = importMedicinesJson(
       medicinesJson,
       sourceLabel: 'ema_medicines_json',
@@ -40,10 +51,12 @@ class EmaP1Importer {
 
   /// 抓取 post-authorisation 主表的 JSON + XLSX，并作为单独任务暴露给 UI。
   Future<P0ImportBundle> fetchAndImportPostAuthorisation() async {
-    final postAuthJson =
-        await fetchClient.getText(P0SourceUrls.emaPostAuthorisationJson);
-    final postAuthXlsx =
-        await fetchClient.getBytes(P0SourceUrls.emaPostAuthorisationXlsx);
+    final postAuthJson = await fetchClient.getText(
+      P0SourceUrls.emaPostAuthorisationJson,
+    );
+    final postAuthXlsx = await fetchClient.getBytes(
+      P0SourceUrls.emaPostAuthorisationXlsx,
+    );
     final postAuthBundle = importPostAuthorisationJson(
       postAuthJson,
       sourceLabel: 'ema_post_authorisation_json',
@@ -131,8 +144,9 @@ class EmaP1Importer {
         sourceFamily: 'EMA',
         organization: 'European Medicines Agency',
         jurisdiction: 'EU',
-        docType:
-            sourceUrl.endsWith('.json') ? 'json_snapshot' : 'xlsx_snapshot',
+        docType: sourceUrl.endsWith('.json')
+            ? 'json_snapshot'
+            : 'xlsx_snapshot',
         title: 'EMA import $sourceLabel',
         originUrl: sourceUrl,
         licenseNote: 'UNSPECIFIED',
@@ -174,8 +188,9 @@ class EmaP1Importer {
         'international_non_proprietary_name_common_name',
         'inn_common_name',
       ]);
-      final genericName =
-          activeSubstance.isEmpty ? medicineName : activeSubstance;
+      final genericName = activeSubstance.isEmpty
+          ? medicineName
+          : activeSubstance;
       final conceptId = buildDrugConceptId(genericName);
       final variantId = buildDrugVariantId(
         conceptId: conceptId,
@@ -193,10 +208,7 @@ class EmaP1Importer {
         'url',
         'medicine_page_url',
       ]);
-      final atcCode = _firstNonEmpty(row, const [
-        'atc_code_human',
-        'atc_code',
-      ]);
+      final atcCode = _firstNonEmpty(row, const ['atc_code_human', 'atc_code']);
       final route = _inferRoute(row);
       final dosageForm = _inferDosageForm(row);
       final releaseType = _inferReleaseType(medicineName, dosageForm);
@@ -340,10 +352,7 @@ class EmaP1Importer {
                 ImporterAudit.sourceIdTypeAuthoritativeProductCode,
             reason: 'EMA product number copied verbatim from medicines row.',
             promotedFields: const ['ema_product_number'],
-            nonPromotedFields: const [
-              'procedure_type',
-              'condition_indication',
-            ],
+            nonPromotedFields: const ['procedure_type', 'condition_indication'],
           ),
         },
       );
@@ -474,7 +483,7 @@ class EmaP1Importer {
                 activeSubstance,
               if (productNumber.isNotEmpty) productNumber,
             ],
-            tags: [if (tag != null) tag],
+            tags: [?tag],
             notes: holder.isEmpty
                 ? 'Imported from EMA medicines metadata.'
                 : 'Imported from EMA medicines metadata ($holder).',
@@ -524,31 +533,39 @@ class EmaP1Importer {
   }
 
   List<Map<String, dynamic>> _xlsxRowsToMaps(List<int> xlsxBytes) {
-    final archive = ZipDecoder().decodeBytes(xlsxBytes);
-    final sharedStrings = _loadSharedStrings(archive);
-    final worksheetFile = archive.files
-        .where((file) => file.name.startsWith('xl/worksheets/sheet'))
-        .toList(growable: false)
-      ..sort((a, b) => a.name.compareTo(b.name));
-    if (worksheetFile.isEmpty) return const <Map<String, dynamic>>[];
-    final sheetXml = utf8.decode(worksheetFile.first.content as List<int>);
-    final sheetDoc = XmlDocument.parse(sheetXml);
-    final rowNodes = sheetDoc.findAllElements('row').toList(growable: false);
-    if (rowNodes.isEmpty) return const <Map<String, dynamic>>[];
+    final files = ArchiveImportSupport.unzipFiles(
+      xlsxBytes,
+      limits: xlsxArchiveLimits,
+    );
+    final worksheetNames =
+        files.keys
+            .where((name) => name.startsWith('xl/worksheets/sheet'))
+            .toList(growable: false)
+          ..sort();
+    if (worksheetNames.isEmpty) return const <Map<String, dynamic>>[];
 
-    final grid =
-        rowNodes.map((row) => _extractRowValues(row, sharedStrings)).toList();
-    if (grid.isEmpty) return const <Map<String, dynamic>>[];
-    final headers =
-        grid.first.map((value) => value.trim()).toList(growable: false);
+    final sheetXml = utf8.decode(files[worksheetNames.first]!);
+    _validateXlsxRowCount(sheetXml);
+    final sheetDoc = XmlDocument.parse(sheetXml);
+
+    final rowIterator = sheetDoc.findAllElements('row').iterator;
+    if (!rowIterator.moveNext()) return const <Map<String, dynamic>>[];
+
+    final sharedStrings = _loadSharedStrings(files);
+    final headers = _extractRowValues(
+      rowIterator.current,
+      sharedStrings,
+    ).map((value) => value.trim()).toList(growable: false);
     final rows = <Map<String, dynamic>>[];
-    for (final row in grid.skip(1)) {
+    while (rowIterator.moveNext()) {
+      final row = _extractRowValues(rowIterator.current, sharedStrings);
       final mapped = <String, dynamic>{};
       for (var index = 0; index < headers.length; index++) {
         final header = headers[index];
         if (header.isEmpty) continue;
-        mapped[_normalizeHeader(header)] =
-            index < row.length ? row[index].trim() : '';
+        mapped[_normalizeHeader(header)] = index < row.length
+            ? row[index].trim()
+            : '';
       }
       if (mapped.values.any((value) => value.toString().trim().isNotEmpty)) {
         rows.add(mapped);
@@ -557,22 +574,32 @@ class EmaP1Importer {
     return rows;
   }
 
-  List<String> _loadSharedStrings(Archive archive) {
-    // 有些 EMA xlsx 快照没有 sharedStrings.xml，或者 archive 包版本
-    // 对 `orElse` 的占位 ArchiveFile 支持不稳定，因此这里显式走 nullable 查找。
-    final matches = archive.files
-        .where((item) => item.name == 'xl/sharedStrings.xml')
-        .toList(growable: false);
-    if (matches.isEmpty) return const <String>[];
-    final file = matches.first;
-    final text = utf8.decode(file.content as List<int>);
+  void _validateXlsxRowCount(String sheetXml) {
+    var rowCount = 0;
+    for (final event in parseEvents(sheetXml)) {
+      if (event is! XmlStartElementEvent || event.name != 'row') continue;
+      rowCount += 1;
+      if (rowCount <= maxXlsxRowCount) continue;
+      throw FormatException(
+        'XLSX worksheet exceeds row-count limit '
+        '($maxXlsxRowCount rows, including the header).',
+      );
+    }
+  }
+
+  List<String> _loadSharedStrings(Map<String, List<int>> files) {
+    final bytes = files['xl/sharedStrings.xml'];
+    if (bytes == null) return const <String>[];
+    final text = utf8.decode(bytes);
     final doc = XmlDocument.parse(text);
     return doc
         .findAllElements('si')
-        .map((node) => node.descendants
-            .whereType<XmlText>()
-            .map((part) => part.value)
-            .join())
+        .map(
+          (node) => node.descendants
+              .whereType<XmlText>()
+              .map((part) => part.value)
+              .join(),
+        )
         .toList(growable: false);
   }
 
@@ -661,8 +688,8 @@ class EmaP1Importer {
       final type = lowerKey.contains('translation')
           ? 'translation_link'
           : lowerKey.contains('document') || lowerKey.contains('leaflet')
-              ? 'document_link'
-              : 'url';
+          ? 'document_link'
+          : 'url';
       links.add(_EmaLink(url: text, type: type, caption: key));
     }
     return links;

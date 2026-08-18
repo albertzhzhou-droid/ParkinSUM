@@ -37,16 +37,15 @@ class _ImportPageState extends State<ImportPage> {
     final state = context.watch<AppState>();
     final i18n = context.appI18n;
     final result = state.latestImportTask;
-    final hasSnapshotBundlePath =
-        _snapshotBundleController.text.trim().isNotEmpty;
+    final hasSnapshotBundlePath = _snapshotBundleController.text
+        .trim()
+        .isNotEmpty;
     final localizedSummary = result == null
         ? ''
         : '${result.steps.where((item) => item.succeeded).length} ${i18n.tr('import.step_status_ok')} / '
-            '${result.steps.where((item) => !item.succeeded).length} ${i18n.tr('import.step_status_failed')}';
+              '${result.steps.where((item) => !item.succeeded).length} ${i18n.tr('import.step_status_failed')}';
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.tr('import.title')),
-      ),
+      appBar: AppBar(title: Text(i18n.tr('import.title'))),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -67,27 +66,27 @@ class _ImportPageState extends State<ImportPage> {
               FilledButton.tonalIcon(
                 onPressed: state.isImportingP0
                     ? null
-                    : () => context
-                        .read<AppState>()
-                        .runRemoteImportTask('ema_medicines'),
+                    : () => context.read<AppState>().runRemoteImportTask(
+                        'ema_medicines',
+                      ),
                 icon: const Icon(Icons.public),
                 label: Text(i18n.tr('import.ema_medicines')),
               ),
               FilledButton.tonalIcon(
                 onPressed: state.isImportingP0
                     ? null
-                    : () => context
-                        .read<AppState>()
-                        .runRemoteImportTask('ema_post_authorisation'),
+                    : () => context.read<AppState>().runRemoteImportTask(
+                        'ema_post_authorisation',
+                      ),
                 icon: const Icon(Icons.update),
                 label: Text(i18n.tr('import.ema_post_authorisation')),
               ),
               FilledButton.tonalIcon(
                 onPressed: state.isImportingP0
                     ? null
-                    : () => context
-                        .read<AppState>()
-                        .runRemoteImportTask('china_official_foods'),
+                    : () => context.read<AppState>().runRemoteImportTask(
+                        'china_official_foods',
+                      ),
                 icon: const Icon(Icons.ramen_dining_outlined),
                 label: Text(i18n.tr('import.china_official_foods')),
               ),
@@ -119,17 +118,18 @@ class _ImportPageState extends State<ImportPage> {
                 onPressed: state.isImportingP0
                     ? null
                     : () => context.read<AppState>().importP0FromLocalPaths(
-                          ciqualPath: _emptyToNull(_ciqualController.text),
-                          fdcPath: _emptyToNull(_fdcController.text),
-                          dailyMedPath: _emptyToNull(_dailyMedController.text),
-                          dpdPath: _emptyToNull(_dpdController.text),
-                        ),
+                        ciqualPath: _emptyToNull(_ciqualController.text),
+                        fdcPath: _emptyToNull(_fdcController.text),
+                        dailyMedPath: _emptyToNull(_dailyMedController.text),
+                        dpdPath: _emptyToNull(_dpdController.text),
+                      ),
                 icon: const Icon(Icons.cloud_download_outlined),
                 label: Text(i18n.tr('import.run')),
               ),
               OutlinedButton.icon(
-                onPressed:
-                    state.isImportingP0 ? null : state.retryLastImportTask,
+                onPressed: state.isImportingP0
+                    ? null
+                    : state.retryLastImportTask,
                 icon: const Icon(Icons.refresh),
                 label: Text(i18n.tr('import.retry')),
               ),
@@ -148,11 +148,7 @@ class _ImportPageState extends State<ImportPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                     const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        i18n.tr('import.running'),
-                      ),
-                    ),
+                    Expanded(child: Text(i18n.tr('import.running'))),
                   ],
                 ),
               ),
@@ -172,20 +168,27 @@ class _ImportPageState extends State<ImportPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Text(localizedSummary.isEmpty
-                        ? result.summary
-                        : localizedSummary),
+                    Text(
+                      localizedSummary.isEmpty
+                          ? result.summary
+                          : localizedSummary,
+                    ),
                     const SizedBox(height: 8),
                     Text(
-                        '${i18n.tr('common.completed')}: ${result.completedAt.toIso8601String()}'),
+                      '${i18n.tr('common.completed')}: ${result.completedAt.toIso8601String()}',
+                    ),
                     Text(
-                        '${i18n.tr('import.source_documents')}: ${result.sourceDocumentCount}'),
+                      '${i18n.tr('import.source_documents')}: ${result.sourceDocumentCount}',
+                    ),
                     Text(
-                        '${i18n.tr('import.food_variants')}: ${result.foodCount}'),
+                      '${i18n.tr('import.food_variants')}: ${result.foodCount}',
+                    ),
                     Text(
-                        '${i18n.tr('import.drug_variants')}: ${result.drugCount}'),
+                      '${i18n.tr('import.drug_variants')}: ${result.drugCount}',
+                    ),
                     Text(
-                        '${i18n.tr('import.observations')}: ${result.observationCount}'),
+                      '${i18n.tr('import.observations')}: ${result.observationCount}',
+                    ),
                     if (result.resolvedPaths.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       for (final entry in result.resolvedPaths.entries)
@@ -218,8 +221,8 @@ class _ImportPageState extends State<ImportPage> {
                             onPressed: state.isImportingP0
                                 ? null
                                 : () => context
-                                    .read<AppState>()
-                                    .retryImportSource(step.sourceKey),
+                                      .read<AppState>()
+                                      .retryImportSource(step.sourceKey),
                             child: Text(i18n.tr('import.retry_source')),
                           ),
                           if ((step.resumeToken ?? '').trim().isNotEmpty)
@@ -227,8 +230,8 @@ class _ImportPageState extends State<ImportPage> {
                               onPressed: state.isImportingP0
                                   ? null
                                   : () => context
-                                      .read<AppState>()
-                                      .resumeImportTask(step.resumeToken!),
+                                        .read<AppState>()
+                                        .resumeImportTask(step.resumeToken!),
                               child: const Text('Resume'),
                             ),
                         ],
@@ -238,21 +241,27 @@ class _ImportPageState extends State<ImportPage> {
                         Text('${i18n.tr('import.run_id')}: ${step.runId}'),
                       if (step.promotedSnapshotId != null)
                         Text(
-                            '${i18n.tr('import.snapshot')}: ${step.promotedSnapshotId}'),
+                          '${i18n.tr('import.snapshot')}: ${step.promotedSnapshotId}',
+                        ),
                       Text(
-                          '${i18n.tr('common.completed')}: ${step.completedAt.toIso8601String()}'),
+                        '${i18n.tr('common.completed')}: ${step.completedAt.toIso8601String()}',
+                      ),
                       if (step.sourceDocumentCount != null)
                         Text(
-                            '${i18n.tr('import.source_documents')}: ${step.sourceDocumentCount}'),
+                          '${i18n.tr('import.source_documents')}: ${step.sourceDocumentCount}',
+                        ),
                       if (step.foodCount != null)
                         Text(
-                            '${i18n.tr('import.food_variants')}: ${step.foodCount}'),
+                          '${i18n.tr('import.food_variants')}: ${step.foodCount}',
+                        ),
                       if (step.drugCount != null)
                         Text(
-                            '${i18n.tr('import.drug_variants')}: ${step.drugCount}'),
+                          '${i18n.tr('import.drug_variants')}: ${step.drugCount}',
+                        ),
                       if (step.observationCount != null)
                         Text(
-                            '${i18n.tr('import.observations')}: ${step.observationCount}'),
+                          '${i18n.tr('import.observations')}: ${step.observationCount}',
+                        ),
                       if ((step.errorMessage ?? '').trim().isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
@@ -299,7 +308,8 @@ class _ImportPageState extends State<ImportPage> {
                                 trailing: (run.resumeToken ?? '').trim().isEmpty
                                     ? Text(
                                         _compactTime(
-                                            run.completedAt ?? run.createdAt),
+                                          run.completedAt ?? run.createdAt,
+                                        ),
                                       )
                                     : IconButton(
                                         tooltip: 'Resume',
@@ -307,9 +317,10 @@ class _ImportPageState extends State<ImportPage> {
                                         onPressed: state.isImportingP0
                                             ? null
                                             : () => context
-                                                .read<AppState>()
-                                                .resumeImportTask(
-                                                    run.resumeToken!),
+                                                  .read<AppState>()
+                                                  .resumeImportTask(
+                                                    run.resumeToken!,
+                                                  ),
                                       ),
                               ),
                           ],
@@ -376,14 +387,15 @@ class _ImportPageState extends State<ImportPage> {
                     runSpacing: 8,
                     children: [
                       OutlinedButton.icon(
-                        onPressed: state.isRunningSnapshotOperation ||
+                        onPressed:
+                            state.isRunningSnapshotOperation ||
                                 !hasSnapshotBundlePath
                             ? null
                             : () =>
-                                context.read<AppState>().importSnapshotBundle(
-                                      filePath:
-                                          _snapshotBundleController.text.trim(),
-                                    ),
+                                  context.read<AppState>().importSnapshotBundle(
+                                    filePath: _snapshotBundleController.text
+                                        .trim(),
+                                  ),
                         icon: const Icon(Icons.upload_file_outlined),
                         label: Text(i18n.tr('import.import_bundle')),
                       ),
@@ -462,27 +474,37 @@ class _ImportPageState extends State<ImportPage> {
                                 'Open review tickets: ${summary.releaseReadiness.openReviewTicketCount} · '
                                 'High severity: ${summary.releaseReadiness.issueCounts['open_high_severity_review_tickets'] ?? 0}',
                               ),
-                              if (summary.releaseReadiness.sampleReviewTicketIds
+                              if (summary
+                                  .releaseReadiness
+                                  .sampleReviewTicketIds
                                   .isNotEmpty)
                                 Text(
                                   'Sample tickets: ${summary.releaseReadiness.sampleReviewTicketIds.join(', ')}',
                                 ),
                               if (summary
-                                  .releaseReadiness.issueCounts.isNotEmpty)
+                                  .releaseReadiness
+                                  .issueCounts
+                                  .isNotEmpty)
                                 Text(
                                   'Issue counts: ${summary.releaseReadiness.issueCounts.entries.map((entry) => '${entry.key}=${entry.value}').join(', ')}',
                                 ),
-                              if (summary.releaseReadiness
-                                  .missingCrosswalkSampleIds.isNotEmpty)
+                              if (summary
+                                  .releaseReadiness
+                                  .missingCrosswalkSampleIds
+                                  .isNotEmpty)
                                 Text(
                                   'Missing crosswalk samples: ${summary.releaseReadiness.missingCrosswalkSampleIds.join(', ')}',
                                 ),
-                              if (summary.releaseReadiness
-                                  .backendCapabilityWarnings.isNotEmpty)
+                              if (summary
+                                  .releaseReadiness
+                                  .backendCapabilityWarnings
+                                  .isNotEmpty)
                                 Text(
                                   'Backend warnings: ${summary.releaseReadiness.backendCapabilityWarnings.join(', ')}',
                                 ),
-                              if (summary.releaseReadiness.reviewTicketSummaries
+                              if (summary
+                                  .releaseReadiness
+                                  .reviewTicketSummaries
                                   .isNotEmpty)
                                 Text(
                                   'Review ticket summaries: ${summary.releaseReadiness.reviewTicketSummaries.map((item) => '${item['ticket_id']}:${item['reason_code']}').join(', ')}',
@@ -497,7 +519,9 @@ class _ImportPageState extends State<ImportPage> {
                                 'Version history: ${summary.versionHistoryCount}',
                               ),
                               if (summary
-                                  .releaseReadiness.blockingIssues.isNotEmpty)
+                                  .releaseReadiness
+                                  .blockingIssues
+                                  .isNotEmpty)
                                 Text(
                                   '${i18n.tr('import.blocking_issues')}: '
                                   '${summary.releaseReadiness.blockingIssues.join(', ')}',
@@ -525,49 +549,51 @@ class _ImportPageState extends State<ImportPage> {
                                     onPressed: state.isRunningSnapshotOperation
                                         ? null
                                         : () => context
-                                            .read<AppState>()
-                                            .publishSnapshotToChannel(
-                                              snapshotId:
-                                                  summary.snapshot.snapshotId,
-                                            ),
-                                    child: Text(i18n.tr('import.publish')),
-                                  ),
-                                  if (!summary.releaseReadiness.isReady)
-                                    OutlinedButton(
-                                      onPressed: state
-                                              .isRunningSnapshotOperation
-                                          ? null
-                                          : () => context
                                               .read<AppState>()
                                               .publishSnapshotToChannel(
                                                 snapshotId:
                                                     summary.snapshot.snapshotId,
-                                                overrideReason:
-                                                    'ops_ui_manual_override',
                                               ),
+                                    child: Text(i18n.tr('import.publish')),
+                                  ),
+                                  if (!summary.releaseReadiness.isReady)
+                                    OutlinedButton(
+                                      onPressed:
+                                          state.isRunningSnapshotOperation
+                                          ? null
+                                          : () => context
+                                                .read<AppState>()
+                                                .publishSnapshotToChannel(
+                                                  snapshotId: summary
+                                                      .snapshot
+                                                      .snapshotId,
+                                                  overrideReason:
+                                                      'ops_ui_manual_override',
+                                                ),
                                       child: const Text('Publish override'),
                                     ),
                                   OutlinedButton(
                                     onPressed: state.isRunningSnapshotOperation
                                         ? null
                                         : () => context
-                                            .read<AppState>()
-                                            .exportSnapshotBundle(
-                                              snapshotId:
-                                                  summary.snapshot.snapshotId,
-                                            ),
-                                    child:
-                                        Text(i18n.tr('import.export_bundle')),
+                                              .read<AppState>()
+                                              .exportSnapshotBundle(
+                                                snapshotId:
+                                                    summary.snapshot.snapshotId,
+                                              ),
+                                    child: Text(
+                                      i18n.tr('import.export_bundle'),
+                                    ),
                                   ),
                                   OutlinedButton(
                                     onPressed: state.isRunningSnapshotOperation
                                         ? null
                                         : () => context
-                                            .read<AppState>()
-                                            .rollbackSnapshot(
-                                              snapshotId:
-                                                  summary.snapshot.snapshotId,
-                                            ),
+                                              .read<AppState>()
+                                              .rollbackSnapshot(
+                                                snapshotId:
+                                                    summary.snapshot.snapshotId,
+                                              ),
                                     child: Text(i18n.tr('import.rollback')),
                                   ),
                                 ],
@@ -619,22 +645,22 @@ class _ImportPageState extends State<ImportPage> {
                                     onPressed: state.isRunningSnapshotOperation
                                         ? null
                                         : () => context
-                                            .read<AppState>()
-                                            .updateReviewTicketStatus(
-                                              ticketId: ticket.ticketId,
-                                              status: 'ignored',
-                                            ),
+                                              .read<AppState>()
+                                              .updateReviewTicketStatus(
+                                                ticketId: ticket.ticketId,
+                                                status: 'ignored',
+                                              ),
                                     child: const Text('Ignore'),
                                   ),
                                   TextButton(
                                     onPressed: state.isRunningSnapshotOperation
                                         ? null
                                         : () => context
-                                            .read<AppState>()
-                                            .updateReviewTicketStatus(
-                                              ticketId: ticket.ticketId,
-                                              status: 'resolved',
-                                            ),
+                                              .read<AppState>()
+                                              .updateReviewTicketStatus(
+                                                ticketId: ticket.ticketId,
+                                                status: 'resolved',
+                                              ),
                                     child: const Text('Resolve'),
                                   ),
                                 ],
@@ -698,8 +724,9 @@ class _ImportPageState extends State<ImportPage> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    for (final distribution
-                        in state.snapshotDistributions.take(10))
+                    for (final distribution in state.snapshotDistributions.take(
+                      10,
+                    ))
                       ListTile(
                         dense: true,
                         contentPadding: EdgeInsets.zero,
@@ -733,7 +760,10 @@ class _ImportPageState extends State<ImportPage> {
   }
 
   String _localizedSourceLabel(
-      AppI18n i18n, String sourceKey, String fallback) {
+    AppI18n i18n,
+    String sourceKey,
+    String fallback,
+  ) {
     switch (sourceKey) {
       case 'ema_medicines':
         return i18n.tr('import.ema_medicines');

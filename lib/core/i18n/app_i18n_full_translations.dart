@@ -12,6 +12,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
   // ko (Korean)
   // ===========================================================================
   'ko': {
+    'diagnostics.title': '엔지니어링 진단',
+    'diagnostics.rerun': '검사 다시 실행',
+    'diagnostics.scope_title': '엔지니어링 검토 전용',
+    'diagnostics.scope_body':
+        '이는 결정론적 거버넌스 검사(문구 컴파일, 현지화 안전성 린트, 합성 시나리오 재생)입니다. 엔지니어링 상태만 보고하며, 점수·심각도·근거·규칙 결과를 변경하지 않고 건강 지침이 아닙니다. 합성/데모 데이터만 사용합니다.',
+    'diagnostics.elapsed': '검사가 {ms} ms 만에 완료되었습니다.',
     'app.welcome': '환영합니다',
     'app.loading': '불러오는 중...',
     'onboarding.title': 'ParkinSUM 동반자 (로컬 에디션)',
@@ -283,6 +289,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
   // hi (Hindi)
   // ===========================================================================
   'hi': {
+    'diagnostics.title': 'इंजीनियरिंग डायग्नोस्टिक्स',
+    'diagnostics.rerun': 'जाँच फिर से चलाएँ',
+    'diagnostics.scope_title': 'केवल इंजीनियरिंग समीक्षा',
+    'diagnostics.scope_body':
+        'ये नियतात्मक गवर्नेंस जाँचें हैं (कॉपी संकलन, स्थानीयकरण सुरक्षा लिंट, सिंथेटिक परिदृश्य रीप्ले)। ये केवल इंजीनियरिंग स्थिति बताती हैं: ये किसी स्कोर, गंभीरता, प्रमाण या नियम परिणाम को नहीं बदलतीं, और ये स्वास्थ्य मार्गदर्शन नहीं हैं। केवल सिंथेटिक/डेमो डेटा।',
+    'diagnostics.elapsed': 'जाँचें {ms} ms में पूरी हुईं।',
     'app.welcome': 'स्वागत है',
     'app.loading': 'लोड हो रहा है...',
     'onboarding.title': 'ParkinSUM साथी (स्थानीय संस्करण)',
@@ -580,6 +592,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
   // es (Spanish — covers es-ES + es-MX)
   // ===========================================================================
   'es': {
+    'diagnostics.title': 'Diagnóstico de ingeniería',
+    'diagnostics.rerun': 'Volver a ejecutar las comprobaciones',
+    'diagnostics.scope_title': 'Solo revisión de ingeniería',
+    'diagnostics.scope_body':
+        'Estas son comprobaciones de gobernanza deterministas (compilación de textos, lint de seguridad de localización, repetición de escenarios sintéticos). Solo informan del estado de ingeniería: no cambian ninguna puntuación, gravedad, evidencia ni resultado de regla, y no son orientación de salud. Solo datos sintéticos o de demostración.',
+    'diagnostics.elapsed': 'Comprobaciones completadas en {ms} ms.',
     'app.welcome': 'Bienvenido',
     'app.loading': 'Cargando...',
     'onboarding.title': 'ParkinSUM Compañero (Edición Local)',
@@ -888,6 +906,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
   // vi (Vietnamese)
   // ===========================================================================
   'vi': {
+    'diagnostics.title': 'Chẩn đoán kỹ thuật',
+    'diagnostics.rerun': 'Chạy lại kiểm tra',
+    'diagnostics.scope_title': 'Chỉ dành cho rà soát kỹ thuật',
+    'diagnostics.scope_body':
+        'Đây là các kiểm tra quản trị tất định (biên dịch nội dung, lint an toàn bản địa hóa, phát lại kịch bản tổng hợp). Chúng chỉ báo cáo trạng thái kỹ thuật: không thay đổi điểm số, mức độ nghiêm trọng, bằng chứng hay kết quả quy tắc, và không phải hướng dẫn sức khỏe. Chỉ dùng dữ liệu tổng hợp/demo.',
+    'diagnostics.elapsed': 'Hoàn tất kiểm tra trong {ms} ms.',
     'app.welcome': 'Chào mừng',
     'app.loading': 'Đang tải...',
     'onboarding.title': 'ParkinSUM Đồng hành (Phiên bản cục bộ)',
@@ -1196,6 +1220,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
   // th (Thai)
   // ===========================================================================
   'th': {
+    'diagnostics.title': 'การวินิจฉัยเชิงวิศวกรรม',
+    'diagnostics.rerun': 'เรียกใช้การตรวจสอบอีกครั้ง',
+    'diagnostics.scope_title': 'สำหรับการตรวจสอบเชิงวิศวกรรมเท่านั้น',
+    'diagnostics.scope_body':
+        'นี่คือการตรวจสอบการกำกับดูแลแบบกำหนดผลแน่นอน (การคอมไพล์ข้อความ การตรวจความปลอดภัยของการแปล การเล่นซ้ำสถานการณ์สังเคราะห์) โดยรายงานเฉพาะสถานะทางวิศวกรรมเท่านั้น ไม่เปลี่ยนคะแนน ระดับความรุนแรง หลักฐาน หรือผลลัพธ์ของกฎ และไม่ใช่คำแนะนำด้านสุขภาพ ใช้ข้อมูลสังเคราะห์/สาธิตเท่านั้น',
+    'diagnostics.elapsed': 'ตรวจสอบเสร็จสิ้นใน {ms} มิลลิวินาที',
     'app.welcome': 'ยินดีต้อนรับ',
     'app.loading': 'กำลังโหลด...',
     'onboarding.title': 'ParkinSUM เพื่อนคู่ใจ (ฉบับในเครื่อง)',
@@ -1496,6 +1526,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
   // id (Indonesian)
   // ===========================================================================
   'id': {
+    'diagnostics.title': 'Diagnostik teknis',
+    'diagnostics.rerun': 'Jalankan ulang pemeriksaan',
+    'diagnostics.scope_title': 'Hanya untuk tinjauan teknis',
+    'diagnostics.scope_body':
+        'Ini adalah pemeriksaan tata kelola deterministik (kompilasi teks, lint keamanan pelokalan, pemutaran ulang skenario sintetis). Semuanya hanya melaporkan status teknis: tidak mengubah skor, tingkat keparahan, bukti, atau hasil aturan, dan bukan panduan kesehatan. Hanya data sintetis/demo.',
+    'diagnostics.elapsed': 'Pemeriksaan selesai dalam {ms} ms.',
     'app.welcome': 'Selamat datang',
     'app.loading': 'Memuat...',
     'onboarding.title': 'ParkinSUM Pendamping (Edisi Lokal)',
@@ -1797,6 +1833,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
   // ru (Russian)
   // ===========================================================================
   'ru': {
+    'diagnostics.title': 'Техническая диагностика',
+    'diagnostics.rerun': 'Запустить проверки заново',
+    'diagnostics.scope_title': 'Только для технического анализа',
+    'diagnostics.scope_body':
+        'Это детерминированные проверки управления (компиляция текстов, проверка безопасности локализации, воспроизведение синтетических сценариев). Они сообщают только технический статус: не изменяют оценку, серьёзность, доказательства или результат правил и не являются медицинскими рекомендациями. Только синтетические/демонстрационные данные.',
+    'diagnostics.elapsed': 'Проверки завершены за {ms} мс.',
     'app.welcome': 'Добро пожаловать',
     'app.loading': 'Загрузка...',
     'onboarding.title': 'ParkinSUM Компаньон (Локальная версия)',
@@ -2105,6 +2147,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
   // pl (Polish)
   // ===========================================================================
   'pl': {
+    'diagnostics.title': 'Diagnostyka techniczna',
+    'diagnostics.rerun': 'Uruchom kontrole ponownie',
+    'diagnostics.scope_title': 'Wyłącznie przegląd techniczny',
+    'diagnostics.scope_body':
+        'To deterministyczne kontrole nadzoru (kompilacja tekstów, kontrola bezpieczeństwa lokalizacji, odtwarzanie syntetycznych scenariuszy). Raportują wyłącznie stan techniczny: nie zmieniają wyniku, istotności, dowodów ani rezultatu reguł i nie są poradą zdrowotną. Wyłącznie dane syntetyczne/demonstracyjne.',
+    'diagnostics.elapsed': 'Kontrole zakończone w {ms} ms.',
     'app.welcome': 'Witamy',
     'app.loading': 'Ładowanie...',
     'onboarding.title': 'ParkinSUM Towarzysz (Wersja Lokalna)',
@@ -2409,6 +2457,12 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
   // ar (Arabic)
   // ===========================================================================
   'ar': {
+    'diagnostics.title': 'تشخيصات هندسية',
+    'diagnostics.rerun': 'إعادة تشغيل الفحوصات',
+    'diagnostics.scope_title': 'للمراجعة الهندسية فقط',
+    'diagnostics.scope_body':
+        'هذه فحوصات حوكمة حتمية (تجميع النصوص، فحص سلامة الترجمة، إعادة تشغيل سيناريوهات اصطناعية). تُبلّغ عن الحالة الهندسية فقط: فهي لا تغيّر أي درجة أو شدة أو دليل أو نتيجة قاعدة، وليست إرشادًا صحيًا. بيانات اصطناعية/تجريبية فقط.',
+    'diagnostics.elapsed': 'اكتملت الفحوصات في {ms} مللي ثانية.',
     'app.welcome': 'مرحباً',
     'app.loading': 'جارٍ التحميل...',
     'onboarding.title': 'ParkinSUM رفيقك (الإصدار المحلي)',

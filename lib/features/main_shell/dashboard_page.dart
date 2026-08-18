@@ -13,6 +13,19 @@ import '../shared/interaction_result_view.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
+  Future<void> _deleteMeal(BuildContext context, String mealId) async {
+    final result = await context.read<AppState>().deleteMeal(mealId);
+    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final i18n = context.appI18n;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          i18n.tr('entry.save_failed', {'error': i18n.tr('common.error')}),
+        ),
+      ),
+    );
+  }
+
   Future<void> _showMealCheckDialog(BuildContext context, Meal meal) async {
     final result = await context.read<AppState>().checkMeal(meal);
     if (!context.mounted) return;
@@ -65,14 +78,11 @@ class DashboardPage extends StatelessWidget {
     if (region == null || mealSlot == null || texture == null) {
       return null;
     }
-    return i18n.tr(
-      'dashboard.recommendation_template',
-      {
-        'region': i18n.regionLabel(region),
-        'mealSlot': i18n.mealSlotLabel(mealSlot),
-        'texture': i18n.textureClassLabel(texture),
-      },
-    );
+    return i18n.tr('dashboard.recommendation_template', {
+      'region': i18n.regionLabel(region),
+      'mealSlot': i18n.mealSlotLabel(mealSlot),
+      'texture': i18n.textureClassLabel(texture),
+    });
   }
 
   String _formatDateTime(DateTime value) {
@@ -115,13 +125,13 @@ class DashboardPage extends StatelessWidget {
       parts.add(i18n.tr('dashboard.meal_context_xanthan_thickener'));
     }
     if (meal.enteralFeedMode == 'continuous') {
-      parts.add(i18n.tr(
-        'dashboard.meal_context_enteral_feed_continuous',
-        {
-          'protein': meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
+      parts.add(
+        i18n.tr('dashboard.meal_context_enteral_feed_continuous', {
+          'protein':
+              meal.enteralFeedProteinGPerDay?.toStringAsFixed(0) ??
               'unspecified',
-        },
-      ));
+        }),
+      );
     } else if (meal.enteralFeedMode == 'bolus') {
       parts.add(i18n.tr('dashboard.meal_context_enteral_feed_bolus'));
     }
@@ -144,22 +154,19 @@ class DashboardPage extends StatelessWidget {
         (recommendation.scoreBreakdown['levodopa_window_penalty'] as num?) ?? 0;
     final swallowingPenalty =
         (recommendation.scoreBreakdown['swallowing_texture_penalty'] as num?) ??
-            0;
+        0;
     final templateAffinity =
         (recommendation.scoreBreakdown['template_texture_affinity'] as num?) ??
-            0;
-    return i18n.tr(
-      'dashboard.recommendation_score_line',
-      {
-        'safety': safety.toStringAsFixed(2),
-        'schedule': schedule.toStringAsFixed(2),
-        'facts': facts.toStringAsFixed(2),
-        'context': contextPenalty.toStringAsFixed(1),
-        'timing': timingPenalty.toStringAsFixed(1),
-        'swallowing': swallowingPenalty.toStringAsFixed(1),
-        'template': templateAffinity.toStringAsFixed(2),
-      },
-    );
+        0;
+    return i18n.tr('dashboard.recommendation_score_line', {
+      'safety': safety.toStringAsFixed(2),
+      'schedule': schedule.toStringAsFixed(2),
+      'facts': facts.toStringAsFixed(2),
+      'context': contextPenalty.toStringAsFixed(1),
+      'timing': timingPenalty.toStringAsFixed(1),
+      'swallowing': swallowingPenalty.toStringAsFixed(1),
+      'template': templateAffinity.toStringAsFixed(2),
+    });
   }
 
   String? _localizedFoodTextureSummary(
@@ -187,9 +194,7 @@ class DashboardPage extends StatelessWidget {
     final copy = ResponseCopyService(i18n: i18n);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(i18n.tr('dashboard.title')),
-      ),
+      appBar: AppBar(title: Text(i18n.tr('dashboard.title'))),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
@@ -202,15 +207,26 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     i18n.tr('dashboard.status'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  Text(i18n.tr('dashboard.logged_meals',
-                      {'count': '${state.meals.length}'})),
-                  Text(i18n.tr('dashboard.active_drugs',
-                      {'count': '${state.activeDrugs.length}'})),
-                  Text(i18n.tr('dashboard.logged_intakes',
-                      {'count': '${state.intakes.length}'})),
+                  Text(
+                    i18n.tr('dashboard.logged_meals', {
+                      'count': '${state.meals.length}',
+                    }),
+                  ),
+                  Text(
+                    i18n.tr('dashboard.active_drugs', {
+                      'count': '${state.activeDrugs.length}',
+                    }),
+                  ),
+                  Text(
+                    i18n.tr('dashboard.logged_intakes', {
+                      'count': '${state.intakes.length}',
+                    }),
+                  ),
                 ],
               ),
             ),
@@ -225,7 +241,9 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     i18n.tr('dashboard.recommendations'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (recommendations.isEmpty)
@@ -239,20 +257,17 @@ class DashboardPage extends StatelessWidget {
                       state.recommendationTemplateTextureLevel != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      i18n.tr(
-                        'dashboard.recommendation_template',
-                        {
-                          'region': i18n.regionLabel(
-                            state.recommendationTemplateCountryCode!,
-                          ),
-                          'mealSlot': i18n.mealSlotLabel(
-                            state.recommendationTemplateMealSlot!,
-                          ),
-                          'texture': i18n.textureClassLabel(
-                            state.recommendationTemplateTextureLevel!,
-                          ),
-                        },
-                      ),
+                      i18n.tr('dashboard.recommendation_template', {
+                        'region': i18n.regionLabel(
+                          state.recommendationTemplateCountryCode!,
+                        ),
+                        'mealSlot': i18n.mealSlotLabel(
+                          state.recommendationTemplateMealSlot!,
+                        ),
+                        'texture': i18n.textureClassLabel(
+                          state.recommendationTemplateTextureLevel!,
+                        ),
+                      }),
                     ),
                   ],
                   const SizedBox(height: 4),
@@ -278,8 +293,9 @@ class DashboardPage extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
-                    for (final reason
-                        in state.recommendationGateReasons.take(4))
+                    for (final reason in state.recommendationGateReasons.take(
+                      4,
+                    ))
                       Text('• ${copy.recommendationMessage(reason)}'),
                   ],
                   const SizedBox(height: 8),
@@ -315,17 +331,14 @@ class DashboardPage extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                i18n.tr(
-                                  'dashboard.recommendation_macro_line',
-                                  {
-                                    'protein': recommendation.food.proteinG
-                                        .toStringAsFixed(1),
-                                    'carbs': recommendation.food.carbsG
-                                        .toStringAsFixed(1),
-                                    'fat': recommendation.food.fatG
-                                        .toStringAsFixed(1),
-                                  },
-                                ),
+                                i18n.tr('dashboard.recommendation_macro_line', {
+                                  'protein': recommendation.food.proteinG
+                                      .toStringAsFixed(1),
+                                  'carbs': recommendation.food.carbsG
+                                      .toStringAsFixed(1),
+                                  'fat': recommendation.food.fatG
+                                      .toStringAsFixed(1),
+                                }),
                               ),
                               const SizedBox(height: 4),
                               Text(
@@ -347,7 +360,8 @@ class DashboardPage extends StatelessWidget {
                                 for (final reason
                                     in recommendation.reasons.take(3))
                                   Text(
-                                      '• ${copy.recommendationMessage(reason)}'),
+                                    '• ${copy.recommendationMessage(reason)}',
+                                  ),
                               ],
                             ],
                           ),
@@ -368,30 +382,31 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     i18n.tr('dashboard.recent_meals'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (meals.isEmpty) Text(i18n.tr('dashboard.no_meals')),
                   for (final meal in meals)
                     Builder(
                       builder: (context) {
-                        final result =
-                            context.read<AppState>().cachedMealCheck(meal);
-                        final mealContextSummary =
-                            _localizedMealContextSummary(i18n, meal);
-                        final accent =
-                            interactionSeverityColor(result.overallSeverity);
+                        final result = context.read<AppState>().cachedMealCheck(
+                          meal,
+                        );
+                        final mealContextSummary = _localizedMealContextSummary(
+                          i18n,
+                          meal,
+                        );
+                        final accent = interactionSeverityColor(
+                          result.overallSeverity,
+                        );
                         return ListTile(
                           title: Text(meal.title),
                           subtitle: Text(
                             [
-                              '${_formatDateTime(meal.eatenAt)} · ${i18n.tr('dashboard.items', {
-                                    'count': '${meal.items.length}'
-                                  })} · ${i18n.tr('interaction.score', {
-                                    'value': '${result.score}'
-                                  })}',
-                              if (mealContextSummary != null)
-                                mealContextSummary,
+                              '${_formatDateTime(meal.eatenAt)} · ${i18n.tr('dashboard.items', {'count': '${meal.items.length}'})} · ${i18n.tr('interaction.score', {'value': '${result.score}'})}',
+                              ?mealContextSummary,
                             ].join('\n'),
                           ),
                           leading: CircleAvatar(
@@ -416,9 +431,9 @@ class DashboardPage extends StatelessWidget {
                               IconButton(
                                 tooltip: i18n.tr('dashboard.delete'),
                                 icon: const Icon(Icons.delete_outline),
-                                onPressed: () => context
-                                    .read<AppState>()
-                                    .deleteMeal(meal.id),
+                                onPressed: state.isUpdatingMeals
+                                    ? null
+                                    : () => _deleteMeal(context, meal.id),
                               ),
                             ],
                           ),
@@ -440,11 +455,16 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     i18n.tr('dashboard.protein_trend'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  Text(i18n.tr('dashboard.average_protein',
-                      {'value': state.averageProtein.toStringAsFixed(1)})),
+                  Text(
+                    i18n.tr('dashboard.average_protein', {
+                      'value': state.averageProtein.toStringAsFixed(1),
+                    }),
+                  ),
                   const SizedBox(height: 8),
                   if (trend.isEmpty) Text(i18n.tr('dashboard.no_trend')),
                   for (final point in trend.take(5).toList().reversed)
@@ -465,7 +485,9 @@ class DashboardPage extends StatelessWidget {
                   Text(
                     i18n.tr('dashboard.timeline'),
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   if (timeline.isEmpty) Text(i18n.tr('dashboard.no_timeline')),
@@ -473,14 +495,16 @@ class DashboardPage extends StatelessWidget {
                     ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: CircleAvatar(
-                        backgroundColor:
-                            _timelineColor(event.type).withValues(alpha: 0.12),
+                        backgroundColor: _timelineColor(
+                          event.type,
+                        ).withValues(alpha: 0.12),
                         foregroundColor: _timelineColor(event.type),
                         child: Icon(_timelineIcon(event.type)),
                       ),
                       title: Text(_localizedTimelineTitle(i18n, event)),
                       subtitle: Text(
-                          '${_formatDateTime(event.time)} · ${_localizedTimelineDescription(i18n, event)}'),
+                        '${_formatDateTime(event.time)} · ${_localizedTimelineDescription(i18n, event)}',
+                      ),
                     ),
                 ],
               ),

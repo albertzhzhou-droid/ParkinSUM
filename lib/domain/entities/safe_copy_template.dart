@@ -58,18 +58,18 @@ class SafeCopyTemplate {
   String get defaultText => localizedText[defaultLocale] ?? '';
 
   Map<String, dynamic> toJson() => {
-        'template_id': templateId,
-        'output_type': outputType,
-        'default_locale': defaultLocale,
-        'localized_text': localizedText,
-        'required_placeholders': requiredPlaceholders,
-        'allowed_placeholders': allowedPlaceholders,
-        'required_safety_terms': requiredSafetyTerms,
-        'required_evidence_terms': requiredEvidenceTerms,
-        'banned_phrase_families': bannedPhraseFamilies,
-        'requires_source_refs': requiresSourceRefs,
-        'requires_limitation_text': requiresLimitationText,
-        'requires_not_advice_text': requiresNotAdviceText,
-        'notes': notes,
-      };
+    'template_id': templateId,
+    'output_type': outputType,
+    'default_locale': defaultLocale,
+    'localized_text': localizedText,
+    'required_placeholders': requiredPlaceholders,
+    'allowed_placeholders': allowedPlaceholders,
+    'required_safety_terms': requiredSafetyTerms,
+    'required_evidence_terms': requiredEvidenceTerms,
+    'banned_phrase_families': bannedPhraseFamilies,
+    'requires_source_refs': requiresSourceRefs,
+    'requires_limitation_text': requiresLimitationText,
+    'requires_not_advice_text': requiresNotAdviceText,
+    'notes': notes,
+  };
 }

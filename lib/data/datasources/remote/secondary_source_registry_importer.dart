@@ -56,14 +56,15 @@ class SecondarySourceRegistryImporter {
             'audit_gaps': <Map<String, Object?>>[
               ImporterAudit.auditGap(
                 fieldName: 'upstream_body',
-                reason: 'Secondary-source registry only records landing-page '
+                reason:
+                    'Secondary-source registry only records landing-page '
                     'metadata; upstream body is intentionally not fetched or '
                     'parsed by this importer.',
               ),
             ],
             'parser_limitation':
                 'Registry-only entry; downstream consumers must treat this as '
-                    'a pointer to the authoritative source, not as a parsed fact.',
+                'a pointer to the authoritative source, not as a parsed fact.',
           }),
         ),
       );

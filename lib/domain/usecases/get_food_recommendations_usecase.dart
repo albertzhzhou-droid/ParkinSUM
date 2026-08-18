@@ -14,19 +14,22 @@ class GetFoodRecommendationsUseCase {
     required UserProfile userProfile,
   }) {
     final i18n = AppI18n.fromLocaleTag(userProfile.displayLocale);
-    final hasLevodopa =
-        drugs.any((drug) => drug.tags.contains(DrugTag.levodopaLike));
+    final hasLevodopa = drugs.any(
+      (drug) => drug.tags.contains(DrugTag.levodopaLike),
+    );
     final latestMeal = history.isEmpty
         ? null
-        : ([...history]..sort((a, b) =>
-                b.effectiveOccurredAt.compareTo(a.effectiveOccurredAt)))
-            .first;
+        : ([...history]..sort(
+                (a, b) =>
+                    b.effectiveOccurredAt.compareTo(a.effectiveOccurredAt),
+              ))
+              .first;
     final averageProtein = history.isEmpty
         ? 0.0
         : history
-                .map((meal) => meal.computeTotals().totalProteinG)
-                .fold<double>(0, (sum, value) => sum + value) /
-            history.length;
+                  .map((meal) => meal.computeTotals().totalProteinG)
+                  .fold<double>(0, (sum, value) => sum + value) /
+              history.length;
     final region = userProfile.contentJurisdictionOverride.isNotEmpty
         ? userProfile.contentJurisdictionOverride.first
         : userProfile.registrationRegion;
@@ -36,7 +39,7 @@ class GetFoodRecommendationsUseCase {
         latestMeal?.coeventSubstanceTags.contains('iron_salt') ?? false;
     final hasIronMultivitaminCoevent =
         latestMeal?.coeventSubstanceTags.contains('multivitamin_with_iron') ??
-            false;
+        false;
     final hasThickenerContext = latestMeal?.thickenerType != null;
     final hasContinuousEnteralFeed =
         latestMeal?.enteralFeedMode == 'continuous';
@@ -55,29 +58,27 @@ class GetFoodRecommendationsUseCase {
       final provenanceScore = _provenanceScore(food);
       final usedDatabaseFacts = _usedDatabaseFacts(food);
       final databaseFactCoverage = usedDatabaseFacts ? 1.0 : 0.35;
-      final hasPreciseTimingWindow = latestMeal?.nextMealWindowStart != null &&
+      final hasPreciseTimingWindow =
+          latestMeal?.nextMealWindowStart != null &&
           latestMeal?.nextMealWindowEnd != null &&
           latestMeal?.timeSource != 'migration_legacy';
       final timingWindowClarity = hasPreciseTimingWindow
           ? 1.0
           : latestMeal == null
-              ? 0.0
-              : 0.35;
+          ? 0.0
+          : 0.35;
       final drugTimingSensitivity = hasLevodopa
           ? (food.proteinG >= 20
-              ? 1.0
-              : food.proteinG >= 15
-                  ? 0.7
-                  : 0.35)
+                ? 1.0
+                : food.proteinG >= 15
+                ? 0.7
+                : 0.35)
           : 0.0;
       final regionMatchScore = _regionMatchScore(
         foodJurisdiction: food.jurisdiction,
         requestedRegion: region,
       );
-      final fallbackUsed = _fallbackUsed(
-        requestedRegion: region,
-        food: food,
-      );
+      final fallbackUsed = _fallbackUsed(requestedRegion: region, food: food);
       final fallbackPenalty = fallbackUsed ? 0.35 : 0.0;
       final repetitionPenalty = recentlyUsed ? 0.18 : 0.0;
       final fiberSupportScore = _fiberSupportScore(food);
@@ -97,7 +98,8 @@ class GetFoodRecommendationsUseCase {
         food: food,
         swallowingTextureMode: swallowingTextureMode,
       );
-      final contextPenaltyPoints = 100 *
+      final contextPenaltyPoints =
+          100 *
           ((0.06 * mealContextPenalty) +
               (0.04 * contextDataGapPenalty) +
               (0.08 * swallowingTexturePenalty));
@@ -111,7 +113,8 @@ class GetFoodRecommendationsUseCase {
         if (contextDataGapPenalty > 0) 'context_data_gap',
         if (swallowingTexturePenalty > 0) 'swallowing_texture_penalty',
       ];
-      final score = 100 *
+      final score =
+          100 *
           ((0.40 * safetyScore) +
               (0.20 * nutrientMatch) +
               (0.15 * scheduleFit) +
@@ -180,8 +183,9 @@ class GetFoodRecommendationsUseCase {
       return FoodRecommendation(
         food: food,
         score: score,
-        reasons:
-            reasons.isEmpty ? [i18n.tr('recommend.general_friendly')] : reasons,
+        reasons: reasons.isEmpty
+            ? [i18n.tr('recommend.general_friendly')]
+            : reasons,
         decision: decision,
         jurisdiction: region,
         fallbackUsed: fallbackUsed,
@@ -228,8 +232,7 @@ class GetFoodRecommendationsUseCase {
           riskTags: riskTags,
         ),
       );
-    }).toList()
-      ..sort((a, b) => b.score.compareTo(a.score));
+    }).toList()..sort((a, b) => b.score.compareTo(a.score));
 
     return recommendations.take(5).toList(growable: false);
   }
@@ -240,7 +243,8 @@ class GetFoodRecommendationsUseCase {
     required Meal? latestMeal,
   }) {
     if (!hasLevodopa) return 0.9;
-    final hasWindow = latestMeal?.nextMealWindowStart != null &&
+    final hasWindow =
+        latestMeal?.nextMealWindowStart != null &&
         latestMeal?.nextMealWindowEnd != null;
     if (!hasWindow) {
       // 未拿到完整时间窗时，不做更激进的排序，只保留保守惩罚。
@@ -249,10 +253,7 @@ class GetFoodRecommendationsUseCase {
     return food.proteinG >= 20 ? 0.45 : 0.92;
   }
 
-  double _safetyScore({
-    required FoodItem food,
-    required bool hasLevodopa,
-  }) {
+  double _safetyScore({required FoodItem food, required bool hasLevodopa}) {
     if (hasLevodopa && food.proteinG >= 25) return 0.4;
     if (hasLevodopa && food.proteinG >= 15) return 0.65;
     return 0.95;

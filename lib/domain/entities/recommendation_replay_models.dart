@@ -53,21 +53,21 @@ class RecommendationReplayCaseReport {
   /// Excludes any wall-clock timestamp so two runs of the same scenario set
   /// produce byte-identical JSON.
   Map<String, dynamic> toJson() => {
-        'case_id': benchmarkCase.caseId,
-        'title': benchmarkCase.title,
-        'focus_tags': benchmarkCase.focusTags,
-        'deterministic_ranking': deterministicRanking,
-        'ai_ranking': aiRanking,
-        'ai_used': aiUsed,
-        'decision_path': decisionPath,
-        'gate_reasons': gateReasons,
-        'ranking_diffs': rankingDiffs,
-        'matched_expected_top_food_ids': matchedExpectedTopFoodIds,
-        'missing_expected_top_food_ids': missingExpectedTopFoodIds,
-        // Safety invariant: the AI path may only reorder the deterministic
-        // candidate set; it must never add or drop a candidate.
-        'ai_preserved_candidate_set': aiPreservedCandidateSet,
-      };
+    'case_id': benchmarkCase.caseId,
+    'title': benchmarkCase.title,
+    'focus_tags': benchmarkCase.focusTags,
+    'deterministic_ranking': deterministicRanking,
+    'ai_ranking': aiRanking,
+    'ai_used': aiUsed,
+    'decision_path': decisionPath,
+    'gate_reasons': gateReasons,
+    'ranking_diffs': rankingDiffs,
+    'matched_expected_top_food_ids': matchedExpectedTopFoodIds,
+    'missing_expected_top_food_ids': missingExpectedTopFoodIds,
+    // Safety invariant: the AI path may only reorder the deterministic
+    // candidate set; it must never add or drop a candidate.
+    'ai_preserved_candidate_set': aiPreservedCandidateSet,
+  };
 
   /// One reviewer-facing section per case: every audit-relevant field plus a
   /// short safety note. [archetypeNote] explains what the archetype represents
@@ -97,9 +97,9 @@ class RecommendationReplayCaseReport {
       '',
       aiBlocked
           ? '_Local AI was limited to wording polish here: '
-              '${gateReasons.isEmpty ? 'the AI path was not engaged.' : 'the deterministic gate held the conservative ranking.'}_'
+                '${gateReasons.isEmpty ? 'the AI path was not engaged.' : 'the deterministic gate held the conservative ranking.'}_'
           : '_Local AI was allowed to reorder the safe whitelist only; the '
-              'deterministic candidate set and decisions stayed authoritative._',
+                'deterministic candidate set and decisions stayed authoritative._',
       '',
       '_Safety note: synthetic educational fixture. Deterministic rules remain '
           'the source of truth; this report is engineering review material and '
@@ -131,12 +131,12 @@ class RecommendationReplayRunReport {
   });
 
   String toMarkdown() => [
-        '# Recommendation Replay Report',
-        'Generated at: $generatedAtIso',
-        'Dataset version: $datasetVersion',
-        '',
-        ...cases.map((item) => item.toMarkdown()),
-      ].join('\n\n');
+    '# Recommendation Replay Report',
+    'Generated at: $generatedAtIso',
+    'Dataset version: $datasetVersion',
+    '',
+    ...cases.map((item) => item.toMarkdown()),
+  ].join('\n\n');
 
   /// Whether every case preserved the deterministic candidate set under the AI
   /// path (a coarse, scenario-level Local-AI safety invariant).
@@ -157,28 +157,41 @@ class RecommendationReplayRunReport {
       ..writeln()
       ..writeln('Dataset version: `$datasetVersion`')
       ..writeln()
-      ..writeln('Educational prototype; synthetic fixtures only. This replay '
-          'runs the same conservative + hybrid recommendation orchestrators '
-          'the app uses, with an offline scripted Local AI stand-in. It is '
-          'engineering review material, not medical advice and not a '
-          'clinical evaluation.')
+      ..writeln(
+        'Educational prototype; synthetic fixtures only. This replay '
+        'runs the same conservative + hybrid recommendation orchestrators '
+        'the app uses, with an offline scripted Local AI stand-in. It is '
+        'engineering review material, not medical advice and not a '
+        'clinical evaluation.',
+      )
       ..writeln()
       ..writeln('## How to read this report')
       ..writeln()
-      ..writeln('- **Invariant checked:** the Local AI path may only *reorder* '
-          'the deterministic candidate whitelist. "AI preserved candidate '
-          'set: yes" means no candidate was invented or dropped; a "NO" '
-          'means the safety invariant was violated and the run fails.')
-      ..writeln('- **Gate reasons:** when present, the deterministic safety '
-          'gate held the conservative ranking and Local AI was limited to '
-          'wording polish.')
-      ..writeln('- **Drift:** this artifact is timestamp-free and '
-          'deterministic. If a regenerated report differs from the committed '
-          'or previously reviewed one, engine/gate/scenario behaviour '
-          'changed and the diff should be reviewed, not regenerated away.')
+      ..writeln(
+        '- **Invariant checked:** the Local AI path may only *reorder* '
+        'the deterministic candidate whitelist. "AI preserved candidate '
+        'set: yes" means no candidate was invented or dropped; a "NO" '
+        'means the safety invariant was violated and the run fails.',
+      )
+      ..writeln(
+        '- **Gate reasons:** when present, the deterministic safety '
+        'gate held the conservative ranking and Local AI was limited to '
+        'wording polish.',
+      )
+      ..writeln(
+        '- **Drift:** this artifact is timestamp-free and '
+        'deterministic. The committed baseline is '
+        '`test/goldens/recommendation_scenario_replay.md`, checked on every '
+        'run by `flutter test test/goldens_test.dart` (also part of '
+        '`npm run verify:all`). If a regenerated report differs from it, '
+        'engine/gate/scenario behaviour changed and the diff should be '
+        'reviewed, not regenerated away.',
+      )
       ..writeln()
-      ..writeln('Candidate-set invariant held for all cases: '
-          '**${allPreservedCandidateSet ? 'yes' : 'NO'}**')
+      ..writeln(
+        'Candidate-set invariant held for all cases: '
+        '**${allPreservedCandidateSet ? 'yes' : 'NO'}**',
+      )
       ..writeln();
     for (final c in cases) {
       final tag = c.benchmarkCase.focusTags.isEmpty
@@ -195,9 +208,9 @@ class RecommendationReplayRunReport {
   /// excluded from [cases] so the case array is stable across runs; callers
   /// that need provenance can read [datasetVersion].
   Map<String, dynamic> toJson() => {
-        'report_type': 'recommendation_scenario_replay',
-        'dataset_version': datasetVersion,
-        'no_medical_advice': true,
-        'cases': cases.map((c) => c.toJson()).toList(growable: false),
-      };
+    'report_type': 'recommendation_scenario_replay',
+    'dataset_version': datasetVersion,
+    'no_medical_advice': true,
+    'cases': cases.map((c) => c.toJson()).toList(growable: false),
+  };
 }

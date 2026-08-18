@@ -59,9 +59,9 @@ class FdcP0Importer {
       final foods = decoded is List<dynamic>
           ? decoded.cast<Map<String, dynamic>>()
           : (decoded['FoundationFoods'] as List<dynamic>? ??
-                  decoded['foods'] as List<dynamic>? ??
-                  const <dynamic>[])
-              .cast<Map<String, dynamic>>();
+                    decoded['foods'] as List<dynamic>? ??
+                    const <dynamic>[])
+                .cast<Map<String, dynamic>>();
       return importFoods(foods, sourceLabel: sourceLabel);
     }
     return importCsvArchive(files, sourceLabel: sourceLabel);
@@ -102,27 +102,31 @@ class FdcP0Importer {
           final nutrients =
               (nutrientRowsByFood[fdcId] ?? const <Map<String, String>>[])
                   .map((item) {
-            final nutrientId =
-                (item['nutrient_id'] ?? item['id'] ?? '').toString();
-            final nutrient =
-                nutrientById[nutrientId] ?? const <String, String>{};
-            return <String, dynamic>{
-              'amount': item['amount'],
-              'nutrient': {
-                'number': (nutrient['number'] ?? '').toString(),
-                'name': (nutrient['name'] ?? '').toString(),
-                'unitName':
-                    (nutrient['unit_name'] ?? nutrient['unitName'] ?? '')
-                        .toString(),
-              },
-            };
-          }).toList(growable: false);
+                    final nutrientId = (item['nutrient_id'] ?? item['id'] ?? '')
+                        .toString();
+                    final nutrient =
+                        nutrientById[nutrientId] ?? const <String, String>{};
+                    return <String, dynamic>{
+                      'amount': item['amount'],
+                      'nutrient': {
+                        'number': (nutrient['number'] ?? '').toString(),
+                        'name': (nutrient['name'] ?? '').toString(),
+                        'unitName':
+                            (nutrient['unit_name'] ??
+                                    nutrient['unitName'] ??
+                                    '')
+                                .toString(),
+                      },
+                    };
+                  })
+                  .toList(growable: false);
           return <String, dynamic>{
             'fdcId': fdcId,
             'description': (row['description'] ?? '').toString(),
-            'dataType':
-                (row['data_type'] ?? row['dataType'] ?? 'FDC').toString(),
-            'foodCategory': categoryById[categoryId] ??
+            'dataType': (row['data_type'] ?? row['dataType'] ?? 'FDC')
+                .toString(),
+            'foodCategory':
+                categoryById[categoryId] ??
                 (row['food_class'] ?? 'other').toString(),
             'foodNutrients': nutrients,
           };
@@ -271,7 +275,8 @@ class FdcP0Importer {
             fieldNamesObserved.add(key.toString());
           }
           final amount = raw['amount'];
-          final modifier = raw['modifier'] ??
+          final modifier =
+              raw['modifier'] ??
               raw['portionDescription'] ??
               raw['description'];
           final gramWeight = raw['gramWeight'];
@@ -280,9 +285,9 @@ class FdcP0Importer {
             continue;
           }
           summarized.add({
-            if (amount != null) 'amount': amount,
+            'amount': ?amount,
             if (modifier != null) 'modifier': modifier.toString(),
-            if (gramWeight != null) 'gram_weight': gramWeight,
+            'gram_weight': ?gramWeight,
             if (raw['measureUnit'] is Map &&
                 (raw['measureUnit'] as Map)['name'] != null)
               'measure_unit': (raw['measureUnit'] as Map)['name'],
@@ -461,19 +466,18 @@ class FdcP0Importer {
   }
 
   List<Map<String, String>> _loadCsvRows(
-      Map<String, String> files, String stem) {
-    final match = files.entries.firstWhere(
-      (entry) {
-        final lower = entry.key.toLowerCase();
-        return lower.endsWith('/$stem.csv') ||
-            lower.endsWith('\\$stem.csv') ||
-            lower.endsWith('$stem.csv') ||
-            lower.endsWith('/$stem.txt') ||
-            lower.endsWith('\\$stem.txt') ||
-            lower.endsWith('$stem.txt');
-      },
-      orElse: () => const MapEntry('', ''),
-    );
+    Map<String, String> files,
+    String stem,
+  ) {
+    final match = files.entries.firstWhere((entry) {
+      final lower = entry.key.toLowerCase();
+      return lower.endsWith('/$stem.csv') ||
+          lower.endsWith('\\$stem.csv') ||
+          lower.endsWith('$stem.csv') ||
+          lower.endsWith('/$stem.txt') ||
+          lower.endsWith('\\$stem.txt') ||
+          lower.endsWith('$stem.txt');
+    }, orElse: () => const MapEntry('', ''));
     if (match.key.isEmpty) return const <Map<String, String>>[];
     return ArchiveImportSupport.parseDelimitedRows(match.value);
   }

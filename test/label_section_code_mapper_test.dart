@@ -39,7 +39,9 @@ void main() {
 
   test('mapping works via title when key is opaque', () {
     final r = mapper.map(
-        sectionKey: 'section_2', sectionTitle: 'Dosage and Administration');
+      sectionKey: 'section_2',
+      sectionTitle: 'Dosage and Administration',
+    );
     expect(r.loincCode, '34068-7');
     expect(r.mappingConfidence, SectionCodeMappingConfidence.mapped);
   });
@@ -55,7 +57,9 @@ void main() {
 
   test('ambiguous / non-section title remains unknown', () {
     final r = mapper.map(
-        sectionKey: 'misc', sectionTitle: 'Additional information of interest');
+      sectionKey: 'misc',
+      sectionTitle: 'Additional information of interest',
+    );
     expect(r.isMapped, isFalse);
     expect(r.loincCode, isNull);
   });

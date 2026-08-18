@@ -10,6 +10,22 @@ enum DrugTag {
   cholinesteraseInhibitor,
   pressorAgent,
   laxative,
+  unknown,
+}
+
+/// Parses persisted/catalog tag values without assigning clinical meaning to
+/// an unrecognized value. Both JSON and native-database deserialization use
+/// this single boundary so a future or malformed tag can never silently turn
+/// into [DrugTag.levodopaLike].
+List<DrugTag> parseDrugTags(Iterable<Object?> rawTags) {
+  return rawTags
+      .map(
+        (rawTag) => DrugTag.values.firstWhere(
+          (tag) => tag.name == rawTag?.toString(),
+          orElse: () => DrugTag.unknown,
+        ),
+      )
+      .toList(growable: false);
 }
 
 /// DrugDefinition：药物目录定义（非处方建议，只是结构化信息）
@@ -51,40 +67,38 @@ class DrugDefinition {
   /// - 让目录页能通过通用名、商品名、别名、剂型、来源系统、交互摘要检索。
   /// - 这里仍是 UI 辅助索引，不替代正式标签解析。
   String get searchableText => [
-        id,
-        genericName,
-        ...brandNames,
-        ...aliases,
-        notes,
-        interactionSummary,
-        sourceSystem,
-        jurisdiction,
-        route,
-        dosageForm,
-        releaseType,
-        sourceProductCode ?? '',
-      ].join(' ').toLowerCase();
+    id,
+    genericName,
+    ...brandNames,
+    ...aliases,
+    notes,
+    interactionSummary,
+    sourceSystem,
+    jurisdiction,
+    route,
+    dosageForm,
+    releaseType,
+    sourceProductCode ?? '',
+  ].join(' ').toLowerCase();
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'genericName': genericName,
-        'brandNames': brandNames,
-        'aliases': aliases,
-        'tags': tags.map((e) => e.name).toList(),
-        'notes': notes,
-        'interactionSummary': interactionSummary,
-        'sourceSystem': sourceSystem,
-        'sourceProductCode': sourceProductCode,
-        'jurisdiction': jurisdiction,
-        'route': route,
-        'dosageForm': dosageForm,
-        'releaseType': releaseType,
-      };
+    'id': id,
+    'genericName': genericName,
+    'brandNames': brandNames,
+    'aliases': aliases,
+    'tags': tags.map((e) => e.name).toList(),
+    'notes': notes,
+    'interactionSummary': interactionSummary,
+    'sourceSystem': sourceSystem,
+    'sourceProductCode': sourceProductCode,
+    'jurisdiction': jurisdiction,
+    'route': route,
+    'dosageForm': dosageForm,
+    'releaseType': releaseType,
+  };
 
   static DrugDefinition fromJson(Map<String, dynamic> json) {
-    final tagsRaw = (json['tags'] as List<dynamic>? ?? const [])
-        .map((e) => e.toString())
-        .toList(growable: false);
+    final tagsRaw = json['tags'] as List<dynamic>? ?? const <dynamic>[];
 
     return DrugDefinition(
       id: json['id'] as String,
@@ -95,10 +109,7 @@ class DrugDefinition {
       aliases: (json['aliases'] as List<dynamic>? ?? const [])
           .map((e) => e.toString())
           .toList(growable: false),
-      tags: tagsRaw
-          .map((t) => DrugTag.values.firstWhere((x) => x.name == t,
-              orElse: () => DrugTag.levodopaLike))
-          .toList(),
+      tags: parseDrugTags(tagsRaw),
       notes: (json['notes'] as String?) ?? '',
       interactionSummary: (json['interactionSummary'] as String?) ?? '',
       sourceSystem: (json['sourceSystem'] as String?) ?? 'LOCAL_SEED',

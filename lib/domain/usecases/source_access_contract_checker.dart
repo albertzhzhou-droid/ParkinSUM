@@ -37,15 +37,17 @@ class SourceAccessContractChecker {
       required String message,
       String suggestedFix = '',
     }) {
-      findings.add(SourceAccessFinding(
-        severity: severity,
-        findingType: type,
-        sourceId: sourceId,
-        file: file,
-        message: message,
-        suggestedFix: suggestedFix,
-        safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-      ));
+      findings.add(
+        SourceAccessFinding(
+          severity: severity,
+          findingType: type,
+          sourceId: sourceId,
+          file: file,
+          message: message,
+          suggestedFix: suggestedFix,
+          safetyBoundary: RuleExplanation.defaultSafetyBoundary,
+        ),
+      );
     }
 
     for (final record in contract.records.values) {
@@ -65,8 +67,9 @@ class SourceAccessContractChecker {
         add(
           severity: SourceAccessSeverity.blocker,
           type: 'missing_required_fields',
-          sourceId:
-              record.sourceId.trim().isEmpty ? '(unknown)' : record.sourceId,
+          sourceId: record.sourceId.trim().isEmpty
+              ? '(unknown)'
+              : record.sourceId,
           file: registryPath,
           message:
               'Registry record is missing required matrix fields: ${missingFields.join(', ')}.',
@@ -217,10 +220,10 @@ class SourceAccessContractChecker {
 
     findings.sort((a, b) {
       int rank(String severity) => switch (severity) {
-            SourceAccessSeverity.blocker => 0,
-            SourceAccessSeverity.warn => 1,
-            _ => 2,
-          };
+        SourceAccessSeverity.blocker => 0,
+        SourceAccessSeverity.warn => 1,
+        _ => 2,
+      };
       final bySeverity = rank(a.severity).compareTo(rank(b.severity));
       if (bySeverity != 0) return bySeverity;
       final byType = a.findingType.compareTo(b.findingType);
@@ -258,16 +261,20 @@ String renderSourceAccessMarkdown(SourceAccessContractReport report) {
   final b = StringBuffer()
     ..writeln('# Source Access Contract Report')
     ..writeln()
-    ..writeln('Source governance / release hygiene only. Not legal advice, '
-        'not license clearance, and not clinical validation.')
+    ..writeln(
+      'Source governance / release hygiene only. Not legal advice, '
+      'not license clearance, and not clinical validation.',
+    )
     ..writeln()
     ..writeln('- Registry: `${report.registryPath}`')
     ..writeln('- Sources: ${report.sourceCount}')
     ..writeln('- Observed references: ${report.referenceCount}')
     ..writeln('- Pass: `${report.pass}`')
-    ..writeln('- Findings: blocker=${report.counts['blocker'] ?? 0}, '
-        'warn=${report.counts['warn'] ?? 0}, '
-        'info=${report.counts['info'] ?? 0}')
+    ..writeln(
+      '- Findings: blocker=${report.counts['blocker'] ?? 0}, '
+      'warn=${report.counts['warn'] ?? 0}, '
+      'info=${report.counts['info'] ?? 0}',
+    )
     ..writeln()
     ..writeln('## Findings')
     ..writeln();
@@ -275,9 +282,11 @@ String renderSourceAccessMarkdown(SourceAccessContractReport report) {
     b.writeln('No findings.');
   } else {
     for (final finding in report.findings) {
-      b.writeln('- **${finding.severity.toUpperCase()}** '
-          '`${finding.findingType}` `${finding.sourceId}` '
-          'in `${finding.file}`: ${finding.message}');
+      b.writeln(
+        '- **${finding.severity.toUpperCase()}** '
+        '`${finding.findingType}` `${finding.sourceId}` '
+        'in `${finding.file}`: ${finding.message}',
+      );
     }
   }
   b

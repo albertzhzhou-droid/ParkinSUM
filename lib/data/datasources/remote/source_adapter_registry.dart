@@ -275,8 +275,10 @@ class SourceAdapterRegistry {
     ),
   ];
 
-  static List<SourceAdapterSpec> get all =>
-      [...medicationSources, ...foodSources];
+  static List<SourceAdapterSpec> get all => [
+    ...medicationSources,
+    ...foodSources,
+  ];
 
   static SourceAdapterSpec? bySourceSystem(String sourceSystem) {
     for (final s in all) {

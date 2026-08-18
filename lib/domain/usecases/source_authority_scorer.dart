@@ -76,8 +76,9 @@ class SourceAuthorityScorer {
   /// Determine whether seed/synthetic data is allowed to override an official
   /// source. Always false — the policy forbids it.
   bool seedMayOverride(
-          SourceDocumentMetadata seed, SourceDocumentMetadata official) =>
-      false;
+    SourceDocumentMetadata seed,
+    SourceDocumentMetadata official,
+  ) => false;
 
   /// Classify a cross-jurisdiction comparison between two sources for the
   /// same attribute. Conflicts are preserved, never silently collapsed.
