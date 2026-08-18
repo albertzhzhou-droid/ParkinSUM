@@ -8,6 +8,7 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/interaction_result.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/purpose_bound_consent.dart';
 import '../../core/models/user_profile.dart';
 import '../entities/food_recommendation.dart';
 
@@ -121,7 +122,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     : _client = client ?? http.Client();
 
   Future<LocalAiAvailability> probe({required UserProfile userProfile}) async {
-    if (!userProfile.localAiConsentEnabled) {
+    if (!userProfile.hasCurrentLocalAiConsent) {
       final preferred = _normalizedProvider(
         userProfile.localAiProviderPreference,
       );
@@ -138,6 +139,14 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       );
     }
 
+    final lease = PurposeBoundConsentRuntimeGate.acquire(
+      subject: userProfile.patientId,
+      evaluation: userProfile.localAiConsentEvaluation,
+    );
+    if (lease == null) {
+      return _consentUnavailable(userProfile);
+    }
+
     final model = _textModel(userProfile);
     final medicalModel = _medicalModel(userProfile);
     final timeout = _timeout(userProfile);
@@ -149,7 +158,9 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         model: model,
         medicalModel: medicalModel,
         timeout: timeout,
+        lease: lease,
       );
+      if (!lease.isCurrent) return _consentUnavailable(userProfile);
       if (response.available) {
         return response;
       }
@@ -170,12 +181,33 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     );
   }
 
+  LocalAiAvailability _consentUnavailable(UserProfile userProfile) {
+    final preferred = _normalizedProvider(
+      userProfile.localAiProviderPreference,
+    );
+    return LocalAiAvailability(
+      available: false,
+      skipped: true,
+      provider: preferred,
+      endpoint: preferred == LocalAiProviders.openAiCompat
+          ? userProfile.localAiOpenAiCompatEndpoint
+          : userProfile.localAiOllamaEndpoint,
+      model: _textModel(userProfile),
+      medicalModel: _medicalModel(userProfile),
+      message: 'Local AI probe skipped because consent is not current.',
+    );
+  }
+
   @override
   Future<String?> polishResponseCopy(ResponseCopyRequest request) async {
-    final userProfile = UserProfile.defaults().copyWith(
-      displayLocale: request.localeTag,
-      localAiConsentEnabled: true,
-    );
+    if (!request.hasCurrentPurposeBoundConsent) return null;
+    final userProfile = UserProfile.defaults()
+        .copyWith(displayLocale: request.localeTag)
+        .withLocalAiConsentDecision(
+          enabled: true,
+          recordedAt: DateTime.now().toUtc(),
+          source: 'response_copy',
+        );
     final availability = await probe(userProfile: userProfile);
     if (!availability.available) return null;
     final schema = {
@@ -203,6 +235,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       schema: schema,
       schemaName: 'copy_polish',
       timeout: const Duration(milliseconds: 12000),
+      lease: PurposeBoundConsentRuntimeGate.acquire(
+        subject: userProfile.patientId,
+        evaluation: userProfile.localAiConsentEvaluation,
+      ),
     );
     final polished = payload?['polished_text']?.toString().trim();
     if (polished == null ||
@@ -220,7 +256,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required List<DrugDefinition> activeDrugs,
     required List<Intake> intakes,
   }) async {
-    if (!userProfile.localAiConsentEnabled) return result;
+    if (!userProfile.hasCurrentLocalAiConsent) return result;
     final availability = await probe(userProfile: userProfile);
     if (!availability.available) return result;
     final model = availability.medicalAvailable
@@ -278,6 +314,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       schema: schema,
       schemaName: 'meal_conflict_polish',
       timeout: _timeout(userProfile),
+      lease: PurposeBoundConsentRuntimeGate.acquire(
+        subject: userProfile.patientId,
+        evaluation: userProfile.localAiConsentEvaluation,
+      ),
     );
     if (payload == null || _containsUnsafeGeneratedCopy(payload)) return result;
     final issueDetails =
@@ -405,6 +445,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       schema: schema,
       schemaName: 'safe_rerank',
       timeout: _timeout(userProfile),
+      lease: PurposeBoundConsentRuntimeGate.acquire(
+        subject: userProfile.patientId,
+        evaluation: userProfile.localAiConsentEvaluation,
+      ),
     );
     if (payload == null || _containsUnsafeGeneratedCopy(payload)) return null;
 
@@ -473,6 +517,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       schema: schema,
       schemaName: 'recommendation_copy_polish',
       timeout: _timeout(userProfile),
+      lease: PurposeBoundConsentRuntimeGate.acquire(
+        subject: userProfile.patientId,
+        evaluation: userProfile.localAiConsentEvaluation,
+      ),
     );
     if (payload == null) return null;
     final notes = _safeCandidateNotes(payload, allowedIds.toSet());
@@ -537,6 +585,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required String model,
     required String medicalModel,
     required Duration timeout,
+    required PurposeBoundConsentLease lease,
   }) async {
     if (!_isLocalhostEndpoint(endpoint)) {
       return LocalAiAvailability(
@@ -555,6 +604,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         endpoint: endpoint,
         model: model,
         timeout: timeout,
+        lease: lease,
       );
 
       if (modelAvailable) {
@@ -565,6 +615,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
             endpoint: endpoint,
             model: medicalModel,
             timeout: timeout,
+            lease: lease,
           );
         }
         return LocalAiAvailability(
@@ -616,13 +667,16 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required String endpoint,
     required String model,
     required Duration timeout,
+    required PurposeBoundConsentLease lease,
   }) async {
+    if (!lease.isCurrent) return false;
     if (provider == LocalAiProviders.ollama) {
       final response = await _getNoRedirect(
         _ollamaTagsUri(endpoint),
         headers: {'Accept': 'application/json'},
         timeout: timeout,
       );
+      if (!lease.isCurrent) return false;
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return false;
       }
@@ -641,7 +695,9 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       endpoint: endpoint,
       model: model,
       timeout: timeout,
+      lease: lease,
     );
+    if (!lease.isCurrent) return false;
     return response.statusCode >= 200 && response.statusCode < 300;
   }
 
@@ -650,7 +706,11 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required String endpoint,
     required String model,
     required Duration timeout,
+    required PurposeBoundConsentLease lease,
   }) {
+    if (!lease.isCurrent) {
+      return Future<http.Response>.value(http.Response('', 499));
+    }
     final uri = Uri.parse(endpoint);
     return switch (provider) {
       LocalAiProviders.ollama => _postJsonNoRedirect(uri, {
@@ -733,8 +793,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required String prompt,
     required Map<String, dynamic> schema,
     required Duration timeout,
+    required PurposeBoundConsentLease lease,
   }) async {
     try {
+      if (!lease.isCurrent) return null;
       final response = await _postJsonNoRedirect(Uri.parse(endpoint), {
         'model': model,
         'stream': false,
@@ -743,6 +805,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         ],
         'format': schema,
       }, timeout);
+      if (!lease.isCurrent) return null;
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final content =
@@ -761,7 +824,9 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Map<String, dynamic> schema,
     required String schemaName,
     required Duration timeout,
+    required PurposeBoundConsentLease? lease,
   }) {
+    if (lease == null || !lease.isCurrent) return Future.value(null);
     return switch (availability.provider) {
       LocalAiProviders.ollama => _tryOllama(
         endpoint: availability.endpoint,
@@ -769,6 +834,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         prompt: prompt,
         schema: schema,
         timeout: timeout,
+        lease: lease,
       ),
       LocalAiProviders.openAiCompat => _tryOpenAiCompat(
         endpoint: availability.endpoint,
@@ -777,6 +843,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
         schema: schema,
         schemaName: schemaName,
         timeout: timeout,
+        lease: lease,
       ),
       _ => Future.value(null),
     };
@@ -789,8 +856,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required Map<String, dynamic> schema,
     String schemaName = 'safe_rerank',
     required Duration timeout,
+    required PurposeBoundConsentLease lease,
   }) async {
     try {
+      if (!lease.isCurrent) return null;
       final response = await _postJsonNoRedirect(Uri.parse(endpoint), {
         'model': model,
         'messages': [
@@ -801,6 +870,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
           'json_schema': {'name': schemaName, 'schema': schema},
         },
       }, timeout);
+      if (!lease.isCurrent) return null;
       if (response.statusCode < 200 || response.statusCode >= 300) return null;
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       final choices = json['choices'] as List<dynamic>? ?? const [];

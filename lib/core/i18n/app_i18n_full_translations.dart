@@ -18,6 +18,15 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'diagnostics.scope_body':
         '이는 결정론적 거버넌스 검사(문구 컴파일, 현지화 안전성 린트, 합성 시나리오 재생)입니다. 엔지니어링 상태만 보고하며, 점수·심각도·근거·규칙 결과를 변경하지 않고 건강 지침이 아닙니다. 합성/데모 데이터만 사용합니다.',
     'diagnostics.elapsed': '검사가 {ms} ms 만에 완료되었습니다.',
+    'reminders.identity_attestation_title': '플러그인 대기 요청 식별 정보 확인',
+    'reminders.identity_attestation_matched':
+        '플러그인이 보고한 대기 식별 정보가 계획과 일치합니다({installed}/{planned}). 이는 운영체제 스케줄러 또는 실제 표시 전달을 독립적으로 검증한 결과가 아닙니다.',
+    'reminders.identity_attestation_drift':
+        '플러그인이 보고한 식별 정보가 계획과 다릅니다. 누락 {missing}개, 추가 {extra}개, 계획된 ID에서 교체 {replaced}개입니다. 다시 동기화될 때까지 시스템 알림에 의존하지 마세요.',
+    'reminders.identity_attestation_uninspectable':
+        '플러그인에서 대기 요청 식별 정보를 읽을 수 없습니다. 로컬 계획이 기준이지만 시스템 알림 상태는 확인되지 않았습니다.',
+    'reminders.error_schedule_identity_unverified':
+        '로컬 계획은 저장되었지만 플러그인이 보고한 대기 식별 정보를 계획과 대조할 수 없습니다. 시스템 알림에 의존하기 전에 다시 동기화하세요.',
     'app.welcome': '환영합니다',
     'app.loading': '불러오는 중...',
     'onboarding.title': 'ParkinSUM 동반자 (로컬 에디션)',
@@ -47,7 +56,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'nav.next_meal': '다음 식사',
     'next_meal.title': '다음 식사 추천',
     'next_meal.subtitle':
-        '다음 식사 시간을 먼저 정하면, 충돌 엔진이 그 시간 창 · 현재 복용 약 · 최근 식사 컨텍스트에 맞춰 5개의 후보를 재정렬합니다. 로컬 AI는 선택 사항이며 문구를 다듬는 데만 사용됩니다.',
+        '다음 식사 시간을 정하세요. 보수적 규칙 경로는 후보 순서를 유지하고, 기전 모델은 교육용 시간 중첩 추적만 추가하며 재정렬하지 않습니다. 로컬 AI는 별도의 선택적 안전 목록 재정렬 기능입니다.',
     'next_meal.input_time': '예상 다음 식사 시간',
     'next_meal.use_local_ai': '로컬 AI로 문구 다듬기 (선택)',
     'next_meal.use_local_ai_help':
@@ -295,6 +304,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'diagnostics.scope_body':
         'ये नियतात्मक गवर्नेंस जाँचें हैं (कॉपी संकलन, स्थानीयकरण सुरक्षा लिंट, सिंथेटिक परिदृश्य रीप्ले)। ये केवल इंजीनियरिंग स्थिति बताती हैं: ये किसी स्कोर, गंभीरता, प्रमाण या नियम परिणाम को नहीं बदलतीं, और ये स्वास्थ्य मार्गदर्शन नहीं हैं। केवल सिंथेटिक/डेमो डेटा।',
     'diagnostics.elapsed': 'जाँचें {ms} ms में पूरी हुईं।',
+    'reminders.identity_attestation_title':
+        'प्लगइन द्वारा बताई गई लंबित पहचान की जाँच',
+    'reminders.identity_attestation_matched':
+        'प्लगइन द्वारा बताई गई लंबित पहचान योजना से मेल खाती हैं ({installed}/{planned})। यह ऑपरेटिंग सिस्टम शेड्यूलर या दिखाई देने वाली डिलीवरी का स्वतंत्र सत्यापन नहीं है।',
+    'reminders.identity_attestation_drift':
+        'प्लगइन की पहचान योजना से अलग है: {missing} गायब, {extra} अतिरिक्त और नियोजित ID पर {replaced} बदली हुई। दोबारा समन्वय सफल होने तक सिस्टम रिमाइंडर पर निर्भर न रहें।',
+    'reminders.identity_attestation_uninspectable':
+        'प्लगइन से लंबित अनुरोध की पहचान नहीं पढ़ी जा सकी। स्थानीय योजना प्रामाणिक है, लेकिन सिस्टम रिमाइंडर की स्थिति अप्रमाणित है।',
+    'reminders.error_schedule_identity_unverified':
+        'स्थानीय योजना सहेजी गई, लेकिन प्लगइन की लंबित पहचान उससे नहीं मिल सकी। सिस्टम रिमाइंडर पर निर्भर होने से पहले फिर समन्वय करें।',
     'app.welcome': 'स्वागत है',
     'app.loading': 'लोड हो रहा है...',
     'onboarding.title': 'ParkinSUM साथी (स्थानीय संस्करण)',
@@ -327,7 +346,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'nav.next_meal': 'अगला भोजन',
     'next_meal.title': 'अगले भोजन की सिफारिश',
     'next_meal.subtitle':
-        'पहले अगले भोजन का अनुमानित समय चुनें; संघर्ष इंजन उस समय विंडो, सक्रिय दवाओं और हाल के संदर्भ के अनुसार 5 उम्मीदवारों को पुनर्क्रमित करेगा। स्थानीय AI वैकल्पिक है और केवल शब्दों को निखारता है।',
+        'अगले भोजन का समय चुनें। रूढ़िवादी नियम-पथ उम्मीदवारों का क्रम बनाए रखता है; यांत्रिक मॉडल केवल शैक्षिक समय-अतिव्यापन ट्रेस जोड़ता है और क्रम नहीं बदलता। स्थानीय AI अलग, वैकल्पिक सुरक्षित-सूची पुनर्क्रमण है।',
     'next_meal.input_time': 'अगले भोजन का अनुमानित समय',
     'next_meal.use_local_ai': 'स्थानीय AI से शब्द निखारें (वैकल्पिक)',
     'next_meal.use_local_ai_help':
@@ -598,6 +617,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'diagnostics.scope_body':
         'Estas son comprobaciones de gobernanza deterministas (compilación de textos, lint de seguridad de localización, repetición de escenarios sintéticos). Solo informan del estado de ingeniería: no cambian ninguna puntuación, gravedad, evidencia ni resultado de regla, y no son orientación de salud. Solo datos sintéticos o de demostración.',
     'diagnostics.elapsed': 'Comprobaciones completadas en {ms} ms.',
+    'reminders.identity_attestation_title':
+        'Comprobación de identidades pendientes informadas por el complemento',
+    'reminders.identity_attestation_matched':
+        'Las identidades pendientes informadas por el complemento coinciden con el plan ({installed}/{planned}). Esto no verifica de forma independiente el programador del sistema operativo ni la entrega visible.',
+    'reminders.identity_attestation_drift':
+        'Las identidades informadas difieren del plan: faltan {missing}, sobran {extra} y {replaced} fueron sustituidas bajo un ID previsto. No dependa de los avisos del sistema hasta completar la reconciliación.',
+    'reminders.identity_attestation_uninspectable':
+        'No se pudieron leer las identidades pendientes del complemento. El plan local sigue siendo la referencia, pero el estado de los avisos del sistema no está verificado.',
+    'reminders.error_schedule_identity_unverified':
+        'El plan local se guardó, pero las identidades pendientes del complemento no pudieron compararse con él. Vuelva a reconciliar antes de depender de los avisos del sistema.',
     'app.welcome': 'Bienvenido',
     'app.loading': 'Cargando...',
     'onboarding.title': 'ParkinSUM Compañero (Edición Local)',
@@ -633,7 +662,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'nav.next_meal': 'Próxima comida',
     'next_meal.title': 'Recomendación de la próxima comida',
     'next_meal.subtitle':
-        'Elija primero la hora prevista de la próxima comida; el motor de conflictos reordena 5 candidatos según esa ventana, sus medicamentos activos y el contexto reciente. La IA local es opcional y solo pule el texto.',
+        'Elija la hora prevista de la próxima comida. La ruta conservadora mantiene el orden de candidatos; el modelo mecanístico solo añade una traza educativa de solapamiento temporal y no reordena. La IA local es un reordenador opcional y separado de lista segura.',
     'next_meal.input_time': 'Hora prevista de la próxima comida',
     'next_meal.use_local_ai': 'Pulir el texto con IA local (opcional)',
     'next_meal.use_local_ai_help':
@@ -912,6 +941,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'diagnostics.scope_body':
         'Đây là các kiểm tra quản trị tất định (biên dịch nội dung, lint an toàn bản địa hóa, phát lại kịch bản tổng hợp). Chúng chỉ báo cáo trạng thái kỹ thuật: không thay đổi điểm số, mức độ nghiêm trọng, bằng chứng hay kết quả quy tắc, và không phải hướng dẫn sức khỏe. Chỉ dùng dữ liệu tổng hợp/demo.',
     'diagnostics.elapsed': 'Hoàn tất kiểm tra trong {ms} ms.',
+    'reminders.identity_attestation_title':
+        'Kiểm tra danh tính yêu cầu đang chờ do plugin báo cáo',
+    'reminders.identity_attestation_matched':
+        'Danh tính đang chờ do plugin báo cáo khớp với kế hoạch ({installed}/{planned}). Đây không phải là xác minh độc lập bộ lập lịch của hệ điều hành hoặc việc thông báo thực sự hiển thị.',
+    'reminders.identity_attestation_drift':
+        'Danh tính do plugin báo cáo khác kế hoạch: thiếu {missing}, thừa {extra}, và {replaced} bị thay thế dưới ID đã lên kế hoạch. Không dựa vào nhắc nhở hệ thống cho đến khi đồng bộ lại thành công.',
+    'reminders.identity_attestation_uninspectable':
+        'Không thể đọc danh tính yêu cầu đang chờ từ plugin. Kế hoạch cục bộ vẫn là nguồn chuẩn, nhưng trạng thái nhắc nhở hệ thống chưa được xác minh.',
+    'reminders.error_schedule_identity_unverified':
+        'Kế hoạch cục bộ đã được lưu, nhưng danh tính đang chờ do plugin báo cáo không thể khớp với kế hoạch. Hãy đồng bộ lại trước khi dựa vào nhắc nhở hệ thống.',
     'app.welcome': 'Chào mừng',
     'app.loading': 'Đang tải...',
     'onboarding.title': 'ParkinSUM Đồng hành (Phiên bản cục bộ)',
@@ -944,7 +983,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'nav.next_meal': 'Bữa kế tiếp',
     'next_meal.title': 'Đề xuất bữa kế tiếp',
     'next_meal.subtitle':
-        'Hãy chọn giờ dự kiến cho bữa kế tiếp; bộ máy xung đột sẽ xếp lại 5 ứng viên theo khung giờ đó, thuốc đang dùng và ngữ cảnh gần đây. AI cục bộ là tùy chọn và chỉ làm mượt văn bản.',
+        'Hãy chọn giờ dự kiến cho bữa kế tiếp. Đường quy tắc thận trọng giữ nguyên thứ tự ứng viên; mô hình cơ chế chỉ thêm dấu vết chồng lấp thời gian mang tính giáo dục và không xếp lại. AI cục bộ là bộ xếp lại danh sách an toàn riêng, tùy chọn.',
     'next_meal.input_time': 'Giờ dự kiến bữa kế tiếp',
     'next_meal.use_local_ai': 'Dùng AI cục bộ làm mượt văn bản (tùy chọn)',
     'next_meal.use_local_ai_help':
@@ -1226,6 +1265,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'diagnostics.scope_body':
         'นี่คือการตรวจสอบการกำกับดูแลแบบกำหนดผลแน่นอน (การคอมไพล์ข้อความ การตรวจความปลอดภัยของการแปล การเล่นซ้ำสถานการณ์สังเคราะห์) โดยรายงานเฉพาะสถานะทางวิศวกรรมเท่านั้น ไม่เปลี่ยนคะแนน ระดับความรุนแรง หลักฐาน หรือผลลัพธ์ของกฎ และไม่ใช่คำแนะนำด้านสุขภาพ ใช้ข้อมูลสังเคราะห์/สาธิตเท่านั้น',
     'diagnostics.elapsed': 'ตรวจสอบเสร็จสิ้นใน {ms} มิลลิวินาที',
+    'reminders.identity_attestation_title':
+        'ตรวจสอบข้อมูลประจำตัวคำขอที่รอดำเนินการจากปลั๊กอิน',
+    'reminders.identity_attestation_matched':
+        'ข้อมูลประจำตัวที่ปลั๊กอินรายงานตรงกับแผน ({installed}/{planned}) นี่ไม่ใช่การตรวจสอบตัวจัดกำหนดการของระบบปฏิบัติการหรือการแสดงการแจ้งเตือนอย่างอิสระ',
+    'reminders.identity_attestation_drift':
+        'ข้อมูลประจำตัวที่ปลั๊กอินรายงานไม่ตรงกับแผน: ขาด {missing} รายการ เกิน {extra} รายการ และถูกแทนที่ภายใต้ ID ที่วางแผนไว้ {replaced} รายการ อย่าพึ่งพาการแจ้งเตือนระบบจนกว่าจะซิงค์ใหม่สำเร็จ',
+    'reminders.identity_attestation_uninspectable':
+        'ไม่สามารถอ่านข้อมูลประจำตัวคำขอที่รอดำเนินการจากปลั๊กอินได้ แผนในเครื่องยังเป็นข้อมูลหลัก แต่สถานะการแจ้งเตือนระบบยังไม่ได้รับการยืนยัน',
+    'reminders.error_schedule_identity_unverified':
+        'บันทึกแผนในเครื่องแล้ว แต่ไม่สามารถจับคู่ข้อมูลประจำตัวที่ปลั๊กอินรายงานกับแผนได้ โปรดซิงค์ใหม่ก่อนพึ่งพาการแจ้งเตือนระบบ',
     'app.welcome': 'ยินดีต้อนรับ',
     'app.loading': 'กำลังโหลด...',
     'onboarding.title': 'ParkinSUM เพื่อนคู่ใจ (ฉบับในเครื่อง)',
@@ -1259,7 +1308,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'nav.next_meal': 'มื้อถัดไป',
     'next_meal.title': 'คำแนะนำมื้อถัดไป',
     'next_meal.subtitle':
-        'เลือกเวลาที่คาดว่าจะรับประทานมื้อถัดไปก่อน เครื่องยนต์ความขัดแย้งจะจัดอันดับใหม่ 5 ตัวเลือกตามช่วงเวลานั้น ยาที่ใช้อยู่ และบริบทล่าสุด AI ในเครื่องเป็นทางเลือกและใช้เพื่อปรับสำนวนเท่านั้น',
+        'เลือกเวลามื้อถัดไป เส้นทางกฎแบบระมัดระวังคงลำดับตัวเลือกไว้ แบบจำลองเชิงกลเพิ่มเพียงร่องรอยการทับซ้อนตามเวลาเพื่อการศึกษาและไม่จัดอันดับใหม่ ส่วน AI ในเครื่องเป็นตัวเลือกแยกต่างหากที่จัดลำดับเฉพาะรายการปลอดภัย',
     'next_meal.input_time': 'เวลามื้อถัดไปที่คาดไว้',
     'next_meal.use_local_ai': 'ใช้ AI ในเครื่องปรับสำนวน (ทางเลือก)',
     'next_meal.use_local_ai_help':
@@ -1532,6 +1581,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'diagnostics.scope_body':
         'Ini adalah pemeriksaan tata kelola deterministik (kompilasi teks, lint keamanan pelokalan, pemutaran ulang skenario sintetis). Semuanya hanya melaporkan status teknis: tidak mengubah skor, tingkat keparahan, bukti, atau hasil aturan, dan bukan panduan kesehatan. Hanya data sintetis/demo.',
     'diagnostics.elapsed': 'Pemeriksaan selesai dalam {ms} ms.',
+    'reminders.identity_attestation_title':
+        'Pemeriksaan identitas tertunda yang dilaporkan plugin',
+    'reminders.identity_attestation_matched':
+        'Identitas tertunda yang dilaporkan plugin cocok dengan rencana ({installed}/{planned}). Ini bukan verifikasi independen atas penjadwal sistem operasi atau pengiriman yang terlihat.',
+    'reminders.identity_attestation_drift':
+        'Identitas yang dilaporkan berbeda dari rencana: {missing} hilang, {extra} berlebih, dan {replaced} diganti pada ID yang direncanakan. Jangan mengandalkan pengingat sistem sebelum rekonsiliasi berhasil.',
+    'reminders.identity_attestation_uninspectable':
+        'Identitas permintaan tertunda tidak dapat dibaca dari plugin. Rencana lokal tetap menjadi acuan, tetapi status pengingat sistem belum terverifikasi.',
+    'reminders.error_schedule_identity_unverified':
+        'Rencana lokal telah disimpan, tetapi identitas tertunda yang dilaporkan plugin tidak dapat dicocokkan dengannya. Rekonsiliasi ulang sebelum mengandalkan pengingat sistem.',
     'app.welcome': 'Selamat datang',
     'app.loading': 'Memuat...',
     'onboarding.title': 'ParkinSUM Pendamping (Edisi Lokal)',
@@ -1565,7 +1624,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'nav.next_meal': 'Makan berikutnya',
     'next_meal.title': 'Rekomendasi makan berikutnya',
     'next_meal.subtitle':
-        'Pilih dulu perkiraan waktu makan berikutnya; mesin konflik akan menyusun ulang 5 kandidat berdasarkan jendela waktu itu, obat aktif, dan konteks makan terbaru. AI lokal bersifat opsional dan hanya memoles kata-kata.',
+        'Pilih perkiraan waktu makan berikutnya. Jalur aturan konservatif mempertahankan urutan kandidat; model mekanistik hanya menambahkan jejak tumpang-tindih waktu edukatif dan tidak mengurutkan ulang. AI lokal adalah pengurut ulang daftar aman yang terpisah dan opsional.',
     'next_meal.input_time': 'Perkiraan waktu makan berikutnya',
     'next_meal.use_local_ai': 'Poles kata dengan AI lokal (opsional)',
     'next_meal.use_local_ai_help':
@@ -1839,6 +1898,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'diagnostics.scope_body':
         'Это детерминированные проверки управления (компиляция текстов, проверка безопасности локализации, воспроизведение синтетических сценариев). Они сообщают только технический статус: не изменяют оценку, серьёзность, доказательства или результат правил и не являются медицинскими рекомендациями. Только синтетические/демонстрационные данные.',
     'diagnostics.elapsed': 'Проверки завершены за {ms} мс.',
+    'reminders.identity_attestation_title':
+        'Проверка ожидающих идентификаторов по данным плагина',
+    'reminders.identity_attestation_matched':
+        'Ожидающие идентификаторы по данным плагина совпадают с планом ({installed}/{planned}). Это не независимая проверка системного планировщика или фактического отображения уведомлений.',
+    'reminders.identity_attestation_drift':
+        'Идентификаторы по данным плагина отличаются от плана: отсутствуют {missing}, лишних {extra}, заменены под запланированным ID {replaced}. Не полагайтесь на системные напоминания до успешной синхронизации.',
+    'reminders.identity_attestation_uninspectable':
+        'Не удалось прочитать ожидающие идентификаторы из плагина. Локальный план остаётся источником истины, но состояние системных напоминаний не проверено.',
+    'reminders.error_schedule_identity_unverified':
+        'Локальный план сохранён, но ожидающие идентификаторы плагина не удалось сопоставить с ним. Повторите синхронизацию, прежде чем полагаться на системные напоминания.',
     'app.welcome': 'Добро пожаловать',
     'app.loading': 'Загрузка...',
     'onboarding.title': 'ParkinSUM Компаньон (Локальная версия)',
@@ -1874,7 +1943,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'nav.next_meal': 'Следующий приём',
     'next_meal.title': 'Рекомендация на следующий приём пищи',
     'next_meal.subtitle':
-        'Сначала укажите предполагаемое время следующего приёма пищи; конфликт-движок переранжирует 5 кандидатов с учётом этого окна, активных лекарств и недавнего контекста. Локальный ИИ опционален и только полирует формулировки.',
+        'Укажите предполагаемое время следующего приёма пищи. Консервативный путь правил сохраняет порядок кандидатов; механистическая модель лишь добавляет учебную трассу временного перекрытия и не ранжирует. Локальный ИИ — отдельный опциональный ранжировщик безопасного списка.',
     'next_meal.input_time': 'Планируемое время следующего приёма',
     'next_meal.use_local_ai': 'Полировка текста локальным ИИ (опционально)',
     'next_meal.use_local_ai_help':
@@ -2153,6 +2222,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'diagnostics.scope_body':
         'To deterministyczne kontrole nadzoru (kompilacja tekstów, kontrola bezpieczeństwa lokalizacji, odtwarzanie syntetycznych scenariuszy). Raportują wyłącznie stan techniczny: nie zmieniają wyniku, istotności, dowodów ani rezultatu reguł i nie są poradą zdrowotną. Wyłącznie dane syntetyczne/demonstracyjne.',
     'diagnostics.elapsed': 'Kontrole zakończone w {ms} ms.',
+    'reminders.identity_attestation_title':
+        'Kontrola oczekujących identyfikatorów zgłoszonych przez wtyczkę',
+    'reminders.identity_attestation_matched':
+        'Oczekujące identyfikatory zgłoszone przez wtyczkę odpowiadają planowi ({installed}/{planned}). Nie jest to niezależna weryfikacja harmonogramu systemu operacyjnego ani widocznego dostarczenia.',
+    'reminders.identity_attestation_drift':
+        'Identyfikatory zgłoszone przez wtyczkę różnią się od planu: brakuje {missing}, dodatkowych jest {extra}, a {replaced} zastąpiono pod zaplanowanym ID. Nie polegaj na przypomnieniach systemowych do udanej synchronizacji.',
+    'reminders.identity_attestation_uninspectable':
+        'Nie można odczytać oczekujących identyfikatorów z wtyczki. Lokalny plan pozostaje źródłem prawdy, ale stan przypomnień systemowych nie jest zweryfikowany.',
+    'reminders.error_schedule_identity_unverified':
+        'Lokalny plan zapisano, ale oczekujących identyfikatorów wtyczki nie można było z nim porównać. Przed poleganiem na przypomnieniach systemowych ponów synchronizację.',
     'app.welcome': 'Witamy',
     'app.loading': 'Ładowanie...',
     'onboarding.title': 'ParkinSUM Towarzysz (Wersja Lokalna)',
@@ -2187,7 +2266,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'nav.next_meal': 'Następny posiłek',
     'next_meal.title': 'Rekomendacja następnego posiłku',
     'next_meal.subtitle':
-        'Najpierw wybierz przewidywaną godzinę następnego posiłku; silnik konfliktów ponownie uszereguje 5 kandydatów względem tego okna, aktywnych leków i niedawnego kontekstu. Lokalna AI jest opcjonalna i tylko poleruje słownictwo.',
+        'Wybierz przewidywaną godzinę następnego posiłku. Zachowawcza ścieżka reguł utrzymuje kolejność kandydatów; model mechanistyczny dodaje tylko edukacyjny ślad nakładania w czasie i nie zmienia kolejności. Lokalna AI to osobny, opcjonalny moduł listy bezpiecznej.',
     'next_meal.input_time': 'Planowana godzina następnego posiłku',
     'next_meal.use_local_ai': 'Poleruj tekst lokalną AI (opcjonalnie)',
     'next_meal.use_local_ai_help':
@@ -2463,6 +2542,16 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'diagnostics.scope_body':
         'هذه فحوصات حوكمة حتمية (تجميع النصوص، فحص سلامة الترجمة، إعادة تشغيل سيناريوهات اصطناعية). تُبلّغ عن الحالة الهندسية فقط: فهي لا تغيّر أي درجة أو شدة أو دليل أو نتيجة قاعدة، وليست إرشادًا صحيًا. بيانات اصطناعية/تجريبية فقط.',
     'diagnostics.elapsed': 'اكتملت الفحوصات في {ms} مللي ثانية.',
+    'reminders.identity_attestation_title':
+        'فحص هويات الطلبات المعلقة التي أبلغت عنها الإضافة',
+    'reminders.identity_attestation_matched':
+        'تتطابق الهويات المعلقة التي أبلغت عنها الإضافة مع الخطة ({installed}/{planned}). هذا ليس تحققًا مستقلاً من مجدول نظام التشغيل أو من ظهور الإشعار فعليًا.',
+    'reminders.identity_attestation_drift':
+        'تختلف الهويات التي أبلغت عنها الإضافة عن الخطة: {missing} مفقودة و{extra} إضافية و{replaced} مستبدلة تحت معرّف مخطط. لا تعتمد على تذكيرات النظام حتى تنجح إعادة المزامنة.',
+    'reminders.identity_attestation_uninspectable':
+        'تعذر قراءة هويات الطلبات المعلقة من الإضافة. تظل الخطة المحلية هي المرجع، لكن حالة تذكيرات النظام غير متحقق منها.',
+    'reminders.error_schedule_identity_unverified':
+        'تم حفظ الخطة المحلية، لكن تعذر مطابقة الهويات المعلقة التي أبلغت عنها الإضافة معها. أعد المزامنة قبل الاعتماد على تذكيرات النظام.',
     'app.welcome': 'مرحباً',
     'app.loading': 'جارٍ التحميل...',
     'onboarding.title': 'ParkinSUM رفيقك (الإصدار المحلي)',
@@ -2496,7 +2585,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'nav.next_meal': 'الوجبة التالية',
     'next_meal.title': 'توصية الوجبة التالية',
     'next_meal.subtitle':
-        'حدد أولاً الوقت المتوقع للوجبة التالية؛ سيعيد محرّك التعارض ترتيب 5 مرشحات وفق تلك النافذة الزمنية والأدوية النشطة والسياق الأخير. الذكاء الاصطناعي المحلي اختياري ولا يقوم إلا بتلميع الصياغة.',
+        'حدد الوقت المتوقع للوجبة التالية. يحافظ مسار القواعد المحافظ على ترتيب المرشحات؛ ولا يضيف النموذج الآلي إلا أثرًا تعليميًا للتداخل الزمني ولا يعيد الترتيب. الذكاء الاصطناعي المحلي أداة منفصلة واختيارية لإعادة ترتيب القائمة الآمنة.',
     'next_meal.input_time': 'الوقت المتوقع للوجبة التالية',
     'next_meal.use_local_ai':
         'تلميع الصياغة بالذكاء الاصطناعي المحلي (اختياري)',

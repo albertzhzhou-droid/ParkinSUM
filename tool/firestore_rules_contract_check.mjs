@@ -39,10 +39,33 @@ const checks = [
       /match\s+\/active_drugs\/\{drugId\}[\s\S]*validActiveDrug\(drugId\)/s.test(rules),
   },
   {
+    name: 'onboarding completion metadata is owner-bound and terminal',
+    pass:
+      /function\s+validAppMeta\(uid,\s*key\)[\s\S]*request\.resource\.data\.stage\s*==\s*'committed'/s.test(rules) &&
+      /request\.resource\.data\.schema_version\s*==\s*1/.test(rules) &&
+      /request\.resource\.data\.owner_uid\s*==\s*uid/.test(rules) &&
+      /request\.resource\.data\.purpose\s*==\s*'atomic_onboarding_commit'/.test(rules),
+  },
+  {
+    name: 'structured intake fields are bounded by an explicit nested schema',
+    pass:
+      /function\s+validIntake\(intakeId\)[\s\S]*'doseAmount'[\s\S]*'productSelection'/s.test(rules) &&
+      /function\s+validMedicationProductSelection\(value\)[\s\S]*value\.keys\(\)\.hasOnly/s.test(rules) &&
+      /request\.resource\.data\.doseAmount\s*>\s*0/.test(rules) &&
+      /validMedicationProductSelection\(request\.resource\.data\.productSelection\)/.test(rules),
+  },
+  {
     name: 'clinical audits are create-only and uid-bound',
     pass:
       /function\s+validClinicalAudit\(uid,\s*auditId\)[\s\S]*request\.resource\.data\.patient_id\s*==\s*uid/s.test(rules) &&
       /match\s+\/clinical_audits\/\{auditId\}[\s\S]*allow\s+create:\s*if\s+isOwner\(uid\)\s*&&\s*validClinicalAudit\(uid,\s*auditId\);[\s\S]*allow\s+update,\s*delete:\s*if\s+false;/s.test(rules),
+  },
+  {
+    name: 'record history is owner-bound, schema-checked, and append-only',
+    pass:
+      /function\s+validRecordHistory\(historyId\)[\s\S]*request\.resource\.data\.schema_version\s*==\s*1/s.test(rules) &&
+      /request\.resource\.data\.created_at\s*==\s*request\.time/.test(rules) &&
+      /match\s+\/record_history\/\{historyId\}[\s\S]*allow\s+create:\s*if\s+isOwner\(uid\)\s*&&\s*validRecordHistory\(historyId\);[\s\S]*allow\s+update,\s*delete:\s*if\s+false;/s.test(rules),
   },
   {
     name: 'user-scoped cdss_tables are owner-read-only',

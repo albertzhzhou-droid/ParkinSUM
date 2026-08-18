@@ -93,16 +93,20 @@ When USDA FDC amino-acid fields are available, `AminoAcidExtractor` builds an
 Ile, 504 Leu, 506 Met, 508 Phe, 509 Tyr, 510 Val, 512 His; number takes
 priority over name; mg→g normalized; missing-unit values marked `partial`).
 This profile is carried on `FoodItem.aminoAcidProfile` → `FoodComponent` →
-the LNAA layer, which uses the actual fields
-(`AminoAcidDataMode.actualAminoAcidFields`) in preference to the protein-source
-proxy. Payloads without any LNAA field fall back to the proxy.
+the LNAA layer. Pure `actualAminoAcidFields` mode requires complete six-LNAA
+coverage for every positive-protein component; mixed coverage is labeled
+`hybridActualAndProteinSourceProxy`, widens uncertainty, and keeps whole-meal
+LNAA totals null. Payloads without any usable LNAA field fall back to the
+disclosed protein-source proxy.
 
 ## 7. Medication metadata requirements
 
 activeIngredient(s), strengthValue + unit, doseForm, route, releaseType,
 productIdentifier, jurisdiction, language, labelSection, translationStatus,
 sourceRefs, limitationText. Missing unit → no dose; missing ingredient → no
-drug context; missing release type → limited/blocked PK interpretation.
+drug context; missing route, form, or release type → typed `insufficient` and
+no mechanistic curve. Route and form are independent: an importer must never
+promote a tablet/capsule form into oral-route evidence.
 
 ## 8. Catalog projection
 
@@ -111,6 +115,8 @@ runtime `FoodItem` / `DrugDefinition`. `AppState._augmentFoodRepoFromProjection(
 merges projected foods into the runtime repo at boot (best-effort; seed
 fallback). Provenance metadata is carried alongside as
 `CandidateMetadata` for the scorer.
+Missing projected medication route remains `unspecified`; projection and
+variant resolution never fill it with `oral`.
 
 ## 9. Metadata completeness gate
 
@@ -172,7 +178,9 @@ defaults (never fake-high).
 `MechanisticNextMealScorer` composes `finalCandidateScore` from conflict
 overlap, protein-redistribution score, nutrition-adequacy contribution,
 metadata completeness, source authority, jurisdiction match, provenance
-quality, and uncertainty penalty. Ranking is by `finalCandidateScore` DESC.
+quality, and uncertainty penalty. The analysis-only scorer sorts its own
+diagnostic rows by `finalCandidateScore` DESC; the production recommendation UI
+realigns those rows to the independent final recommendation order.
 
 ## 12. Protein redistribution objective
 
@@ -187,12 +195,14 @@ optimization off.
 
 ## 13. User-defined time window requirement
 
-Mechanistic-primary ranking activates only when the request carries a
-`userDefinedWindow` (the user supplies it via the next-meal page window
-chooser) AND confidence is medium/high AND every candidate is scored. The
-engine never chooses the meal time; it ranks candidates *inside* the window
-the user provided. Otherwise the legacy heuristic fallback runs and
-`rankerUsed = heuristic_legacy_fallback` is surfaced.
+The mechanistic model is `trace_only`. A `userDefinedWindow` lets the engine
+sample educational candidate traces inside a time range supplied by the user;
+the engine never chooses the meal time and never changes recommendation order.
+The conservative heuristic remains the default production ranker. `rankerUsed`
+reports `heuristic_legacy_fallback`, or
+`local_ai_safe_candidate_rerank` only when a separately consented local-AI
+whitelist reorder actually produced the final order. The stable trace-only
+reason independently proves that the mechanistic model did not reorder it.
 
 ## 14. Why the engine does not globally minimize protein
 
@@ -213,9 +223,8 @@ prescribe a diet.
 - Canonical metadata fields (`source_metadata.dart`).
 - `SourceAuthorityScorer` + cross-jurisdiction conflict policy.
 - `MetadataCompletenessGate`.
-- Protein-redistribution scoring drives the mechanistic-primary ranker
-  (`finalCandidateScore`), with the legacy heuristic reordered/overridden when
-  mechanistic-primary is eligible.
+- Protein-redistribution and overlap scores are visible educational trace
+  fields. They do not reorder or override the production recommendation list.
 - Replay: **21 scenarios** with per-candidate protein/source/authority fields
   in the report.
 

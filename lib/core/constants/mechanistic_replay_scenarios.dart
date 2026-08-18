@@ -114,7 +114,7 @@ const _splIrMetadata = MechanisticMedicationMetadata(
   effectiveDate: '2025-01-01',
   jurisdiction: 'US',
   language: 'en',
-  drugProductVariantId: 'synthetic:cl-ir',
+  drugProductVariantId: 'synthetic:carbidopa-levodopa-25-100-ir-tablet',
   doseForm: 'tablet',
   route: 'oral',
   releaseType: 'immediate',
@@ -147,7 +147,7 @@ const _splErMetadata = MechanisticMedicationMetadata(
   effectiveDate: '2025-01-01',
   jurisdiction: 'US',
   language: 'en',
-  drugProductVariantId: 'synthetic:cl-er',
+  drugProductVariantId: 'synthetic:carbidopa-levodopa-50-200-er-tablet',
   doseForm: 'extended-release tablet',
   route: 'oral',
   releaseType: 'extended',
@@ -580,9 +580,9 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   ),
   MechanisticReplayScenario(
     scenarioId: 's06_missing_protein',
-    title: 'Missing meal protein data',
-    expectedOutputType: ScenarioExpectedOutputType.educationalInfo,
-    expectedConfidenceCeiling: ConfidenceBand.low,
+    title: 'Missing meal protein data → typed insufficient abstention',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(30)],
     meals: [
@@ -610,7 +610,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's07_missing_meal_time',
     title: 'Missing meal start time',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(60)],
     meals: [], // empty — simulates meal-time missing
@@ -728,10 +729,10 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'User-defined window that straddles the levodopa absorption window — '
         'multi-point sampling should produce varying overlap across the window',
-    // Base context has no prior meal, so the engine reports
-    // `noModeledInteraction`; the multi-point sampling happens against the
-    // candidates' hypothetical meal events placed inside the user window.
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    // Base context has no recorded meal, so the engine abstains. Multi-point
+    // sampling still evaluates explicitly hypothetical candidate meal events.
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-15)],
@@ -752,7 +753,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Daytime high-overlap window + high-protein candidate → overlap '
         'penalty (NOT a "protein is bad" penalty)',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(0)],
@@ -768,7 +770,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Evening low-overlap window + high-protein candidate → not globally '
         'penalized',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-300)],
@@ -784,7 +787,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Zero-protein vs moderate-protein in a low-overlap window → '
         'zero-protein does not automatically win',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-300)],
@@ -798,7 +802,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's19_missing_protein_unknown_competition',
     title: 'Candidate missing protein → unknown amino-acid competition',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-240)],
@@ -829,9 +834,10 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's21_no_user_window_mechanistic_primary_unavailable',
     title:
-        'No user-defined window → mechanistic-primary unavailable; candidates '
-        'return insufficient context with a visible reason',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+        'No recorded meal or user window → base engine abstains and '
+        'candidate scoring reports the missing window',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-30)],
     meals: [],
@@ -843,7 +849,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Candidate with actual amino-acid fields → LNAA uses actual-fields '
         'mode (preferred over protein-source proxy)',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-300)],
@@ -859,7 +866,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Candidate without amino-acid fields → LNAA falls back to '
         'protein-source proxy mode',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-300)],
@@ -897,11 +905,12 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     meals: [],
   ),
   MechanisticReplayScenario(
-    scenarioId: 's26_eligible_overwrites_legacy_order',
+    scenarioId: 's26_trace_only_preserves_legacy_order',
     title:
-        'Mechanistic-primary eligible (window + scored candidates) → '
-        'mechanistic ordering, not legacy heuristic',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+        'Candidate window produces educational traces without treating a '
+        'missing recorded meal as no interaction',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-300)],
@@ -922,7 +931,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Amino-acid-profiled candidate in a far low-overlap window → actual '
         'amino-acid mode, redistribution-compatible',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-360)],
@@ -938,7 +948,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Mixed candidate set (amino-acid-profiled + proxy + missing nutrients) '
         '→ each scored with its own data mode',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-360)],
@@ -973,9 +984,10 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's30_no_window_fallback_visible',
     title:
-        'No user-defined window with amino-acid candidate → mechanistic-primary '
-        'unavailable, fallback reason visible',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+        'No recorded meal or user window with amino-acid candidate → '
+        'base engine abstains and fallback reason stays visible',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-30)],
     meals: [],
@@ -986,7 +998,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Daytime high-overlap window + amino-acid-profiled candidate → overlap '
         'penalty (not a protein-is-bad penalty)',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(0)],
@@ -1002,7 +1015,8 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Candidate with a PARTIAL amino-acid profile → partial data flag + '
         'widened uncertainty (not treated as fully narrow)',
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     expectNonEmptyRecommendations: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(-300)],
@@ -1086,10 +1100,10 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's36_missing_all_macros_unknown_competition',
     title:
-        'All macronutrients missing → unknown competition + insufficient/low '
-        'confidence (never fabricated)',
-    expectedOutputType: ScenarioExpectedOutputType.educationalInfo,
-    expectedConfidenceCeiling: ConfidenceBand.low,
+        'All macronutrients missing → typed insufficient abstention '
+        '(never fabricated)',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(30)],
     meals: [
@@ -1158,8 +1172,10 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Bolus enteral-style feed (protein-containing liquid) near a dose — '
         'educational context only, no schedule or timing advice',
-    // A liquid bolus empties quickly, so in this configuration the model finds
-    // no modeled interaction by the time the absorption window opens.
+    // On the complete absorption-openness grid, the small nonzero score stays
+    // below the engine's categorical interaction-type cutoff. The score is
+    // retained in the trace; the category is not evidence of biological
+    // absence.
     expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(20)],
@@ -1203,9 +1219,10 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's40_spl_er_section_provenance',
     title:
-        'SPL-style ER carbidopa/levodopa with section provenance → wider '
-        'absorption window from source-backed release type (educational)',
-    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+        'SPL-style ER carbidopa/levodopa stays outside the IR-only model '
+        'context of use',
+    expectedOutputType: ScenarioExpectedOutputType.insufficientContext,
+    expectInsufficientContext: true,
     medicationEntries: [_carbidopaLevodopaErWithMetadata],
     medicationMinutesOffsets: [MinutesOffset(30)],
     meals: [
@@ -1217,7 +1234,7 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
       ),
     ],
     notes:
-        'Extended-release product metadata widens the modeled absorption '
-        'window; release-type source recorded as structured_variant_metadata.',
+        'Section provenance remains visible, but an extended-release product '
+        'must not reuse the immediate-release absorption shape.',
   ),
 ];

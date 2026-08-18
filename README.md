@@ -72,27 +72,40 @@ effects, and uncertainty bands. Every modeled assumption is backed by a
 local source registry (`lib/domain/usecases/model_assumption_registry.dart`)
 that cites entries in [Bibliographies.md](Bibliographies.md) (MLA format).
 
-The next-meal recommendation engine accepts a **user-defined time window**
-and a regional food library, then ranks candidate foods inside that window
-by modeled overlap with the educational simulation. **The engine does not
-decide when the user eats**, does not produce medication timing or dietary
-advice, and returns `insufficient_context` whenever the window or
-medication context is missing.
+The next-meal flow accepts a **user-defined time window** and a regional food
+library. Inside a narrowly supported medication domain it computes
+deterministic per-candidate overlap traces for inspection and sensitivity
+comparison. Those traces **do not reorder recommendations**: the production
+decision-influence boundary is `trace_only`. `rankerUsed` reports
+`heuristic_legacy_fallback` or, only after separate consent and whitelist
+validation, `local_ai_safe_candidate_rerank`; it never names the mechanistic
+trace as the ranker. The model does not decide when the user eats,
+does not produce medication timing or dietary advice, and abstains when the
+window, medication context, or applicability predicates are insufficient.
+Missing route is never promoted to oral, an unrecorded meal is never promoted
+to fasting, and a future candidate meal cannot alter an earlier dose's
+absorption window. A stale meal outside its explicit gastric-residence horizon
+also cannot unlock a current trace, and contradictory nested product/source
+metadata invalidates the medication context instead of authorizing a curve.
+The built-in generic carbidopa/levodopa entry deliberately carries an
+`unspecified` release type: until the product picker persists a governed
+product-level ingredient/route/form/release snapshot, selecting any concrete
+package forces the model context to remain unspecified even if its parent
+catalog row claims IR.
 
-The mechanistic engine is now the **primary ranker** for next-meal
-recommendations whenever the request carries a user-defined time window
-and the engine has at least `medium` confidence — see
-`docs/CONFLICT_ENGINE_MODEL.md` for the promotion contract and the
-`rankerUsed` field. Candidate scoring uses **deterministic multi-point
-sampling** (5–12 samples, capped) across the user-provided window; the
-worst-case overlap drives ranking and the best/average/per-sample summary
-is surfaced for trace and UI. Gastric-emptying numerics live in a single
+Trace sampling uses **deterministic multi-point sampling** (5–12 samples,
+capped) across the user-provided window; worst/best/average/per-sample values
+are surfaced as educational trace data, not as a validated optimization
+target. Gastric-emptying numerics live in a single
 `GastricEmptyingParameterSet` with per-parameter `sourceRefs`, and the
 amino-acid competition layer now applies a coarse, direction-only
-**LNAA load factor** per protein source (animal vs plant). The runtime
+**LNAA load factor** per protein source (animal vs plant). Mixed actual-profile
+coverage is labeled hybrid, widens uncertainty, and does not publish a
+pseudo-measured whole-meal LNAA total. The runtime
 food repository is augmented at app boot with foods projected from CDSS
-observations so the scorer can rank real catalog-backed candidates, not
-only synthetic replay items.
+observations so traces can use catalog-backed candidates, not only synthetic
+replay items. See `docs/RUNTIME_MODEL_APPLICABILITY_RESEARCH_2026-08-17.md`
+for the evidence and abstention boundary.
 
 The data chain preserves fidelity end-to-end: missing nutrient data is
 carried as **unknown, never coerced to a fake `0 g`** (`missingNutrientFields`
@@ -140,8 +153,11 @@ medication-timing, dietary, or dose guidance, and carries no clinical-validation
 claim. All importer adapters are fixture-validated (not live production
 ingestion); the optional live-source smoke harness is opt-in, excluded from
 normal tests, fetches official metadata only, and is not used for clinical
-advice. Source-specific legal/license review remains future work — see
-[docs/SOURCE_ACCESS_AND_LICENSES.md](docs/SOURCE_ACCESS_AND_LICENSES.md).
+advice. A fail-closed open-source influence inventory now separates conceptual
+research from authorized transferred artifacts; legal advice, artifact-level
+SBOM attestation, and complete cross-platform NOTICE verification remain open.
+See [docs/OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md](docs/OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md)
+and [docs/SOURCE_ACCESS_AND_LICENSES.md](docs/SOURCE_ACCESS_AND_LICENSES.md).
 
 ## Multi-Jurisdiction Metadata & Protein Redistribution
 
@@ -156,13 +172,12 @@ jurisdiction, language, unit, basis, authority tier, completeness, limitation
 — is preserved from importer to runtime so the mechanistic engine and scorer
 can reason about it.
 
-The next-meal scorer models **protein redistribution, not global protein
-minimization**: protein is penalized only in modeled high-overlap windows and
-allowed in low-overlap windows, with a non-clinical nutrition-adequacy proxy
-so zero-protein does not automatically win. Window role is decided primarily
-from modeled overlap, not the clock. The next-meal page lets the user provide
-a meal-time *window*; mechanistic-primary ranking activates only with a
-user-provided window and sufficient context.
+The next-meal scorer exposes **protein-redistribution timing as an educational
+trace, not a diet optimizer**. Inside the narrowly declared immediate-release
+applicability domain it shows a unitless overlap assumption and a non-clinical
+nutrition-adequacy proxy; outside that domain it abstains. The production
+recommendation order remains the conservative heuristic order—the
+mechanistic trace never selects a meal time or reorders food candidates.
 
 See [docs/IMPORTER_METADATA_FLOW.md](docs/IMPORTER_METADATA_FLOW.md) for the
 canonical metadata model, source-authority policy, cross-jurisdiction conflict
@@ -178,9 +193,9 @@ source), **EU national registers** (member-state identity vs full SmPC), and
 returning structured `SourceFetchResult`s) keeps all tests deterministic;
 live fetch is optional and never used for clinical advice. Per-food
 amino-acid fields, when present, drive the LNAA competition layer in
-preference to the protein-source proxy. The legacy heuristic can only order
-results when `rankerEligibility.mechanisticPrimaryEligible == false`, with the
-reason surfaced in UI + replay.
+preference to the protein-source proxy. The conservative heuristic remains the
+only production recommendation ranker; the trace-only reason is surfaced in
+UI and replay.
 
 ## Evidence & Traceability Architecture
 

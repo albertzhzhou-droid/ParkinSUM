@@ -17,6 +17,27 @@ void main() {
     );
   });
 
+  test('report binds replay to configuration without claiming validity', () {
+    final report = runner.run();
+    final configuration =
+        report.toJson()['algorithm_configuration'] as Map<String, dynamic>;
+
+    expect(
+      configuration['manifest_schema'],
+      'parkinsum.algorithm-configuration/2',
+    );
+    expect(configuration['sha256'], matches(RegExp(r'^[a-f0-9]{64}$')));
+    expect(
+      configuration['reproducibility_scope'],
+      'engineering_replay_identity_not_biological_validation',
+    );
+    expect(
+      configuration['biological_validity_status'],
+      'not_clinically_calibrated',
+    );
+    expect(report.toMarkdown(), contains('does **not** establish biological'));
+  });
+
   test('every case has zero banned-phrase hits', () {
     final report = runner.run();
     for (final c in report.cases) {
@@ -28,7 +49,7 @@ void main() {
     }
   });
 
-  test('insufficient-context scenarios attach no conflict result', () {
+  test('insufficient-context scenarios serialize a typed null abstention', () {
     final report = runner.run();
     for (final c in report.cases.where(
       (c) =>
@@ -36,9 +57,86 @@ void main() {
           c.scenarioId.startsWith('s09') ||
           c.scenarioId.startsWith('s10'),
     )) {
-      expect(c.interactionScore, 0.0);
-      expect(c.confidenceBand, 'insufficient');
+      expect(c.resultAvailability, 'insufficient');
+      expect(c.hasModeledOutput, isFalse);
+      expect(c.interactionScore, isNull);
+      expect(c.severityBand, isNull);
+      expect(c.confidenceBand, isNull);
+      expect(c.aminoAcidCompetitionBand, isNull);
+      expect(c.abstentionReasons, isNotEmpty);
       expect(c.blockedMechanisms, isNotEmpty);
+    }
+  });
+
+  test('a missing meal record abstains without an absorption window', () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+      (c) => c.scenarioId == 's07_missing_meal_time',
+    );
+
+    expect(c.pass, isTrue, reason: c.failureReason);
+    expect(c.mealContextCompleteness, 0.0);
+    expect(c.resultAvailability, 'insufficient');
+    expect(c.hasModeledOutput, isFalse);
+    expect(c.interactionScore, isNull);
+    expect(c.severityBand, isNull);
+    expect(c.confidenceBand, isNull);
+    expect(c.aminoAcidCompetitionBand, isNull);
+    expect(c.absorptionOpportunityWindow, isNull);
+    expect(c.absorptionOpennessSampleCount, 0);
+    expect(c.abstentionReasons, isNotEmpty);
+    expect(c.blockedMechanisms, isNotEmpty);
+  });
+
+  test('an ER medication replay abstains outside the executable domain', () {
+    final report = runner.run();
+    final c = report.cases.firstWhere(
+      (c) => c.scenarioId == 's40_spl_er_section_provenance',
+    );
+
+    expect(c.pass, isTrue, reason: c.failureReason);
+    // The release is known unsupported, while the composite dosage-form token
+    // remains outside the governed vocabulary; unknown evidence takes the
+    // more conservative insufficient state over notApplicable.
+    expect(c.resultAvailability, 'insufficient');
+    expect(c.hasModeledOutput, isFalse);
+    expect(c.interactionScore, isNull);
+    expect(c.severityBand, isNull);
+    expect(c.confidenceBand, isNull);
+    expect(c.aminoAcidCompetitionBand, isNull);
+    expect(c.absorptionOpportunityWindow, isNull);
+    expect(c.absorptionOpennessSampleCount, 0);
+    expect(c.abstentionReasons, isNotEmpty);
+  });
+
+  test('abstentions never leak legacy zero/band or candidate rank values', () {
+    final report = runner.run();
+    final abstentions = report.cases.where((c) => !c.hasModeledOutput).toList();
+
+    expect(abstentions, isNotEmpty);
+    for (final c in abstentions) {
+      final json = c.toJson();
+      expect(json['result_availability'], isNot('available'));
+      expect(json['has_modeled_output'], isFalse);
+      expect(json['interaction_score'], isNull);
+      expect(json['severity_band'], isNull);
+      expect(json['confidence_band'], isNull);
+      expect(json['amino_acid_competition_band'], isNull);
+      expect(json['abstention_reasons'], isNotEmpty);
+      expect(c.rankerUsed, 'none_model_abstained');
+      expect(c.sampledWindowOffsets, isEmpty);
+      expect(c.topFinalCandidateScore, isNull);
+      expect(c.topProteinRedistributionScore, isNull);
+      expect(c.topNutritionAdequacyContribution, isNull);
+      expect(c.topSourceAuthorityScore, isNull);
+      expect(c.topJurisdictionMatchScore, isNull);
+      for (final candidate in c.nextMealRecommendationResult ?? const []) {
+        final candidateJson = candidate.toJson();
+        expect(candidateJson['has_modeled_output'], isFalse);
+        expect(candidateJson['final_candidate_score'], isNull);
+        expect(candidateJson['sample_count'], isNull);
+        expect(candidateJson['sampled_window_summary'], isEmpty);
+      }
     }
   });
 
@@ -82,25 +180,33 @@ void main() {
     }
   });
 
-  test('actual amino-acid scenario surfaces absolute competing LNAA grams', () {
+  test('candidate-only AA abstention does not leak LNAA totals', () {
     final report = runner.run();
     final c = report.cases.firstWhere(
       (c) => c.scenarioId == 's22_amino_acid_actual_fields_mode',
     );
-    expect(c.aminoAcidDataMode, 'actualAminoAcidFields');
-    expect(c.competingLnaaGrams, isNotNull);
+    expect(c.hasModeledOutput, isFalse);
+    expect(c.resultAvailability, 'insufficient');
+    expect(c.aminoAcidDataMode, isNull);
+    expect(c.competingLnaaGrams, isNull);
     expect(c.partialAminoAcidData, isFalse);
-    // Candidate scoring ran → the active scoring weight set is recorded.
-    expect(c.scoringParameterSetId, 'next_meal_scoring.v1');
+    expect(c.scoringParameterSetId, 'none');
   });
 
-  test('partial amino-acid scenario flags partial data', () {
-    final report = runner.run();
-    final c = report.cases.firstWhere(
-      (c) => c.scenarioId == 's32_partial_amino_acid_profile',
-    );
-    expect(c.partialAminoAcidData, isTrue);
-  });
+  test(
+    'candidate-only partial AA abstention does not project model fields',
+    () {
+      final report = runner.run();
+      final c = report.cases.firstWhere(
+        (c) => c.scenarioId == 's32_partial_amino_acid_profile',
+      );
+      expect(c.hasModeledOutput, isFalse);
+      expect(c.resultAvailability, 'insufficient');
+      expect(c.aminoAcidDataMode, isNull);
+      expect(c.competingLnaaGrams, isNull);
+      expect(c.partialAminoAcidData, isFalse);
+    },
+  );
 
   test('high-calorie meal scenario widens gastric uncertainty', () {
     final report = runner.run();
@@ -167,13 +273,17 @@ void main() {
     },
   );
 
-  test('all-macros-missing → unknown competition + insufficient/low (D2)', () {
+  test('all-macros-missing → typed insufficient with null outputs (D2)', () {
     final report = runner.run();
     final c = report.cases.firstWhere(
       (c) => c.scenarioId == 's36_missing_all_macros_unknown_competition',
     );
-    expect(c.aminoAcidCompetitionBand, 'unknown');
-    expect(['insufficient', 'low'], contains(c.confidenceBand));
+    expect(c.resultAvailability, 'insufficient');
+    expect(c.hasModeledOutput, isFalse);
+    expect(c.interactionScore, isNull);
+    expect(c.severityBand, isNull);
+    expect(c.confidenceBand, isNull);
+    expect(c.aminoAcidCompetitionBand, isNull);
   });
 
   // C1 — enteral feeding educational scenarios stay non-prescriptive.

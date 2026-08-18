@@ -184,4 +184,24 @@ void main() {
     // pure-solid lag → both components contributed.
     expect(mixed.aggregateLagMinutes, greaterThan(0));
   });
+
+  test('population variability is exposed as sensitivity, not hidden', () {
+    final profile = profileFor([
+      component(
+        id: 'reference',
+        form: MealPhysicalForm.solid,
+        protein: 10,
+        fat: 4,
+        fiber: 3,
+        carbs: 40,
+        calories: 300,
+        portion: 250,
+      ),
+    ]);
+    final central = profile.remainingFractionAt(120);
+    final envelope = profile.sensitivityEnvelopeAt(120);
+    expect(envelope.fasterRemaining, lessThan(central));
+    expect(envelope.slowerRemaining, greaterThan(central));
+    expect(profile.timeScaleSensitivityFraction, closeTo(0.24, 1e-9));
+  });
 }

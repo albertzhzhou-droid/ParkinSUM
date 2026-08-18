@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/state/app_state.dart';
+import '../../core/state/app_state_slices.dart';
 import '../../core/theme/liquid_glass_theme.dart';
 import 'catalog_detail_pages.dart';
 
@@ -36,7 +37,10 @@ class _CatalogPageState extends State<CatalogPage> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.watch<AppState>();
+    final catalogState = context.select<AppState, CatalogStateSlice>(
+      CatalogStateSlice.fromState,
+    );
+    final state = context.read<AppState>();
     final i18n = context.appI18n;
     final engine = state.catalogEngine;
 
@@ -124,8 +128,8 @@ class _CatalogPageState extends State<CatalogPage> {
                     separatorBuilder: (_, _) => const Divider(height: 1),
                     itemBuilder: (_, i) {
                       final drug = drugs[i];
-                      final active = state.activeDrugs.any(
-                        (item) => item.id == drug.id,
+                      final active = catalogState.activeDrugIds.contains(
+                        drug.id,
                       );
                       return ListTile(
                         title: Text(

@@ -103,17 +103,22 @@ void main() {
     expect(s.partialAminoAcidData, isFalse);
   });
 
-  test('partial amino-acid profile widens uncertainty + flags partial', () {
-    final s = summaryFor(
-      withProfile(
-        // Only 3 of the 6 LNAA present → partial.
-        const AminoAcidProfile(leucine: 2.1, valine: 1.3, tryptophan: 0.3),
-      ),
-    );
-    expect(s.dataMode, AminoAcidDataMode.actualAminoAcidFields);
-    expect(s.partialAminoAcidData, isTrue);
-    expect(s.uncertaintyWidened, isTrue); // NOT treated as fully narrow
-  });
+  test(
+    'partial profile falls back to proxy and remains explicitly partial',
+    () {
+      final s = summaryFor(
+        withProfile(
+          // Only 3 of the 6 LNAA present → partial.
+          const AminoAcidProfile(leucine: 2.1, valine: 1.3, tryptophan: 0.3),
+        ),
+      );
+      expect(s.dataMode, AminoAcidDataMode.proteinSourceProxy);
+      expect(s.partialAminoAcidData, isTrue);
+      expect(s.uncertaintyWidened, isTrue); // NOT treated as fully narrow
+      expect(s.actualAminoAcidProteinCoverageFraction, 0);
+      expect(s.competingLnaaGrams, isNull);
+    },
+  );
 
   test('no amino-acid fields → protein-source proxy fallback', () {
     final s = summaryFor(withProfile(null));

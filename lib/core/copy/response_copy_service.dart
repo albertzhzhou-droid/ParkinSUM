@@ -15,12 +15,14 @@ class ResponseCopyRequest {
   final String context;
   final String draftText;
   final List<String> protectedFacts;
+  final bool hasCurrentPurposeBoundConsent;
 
   const ResponseCopyRequest({
     required this.localeTag,
     required this.context,
     required this.draftText,
     this.protectedFacts = const <String>[],
+    this.hasCurrentPurposeBoundConsent = false,
   });
 }
 
@@ -152,6 +154,7 @@ class ResponseCopyService {
     required String context,
     required String draftText,
     List<String> protectedFacts = const <String>[],
+    bool hasCurrentPurposeBoundConsent = false,
   }) async {
     final polisher = localPolisher;
     if (polisher == null) return draftText;
@@ -161,6 +164,7 @@ class ResponseCopyService {
         context: context,
         draftText: draftText,
         protectedFacts: protectedFacts,
+        hasCurrentPurposeBoundConsent: hasCurrentPurposeBoundConsent,
       ),
     );
     final value = polished?.trim();

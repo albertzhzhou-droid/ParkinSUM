@@ -3,16 +3,21 @@ import 'dart:convert';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 
+import '../models/atomic_onboarding_commit.dart';
 import '../models/drug_definition.dart';
 import '../models/food_item.dart';
 import '../models/intake.dart';
 import '../models/medication_product_pack.dart';
 import '../models/meal.dart';
+import '../models/recoverable_user_event.dart';
 import '../models/user_profile.dart';
 import '../../data/models/interaction_rule_record.dart';
 import 'app_database.dart';
+import 'recoverable_user_event_store.dart';
 
-const int nativeAppDatabaseSchemaVersion = 7;
+const int nativeAppDatabaseSchemaVersion = 8;
+const String _nativeOnboardingOperationKey = 'onboarding_operation_id_v1';
+const String _nativeOnboardingStageKey = 'onboarding_stage_v1';
 
 const String nativeIntakesCreateTableSql = '''
 CREATE TABLE intakes (
@@ -40,6 +45,17 @@ const List<String> nativeIntakeSchemaV6MigrationStatements = <String>[
 const List<String> nativeIntakeSchemaV7MigrationStatements = <String>[
   'ALTER TABLE intakes ADD COLUMN product_selection_json TEXT',
 ];
+
+const String nativeRecoverableEventHistoryCreateTableSql = '''
+CREATE TABLE recoverable_event_history (
+  history_id TEXT PRIMARY KEY,
+  operation_id TEXT NOT NULL UNIQUE,
+  event_type TEXT NOT NULL,
+  record_id TEXT NOT NULL,
+  recorded_at INTEGER NOT NULL,
+  revision_json TEXT NOT NULL
+)
+''';
 
 Map<String, Object?> nativeIntakeToSqliteRow(Intake intake) {
   return <String, Object?>{
@@ -278,7 +294,150 @@ String nativeMealItemStorageId({
   return jsonEncode(<Object>[mealId, ordinal, foodId]);
 }
 
-class NativeAppDatabase implements AppDatabase {
+int? _nativeMealItemOrdinal(Map<String, Object?> row) {
+  try {
+    final decoded = jsonDecode(row['id'] as String);
+    if (decoded is! List || decoded.length != 3 || decoded[1] is! num) {
+      return null;
+    }
+    final ordinal = (decoded[1] as num).toInt();
+    return ordinal >= 0 ? ordinal : null;
+  } on Object {
+    // Rows from schema versions before the JSON tuple primary key used a
+    // delimiter-based id. Preserve their database order instead of making an
+    // old row unreadable during the v8 migration.
+    return null;
+  }
+}
+
+MealItem _nativeMealItemFromRow(Map<String, Object?> row) {
+  final categoryName = row['category'] as String;
+  final category = FoodCategory.values.firstWhere(
+    (value) => value.name == categoryName,
+    orElse: () => FoodCategory.other,
+  );
+  return MealItem(
+    foodId: row['food_id'] as String,
+    foodName: row['food_name'] as String,
+    foodCategory: category,
+    quantityFactor: (row['quantity'] as num).toDouble(),
+    foodTags: (jsonDecode(row['tags'] as String) as List<dynamic>)
+        .map((value) => value.toString())
+        .toList(growable: false),
+    proteinPer100g: (row['protein'] as num).toDouble(),
+    carbsPer100g: (row['carbs'] as num).toDouble(),
+    fatPer100g: (row['fat'] as num).toDouble(),
+    fiberPer100g: (row['fiber'] as num).toDouble(),
+    sodiumPer100g: (row['sodium'] as num).toDouble(),
+  );
+}
+
+Meal _nativeMealFromRows(
+  Map<String, Object?> row,
+  List<Map<String, Object?>> itemRows,
+) {
+  final mealId = row['id'] as String;
+  final matchingItems = itemRows
+      .where((item) => item['meal_id'] == mealId)
+      .toList(growable: false);
+  if (matchingItems.every((item) => _nativeMealItemOrdinal(item) != null)) {
+    matchingItems.sort(
+      (left, right) => _nativeMealItemOrdinal(
+        left,
+      )!.compareTo(_nativeMealItemOrdinal(right)!),
+    );
+  }
+  return Meal(
+    id: mealId,
+    eatenAt: DateTime.fromMillisecondsSinceEpoch(row['eaten_at'] as int),
+    recordedAt: row['recorded_at'] == null
+        ? DateTime.fromMillisecondsSinceEpoch(row['eaten_at'] as int)
+        : DateTime.fromMillisecondsSinceEpoch(row['recorded_at'] as int),
+    occurredAt: row['occurred_at'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(row['occurred_at'] as int),
+    occurredRangeStart: row['occurred_range_start'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(
+            row['occurred_range_start'] as int,
+          ),
+    occurredRangeEnd: row['occurred_range_end'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(row['occurred_range_end'] as int),
+    timeSource: (row['time_source'] as String?) ?? 'migration_legacy',
+    timePrecision: (row['time_precision'] as String?) ?? 'exact',
+    nextMealWindowStart: row['next_meal_window_start'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(
+            row['next_meal_window_start'] as int,
+          ),
+    nextMealWindowEnd: row['next_meal_window_end'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(
+            row['next_meal_window_end'] as int,
+          ),
+    coeventTime: row['coevent_time'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(row['coevent_time'] as int),
+    coeventSubstanceTags:
+        (jsonDecode((row['coevent_substance_tags'] as String?) ?? '[]')
+                as List<dynamic>)
+            .map((value) => value.toString())
+            .toList(growable: false),
+    thickenerType: row['thickener_type'] as String?,
+    enteralFeedMode: row['enteral_feed_mode'] as String?,
+    enteralFeedFormula: row['enteral_feed_formula'] as String?,
+    enteralFeedProteinGPerDay: (row['enteral_feed_protein_g_per_day'] as num?)
+        ?.toDouble(),
+    title: row['title'] as String,
+    items: matchingItems.map(_nativeMealItemFromRow).toList(growable: false),
+  );
+}
+
+Future<void> _insertNativeMeal(DatabaseExecutor database, Meal meal) async {
+  await database.insert('meals', <String, Object?>{
+    'id': meal.id,
+    'title': meal.title,
+    'eaten_at': meal.eatenAt.millisecondsSinceEpoch,
+    'recorded_at': meal.recordedAt.millisecondsSinceEpoch,
+    'occurred_at': meal.occurredAt?.millisecondsSinceEpoch,
+    'occurred_range_start': meal.occurredRangeStart?.millisecondsSinceEpoch,
+    'occurred_range_end': meal.occurredRangeEnd?.millisecondsSinceEpoch,
+    'time_source': meal.timeSource,
+    'time_precision': meal.timePrecision,
+    'next_meal_window_start': meal.nextMealWindowStart?.millisecondsSinceEpoch,
+    'next_meal_window_end': meal.nextMealWindowEnd?.millisecondsSinceEpoch,
+    'coevent_time': meal.coeventTime?.millisecondsSinceEpoch,
+    'coevent_substance_tags': jsonEncode(meal.coeventSubstanceTags),
+    'thickener_type': meal.thickenerType,
+    'enteral_feed_mode': meal.enteralFeedMode,
+    'enteral_feed_formula': meal.enteralFeedFormula,
+    'enteral_feed_protein_g_per_day': meal.enteralFeedProteinGPerDay,
+  });
+  for (var ordinal = 0; ordinal < meal.items.length; ordinal++) {
+    final item = meal.items[ordinal];
+    await database.insert('meal_items', <String, Object?>{
+      'id': nativeMealItemStorageId(
+        mealId: meal.id,
+        foodId: item.foodId,
+        ordinal: ordinal,
+      ),
+      'meal_id': meal.id,
+      'food_id': item.foodId,
+      'food_name': item.foodName,
+      'category': item.foodCategory.name,
+      'quantity': item.quantityFactor,
+      'protein': item.proteinPer100g,
+      'carbs': item.carbsPer100g,
+      'fat': item.fatPer100g,
+      'fiber': item.fiberPer100g,
+      'sodium': item.sodiumPer100g,
+      'tags': jsonEncode(item.foodTags),
+    });
+  }
+}
+
+class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
   Database? _database;
 
   Future<Database> _open() async {
@@ -309,6 +468,7 @@ class NativeAppDatabase implements AppDatabase {
           'CREATE TABLE interaction_rules (id TEXT PRIMARY KEY, drug_id TEXT NOT NULL, rule_type TEXT NOT NULL, target TEXT NOT NULL, severity INTEGER NOT NULL, weight REAL NOT NULL, description TEXT NOT NULL)',
         );
         await db.execute('CREATE TABLE active_drugs (id TEXT PRIMARY KEY)');
+        await db.execute(nativeRecoverableEventHistoryCreateTableSql);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -367,7 +527,7 @@ class NativeAppDatabase implements AppDatabase {
             "ALTER TABLE medications ADD COLUMN jurisdiction TEXT NOT NULL DEFAULT 'GLOBAL'",
           );
           await db.execute(
-            "ALTER TABLE medications ADD COLUMN route TEXT NOT NULL DEFAULT 'oral'",
+            "ALTER TABLE medications ADD COLUMN route TEXT NOT NULL DEFAULT 'unspecified'",
           );
           await db.execute(
             "ALTER TABLE medications ADD COLUMN dosage_form TEXT NOT NULL DEFAULT 'unspecified'",
@@ -412,6 +572,9 @@ class NativeAppDatabase implements AppDatabase {
           for (final statement in nativeIntakeSchemaV7MigrationStatements) {
             await db.execute(statement);
           }
+        }
+        if (oldVersion < 8) {
+          await db.execute(nativeRecoverableEventHistoryCreateTableSql);
         }
       },
     );
@@ -473,6 +636,51 @@ class NativeAppDatabase implements AppDatabase {
   }
 
   @override
+  Future<void> commitOnboarding(AtomicOnboardingCommit commit) async {
+    final db = await _open();
+    await db.transaction((transaction) async {
+      final marker = await transaction.query(
+        'app_meta',
+        columns: <String>['value'],
+        where: 'key = ?',
+        whereArgs: <Object?>[_nativeOnboardingOperationKey],
+        limit: 1,
+      );
+      if (marker.isNotEmpty && marker.first['value'] == commit.operationId) {
+        return;
+      }
+
+      final batch = transaction.batch()
+        ..insert('app_meta', <String, Object?>{
+          'key': 'user_profile',
+          'value': jsonEncode(commit.profile.toJson()),
+        }, conflictAlgorithm: ConflictAlgorithm.replace)
+        ..delete('active_drugs')
+        ..delete('intakes');
+      for (final id in commit.activeDrugIds) {
+        batch.insert('active_drugs', <String, Object?>{'id': id});
+      }
+      for (final intake in commit.intakes) {
+        batch.insert('intakes', nativeIntakeToSqliteRow(intake));
+      }
+      batch
+        ..insert('app_meta', <String, Object?>{
+          'key': 'onboarded',
+          'value': 'true',
+        }, conflictAlgorithm: ConflictAlgorithm.replace)
+        ..insert('app_meta', <String, Object?>{
+          'key': _nativeOnboardingOperationKey,
+          'value': commit.operationId,
+        }, conflictAlgorithm: ConflictAlgorithm.replace)
+        ..insert('app_meta', <String, Object?>{
+          'key': _nativeOnboardingStageKey,
+          'value': atomicOnboardingCommitStageCommitted,
+        }, conflictAlgorithm: ConflictAlgorithm.replace);
+      await batch.commit(noResult: true);
+    });
+  }
+
+  @override
   Future<bool> loadOnboarded() async {
     final db = await _open();
     final rows = await db.query(
@@ -488,10 +696,22 @@ class NativeAppDatabase implements AppDatabase {
   @override
   Future<void> saveOnboarded(bool value) async {
     final db = await _open();
-    await db.insert('app_meta', {
-      'key': 'onboarded',
-      'value': value ? 'true' : 'false',
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.transaction((transaction) async {
+      await transaction.insert('app_meta', {
+        'key': 'onboarded',
+        'value': value ? 'true' : 'false',
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      if (!value) {
+        await transaction.delete(
+          'app_meta',
+          where: 'key IN (?, ?)',
+          whereArgs: <Object?>[
+            _nativeOnboardingOperationKey,
+            _nativeOnboardingStageKey,
+          ],
+        );
+      }
+    });
   }
 
   @override
@@ -542,70 +762,8 @@ class NativeAppDatabase implements AppDatabase {
     final db = await _open();
     final mealRows = await db.query('meals', orderBy: 'eaten_at DESC');
     final itemRows = await db.query('meal_items');
-
     return mealRows
-        .map((row) {
-          final mealId = row['id'] as String;
-          final items = itemRows
-              .where((item) => item['meal_id'] == mealId)
-              .map(_mealItemFromRow)
-              .toList();
-          return Meal(
-            id: mealId,
-            eatenAt: DateTime.fromMillisecondsSinceEpoch(
-              row['eaten_at'] as int,
-            ),
-            recordedAt: row['recorded_at'] == null
-                ? DateTime.fromMillisecondsSinceEpoch(row['eaten_at'] as int)
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['recorded_at'] as int,
-                  ),
-            occurredAt: row['occurred_at'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['occurred_at'] as int,
-                  ),
-            occurredRangeStart: row['occurred_range_start'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['occurred_range_start'] as int,
-                  ),
-            occurredRangeEnd: row['occurred_range_end'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['occurred_range_end'] as int,
-                  ),
-            timeSource: (row['time_source'] as String?) ?? 'migration_legacy',
-            timePrecision: (row['time_precision'] as String?) ?? 'exact',
-            nextMealWindowStart: row['next_meal_window_start'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['next_meal_window_start'] as int,
-                  ),
-            nextMealWindowEnd: row['next_meal_window_end'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['next_meal_window_end'] as int,
-                  ),
-            coeventTime: row['coevent_time'] == null
-                ? null
-                : DateTime.fromMillisecondsSinceEpoch(
-                    row['coevent_time'] as int,
-                  ),
-            coeventSubstanceTags:
-                (jsonDecode((row['coevent_substance_tags'] as String?) ?? '[]')
-                        as List<dynamic>)
-                    .map((value) => value.toString())
-                    .toList(growable: false),
-            thickenerType: row['thickener_type'] as String?,
-            enteralFeedMode: row['enteral_feed_mode'] as String?,
-            enteralFeedFormula: row['enteral_feed_formula'] as String?,
-            enteralFeedProteinGPerDay:
-                (row['enteral_feed_protein_g_per_day'] as num?)?.toDouble(),
-            title: row['title'] as String,
-            items: items,
-          );
-        })
+        .map((row) => _nativeMealFromRows(row, itemRows))
         .toList(growable: false);
   }
 
@@ -682,6 +840,150 @@ class NativeAppDatabase implements AppDatabase {
   }
 
   @override
+  Future<List<RecoverableUserEventRevision>>
+  loadRecoverableUserEventHistory() async {
+    final db = await _open();
+    final rows = await db.query(
+      'recoverable_event_history',
+      orderBy: 'recorded_at DESC, history_id DESC',
+    );
+    return rows
+        .map(
+          (row) => RecoverableUserEventRevision.fromJson(
+            Map<String, dynamic>.from(
+              jsonDecode(row['revision_json'] as String) as Map,
+            ),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  @override
+  Future<void> commitRecoverableUserEventMutation(
+    RecoverableUserEventMutation mutation,
+  ) async {
+    final revision = mutation.revision..validate();
+    final db = await _open();
+    await db.transaction((transaction) async {
+      final existing = await transaction.query(
+        'recoverable_event_history',
+        columns: const <String>['revision_json'],
+        where: 'history_id = ? OR operation_id = ?',
+        whereArgs: <Object?>[revision.historyId, revision.operationId],
+      );
+      final currentPayload = await _nativeCurrentEventPayload(
+        transaction,
+        revision,
+      );
+      final currentDigest = recoverableUserEventPayloadDigest(currentPayload);
+      if (existing.isNotEmpty) {
+        if (existing.length != 1 ||
+            RecoverableUserEventRevision.fromJson(
+                  Map<String, dynamic>.from(
+                    jsonDecode(existing.single['revision_json'] as String)
+                        as Map,
+                  ),
+                ).historyId !=
+                revision.historyId ||
+            currentDigest != revision.afterDigest) {
+          throw RecoverableUserEventConflict(
+            recordId: revision.recordId,
+            expectedDigest: revision.afterDigest,
+            actualDigest: currentDigest,
+          );
+        }
+        return;
+      }
+      if (currentDigest != mutation.expectedCurrentDigest) {
+        throw RecoverableUserEventConflict(
+          recordId: revision.recordId,
+          expectedDigest: mutation.expectedCurrentDigest,
+          actualDigest: currentDigest,
+        );
+      }
+
+      switch (revision.eventType) {
+        case RecoverableUserEventType.meal:
+          await transaction.delete(
+            'meal_items',
+            where: 'meal_id = ?',
+            whereArgs: <Object?>[revision.recordId],
+          );
+          await transaction.delete(
+            'meals',
+            where: 'id = ?',
+            whereArgs: <Object?>[revision.recordId],
+          );
+          if (revision.afterPayload != null) {
+            await _insertNativeMeal(
+              transaction,
+              Meal.fromJson(Map<String, dynamic>.from(revision.afterPayload!)),
+            );
+          }
+        case RecoverableUserEventType.intake:
+          await transaction.delete(
+            'intakes',
+            where: 'id = ?',
+            whereArgs: <Object?>[revision.recordId],
+          );
+          if (revision.afterPayload != null) {
+            await transaction.insert(
+              'intakes',
+              nativeIntakeToSqliteRow(
+                Intake.fromJson(
+                  Map<String, dynamic>.from(revision.afterPayload!),
+                ),
+              ),
+            );
+          }
+      }
+      await transaction.insert('recoverable_event_history', <String, Object?>{
+        'history_id': revision.historyId,
+        'operation_id': revision.operationId,
+        'event_type': revision.eventType.name,
+        'record_id': revision.recordId,
+        'recorded_at': revision.recordedAtUtc.millisecondsSinceEpoch,
+        'revision_json': jsonEncode(revision.toJson()),
+      });
+    });
+  }
+
+  Future<Map<String, Object?>?> _nativeCurrentEventPayload(
+    DatabaseExecutor database,
+    RecoverableUserEventRevision revision,
+  ) async {
+    switch (revision.eventType) {
+      case RecoverableUserEventType.meal:
+        final rows = await database.query(
+          'meals',
+          where: 'id = ?',
+          whereArgs: <Object?>[revision.recordId],
+          limit: 1,
+        );
+        if (rows.isEmpty) return null;
+        final itemRows = await database.query(
+          'meal_items',
+          where: 'meal_id = ?',
+          whereArgs: <Object?>[revision.recordId],
+        );
+        return Map<String, Object?>.from(
+          _nativeMealFromRows(rows.single, itemRows).toJson(),
+        );
+      case RecoverableUserEventType.intake:
+        final rows = await database.query(
+          'intakes',
+          where: 'id = ?',
+          whereArgs: <Object?>[revision.recordId],
+          limit: 1,
+        );
+        if (rows.isEmpty) return null;
+        return Map<String, Object?>.from(
+          nativeIntakeFromSqliteRow(rows.single).toJson(),
+        );
+    }
+  }
+
+  @override
   Future<List<FoodItem>> loadFoods() async {
     final db = await _open();
     final rows = await db.query('foods', orderBy: 'name ASC');
@@ -714,29 +1016,6 @@ class NativeAppDatabase implements AppDatabase {
         .toList(growable: false);
   }
 
-  MealItem _mealItemFromRow(Map<String, Object?> row) {
-    final categoryName = row['category'] as String;
-    final category = FoodCategory.values.firstWhere(
-      (value) => value.name == categoryName,
-      orElse: () => FoodCategory.other,
-    );
-
-    return MealItem(
-      foodId: row['food_id'] as String,
-      foodName: row['food_name'] as String,
-      foodCategory: category,
-      quantityFactor: (row['quantity'] as num).toDouble(),
-      foodTags: (jsonDecode(row['tags'] as String) as List<dynamic>)
-          .map((value) => value.toString())
-          .toList(),
-      proteinPer100g: (row['protein'] as num).toDouble(),
-      carbsPer100g: (row['carbs'] as num).toDouble(),
-      fatPer100g: (row['fat'] as num).toDouble(),
-      fiberPer100g: (row['fiber'] as num).toDouble(),
-      sodiumPer100g: (row['sodium'] as num).toDouble(),
-    );
-  }
-
   DrugDefinition _medicationFromRow(Map<String, Object?> row) {
     final tagNames = jsonDecode(row['tags'] as String) as List<dynamic>;
     return DrugDefinition(
@@ -753,7 +1032,7 @@ class NativeAppDatabase implements AppDatabase {
       sourceSystem: (row['source_system'] as String?) ?? 'LOCAL_SEED',
       sourceProductCode: row['source_product_code'] as String?,
       jurisdiction: (row['jurisdiction'] as String?) ?? 'GLOBAL',
-      route: (row['route'] as String?) ?? 'oral',
+      route: (row['route'] as String?) ?? 'unspecified',
       dosageForm: (row['dosage_form'] as String?) ?? 'unspecified',
       releaseType: (row['release_type'] as String?) ?? 'unspecified',
     );

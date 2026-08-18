@@ -14,7 +14,7 @@ enum PortionSizeBand { small, medium, large, unknown }
 /// `missingFields` records it and `compositionCompleteness` shrinks below
 /// 1.0; the downstream model widens its uncertainty band rather than
 /// pretending precision.
-class MealComposition {
+final class MealComposition {
   final String id;
   final double? totalCalories;
   final double? proteinGrams;
@@ -75,7 +75,7 @@ class MealComposition {
 
 /// A single food contributing to a meal. Nutrient fields are *per serving*
 /// already (the normalizer multiplied by portion at intake time).
-class FoodComponent {
+final class FoodComponent {
   final String id;
   final String name;
   final MealPhysicalForm physicalForm;

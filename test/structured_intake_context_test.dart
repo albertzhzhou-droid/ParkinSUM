@@ -107,6 +107,40 @@ void main() {
     expect(DosageNoteParser().milligramsForIntake(intake), isNull);
   });
 
+  test(
+    'package selection without formulation snapshot blocks model context',
+    () {
+      final intake = IntakeDoseContextBuilder()
+          .build(
+            id: 'i_product',
+            drugId: drug.id,
+            takenAt: DateTime.utc(2026, 8, 16, 12),
+            dosageNote: '100 mg',
+            drug: drug,
+          )
+          .copyWith(
+            productSelection: const MedicationProductSelection(
+              packId: 'pack_without_formulation_snapshot',
+              identifierSystem: 'ndcPackage',
+              identifierValue: '00000-0000-00',
+              displayName: 'Selected package',
+              labelerName: 'fixture',
+              strengthDisplay: '25 mg / 100 mg',
+              packageDescription: 'package fixture',
+            ),
+          );
+
+      final context = resolveIntakeMechanisticFormulation(
+        intake: intake,
+        drug: drug,
+      );
+
+      expect(context.dosageForm, 'unspecified');
+      expect(context.route, 'unspecified');
+      expect(context.releaseType, 'unspecified');
+    },
+  );
+
   test('structured dose is preferred while legacy JSON remains readable', () {
     final structured = Intake(
       id: 'i3',

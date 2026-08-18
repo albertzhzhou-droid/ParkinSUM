@@ -4,9 +4,10 @@
 
 ParkinSUM's mechanistic conflict engine is a deterministic, time-axis,
 literature-informed *educational simulation* layer. It sits next to the
-existing declarative rule engine and produces continuous-valued exposure-
-disruption estimates that approximate the pathway by which meals may affect
-levodopa availability for absorption.
+existing declarative rule engine and produces a unitless timing-overlap trace
+for a narrowly declared model-applicability domain. The trace is a transparent
+prototype assumption, not an exposure, absorption, concentration, or symptom
+estimate.
 
 It is not a clinical decision tool. It does not predict any individual's
 plasma levodopa concentration. It does not recommend medication timing,
@@ -101,10 +102,20 @@ remaining(t) = exp(-(ln 2 / t_half) · (t - lag))   if t > lag
 - **Unknown physical form:** uses dampened solid defaults *and* widens
   uncertainty.
 
-All numeric magnitudes are tagged `prototype_heuristic` in
-`model_assumption_registry.dart`. The *direction* of each effect is grounded
-in the cited literature; the exact magnitudes are illustrative and are not
-patient-calibrated.
+Numeric fields tagged `prototype_heuristic` are explicitly illustrative. A
+small set of lag, half-time, and sensitivity fields still use `mechanism` to
+mean that their range or direction is literature-informed; that label does
+**not** establish that the selected point value is fitted, externally
+transportable, or estimated from person-specific observations. Splitting
+direction evidence from selected-value status is
+tracked as a required metadata upgrade.
+
+The evidence is heterogeneous rather than uniformly positive. Hardoff et al.
+reported slower group means with broad variability, Doi et al. reported an
+association between delayed emptying and a later levodopa peak, while Siebner
+et al. found no group-level delay in a small early, medicated Parkinson cohort.
+The model therefore exposes a sensitivity analysis and must not apply a
+universal “Parkinson gastric-delay” multiplier.
 
 ## 7. Solid vs liquid behavior
 
@@ -152,29 +163,41 @@ When a second meal arrives before the first is mostly emptied, the engine:
 3. The second profile's uncertainty band widens proportionally to the
    residual.
 
-The absorption opportunity layer also detects residual stomach load at
-the medication time and shifts/widens the window accordingly.
+The absorption opportunity layer detects residual stomach load at the
+medication time only from a meal that has already started. A future candidate
+meal can be the competition target, but it cannot travel backward in time and
+delay an earlier dose. The latest started meal is accepted only while the dose
+still falls within that meal profile's explicit `mostlyEmptiedWindow`; an
+arbitrarily old meal cannot unlock a current trace. If no current dose-time
+meal context is recorded, the provider returns `insufficient`; the absence of
+a record is not inferred as fasting.
 
 ## 10a. Multi-dose time axis
 
 The engine evaluates **each levodopa medication event** on the timeline
 independently rather than only the first dose:
 
-1. Non-levodopa events (e.g. iron, MAO-B inhibitors) are **excluded** from
-   levodopa-specific food-interaction scoring — they are handled by other
-   rule layers.
-2. For every levodopa dose, the engine finds that dose's primary meal,
-   computes residual stomach load, gastric emptying, the absorption
-   opportunity window, and the amino-acid competition overlap.
+1. Until a governed terminology can prove a non-target medication identity,
+   any additional free-text/non-target medication context makes the
+   mechanistic provider `insufficient`. Other medicines remain handled by the
+   categorical rule layers; they are not silently dropped from a mixed model
+   timeline. If another event is also a known out-of-domain target, the
+   unresolved event still takes precedence and the aggregate state remains
+   `insufficient`, not a falsely certain `notApplicable`.
+2. For every levodopa dose, the engine separately resolves (a) an already
+   started meal for dose-time gastric context and (b) a possible future target
+   meal for competition. It computes an absorption opportunity only from (a),
+   then evaluates (b) against that causally valid window.
 3. Aggregation is **deterministic max-overlap**: the dose with the highest
    modeled overlap drives the primary `interaction_score`, severity, and
    confidence. A high-overlap dose is never averaged away by lower-overlap
    doses. Ties break by earliest dose minute for stability.
-4. Every evaluated dose is retained in `perEventTraces` (with its own
+4. Every applicable dose is retained in `perEventTraces` (with its own
    `interactionScore`, competition band, delayed-arrival likelihood, source
    refs, and uncertainty reasons), and `perEventCount` records how many doses
-   were modeled. Extended/controlled-release doses widen the absorption window
-   per Section 12.
+   were modeled. If any levodopa-context event is outside the declared v1
+   applicability domain, the provider abstains for the whole timeline instead
+   of dropping that event or borrowing an immediate-release curve.
 
 ## 10b. Dose comes only from user input (hard requirement)
 
@@ -205,26 +228,31 @@ Per-component modeling means food-food interactions surface naturally:
 
 ## 12. Levodopa absorption-window assumptions
 
-Per the cited DailyMed labeling and PK reviews:
+The executable v1 provider has one deliberately narrow configuration:
 
 - Absorption opportunity starts after a short post-dose lag.
 - Immediate-release: lag ≈ 5 min, duration ≈ 90 min.
-- Extended / controlled / **delayed** release: wider window (lag ≈ 30 min,
-  duration ≈ 240 min).
-- **Unknown / unspecified release type**: the window defaults to the
-  immediate-release shape but the **uncertainty band is widened one step** and
-  the assumption `ldopa.absorption.release_type_unknown_limited` is recorded —
-  release-specific interpretation is treated as limited. Release type is taken
-  from the (source-backed) medication context and is **never inferred from
-  dose**.
+- It executes only when the runtime fields explicitly contain the exact
+  carbidopa + levodopa token set plus oral, swallowed-tablet, and
+  immediate-release values. These string checks are not yet a governed product
+  identity or terminology service; that remains an open credibility boundary.
+- Extended-, controlled-, delayed-release, capsule, enteral, inhaled,
+  subcutaneous, unknown, unspecified, or malformed metadata causes an explicit
+  `notApplicable` or `insufficient` abstention. No IR-shaped fallback and no
+  ER/CR/DR curve are executable.
+- Release type is taken from the explicit medication context and is never
+  inferred from dose, brand, tag, or a substring match.
 - A high residual stomach load at the medication time shifts the window
   forward and widens it. Delay likelihood band reflects this:
   - `low` (residual ≤ 0.4)
   - `moderate` (0.4 < residual ≤ 0.7)
   - `high` (residual > 0.7)
-  - `unknown` (no overlapping meal profile available)
+- No overlapping meal profile is `insufficient`, so the provider emits no
+  window, peak, openness samples, delay band, or modeled numeric result.
 
-This is an educational simulation, not a PK prediction.
+These lag and duration constants define a unitless engineering trace. Product
+labels and small PK studies motivate the need to separate formulations; they
+do not validate these constants as human PK. This is not a PK prediction.
 
 ### 12b. Medication section provenance in the per-event trace
 
@@ -237,6 +265,11 @@ additionally surfaces the medication provenance: `releaseTypeSource`,
 `medicationMetadataCompleteness`. This is **provenance/traceability only** — it
 never contributes to the dose, and the intake dose still comes solely from the
 user-facing dosage path (product/component strength never fabricates a dose).
+Before the context becomes executable, the validator requires the nested
+product variant, source document, jurisdiction, component set, route, form,
+release type, and extraction-confidence bounds to agree with the top-level
+structured entry. Missing identity bindings or contradictions fail closed;
+provenance cannot be used to disguise a different formulation.
 
 The same `MechanisticMedicationMetadata` is also exportable as a local,
 **FHIR-inspired, PHI-free MedicationKnowledge view**
@@ -258,17 +291,21 @@ deterministic **sampled openness curve** (`opennessProfile`: a list of
 
 - Immediate-release rises sharply to a full-openness peak then decays to a low
   tail (sharp, short).
-- Extended/controlled-release is flatter and longer (lower peak, higher
-  sustained tail).
+- No extended-, controlled-, or delayed-release openness curve is executable;
+  those formulations produce an explicit abstention.
 - When the meal context is incomplete (no overlapping meal profile) the whole
-  curve is flattened (scaled down) to reflect lower confidence.
+  provider abstains instead of flattening a guessed curve.
 
 `openness` is a unitless educational weight — NOT an absorbed fraction and NOT
 a blood concentration. The amino-acid competition overlap (Layer 5) is
 **openness-weighted** (`Σ pressure·openness / Σ openness`) so competition
 pressure arriving near the peak opportunity counts more than pressure at the
-window edges; it falls back to the flat in-window average when no profile is
-present. Not PK/PD calibration, not dose-response advice.
+window edges. Both sums cover the full validated absorption-openness grid;
+times without competition pressure contribute zero to the numerator but keep
+their openness weight in the denominator, so a brief intersection cannot look
+equivalent to whole-window overlap. A missing, malformed, empty, or
+not-applicable opportunity profile causes abstention; it is not replaced by a
+flat numeric window. Not PK/PD calibration, not dose-response advice.
 
 ## 13. Amino-acid competition assumptions
 
@@ -285,8 +322,7 @@ al. 1989; Cereda et al. 2017; Boelens Keun et al. 2021; Virmani et al.
 band widens by one step rather than the model faking precision.
 
 The competition score is the *openness-weighted* competition pressure across
-the absorption opportunity profile (see §12a; falls back to the flat in-window
-average when no openness profile is present). Discretized bands:
+an available absorption opportunity profile (see §12a). Discretized bands:
 
 | Overlap (avg pressure × overlap fraction) | Competition band |
 | --- | --- |
@@ -295,14 +331,18 @@ average when no openness profile is present). Discretized bands:
 | < 0.25 | `moderate` |
 | ≥ 0.25 | `high` |
 
-Missing protein → `unknown` band and `veryWide` uncertainty.
+Missing protein → typed `insufficient`, null numeric wire fields, and no
+pressure curve. Unknown is never inserted as zero into the composite.
 
 ### 13a. Actual amino-acid fields, absolute grams, and dose-relative proxy
 
-When a food component carries actual amino-acid fields
-(`FoodComponent.aminoAcidProfile`), the LNAA layer uses
-`AminoAcidDataMode.actualAminoAcidFields` in preference to the protein-source
-proxy and additionally exposes, in `CompetitionLnaaSummary`:
+When every positive-protein component carries a complete six-LNAA profile,
+the LNAA layer uses `AminoAcidDataMode.actualAminoAcidFields`. When coverage is
+mixed, it uses `hybridActualAndProteinSourceProxy`: covered components retain
+their measured fields, uncovered components use the disclosed protein-source
+proxy, uncertainty widens, and whole-meal LNAA grams/dose-relative ratios stay
+null rather than presenting a hybrid estimate as a measured total. The layer
+additionally exposes, in `CompetitionLnaaSummary`:
 
 - `competingLnaaGrams` — absolute competing LNAA grams summed across components
   (null in proxy/unknown mode; missing ≠ zero).
@@ -312,9 +352,9 @@ proxy and additionally exposes, in `CompetitionLnaaSummary`:
   `doseRelativeAvailable` — populated **only** when an explicit user-entered
   dose is available. The dose is taken from the validated medication context;
   no dose is ever invented. Missing/non-explicit dose → ratio unavailable.
-- `partialAminoAcidData` — true when only some of the six competing LNAA are
-  present (or a value was unit-ambiguous). Partial actual data widens
-  uncertainty rather than being trusted as fully narrow.
+- `partialAminoAcidData` — true when a component/profile is incomplete, a value
+  is unit-ambiguous, or only part of the meal has complete profiles. Partial or
+  hybrid evidence widens uncertainty rather than being trusted as fully narrow.
 - `aminoAcidConfidenceTier` — when the FDC payload carries per-nutrient
   provenance (`foodNutrientDerivation` / `dataPoints` / food `dataType`), the
   extractor maps it to an ordinal `NutrientConfidenceTier`
@@ -328,14 +368,24 @@ proxy and additionally exposes, in `CompetitionLnaaSummary`:
   feeds **candidate metadata completeness** (`MetadataCompletenessGate
   .scoreCandidateFood` → `CandidateMetadata.completeness` →
   `MechanisticCandidateScore`) and is stored explicitly on `FoodVariantMetadata`,
-  so source quality affects ranking confidence/tie-breaking — never advice, and
-  never overriding source-authority/jurisdiction policy or conflict dominance
+  so source quality affects only the analysis trace's confidence/composite —
+  never the production recommendation order, advice, or an override of
+  source-authority/jurisdiction policy
   (see `docs/IMPORTER_METADATA_FLOW.md` §9 and
   `docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`).
 
-The modeled overlap represents **intestinal-absorption** competition; broader
-blood–brain-barrier LNAA transport competition is named as a cited mechanism in
-the trace but is not quantified here (no overclaiming).
+The modeled value is a **unitless timing-overlap proxy motivated by possible
+intestinal competition**; it is not absorbed fraction, transporter occupancy,
+or concentration. Broader blood–brain-barrier LNAA transport competition is
+named as a cited mechanism in the trace but is not quantified here.
+
+The pressure timeline uses the gastric model's intestinal-arrival curve for
+**shape**, normalizes that curve to its own peak, then applies a bounded
+protein/LNAA load amplitude. This keeps the pressure and its 0–1 band thresholds
+on the same relative scale. Earlier code compared a fraction-per-minute rate
+directly with unitless 0.10/0.25 thresholds, which compressed every rendered
+curve near zero. The normalized result is still a prototype heuristic—not an
+amino-acid concentration, transporter occupancy, or clinical effect probability.
 
 ## 14. Uncertainty / confidence scoring
 
@@ -343,7 +393,7 @@ The engine returns a discrete `ConfidenceBand`:
 
 | Condition | Confidence |
 | --- | --- |
-| `compositionCompleteness < 0.4` | `insufficient` |
+| `compositionCompleteness < 0.4` | typed `insufficient`; no modeled score |
 | competition band == `unknown` | `low` |
 | `missingTimelineFields ≥ 3` | `low` |
 | emptying `uncertaintyBand == veryWide` | `low` |
@@ -353,6 +403,26 @@ The engine returns a discrete `ConfidenceBand`:
 
 Uncertainty reasons are surfaced in the result so reviewers can see exactly
 which inputs degraded confidence.
+
+### 14.1 Visible gastric time-scale sensitivity
+
+`GastricEmptyingProfile.sensitivityEnvelopeAt()` evaluates the same component
+model at 0.76× and 1.24× the central lag/half-time scale. The 24% fraction is
+an illustrative symmetric transform motivated by a study reporting 24.5%
+between-participant variation in measured half-time among healthy participants.
+That study does not supply a Parkinson distribution. The transform is displayed
+beside the central curve as a deterministic one-way sensitivity analysis—not a
+confidence interval, clinical reference range, gastric-emptying test, or
+patient prediction. The primary trace remains the central parameter set;
+sensitivity lines never silently alter ranking.
+
+For high residual stomach load, the absorption opportunity uses 34 minutes as
+its illustrative central shift, matching the mean meal-associated absorption
+delay reported by Nutt et al. (1984). The small selected sample prevents this
+value from being interpreted as an individual or formulation-independent
+estimate. The residual-load thresholds and the 17/34/68-minute window
+transform are prototype heuristics; the end of the opportunity window remains
+deliberately widened.
 
 ## 15. Explanation schema
 
@@ -375,8 +445,9 @@ The trace is JSON-serializable for the replay runner.
 
 ## 16. Testability requirements
 
-- The engine never produces a number when inputs are insufficient — it
-  returns one of the `insufficient*` interaction types.
+- Every provider serializes an explicit availability state. Insufficient,
+  not-applicable, or integrity-blocked outputs carry null modeled numbers and
+  no curve; compatibility sentinels are never presented as results.
 - Every modeled assumption has a `sourceId` in
   `model_assumption_registry.dart`, mapped to a citation in
   `Bibliographies.md`.
@@ -427,12 +498,12 @@ scenario: `mealComponentCount`, `gastricEmptyingAssumptions`,
 - Uses **multi-point sampling** inside the window:
   `max(5, ceil(window_minutes / 15))` samples, capped at 12. Each sample
   is a hypothetical meal event at a candidate offset; the engine runs
-  end-to-end for each. The conservative (worst-case) overlap drives
-  ranking; best, average, and per-sample summaries are surfaced in
+  end-to-end for each. Best, worst, average, and per-sample summaries are
+  surfaced in
   `MechanisticCandidateScore.sampledWindowSummary` for trace and UI.
-- Ranks candidates ascending by worst-case `conflictOverlapScore`,
-  breaking ties by `nutritionDataCompleteness` descending, then by
-  candidate id for deterministic order.
+- May calculate an analysis-only composite score, but the production
+  recommendation path does not use that score to reorder foods. The UI aligns
+  every candidate trace to the existing conservative heuristic order.
 - Returns `insufficient_context` for *every* candidate when the
   medication context is invalid — never pretends to optimize against a
   bare numeric dose.
@@ -447,22 +518,21 @@ outrank a high modeled conflict overlap. It is **enforced at construction**:
 `MechanisticNextMealScorer` throws `ArgumentError` if injected with a
 non-dominant weight set, so an unsafe set cannot enter the scorer.
 
-### Mechanistic-primary ranking promotion
+### Trace-only decision influence
 
-`NextMealRecommendationOrchestrator._enrichWithMechanistic` promotes the
-mechanistic engine to be the **primary ranker** of `recommendations`
-exactly when **all** of these hold:
+`NextMealRecommendationOrchestrator._enrichWithMechanistic` may compute an
+inspectable candidate trace when the user supplies a window and the runtime
+applicability/context gates pass. The current equations are not product- and
+population-specifically validated for optimization, so they never reorder
+`recommendations`. `rankerUsed` reports `heuristic_legacy_fallback` unless a
+separately consented local-AI safe-whitelist reorder actually produced the
+final order, in which case it reports `local_ai_safe_candidate_rerank`;
+`mechanisticPrimaryEligible` remains false, and the eligibility record includes
+`mechanistic_trace_only_not_validated_for_ranking`.
 
-1. `request.userDefinedWindow != null`, and
-2. `mechanisticTrace.confidenceBand` is `medium` or `high`, and
-3. every candidate has a `MechanisticCandidateScore` with
-   `insufficientContext == false`.
-
-In every other case the existing legacy heuristic (`_levodopaWindowPenalty`,
-documented as a fallback in the orchestrator source) drives ordering.
-The result's new `rankerUsed` field surfaces which path ran
-(`mechanistic_primary` or `heuristic_legacy_fallback`) so reviewers can
-audit ranking decisions without reading code.
+This is an executable decision-influence ceiling, not a disclaimer. A future
+change to ranking requires a separately reviewed context of use, governed
+calibration/validation evidence, and a versioned promotion contract.
 
 ## 19. What the model does NOT infer
 
@@ -476,20 +546,22 @@ audit ranking decisions without reading code.
   and (with an explicit dose) a dose-relative ratio; otherwise it falls back to
   a total-protein-grams proxy. Neither is a calibrated transport model.
 
-## 20. Implementation status
+## 20. Implementation status and open credibility work
 
-- **Engine + scorer:** complete; exercised by 38+ focused tests + a
-  15-scenario replay runner.
-- **Centralized gastric-emptying parameter set:** complete
+- **Engine + scorer:** implemented as an educational, abstaining trace and
+  exercised by focused invariant, mutation, applicability, replay, and UI
+  tests. This is engineering verification, not biological validation.
+- **Centralized gastric-emptying parameter set:** implemented
   (`lib/domain/entities/gastric_emptying_parameters.dart`).
-- **LNAA / protein-source proxy:** complete
+- **LNAA / protein-source proxy:** implemented
   (`lib/domain/entities/protein_source.dart`,
   `lib/domain/usecases/amino_acid_competition_model.dart`); load factors are
   direction-only and tagged `prototype_heuristic`.
-- **Multi-point window sampling:** complete; deterministic, 5–12 samples.
-- **Mechanistic-primary ranking promotion:** complete in
-  `NextMealRecommendationOrchestrator`; `rankerUsed` surfaces which path
-  ran.
+- **Multi-point window sampling:** implemented; deterministic, 5–12 samples.
+- **Trace-only decision influence:** enforced in
+  `NextMealRecommendationOrchestrator`; the stable trace-only reason makes model
+  non-influence inspectable, while `rankerUsed` truthfully names the heuristic
+  or separately consented local-AI producer of the final order.
 - **Catalog wiring:** `AppState._augmentFoodRepoFromProjection` merges
   CDSS-projected foods into the runtime food repository at boot, best-
   effort. The seed/persisted catalog remains the fallback.
@@ -501,6 +573,11 @@ audit ranking decisions without reading code.
   `MechanisticCandidateScoreLine` render compact, non-prescriptive
   summaries in `next_meal_page.dart` and `interaction_result_view.dart`
   via an `ExpansionTile`. Raw JSON is not shown by default.
+- **Still open:** governed product/ingredient terminology and release manifests,
+  independently curated applicability fixtures, immutable calibration datasets,
+  prospective/external validation, and any evidence supporting clinical or
+  ranking use. Until those exist, abstention and trace-only influence are
+  mandatory.
 
 ## 21. Future literature-calibration path
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/i18n/app_i18n.dart';
+import '../../core/constants/profile_options.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/liquid_glass_theme.dart';
@@ -16,49 +17,9 @@ class OnboardingPage extends StatefulWidget {
 }
 
 class _OnboardingPageState extends State<OnboardingPage> {
-  static const _regions = <String>[
-    'CN',
-    'US',
-    'CA',
-    'FR',
-    'JP',
-    'KR',
-    'IN',
-    'ES',
-    'MX',
-    'VN',
-    'TH',
-    'ID',
-    'RU',
-    'PL',
-    'SA',
-  ];
-  static const _locales = <String>[
-    'zh-CN',
-    'en-US',
-    'en-CA',
-    'fr-CA',
-    'fr-FR',
-    'ja-JP',
-    'ko-KR',
-    'hi-IN',
-    'es-ES',
-    'es-MX',
-    'vi-VN',
-    'th-TH',
-    'id-ID',
-    'ru-RU',
-    'pl-PL',
-    'ar-SA',
-  ];
-  static const _textureModes = <String>[
-    'unrestricted',
-    'soft_or_liquid',
-    'liquid_only',
-  ];
-
   final _overrideController = TextEditingController();
   final _doseController = TextEditingController();
+  final _medicationSearchController = TextEditingController();
   final _scrollController = ScrollController();
   final Set<String> _activeDrugIds = <String>{};
 
@@ -85,7 +46,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     _dietProfileRegion =
         profile.dietProfileRegion ?? profile.registrationRegion;
     _swallowingTextureMode = profile.swallowingTextureMode;
-    _localAiConsentEnabled = profile.localAiConsentEnabled;
+    _localAiConsentEnabled = profile.hasCurrentLocalAiConsent;
     _overrideController.text = profile.contentJurisdictionOverride.join(', ');
     _activeDrugIds.addAll(state.activeDrugs.map((drug) => drug.id));
     if (_activeDrugIds.isNotEmpty) {
@@ -99,6 +60,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void dispose() {
     _overrideController.dispose();
     _doseController.dispose();
+    _medicationSearchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -116,14 +78,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
           controller: _scrollController,
           type: StepperType.vertical,
           currentStep: _currentStep,
-          onStepTapped: (step) => setState(() => _currentStep = step),
+          onStepTapped: _goToStep,
           controlsBuilder: (context, details) {
+            // Stepper builds controls for every step, including collapsed and
+            // outgoing animated content. Keep only the active controls in the
+            // focus tree so keyboard users and device tests never encounter
+            // duplicate Continue/Back actions.
+            if (details.stepIndex != _currentStep) {
+              return const SizedBox.shrink();
+            }
             final isLast = _currentStep == steps.length - 1;
             return Padding(
               padding: const EdgeInsets.only(top: 18),
-              child: Row(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   FilledButton.icon(
+                    key: ValueKey(
+                      isLast ? 'onboarding-finish' : 'onboarding-next',
+                    ),
                     onPressed: _isSubmitting
                         ? null
                         : isLast
@@ -142,8 +116,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     ),
                   ),
                   if (_currentStep > 0) ...[
-                    const SizedBox(width: 8),
                     TextButton.icon(
+                      key: const ValueKey('onboarding-back'),
                       onPressed: _isSubmitting ? null : _back,
                       icon: const Icon(Icons.arrow_back),
                       label: Text(i18n.tr('onboarding.back')),
@@ -209,7 +183,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               label: i18n.tr('onboarding.registration_region'),
               helper: i18n.tr('onboarding.registration_region_help'),
               value: _registrationRegion,
-              options: _regions
+              options: kSupportedRegistrationRegions
                   .map(
                     (value) => GlassSelectOption<String>(
                       value: value,
@@ -233,7 +207,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               label: i18n.tr('onboarding.display_language'),
               helper: i18n.tr('onboarding.display_language_help'),
               value: _displayLocale,
-              options: _locales
+              options: kSupportedDisplayLocales
                   .map(
                     (value) => GlassSelectOption<String>(
                       value: value,
@@ -258,7 +232,27 @@ class _OnboardingPageState extends State<OnboardingPage> {
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
-            ..._medicationOptions(state, i18n),
+            TextField(
+              key: const ValueKey('onboarding-medication-search'),
+              controller: _medicationSearchController,
+              onChanged: (_) => setState(() {}),
+              decoration: InputDecoration(
+                labelText: i18n.tr('catalog.search'),
+                prefixIcon: const Icon(Icons.search_outlined),
+                suffixIcon: _medicationSearchController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: i18n.tr('common.close'),
+                        onPressed: () {
+                          _medicationSearchController.clear();
+                          setState(() {});
+                        },
+                        icon: const Icon(Icons.clear),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            _medicationPicker(state, i18n),
             if (_activeDrugIds.isNotEmpty) ...[
               const Divider(height: 28),
               SwitchListTile(
@@ -328,7 +322,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               label: i18n.tr('onboarding.diet_profile_region'),
               helper: i18n.tr('onboarding.diet_profile_region_help'),
               value: _dietProfileRegion ?? _registrationRegion,
-              options: _regions
+              options: kSupportedRegistrationRegions
                   .map(
                     (value) => GlassSelectOption<String>(
                       value: value,
@@ -343,7 +337,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               label: i18n.tr('onboarding.swallowing_texture_mode'),
               helper: i18n.tr('onboarding.swallowing_texture_mode_help'),
               value: _swallowingTextureMode,
-              options: _textureModes
+              options: kSupportedTextureModes
                   .map(
                     (value) => GlassSelectOption<String>(
                       value: value,
@@ -411,44 +405,69 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ];
   }
 
-  List<Widget> _medicationOptions(AppState state, AppI18n i18n) {
-    final drugs = state.medRepo.allDrugs;
-    if (drugs.isEmpty) {
-      return [Text(i18n.tr('onboarding.no_medications_available'))];
-    }
-    return drugs
-        .map(
-          (drug) => CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _activeDrugIds.contains(drug.id),
-            title: Text(i18n.medicationName(drug.id, drug.displayName)),
-            subtitle: Text(
-              [
-                i18n.sourceSystemLabel(drug.sourceSystem),
-                i18n.regionLabel(drug.jurisdiction),
-                i18n.routeLabel(drug.route),
-                i18n.dosageFormLabel(drug.dosageForm),
-              ].join(' · '),
-            ),
-            onChanged: (value) => setState(() {
-              if (value == true) {
-                _activeDrugIds.add(drug.id);
-                _initialIntakeDrugId ??= drug.id;
-              } else {
-                _activeDrugIds.remove(drug.id);
-                if (_initialIntakeDrugId == drug.id) {
-                  _initialIntakeDrugId = _activeDrugIds.isEmpty
-                      ? null
-                      : _activeDrugIds.first;
-                }
-                if (_activeDrugIds.isEmpty) {
-                  _recordInitialIntake = false;
-                }
-              }
-            }),
-          ),
-        )
+  Widget _medicationPicker(AppState state, AppI18n i18n) {
+    final query = _medicationSearchController.text.trim().toLowerCase();
+    final drugs = state.medRepo.allDrugs
+        .where((drug) {
+          if (query.isEmpty) return true;
+          final localizedName = i18n
+              .medicationName(drug.id, drug.displayName)
+              .toLowerCase();
+          return localizedName.contains(query) ||
+              drug.genericName.toLowerCase().contains(query) ||
+              drug.sourceSystem.toLowerCase().contains(query) ||
+              drug.jurisdiction.toLowerCase().contains(query);
+        })
         .toList(growable: false);
+    if (drugs.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Text(i18n.tr('onboarding.no_medications_available')),
+      );
+    }
+    return ConstrainedBox(
+      key: const ValueKey('onboarding-medication-picker'),
+      constraints: const BoxConstraints(maxHeight: 420),
+      child: Scrollbar(
+        child: ListView.builder(
+          primary: false,
+          shrinkWrap: true,
+          itemCount: drugs.length,
+          itemBuilder: (context, index) {
+            final drug = drugs[index];
+            return CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: _activeDrugIds.contains(drug.id),
+              title: Text(i18n.medicationName(drug.id, drug.displayName)),
+              subtitle: Text(
+                [
+                  i18n.sourceSystemLabel(drug.sourceSystem),
+                  i18n.regionLabel(drug.jurisdiction),
+                  i18n.routeLabel(drug.route),
+                  i18n.dosageFormLabel(drug.dosageForm),
+                ].join(' · '),
+              ),
+              onChanged: (value) => setState(() {
+                if (value == true) {
+                  _activeDrugIds.add(drug.id);
+                  _initialIntakeDrugId ??= drug.id;
+                } else {
+                  _activeDrugIds.remove(drug.id);
+                  if (_initialIntakeDrugId == drug.id) {
+                    _initialIntakeDrugId = _activeDrugIds.isEmpty
+                        ? null
+                        : _activeDrugIds.first;
+                  }
+                  if (_activeDrugIds.isEmpty) {
+                    _recordInitialIntake = false;
+                  }
+                }
+              }),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   StepState _stepState(int step) {
@@ -458,11 +477,24 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _next() {
-    setState(() => _currentStep += 1);
+    _goToStep(_currentStep + 1);
   }
 
   void _back() {
-    setState(() => _currentStep -= 1);
+    _goToStep(_currentStep - 1);
+  }
+
+  void _goToStep(int step) {
+    if (step < 0 || step > 4 || step == _currentStep) return;
+    setState(() => _currentStep = step);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+      );
+    });
   }
 
   Future<void> _finish() async {
@@ -493,6 +525,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         profile: draft.buildProfile(
           state.userProfile,
           patientId: state.currentUserId ?? state.userProfile.patientId,
+          consentRecordedAt: DateTime.now().toUtc(),
         ),
         activeDrugIds: draft.activeDrugIds,
         initialIntake: intake,

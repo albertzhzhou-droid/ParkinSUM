@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +7,7 @@ import 'package:http/testing.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/interaction_result.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
+import 'package:parkinsum_companion/core/models/purpose_bound_consent.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/entities/food_recommendation.dart';
 import 'package:parkinsum_companion/domain/usecases/local_ai_recommendation_adapter.dart';
@@ -17,14 +19,19 @@ void main() {
     String ollamaEndpoint = 'http://127.0.0.1:11434/api/chat',
     String openAiEndpoint = 'http://127.0.0.1:8080/v1/chat/completions',
   }) {
-    return UserProfile.defaults().copyWith(
-      localAiConsentEnabled: consentEnabled,
-      localAiProviderPreference: provider,
-      localAiModel: 'llama3.2',
-      localAiOllamaEndpoint: ollamaEndpoint,
-      localAiOpenAiCompatEndpoint: openAiEndpoint,
-      localAiTimeoutMs: 3000,
-    );
+    return UserProfile.defaults()
+        .copyWith(
+          localAiProviderPreference: provider,
+          localAiModel: 'llama3.2',
+          localAiOllamaEndpoint: ollamaEndpoint,
+          localAiOpenAiCompatEndpoint: openAiEndpoint,
+          localAiTimeoutMs: 3000,
+        )
+        .withLocalAiConsentDecision(
+          enabled: consentEnabled,
+          recordedAt: DateTime.utc(2026, 8, 18),
+          source: 'test_fixture',
+        );
   }
 
   FoodRecommendation buildCandidate(String id) {
@@ -95,6 +102,27 @@ void main() {
     },
   );
 
+  test('legacy boolean without a current receipt never starts HTTP', () async {
+    var requestCount = 0;
+    final adapter = LocalAiRecommendationAdapter(
+      client: MockClient((request) async {
+        requestCount += 1;
+        return http.Response('{}', 200);
+      }),
+    );
+    final legacy = UserProfile.defaults().copyWith(
+      localAiConsentEnabled: true,
+      localAiProviderPreference: LocalAiProviders.ollama,
+    );
+
+    final result = await adapter.probe(userProfile: legacy);
+
+    expect(legacy.localAiConsentEnabled, isTrue);
+    expect(legacy.hasCurrentLocalAiConsent, isFalse);
+    expect(result.skipped, isTrue);
+    expect(requestCount, 0);
+  });
+
   test('probe prefers Ollama in auto mode when consent is enabled', () async {
     var requestCount = 0;
     final client = MockClient((request) async {
@@ -118,6 +146,36 @@ void main() {
     expect(result.skipped, isFalse);
     expect(result.provider, LocalAiProviders.ollama);
     expect(requestCount, greaterThan(0));
+  });
+
+  test('withdrawal invalidates an in-flight probe result', () async {
+    final requestStarted = Completer<void>();
+    final releaseResponse = Completer<void>();
+    final profile = buildProfile().copyWith(patientId: 'withdraw-race-user');
+    final adapter = LocalAiRecommendationAdapter(
+      client: MockClient((request) async {
+        requestStarted.complete();
+        await releaseResponse.future;
+        return http.Response(
+          jsonEncode({
+            'models': [
+              {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+            ],
+          }),
+          200,
+        );
+      }),
+    );
+
+    final pending = adapter.probe(userProfile: profile);
+    await requestStarted.future;
+    PurposeBoundConsentRuntimeGate.revokeImmediately(profile.patientId);
+    releaseResponse.complete();
+    final result = await pending;
+
+    expect(result.available, isFalse);
+    expect(result.skipped, isTrue);
+    expect(result.message, contains('not current'));
   });
 
   test('probe rejects non-localhost endpoints', () async {

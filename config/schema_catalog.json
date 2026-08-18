@@ -1,0 +1,532 @@
+{
+  "catalogVersion": 2,
+  "boundary": "This catalog inventories source-level schema and persistence surfaces only. A passing check does not prove migration coverage, backward compatibility, deployed backend state, or successful recovery of historical data.",
+  "schemas": [
+    {
+      "id": "parkinsum.algorithm-evaluation",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 4,
+      "compatibility": "Consumers must reject unsupported major envelope versions.",
+      "source": "lib/algorithm_sdk/parkinsum_algorithm_sdk.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-configuration",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Configuration identity changes require a new schema URI and digest review.",
+      "source": "lib/algorithm_sdk/algorithm_configuration_identity.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-numerical-oracle",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The truth-vector manifest, observation shape, status semantics, and calculation boundary are versioned together. Incompatible equations or report fields require an explicit schema migration and reviewed digest change; passing is engineering verification, not biological or clinical validation.",
+      "source": "lib/domain/usecases/algorithm_numerical_verification_oracle.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmNumericalOracleSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-event-ledger",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Event kind, value-state distinctions, original and canonical units, timestamp and equal-time ordering, source and revision identity, full audit digest, and canonical replay digest are one versioned contract. Unsupported versions, fields, units, identities, ordering, timestamps, or either digest mismatch fail closed; the ledger is read-only replay evidence and never a dose schedule.",
+      "source": "lib/domain/entities/mechanistic_event_ledger.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "mechanisticEventLedgerSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.open-source-influence-inventory",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The upstream identity, pinned commit, license evidence, artifact class, transfer disposition, authorization, local paths, obligations, and release boundary are one fail-closed governance contract. Incompatible fields require a new schema version; a passing inventory is release hygiene, not legal advice or scientific validation.",
+      "source": "lib/domain/entities/product_upgrade_queue.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "openSourceInfluenceInventorySchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-fitted-parameter-identity",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Immutable fitted-lineage identity; incompatible fields require a new schema URI.",
+      "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-parameter-provenance",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Parameter records are read under their explicit schema URI; incompatible changes require a new version.",
+      "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-parameter-manifest",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Manifest consumers must bind records to the declared manifest schema and configuration digest.",
+      "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cdss-rule-logic",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Canonical rule-logic values are identified by this schema URI; it is not a clinical-validation claim.",
+      "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-parameter-set",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "semantic-versioned",
+      "currentVersion": "2026.08.17-v2",
+      "compatibility": "The semantic parameter-set identity is emitted inside the algorithm envelope; it is not a population calibration version.",
+      "source": "lib/domain/entities/gastric_emptying_parameters.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-named-string-argument",
+          "argument": "version",
+          "anchor": "factory GastricEmptyingParameterSet.literatureInformedDefault()",
+          "endAnchor": "Map<String, dynamic> toJson()"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-trace-node",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "Nested under a versioned parent envelope; no independent trace-node migration contract exists.",
+      "source": "lib/domain/entities/algorithm_trace_node.dart",
+      "surfaceMarker": "class AlgorithmTraceNode",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.personal-log-handoff",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Generated handoff artifacts bind a reviewed source revision and explicit schema version. Incompatible semantic or rendering changes require a new version; this is not a medical-record or IPS conformance claim.",
+      "source": "lib/domain/usecases/personal_log_handoff_summary_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "personalLogHandoffSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.privacy-safe-support-bundle",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Only exact allowlisted technical fields are emitted. Unsupported versions and privacy, budget, or integrity failures produce no artifact; the bundle is not a log, telemetry stream, device attestation, or identity proof.",
+      "source": "lib/domain/usecases/privacy_safe_support_bundle_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "privacySafeSupportBundleSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.purpose-bound-consent-receipt",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Receipts are append-only events bound to an exact feature, purpose, notice version, notice digest, decision, sequence, UTC evidence time, and source. Missing, malformed, future-schema, stale-notice, noncontiguous, or duplicate state fails closed; explicit revoke repairs a blocked ledger without granting.",
+      "source": "lib/core/models/purpose_bound_consent.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "purposeBoundConsentReceiptSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.recoverable-user-event-history",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Every revision has an exact schema, canonical before/after payload digests, a canonical transition identity, and an idempotent operation ID. Unsupported, malformed, noncanonical, oversized, or conflicting revisions fail closed; future incompatible shapes require an explicit migration.",
+      "source": "lib/core/models/recoverable_user_event.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "recoverableUserEventSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.recoverable-event-restore-impact",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The read-only preview uses exact content-addressed fields and is rebuilt before confirmation. Unsupported future versions require an explicit preview migration and can never serve as a write token by shape alone.",
+      "source": "lib/domain/usecases/recoverable_event_restore_impact_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "recoverableEventRestoreImpactSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.restore-relationship-graph",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Relationship kind, ordering, unresolved-reference, and derived-artifact semantics are part of the preview identity. Incompatible graph semantics require a new schema URI and invalidate older previews.",
+      "source": "lib/domain/usecases/recoverable_event_restore_impact_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.restore-impact-account",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The domain-separated account binding is a deterministic stale-preview guard, not an anonymous identifier, authentication credential, portable owner capability, or privacy-preserving export subject.",
+      "source": "lib/domain/usecases/recoverable_event_restore_impact_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.user-portable-data-package",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Import preview rejects unsupported versions and only proposes reviewed future migrations; current code performs no import writes.",
+      "source": "lib/domain/usecases/user_portable_data_package_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "userPortableDataPackageSchemaVersion"
+        },
+        {
+          "kind": "versioned-string",
+          "prefix": "parkinsum-portable-package-v"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-owner-token",
+      "surfaceKind": "persisted-boundary",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Version 1 raw SharedPreferences tokens are one-way migration input only. Version 2 stores a strict protected envelope, verifies durable read-back and legacy cleanup, and fails closed on malformed or conflicting state.",
+      "source": "lib/core/services/portable_data_owner_scope_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "userPortableDataOwnerTokenSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-owner-secret-envelope",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The protected envelope uses exact keys, purpose, owner lookup digest, revision, UTC timestamps, protection class, and capability identifiers. Unknown or malformed fields are rejected; no historical protected-envelope migration exists yet.",
+      "source": "lib/core/services/portable_data_owner_scope_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableDataOwnerSecretEnvelopeSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.protected-secret-store",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The contract identifies platform protection semantics and never infers hardware backing. Capability-ID changes require explicit envelope migration review rather than silent relabeling.",
+      "source": "lib/core/security/protected_secret_store.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "protectedSecretStoreContractVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.atomic-onboarding-commit",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Committed envelopes fail closed on unsupported versions; backend migration completeness is outside this catalog.",
+      "source": "lib/core/models/atomic_onboarding_commit.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "atomicOnboardingCommitSchemaVersion"
+        },
+        {
+          "kind": "versioned-string",
+          "prefix": "onboarding_v"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.intake-record",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Serialized intake records carry a version, while legacy optional fields remain source-reader policy.",
+      "source": "lib/core/models/intake.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-activation-inbox",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Native inbox files and records reject unsupported versions and quarantine malformed storage.",
+      "source": "lib/core/services/reminder_activation_inbox.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "reminderActivationInboxSchemaVersion"
+        },
+        {
+          "kind": "versioned-string",
+          "source": "lib/core/services/reminder_activation_store_io.dart",
+          "prefix": "parkinsum_notification_activation_inbox_v"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-plan",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "compatibility": "Reminder rows are persisted under an account-scoped v3 key; v2 rows migrate once with privacy mode defaulting to minimal and the notification locale snapshot defaulting to English, while unsupported versions fail closed.",
+      "source": "lib/domain/entities/user_logging_reminder.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-json-int-field",
+          "field": "schemaVersion",
+          "anchor": "class UserLoggingReminder {",
+          "endAnchor": "factory UserLoggingReminder.fromJson"
+        },
+        {
+          "kind": "versioned-string",
+          "source": "lib/core/services/user_logging_reminder_service.dart",
+          "prefix": "parkinsum.user_logging_reminders.v"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-notification-payload",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Notification activation routing accepts only the explicit payload version and opaque capability token shape.",
+      "source": "lib/core/services/user_logging_reminder_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "versioned-string",
+          "prefix": "parkinsum-reminder:v"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-schedule-manifest",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "Deterministic in-memory preflight contract only; no independently versioned serialized manifest exists.",
+      "source": "lib/core/services/reminder_schedule_manifest.dart",
+      "surfaceMarker": "class ReminderScheduleManifest",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.app-database-native",
+      "surfaceKind": "database-schema",
+      "versionStatus": "versioned",
+      "currentVersion": 8,
+      "compatibility": "SQLite onUpgrade statements govern supported transitions; catalog presence does not prove every historical migration path.",
+      "source": "lib/core/db/app_database_native.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "nativeAppDatabaseSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.app-database-web-user-state",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "The consolidated envelope migrated from version 1 to version 2 by adding meals and recoverable event history to one atomic value. The historical db.user_state.v1 storage key is deliberately stable and is not the envelope schema authority.",
+      "source": "lib/core/db/app_database_web.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-json-int-field",
+          "field": "schemaVersion",
+          "anchor": "class _WebUserState {",
+          "endAnchor": "factory _WebUserState.fromJson"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.app-database-web-record-sets",
+      "surfaceKind": "persisted-boundary",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "SharedPreferences record sets outside web user-state have no global database version or atomic migration contract.",
+      "source": "lib/core/db/app_database_web.dart",
+      "surfaceMarker": "class WebAppDatabase implements AppDatabase",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.app-database-firestore",
+      "surfaceKind": "persisted-boundary",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "Firestore collections use record-level fields and rules, not one deployed database schema version.",
+      "source": "lib/core/db/app_database_firestore.dart",
+      "surfaceMarker": "class FirestoreAppDatabase implements AppDatabase",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.cdss-database-native",
+      "surfaceKind": "database-schema",
+      "versionStatus": "versioned",
+      "currentVersion": 9,
+      "compatibility": "SQLite onUpgrade statements govern known transitions; historical data migration still requires separate tests.",
+      "source": "lib/core/db/cdss_database_native.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "_schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cdss-database-web",
+      "surfaceKind": "persisted-boundary",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "SharedPreferences JSON arrays have no global schema envelope, transaction equivalence, or migration version.",
+      "source": "lib/core/db/cdss_database_web.dart",
+      "surfaceMarker": "class WebCdssDatabase implements CdssDatabase",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.cdss-database-firestore",
+      "surfaceKind": "persisted-boundary",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "Firestore CDSS records use per-record lineage and snapshot fields, not a single deployed database schema version.",
+      "source": "lib/core/db/cdss_database_firestore.dart",
+      "surfaceMarker": "class FirestoreCdssDatabase implements CdssDatabase",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.engine-snapshot-record",
+      "surfaceKind": "persisted-boundary",
+      "versionStatus": "unversioned",
+      "currentVersion": null,
+      "compatibility": "factsVersion and rulesVersion identify snapshot contents; the record shape itself has no independent schema version.",
+      "source": "lib/domain/entities/cdss_records.dart",
+      "surfaceMarker": "class EngineSnapshotRecord",
+      "versionEvidence": []
+    },
+    {
+      "id": "parkinsum.complete-app-upgrade-queue",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The app parser rejects unsupported queue schema versions; this is governance metadata, not user clinical data.",
+      "source": "lib/domain/entities/product_upgrade_queue.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-json-int-guard",
+          "field": "schemaVersion",
+          "anchor": "factory ProductUpgradeQueue.fromJsonText",
+          "endAnchor": "return ProductUpgradeQueue("
+        },
+        {
+          "kind": "dart-named-int-argument",
+          "argument": "schemaVersion",
+          "anchor": "return ProductUpgradeQueue(",
+          "endAnchor": "List<ProductUpgradeItem> get activeItems"
+        }
+      ]
+    }
+  ]
+}

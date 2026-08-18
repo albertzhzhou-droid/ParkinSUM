@@ -1,20 +1,22 @@
-/// Explicit record of whether mechanistic-primary ranking was eligible and,
-/// if not, why the legacy heuristic fallback was used. This makes it
-/// impossible for the legacy `_levodopaWindowPenalty` to *silently* dominate:
-/// whenever it determines order, `rankerUsed == heuristic_legacy_fallback`
-/// and `fallbackReasons` is populated and surfaced in UI + replay.
+/// Explicit record of the recommendation-ranking boundary.
+///
+/// The current mechanistic model is trace-only, so it never changes production
+/// ordering and [fallbackReasons] includes the stable trace-only reason. The
+/// actual final order may still come from a separately consented local-AI
+/// safe-whitelist rerank. Keeping the older eligibility field is wire-compatible
+/// while making the mechanistic non-influence decision inspectable.
 library;
 
 class RankerEligibility {
   final bool mechanisticPrimaryEligible;
 
-  /// `mechanistic_primary` or `heuristic_legacy_fallback`.
+  /// Actual final-order producer: conservative heuristic or consented local AI.
   final String rankerUsed;
 
-  /// Reasons the mechanistic-primary gate passed (when eligible).
+  /// Predicates that were sufficient to generate an educational trace.
   final List<String> rankerEligibilityReasons;
 
-  /// Reasons the fallback was used (when not eligible). Empty when eligible.
+  /// Reasons the model did not affect recommendation order or abstained.
   final List<String> fallbackReasons;
 
   const RankerEligibility({

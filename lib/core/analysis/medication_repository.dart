@@ -5,6 +5,7 @@ import '../models/drug_definition.dart';
 /// - 你后续可以将其替换为联网目录或外部 JSON，但保持 API 不变
 class MedicationRepository {
   List<DrugDefinition> _drugs;
+  int _revision = 0;
 
   MedicationRepository._(this._drugs);
 
@@ -30,7 +31,12 @@ class MedicationRepository {
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
-        releaseType: 'immediate_release',
+        // This generic seed is not a formulation-identified product. The
+        // product picker currently snapshots package identity/strength but not
+        // a governed release profile, so claiming IR here could apply the IR
+        // model to an ER/CR package. Keep it fail-closed until a verified
+        // product-level formulation snapshot is persisted end to end.
+        releaseType: 'unspecified',
       ),
       DrugDefinition(
         id: 'drug_entacapone',
@@ -358,11 +364,13 @@ class MedicationRepository {
   }
 
   List<DrugDefinition> get allDrugs => List.unmodifiable(_drugs);
+  int get revision => _revision;
 
   /// 和 FoodRepository 一样，允许用本地数据库里更完整的目录替换内置 seed。
   void replaceAll(List<DrugDefinition> drugs) {
     if (drugs.isEmpty) return;
     _drugs = List<DrugDefinition>.from(drugs);
+    _revision += 1;
   }
 
   DrugDefinition? getById(String id) {

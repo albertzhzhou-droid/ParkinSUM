@@ -67,7 +67,19 @@ class PrivacyDisclaimerPage extends StatelessWidget {
                   Text('User data rights', style: theme.textTheme.titleLarge),
                   const SizedBox(height: 10),
                   const Text(
-                    'Users may request export of their private app data, '
+                    'Settings can generate an unencrypted JSON package of the '
+                    'currently loaded profile, preferences, medication and '
+                    'meal records, this-device reminders, and relationship '
+                    'links. That package excludes raw account identifiers, '
+                    'capability tokens, local-AI endpoints, and cloud-only '
+                    'audit/history records. Its owner check is a one-way '
+                    'pseudonymous binding, not anonymity or encryption. Local '
+                    'accounts use a random token stored on this device, so '
+                    'another device may not validate the package. It is not a '
+                    'complete cloud export, '
+                    'account-deletion request, restore point, or compliance '
+                    'receipt.\n\n'
+                    'Users may request export of their remaining private app data, '
                     'deletion of private app data, and account deletion where '
                     'supported. Production operators must verify the Firebase '
                     'uid and execute the documented user-scoped export or '

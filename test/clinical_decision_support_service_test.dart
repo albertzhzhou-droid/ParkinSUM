@@ -261,6 +261,13 @@ class RecordingCdssDatabase implements CdssDatabase {
       tables[table] ?? const <Map<String, Object?>>[];
 }
 
+class FailingResolvedFactCdssDatabase extends RecordingCdssDatabase {
+  @override
+  Future<void> insertResolvedFact(ResolvedFactRecord record) async {
+    throw StateError('injected resolved-fact persistence failure');
+  }
+}
+
 void main() {
   test(
     'engine does not escalate when missing dose is irrelevant to matched levodopa protein rule',
@@ -769,6 +776,98 @@ void main() {
       expect('${promoteRun['notes_json']}', contains('runtime_event_count'));
     },
   );
+
+  test('failed import copy never exposes a promoted snapshot', () async {
+    final db = FailingResolvedFactCdssDatabase();
+    final service = ClinicalDecisionSupportService(
+      database: db,
+      factConflictEngine: FactConflictEngine(),
+      runtimeRuleEngine: RuntimeRuleEngine(),
+    );
+
+    await expectLater(
+      service.importBundle(
+        const P0ImportBundle(
+          resolvedFacts: [
+            ResolvedFactRecord(
+              factId: 'fact_atomic_import',
+              entityKey: 'FOOD_TEST',
+              attributeCode: 'protein_g',
+              scopeHash: 'scope_global',
+              resolutionStatus: 'resolved',
+              chosenObservationId: 'obs_atomic_import',
+              resolvedValue: QualifiedValue(
+                rawValueText: '10',
+                qualifierKind: QualifierKind.exact,
+                valueNum: 10,
+                low: 10,
+                high: 10,
+              ),
+              resolvedUnit: 'g',
+              resolutionPolicyId: 'test_policy',
+              snapshotId: 'staging_fixture',
+              factVersion: 'staging_fixture',
+              manualOverride: false,
+            ),
+          ],
+        ),
+      ),
+      throwsStateError,
+    );
+
+    final snapshots = await db.queryTable('engine_snapshot');
+    expect(snapshots.where((row) => row['promoted_at'] != null), isEmpty);
+    expect(await service.latestPromotedSnapshot(), isNull);
+  });
+
+  test('failed rollback copy keeps the prior snapshot active', () async {
+    final db = FailingResolvedFactCdssDatabase();
+    final service = ClinicalDecisionSupportService(
+      database: db,
+      factConflictEngine: FactConflictEngine(),
+      runtimeRuleEngine: RuntimeRuleEngine(),
+    );
+    db.tables['engine_snapshot']!.add({
+      'snapshot_id': 'source_snapshot',
+      'facts_version': 'facts_source',
+      'rules_version': 'rules_source',
+      'created_at': 1000,
+      'promoted_at': 2000,
+      'rollback_parent': null,
+      'input_hash': 'source_hash',
+    });
+    db.tables['resolved_fact']!.add({
+      'fact_id': 'source_fact',
+      'entity_key': 'FOOD_TEST',
+      'attribute_code': 'protein_g',
+      'scope_hash': 'scope_global',
+      'resolution_status': 'resolved',
+      'chosen_observation_id': 'obs_source',
+      'raw_value_text': '10',
+      'qualifier_kind': 'exact',
+      'resolved_low': 10.0,
+      'resolved_high': 10.0,
+      'value_num': 10.0,
+      'resolved_unit': 'g',
+      'resolution_policy_id': 'test_policy',
+      'snapshot_id': 'source_snapshot',
+      'manual_override': true,
+    });
+
+    await expectLater(
+      service.rollbackToSnapshot(snapshotId: 'source_snapshot'),
+      throwsStateError,
+    );
+
+    final active = await service.latestPromotedSnapshot();
+    expect(active?.snapshotId, 'source_snapshot');
+    expect(
+      db.tables['engine_snapshot']!.where(
+        (row) => row['rollback_parent'] == 'source_snapshot',
+      ),
+      isEmpty,
+    );
+  });
 
   test(
     'opicapone meal-window rule warns when meal is too close to dose',
@@ -1477,6 +1576,53 @@ void main() {
     },
   );
 
+  test(
+    'identical runtime evaluations persist distinct safe IDs with one-way input digests',
+    () async {
+      final db = RecordingCdssDatabase();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+      );
+
+      await service.run(
+        context: _runtimeContextForDbRule(),
+        rules: const [],
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+      );
+      await service.run(
+        context: _runtimeContextForDbRule(),
+        rules: const [],
+        factsVersion: 'facts_v1',
+        rulesVersion: 'rules_v1',
+      );
+
+      final snapshots = await db.queryTable('engine_snapshot');
+      final runtimeEvents = await db.queryTable('runtime_event');
+      final snapshotIds = snapshots
+          .map((row) => '${row['snapshot_id']}')
+          .toList(growable: false);
+      final eventIds = runtimeEvents
+          .map((row) => '${row['event_id']}')
+          .toList(growable: false);
+      final inputHashes = snapshots
+          .map((row) => '${row['input_hash']}')
+          .toList(growable: false);
+
+      expect(snapshotIds, hasLength(2));
+      expect(snapshotIds.toSet(), hasLength(2));
+      expect(snapshotIds, everyElement(matches(RegExp(r'^[A-Za-z0-9._:-]+$'))));
+      expect(eventIds, hasLength(2));
+      expect(eventIds.toSet(), hasLength(2));
+      expect(eventIds, everyElement(matches(RegExp(r'^[A-Za-z0-9._:-]+$'))));
+      expect(inputHashes.toSet(), hasLength(1));
+      expect(inputHashes.first, matches(RegExp(r'^[a-f0-9]{64}$')));
+      expect(inputHashes.first, isNot(contains('patient_db_rule')));
+    },
+  );
+
   test('database rule version switch changes runtime result', () async {
     final db = RecordingCdssDatabase();
     final service = ClinicalDecisionSupportService(
@@ -1731,6 +1877,32 @@ void main() {
         projected.single.description,
         contains('legacy_variant_id_projection'),
       );
+    },
+  );
+
+  test(
+    'catalog drug projection preserves a missing route as unspecified',
+    () async {
+      final db = RecordingCdssDatabase();
+      db.tables['drug_concept']!.add({
+        'drug_concept_id': 'DRUG_LDOPA',
+        'generic_name': 'carbidopa/levodopa',
+      });
+      db.tables['drug_product_variant']!.add({
+        'drug_product_variant_id': 'variant_missing_route',
+        'drug_concept_id': 'DRUG_LDOPA',
+        'jurisdiction': 'US',
+        'regulator': 'DAILYMED',
+        'external_product_code': 'setid_missing_route',
+        'dosage_form': 'tablet',
+        'release_type': 'immediate_release',
+      });
+
+      final projected = await CdssCatalogProjectionService(
+        database: db,
+      ).projectDrugs();
+
+      expect(projected.single.route, 'unspecified');
     },
   );
 

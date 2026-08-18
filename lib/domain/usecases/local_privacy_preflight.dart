@@ -49,6 +49,14 @@ class LocalPrivacyPreflight {
     r'''(?:api[_-]?key|secret|access[_-]?token)["'\s]*[:=]\s*["']([A-Za-z0-9_\-]{16,})["']''',
     caseSensitive: false,
   );
+  static final RegExp _lockfilePackageVersionReference = RegExp(
+    r'''^\s*"@[a-z0-9._-]+/[^"]*(?:password|secret|token|api[_-]?key)[^"]*"\s*:\s*"[\^~<>=*0-9.xX|\s.-]+"\s*,?\s*$''',
+    caseSensitive: false,
+  );
+  static final RegExp _localizedPasswordCopy = RegExp(
+    r'''^\s*["'](?:settings|auth)\.[^"']*password[^"']*["']\s*:\s*["']''',
+    caseSensitive: false,
+  );
 
   // Strong PHI keys (concrete value → BLOCKER). NOTE: `patientId`/`patient_id`
   // are intentionally excluded — the app's domain model uses a *synthetic, local*
@@ -345,7 +353,17 @@ class LocalPrivacyPreflight {
         );
       }
       final pw = _passwordAssign.firstMatch(raw);
-      if (pw != null && !_isSafePolicyValue(pw.group(1) ?? '', config)) {
+      final lockfilePackageReference =
+          (path == 'package-lock.json' ||
+              path.endsWith('/package-lock.json')) &&
+          _lockfilePackageVersionReference.hasMatch(raw);
+      final localizationCopy =
+          (path.contains('/i18n/') || path.endsWith('app_i18n.dart')) &&
+          _localizedPasswordCopy.hasMatch(raw);
+      if (pw != null &&
+          !lockfilePackageReference &&
+          !localizationCopy &&
+          !_isSafePolicyValue(pw.group(1) ?? '', config)) {
         out.add(
           f(
             LocalPrivacySeverity.blocker,
@@ -359,7 +377,9 @@ class LocalPrivacyPreflight {
         );
       }
       final gs = _genericSecretAssign.firstMatch(raw);
-      if (gs != null && !_isSafePolicyValue(gs.group(1) ?? '', config)) {
+      if (gs != null &&
+          !lockfilePackageReference &&
+          !_isSafePolicyValue(gs.group(1) ?? '', config)) {
         // Google API keys handled separately below; avoid double-count here.
         if (!_googleApiKey.hasMatch(raw)) {
           out.add(

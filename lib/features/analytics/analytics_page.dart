@@ -202,7 +202,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(i18n.tr('analytics.local_ai_enable')),
                     subtitle: Text(i18n.tr('analytics.local_ai_help')),
-                    value: state.userProfile.localAiConsentEnabled,
+                    value: state.userProfile.hasCurrentLocalAiConsent,
                     onChanged: (value) =>
                         context.read<AppState>().setLocalAiConsent(value),
                   ),

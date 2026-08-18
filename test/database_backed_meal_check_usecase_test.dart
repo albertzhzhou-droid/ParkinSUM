@@ -234,6 +234,45 @@ void main() {
     expect(drugVariant.fallbackUsed, isFalse);
   });
 
+  test('variant resolver never fabricates a missing oral route', () async {
+    final db = QueryBackedCdssDatabase({
+      'region_jurisdiction_map': [
+        {
+          'region_code': 'US',
+          'jurisdiction_chain_json': '["US","GLOBAL"]',
+          'food_source_priority_json': '[]',
+          'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+        },
+      ],
+      'drug_product_variant': [
+        {
+          'drug_product_variant_id': 'variant_missing_route',
+          'drug_concept_id': 'DRUG_LDOPA',
+          'jurisdiction': 'US',
+          'regulator': 'DAILYMED',
+          'external_product_code': 'drug_levodopa_carbidopa',
+          'dosage_form': 'tablet',
+          'release_type': 'immediate_release',
+        },
+      ],
+    });
+
+    final resolved = await VariantResolver(database: db).resolveDrugVariant(
+      drugId: 'drug_levodopa_carbidopa',
+      userProfile: const UserProfileRuntimeContext(
+        patientId: 'patient_1',
+        registrationRegion: 'US',
+        displayLocale: 'en-US',
+        contentJurisdictionOverride: [],
+        dietProfileRegion: 'US',
+        timezone: 'America/Toronto',
+      ),
+    );
+
+    expect(resolved.selectedVariantId, 'variant_missing_route');
+    expect(resolved.route, 'unspecified');
+  });
+
   test(
     'database-backed meal check uses resolved variants without fallback note',
     () async {
@@ -1269,6 +1308,13 @@ void main() {
 
       final components = engine.composition!.foodComponents;
       expect(result.mechanisticTraceJson, isNotNull);
+      expect(
+        engine.context!.medicationEvents.single.context.activeIngredients,
+        const ['carbidopa', 'levodopa'],
+        reason:
+            'The database mechanistic bridge must split exact generic-name '
+            'components and must not promote levodopaLike tags to ingredients.',
+      );
       expect(components, hasLength(2));
       expect(components.first.portionGrams, 150);
       expect(components.first.calories, 180);
@@ -1279,8 +1325,18 @@ void main() {
       expect(components.last.physicalForm, MealPhysicalForm.unknown);
       expect(components.last.aminoAcidProfile, isNull);
       expect(
+        engine.composition!.missingFields,
+        contains('meal_physical_form'),
+        reason:
+            'The catalog proves tofu is solid, but provides no physical form '
+            'for the uncatalogued component.',
+      );
+      expect(
         engine.context!.mealEvents.single.physicalForm,
-        MealPhysicalForm.solid,
+        MealPhysicalForm.unknown,
+        reason:
+            'A mixed history meal cannot be declared solid while any '
+            'component form remains unknown.',
       );
     },
   );

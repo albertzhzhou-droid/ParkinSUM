@@ -137,6 +137,46 @@ void main() {
     expect(r.pass, isFalse);
   });
 
+  test('package-lock dependency names are not password assignments', () {
+    final dependency = scan([
+      file('package-lock.json', '        "@inquirer/password": "^4.0.23",\n'),
+    ]);
+    expect(hasType(dependency, 'secret_password_assignment'), isFalse);
+    expect(dependency.pass, isTrue);
+
+    final realSecret = scan([
+      file('package-lock.json', '        "password": "s3cretValue123",\n'),
+    ]);
+    expect(hasType(realSecret, 'secret_password_assignment'), isTrue);
+    expect(realSecret.pass, isFalse);
+
+    final numericSecret = scan([
+      file('package-lock.json', '        "password": "12345678",\n'),
+    ]);
+    expect(hasType(numericSecret, 'secret_password_assignment'), isTrue);
+    expect(numericSecret.pass, isFalse);
+  });
+
+  test('localized password labels are copy, not concrete credentials', () {
+    final copy = scan([
+      file(
+        'lib/core/i18n/app_i18n.dart',
+        "  'settings.confirm_password': 'Confirm new password',\n",
+      ),
+    ]);
+    expect(hasType(copy, 'secret_password_assignment'), isFalse);
+    expect(copy.pass, isTrue);
+
+    final actualSecret = scan([
+      file(
+        'lib/core/i18n/app_i18n.dart',
+        'final password = "s3cretValue123";\n',
+      ),
+    ]);
+    expect(hasType(actualSecret, 'secret_password_assignment'), isTrue);
+    expect(actualSecret.pass, isFalse);
+  });
+
   // 8 — DB URL with embedded credentials: real → BLOCKER, localhost → INFO.
   test('db url credentials: real BLOCKER, localhost INFO', () {
     final real = scan([

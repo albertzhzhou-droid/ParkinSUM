@@ -49,18 +49,20 @@ does not run the full Flutter test suite, fetch the network, or use real data.
 - **B — meal nutrient missingness**: complete, true 0 g protein, missing
   protein/calories/portion. Invariants: missing lowers completeness; **true 0 g is
   not missing**.
-- **C — release-type / timeline**: IR baseline, ER/CR wider, unknown widens
-  uncertainty, non-levodopa isolated. Invariants: ER/CR window wider than IR;
-  unknown widens uncertainty / records limited interpretation; a non-levodopa
-  event gets a degenerate passthrough window (no levodopa contamination).
+- **C — applicability / timeline**: supported IR baseline, ER/CR rejection,
+  unknown release abstention, and non-levodopa isolation. Invariants: only the
+  governed IR context may emit a curve; ER/CR is `notApplicable`; unknown is
+  `insufficient`; a non-levodopa event cannot contaminate a levodopa trace.
 - **D — source quality / provenance**: tier ordering (analytical > calculated >
   imputed > unknown), missing sourceRefs, official-vs-synthetic authority.
   Invariants: tier ordering preserved; missing sourceRefs lower the grade;
   official in-jurisdiction ≥ synthetic.
-- **E — window / ranking**: no window → fallback; valid window → scored;
+- **E — window / trace comparison**: no window → fallback; a valid window plus
+  explicit dose-time historical meal context → modeled trace;
   provenance tie-break with bounded swing. Invariants: no window →
-  insufficient context; provenance can break a near-tie; the provenance swing
-  stays below the dominant conflict-overlap weight.
+  insufficient context; a missing history meal never becomes implicit fasting;
+  provenance can break an analysis-fixture near-tie; the provenance swing stays
+  below the dominant conflict-overlap weight.
 - **F — safety-copy / no-PHI**: shared safety copy is clean; the unsafe-phrase
   detector flags injected unsafe text; the key-level scan permits safety-policy
   *values* but flags forbidden *keys*.
@@ -110,7 +112,9 @@ observes existing gates; it does not change scoring.
       deterministic.
 - [ ] Unitless/missing dose never validates; product strength never rescues it.
 - [ ] Missing nutrient lowers completeness; true 0 g is not missing.
-- [ ] Unknown release widens uncertainty; non-levodopa event stays isolated.
+- [ ] ER/CR abstains as not applicable; unknown release abstains as
+      insufficient; non-levodopa stays isolated.
 - [ ] Tier ordering + official ≥ synthetic hold.
-- [ ] No window → fallback; provenance swing bounded below conflict weight.
+- [ ] No window or no dose-time meal evidence → fallback; modeled fixtures use
+      typed scores; provenance swing remains bounded below conflict weight.
 - [ ] No banned phrases; no forbidden patient/subject/encounter keys emitted.

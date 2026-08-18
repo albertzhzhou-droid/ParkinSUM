@@ -80,6 +80,47 @@ service cloud.firestore {
         );
     }
 
+    function validMedicationProductSelection(value) {
+      return value is map &&
+        value.keys().hasOnly([
+          'packId',
+          'identifierSystem',
+          'identifierValue',
+          'displayName',
+          'labelerName',
+          'strengthDisplay',
+          'packageDescription',
+          'doseBasisIngredient',
+          'unitQuantity',
+          'unitLabel',
+        ]) &&
+        value.packId is string && value.packId.size() > 0 && value.packId.size() <= 160 &&
+        value.identifierSystem is string && value.identifierSystem.size() > 0 && value.identifierSystem.size() <= 48 &&
+        value.identifierValue is string && value.identifierValue.size() > 0 && value.identifierValue.size() <= 160 &&
+        value.displayName is string && value.displayName.size() > 0 && value.displayName.size() <= 240 &&
+        value.strengthDisplay is string && value.strengthDisplay.size() <= 160 &&
+        value.packageDescription is string && value.packageDescription.size() <= 240 &&
+        (
+          !('labelerName' in value) || value.labelerName == null ||
+          (value.labelerName is string && value.labelerName.size() <= 160)
+        ) &&
+        (
+          !('doseBasisIngredient' in value) || value.doseBasisIngredient == null ||
+          (value.doseBasisIngredient is string && value.doseBasisIngredient.size() <= 160)
+        ) &&
+        (
+          !('unitQuantity' in value) || value.unitQuantity == null ||
+          (
+            (value.unitQuantity is int || value.unitQuantity is float) &&
+            value.unitQuantity > 0 && value.unitQuantity <= 1000000
+          )
+        ) &&
+        (
+          !('unitLabel' in value) || value.unitLabel == null ||
+          (value.unitLabel is string && value.unitLabel.size() <= 48)
+        );
+    }
+
     function validProfile(uid) {
       return request.resource.data.keys().hasOnly([
         'patientId',
@@ -90,6 +131,9 @@ service cloud.firestore {
         'timezone',
         'swallowingTextureMode',
         'localAiConsentEnabled',
+        'consentReceipts',
+        'consentReceiptLedgerBlocked',
+        'legacyLocalAiConsentRequested',
         'localAiProviderPreference',
         'localAiModel',
         'localAiMedicalModel',
@@ -106,6 +150,10 @@ service cloud.firestore {
       validString('timezone', 64) &&
       validString('swallowingTextureMode', 48) &&
       optionalBool('localAiConsentEnabled') &&
+      request.resource.data.consentReceipts is list &&
+      request.resource.data.consentReceipts.size() <= 128 &&
+      request.resource.data.consentReceiptLedgerBlocked is bool &&
+      request.resource.data.legacyLocalAiConsentRequested is bool &&
       validString('localAiProviderPreference', 32) &&
       validString('localAiModel', 128) &&
       validString('localAiMedicalModel', 180) &&
@@ -120,6 +168,7 @@ service cloud.firestore {
       return safeId(mealId) &&
       request.resource.data.keys().hasOnly([
         'id',
+        'schemaVersion',
         'eatenAt',
         'recordedAt',
         'occurredAt',
@@ -165,15 +214,41 @@ service cloud.firestore {
       return safeId(intakeId) &&
       request.resource.data.keys().hasOnly([
         'id',
+        'schemaVersion',
         'drugId',
         'takenAt',
         'dosageNote',
+        'doseAmount',
+        'doseUnit',
+        'dosageForm',
+        'route',
+        'releaseType',
+        'productSelection',
         'takenAtIso',
       ]) &&
       request.resource.data.id == intakeId &&
+      request.resource.data.schemaVersion == 1 &&
       validString('drugId', 160) &&
       validString('takenAt', 80) &&
       optionalString('dosageNote', 240) &&
+      (
+        !('doseAmount' in request.resource.data) ||
+        request.resource.data.doseAmount == null ||
+        (
+          (request.resource.data.doseAmount is int || request.resource.data.doseAmount is float) &&
+          request.resource.data.doseAmount > 0 &&
+          request.resource.data.doseAmount <= 1000000
+        )
+      ) &&
+      optionalString('doseUnit', 48) &&
+      optionalString('dosageForm', 80) &&
+      optionalString('route', 80) &&
+      optionalString('releaseType', 80) &&
+      (
+        !('productSelection' in request.resource.data) ||
+        request.resource.data.productSelection == null ||
+        validMedicationProductSelection(request.resource.data.productSelection)
+      ) &&
       optionalString('takenAtIso', 80);
     }
 
@@ -187,6 +262,9 @@ service cloud.firestore {
       return safeId(key) &&
       request.resource.data.keys().hasOnly([
         'value',
+        'operation_id',
+        'stage',
+        'schema_version',
         'probe_run_id',
         'owner_uid',
         'created_at',
@@ -197,6 +275,23 @@ service cloud.firestore {
         request.resource.data.value is bool
       ) &&
       optionalString('probe_run_id', 160) &&
+      optionalString('operation_id', 160) &&
+      optionalString('stage', 32) &&
+      (
+        (
+          !('operation_id' in request.resource.data) &&
+          !('stage' in request.resource.data) &&
+          !('schema_version' in request.resource.data)
+        ) ||
+        (
+          safeId(request.resource.data.operation_id) &&
+          request.resource.data.stage == 'committed' &&
+          request.resource.data.schema_version == 1 &&
+          request.resource.data.value == true &&
+          request.resource.data.owner_uid == uid &&
+          request.resource.data.purpose == 'atomic_onboarding_commit'
+        )
+      ) &&
       (
         !('owner_uid' in request.resource.data) ||
         request.resource.data.owner_uid == uid
@@ -266,6 +361,86 @@ service cloud.firestore {
       optionalString('release_id', 160) &&
       optionalString('redaction_contract', 240) &&
       optionalTimestampOrString('created_at');
+    }
+
+    function validRecordHistory(historyId) {
+      return safeId(historyId) && (
+        (
+          request.resource.data.keys().hasOnly([
+            'schema_version',
+            'collection',
+            'record_id',
+            'operation',
+            'created_at',
+          ]) &&
+          request.resource.data.schema_version == 1 &&
+          request.resource.data.collection in ['active_drugs', 'intakes', 'meals'] &&
+          safeId(request.resource.data.record_id) &&
+          request.resource.data.operation in ['set', 'delete'] &&
+          request.resource.data.created_at is timestamp &&
+          request.resource.data.created_at == request.time
+        ) ||
+        validRecoverableEventHistory(historyId)
+      );
+    }
+
+    function validRecoverableEventHistory(historyDocumentId) {
+      let revision = request.resource.data.revision;
+      return request.resource.data.keys().hasOnly([
+        'schema_version',
+        'collection',
+        'record_id',
+        'operation',
+        'operation_id',
+        'before_digest',
+        'after_digest',
+        'revision',
+        'created_at',
+      ]) &&
+      request.resource.data.schema_version == 1 &&
+      request.resource.data.collection in ['intakes', 'meals'] &&
+      safeId(request.resource.data.record_id) &&
+      request.resource.data.operation in ['create', 'update', 'delete', 'restore'] &&
+      safeId(request.resource.data.operation_id) &&
+      request.resource.data.before_digest is string &&
+      request.resource.data.before_digest.matches('^[a-f0-9]{64}$') &&
+      request.resource.data.after_digest is string &&
+      request.resource.data.after_digest.matches('^[a-f0-9]{64}$') &&
+      request.resource.data.created_at is timestamp &&
+      request.resource.data.created_at == request.time &&
+      revision is map &&
+      revision.keys().hasOnly([
+        'schema_version',
+        'history_id',
+        'operation_id',
+        'event_type',
+        'record_id',
+        'mutation_type',
+        'before_payload',
+        'after_payload',
+        'before_digest',
+        'after_digest',
+        'recorded_at_utc',
+        'source',
+        'restores_history_id',
+      ]) &&
+      revision.schema_version == 1 &&
+      revision.operation_id == historyDocumentId &&
+      revision.operation_id == request.resource.data.operation_id &&
+      revision.record_id == request.resource.data.record_id &&
+      revision.mutation_type == request.resource.data.operation &&
+      revision.before_digest == request.resource.data.before_digest &&
+      revision.after_digest == request.resource.data.after_digest &&
+      revision.event_type in ['meal', 'intake'] &&
+      (
+        (revision.event_type == 'meal' && request.resource.data.collection == 'meals') ||
+        (revision.event_type == 'intake' && request.resource.data.collection == 'intakes')
+      ) &&
+      (revision.before_payload == null || (revision.before_payload is map && revision.before_payload.keys().size() <= 32)) &&
+      (revision.after_payload == null || (revision.after_payload is map && revision.after_payload.keys().size() <= 32)) &&
+      revision.recorded_at_utc is string && revision.recorded_at_utc.size() <= 80 &&
+      revision.source is string && revision.source.size() > 0 && revision.source.size() <= 80 &&
+      (revision.restores_history_id == null || safeId(revision.restores_history_id));
     }
 
     function validAppCatalogWrite(table, rowId) {
@@ -400,6 +575,12 @@ service cloud.firestore {
       match /clinical_audits/{auditId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && validClinicalAudit(uid, auditId);
+        allow update, delete: if false;
+      }
+
+      match /record_history/{historyId} {
+        allow read: if isOwner(uid);
+        allow create: if isOwner(uid) && validRecordHistory(historyId);
         allow update, delete: if false;
       }
 

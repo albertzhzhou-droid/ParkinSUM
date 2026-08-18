@@ -1,7 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
+import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_conflict_engine.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_next_meal_scorer.dart';
 import 'package:parkinsum_companion/domain/usecases/next_meal_scoring_parameters.dart';
 import 'package:parkinsum_companion/domain/usecases/source_quality_perturbation_report.dart';
 
@@ -59,8 +64,17 @@ void main() {
     // Same composition + overlap; only the amino-acid provenance tier differs.
     expect(analytical.lnaaUncertaintyWidened, isFalse);
     expect(imputed.lnaaUncertaintyWidened, isTrue);
-    expect(analytical.competitionUncertaintyBand, 'narrow');
-    expect(imputed.competitionUncertaintyBand, isNot('narrow'));
+    // Analytical nutrient provenance does not imply narrow overall model
+    // uncertainty: the fixed historical-meal/timing context still contributes
+    // its own uncertainty. The provenance perturbation must widen the combined
+    // band relative to that same baseline.
+    const uncertaintyOrder = ['narrow', 'moderate', 'wide', 'veryWide'];
+    expect(
+      uncertaintyOrder.indexOf(imputed.competitionUncertaintyBand),
+      greaterThan(
+        uncertaintyOrder.indexOf(analytical.competitionUncertaintyBand),
+      ),
+    );
   });
 
   test('conflict overlap stays dominant: provenance swing is bounded', () {
@@ -97,11 +111,32 @@ void main() {
     }
   });
 
-  test('every scored row uses the mechanistic-primary ranker', () {
+  test('every scored row is labeled as an educational trace', () {
     for (final row in runner.run().rows) {
-      expect(row.rankerUsed, 'mechanistic_primary_window_sampled');
+      expect(row.rankerUsed, 'mechanistic_trace_only_window_sampled');
+      expect(row.finalCandidateScore, greaterThan(0));
     }
   });
+
+  test(
+    'unexpected scorer abstention fails closed instead of emitting zero',
+    () {
+      final abstainingRunner = SourceQualityPerturbationReportRunner(
+        scorer: MechanisticNextMealScorer(engine: _AlwaysAbstainingEngine()),
+      );
+
+      expect(
+        abstainingRunner.run,
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('unexpectedly abstained'),
+          ),
+        ),
+      );
+    },
+  );
 
   // P5 — FDC provenance tier fields exposed in the report rows + JSON.
   test('rows expose nutrient-provenance + confidence fields (P5)', () {
@@ -146,5 +181,20 @@ void main() {
       expect(officialImputed.sourceAuthorityScore, greaterThan(0.5));
       expect(officialImputed.nutrientProvenanceQuality, lessThan(0.5));
     },
+  );
+}
+
+class _AlwaysAbstainingEngine extends MechanisticConflictEngine {
+  @override
+  MechanisticConflictResult evaluate({
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+    String resultId = 'mechanistic_result',
+    String? preferredMealId,
+  }) => MechanisticConflictResult.insufficientContext(
+    id: resultId,
+    reason: MechanisticInteractionType.insufficientMealContext,
+    missingInputs: const ['synthetic_forced_abstention'],
+    sourceRefs: const ['synthetic:test'],
   );
 }

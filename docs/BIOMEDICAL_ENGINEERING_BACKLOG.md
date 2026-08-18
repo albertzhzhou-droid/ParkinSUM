@@ -46,8 +46,10 @@ only from explicit user entry; missing ≠ zero; no live ingestion without opt-i
   `lib/domain/entities/amino_acid_profile.dart`, FDC fixtures, tests.
 - **Tests required:** realistic FDC fixture covering full LNAA set; assert
   actual-fields mode, partial handling, missing≠zero.
-- **Acceptance:** all LNAA nutrient numbers parsed when present; partial → widen
-  uncertainty; absent → null.
+- **Acceptance:** all LNAA nutrient numbers parsed when present; complete
+  per-component coverage may use actual-fields mode; mixed/partial coverage
+  enters explicit hybrid actual+proxy mode with wider uncertainty and no
+  pseudo-measured whole-meal LNAA total; absent → null.
 - **Safety boundary:** no fabricated amino-acid values.
 - **Not in scope:** live API ingestion (key required).
 - **Labels:** `importer`, `nutrition`, `P1`.

@@ -33,6 +33,7 @@ node_modules/
 .pub/
 /build/
 /coverage/
+.playwright-cli/
 
 # Symbolication related
 app.*.symbols

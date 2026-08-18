@@ -123,15 +123,15 @@ now · reason.
 - Safety boundary: metadata only; no dose/timing inference; mechanism evidence still requires explicit label text.
 - Priority **P1** · Complexity medium · Risk low · Implement now: **no** (needs fixture work) · Reason: high provenance value, bounded but more than a doc pass.
 
-**OPP-A2 — Release-type / dose-form / combination-product extraction**
+**OPP-A2 — Release-type / dose-form / combination-product applicability binding**
 - Sources: `src.dailymed.spl.webservices.v2`, `src.ema.epi.fhir`
 - Type: official label · Access: `public_api`/`downloadable`
-- Rationale: IR vs ER/controlled-release and combination components (carbidopa/levodopa/entacapone) materially change the modeled absorption window; extracting them from label structure (not guessing) improves fidelity.
-- App layer: importer → `DrugProductVariantMetadata.releaseType/doseForm/components` → absorption model.
-- Implementation idea: parse SPL dosage-form + release-type + ingredient-strength arrays into the variant metadata; keep null when absent.
+- Rationale: formulation and combination components determine whether the narrow runtime context of use applies. Extracting them from label structure prevents an ER/CR/DR or extra-component product from being run through an IR-only trace.
+- App layer: importer → governed `DrugProductVariantMetadata.releaseType/doseForm/components` snapshot → applicability manifest → trace only when every v1 predicate passes.
+- Implementation idea: parse SPL dosage-form + release-type + ingredient-strength arrays into versioned variant metadata; keep null when absent and bind the snapshot to product and label identity.
 - Required metadata: dose form, release type, per-ingredient strength+unit, product identifier.
-- Testing: fixtures for IR, ER, and a 3-component combo; assert release-type drives the openness profile; missing → insufficient (no guess).
-- Safety: never default a release type; unknown → wider uncertainty.
+- Testing: fixtures for IR, ER, and a 3-component combo; assert only governed IR carbidopa/levodopa can enter the educational trace, ER/CR/DR and extra components return `notApplicable`, and missing/ambiguous metadata returns `insufficient`.
+- Safety: never default a release type and never substitute a generic ER curve. Unknown does not widen into a numeric result; it abstains.
 - Priority **P1** · Complexity medium · Risk low · now: **no** · Reason: bounded importer work + tests.
 
 **OPP-A3 — RxNorm/RxClass identity + ATC normalization**
@@ -165,8 +165,8 @@ now · reason.
 - App layer: `AminoAcidExtractor` → `AminoAcidProfile` → competition model.
 - Implementation idea: extend the extractor + fixtures to all FDC amino-acid nutrient numbers with mg→g normalization and partial-field flagging (already partly present); add per-nutrient basis.
 - Required metadata: nutrient number, unit, amount, basis, partial flag.
-- Testing: realistic FDC fixture covering the full LNAA set; assert actual-fields mode + partial handling.
-- Safety: missing amino acids stay null; partial widens uncertainty.
+- Testing: realistic FDC fixture covering the full LNAA set; assert pure actual-fields mode only for complete meal coverage and explicit hybrid mode for mixed/partial coverage.
+- Safety: missing amino acids stay null; mixed/partial coverage widens uncertainty and never publishes a pseudo-measured whole-meal LNAA total.
 - Priority **P1** · Complexity low–medium · Risk low · now: **no** (fixture + extractor) · Reason: extends an existing, well-tested seam.
 
 **OPP-B3 — FAO/INFOODS tagname + nutrient missingness/confidence flags**

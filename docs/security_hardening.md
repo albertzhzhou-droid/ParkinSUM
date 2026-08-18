@@ -62,3 +62,19 @@ rate limiting.
 - Run `node tool/local_sensitive_artifact_sanitize.mjs --root <private-hold>`
   before archiving or sharing local operator evidence.
 - Run `npm run security:backend` before deployment or public repository sync.
+
+## Firestore Rules Verification
+
+`npm run rules:contract` checks the committed rule shape. The stronger
+`npm run rules:test` command starts the Firestore Emulator and executes
+owner, cross-account, malformed-input, append-only, onboarding-marker, and
+privileged-catalog allow/deny cases against the real rules engine.
+The suite seeds owner data and rejects another signed-in account's direct reads
+and collection queries. A TAP manifest gate also requires all seven named cases
+to pass with zero failures, cancellations, skips, or TODO results.
+
+The emulator requires Java 21 or newer. The repository runner checks
+`PARKINSUM_JAVA_HOME`, `JAVA_HOME`, the standard Android Studio JBR locations,
+and finally `java` on `PATH`; it fails closed before starting Firebase if none
+of them is suitable. This selection is process-local and does not change the
+machine's system Java configuration.

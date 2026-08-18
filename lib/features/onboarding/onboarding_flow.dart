@@ -31,8 +31,9 @@ class OnboardingDraft {
   UserProfile buildProfile(
     UserProfile baseProfile, {
     required String patientId,
+    DateTime? consentRecordedAt,
   }) {
-    return baseProfile.copyWith(
+    final profile = baseProfile.copyWith(
       patientId: patientId,
       registrationRegion: registrationRegion,
       displayLocale: displayLocale,
@@ -41,7 +42,12 @@ class OnboardingDraft {
       ),
       dietProfileRegion: dietProfileRegion ?? registrationRegion,
       swallowingTextureMode: swallowingTextureMode,
-      localAiConsentEnabled: localAiConsentEnabled,
+      localAiConsentEnabled: false,
+    );
+    return profile.withLocalAiConsentDecision(
+      enabled: localAiConsentEnabled,
+      recordedAt: consentRecordedAt ?? DateTime.now().toUtc(),
+      source: 'onboarding',
     );
   }
 

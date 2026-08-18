@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../core/db/cdss_database.dart';
 import '../../core/i18n/app_i18n.dart';
+import '../../core/security/cdss_identifier_factory.dart';
 import '../../core/utils/qualified_value_parser.dart';
 import '../entities/cdss_records.dart';
 import '../entities/cdss_runtime.dart';
@@ -31,6 +32,7 @@ class ClinicalDecisionSupportService {
   final RuntimeRuleSupport runtimeRuleSupport;
   final CdssArtifactStore artifactStore;
   final RuleRegistryCompiler ruleRegistryCompiler;
+  final CdssIdentifierFactory identifierFactory;
 
   ClinicalDecisionSupportService({
     required this.database,
@@ -39,9 +41,11 @@ class ClinicalDecisionSupportService {
     RuntimeRuleSupport? runtimeRuleSupport,
     CdssArtifactStore? artifactStore,
     RuleRegistryCompiler? ruleRegistryCompiler,
+    CdssIdentifierFactory? identifierFactory,
   }) : runtimeRuleSupport = runtimeRuleSupport ?? const RuntimeRuleSupport(),
        artifactStore = artifactStore ?? createCdssArtifactStore(),
-       ruleRegistryCompiler = ruleRegistryCompiler ?? RuleRegistryCompiler();
+       ruleRegistryCompiler = ruleRegistryCompiler ?? RuleRegistryCompiler(),
+       identifierFactory = identifierFactory ?? CdssIdentifierFactory();
 
   Future<void> initializeRuleRegistry({
     required List<RuleRegistryEntry> rules,
@@ -155,31 +159,23 @@ class ClinicalDecisionSupportService {
   Future<CdssImportReport> importBundle(P0ImportBundle bundle) async {
     await database.initialize();
     final createdAt = DateTime.now();
-    final baseHash = base64.encode(
-      utf8.encode(
-        jsonEncode({
-          'source_documents': bundle.sourceDocuments
-              .map((e) => e.sourceDocId)
-              .toList(),
-          'country_diet_profiles': bundle.countryDietProfiles
-              .map((e) => e.countryCode)
-              .toList(),
-          'food_variants': bundle.foodVariants
-              .map((e) => e.foodVariantId)
-              .toList(),
-          'drug_variants': bundle.drugProductVariants
-              .map((e) => e.drugProductVariantId)
-              .toList(),
-          'observations': bundle.observations
-              .map((e) => e.observationId)
-              .toList(),
-          'rule_registry': bundle.ruleRegistryRows
-              .map((e) => e['rule_id'])
-              .toList(),
-          'runtime_events': bundle.runtimeEvents.map((e) => e.eventId).toList(),
-        }),
-      ),
-    );
+    final baseHash = identifierFactory.inputDigest('import-bundle', {
+      'source_documents': bundle.sourceDocuments
+          .map((e) => e.sourceDocId)
+          .toList(),
+      'country_diet_profiles': bundle.countryDietProfiles
+          .map((e) => e.countryCode)
+          .toList(),
+      'food_variants': bundle.foodVariants.map((e) => e.foodVariantId).toList(),
+      'drug_variants': bundle.drugProductVariants
+          .map((e) => e.drugProductVariantId)
+          .toList(),
+      'observations': bundle.observations.map((e) => e.observationId).toList(),
+      'rule_registry': bundle.ruleRegistryRows
+          .map((e) => e['rule_id'])
+          .toList(),
+      'runtime_events': bundle.runtimeEvents.map((e) => e.eventId).toList(),
+    });
     final activeSnapshot = await latestPromotedSnapshot();
     final stagingSnapshotId = 'staging_${createdAt.microsecondsSinceEpoch}';
     final promotedSnapshotId = 'promoted_${createdAt.microsecondsSinceEpoch}';
@@ -482,17 +478,6 @@ class ClinicalDecisionSupportService {
       );
     }
 
-    await database.insertEngineSnapshot(
-      EngineSnapshotRecord(
-        snapshotId: promotedSnapshotId,
-        factsVersion: promotedSnapshotId,
-        rulesVersion: activeSnapshot?.rulesVersion ?? 'baseline_cdss_rules_v1',
-        createdAt: createdAt,
-        promotedAt: DateTime.now(),
-        rollbackParent: activeSnapshot?.snapshotId,
-        inputHash: baseHash,
-      ),
-    );
     final stagedFacts = await database.queryTable('staging_resolved_fact');
     for (final row in stagedFacts.where((row) => row['run_id'] == runId)) {
       final payload =
@@ -616,6 +601,21 @@ class ClinicalDecisionSupportService {
         'fallback': 'inline storage is used on backends without a filesystem',
       },
       createdAt: createdAt,
+    );
+
+    // The promoted snapshot is the activation marker read by runtime queries.
+    // Persist it only after every result-affecting row and audit artifact has
+    // succeeded, so an interrupted copy cannot become the active knowledge base.
+    await database.insertEngineSnapshot(
+      EngineSnapshotRecord(
+        snapshotId: promotedSnapshotId,
+        factsVersion: promotedSnapshotId,
+        rulesVersion: activeSnapshot?.rulesVersion ?? 'baseline_cdss_rules_v1',
+        createdAt: createdAt,
+        promotedAt: DateTime.now(),
+        rollbackParent: activeSnapshot?.snapshotId,
+        inputHash: baseHash,
+      ),
     );
     await database.insertIngestionRun(
       IngestionRunRecord(
@@ -780,20 +780,7 @@ class ClinicalDecisionSupportService {
       (row) => '${row['snapshot_id']}' == snapshotId,
       orElse: () => <String, Object?>{},
     );
-    final rollbackSnapshotId =
-        'rollback_${DateTime.now().microsecondsSinceEpoch}';
-    await database.insertEngineSnapshot(
-      EngineSnapshotRecord(
-        snapshotId: rollbackSnapshotId,
-        factsVersion: rollbackSnapshotId,
-        rulesVersion:
-            '${targetSnapshot['rules_version'] ?? 'baseline_cdss_rules_v1'}',
-        createdAt: DateTime.now(),
-        promotedAt: DateTime.now(),
-        rollbackParent: snapshotId,
-        inputHash: base64.encode(utf8.encode(reason)),
-      ),
-    );
+    final rollbackSnapshotId = identifierFactory.newId('rollback');
     for (final row in sourceFacts) {
       final record = ResolvedFactRecord(
         factId: '${row['fact_id']}_$rollbackSnapshotId',
@@ -815,10 +802,31 @@ class ClinicalDecisionSupportService {
         resolutionPolicyId: '${row['resolution_policy_id']}',
         snapshotId: rollbackSnapshotId,
         factVersion: rollbackSnapshotId,
-        manualOverride: (row['manual_override'] as num?) == 1,
+        manualOverride: switch (row['manual_override']) {
+          final bool value => value,
+          final num value => value == 1,
+          _ => false,
+        },
       );
       await database.insertResolvedFact(record);
     }
+
+    // As with import promotion, the active marker is written last. A failed
+    // rollback copy therefore leaves the previously promoted snapshot active.
+    await database.insertEngineSnapshot(
+      EngineSnapshotRecord(
+        snapshotId: rollbackSnapshotId,
+        factsVersion: rollbackSnapshotId,
+        rulesVersion:
+            '${targetSnapshot['rules_version'] ?? 'baseline_cdss_rules_v1'}',
+        createdAt: DateTime.now(),
+        promotedAt: DateTime.now(),
+        rollbackParent: snapshotId,
+        inputHash: identifierFactory.inputDigest('rollback-reason', {
+          'reason': reason,
+        }),
+      ),
+    );
     await database.insertIngestionRun(
       IngestionRunRecord(
         runId: 'rollback_${DateTime.now().microsecondsSinceEpoch}',
@@ -906,9 +914,13 @@ class ClinicalDecisionSupportService {
         );
     final i18n = AppI18n.fromLocaleTag(context.userProfile.displayLocale);
 
-    final inputHash = base64.encode(utf8.encode(jsonEncode(context.toJson())));
+    final inputHash = identifierFactory.inputDigest(
+      'runtime-evaluation',
+      context.toJson(),
+    );
+    final snapshotId = identifierFactory.newId('snapshot');
     final snapshot = EngineSnapshotRecord(
-      snapshotId: 'snapshot_$inputHash',
+      snapshotId: snapshotId,
       factsVersion: factsVersion,
       rulesVersion: rulesVersion,
       createdAt: DateTime.now(),
@@ -1167,7 +1179,7 @@ class ClinicalDecisionSupportService {
     ].map(toJsonLine).join();
 
     final runtimeEvent = RuntimeEventRecord(
-      eventId: 'runtime_$inputHash',
+      eventId: identifierFactory.newId('runtime'),
       patientId: context.userProfile.patientId,
       eventType: 'patient_level_runtime_evaluation',
       snapshotId: snapshot.snapshotId,
@@ -1631,20 +1643,14 @@ class ClinicalDecisionSupportService {
               ),
             ),
           );
-    final inputHash = base64.encode(
-      utf8.encode(
-        jsonEncode({
-          'patient_id': userProfile.patientId,
-          'meal_slot': mealSlot,
-          'facts_version': factsVersion,
-          'rules_version': rulesVersion,
-          'recommendations': recommendations
-              .map((item) => item.food.id)
-              .toList(),
-        }),
-      ),
-    );
-    final snapshotId = 'recommendation_snapshot_$inputHash';
+    final inputHash = identifierFactory.inputDigest('recommendation-audit', {
+      'patient_id': userProfile.patientId,
+      'meal_slot': mealSlot,
+      'facts_version': factsVersion,
+      'rules_version': rulesVersion,
+      'recommendations': recommendations.map((item) => item.food.id).toList(),
+    });
+    final snapshotId = identifierFactory.newId('recommendation_snapshot');
     await database.insertEngineSnapshot(
       EngineSnapshotRecord(
         snapshotId: snapshotId,
@@ -1679,7 +1685,7 @@ class ClinicalDecisionSupportService {
 
     await database.insertRecommendationAuditLog(
       RecommendationAuditLogRecord(
-        recAuditId: 'rec_$inputHash',
+        recAuditId: identifierFactory.newId('rec'),
         userId: userProfile.patientId,
         mealSlot: mealSlot,
         snapshotId: snapshotId,

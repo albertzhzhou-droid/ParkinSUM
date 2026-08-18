@@ -1,5 +1,7 @@
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/absorption_opportunity.dart';
 import '../entities/gastric_emptying_profile.dart';
+import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/time_axis_events.dart';
 
 /// Estimates a window in which levodopa could become available for
@@ -7,35 +9,33 @@ import '../entities/time_axis_events.dart';
 /// meal's gastric emptying profile.
 ///
 /// Educational simulation only. Does NOT predict blood concentration.
-class LevodopaAbsorptionOpportunityModel {
+class LevodopaAbsorptionOpportunityModel
+    with RegisteredAlgorithmComponentIdentity {
+  static const MechanisticMedicationApplicabilityPolicy _applicabilityPolicy =
+      MechanisticMedicationApplicabilityPolicy();
+
   /// Reference parameters for immediate-release formulations.
   static const int referenceIrLagMinutes = 5;
   static const int referenceIrDurationMinutes = 90;
 
-  /// Extended-release shifts and widens the opportunity window.
-  static const int referenceErLagMinutes = 30;
-  static const int referenceErDurationMinutes = 240;
+  /// Mean meal-associated absorption delay reported for nine selected
+  /// participants in Nutt et al. (1984). Mapping this group mean onto the
+  /// residual-load thresholds below is a prototype heuristic: it is an
+  /// illustrative central shift, never an individual or formulation estimate.
+  static const int illustrativeMealDelayMinutes = 34;
 
   /// Openness-curve shape constants (prototype heuristic; unitless 0..1
   /// educational weights, NOT an absorbed fraction or blood concentration).
-  /// IR rises sharply to a full-openness peak then decays to a low tail; ER /
-  /// controlled release is flatter and longer (lower peak, higher sustained
-  /// tail), reflecting the prolonged release profile.
-  static const int _opennessSampleStrideMinutes = 10;
-  static const double _irPeakOpenness = 1.0;
-  static const double _irTailOpenness = 0.15;
-  static const double _erPeakOpenness = 0.85;
-  static const double _erTailOpenness = 0.5;
-
-  /// Multiplier applied to the whole curve when the meal context is incomplete
-  /// (no overlapping meal profile) — the opportunity shape is less certain, so
-  /// it is flattened rather than asserted sharply.
-  static const double _incompleteContextOpennessScale = 0.85;
+  /// The supported IR tablet trace rises to a full-openness peak then decays to
+  /// a low tail.
+  static const int opennessSampleStrideMinutes = 10;
+  static const double irPeakOpenness = 1.0;
+  static const double irTailOpenness = 0.15;
 
   static const List<String> _baseSourceRefs = [
     'src.dailymed.sinemet.label',
-    'src.dailymed.sinemet.extended.label',
-    'src.contin.levodopa.pk.2010',
+    'src.nutt.onoff.1984',
+    'src.doi.ge.levodopa.2012',
     'src.internal.prototype.heuristic',
   ];
 
@@ -43,45 +43,42 @@ class LevodopaAbsorptionOpportunityModel {
     required MedicationTimelineEvent medication,
     GastricEmptyingProfile? overlappingMealProfile,
   }) {
-    if (!medication.isLevodopaContext) {
-      return AbsorptionOpportunityWindow(
-        medicationEventId: medication.id,
-        window: TimelineWindow(
-          startMinute: medication.minute,
-          endMinute: medication.minute,
-        ),
-        peakMinute: medication.minute,
-        delayedArrivalLikelihood: DelayedArrivalLikelihood.unknown,
-        uncertaintyBand: UncertaintyBand.wide,
-        assumptions: const ['ldopa.absorption.non_levodopa_passthrough'],
-        missingInputs: const ['active_ingredient_is_levodopa'],
-        sourceRefs: _baseSourceRefs,
+    final applicability = _applicabilityPolicy.evaluate(medication.context);
+    if (!applicability.applicable) {
+      return _abstainedWindow(
+        medication: medication,
+        availability:
+            applicability.status ==
+                MechanisticMedicationApplicabilityStatus.notApplicable
+            ? MechanisticProviderAvailability.notApplicable
+            : MechanisticProviderAvailability.insufficient,
+        reasonCodes: applicability.reasonCodes,
+      );
+    }
+    if (overlappingMealProfile == null) {
+      return _abstainedWindow(
+        medication: medication,
+        availability: MechanisticProviderAvailability.insufficient,
+        reasonCodes: const ['absorption.overlapping_meal_profile_missing'],
+      );
+    }
+    if (!overlappingMealProfile.modelApplicable) {
+      return _abstainedWindow(
+        medication: medication,
+        availability: overlappingMealProfile.availability,
+        reasonCodes: [
+          'absorption.gastric_emptying_not_applicable',
+          ...overlappingMealProfile.effectiveApplicabilityReasons,
+        ],
       );
     }
 
-    final releaseTypeRaw = medication.releaseType.toLowerCase().trim();
-    final isExtended = releaseTypeRaw.contains('extend');
-    final isControlled = releaseTypeRaw.contains('control');
-    final isDelayed = releaseTypeRaw.contains('delay');
-    // Extended / controlled / delayed release all widen the opportunity window.
-    final isWideRelease = isExtended || isControlled || isDelayed;
-    // Unknown/unspecified/empty → release-specific interpretation is limited;
-    // we keep a default (IR-shaped) window but widen uncertainty and never
-    // assert ER/IR specifics. Release type is NEVER inferred from dose.
-    final releaseTypeUnknown =
-        releaseTypeRaw.isEmpty ||
-        releaseTypeRaw == 'unknown' ||
-        releaseTypeRaw == 'unspecified';
-    final lag = isWideRelease ? referenceErLagMinutes : referenceIrLagMinutes;
-    final duration = isWideRelease
-        ? referenceErDurationMinutes
-        : referenceIrDurationMinutes;
+    // The v1 applicability policy admits only the IR whole-tablet context.
+    // Arbitrary non-empty strings and other formulations never default to IR.
+    final lag = referenceIrLagMinutes;
+    final duration = referenceIrDurationMinutes;
 
-    final assumptions = <String>[
-      'ldopa.absorption.small_intestine',
-      if (isWideRelease) 'ldopa.release_type.extended_widens_window',
-      if (releaseTypeUnknown) 'ldopa.absorption.release_type_unknown_limited',
-    ];
+    final assumptions = <String>['ldopa.absorption.small_intestine'];
 
     var startMinute = medication.minute + lag;
     var endMinute = medication.minute + lag + duration;
@@ -90,69 +87,49 @@ class LevodopaAbsorptionOpportunityModel {
     DelayedArrivalLikelihood delayLikelihood = DelayedArrivalLikelihood.low;
     var uncertainty = UncertaintyBand.narrow;
 
-    if (overlappingMealProfile != null) {
-      // Estimate residual stomach load at medication time.
-      final tSinceMealStart =
-          medication.minute -
-          overlappingMealProfile.peakEmptyingWindow.startMinute +
-          overlappingMealProfile.aggregateLagMinutes.round();
-      final residual = overlappingMealProfile.remainingFractionAt(
-        tSinceMealStart < 0 ? 0 : tSinceMealStart,
+    // Estimate residual stomach load at medication time.
+    final tSinceMealStart =
+        medication.minute -
+        overlappingMealProfile.peakEmptyingWindow.startMinute +
+        overlappingMealProfile.aggregateLagMinutes.round();
+    final residual = overlappingMealProfile.remainingFractionAt(
+      tSinceMealStart < 0 ? 0 : tSinceMealStart,
+    );
+
+    if (residual > 0.7) {
+      startMinute += illustrativeMealDelayMinutes;
+      endMinute += illustrativeMealDelayMinutes * 2;
+      peakMinute += illustrativeMealDelayMinutes;
+      delayLikelihood = DelayedArrivalLikelihood.high;
+      assumptions.add(
+        'ldopa.absorption.high_residual_group_mean_shift_prototype_heuristic',
       );
-
-      if (residual > 0.7) {
-        startMinute += 30;
-        endMinute += 60;
-        peakMinute += 30;
-        delayLikelihood = DelayedArrivalLikelihood.high;
-        assumptions.add(
-          'ldopa.absorption.delayed_by_high_residual_stomach_load',
-        );
-      } else if (residual > 0.4) {
-        startMinute += 15;
-        endMinute += 30;
-        peakMinute += 15;
-        delayLikelihood = DelayedArrivalLikelihood.moderate;
-        assumptions.add(
-          'ldopa.absorption.shifted_by_moderate_residual_stomach_load',
-        );
-      } else {
-        delayLikelihood = DelayedArrivalLikelihood.low;
-      }
-
-      uncertainty = _combineUncertainty(
-        uncertainty,
-        overlappingMealProfile.uncertaintyBand,
+    } else if (residual > 0.4) {
+      final moderateShift = illustrativeMealDelayMinutes ~/ 2;
+      startMinute += moderateShift;
+      endMinute += illustrativeMealDelayMinutes;
+      peakMinute += moderateShift;
+      delayLikelihood = DelayedArrivalLikelihood.moderate;
+      assumptions.add(
+        'ldopa.absorption.moderate_residual_half_shift_prototype_heuristic',
       );
     } else {
-      delayLikelihood = DelayedArrivalLikelihood.unknown;
-      assumptions.add('ldopa.absorption.no_overlapping_meal_profile');
+      delayLikelihood = DelayedArrivalLikelihood.low;
     }
 
-    // Unknown release type widens uncertainty by one step (release-specific
-    // interpretation is limited).
-    if (releaseTypeUnknown) {
-      uncertainty = _combineUncertainty(uncertainty, UncertaintyBand.wide);
-    }
+    // Downstream uncertainty cannot be narrower than the meal model that
+    // supplies its gastric-arrival input.
+    uncertainty = _inheritUncertainty(
+      uncertainty,
+      overlappingMealProfile.uncertaintyBand,
+    );
 
-    final incompleteContext = overlappingMealProfile == null;
     final opennessProfile = _buildOpennessProfile(
       startMinute: startMinute,
       endMinute: endMinute,
       peakMinute: peakMinute,
-      extended: isWideRelease,
-      incompleteContext: incompleteContext,
     );
-    assumptions.add(
-      isWideRelease
-          ? 'ldopa.absorption.openness_profile_extended_flatter_longer'
-          : 'ldopa.absorption.openness_profile_immediate_sharper',
-    );
-    if (incompleteContext) {
-      assumptions.add(
-        'ldopa.absorption.openness_flattened_incomplete_meal_context',
-      );
-    }
+    assumptions.add('ldopa.absorption.openness_profile_immediate_sharper');
 
     return AbsorptionOpportunityWindow(
       medicationEventId: medication.id,
@@ -161,35 +138,53 @@ class LevodopaAbsorptionOpportunityModel {
       delayedArrivalLikelihood: delayLikelihood,
       uncertaintyBand: uncertainty,
       assumptions: List.unmodifiable(assumptions),
-      missingInputs: overlappingMealProfile == null
-          ? const ['overlapping_meal_profile']
-          : const [],
+      missingInputs: const [],
       sourceRefs: _baseSourceRefs,
       opennessProfile: opennessProfile,
     );
   }
 
+  AbsorptionOpportunityWindow _abstainedWindow({
+    required MedicationTimelineEvent medication,
+    required MechanisticProviderAvailability availability,
+    required List<String> reasonCodes,
+  }) {
+    return AbsorptionOpportunityWindow(
+      medicationEventId: medication.id,
+      window: TimelineWindow(
+        startMinute: medication.minute,
+        endMinute: medication.minute,
+      ),
+      peakMinute: medication.minute,
+      delayedArrivalLikelihood: DelayedArrivalLikelihood.unknown,
+      uncertaintyBand: UncertaintyBand.veryWide,
+      assumptions: const ['ldopa.absorption.model_not_applicable'],
+      missingInputs: List.unmodifiable(reasonCodes),
+      sourceRefs: _baseSourceRefs,
+      availability: availability,
+      applicabilityReasons: List.unmodifiable(reasonCodes),
+      opennessProfile: const [],
+    );
+  }
+
   /// Deterministic sampled openness curve over [startMinute, endMinute] with a
-  /// rise to [peakMinute] then a decay to a release-type-specific tail.
+  /// rise to [peakMinute] then a decay to the supported IR tail.
   /// Educational shape only — not blood concentration, not PK/PD calibration.
   List<AbsorptionOpennessSample> _buildOpennessProfile({
     required int startMinute,
     required int endMinute,
     required int peakMinute,
-    required bool extended,
-    required bool incompleteContext,
   }) {
     if (endMinute <= startMinute) return const [];
-    final peakOpenness = extended ? _erPeakOpenness : _irPeakOpenness;
-    final tailOpenness = extended ? _erTailOpenness : _irTailOpenness;
-    final scale = incompleteContext ? _incompleteContextOpennessScale : 1.0;
+    const peakOpenness = irPeakOpenness;
+    const tailOpenness = irTailOpenness;
     final peak = peakMinute.clamp(startMinute, endMinute);
 
     final samples = <AbsorptionOpennessSample>[];
     for (
       var t = startMinute;
       t <= endMinute;
-      t += _opennessSampleStrideMinutes
+      t += opennessSampleStrideMinutes
     ) {
       double o;
       if (t <= peak) {
@@ -202,34 +197,23 @@ class LevodopaAbsorptionOpportunityModel {
         o = peakOpenness - decay * (peakOpenness - tailOpenness);
       }
       samples.add(
-        AbsorptionOpennessSample(
-          minute: t,
-          openness: (o * scale).clamp(0.0, 1.0),
-        ),
+        AbsorptionOpennessSample(minute: t, openness: o.clamp(0.0, 1.0)),
       );
     }
     // Ensure the window end is represented as a sample.
     if (samples.isEmpty || samples.last.minute != endMinute) {
       samples.add(
-        AbsorptionOpennessSample(
-          minute: endMinute,
-          openness: (tailOpenness * scale).clamp(0.0, 1.0),
-        ),
+        AbsorptionOpennessSample(minute: endMinute, openness: tailOpenness),
       );
     }
     return List.unmodifiable(samples);
   }
 
-  UncertaintyBand _combineUncertainty(UncertaintyBand a, UncertaintyBand b) {
-    final order = [
-      UncertaintyBand.narrow,
-      UncertaintyBand.moderate,
-      UncertaintyBand.wide,
-      UncertaintyBand.veryWide,
-    ];
-    final idx =
-        (order.indexOf(a) + order.indexOf(b)) ~/ 2 +
-        ((order.indexOf(a) + order.indexOf(b)) % 2);
-    return order[idx.clamp(0, order.length - 1)];
-  }
+  UncertaintyBand _inheritUncertainty(
+    UncertaintyBand current,
+    UncertaintyBand upstream,
+  ) =>
+      UncertaintyBand.values[current.index > upstream.index
+          ? current.index
+          : upstream.index];
 }

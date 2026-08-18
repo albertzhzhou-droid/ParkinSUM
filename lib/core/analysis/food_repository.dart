@@ -7,6 +7,7 @@ import 'nutrition_rules.dart';
 /// 2) 提供一些“默认推荐/分类辅助”的字段
 class FoodRepository {
   List<FoodItem> _foods;
+  int _revision = 0;
 
   FoodRepository._(this._foods);
 
@@ -17,6 +18,7 @@ class FoodRepository {
   }
 
   List<FoodItem> get allFoods => List.unmodifiable(_foods);
+  int get revision => _revision;
 
   /// AppState 在 bootstrap 后可以用数据库里更完整的目录覆盖默认值。
   /// 这样能兼容：
@@ -25,6 +27,7 @@ class FoodRepository {
   void replaceAll(List<FoodItem> foods) {
     if (foods.isEmpty) return;
     _foods = List<FoodItem>.from(foods);
+    _revision += 1;
   }
 
   FoodItem? getById(String id) {

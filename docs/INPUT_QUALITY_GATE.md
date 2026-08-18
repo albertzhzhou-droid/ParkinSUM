@@ -13,8 +13,8 @@ not clinically calibrated, and carries no clinical-validation claim.**
 
 `InputQualityGate` (P1, also "MealMedicationEntryQualityScorer") evaluates
 whether a meal + medication entry carries enough structured, source-linked,
-non-ambiguous context to enter mechanistic scoring or mechanistic-primary
-ranking. Before the engine runs, it answers a single deterministic question —
+non-ambiguous context to enter an educational mechanistic trace. Before the
+engine runs, it answers a single deterministic question —
 *how complete and unambiguous is this input?* — and explains gaps in
 non-prescriptive language.
 
@@ -63,7 +63,10 @@ eligibility and findings but, by design, do not by themselves make the context
 `complete` → `sufficient` → `partial` → `insufficient` → `invalid` (weakest).
 Each status maps to a deterministic 0..1 score (1.0 / 0.8 / 0.5 / 0.25 / 0.0).
 Findings carry a severity of `info` / `warn` / `blocker`. A `blocker` finding
-populates `blocking_reasons` and makes mechanistic-primary ranking ineligible.
+populates `blocking_reasons` and prevents a modeled trace from being emitted.
+The backward-compatible `mechanisticPrimaryEligible` field now means only that
+the educational trace has enough input context; it does not authorize ranking
+or any clinical use.
 
 ## 6. Medication dosage boundary
 
@@ -98,11 +101,12 @@ populates `blocking_reasons` and makes mechanistic-primary ranking ineligible.
 
 ## 9. Timing-window boundary
 
-- No user-defined meal window → the context is **not** invalid, but
-  mechanistic-primary ranking is **not eligible** and a fallback reason is
-  recorded. The gate never suggests a meal time.
+- No user-defined meal window → the context is **not** invalid, but the
+  candidate timing trace is unavailable and a fallback reason is recorded.
+  The gate never suggests a meal time or changes recommendation order.
 - A non-positive window duration → `invalid` window.
-- A valid window + sufficient context → eligible.
+- A valid window + sufficient context → eligible for an educational trace,
+  subject to the separate medication-applicability policy.
 
 ## 10. Localization-readiness boundary
 

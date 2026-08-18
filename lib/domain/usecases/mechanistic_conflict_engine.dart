@@ -1,7 +1,9 @@
 import '../entities/absorption_opportunity.dart';
+import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/amino_acid_competition.dart';
 import '../entities/gastric_emptying_profile.dart';
 import '../entities/mechanistic_conflict_result.dart';
+import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/meal_composition.dart';
 import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
@@ -9,6 +11,8 @@ import '../entities/gastric_emptying_parameters.dart';
 import 'amino_acid_competition_model.dart';
 import 'gastric_emptying_model.dart';
 import 'levodopa_absorption_opportunity_model.dart';
+import 'meal_composition_normalizer.dart';
+import 'medication_entry_validator.dart';
 
 /// Top-level deterministic composer.
 ///
@@ -16,7 +20,12 @@ import 'levodopa_absorption_opportunity_model.dart';
 /// `MealComposition`. The engine never invents either; if context is
 /// insufficient it returns an `insufficient*` result with a structured
 /// explanation rather than a number.
-class MechanisticConflictEngine {
+class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
+  static const MechanisticMedicationApplicabilityPolicy _applicabilityPolicy =
+      MechanisticMedicationApplicabilityPolicy();
+  static final MedicationEntryValidator _medicationEntryValidator =
+      MedicationEntryValidator();
+
   final GastricEmptyingModel gastricEmptyingModel;
   final LevodopaAbsorptionOpportunityModel absorptionModel;
   final AminoAcidCompetitionModel competitionModel;
@@ -39,6 +48,66 @@ class MechanisticConflictEngine {
     String resultId = 'mechanistic_result',
     String? preferredMealId,
   }) {
+    final directTimelineIntegrity = _timelineIdentityIntegrityReasons(context);
+    final timelineIdentityFailures = <String>{
+      ...context.missingFields.where(
+        (field) =>
+            field.startsWith('timeline.event_id_collision') ||
+            field.startsWith('medication.event_id_duplicate') ||
+            field.startsWith('meal.event_id_duplicate'),
+      ),
+      ...directTimelineIntegrity.integrityReasons,
+    }.toList(growable: false)..sort();
+    if (timelineIdentityFailures.isNotEmpty) {
+      return MechanisticConflictResult.blockedIntegrity(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMedicationContext,
+        integrityReasons: timelineIdentityFailures,
+        sourceRefs: const [
+          'src.fda.cds.guidance.2022',
+          'src.internal.prototype.heuristic',
+        ],
+      );
+    }
+
+    // The time-axis builder intentionally drops events whose context or time
+    // is unusable. If even one such medication event or meal timestamp exists,
+    // the remaining events are not a complete interaction timeline: the
+    // omitted event could be the highest-overlap one. Fail closed before
+    // applicability selection or curve construction.
+    final blockingTimelineFields = <String>{
+      ...context.missingFields.where(
+        (field) =>
+            field.startsWith('medication.') ||
+            field.startsWith('meal.') ||
+            field.startsWith('timeline.'),
+      ),
+      ...directTimelineIntegrity.missingReasons,
+    }.toList(growable: false)..sort();
+    if (blockingTimelineFields.isNotEmpty) {
+      final hasMealBlocker = blockingTimelineFields.any(
+        (field) => field.startsWith('meal.') || field.startsWith('timeline.'),
+      );
+      final hasMedicationBlocker = blockingTimelineFields.any(
+        (field) =>
+            field.startsWith('medication.') || field.startsWith('timeline.'),
+      );
+      return MechanisticConflictResult.insufficientContext(
+        id: resultId,
+        reason: hasMedicationBlocker
+            ? MechanisticInteractionType.insufficientMedicationContext
+            : MechanisticInteractionType.insufficientMealContext,
+        missingInputs: blockingTimelineFields,
+        sourceRefs: [
+          if (hasMedicationBlocker) ...[
+            'src.dailymed.sinemet.label',
+            'src.fda.cds.guidance.2022',
+          ],
+          if (hasMealBlocker) 'src.hens.foodphysical.2024',
+        ],
+      );
+    }
+
     // No valid medication event = insufficient medication context.
     if (context.medicationEvents.isEmpty) {
       return MechanisticConflictResult.insufficientContext(
@@ -52,19 +121,58 @@ class MechanisticConflictEngine {
       );
     }
 
+    final normalizedMedicationIntegrityFailures = <String>{};
+    for (final event in context.medicationEvents) {
+      normalizedMedicationIntegrityFailures.addAll(
+        _normalizedMedicationIntegrityReasons(event),
+      );
+    }
+    if (normalizedMedicationIntegrityFailures.isNotEmpty) {
+      final reasons = normalizedMedicationIntegrityFailures.toList(
+        growable: false,
+      )..sort();
+      return MechanisticConflictResult.blockedIntegrity(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMedicationContext,
+        integrityReasons: reasons,
+        sourceRefs: const [
+          'src.dailymed.sinemet.label',
+          'src.fda.cds.guidance.2022',
+        ],
+      );
+    }
+
     // Levodopa-specific scoring: ONLY levodopa events drive the food-levodopa
     // interaction score. Non-levodopa events (e.g. iron, MAO-B inhibitors) are
     // excluded here — they are handled by other rule layers, not this PK proxy.
-    final levodopaEvents = context.medicationEvents
+    final medicationApplicability = _applicabilityPolicy.evaluateContexts(
+      context.medicationEvents.map((event) => event.context),
+    );
+    if (!medicationApplicability.applicable) {
+      const sourceRefs = [
+        'src.dailymed.sinemet.label',
+        'src.fda.cds.guidance.2022',
+      ];
+      if (medicationApplicability.status ==
+          MechanisticMedicationApplicabilityStatus.notApplicable) {
+        return MechanisticConflictResult.notApplicable(
+          id: resultId,
+          reason: MechanisticInteractionType.insufficientMedicationContext,
+          reasonCodes: medicationApplicability.reasonCodes,
+          sourceRefs: sourceRefs,
+        );
+      }
+      return MechanisticConflictResult.insufficientContext(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMedicationContext,
+        missingInputs: medicationApplicability.reasonCodes,
+        sourceRefs: sourceRefs,
+      );
+    }
+
+    final scoringEvents = context.medicationEvents
         .where((e) => e.isLevodopaContext)
         .toList(growable: false);
-    final scoringEvents = levodopaEvents.isNotEmpty
-        ? levodopaEvents
-        : <MedicationTimelineEvent>[context.medicationEvents.first];
-
-    // The primary single-dose window for the no-meal path uses the first
-    // scoring event (deterministic order is preserved by the time-axis builder).
-    final med = scoringEvents.first;
 
     // An explicitly requested meal must exist. Candidate scoring uses this to
     // bind each hypothetical meal to its evaluation rather than silently
@@ -79,52 +187,153 @@ class MechanisticConflictEngine {
       );
     }
 
-    // No meal event = no food-medication interaction modeled.
+    // Absence of a recorded meal is missing context, not evidence that no
+    // food-medication interaction exists. Abstain without building a curve.
     if (context.mealEvents.isEmpty) {
-      final absorption = absorptionModel.build(
-        medication: med,
-        overlappingMealProfile: null,
-      );
-      final explanation = _buildExplanation(
-        resultId: resultId,
-        layerTraces: [
-          _trace(
-            'time_axis',
-            ['medication_event'],
-            const ['no_meal_overlap'],
-            'no meal',
-            'No meal events on the timeline.',
-          ),
-          _trace(
-            'absorption_opportunity',
-            ['medication.release_type', 'medication.minute'],
-            absorption.assumptions,
-            absorption.uncertaintyBand.name,
-            'Absorption opportunity window built from medication event '
-                'without an overlapping meal profile.',
-          ),
-        ],
-        inputFieldsUsed: const ['medication_events[0]'],
-        missingInputs: ['meal_events'],
-        sourceRefs: absorption.sourceRefs,
-      );
-      return MechanisticConflictResult(
+      return MechanisticConflictResult.insufficientContext(
         id: resultId,
-        interactionType: MechanisticInteractionType.noModeledInteraction,
-        interactionScore: 0.0,
-        severityBand: SeverityBand.none,
-        confidenceBand: ConfidenceBand.medium,
-        primaryDrivers: const ['no_meal_overlap'],
-        modeledTimelineWindows: [absorption.window],
-        uncertaintyReasons: const ['no_overlapping_meal_profile'],
-        sourceRefs: absorption.sourceRefs,
-        limitationText: MechanisticExplanation.defaultLimitation,
-        safetyBoundary: RuleExplanation.defaultSafetyBoundary,
-        notAdviceText: RuleExplanation.defaultNotAdvice,
-        explanation: explanation,
-        primaryEmptyingProfile: null,
-        absorptionOpportunityWindow: absorption,
-        competitionTimeline: null,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        missingInputs: const ['meal_events'],
+        sourceRefs: const ['src.hens.foodphysical.2024'],
+      );
+    }
+
+    // Resolve the complete set of meal compositions that can affect any
+    // applicable dose before invoking a numerical layer. This includes each
+    // dose's target meal, its residual predecessors, and the already-started
+    // meal context that may affect the dose-time absorption window. A future
+    // target meal can contribute competition after it starts, but can never be
+    // treated as stomach contents at the earlier medication time.
+    // Missing/empty compositions are unknown evidence, not zero intake, so one
+    // unusable relevant meal makes the whole timeline insufficient.
+    final relevantMealEvents = <String, MealTimelineEvent>{};
+    final primaryMealIds = <String>{};
+    final missingDoseTimeContexts = <String>{};
+    void includeMealAndResidualPredecessors(MealTimelineEvent target) {
+      relevantMealEvents[target.id] = target;
+      for (final meal in context.mealEvents) {
+        if (meal.minute < target.minute) {
+          relevantMealEvents[meal.id] = meal;
+        }
+      }
+    }
+
+    for (final event in scoringEvents) {
+      final primaryMeal = _primaryMealFor(
+        event,
+        context,
+        preferredMealId: preferredMealId,
+      );
+      if (primaryMeal == null) continue;
+      primaryMealIds.add(primaryMeal.id);
+      includeMealAndResidualPredecessors(primaryMeal);
+      final doseTimeMeal = _absorptionMealFor(event, context);
+      if (doseTimeMeal == null) {
+        missingDoseTimeContexts.add('dose_time_meal_context(${event.id})');
+      } else {
+        includeMealAndResidualPredecessors(doseTimeMeal);
+      }
+    }
+    final unusableMealInputs = <String>{...missingDoseTimeContexts};
+    final integrityFailures = <String>{};
+    final canonicalMealCompositionsById = <String, MealComposition>{};
+    for (final meal in relevantMealEvents.values) {
+      final composition = mealCompositionsById[meal.compositionId];
+      if (composition == null) {
+        unusableMealInputs.add('meal_composition(${meal.compositionId})');
+        continue;
+      }
+      final integrityReasons = _mealCompositionIntegrityReasons(
+        composition,
+        expectedId: meal.compositionId,
+      );
+      if (integrityReasons.isNotEmpty) {
+        integrityFailures.addAll(
+          integrityReasons.map(
+            (reason) => 'meal_composition(${meal.compositionId}).$reason',
+          ),
+        );
+        continue;
+      }
+      final canonicalComposition = _canonicalCompositionSnapshot(composition);
+      canonicalMealCompositionsById[meal.compositionId] = canonicalComposition;
+      if (canonicalComposition.foodComponents.isEmpty) {
+        unusableMealInputs.add(
+          'meal_composition(${meal.compositionId}).food_components',
+        );
+      }
+      if (canonicalComposition.compositionCompleteness <= 0) {
+        unusableMealInputs.add(
+          'meal_composition(${meal.compositionId}).composition_completeness',
+        );
+      }
+      final protein = canonicalComposition.proteinGrams;
+      if (primaryMealIds.contains(meal.id) && protein == null) {
+        unusableMealInputs.add(
+          'meal_composition(${meal.compositionId}).protein_grams',
+        );
+      }
+    }
+    if (integrityFailures.isNotEmpty) {
+      final integrityReasons = integrityFailures.toList(growable: false)
+        ..sort();
+      return MechanisticConflictResult.blockedIntegrity(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        integrityReasons: integrityReasons,
+        sourceRefs: const [
+          'src.fda.cds.guidance.2022',
+          'src.internal.prototype.heuristic',
+        ],
+      );
+    }
+    if (unusableMealInputs.isNotEmpty) {
+      final missingInputs = unusableMealInputs.toList(growable: false)..sort();
+      return MechanisticConflictResult.insufficientContext(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        missingInputs: missingInputs,
+        sourceRefs: const ['src.hens.foodphysical.2024'],
+      );
+    }
+
+    // A recorded meal can supply dose-time gastric context only while the
+    // model's own structural residence horizon still contains the dose. An
+    // arbitrarily old meal does not prove that no unrecorded food occurred in
+    // the intervening interval and therefore cannot be treated as fasting.
+    final staleDoseTimeContexts = <String>{};
+    for (final event in scoringEvents) {
+      final doseTimeMeal = _absorptionMealFor(event, context);
+      if (doseTimeMeal == null) continue;
+      final composition =
+          canonicalMealCompositionsById[doseTimeMeal.compositionId];
+      if (composition == null) continue;
+      final residual = _residualLoadBeforeMeal(
+        target: doseTimeMeal,
+        context: context,
+        mealCompositionsById: canonicalMealCompositionsById,
+      );
+      if (residual == null) continue;
+      final profile = gastricEmptyingModel.build(
+        mealId: doseTimeMeal.id,
+        mealStartMinute: doseTimeMeal.minute,
+        composition: composition,
+        overlappingResidualLoad: residual,
+      );
+      if (event.minute > profile.mostlyEmptiedWindow.endMinute) {
+        staleDoseTimeContexts.add(
+          'dose_time_meal_context_stale(${event.id},${doseTimeMeal.id})',
+        );
+      }
+    }
+    if (staleDoseTimeContexts.isNotEmpty) {
+      final missingInputs = staleDoseTimeContexts.toList(growable: false)
+        ..sort();
+      return MechanisticConflictResult.insufficientContext(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        missingInputs: missingInputs,
+        sourceRefs: const ['src.hens.foodphysical.2024'],
       );
     }
 
@@ -133,25 +342,87 @@ class MechanisticConflictEngine {
     // highest-overlap dose drives the primary score (a high-overlap dose is
     // never averaged away by lower-overlap doses).
     final evaluations = <_MedEventEvaluation>[];
-    final missingCompositionIds = <String>{};
     for (final event in scoringEvents) {
       final eval = _evaluateMedicationEvent(
         med: event,
         context: context,
-        mealCompositionsById: mealCompositionsById,
+        mealCompositionsById: canonicalMealCompositionsById,
         preferredMealId: preferredMealId,
       );
       if (eval == null) {
-        // Record which meal composition was unavailable for this dose.
+        // Defensive fail-closed fallback. The unified preflight above should
+        // have resolved every relevant primary composition, but never skip an
+        // unexpected missing evaluation and continue with a partial timeline.
         final mealForEvent = _primaryMealFor(
           event,
           context,
           preferredMealId: preferredMealId,
         );
-        if (mealForEvent != null) {
-          missingCompositionIds.add(mealForEvent.compositionId);
+        return MechanisticConflictResult.insufficientContext(
+          id: resultId,
+          reason: MechanisticInteractionType.insufficientMealContext,
+          missingInputs: [
+            if (mealForEvent == null)
+              'meal_event'
+            else
+              'meal_composition(${mealForEvent.compositionId})',
+          ],
+          sourceRefs: const ['src.hens.foodphysical.2024'],
+        );
+      }
+      final providerAvailability = _mergeProviderAvailability([
+        eval.emptyingProfile.availability,
+        eval.absorption.availability,
+        eval.competition.availability,
+      ]);
+      if (providerAvailability != MechanisticProviderAvailability.available) {
+        final reasons = <String>{
+          ...eval.emptyingProfile.applicabilityReasons,
+          ...eval.absorption.applicabilityReasons,
+          ...eval.competition.applicabilityReasons,
+        }.toList(growable: false)..sort();
+        final sourceRefs = <String>{
+          ...eval.emptyingProfile.sourceRefs,
+          ...eval.absorption.sourceRefs,
+          ...eval.competition.sourceRefs,
+        }.toList(growable: false)..sort();
+        if (providerAvailability ==
+            MechanisticProviderAvailability.blockedIntegrity) {
+          return MechanisticConflictResult.blockedIntegrity(
+            id: resultId,
+            reason: MechanisticInteractionType.insufficientMealContext,
+            integrityReasons: reasons,
+            sourceRefs: sourceRefs,
+          );
         }
-        continue;
+        if (providerAvailability ==
+            MechanisticProviderAvailability.notApplicable) {
+          return MechanisticConflictResult.notApplicable(
+            id: resultId,
+            reason: MechanisticInteractionType.insufficientMealContext,
+            reasonCodes: reasons,
+            sourceRefs: sourceRefs,
+          );
+        }
+        return MechanisticConflictResult.insufficientContext(
+          id: resultId,
+          reason: MechanisticInteractionType.insufficientMealContext,
+          missingInputs: reasons,
+          sourceRefs: sourceRefs,
+        );
+      }
+      if (eval.competition.competitionBand == CompetitionBand.unknown) {
+        return MechanisticConflictResult.insufficientContext(
+          id: resultId,
+          reason: MechanisticInteractionType.insufficientMealContext,
+          missingInputs: <String>{
+            'amino_acid_competition.unknown',
+            ...eval.composition.missingFields.map(
+              (field) => 'meal_composition(${eval.composition.id}).$field',
+            ),
+          }.toList(growable: false)..sort(),
+          sourceRefs: eval.competition.sourceRefs,
+        );
       }
       evaluations.add(eval);
     }
@@ -160,9 +431,7 @@ class MechanisticConflictEngine {
       return MechanisticConflictResult.insufficientContext(
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
-        missingInputs: missingCompositionIds
-            .map((id) => 'meal_composition($id)')
-            .toList(growable: false),
+        missingInputs: const ['meal_evaluation'],
         sourceRefs: const ['src.hens.foodphysical.2024'],
       );
     }
@@ -172,13 +441,17 @@ class MechanisticConflictEngine {
     evaluations.sort((a, b) {
       final byScore = b.interactionScore.compareTo(a.interactionScore);
       if (byScore != 0) return byScore;
-      return a.med.minute.compareTo(b.med.minute);
+      final byMinute = a.med.minute.compareTo(b.med.minute);
+      return byMinute != 0 ? byMinute : a.med.id.compareTo(b.med.id);
     });
     final primary = evaluations.first;
 
     // Build per-event traces (kept in deterministic dose-time order).
     final perEventOrdered = [...evaluations]
-      ..sort((a, b) => a.med.minute.compareTo(b.med.minute));
+      ..sort((a, b) {
+        final byMinute = a.med.minute.compareTo(b.med.minute);
+        return byMinute != 0 ? byMinute : a.med.id.compareTo(b.med.id);
+      });
     final perEventTraces = perEventOrdered
         .map(
           (e) => MechanisticPerEventTrace(
@@ -199,6 +472,10 @@ class MechanisticConflictEngine {
             uncertaintyReasons: <String>[
               if (e.emptyingProfile.uncertaintyBand != UncertaintyBand.narrow)
                 'gastric_emptying_${e.emptyingProfile.uncertaintyBand.name}',
+              if (e.absorption.uncertaintyBand != UncertaintyBand.narrow)
+                'absorption_${e.absorption.uncertaintyBand.name}',
+              if (e.competition.uncertaintyBand != UncertaintyBand.narrow)
+                'competition_${e.competition.uncertaintyBand.name}',
               ...e.absorption.missingInputs.map((m) => 'absorption_missing:$m'),
             ],
             // Medication provenance bridged from CDSS metadata (when present;
@@ -233,13 +510,35 @@ class MechanisticConflictEngine {
       absorption.delayedArrivalLikelihood,
     );
 
+    final consumedUpstreamUncertainty = _widestUncertainty([
+      emptyingProfile.uncertaintyBand,
+      absorption.uncertaintyBand,
+      competition.uncertaintyBand,
+    ]);
     final confidence = _confidence(
       compositionCompleteness: composition.compositionCompleteness,
-      emptyingUncertainty: emptyingProfile.uncertaintyBand,
+      consumedUpstreamUncertainty: consumedUpstreamUncertainty,
       missingTimelineFields: context.missingFields.length,
       competitionUnknown:
           competition.competitionBand == CompetitionBand.unknown,
     );
+    if (confidence == ConfidenceBand.insufficient) {
+      return MechanisticConflictResult.insufficientContext(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        missingInputs: <String>{
+          'model_confidence.insufficient',
+          ...composition.missingFields.map(
+            (field) => 'meal_composition(${composition.id}).$field',
+          ),
+        }.toList(growable: false)..sort(),
+        sourceRefs: <String>{
+          ...emptyingProfile.sourceRefs,
+          ...absorption.sourceRefs,
+          ...competition.sourceRefs,
+        }.toList(growable: false),
+      );
+    }
 
     final drivers = <String>[];
     if (competition.competitionBand == CompetitionBand.high) {
@@ -269,6 +568,10 @@ class MechanisticConflictEngine {
         'meal_composition_incomplete',
       if (emptyingProfile.uncertaintyBand != UncertaintyBand.narrow)
         'gastric_emptying_uncertainty_${emptyingProfile.uncertaintyBand.name}',
+      if (absorption.uncertaintyBand != UncertaintyBand.narrow)
+        'absorption_uncertainty_${absorption.uncertaintyBand.name}',
+      if (competition.uncertaintyBand != UncertaintyBand.narrow)
+        'competition_uncertainty_${competition.uncertaintyBand.name}',
       if (residual > 0.1) 'overlapping_meal_residual_load',
       if (absorption.missingInputs.isNotEmpty)
         ...absorption.missingInputs.map((m) => 'absorption_missing:$m'),
@@ -371,6 +674,91 @@ class MechanisticConflictEngine {
     );
   }
 
+  static ({Set<String> integrityReasons, Set<String> missingReasons})
+  _timelineIdentityIntegrityReasons(TimeAxisConflictContext context) {
+    final integrityReasons = <String>{};
+    final missingReasons = <String>{};
+    final medicationIds = <String>{};
+    final mealIds = <String>{};
+
+    void inspectIds(
+      Iterable<TimelineEvent> events,
+      String prefix,
+      Set<String> ids,
+    ) {
+      for (final event in events) {
+        final canonicalId = event.id.trim();
+        if (canonicalId.isEmpty) {
+          missingReasons.add('$prefix.event_id_empty');
+          continue;
+        }
+        if (canonicalId != event.id) {
+          integrityReasons.add('$prefix.event_id_not_canonical($canonicalId)');
+        }
+        if (!ids.add(canonicalId)) {
+          integrityReasons.add('$prefix.event_id_duplicate($canonicalId)');
+        }
+      }
+    }
+
+    inspectIds(context.medicationEvents, 'medication', medicationIds);
+    inspectIds(context.mealEvents, 'meal', mealIds);
+    for (final id in medicationIds.intersection(mealIds)) {
+      integrityReasons.add('timeline.event_id_collision($id)');
+    }
+    return (integrityReasons: integrityReasons, missingReasons: missingReasons);
+  }
+
+  static List<String> _normalizedMedicationIntegrityReasons(
+    MedicationTimelineEvent event,
+  ) {
+    final context = event.context;
+    final validation = _medicationEntryValidator.validate(
+      RawMedicationEntry(
+        activeIngredients: context.activeIngredients,
+        drugProductVariant: context.drugProductVariant,
+        form: context.form,
+        route: context.route,
+        releaseType: context.releaseType,
+        strength: context.strength,
+        unit: context.unit,
+        jurisdiction: context.jurisdiction,
+        sourceDocId: context.sourceDocId,
+        labelSection: context.labelSection,
+        extractionConfidence: context.extractionConfidence,
+        medicationMetadata: context.metadata,
+      ),
+    );
+    final reasons = <String>{
+      for (final issue in validation.issues)
+        'medication.normalized_context(${event.id}).${issue.code.toLowerCase()}',
+    };
+    final canonical = validation.normalized;
+    if (canonical != null) {
+      final ingredientsAreCanonical =
+          context.activeIngredients.length ==
+              canonical.activeIngredients.length &&
+          List.generate(
+            context.activeIngredients.length,
+            (index) =>
+                context.activeIngredients[index] ==
+                canonical.activeIngredients[index],
+          ).every((matches) => matches);
+      if (!ingredientsAreCanonical ||
+          context.drugProductVariant != canonical.drugProductVariant ||
+          context.form != canonical.form ||
+          context.route != canonical.route ||
+          context.releaseType != canonical.releaseType ||
+          context.unit != canonical.unit ||
+          context.jurisdiction != canonical.jurisdiction ||
+          context.sourceDocId != canonical.sourceDocId ||
+          context.labelSection != canonical.labelSection) {
+        reasons.add('medication.normalized_context(${event.id}).not_canonical');
+      }
+    }
+    return reasons.toList(growable: false);
+  }
+
   /// Latest meal whose start falls within the model lookahead window — up to
   /// 180 minutes AFTER the dose (`m.minute <= med.minute + 180`), not only
   /// meals at or before the dose. Falls back to the earliest meal when none
@@ -402,6 +790,47 @@ class MechanisticConflictEngine {
     }
     // Fallback to the earliest meal (deterministic via the sort above).
     return primaryMeal ?? sorted.first;
+  }
+
+  /// Latest meal that had actually started by the medication event. This is
+  /// the only meal eligible to shift the dose-time absorption window. Future
+  /// candidate meals remain eligible for downstream competition overlap but
+  /// cannot causally become pre-dose gastric residual.
+  MealTimelineEvent? _absorptionMealFor(
+    MedicationTimelineEvent med,
+    TimeAxisConflictContext context,
+  ) {
+    final started =
+        context.mealEvents
+            .where((meal) => meal.minute <= med.minute)
+            .toList(growable: false)
+          ..sort((a, b) {
+            final byMinute = b.minute.compareTo(a.minute);
+            return byMinute != 0 ? byMinute : a.id.compareTo(b.id);
+          });
+    return started.isEmpty ? null : started.first;
+  }
+
+  double? _residualLoadBeforeMeal({
+    required MealTimelineEvent target,
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+  }) {
+    var residual = 0.0;
+    for (final earlier in context.mealEvents) {
+      if (earlier.id == target.id || earlier.minute >= target.minute) continue;
+      final earlierComp = mealCompositionsById[earlier.compositionId];
+      if (earlierComp == null) return null;
+      final earlierProfile = gastricEmptyingModel.build(
+        mealId: earlier.id,
+        mealStartMinute: earlier.minute,
+        composition: earlierComp,
+      );
+      residual += earlierProfile
+          .remainingFractionAt(target.minute - earlier.minute)
+          .clamp(0.0, 1.0);
+    }
+    return residual.clamp(0.0, 1.0);
   }
 
   /// Explicit levodopa dose in mg from a validated medication context. The
@@ -449,24 +878,14 @@ class MechanisticConflictEngine {
     final composition = mealCompositionsById[primaryMeal.compositionId];
     if (composition == null) return null;
 
-    // Cumulative overlap from earlier meals (residual stomach load).
-    var residual = 0.0;
-    for (final earlier in context.mealEvents) {
-      if (earlier.id == primaryMeal.id) continue;
-      if (earlier.minute >= primaryMeal.minute) continue;
-      final earlierComp = mealCompositionsById[earlier.compositionId];
-      if (earlierComp == null) continue;
-      final earlierProfile = gastricEmptyingModel.build(
-        mealId: earlier.id,
-        mealStartMinute: earlier.minute,
-        composition: earlierComp,
-      );
-      final tSinceEarlier = primaryMeal.minute - earlier.minute;
-      residual += earlierProfile
-          .remainingFractionAt(tSinceEarlier)
-          .clamp(0.0, 1.0);
-    }
-    if (residual > 1.0) residual = 1.0;
+    // Cumulative overlap at the target meal time (used only for that meal's
+    // emptying/competition trace).
+    final residual = _residualLoadBeforeMeal(
+      target: primaryMeal,
+      context: context,
+      mealCompositionsById: mealCompositionsById,
+    );
+    if (residual == null) return null;
 
     final emptyingProfile = gastricEmptyingModel.build(
       mealId: primaryMeal.id,
@@ -474,9 +893,35 @@ class MechanisticConflictEngine {
       composition: composition,
       overlappingResidualLoad: residual,
     );
+
+    // Dose-time gastric context is causally separate from the target meal.
+    // Only a meal that started on/before the medication can shift absorption.
+    final doseTimeMeal = _absorptionMealFor(med, context);
+    GastricEmptyingProfile? doseTimeMealProfile;
+    if (doseTimeMeal != null) {
+      if (doseTimeMeal.id == primaryMeal.id) {
+        doseTimeMealProfile = emptyingProfile;
+      } else {
+        final doseTimeComposition =
+            mealCompositionsById[doseTimeMeal.compositionId];
+        if (doseTimeComposition == null) return null;
+        final doseTimeResidual = _residualLoadBeforeMeal(
+          target: doseTimeMeal,
+          context: context,
+          mealCompositionsById: mealCompositionsById,
+        );
+        if (doseTimeResidual == null) return null;
+        doseTimeMealProfile = gastricEmptyingModel.build(
+          mealId: doseTimeMeal.id,
+          mealStartMinute: doseTimeMeal.minute,
+          composition: doseTimeComposition,
+          overlappingResidualLoad: doseTimeResidual,
+        );
+      }
+    }
     final absorption = absorptionModel.build(
       medication: med,
-      overlappingMealProfile: emptyingProfile,
+      overlappingMealProfile: doseTimeMealProfile,
     );
     final competition = competitionModel.build(
       mealComposition: composition,
@@ -528,6 +973,157 @@ class MechanisticConflictEngine {
     return raw.clamp(0.0, 1.0);
   }
 
+  MealComposition _canonicalCompositionSnapshot(MealComposition composition) =>
+      MealCompositionNormalizer().normalize(
+        mealId: composition.id,
+        components: List<FoodComponent>.of(composition.foodComponents),
+        declaredPhysicalForm:
+            composition.mealPhysicalForm == MealPhysicalForm.unknown
+            ? null
+            : composition.mealPhysicalForm,
+      );
+
+  List<String> _mealCompositionIntegrityReasons(
+    MealComposition composition, {
+    required String expectedId,
+  }) {
+    final reasons = <String>[];
+    if (composition.id != expectedId || composition.id.trim().isEmpty) {
+      reasons.add('id_mismatch');
+    }
+    void validateNonnegative(String field, double? value) {
+      if (value != null && (!value.isFinite || value < 0)) {
+        reasons.add('$field.invalid_numeric');
+      }
+    }
+
+    validateNonnegative('total_calories', composition.totalCalories);
+    validateNonnegative('protein_grams', composition.proteinGrams);
+    validateNonnegative('fat_grams', composition.fatGrams);
+    validateNonnegative('fiber_grams', composition.fiberGrams);
+    validateNonnegative('carbohydrate_grams', composition.carbohydrateGrams);
+    final liquidFraction = composition.liquidFraction;
+    if (liquidFraction != null &&
+        (!liquidFraction.isFinite ||
+            liquidFraction < 0 ||
+            liquidFraction > 1)) {
+      reasons.add('liquid_fraction.invalid_numeric');
+    }
+    if (!composition.compositionCompleteness.isFinite ||
+        composition.compositionCompleteness < 0 ||
+        composition.compositionCompleteness > 1) {
+      reasons.add('composition_completeness.out_of_range');
+    }
+
+    final componentIds = <String>{};
+    for (final component in composition.foodComponents) {
+      final componentPrefix = 'food_component(${component.id})';
+      if (component.id.trim().isEmpty || !componentIds.add(component.id)) {
+        reasons.add('$componentPrefix.id_empty_or_duplicate');
+      }
+      if (component.name.trim().isEmpty) {
+        reasons.add('$componentPrefix.name_empty');
+      }
+      validateNonnegative(
+        '$componentPrefix.protein_grams',
+        component.proteinGrams,
+      );
+      validateNonnegative('$componentPrefix.fat_grams', component.fatGrams);
+      validateNonnegative('$componentPrefix.fiber_grams', component.fiberGrams);
+      validateNonnegative(
+        '$componentPrefix.carbohydrate_grams',
+        component.carbohydrateGrams,
+      );
+      validateNonnegative('$componentPrefix.calories', component.calories);
+      validateNonnegative(
+        '$componentPrefix.portion_grams',
+        component.portionGrams,
+      );
+      final aminoAcids = component.aminoAcidProfile;
+      if (aminoAcids != null) {
+        final values = [
+          aminoAcids.leucine,
+          aminoAcids.isoleucine,
+          aminoAcids.valine,
+          aminoAcids.phenylalanine,
+          aminoAcids.tyrosine,
+          aminoAcids.tryptophan,
+          aminoAcids.histidine,
+          aminoAcids.methionine,
+          aminoAcids.threonine,
+          aminoAcids.lysine,
+          aminoAcids.cystine,
+          aminoAcids.arginine,
+        ];
+        if (values.any(
+          (value) => value != null && (!value.isFinite || value < 0),
+        )) {
+          reasons.add('$componentPrefix.amino_acid_profile.invalid_numeric');
+        }
+      }
+    }
+
+    final canonical = _canonicalCompositionSnapshot(composition);
+    bool sameNumber(double? left, double? right) {
+      if (left == null || right == null) return left == right;
+      if (!left.isFinite || !right.isFinite) return false;
+      final scale = 1.0 + left.abs() + right.abs();
+      return (left - right).abs() <= 1e-12 * scale;
+    }
+
+    final numericPairs = <String, (double?, double?)>{
+      'total_calories': (composition.totalCalories, canonical.totalCalories),
+      'protein_grams': (composition.proteinGrams, canonical.proteinGrams),
+      'fat_grams': (composition.fatGrams, canonical.fatGrams),
+      'fiber_grams': (composition.fiberGrams, canonical.fiberGrams),
+      'carbohydrate_grams': (
+        composition.carbohydrateGrams,
+        canonical.carbohydrateGrams,
+      ),
+      'liquid_fraction': (composition.liquidFraction, canonical.liquidFraction),
+      'composition_completeness': (
+        composition.compositionCompleteness,
+        canonical.compositionCompleteness,
+      ),
+    };
+    for (final entry in numericPairs.entries) {
+      if (!sameNumber(entry.value.$1, entry.value.$2)) {
+        reasons.add('${entry.key}.canonical_mismatch');
+      }
+    }
+    if (composition.mealPhysicalForm != canonical.mealPhysicalForm) {
+      reasons.add('meal_physical_form.canonical_mismatch');
+    }
+    if (composition.portionSizeBand != canonical.portionSizeBand) {
+      reasons.add('portion_size_band.canonical_mismatch');
+    }
+    if (composition.proteinAmountBand != canonical.proteinAmountBand) {
+      reasons.add('protein_amount_band.canonical_mismatch');
+    }
+    if (composition.fatAmountBand != canonical.fatAmountBand) {
+      reasons.add('fat_amount_band.canonical_mismatch');
+    }
+    if (composition.fiberAmountBand != canonical.fiberAmountBand) {
+      reasons.add('fiber_amount_band.canonical_mismatch');
+    }
+    if (composition.calorieBand != canonical.calorieBand) {
+      reasons.add('calorie_band.canonical_mismatch');
+    }
+    if (composition.missingFields.toSet().length !=
+            composition.missingFields.length ||
+        composition.missingFields
+            .toSet()
+            .difference(canonical.missingFields.toSet())
+            .isNotEmpty ||
+        canonical.missingFields
+            .toSet()
+            .difference(composition.missingFields.toSet())
+            .isNotEmpty) {
+      reasons.add('missing_fields.canonical_mismatch');
+    }
+    return List.unmodifiable(reasons);
+  }
+
   SeverityBand _severity(
     double score,
     CompetitionBand competition,
@@ -542,7 +1138,7 @@ class MechanisticConflictEngine {
 
   ConfidenceBand _confidence({
     required double compositionCompleteness,
-    required UncertaintyBand emptyingUncertainty,
+    required UncertaintyBand consumedUpstreamUncertainty,
     required int missingTimelineFields,
     required bool competitionUnknown,
   }) {
@@ -551,14 +1147,33 @@ class MechanisticConflictEngine {
     // missing), the engine must not pretend medium confidence.
     if (competitionUnknown) return ConfidenceBand.low;
     if (missingTimelineFields >= 3) return ConfidenceBand.low;
-    if (emptyingUncertainty == UncertaintyBand.veryWide) {
+    if (consumedUpstreamUncertainty == UncertaintyBand.veryWide) {
       return ConfidenceBand.low;
     }
-    if (emptyingUncertainty == UncertaintyBand.wide) {
+    if (consumedUpstreamUncertainty == UncertaintyBand.wide) {
       return ConfidenceBand.medium;
     }
     if (compositionCompleteness < 0.85) return ConfidenceBand.medium;
     return ConfidenceBand.high;
+  }
+
+  UncertaintyBand _widestUncertainty(Iterable<UncertaintyBand> bands) => bands
+      .reduce((current, next) => current.index >= next.index ? current : next);
+
+  MechanisticProviderAvailability _mergeProviderAvailability(
+    Iterable<MechanisticProviderAvailability> availabilities,
+  ) {
+    final values = availabilities.toSet();
+    if (values.contains(MechanisticProviderAvailability.blockedIntegrity)) {
+      return MechanisticProviderAvailability.blockedIntegrity;
+    }
+    if (values.contains(MechanisticProviderAvailability.notApplicable)) {
+      return MechanisticProviderAvailability.notApplicable;
+    }
+    if (values.contains(MechanisticProviderAvailability.insufficient)) {
+      return MechanisticProviderAvailability.insufficient;
+    }
+    return MechanisticProviderAvailability.available;
   }
 
   MechanisticLayerTrace _trace(

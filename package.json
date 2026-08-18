@@ -7,6 +7,13 @@
     "public:preflight": "node tool/public_repo_preflight.mjs",
     "security:backend": "node tool/backend_security_gate.mjs",
     "rules:contract": "node tool/firestore_rules_contract_check.mjs",
+    "rules:runner:test": "node --test tool/run_firestore_rules_semantic.test.mjs tool/run_firestore_rules_semantic_suite.test.mjs",
+    "schema:contract": "node --test tool/schema_catalog_check.test.mjs && node tool/schema_catalog_check.mjs",
+    "upgrade:queue": "node --test tool/complete_app_upgrade_queue_check.test.mjs && node tool/complete_app_upgrade_queue_check.mjs",
+    "open-source:firewall": "node --test tool/open_source_influence_check.test.mjs && node tool/open_source_influence_check.mjs",
+    "release:contract": "node --test tool/release_app_check_config.test.mjs tool/release_source_contract.test.mjs",
+    "security:dependencies": "npm audit --omit=dev --audit-level=high",
+    "rules:test": "node tool/run_firestore_rules_semantic.mjs",
     "firebase:ops": "node tool/firebase_ops.mjs",
     "firebase:live-probe": "node tool/firestore_live_probe.mjs",
     "firebase:stage-test-accounts": "node tool/firebase_stage_test_accounts.mjs",
@@ -31,6 +38,7 @@
     "scenario:fuzz": "node tool/run_synthetic_scenario_fuzzer.mjs",
     "localization:lint": "node tool/run_localization_safety_lint.mjs",
     "privacy:preflight": "node tool/run_local_privacy_preflight.mjs",
+    "privacy:store": "node --test tool/store_privacy_contract_check.test.mjs && node tool/store_privacy_contract_check.mjs",
     "source:access": "node tool/run_source_access_contract_check.mjs",
     "input:quality": "node tool/run_input_quality_demo.mjs",
     "catalog:resolve": "node tool/run_catalog_resolution_demo.mjs",
@@ -46,5 +54,10 @@
   },
   "overrides": {
     "uuid": "^11.1.1"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "firebase": "^12.17.1",
+    "firebase-tools": "15.27.0"
   }
 }

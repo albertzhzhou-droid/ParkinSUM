@@ -1,0 +1,283 @@
+{
+  "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
+  "schemaVersion": 1,
+  "review": {
+    "reviewedAt": "2026-08-18",
+    "reviewerRole": "repository_privacy_engineering_review",
+    "storeOwnerApproval": "pending_external_account_owner",
+    "approvalScope": "Repository and locally built artifact facts only; this is not an App Store Connect or Play Console submission receipt."
+  },
+  "lockIdentities": {
+    "pubspec.lock": "658d6b4084a87ca74145984f1efbaf95736381424d0a638dd9d418a1a34e5b5c",
+    "package-lock.json": "cf791de0c70e48a1f85e35e8de84a471020e1114d67ba42fe8a5c1d2e4d1217c",
+    "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
+    "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
+  },
+  "runtimeDirectDependencies": {
+    "archive": "archive_import_and_export",
+    "cloud_firestore": "first_party_firebase_backend",
+    "crypto": "local_integrity_hashing",
+    "csv": "local_import_parsing",
+    "cupertino_icons": "ui_asset",
+    "firebase_app_check": "first_party_backend_abuse_protection",
+    "firebase_auth": "first_party_account_authentication",
+    "firebase_core": "first_party_backend_bootstrap",
+    "flutter": "application_framework",
+    "flutter_local_notifications": "device_notification_scheduler",
+    "flutter_localizations": "localization_framework",
+    "flutter_secure_storage": "platform_protected_secret_storage",
+    "flutter_timezone": "device_timezone_read",
+    "http": "network_transport",
+    "path": "local_path_manipulation",
+    "pdf": "offline_personal_log_pdf_generation",
+    "printing": "user_initiated_system_print_and_share",
+    "provider": "local_state_management",
+    "shared_preferences": "noncritical_local_preferences",
+    "sqflite": "local_structured_persistence",
+    "timezone": "local_schedule_calculation",
+    "xml": "local_import_parsing",
+    "yaml": "local_configuration_parsing"
+  },
+  "operatorDependencies": {
+    "firebase-admin": "operator_only_backend_administration"
+  },
+  "apple": {
+    "privacyManifests": {
+      "ios/Runner/PrivacyInfo.xcprivacy": "b505f90690a976cb6b782aa429ea40d4ef4491d08ec6ccf9605bda95bd35be8b",
+      "macos/Runner/PrivacyInfo.xcprivacy": "db95cc62a5df15f3ce1661285addbc7eda12172002f6cbf9bfcbdd6cedf1ae29"
+    },
+    "collectedDataTypes": [
+      "NSPrivacyCollectedDataTypeEmailAddress",
+      "NSPrivacyCollectedDataTypeHealth",
+      "NSPrivacyCollectedDataTypeOtherUserContent",
+      "NSPrivacyCollectedDataTypeUserID"
+    ],
+    "tracking": false,
+    "trackingDomains": [],
+    "appRequiredReasonApis": [],
+    "reviewedThirdPartyPrivacyManifests": {
+      "flutter_local_notifications": {
+        "accessedApiCategory": "NSPrivacyAccessedAPICategoryUserDefaults",
+        "reason": "CA92.1"
+      },
+      "flutter_secure_storage_darwin": {
+        "package": "flutter_secure_storage_darwin",
+        "manifestPath": "darwin/flutter_secure_storage_darwin/Sources/flutter_secure_storage_darwin/Resources/PrivacyInfo.xcprivacy",
+        "accessedApiCategory": null,
+        "reason": null,
+        "manifestSha256": "47226a29608df206ad0a110e6afeb5a77ff575ac1df9c76bfdb2d6dfb3fafed1"
+      },
+      "shared_preferences_foundation": {
+        "accessedApiCategory": "NSPrivacyAccessedAPICategoryUserDefaults",
+        "reason": "1C8F.1"
+      },
+      "flutter_timezone": {
+        "accessedApiCategory": null,
+        "reason": null
+      },
+      "pdf": {
+        "accessedApiCategory": null,
+        "reason": null,
+        "manifestAvailability": "not_an_apple_plugin",
+        "reviewBoundary": "offline_byte_generation_only"
+      },
+      "printing": {
+        "accessedApiCategory": null,
+        "reason": null,
+        "manifestAvailability": "no_bundled_privacy_manifest_in_5_15_0",
+        "reviewBoundary": "system_print_and_share_only_no_pdf_preview_or_google_fonts"
+      },
+      "sqflite_darwin": {
+        "accessedApiCategory": null,
+        "reason": null
+      }
+    },
+    "keychainAccessGroupEntitlements": {
+      "ios/Runner/Runner.entitlements": "0672f83103b450e4e0b5b86e42238d9b9ba39af727de43d185f22ec56143cda5",
+      "macos/Runner/DebugProfile.entitlements": "4e3aee7c236fd006e45411b3c64d753918ab8dfc24ff76894a6997632973bcf7",
+      "macos/Runner/Release.entitlements": "72fcfa8eef3a4a9cc33b81725101fc247c684a8d11dcb897272ceaf5af8e2357"
+    },
+    "releaseEntitlements": {
+      "com.apple.security.app-sandbox": true,
+      "com.apple.security.network.client": true,
+      "com.apple.security.print": true
+    }
+  },
+  "android": {
+    "sourceManifestSha256": "7e2281a537e116e2711f658f514c0b802f6eed629802bc7cc4f638c00faf4c95",
+    "dataExtractionRules": {
+      "path": "android/app/src/main/res/xml/data_extraction_rules.xml",
+      "sha256": "9bd907668d74ac2a01475758d4833624d7cbe067769877f211516eeae339cabb",
+      "cloudBackup": "deny_all",
+      "deviceTransfer": "deny_all"
+    },
+    "sourcePermissions": [
+      "android.permission.RECEIVE_BOOT_COMPLETED"
+    ],
+    "expectedMergedPermissions": [
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.INTERNET",
+      "android.permission.POST_NOTIFICATIONS",
+      "android.permission.RECEIVE_BOOT_COMPLETED",
+      "android.permission.VIBRATE",
+      "com.google.android.providers.gsf.permission.READ_GSERVICES",
+      "com.parkinsum.companion.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+    ],
+    "permissions": {
+      "android.permission.ACCESS_NETWORK_STATE": "backend_connectivity_state",
+      "android.permission.INTERNET": "first_party_backend_and_user_initiated_catalog_fetch",
+      "android.permission.POST_NOTIFICATIONS": "user_enabled_local_logging_reminders",
+      "android.permission.RECEIVE_BOOT_COMPLETED": "restore_enabled_local_reminder_schedules",
+      "android.permission.VIBRATE": "local_notification_delivery",
+      "com.google.android.providers.gsf.permission.READ_GSERVICES": "firebase_google_play_services_bootstrap",
+      "com.parkinsum.companion.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION": "androidx_internal_nonexported_receiver_guard"
+    }
+  },
+  "networkDestinations": {
+    "literalHosts": [
+      "127.0.0.1",
+      "api.fda.gov",
+      "api.nal.usda.gov",
+      "cdsco.gov.in",
+      "dailymed.nlm.nih.gov",
+      "ebasis.eurofir.org",
+      "entrepot.recherche.data.gouv.fr",
+      "fdc.nal.usda.gov",
+      "health-products.canada.ca",
+      "inmu2.mahidol.ac.th",
+      "ion.ru",
+      "koreanfood.rda.go.kr",
+      "medlineplus.gov",
+      "nlc.chinanutri.cn",
+      "pubmed.ncbi.nlm.nih.gov",
+      "roszdravnadzor.gov.ru",
+      "world.openfoodfacts.org",
+      "www.aemps.gob.es",
+      "www.bedca.net",
+      "www.chinacdc.cn",
+      "www.dietaryguidelines.gov",
+      "www.ema.europa.eu",
+      "www.eurofir.org",
+      "www.fao.org",
+      "www.fda.gov",
+      "www.fda.moph.go.th",
+      "www.foodstandards.gov.au",
+      "www.gob.mx",
+      "www.incap.int",
+      "www.mext.go.jp",
+      "www.mfds.go.kr",
+      "www.nhc.gov.cn",
+      "www.nice.org.uk",
+      "www.nin.res.in",
+      "www.nrc.sci.eg",
+      "www.pmda.go.jp",
+      "www.pzh.gov.pl",
+      "www.sfda.gov.sa",
+      "www.whocc.no",
+      "zwfw.nmpa.gov.cn"
+    ],
+    "dynamicClasses": {
+      "firebase_first_party": {
+        "hostPatterns": [
+          "*.firebaseapp.com",
+          "*.firebasestorage.app",
+          "*.googleapis.com",
+          "*.google.com"
+        ],
+        "data": ["email_address", "user_id", "health_and_medication_log", "user_content"],
+        "purpose": "account_authentication_and_user_requested_cross_device_persistence"
+      },
+      "local_ai_loopback_only": {
+        "hostPatterns": ["127.0.0.1", "localhost", "[::1]"],
+        "data": ["user_selected_meal_and_medication_context"],
+        "purpose": "separately_consented_on_device_or_loopback_response_polish"
+      },
+      "catalog_and_evidence_sources": {
+        "hostPatterns": ["literalHosts"],
+        "data": ["public_catalog_query_identifiers", "operator_supplied_api_key_where_required"],
+        "purpose": "user_or_operator_initiated_public_catalog_import_no_account_or_health_payload"
+      }
+    }
+  },
+  "dataFlows": [
+    {
+      "id": "local_user_state",
+      "location": "on_device",
+      "fields": ["profile_preferences", "purpose_bound_consent_receipts", "medication_selection", "intakes", "meals", "recoverable_meal_and_intake_revision_history", "reminder_plans"],
+      "purpose": "app_functionality",
+      "thirdParty": false
+    },
+    {
+      "id": "firebase_user_state",
+      "location": "first_party_off_device",
+      "fields": ["email_address", "user_id", "profile_preferences", "purpose_bound_consent_receipts", "medication_selection", "intakes", "meals", "recoverable_meal_and_intake_revision_history"],
+      "purpose": "authentication_and_cross_device_app_functionality",
+      "thirdParty": false
+    },
+    {
+      "id": "local_notifications",
+      "location": "operating_system_local",
+      "fields": ["random_plan_capability", "random_reminder_id", "minimal_or_generic_nonclinical_copy", "notification_locale_snapshot", "requested_android_lockscreen_visibility"],
+      "purpose": "user_enabled_logging_prompt",
+      "thirdParty": false
+    },
+    {
+      "id": "portable_export",
+      "location": "user_selected_local_destination",
+      "fields": ["user_reviewed_portable_snapshot"],
+      "purpose": "user_initiated_data_portability",
+      "thirdParty": false
+    },
+    {
+      "id": "personal_log_handoff",
+      "location": "user_selected_operating_system_destination",
+      "fields": ["user_reviewed_personal_log_summary", "rendered_pdf"],
+      "purpose": "user_initiated_copy_print_or_share",
+      "thirdParty": false
+    },
+    {
+      "id": "privacy_safe_support_bundle",
+      "location": "user_selected_local_destination",
+      "fields": [
+        "allowlisted_build_identity",
+        "coarse_platform_capabilities",
+        "stable_diagnostic_codes",
+        "bounded_governance_counts"
+      ],
+      "purpose": "user_initiated_technical_support",
+      "thirdParty": false
+    },
+    {
+      "id": "local_portable_owner_capability",
+      "location": "platform_protected_local_storage",
+      "fields": ["random_owner_capability", "key_id", "revision", "owner_lookup_digest"],
+      "purpose": "local_account_portable_package_owner_binding",
+      "thirdParty": false
+    },
+    {
+      "id": "operational_telemetry",
+      "location": "none",
+      "fields": [],
+      "purpose": "disabled_not_implemented",
+      "thirdParty": false
+    }
+  ],
+  "storeDeclarationSnapshots": {
+    "apple": {
+      "reviewedAt": "2026-08-18",
+      "status": "draft_pending_app_store_connect_owner_review",
+      "tracking": false,
+      "linkedData": ["email_address", "health", "other_user_content", "user_id"],
+      "purposes": ["app_functionality"]
+    },
+    "googlePlay": {
+      "reviewedAt": "2026-08-18",
+      "status": "draft_pending_play_console_owner_review",
+      "collected": ["email_address", "health_info", "other_user_content", "user_ids"],
+      "shared": [],
+      "purposes": ["account_management", "app_functionality"],
+      "encryptedInTransit": true,
+      "deletionRequestImplemented": false
+    }
+  }
+}

@@ -15,7 +15,7 @@ library;
 
 import 'model_assumption_registry.dart' show ModelEvidenceLevel;
 
-class ScoringWeight {
+final class ScoringWeight {
   final String id;
   final String label;
   final double value;
@@ -23,14 +23,14 @@ class ScoringWeight {
   final ModelEvidenceLevel evidenceLevel;
   final String limitation;
 
-  const ScoringWeight({
+  ScoringWeight({
     required this.id,
     required this.label,
     required this.value,
-    required this.sourceRefs,
+    required List<String> sourceRefs,
     required this.evidenceLevel,
     required this.limitation,
-  });
+  }) : sourceRefs = List<String>.unmodifiable(sourceRefs);
 
   bool get isPrototypeHeuristic =>
       evidenceLevel == ModelEvidenceLevel.prototypeHeuristic;
@@ -46,7 +46,9 @@ class ScoringWeight {
   };
 }
 
-class NextMealScoringParameterSet {
+final class NextMealScoringParameterSet {
+  static const double normalizationTolerance = 1e-12;
+
   /// Stable id/version so reports can record which weight set was active.
   final String id;
   final ScoringWeight conflictOverlap;
@@ -74,7 +76,7 @@ class NextMealScoringParameterSet {
   /// direction (conflict overlap dominant; provenance refines but never
   /// dominates) follows the cited levodopa-protein interaction literature.
   factory NextMealScoringParameterSet.literatureInformedDefault() {
-    return const NextMealScoringParameterSet(
+    return NextMealScoringParameterSet(
       id: 'next_meal_scoring.v1',
       conflictOverlap: ScoringWeight(
         id: 'score.conflict_overlap',
@@ -157,7 +159,7 @@ class NextMealScoringParameterSet {
     );
   }
 
-  List<ScoringWeight> get all => [
+  List<ScoringWeight> get all => List<ScoringWeight>.unmodifiable([
     conflictOverlap,
     proteinRedistribution,
     nutritionAdequacy,
@@ -166,7 +168,7 @@ class NextMealScoringParameterSet {
     jurisdictionMatch,
     provenanceQuality,
     uncertaintyPenalty,
-  ];
+  ]);
 
   /// Sum of the provenance/metadata refinement weights. Must stay below the
   /// conflict-overlap weight so provenance can never outrank a high modeled
@@ -177,6 +179,14 @@ class NextMealScoringParameterSet {
       jurisdictionMatch.value +
       provenanceQuality.value;
 
+  /// Positive contribution weights are a convex combination. The uncertainty
+  /// term is subtractive and therefore excluded from this sum.
+  double get positiveContributionWeightSum =>
+      conflictOverlap.value +
+      proteinRedistribution.value +
+      nutritionAdequacy.value +
+      provenanceWeightSum;
+
   /// Invariant guard: modeled conflict overlap stays the dominant single term
   /// and the combined provenance/metadata weight cannot exceed it.
   bool get conflictRemainsDominant =>
@@ -186,6 +196,45 @@ class NextMealScoringParameterSet {
       conflictOverlap.value >= sourceAuthority.value &&
       conflictOverlap.value >= jurisdictionMatch.value &&
       conflictOverlap.value >= provenanceQuality.value;
+
+  /// Complete production validation for an injected parameter set. Keeping
+  /// this as data allows the independent invariant gate to construct malformed
+  /// mutation fixtures, while [MechanisticNextMealScorer] rejects every error
+  /// before execution.
+  List<String> get validationErrors {
+    final errors = <String>[];
+    if (id.trim().isEmpty) errors.add('parameter_set_id_empty');
+    final semanticIds = <String>{};
+    for (final weight in all) {
+      if (weight.id.trim().isEmpty || !semanticIds.add(weight.id)) {
+        errors.add('weight_id_empty_or_duplicate:${weight.id}');
+      }
+      if (!weight.value.isFinite) {
+        errors.add('weight_nonfinite:${weight.id}');
+      } else if (weight.value < 0 || weight.value > 1) {
+        errors.add('weight_out_of_range:${weight.id}');
+      }
+      if (weight.label.trim().isEmpty) {
+        errors.add('weight_label_empty:${weight.id}');
+      }
+      if (weight.limitation.trim().isEmpty) {
+        errors.add('weight_limitation_empty:${weight.id}');
+      }
+      if (weight.sourceRefs.isEmpty ||
+          weight.sourceRefs.any((source) => source.trim().isEmpty)) {
+        errors.add('weight_source_refs_invalid:${weight.id}');
+      }
+    }
+    final positiveSum = positiveContributionWeightSum;
+    if (!positiveSum.isFinite ||
+        (positiveSum - 1.0).abs() > normalizationTolerance) {
+      errors.add('positive_weights_not_normalized');
+    }
+    if (!conflictRemainsDominant) errors.add('conflict_not_dominant');
+    return List.unmodifiable(errors);
+  }
+
+  bool get isValidForExecution => validationErrors.isEmpty;
 
   Map<String, dynamic> toJson() => {
     'id': id,

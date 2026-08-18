@@ -6,6 +6,7 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/medication_product_pack.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/recoverable_user_event.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/persisted_list_mutation.dart';
 import '../../core/theme/liquid_glass_theme.dart';
@@ -21,9 +22,31 @@ class TimelinePage extends StatelessWidget {
   const TimelinePage({super.key});
 
   Future<void> _deleteMeal(BuildContext context, String mealId) async {
-    final result = await context.read<AppState>().deleteMeal(mealId);
-    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final state = context.read<AppState>();
+    final result = await state.deleteMeal(mealId);
+    if (!context.mounted) return;
     final i18n = context.appI18n;
+    if (result.wasCommitted) {
+      final revision = state.latestRecoverableRevisionFor(
+        eventType: RecoverableUserEventType.meal,
+        recordId: mealId,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(i18n.tr('history.deleted_undo')),
+          action: revision == null
+              ? null
+              : SnackBarAction(
+                  label: i18n.tr('history.undo'),
+                  onPressed: () => state.restoreRecoverableEvent(
+                    revision.historyId,
+                  ),
+                ),
+        ),
+      );
+      return;
+    }
+    if (!result.shouldReportSaveFailure) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -34,9 +57,31 @@ class TimelinePage extends StatelessWidget {
   }
 
   Future<void> _deleteIntake(BuildContext context, String intakeId) async {
-    final result = await context.read<AppState>().deleteIntake(intakeId);
-    if (!context.mounted || !result.shouldReportSaveFailure) return;
+    final state = context.read<AppState>();
+    final result = await state.deleteIntake(intakeId);
+    if (!context.mounted) return;
     final i18n = context.appI18n;
+    if (result.wasCommitted) {
+      final revision = state.latestRecoverableRevisionFor(
+        eventType: RecoverableUserEventType.intake,
+        recordId: intakeId,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(i18n.tr('history.deleted_undo')),
+          action: revision == null
+              ? null
+              : SnackBarAction(
+                  label: i18n.tr('history.undo'),
+                  onPressed: () => state.restoreRecoverableEvent(
+                    revision.historyId,
+                  ),
+                ),
+        ),
+      );
+      return;
+    }
+    if (!result.shouldReportSaveFailure) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -221,7 +266,7 @@ class TimelinePage extends StatelessWidget {
   }) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => _IntakeEditorPage(initialIntake: initialIntake),
+        builder: (_) => IntakeEditorPage(initialIntake: initialIntake),
       ),
     );
   }
@@ -404,18 +449,23 @@ class TimelinePage extends StatelessWidget {
   }
 }
 
-class _IntakeEditorPage extends StatefulWidget {
+class IntakeEditorPage extends StatefulWidget {
   final Intake? initialIntake;
+  final bool requireExplicitMedicationSelection;
 
-  const _IntakeEditorPage({this.initialIntake});
+  const IntakeEditorPage({
+    super.key,
+    this.initialIntake,
+    this.requireExplicitMedicationSelection = false,
+  });
 
   bool get isEditing => initialIntake != null;
 
   @override
-  State<_IntakeEditorPage> createState() => _IntakeEditorPageState();
+  State<IntakeEditorPage> createState() => _IntakeEditorPageState();
 }
 
-class _IntakeEditorPageState extends State<_IntakeEditorPage> {
+class _IntakeEditorPageState extends State<IntakeEditorPage> {
   late DateTime _takenAt;
   String? _drugId;
   late final TextEditingController _dosageCtrl;
@@ -522,6 +572,8 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
     final medications = context.read<AppState>().medRepo.allDrugs;
     final drugId = medications.any((drug) => drug.id == _drugId)
         ? _drugId
+        : widget.requireExplicitMedicationSelection
+        ? null
         : medications.isEmpty
         ? null
         : medications.first.id;
@@ -593,6 +645,8 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
     final activeIds = state.activeDrugs.map((drug) => drug.id).toSet();
     final selectedDrugId = medications.any((drug) => drug.id == _drugId)
         ? _drugId
+        : widget.requireExplicitMedicationSelection
+        ? null
         : medications.isEmpty
         ? null
         : medications.first.id;
@@ -629,6 +683,34 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
                           icon: activeIds.contains(drug.id)
                               ? Icons.medication_rounded
                               : Icons.medication_outlined,
+                        ),
+                    ],
+                    onChanged: (value) => setState(() {
+                      _drugId = value;
+                      _selectedProduct = null;
+                      _productSelection = null;
+                    }),
+                  ),
+                if (selectedDrugId == null)
+                  DropdownButtonFormField<String>(
+                    key: const ValueKey<String>(
+                      'reminder-intake-medication-selection',
+                    ),
+                    initialValue: null,
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      labelText: i18n.tr('timeline.medication'),
+                      helperText: i18n.tr(
+                        'reminders.explicit_medication_selection',
+                      ),
+                    ),
+                    items: [
+                      for (final drug in medications)
+                        DropdownMenuItem<String>(
+                          value: drug.id,
+                          child: Text(
+                            i18n.medicationName(drug.id, drug.displayName),
+                          ),
                         ),
                     ],
                     onChanged: (value) => setState(() {
@@ -724,6 +806,7 @@ class _IntakeEditorPageState extends State<_IntakeEditorPage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
+                    key: const ValueKey<String>('intake-save'),
                     icon: _isSaving
                         ? const SizedBox(
                             width: 18,

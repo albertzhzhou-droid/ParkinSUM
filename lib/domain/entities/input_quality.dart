@@ -2,8 +2,8 @@
 ///
 /// Educational/research prototype only. The InputQualityGate evaluates whether a
 /// meal + medication entry carries enough structured, source-linked,
-/// non-ambiguous context to enter mechanistic scoring or mechanistic-primary
-/// ranking. It is an **input/context-completeness** assessment, NOT a
+/// non-ambiguous context to enter an educational mechanistic trace. It is an
+/// **input/context-completeness** assessment, NOT a
 /// recommendation engine. It never tells a user what to eat, when to eat, when
 /// to take medication, how to dose, or what is safe. It does not validate
 /// clinical correctness and is not clinically calibrated. Synthetic/demo data

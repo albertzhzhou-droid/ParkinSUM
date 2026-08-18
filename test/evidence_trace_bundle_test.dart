@@ -217,7 +217,7 @@ void main() {
       mechanisticTraceSummary: const MechanisticTraceSummary(
         severityBand: 'moderate',
         confidenceBand: 'medium',
-        rankerUsed: 'mechanistic_primary_window_sampled',
+        rankerUsed: 'mechanistic_trace_only_window_sampled',
         replayScenarioId: 's39_spl_ir_section_provenance',
         medicationMetadataCompleteness: 'adequate',
       ),
@@ -225,7 +225,7 @@ void main() {
     final json = b.toJson();
     final ts = json['mechanistic_trace_summary'] as Map;
     expect(ts['replay_scenario_id'], 's39_spl_ir_section_provenance');
-    expect(ts['ranker_used'], 'mechanistic_primary_window_sampled');
+    expect(ts['ranker_used'], 'mechanistic_trace_only_window_sampled');
     scanNoPhiKeys(json, extraForbiddenKeys: extraForbidden);
     expect(findBannedSubstrings(jsonEncode(json)), isEmpty);
   });

@@ -11,17 +11,20 @@ import 'package:parkinsum_companion/domain/usecases/meal_composition_normalizer.
 import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.dart';
 import 'package:parkinsum_companion/domain/usecases/time_axis_builder.dart';
 
-MedicationTimelineEvent _validLevodopaEventAt(int minute) {
+MedicationTimelineEvent _validLevodopaEventAt(
+  int minute, {
+  String releaseType = 'immediate',
+}) {
   final validator = MedicationEntryValidator();
   final result = validator.validate(
-    const RawMedicationEntry(
+    RawMedicationEntry(
       activeIngredients: ['carbidopa', 'levodopa'],
       drugProductVariant: 'synthetic:carbidopa-levodopa-25-100-ir-tablet',
       strength: 100,
       unit: 'mg',
       form: 'tablet',
       route: 'oral',
-      releaseType: 'immediate',
+      releaseType: releaseType,
       jurisdiction: 'US',
       sourceDocId: 'synthetic:demo',
     ),
@@ -32,6 +35,29 @@ MedicationTimelineEvent _validLevodopaEventAt(int minute) {
     context: result.normalized!,
   );
 }
+
+GastricEmptyingProfile _profileWithUncertainty(UncertaintyBand band) =>
+    GastricEmptyingProfile(
+      mealId: 'synthetic:uncertainty-fixture',
+      componentProfiles: const [
+        EmptyingComponentProfile(
+          componentId: 'synthetic:uncertainty-component',
+          physicalForm: MealPhysicalForm.solid,
+          lagMinutes: 0,
+          halfEmptyingMinutes: 60,
+          fractionOfMeal: 1,
+          appliedModifiers: [],
+        ),
+      ],
+      uncertaintyBand: band,
+      assumptions: const ['synthetic_test_fixture'],
+      missingInputs: const [],
+      sourceRefs: const ['synthetic:test'],
+      aggregateLagMinutes: 0,
+      peakEmptyingWindow: const TimelineWindow(startMinute: 0, endMinute: 90),
+      mostlyEmptiedWindow: const TimelineWindow(startMinute: 0, endMinute: 240),
+      timeScaleSensitivityFraction: 0.2,
+    );
 
 const _waterComponent = FoodComponent(
   id: 'food.water',
@@ -135,6 +161,119 @@ void main() {
       );
       expect(ctx.medicationEvents.first.id, 'b');
       expect(ctx.medicationEvents.last.id, 'a');
+    });
+
+    test('trims valid IDs and omits empty medication and meal IDs', () {
+      final builder = TimeAxisBuilder();
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final valid = MedicationEntryValidator().validate(
+        const RawMedicationEntry(
+          activeIngredients: ['carbidopa', 'levodopa'],
+          drugProductVariant: 'synthetic:v',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo',
+        ),
+      );
+      final ctx = builder.build(
+        now: now,
+        medicationInputs: [
+          MedicationTimelineInput(
+            id: ' dose ',
+            takenAt: now,
+            medicationContext: valid,
+          ),
+          MedicationTimelineInput(
+            id: '   ',
+            takenAt: now,
+            medicationContext: valid,
+          ),
+        ],
+        mealInputs: [
+          MealTimelineInput(id: ' meal ', startedAt: now, compositionId: 'c1'),
+          MealTimelineInput(id: '', startedAt: now, compositionId: 'c2'),
+        ],
+      );
+
+      expect(ctx.medicationEvents.map((event) => event.id), ['dose']);
+      expect(ctx.mealEvents.map((event) => event.id), ['meal']);
+      expect(
+        ctx.missingFields,
+        containsAll(const [
+          'medication.event_id_empty(index=1)',
+          'meal.event_id_empty(index=1)',
+        ]),
+      );
+    });
+
+    test('omits duplicate and cross-type event IDs after trimming', () {
+      final builder = TimeAxisBuilder();
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final valid = MedicationEntryValidator().validate(
+        const RawMedicationEntry(
+          activeIngredients: ['carbidopa', 'levodopa'],
+          drugProductVariant: 'synthetic:v',
+          strength: 100,
+          unit: 'mg',
+          form: 'tablet',
+          route: 'oral',
+          releaseType: 'immediate',
+          jurisdiction: 'US',
+          sourceDocId: 'synthetic:demo',
+        ),
+      );
+      final ctx = builder.build(
+        now: now,
+        medicationInputs: [
+          MedicationTimelineInput(
+            id: 'duplicate_med',
+            takenAt: now,
+            medicationContext: valid,
+          ),
+          MedicationTimelineInput(
+            id: ' duplicate_med ',
+            takenAt: now,
+            medicationContext: valid,
+          ),
+          MedicationTimelineInput(
+            id: 'shared',
+            takenAt: now,
+            medicationContext: valid,
+          ),
+        ],
+        mealInputs: [
+          MealTimelineInput(
+            id: 'duplicate_meal',
+            startedAt: now,
+            compositionId: 'c1',
+          ),
+          MealTimelineInput(
+            id: ' duplicate_meal ',
+            startedAt: now,
+            compositionId: 'c2',
+          ),
+          MealTimelineInput(
+            id: ' shared ',
+            startedAt: now,
+            compositionId: 'c3',
+          ),
+        ],
+      );
+
+      expect(ctx.medicationEvents, isEmpty);
+      expect(ctx.mealEvents, isEmpty);
+      expect(
+        ctx.missingFields,
+        containsAll(const [
+          'medication.event_id_duplicate(duplicate_med)',
+          'meal.event_id_duplicate(duplicate_meal)',
+          'timeline.event_id_collision(shared)',
+        ]),
+      );
     });
   });
 
@@ -287,7 +426,263 @@ void main() {
   });
 
   group('LevodopaAbsorptionOpportunityModel', () {
-    test('extended-release shifts and widens absorption window', () {
+    test(
+      'claimed-available malformed gastric profiles block every downstream wire',
+      () {
+        final composition = normalizer.normalize(
+          mealId: 'synthetic:gastric-integrity-meal',
+          components: const [_solidOats],
+        );
+        const validComponent = EmptyingComponentProfile(
+          componentId: 'synthetic:gastric-integrity-component',
+          physicalForm: MealPhysicalForm.solid,
+          lagMinutes: 5,
+          halfEmptyingMinutes: 60,
+          fractionOfMeal: 1,
+          appliedModifiers: [],
+        );
+        final invalidProfiles = <String, GastricEmptyingProfile>{
+          'empty-meal-id': const GastricEmptyingProfile(
+            mealId: '   ',
+            componentProfiles: [validComponent],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-meal-id'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 5,
+            peakEmptyingWindow: TimelineWindow(startMinute: 5, endMinute: 95),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 5, endMinute: 245),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'canonical-duplicate-component-id': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-duplicate-components',
+            componentProfiles: [
+              EmptyingComponentProfile(
+                componentId: 'same-id',
+                physicalForm: MealPhysicalForm.solid,
+                lagMinutes: 5,
+                halfEmptyingMinutes: 60,
+                fractionOfMeal: 0.5,
+                appliedModifiers: [],
+              ),
+              EmptyingComponentProfile(
+                componentId: ' same-id ',
+                physicalForm: MealPhysicalForm.liquid,
+                lagMinutes: 0,
+                halfEmptyingMinutes: 30,
+                fractionOfMeal: 0.5,
+                appliedModifiers: [],
+              ),
+            ],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-component-id'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 2.5,
+            peakEmptyingWindow: TimelineWindow(startMinute: 3, endMinute: 70),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 3, endMinute: 183),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'empty': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-empty',
+            componentProfiles: [],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-empty'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 0,
+            peakEmptyingWindow: TimelineWindow(startMinute: 0, endMinute: 30),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 0, endMinute: 180),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'nonfinite': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-nonfinite',
+            componentProfiles: [
+              EmptyingComponentProfile(
+                componentId: 'synthetic:nonfinite-component',
+                physicalForm: MealPhysicalForm.solid,
+                lagMinutes: double.nan,
+                halfEmptyingMinutes: double.infinity,
+                fractionOfMeal: 1,
+                appliedModifiers: [],
+              ),
+            ],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-numeric'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: double.nan,
+            peakEmptyingWindow: TimelineWindow(startMinute: 0, endMinute: 30),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 0, endMinute: 180),
+            timeScaleSensitivityFraction: double.nan,
+          ),
+          'window-order': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-window-order',
+            componentProfiles: [validComponent],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-window-order'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 5,
+            peakEmptyingWindow: TimelineWindow(startMinute: 20, endMinute: 60),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 30, endMinute: 50),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'derived-aggregate-lag': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-derived-lag',
+            componentProfiles: [validComponent],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-derived-lag'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 999,
+            peakEmptyingWindow: TimelineWindow(startMinute: 5, endMinute: 95),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 5, endMinute: 245),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'derived-peak-duration': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-derived-peak',
+            componentProfiles: [validComponent],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-derived-peak'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 5,
+            peakEmptyingWindow: TimelineWindow(startMinute: 5, endMinute: 94),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 5, endMinute: 245),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'derived-mostly-duration': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-derived-mostly',
+            componentProfiles: [validComponent],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-derived-mostly'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 5,
+            peakEmptyingWindow: TimelineWindow(startMinute: 5, endMinute: 95),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 5, endMinute: 244),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+          'derived-window-origin': const GastricEmptyingProfile(
+            mealId: 'synthetic:gastric-derived-origin',
+            componentProfiles: [validComponent],
+            uncertaintyBand: UncertaintyBand.veryWide,
+            assumptions: ['synthetic:invalid-derived-origin'],
+            missingInputs: [],
+            sourceRefs: ['synthetic:test'],
+            aggregateLagMinutes: 5,
+            peakEmptyingWindow: TimelineWindow(startMinute: 5, endMinute: 95),
+            mostlyEmptiedWindow: TimelineWindow(startMinute: 6, endMinute: 246),
+            timeScaleSensitivityFraction: 0.2,
+          ),
+        };
+
+        for (final fixture in invalidProfiles.entries) {
+          final profile = fixture.value;
+          expect(
+            profile.availability,
+            MechanisticProviderAvailability.blockedIntegrity,
+            reason: fixture.key,
+          );
+          final gastricWire = profile.toJson();
+          expect(gastricWire['has_modeled_output'], isFalse);
+          expect(gastricWire['component_profiles'], isEmpty);
+          expect(gastricWire['aggregate_lag_minutes'], isNull);
+          expect(gastricWire['peak_emptying_window'], isNull);
+          expect(gastricWire['mostly_emptied_window'], isNull);
+          expect(gastricWire['time_scale_sensitivity_fraction'], isNull);
+
+          final absorptionResult = absorption.build(
+            medication: _validLevodopaEventAt(30),
+            overlappingMealProfile: profile,
+          );
+          expect(
+            absorptionResult.availability,
+            MechanisticProviderAvailability.blockedIntegrity,
+            reason: fixture.key,
+          );
+          final absorptionWire = absorptionResult.toJson();
+          expect(absorptionWire['window'], isNull);
+          expect(absorptionWire['peak_minute'], isNull);
+          expect(absorptionWire['peak_openness'], isNull);
+          expect(absorptionWire['openness_profile'], isEmpty);
+
+          final competitionResult = competition.build(
+            mealComposition: composition,
+            mealEmptyingProfile: profile,
+            absorptionWindow: const AbsorptionOpportunityWindow(
+              medicationEventId: 'synthetic:gastric-integrity-dose',
+              window: TimelineWindow(startMinute: 30, endMinute: 120),
+              peakMinute: 60,
+              delayedArrivalLikelihood: DelayedArrivalLikelihood.low,
+              uncertaintyBand: UncertaintyBand.narrow,
+              assumptions: ['synthetic:valid-absorption'],
+              missingInputs: [],
+              sourceRefs: ['synthetic:test'],
+              opennessProfile: [
+                AbsorptionOpennessSample(minute: 30, openness: 0.1),
+                AbsorptionOpennessSample(minute: 60, openness: 1),
+                AbsorptionOpennessSample(minute: 120, openness: 0.1),
+              ],
+            ),
+            mealStartMinute: 0,
+          );
+          expect(
+            competitionResult.availability,
+            MechanisticProviderAvailability.blockedIntegrity,
+            reason: fixture.key,
+          );
+          final competitionWire = competitionResult.toJson();
+          expect(competitionWire['samples'], isEmpty);
+          expect(competitionWire['peak_minute'], isNull);
+          expect(competitionWire['peak_pressure'], isNull);
+          expect(competitionWire['overlap_with_absorption_window'], isNull);
+        }
+      },
+    );
+
+    test('inherits wide meal uncertainty without narrowing it', () {
+      for (final band in const [
+        UncertaintyBand.wide,
+        UncertaintyBand.veryWide,
+      ]) {
+        final window = absorption.build(
+          medication: _validLevodopaEventAt(30),
+          overlappingMealProfile: _profileWithUncertainty(band),
+        );
+        expect(window.uncertaintyBand, band, reason: band.name);
+      }
+    });
+
+    test('unknown release abstains without emitting an IR-shaped curve', () {
+      for (final band in const [
+        UncertaintyBand.narrow,
+        UncertaintyBand.moderate,
+        UncertaintyBand.wide,
+        UncertaintyBand.veryWide,
+      ]) {
+        final window = absorption.build(
+          medication: _validLevodopaEventAt(30, releaseType: 'unknown'),
+          overlappingMealProfile: _profileWithUncertainty(band),
+        );
+        expect(window.modelApplicable, isFalse, reason: band.name);
+        expect(
+          window.availability,
+          MechanisticProviderAvailability.insufficient,
+          reason: band.name,
+        );
+        expect(window.window.durationMinutes, 0, reason: band.name);
+        expect(window.opennessProfile, isEmpty, reason: band.name);
+        expect(
+          window.applicabilityReasons,
+          contains('mechanistic_applicability.release_type_not_supported'),
+          reason: band.name,
+        );
+      }
+    });
+
+    test('generic extended-release value abstains from the IR-only model', () {
       final c = normalizer.normalize(
         mealId: 'c',
         components: const [_solidOats],
@@ -296,10 +691,6 @@ void main() {
         mealId: 'c',
         mealStartMinute: 0,
         composition: c,
-      );
-      final ir = absorption.build(
-        medication: _validLevodopaEventAt(30),
-        overlappingMealProfile: profile,
       );
       final erValidator = MedicationEntryValidator();
       final er = erValidator.validate(
@@ -324,10 +715,13 @@ void main() {
         medication: erEvent,
         overlappingMealProfile: profile,
       );
+      expect(erWindow.modelApplicable, isFalse);
       expect(
-        erWindow.window.durationMinutes,
-        greaterThan(ir.window.durationMinutes),
+        erWindow.availability,
+        MechanisticProviderAvailability.notApplicable,
       );
+      expect(erWindow.window.durationMinutes, 0);
+      expect(erWindow.opennessProfile, isEmpty);
     });
 
     test('non-levodopa medication returns unknown delay likelihood', () {
@@ -354,6 +748,8 @@ void main() {
         overlappingMealProfile: null,
       );
       expect(w.delayedArrivalLikelihood, DelayedArrivalLikelihood.unknown);
+      expect(w.modelApplicable, isFalse);
+      expect(w.availability, MechanisticProviderAvailability.insufficient);
     });
   });
 

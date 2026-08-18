@@ -8,6 +8,7 @@ import '../../core/models/user_profile.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../entities/cdss_runtime.dart';
 import '../entities/meal_composition.dart';
+import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/resolved_variant.dart';
 import '../entities/rule_registry_models.dart';
 import '../entities/runtime_context.dart';
@@ -15,6 +16,7 @@ import 'clinical_decision_support_service.dart';
 import 'catalog_food_to_candidate.dart';
 import 'dosage_note_parser.dart';
 import 'imported_label_rule_provider.dart';
+import 'intake_dose_context_builder.dart';
 import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
 import 'medication_entry_validator.dart';
@@ -759,21 +761,27 @@ class DatabaseBackedMealCheckUseCase {
     for (final intake in intakes) {
       final drug = drugsById[intake.drugId];
       if (drug == null) continue;
-      final ingredients = <String>{
-        drug.genericName.toLowerCase(),
-        ...drug.tags.map((t) => t.name.toLowerCase()),
-      }.where((s) => s.isNotEmpty).toList(growable: false);
+      // Ingredient identity comes only from exact generic-name components.
+      // Drug tags remain category/substance tags for the legacy rule path and
+      // must never masquerade as active ingredients in the mechanistic model.
+      final ingredients = CanonicalMedicationIngredientTokenizer.tokenize([
+        drug.genericName,
+      ]);
       // Structured values are user-note-derived and preferred when present;
       // legacy records fall back to parsing dosageNote. No default is added.
       final dose = _dosageNoteParser.parseIntake(intake);
+      final formulation = resolveIntakeMechanisticFormulation(
+        intake: intake,
+        drug: drug,
+      );
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
         strength: dose.explicit ? dose.value : null,
         unit: dose.explicit ? dose.unit : null,
-        form: intake.dosageForm ?? drug.dosageForm,
-        route: intake.route ?? drug.route,
-        releaseType: intake.releaseType ?? drug.releaseType,
+        form: formulation.dosageForm,
+        route: formulation.route,
+        releaseType: formulation.releaseType,
         jurisdiction: drug.jurisdiction,
         sourceDocId: 'synthetic:${drug.sourceSystem}',
       );

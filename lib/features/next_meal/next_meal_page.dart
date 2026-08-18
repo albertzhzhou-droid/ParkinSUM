@@ -5,10 +5,68 @@ import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/liquid_glass_theme.dart';
+import '../../domain/entities/mechanistic_candidate_score.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
 import '../shared/mechanistic_trace_view.dart';
 
-/// 下餐推荐：以冲突引擎为主、本地 AI 为可选润色。
+/// Exact, one-to-one projection of model traces onto the heuristic order that
+/// the result says is authoritative. Missing, duplicate, or extra ids are
+/// withheld rather than guessed into a position.
+class MechanisticCandidateTraceAlignment {
+  final List<MechanisticCandidateScore> alignedScores;
+  final List<String> missingRecommendationIds;
+  final List<String> withheldCandidateIds;
+
+  MechanisticCandidateTraceAlignment({
+    required List<MechanisticCandidateScore> alignedScores,
+    required List<String> missingRecommendationIds,
+    required List<String> withheldCandidateIds,
+  }) : alignedScores = List.unmodifiable(alignedScores),
+       missingRecommendationIds = List.unmodifiable(missingRecommendationIds),
+       withheldCandidateIds = List.unmodifiable(withheldCandidateIds);
+
+  bool get complete =>
+      missingRecommendationIds.isEmpty && withheldCandidateIds.isEmpty;
+}
+
+MechanisticCandidateTraceAlignment alignMechanisticCandidateTraces({
+  required List<String> recommendationFoodIds,
+  required List<MechanisticCandidateScore> candidateScores,
+}) {
+  final recommendationCounts = <String, int>{};
+  for (final id in recommendationFoodIds) {
+    recommendationCounts[id] = (recommendationCounts[id] ?? 0) + 1;
+  }
+  final scoreBuckets = <String, List<MechanisticCandidateScore>>{};
+  for (final score in candidateScores) {
+    scoreBuckets.putIfAbsent(score.candidateFoodId, () => []).add(score);
+  }
+
+  final aligned = <MechanisticCandidateScore>[];
+  final missing = <String>{};
+  final matchedIds = <String>{};
+  for (final id in recommendationFoodIds) {
+    final matches = scoreBuckets[id] ?? const <MechanisticCandidateScore>[];
+    if (recommendationCounts[id] == 1 && matches.length == 1) {
+      aligned.add(matches.single);
+      matchedIds.add(id);
+    } else {
+      missing.add(id);
+    }
+  }
+  final withheld = <String>{
+    for (final score in candidateScores)
+      if (!matchedIds.contains(score.candidateFoodId)) score.candidateFoodId,
+  };
+  return MechanisticCandidateTraceAlignment(
+    alignedScores: aligned,
+    missingRecommendationIds: missing.toList(growable: false),
+    withheldCandidateIds: withheld.toList(growable: false),
+  );
+}
+
+/// 下餐推荐：保守规则负责主排序，机制模型只提供教育性 trace；本地 AI
+/// 可在安全门允许时重排规则已筛选的候选或润色文案。
 ///
 /// 用户先选下一餐的预计时间 → 引擎按那个时间窗 + 当前药历 + 最近上下文重算，
 /// 然后输出 5 条候选 + 一段"为什么这样推"的解释段落（多语言）。
@@ -29,8 +87,9 @@ class _NextMealPageState extends State<NextMealPage> {
   String? _error;
 
   /// User-defined window length (minutes) starting at the target time.
-  /// Required for mechanistic-primary ranking — the engine never picks the
-  /// window; the user does. 0 = no window (mechanistic-primary inactive).
+  /// Required for an educational per-candidate mechanistic trace — the engine
+  /// never picks the window or changes the authoritative rule order. 0 means
+  /// no trace window.
   int _windowMinutes = 60;
   static const List<int> _windowChoices = [0, 30, 60, 90];
 
@@ -48,7 +107,7 @@ class _NextMealPageState extends State<NextMealPage> {
     // Default the AI toggle to whatever the user already consented to during
     // onboarding. They can still flip it per-generation.
     final state = context.read<AppState>();
-    _useLocalAi = state.userProfile.localAiConsentEnabled;
+    _useLocalAi = state.userProfile.hasCurrentLocalAiConsent;
   }
 
   Future<void> _pickTargetTime() async {
@@ -77,6 +136,7 @@ class _NextMealPageState extends State<NextMealPage> {
   }
 
   Future<void> _generate() async {
+    debugPrint('[NextMeal] generate:start');
     setState(() {
       _generating = true;
       _error = null;
@@ -93,9 +153,11 @@ class _NextMealPageState extends State<NextMealPage> {
           );
       if (!mounted) return;
       setState(() => _result = result);
+      debugPrint('[NextMeal] generate:done');
     } catch (error) {
       if (!mounted) return;
       setState(() => _error = '$error');
+      debugPrint('[NextMeal] generate:error type=${error.runtimeType}');
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -111,6 +173,15 @@ class _NextMealPageState extends State<NextMealPage> {
       body: SafeArea(
         bottom: false,
         child: ListView(
+          key: ValueKey<String>(
+            _error != null
+                ? 'next-meal-state-error'
+                : _result != null
+                ? 'next-meal-state-result'
+                : _generating
+                ? 'next-meal-state-generating'
+                : 'next-meal-state-idle',
+          ),
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           children: [
             _SubtitleBlock(i18n: i18n),
@@ -130,8 +201,8 @@ class _NextMealPageState extends State<NextMealPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Meal time window you provide (minutes)',
+                  Text(
+                    i18n.tr('next_meal.window_title'),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -139,10 +210,8 @@ class _NextMealPageState extends State<NextMealPage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'You set the window. The prototype only ranks food '
-                    'candidates inside it and does not choose your meal time. '
-                    'A window is required for mechanistic-primary ranking.',
+                  Text(
+                    i18n.tr('next_meal.window_help'),
                     style: TextStyle(
                       fontSize: 11,
                       color: LiquidGlass.onSurfaceMuted,
@@ -154,7 +223,13 @@ class _NextMealPageState extends State<NextMealPage> {
                     children: [
                       for (final m in _windowChoices)
                         ChoiceChip(
-                          label: Text(m == 0 ? 'none' : '$m min'),
+                          label: Text(
+                            m == 0
+                                ? i18n.tr('next_meal.window_none')
+                                : i18n.tr('next_meal.window_minutes', {
+                                    'minutes': '$m',
+                                  }),
+                          ),
                           selected: _windowMinutes == m,
                           onSelected: (_) => setState(() => _windowMinutes = m),
                         ),
@@ -254,35 +329,40 @@ class _ControlsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(LiquidGlass.radiusMd),
-              onTap: onPickTime,
-              child: GlassSurface(
-                borderRadius: LiquidGlass.radiusMd,
-                blurSigma: LiquidGlass.blurSm,
+          Semantics(
+            button: true,
+            label: i18n.tr('next_meal.input_time'),
+            value: _formatTime(targetTime),
+            excludeSemantics: true,
+            child: OutlinedButton(
+              key: const ValueKey('next-meal-time-picker'),
+              onPressed: onPickTime,
+              style: OutlinedButton.styleFrom(
+                alignment: AlignmentDirectional.centerStart,
                 padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _formatTime(targetTime),
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: LiquidGlass.onSurface,
-                          letterSpacing: -0.1,
-                        ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(LiquidGlass.radiusMd),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _formatTime(targetTime),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: LiquidGlass.onSurface,
+                        letterSpacing: -0.1,
                       ),
                     ),
-                    const Icon(
-                      Icons.event_outlined,
-                      size: 20,
-                      color: LiquidGlass.onSurfaceMuted,
-                    ),
-                  ],
-                ),
+                  ),
+                  const Icon(
+                    Icons.event_outlined,
+                    size: 20,
+                    color: LiquidGlass.onSurfaceMuted,
+                  ),
+                ],
               ),
             ),
           ),
@@ -312,6 +392,7 @@ class _ControlsCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: GlassButton(
+              key: const ValueKey('next-meal-generate'),
               onPressed: generating ? null : onGenerate,
               leadingIcon: generating ? null : Icons.auto_fix_high_rounded,
               label: Text(
@@ -365,41 +446,45 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            size: 22,
-            color: Colors.red.withValues(alpha: 0.85),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  i18n.tr('next_meal.error'),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.red.withValues(alpha: 0.85),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  error,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: LiquidGlass.onSurfaceMuted,
-                  ),
-                ),
-              ],
+    return Semantics(
+      key: const ValueKey('next-meal-error'),
+      liveRegion: true,
+      child: GlassCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 22,
+              color: Colors.red.withValues(alpha: 0.85),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    i18n.tr('next_meal.error'),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.red.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    error,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: LiquidGlass.onSurfaceMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -427,8 +512,18 @@ class _ResultBlock extends StatelessWidget {
         .where((line) => line.trim().isNotEmpty)
         .map(copy.recommendationMessage)
         .toList(growable: false);
+    final traceAlignment = alignMechanisticCandidateTraces(
+      recommendationFoodIds: result.recommendations
+          .take(5)
+          .map((recommendation) => recommendation.food.id)
+          .toList(growable: false),
+      candidateScores:
+          result.mechanisticCandidateScores ??
+          const <MechanisticCandidateScore>[],
+    );
 
     return Column(
+      key: const ValueKey('next-meal-result'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Path + AI badge header.
@@ -653,8 +748,7 @@ class _ResultBlock extends StatelessWidget {
           const SizedBox(height: 12),
           MechanisticConflictTraceCard(typedResult: result.mechanisticTrace),
         ],
-        if (result.mechanisticCandidateScores != null &&
-            result.mechanisticCandidateScores!.isNotEmpty) ...[
+        if (traceAlignment.alignedScores.isNotEmpty) ...[
           const SizedBox(height: 12),
           const Text(
             'Model trace per candidate (educational)',
@@ -665,17 +759,28 @@ class _ResultBlock extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          for (final s in result.mechanisticCandidateScores!.take(5))
+          for (final s in traceAlignment.alignedScores)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: MechanisticCandidateScoreLine(score: s),
             ),
         ],
+        if ((result.mechanisticCandidateScores?.isNotEmpty ?? false) &&
+            !traceAlignment.complete) ...[
+          const SizedBox(height: 4),
+          const Text(
+            'Some candidate trace rows were withheld because an exact '
+            'one-to-one ID match with the displayed heuristic order could '
+            'not be established.',
+            key: ValueKey('next-meal-trace-alignment-withheld'),
+            style: TextStyle(fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+          ),
+        ],
         if (result.rankerUsed != null) ...[
           const SizedBox(height: 6),
           Text(
-            'Ranker used: ${result.rankerUsed}'
-            '${result.rankerEligibility != null ? ' · eligible: ${result.rankerEligibility!.mechanisticPrimaryEligible}' : ''}',
+            'Recommendation ranker: ${result.rankerUsed} · '
+            'mechanistic trace changes order: no',
             style: const TextStyle(
               fontSize: 11,
               color: LiquidGlass.onSurfaceMuted,
@@ -687,12 +792,13 @@ class _ResultBlock extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             result.rankerEligibility!.fallbackReasons.contains(
-                  'missing_user_defined_window',
+                  'mechanistic_trace_only_not_validated_for_ranking',
                 )
-                ? 'Mechanistic-primary ranking is unavailable because no '
-                      'user-defined meal window was provided.'
-                : 'Mechanistic-primary ranking is unavailable because context '
-                      'metadata is incomplete (${result.rankerEligibility!.fallbackReasons.join(', ')}).',
+                ? 'The mechanistic model is an educational trace only and '
+                      'does not reorder recommendations. Trace limitations: '
+                      '${result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ').isEmpty ? 'none beyond the trace-only boundary' : result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ')}.'
+                : 'The mechanistic trace is unavailable for this request '
+                      '(${result.rankerEligibility!.fallbackReasons.join(', ')}).',
             style: const TextStyle(
               fontSize: 11,
               color: LiquidGlass.onSurfaceMuted,
@@ -704,11 +810,12 @@ class _ResultBlock extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             !windowProvided
-                ? 'Mechanistic-primary ranking is unavailable because no '
-                      'meal-time window was provided. Choose a window above to '
-                      'enable it. This is not medical advice.'
-                : 'Mechanistic-primary ranking is unavailable for this request '
-                      '(insufficient context). Showing the conservative fallback. '
+                ? 'No meal-time window was provided, so no per-candidate '
+                      'mechanistic trace was generated. Recommendations remain '
+                      'on the conservative heuristic. This is not medical advice.'
+                : 'The mechanistic trace is unavailable for this request '
+                      '(insufficient or out-of-domain context). Recommendations '
+                      'remain on the conservative heuristic. '
                       'This is not medical advice.',
             style: const TextStyle(
               fontSize: 11,

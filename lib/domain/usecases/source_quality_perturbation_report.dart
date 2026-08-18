@@ -5,6 +5,7 @@ import '../entities/meal_composition.dart';
 import '../entities/nutrient_derivation.dart';
 import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
+import 'meal_composition_normalizer.dart';
 import 'mechanistic_next_meal_scorer.dart';
 import 'medication_entry_validator.dart';
 import 'time_axis_builder.dart';
@@ -199,6 +200,42 @@ class SourceQualityPerturbationReportRunner {
 
   // Fixed reference instant for deterministic timelines (UTC).
   static final DateTime _now = DateTime.utc(2026, 1, 1, 8);
+  static const String _doseTimeMealId = 'dose_time_history';
+  static final MealComposition _doseTimeMealComposition =
+      MealCompositionNormalizer().normalize(
+        mealId: _doseTimeMealId,
+        declaredPhysicalForm: MealPhysicalForm.solid,
+        components: const [
+          FoodComponent(
+            id: 'dose_time_history_component',
+            name: 'synthetic dose-time history',
+            physicalForm: MealPhysicalForm.solid,
+            proteinGrams: 4,
+            fatGrams: 3,
+            fiberGrams: 2,
+            carbohydrateGrams: 30,
+            calories: 180,
+            portionGrams: 150,
+            sourceDocId: 'synthetic:dose_time_history',
+            aminoAcidProfile: AminoAcidProfile(
+              leucine: 0.8,
+              isoleucine: 0.4,
+              valine: 0.5,
+              phenylalanine: 0.3,
+              tyrosine: 0.2,
+              tryptophan: 0.1,
+              basis: 'per_serving',
+              nutrientIds: ['504', '503', '510', '508', '509', '501'],
+              sourceRefs: ['synthetic:dose_time_history'],
+              derivations: {'leucine': NutrientDerivation(derivationCode: 'A')},
+            ),
+          ),
+        ],
+      );
+
+  Map<String, MealComposition> get _baseMealCompositionsById => {
+    _doseTimeMealComposition.id: _doseTimeMealComposition,
+  };
 
   TimeAxisConflictContext _baseContext() {
     final v = validator.validate(
@@ -223,7 +260,14 @@ class SourceQualityPerturbationReportRunner {
           medicationContext: v,
         ),
       ],
-      mealInputs: const [],
+      mealInputs: [
+        MealTimelineInput(
+          id: _doseTimeMealId,
+          startedAt: _now.subtract(const Duration(minutes: 60)),
+          compositionId: _doseTimeMealComposition.id,
+          physicalForm: MealPhysicalForm.solid,
+        ),
+      ],
       userDefinedWindow: UserDefinedMealWindow(
         window: TimelineWindow(
           startMinute: dateTimeToMinute(_now) + 60,
@@ -309,34 +353,60 @@ class SourceQualityPerturbationReportRunner {
   }) {
     final scores = scorer.score(
       baseContext: _baseContext(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: _baseMealCompositionsById,
       candidates: [candidate],
       candidateMetadata: {candidate.id: metadata},
     );
     final s = scores.firstWhere((e) => e.candidateFoodId == candidate.id);
-    final competition = s.upstreamResult?.competitionTimeline;
+    final jurisdictionMatch = s.modeledJurisdictionMatchScore;
+    final sourceAuthority = s.modeledSourceAuthorityScore;
+    final metadataCompleteness = s.modeledMetadataCompletenessScore;
+    final provenanceQuality = s.modeledProvenanceQualityScore;
+    final confidence = s.modeledConfidenceBand;
+    final nutrientCompleteness = s.modeledNutritionDataCompleteness;
+    final finalScore = s.modeledFinalCandidateScore;
+    final conflictOverlap = s.modeledConflictOverlapScore;
+    final uncertaintyPenalty = s.modeledUncertaintyPenalty;
+    final upstream = s.upstreamResult;
+    final competition = upstream?.competitionTimeline;
+    if (!s.hasModeledOutput ||
+        jurisdictionMatch == null ||
+        sourceAuthority == null ||
+        metadataCompleteness == null ||
+        provenanceQuality == null ||
+        confidence == null ||
+        nutrientCompleteness == null ||
+        finalScore == null ||
+        conflictOverlap == null ||
+        uncertaintyPenalty == null ||
+        upstream?.hasModeledOutput != true ||
+        competition == null) {
+      throw StateError(
+        'Source-quality perturbation fixture unexpectedly abstained for '
+        '$caseId (${s.availability.name}); no numeric diagnostic row was '
+        'emitted.',
+      );
+    }
     return SourceQualityPerturbationRow(
       caseId: caseId,
       inputChanged: inputChanged,
       sourceSystem: candidate.regionalFoodLibraryRef,
-      jurisdictionMatch: s.jurisdictionMatchScore,
-      sourceAuthorityScore: s.sourceAuthorityScore,
-      metadataCompleteness: s.metadataCompletenessScore,
+      jurisdictionMatch: jurisdictionMatch,
+      sourceAuthorityScore: sourceAuthority,
+      metadataCompleteness: metadataCompleteness,
       aminoAcidConfidenceTier: aaTier.name,
       nutrientConfidenceTier: aaTier.name,
       nutrientProvenanceQuality: nutrientProvenanceQualityFor(aaTier),
-      provenanceQualityScore: s.provenanceQualityScore,
-      confidenceBand: s.confidenceBand.name,
-      nutrientCompleteness: s.nutritionDataCompleteness,
-      finalCandidateScore: s.finalCandidateScore,
-      conflictOverlapScore: s.conflictOverlapScore,
-      uncertaintyPenalty: s.uncertaintyPenalty,
-      competitionUncertaintyBand: competition?.uncertaintyBand.name ?? 'none',
+      provenanceQualityScore: provenanceQuality,
+      confidenceBand: confidence.name,
+      nutrientCompleteness: nutrientCompleteness,
+      finalCandidateScore: finalScore,
+      conflictOverlapScore: conflictOverlap,
+      uncertaintyPenalty: uncertaintyPenalty,
+      competitionUncertaintyBand: competition.uncertaintyBand.name,
       lnaaUncertaintyWidened:
-          competition?.lnaaSummary?.uncertaintyWidened ?? false,
-      rankerUsed: s.insufficientContext
-          ? 'legacy_fallback'
-          : 'mechanistic_primary_window_sampled',
+          competition.lnaaSummary?.uncertaintyWidened ?? false,
+      rankerUsed: 'mechanistic_trace_only_window_sampled',
       explanation:
           'Holding the meal/conflict/model input constant, only "$inputChanged" '
           'changed. Conflict overlap remains the dominant scoring term; '
@@ -444,7 +514,7 @@ class SourceQualityPerturbationReportRunner {
     );
 
     // --- Family 2: amino-acid confidence tier (metadata held neutral) -------
-    const neutralMeta = CandidateMetadata(
+    final neutralMeta = CandidateMetadata(
       completeness: 0.6,
       authorityScore: 0.5,
       jurisdictionMatchScore: 0.5,
@@ -544,7 +614,7 @@ class SourceQualityPerturbationReportRunner {
     final worst = _candidate('tie_worst', protein: 8, aa: aa);
     final scores = scorer.score(
       baseContext: _baseContext(),
-      baseMealCompositionsById: const {},
+      baseMealCompositionsById: _baseMealCompositionsById,
       candidates: [best, worst],
       candidateMetadata: {
         'tie_best': _meta(
@@ -561,13 +631,24 @@ class SourceQualityPerturbationReportRunner {
         ),
       },
     );
+    double modeledFinalScore(String candidateId) {
+      final score = scores.firstWhere(
+        (candidate) => candidate.candidateFoodId == candidateId,
+      );
+      final modeled = score.modeledFinalCandidateScore;
+      if (!score.hasModeledOutput || modeled == null) {
+        throw StateError(
+          'Source-quality tiebreak fixture unexpectedly abstained for '
+          '$candidateId (${score.availability.name}); no zero sentinel was '
+          'used as a score.',
+        );
+      }
+      return modeled;
+    }
+
     return (
-      better: scores
-          .firstWhere((e) => e.candidateFoodId == 'tie_best')
-          .finalCandidateScore,
-      worse: scores
-          .firstWhere((e) => e.candidateFoodId == 'tie_worst')
-          .finalCandidateScore,
+      better: modeledFinalScore('tie_best'),
+      worse: modeledFinalScore('tie_worst'),
     );
   }
 }

@@ -68,11 +68,16 @@ void main() {
     ),
   );
 
-  UserProfile consentingProfile() => UserProfile.defaults().copyWith(
-    localAiConsentEnabled: true,
-    localAiProviderPreference: LocalAiProviders.ollama,
-    localAiModel: 'gemma3n:e2b',
-  );
+  UserProfile consentingProfile() => UserProfile.defaults()
+      .copyWith(
+        localAiProviderPreference: LocalAiProviders.ollama,
+        localAiModel: 'gemma3n:e2b',
+      )
+      .withLocalAiConsentDecision(
+        enabled: true,
+        recordedAt: DateTime.utc(2026, 8, 18),
+        source: 'test_fixture',
+      );
 
   /// Builds a MockClient that always reports the model available and routes the
   /// first non-probe completion to [completionContent] (a JSON string that the
@@ -267,6 +272,7 @@ void main() {
           draftText: 'An educational note.',
           localeTag: 'en-US',
           context: 'unit-test',
+          hasCurrentPurposeBoundConsent: true,
         ),
       );
       expect(

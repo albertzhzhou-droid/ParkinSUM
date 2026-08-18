@@ -541,6 +541,7 @@ class _EntryPageState extends State<EntryPage> {
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 120),
         children: [
           TextField(
+            key: const ValueKey('entry-title-field'),
             controller: _titleCtrl,
             decoration: InputDecoration(
               labelText: i18n.tr('entry.meal_title'),
@@ -549,6 +550,7 @@ class _EntryPageState extends State<EntryPage> {
           ),
           const SizedBox(height: 12),
           TextField(
+            key: const ValueKey('entry-food-search'),
             controller: _searchCtrl,
             decoration: InputDecoration(
               labelText: i18n.tr('entry.search_food'),

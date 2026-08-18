@@ -12,6 +12,8 @@ import '../models/intake.dart';
 import '../models/interaction_result.dart';
 import '../models/meal.dart';
 import '../models/user_profile.dart';
+import '../models/purpose_bound_consent.dart';
+import '../models/recoverable_user_event.dart';
 import '../services/services.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
@@ -27,11 +29,14 @@ import '../../domain/entities/timeline_event.dart';
 import '../../domain/entities/runtime_context.dart';
 import '../../domain/usecases/knowledge_base_release_service.dart';
 import '../../domain/usecases/local_ai_recommendation_adapter.dart';
+import '../../domain/usecases/recoverable_event_restore_impact_service.dart';
+import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../../data/datasources/remote/p0_import_models.dart';
 import '../../data/datasources/remote/p0_ingestion_orchestrator.dart';
 import '../utils/local_p0_import_locator.dart';
 import 'active_drug_selection_transaction.dart';
 import 'persisted_list_mutation.dart';
+import 'persisted_value_mutation.dart';
 
 void _debugLog(String message) {
   if (kDebugMode) {
@@ -181,7 +186,13 @@ class AppState extends ChangeNotifier {
   String? _authError;
   String? _authUserId;
   String? _authUserEmail;
+  bool _authUserEmailVerified = false;
+  List<String> _authProviderIds = const <String>[];
+  Future<void>? _activeOnboardingPersistence;
   UserProfile _userProfile = UserProfile.defaults();
+  final PersistedValueMutationCoordinator<UserProfile>
+  _profileMutationCoordinator =
+      PersistedValueMutationCoordinator<UserProfile>();
 
   List<String> _activeDrugIds = [];
   final ActiveDrugSelectionCoordinator _activeDrugSelectionCoordinator =
@@ -192,6 +203,13 @@ class AppState extends ChangeNotifier {
   List<Intake> _intakes = [];
   final PersistedListMutationCoordinator<Intake> _intakeMutationCoordinator =
       PersistedListMutationCoordinator<Intake>();
+  List<RecoverableUserEventRevision> _recoverableEventHistory =
+      <RecoverableUserEventRevision>[];
+  final RecoverableUserEventIdFactory _recoverableEventIdFactory =
+      RecoverableUserEventIdFactory();
+  final RecoverableEventRestoreImpactService _restoreImpactService =
+      const RecoverableEventRestoreImpactService();
+  String? _restoreImpactAlgorithmConfigurationDigest;
   List<FoodRecommendation> _recommendations = [];
   Map<String, InteractionResult> _mealCheckCache = {};
   bool _isImportingP0 = false;
@@ -228,13 +246,20 @@ class AppState extends ChangeNotifier {
   String? get authError => _authError;
   String? get currentUserId => _authUserId;
   String? get currentUserEmail => _authUserEmail;
+  bool get currentUserEmailVerified => _authUserEmailVerified;
+  List<String> get currentUserProviderIds =>
+      List<String>.unmodifiable(_authProviderIds);
+  bool get canChangePassword => _authProviderIds.contains('password');
   UserProfile get userProfile => _userProfile;
+  bool get isSavingUserProfile => _profileMutationCoordinator.isRunning;
   bool get isUpdatingActiveDrugIds => _activeDrugSelectionCoordinator.isRunning;
   bool get isUpdatingMeals => _mealMutationCoordinator.isRunning;
   bool get isUpdatingIntakes => _intakeMutationCoordinator.isRunning;
 
   List<Meal> get meals => List.unmodifiable(_meals);
   List<Intake> get intakes => List.unmodifiable(_intakes);
+  List<RecoverableUserEventRevision> get recoverableEventHistory =>
+      List<RecoverableUserEventRevision>.unmodifiable(_recoverableEventHistory);
   bool get isImportingP0 => _isImportingP0;
   ImportTaskResult? get latestImportTask => _latestImportTask;
   String get recommendationDecisionPath => _recommendationDecisionPath;
@@ -267,6 +292,8 @@ class AppState extends ChangeNotifier {
   FoodRepository get foodRepo => services.foodRepository;
   MedicationRepository get medRepo => services.medicationRepository;
   CatalogEngine get catalogEngine => services.catalogEngine;
+  int get catalogRevision => Object.hash(foodRepo.revision, medRepo.revision);
+  Set<String> get activeDrugIds => Set<String>.unmodifiable(_activeDrugIds);
 
   List<DrugDefinition> get activeDrugs {
     final defs = <DrugDefinition>[];
@@ -311,9 +338,15 @@ class AppState extends ChangeNotifier {
     final uid = await services.authService.ensureUser();
     _authUserId = uid;
     _authUserEmail = services.authService.currentUserEmail;
+    _authUserEmailVerified = services.authService.currentUserEmailVerified;
+    _authProviderIds = services.authService.currentUserProviderIds;
 
     _isOnboarded = await services.userDataService.loadOnboarded();
     _userProfile = await services.userDataService.loadUserProfile();
+    PurposeBoundConsentRuntimeGate.synchronize(
+      subject: _userProfile.patientId,
+      evaluation: _userProfile.localAiConsentEvaluation,
+    );
     // Pull every locale_resource_bundle row into AppI18n. Importer-side
     // `LocaleResourceSeedImporter` writes ko/hi/es/vi/th/id/ru/pl/ar
     // translations into this table; loading them here means `AppI18n.tr()`
@@ -335,6 +368,8 @@ class AppState extends ChangeNotifier {
     _activeDrugIds = await services.userDataService.loadActiveDrugIdsCompat();
     _meals = await services.userDataService.loadMeals();
     _intakes = await services.userDataService.loadIntakes();
+    _recoverableEventHistory = await services.userDataService
+        .loadRecoverableUserEventHistory();
     await _refreshRecommendations();
     await _refreshMealChecks();
     await refreshLocalAiAvailability();
@@ -371,12 +406,78 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  Future<void> sendPasswordResetEmail(String email) async {
+    _isAuthBusy = true;
+    _authError = null;
+    notifyListeners();
+    try {
+      await services.authService.sendPasswordResetEmail(
+        email: email,
+        languageCode: _userProfile.displayLocale,
+      );
+      _debugLog('[AppState] auth:password_reset_requested');
+    } catch (_) {
+      // Do not expose provider error codes here: a reset surface must not
+      // become an account-enumeration oracle. The UI always shows the same
+      // neutral completion message.
+      rethrow;
+    } finally {
+      _isAuthBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> sendEmailVerification() async {
+    _isAuthBusy = true;
+    _authError = null;
+    notifyListeners();
+    try {
+      await services.authService.sendEmailVerification(
+        languageCode: _userProfile.displayLocale,
+      );
+      _debugLog('[AppState] auth:verification_requested');
+    } catch (error) {
+      _authError = '$error';
+      rethrow;
+    } finally {
+      _isAuthBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> refreshEmailVerificationStatus() async {
+    _isAuthBusy = true;
+    _authError = null;
+    notifyListeners();
+    try {
+      final user = await services.authService.reloadCurrentUser();
+      _authUserId = user?.uid;
+      _authUserEmail = user?.email;
+      _authUserEmailVerified = user?.emailVerified ?? false;
+      _authProviderIds = user?.providerIds ?? const <String>[];
+      _debugLog(
+        '[AppState] auth:verification_refreshed verified=$_authUserEmailVerified',
+      );
+      return _authUserEmailVerified;
+    } catch (error) {
+      _authError = '$error';
+      rethrow;
+    } finally {
+      _isAuthBusy = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> signOut() async {
+    await _waitForActiveOnboardingPersistence();
     _isAuthBusy = true;
     _authError = null;
     notifyListeners();
     try {
       await services.authService.signOut();
+      _authUserId = null;
+      _authUserEmail = null;
+      _authProviderIds = const <String>[];
       _clearVisiblePatientData();
     } catch (error) {
       _authError = '$error';
@@ -386,7 +487,38 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _isAuthBusy = true;
+    _authError = null;
+    notifyListeners();
+    try {
+      await services.authService.reauthenticateAndChangePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      final user = await services.authService.reloadCurrentUser();
+      _authUserId = user?.uid;
+      _authUserEmail = user?.email;
+      _authUserEmailVerified = user?.emailVerified ?? false;
+      _authProviderIds = user?.providerIds ?? const <String>[];
+      _debugLog('[AppState] auth:password_changed');
+    } on AccountSecurityException catch (error) {
+      _authError = error.failure.name;
+      rethrow;
+    } catch (_) {
+      _authError = AccountSecurityFailure.unknown.name;
+      throw const AccountSecurityException(AccountSecurityFailure.unknown);
+    } finally {
+      _isAuthBusy = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _runAuthTask(Future<String> Function() task) async {
+    await _waitForActiveOnboardingPersistence();
     _isAuthBusy = true;
     _authError = null;
     notifyListeners();
@@ -406,6 +538,8 @@ class AppState extends ChangeNotifier {
     final previousUid = _authUserId;
     _authUserId = user?.uid;
     _authUserEmail = user?.email;
+    _authUserEmailVerified = user?.emailVerified ?? false;
+    _authProviderIds = user?.providerIds ?? const <String>[];
     if (user == null) {
       _clearVisiblePatientData();
       notifyListeners();
@@ -421,11 +555,15 @@ class AppState extends ChangeNotifier {
   }
 
   void _clearVisiblePatientData() {
+    PurposeBoundConsentRuntimeGate.revokeImmediately(_userProfile.patientId);
     _isOnboarded = false;
+    _authUserEmailVerified = false;
+    _authProviderIds = const <String>[];
     _userProfile = UserProfile.defaults();
     _activeDrugIds = [];
     _meals = [];
     _intakes = [];
+    _recoverableEventHistory = [];
     _recommendations = [];
     _mealCheckCache = {};
     _recommendationDecisionPath = 'conservative_cdss';
@@ -443,51 +581,141 @@ class AppState extends ChangeNotifier {
     List<String>? activeDrugIds,
     Intake? initialIntake,
   }) async {
-    if (profile != null) {
-      final scopedProfile = FirebaseBackend.enabled && _authUserId != null
-          ? profile.copyWith(patientId: _authUserId)
-          : profile;
-      _userProfile = scopedProfile;
-      await services.userDataService.saveUserProfile(scopedProfile);
+    final expectedUserScope = _authUserId;
+    if (expectedUserScope == null) {
+      throw StateError('Onboarding requires an authenticated account scope.');
     }
-    if (activeDrugIds != null) {
-      _activeDrugIds = List<String>.from(activeDrugIds);
-      await services.userDataService.saveActiveDrugIds(_activeDrugIds);
+    final nextProfile = (profile ?? _userProfile).copyWith(
+      patientId: expectedUserScope,
+    );
+    final nextActiveDrugIds = List<String>.from(
+      activeDrugIds ?? _activeDrugIds,
+    );
+    final nextIntakes = initialIntake == null
+        ? List<Intake>.from(_intakes)
+        : <Intake>[
+            initialIntake,
+            ..._intakes.where((intake) => intake.id != initialIntake.id),
+          ];
+    _debugLog(
+      '[AppState] completeOnboarding:start '
+      'drugs=${nextActiveDrugIds.length} intakes=${nextIntakes.length}',
+    );
+    final persistence = services.userDataService.commitOnboarding(
+      profile: nextProfile,
+      activeDrugIds: nextActiveDrugIds,
+      intakes: nextIntakes,
+    );
+    final publicationBarrier = Completer<void>();
+    _activeOnboardingPersistence = publicationBarrier.future;
+    try {
+      final committed = await persistence;
+      if (_authUserId != expectedUserScope) {
+        _debugLog('[AppState] completeOnboarding:superseded_account_change');
+        throw StateError('Onboarding account changed before commit completed.');
+      }
+
+      _userProfile = committed.profile;
+      PurposeBoundConsentRuntimeGate.synchronize(
+        subject: _userProfile.patientId,
+        evaluation: _userProfile.localAiConsentEvaluation,
+      );
+      _activeDrugIds = List<String>.from(committed.activeDrugIds);
+      _intakes = List<Intake>.from(committed.intakes);
+      _isOnboarded = true;
+      try {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+        await refreshLocalAiAvailability();
+      } catch (_) {
+        // The durable first-day commit already succeeded. Derived views recover
+        // on bootstrap and must never turn a complete commit into a UI retry.
+        _debugLog('[AppState] completeOnboarding:derived_refresh_deferred');
+      }
+      _debugLog('[AppState] completeOnboarding:done');
+      notifyListeners();
+    } finally {
+      publicationBarrier.complete();
+      if (identical(_activeOnboardingPersistence, publicationBarrier.future)) {
+        _activeOnboardingPersistence = null;
+      }
     }
-    if (initialIntake != null) {
-      _intakes = [
-        initialIntake,
-        ..._intakes.where((intake) => intake.id != initialIntake.id),
-      ];
-      await services.userDataService.saveIntakes(_intakes);
-    }
-    _isOnboarded = true;
-    await services.userDataService.saveOnboarded(true);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    await refreshLocalAiAvailability();
-    notifyListeners();
   }
 
-  Future<void> saveUserProfile(UserProfile profile) async {
+  Future<void> _waitForActiveOnboardingPersistence() async {
+    final active = _activeOnboardingPersistence;
+    if (active == null) return;
+    _debugLog('[AppState] auth:waiting_for_onboarding_commit');
+    await active;
+  }
+
+  Future<PersistedValueMutationResult<UserProfile>> saveUserProfile(
+    UserProfile profile,
+  ) async {
     final scopedProfile = FirebaseBackend.enabled && _authUserId != null
         ? profile.copyWith(patientId: _authUserId)
         : profile;
-    _userProfile = scopedProfile;
-    await services.userDataService.saveUserProfile(scopedProfile);
-    await _refreshRecommendations();
-    await _refreshMealChecks();
-    await refreshLocalAiAvailability();
+    final previousProfile = _userProfile;
     _debugLog(
-      '[AppState] saveUserProfile:done region=${scopedProfile.registrationRegion} locale=${scopedProfile.displayLocale}',
+      '[AppState] saveUserProfile:start region=${scopedProfile.registrationRegion} locale=${scopedProfile.displayLocale}',
     );
-    notifyListeners();
+    final result = await _profileMutationCoordinator.commit(
+      previousValue: previousProfile,
+      nextValue: scopedProfile,
+      persist: services.userDataService.saveUserProfile,
+      apply: (savedProfile) {
+        _userProfile = savedProfile;
+        PurposeBoundConsentRuntimeGate.synchronize(
+          subject: savedProfile.patientId,
+          evaluation: savedProfile.localAiConsentEvaluation,
+        );
+        notifyListeners();
+      },
+      refresh: () async {
+        await _refreshRecommendations();
+        await _refreshMealChecks();
+        await refreshLocalAiAvailability();
+      },
+      onRunningChanged: (isRunning) {
+        _debugLog('[AppState] saveUserProfile:running=$isRunning');
+        notifyListeners();
+      },
+    );
+    if (result.status == PersistedValueMutationStatus.busy) {
+      throw StateError('A profile save is already running.');
+    }
+    _debugLog(
+      '[AppState] saveUserProfile:done status=${result.status.name} region=${scopedProfile.registrationRegion} locale=${scopedProfile.displayLocale}',
+    );
+    return result;
   }
 
-  Future<void> setLocalAiConsent(bool enabled) async {
-    await saveUserProfile(
-      _userProfile.copyWith(localAiConsentEnabled: enabled),
+  Future<void> setLocalAiConsent(
+    bool enabled, {
+    String source = 'analytics',
+  }) async {
+    final previous = _userProfile;
+    final next = previous.withLocalAiConsentDecision(
+      enabled: enabled,
+      recordedAt: DateTime.now().toUtc(),
+      source: source,
     );
+    if (!enabled) {
+      PurposeBoundConsentRuntimeGate.revokeImmediately(previous.patientId);
+      _localAiAvailability = null;
+      notifyListeners();
+    }
+    try {
+      await saveUserProfile(next);
+    } catch (_) {
+      if (enabled) {
+        PurposeBoundConsentRuntimeGate.synchronize(
+          subject: previous.patientId,
+          evaluation: previous.localAiConsentEvaluation,
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<void> saveLocalAiSettings({
@@ -566,7 +794,26 @@ class AppState extends ChangeNotifier {
       meal,
       ..._meals.where((item) => item.id != meal.id),
     ];
-    return _commitMeals('addMeal', nextMeals);
+    final previous = _meals.where((item) => item.id == meal.id).firstOrNull;
+    if (previous != null &&
+        recoverableUserEventPayloadDigest(previous.toJson()) ==
+            recoverableUserEventPayloadDigest(meal.toJson())) {
+      _debugLog('[AppState] addMeal:unchanged identical_payload');
+      return _mealMutationCoordinator.unchanged(_meals);
+    }
+    return _commitMeals(
+      'addMeal',
+      nextMeals,
+      revision: _newEventRevision(
+        eventType: RecoverableUserEventType.meal,
+        recordId: meal.id,
+        mutationType: previous == null
+            ? RecoverableUserEventMutationType.create
+            : RecoverableUserEventMutationType.update,
+        beforePayload: previous?.toJson(),
+        afterPayload: meal.toJson(),
+      ),
+    );
   }
 
   Future<PersistedListMutationResult<Meal>> updateMeal(Meal meal) async {
@@ -578,7 +825,23 @@ class AppState extends ChangeNotifier {
     final nextMeals = _meals
         .map((item) => item.id == meal.id ? meal : item)
         .toList();
-    return _commitMeals('updateMeal', nextMeals);
+    final previous = _meals.firstWhere((item) => item.id == meal.id);
+    if (recoverableUserEventPayloadDigest(previous.toJson()) ==
+        recoverableUserEventPayloadDigest(meal.toJson())) {
+      _debugLog('[AppState] updateMeal:unchanged identical_payload');
+      return _mealMutationCoordinator.unchanged(_meals);
+    }
+    return _commitMeals(
+      'updateMeal',
+      nextMeals,
+      revision: _newEventRevision(
+        eventType: RecoverableUserEventType.meal,
+        recordId: meal.id,
+        mutationType: RecoverableUserEventMutationType.update,
+        beforePayload: previous.toJson(),
+        afterPayload: meal.toJson(),
+      ),
+    );
   }
 
   Future<PersistedListMutationResult<Meal>> deleteMeal(String mealId) async {
@@ -590,6 +853,13 @@ class AppState extends ChangeNotifier {
     return _commitMeals(
       'deleteMeal',
       nextMeals,
+      revision: _newEventRevision(
+        eventType: RecoverableUserEventType.meal,
+        recordId: mealId,
+        mutationType: RecoverableUserEventMutationType.delete,
+        beforePayload: _meals.firstWhere((item) => item.id == mealId).toJson(),
+        afterPayload: null,
+      ),
       afterApply: () => _mealCheckCache.remove(mealId),
     );
   }
@@ -600,7 +870,26 @@ class AppState extends ChangeNotifier {
       intake,
       ..._intakes.where((item) => item.id != intake.id),
     ];
-    return _commitIntakes('addIntake', nextIntakes);
+    final previous = _intakes.where((item) => item.id == intake.id).firstOrNull;
+    if (previous != null &&
+        recoverableUserEventPayloadDigest(previous.toJson()) ==
+            recoverableUserEventPayloadDigest(intake.toJson())) {
+      _debugLog('[AppState] addIntake:unchanged identical_payload');
+      return _intakeMutationCoordinator.unchanged(_intakes);
+    }
+    return _commitIntakes(
+      'addIntake',
+      nextIntakes,
+      revision: _newEventRevision(
+        eventType: RecoverableUserEventType.intake,
+        recordId: intake.id,
+        mutationType: previous == null
+            ? RecoverableUserEventMutationType.create
+            : RecoverableUserEventMutationType.update,
+        beforePayload: previous?.toJson(),
+        afterPayload: intake.toJson(),
+      ),
+    );
   }
 
   Future<PersistedListMutationResult<Intake>> updateIntake(
@@ -614,7 +903,23 @@ class AppState extends ChangeNotifier {
     final nextIntakes = _intakes
         .map((item) => item.id == intake.id ? intake : item)
         .toList();
-    return _commitIntakes('updateIntake', nextIntakes);
+    final previous = _intakes.firstWhere((item) => item.id == intake.id);
+    if (recoverableUserEventPayloadDigest(previous.toJson()) ==
+        recoverableUserEventPayloadDigest(intake.toJson())) {
+      _debugLog('[AppState] updateIntake:unchanged identical_payload');
+      return _intakeMutationCoordinator.unchanged(_intakes);
+    }
+    return _commitIntakes(
+      'updateIntake',
+      nextIntakes,
+      revision: _newEventRevision(
+        eventType: RecoverableUserEventType.intake,
+        recordId: intake.id,
+        mutationType: RecoverableUserEventMutationType.update,
+        beforePayload: previous.toJson(),
+        afterPayload: intake.toJson(),
+      ),
+    );
   }
 
   Future<PersistedListMutationResult<Intake>> deleteIntake(
@@ -626,25 +931,50 @@ class AppState extends ChangeNotifier {
       return _intakeMutationCoordinator.unchanged(_intakes);
     }
     final nextIntakes = _intakes.where((item) => item.id != intakeId).toList();
-    return _commitIntakes('deleteIntake', nextIntakes);
+    return _commitIntakes(
+      'deleteIntake',
+      nextIntakes,
+      revision: _newEventRevision(
+        eventType: RecoverableUserEventType.intake,
+        recordId: intakeId,
+        mutationType: RecoverableUserEventMutationType.delete,
+        beforePayload: _intakes
+            .firstWhere((item) => item.id == intakeId)
+            .toJson(),
+        afterPayload: null,
+      ),
+    );
   }
 
   Future<PersistedListMutationResult<Meal>> _commitMeals(
     String operation,
     List<Meal> nextMeals, {
+    required RecoverableUserEventRevision revision,
     VoidCallback? afterApply,
   }) async {
     final previousMeals = List<Meal>.from(_meals);
+    final expectedUserScope = _authUserId;
     final result = await _mealMutationCoordinator.commit(
       previousItems: previousMeals,
       nextItems: nextMeals,
-      persist: services.userDataService.saveMeals,
+      persist: (committedMeals) =>
+          services.userDataService.commitRecoverableUserEventMutation(
+            mutation: RecoverableUserEventMutation(revision: revision),
+            fallbackMeals: committedMeals,
+            fallbackIntakes: _intakes,
+          ),
       apply: (committedMeals) {
+        if (_authUserId != expectedUserScope) {
+          _debugLog('[AppState] $operation:publication_superseded_account');
+          return;
+        }
         _meals = List<Meal>.from(committedMeals);
+        _recordCommittedEventRevision(revision);
         afterApply?.call();
         notifyListeners();
       },
       refresh: () async {
+        if (_authUserId != expectedUserScope) return;
         await _refreshRecommendations();
         await _refreshMealChecks();
       },
@@ -668,18 +998,31 @@ class AppState extends ChangeNotifier {
 
   Future<PersistedListMutationResult<Intake>> _commitIntakes(
     String operation,
-    List<Intake> nextIntakes,
-  ) async {
+    List<Intake> nextIntakes, {
+    required RecoverableUserEventRevision revision,
+  }) async {
     final previousIntakes = List<Intake>.from(_intakes);
+    final expectedUserScope = _authUserId;
     final result = await _intakeMutationCoordinator.commit(
       previousItems: previousIntakes,
       nextItems: nextIntakes,
-      persist: services.userDataService.saveIntakes,
+      persist: (committedIntakes) =>
+          services.userDataService.commitRecoverableUserEventMutation(
+            mutation: RecoverableUserEventMutation(revision: revision),
+            fallbackMeals: _meals,
+            fallbackIntakes: committedIntakes,
+          ),
       apply: (committedIntakes) {
+        if (_authUserId != expectedUserScope) {
+          _debugLog('[AppState] $operation:publication_superseded_account');
+          return;
+        }
         _intakes = List<Intake>.from(committedIntakes);
+        _recordCommittedEventRevision(revision);
         notifyListeners();
       },
       refresh: () async {
+        if (_authUserId != expectedUserScope) return;
         await _refreshRecommendations();
         await _refreshMealChecks();
       },
@@ -699,6 +1042,222 @@ class AppState extends ChangeNotifier {
       'totalIntakes=${result.items.length}',
     );
     return result;
+  }
+
+  RecoverableUserEventRevision _newEventRevision({
+    required RecoverableUserEventType eventType,
+    required String recordId,
+    required RecoverableUserEventMutationType mutationType,
+    required Map<String, Object?>? beforePayload,
+    required Map<String, Object?>? afterPayload,
+    String? restoresHistoryId,
+  }) => RecoverableUserEventRevision.create(
+    operationId: _recoverableEventIdFactory.newOperationId(),
+    eventType: eventType,
+    recordId: recordId,
+    mutationType: mutationType,
+    beforePayload: beforePayload,
+    afterPayload: afterPayload,
+    recordedAtUtc: DateTime.now().toUtc(),
+    source: 'app_state',
+    restoresHistoryId: restoresHistoryId,
+  );
+
+  void _recordCommittedEventRevision(RecoverableUserEventRevision revision) {
+    _recoverableEventHistory = <RecoverableUserEventRevision>[
+      revision,
+      ..._recoverableEventHistory.where(
+        (entry) => entry.historyId != revision.historyId,
+      ),
+    ];
+  }
+
+  RecoverableUserEventRevision? latestRecoverableRevisionFor({
+    required RecoverableUserEventType eventType,
+    required String recordId,
+  }) => _recoverableEventHistory
+      .where(
+        (entry) => entry.eventType == eventType && entry.recordId == recordId,
+      )
+      .firstOrNull;
+
+  bool canRestoreRecoverableEvent(String historyId) {
+    final selected = _recoverableEventHistory
+        .where((entry) => entry.historyId == historyId)
+        .firstOrNull;
+    if (selected == null) return false;
+    final currentPayload = switch (selected.eventType) {
+      RecoverableUserEventType.meal =>
+        _meals
+            .where((meal) => meal.id == selected.recordId)
+            .map((meal) => Map<String, Object?>.from(meal.toJson()))
+            .firstOrNull,
+      RecoverableUserEventType.intake =>
+        _intakes
+            .where((intake) => intake.id == selected.recordId)
+            .map((intake) => Map<String, Object?>.from(intake.toJson()))
+            .firstOrNull,
+    };
+    return recoverableUserEventPayloadDigest(currentPayload) ==
+        selected.afterDigest;
+  }
+
+  RecoverableEventRestoreImpactPreview? previewRecoverableEventRestore(
+    String historyId,
+  ) {
+    final selected = _recoverableEventHistory
+        .where((entry) => entry.historyId == historyId)
+        .firstOrNull;
+    if (selected == null) return null;
+    return _restoreImpactService.build(
+      revision: selected,
+      currentPayload: _currentRecoverableEventPayload(selected),
+      accountScope: _authUserId,
+      algorithmConfigurationDigest:
+          _restoreImpactAlgorithmConfigurationDigest ??=
+              AlgorithmConfigurationIdentity.defaults().sha256Digest,
+      foodsById: <String, Map<String, Object?>>{
+        for (final food in foodRepo.allFoods)
+          food.id: Map<String, Object?>.from(food.toJson()),
+      },
+      drugsById: <String, Map<String, Object?>>{
+        for (final drug in medRepo.allDrugs)
+          drug.id: Map<String, Object?>.from(drug.toJson()),
+      },
+    );
+  }
+
+  Future<RecoverableEventRestoreConfirmationResult>
+  confirmRecoverableEventRestore(
+    RecoverableEventRestoreImpactPreview preview,
+  ) async {
+    final current = previewRecoverableEventRestore(preview.historyId);
+    if (current == null || current.previewId != preview.previewId) {
+      _debugLog('[AppState] restoreEvent:stale_preview');
+      return const RecoverableEventRestoreConfirmationResult(
+        RecoverableEventRestoreConfirmationStatus.stalePreview,
+      );
+    }
+    if (!current.isConfirmable) {
+      _debugLog('[AppState] restoreEvent:preview_blocked');
+      return const RecoverableEventRestoreConfirmationResult(
+        RecoverableEventRestoreConfirmationStatus.blocked,
+      );
+    }
+    final selected = _recoverableEventHistory
+        .where((entry) => entry.historyId == preview.historyId)
+        .firstOrNull;
+    if (selected == null) {
+      return const RecoverableEventRestoreConfirmationResult(
+        RecoverableEventRestoreConfirmationStatus.stalePreview,
+      );
+    }
+    final status = await _restoreRecoverableEventRevision(
+      selected,
+      _currentRecoverableEventPayload(selected),
+    );
+    return RecoverableEventRestoreConfirmationResult(switch (status) {
+      PersistedListMutationStatus.committed =>
+        RecoverableEventRestoreConfirmationStatus.committed,
+      PersistedListMutationStatus.committedWithRefreshFailure =>
+        RecoverableEventRestoreConfirmationStatus.committedWithRefreshFailure,
+      PersistedListMutationStatus.busy =>
+        RecoverableEventRestoreConfirmationStatus.busy,
+      PersistedListMutationStatus.persistenceFailed =>
+        RecoverableEventRestoreConfirmationStatus.persistenceFailed,
+      PersistedListMutationStatus.unchanged =>
+        RecoverableEventRestoreConfirmationStatus.stalePreview,
+    });
+  }
+
+  Future<bool> restoreRecoverableEvent(String historyId) async {
+    final selected = _recoverableEventHistory
+        .where((entry) => entry.historyId == historyId)
+        .firstOrNull;
+    if (selected == null) return false;
+    final currentPayload = _currentRecoverableEventPayload(selected);
+    if (recoverableUserEventPayloadDigest(currentPayload) !=
+        selected.afterDigest) {
+      _debugLog('[AppState] restoreEvent:conflict');
+      return false;
+    }
+    final status = await _restoreRecoverableEventRevision(
+      selected,
+      currentPayload,
+    );
+    return status == PersistedListMutationStatus.committed ||
+        status == PersistedListMutationStatus.committedWithRefreshFailure;
+  }
+
+  Map<String, Object?>? _currentRecoverableEventPayload(
+    RecoverableUserEventRevision selected,
+  ) => switch (selected.eventType) {
+    RecoverableUserEventType.meal =>
+      _meals
+          .where((meal) => meal.id == selected.recordId)
+          .map((meal) => Map<String, Object?>.from(meal.toJson()))
+          .firstOrNull,
+    RecoverableUserEventType.intake =>
+      _intakes
+          .where((intake) => intake.id == selected.recordId)
+          .map((intake) => Map<String, Object?>.from(intake.toJson()))
+          .firstOrNull,
+  };
+
+  Future<PersistedListMutationStatus> _restoreRecoverableEventRevision(
+    RecoverableUserEventRevision selected,
+    Map<String, Object?>? currentPayload,
+  ) async {
+    if (recoverableUserEventPayloadDigest(currentPayload) !=
+        selected.afterDigest) {
+      _debugLog('[AppState] restoreEvent:conflict');
+      return PersistedListMutationStatus.unchanged;
+    }
+    final revision = _newEventRevision(
+      eventType: selected.eventType,
+      recordId: selected.recordId,
+      mutationType: RecoverableUserEventMutationType.restore,
+      beforePayload: currentPayload,
+      afterPayload: selected.beforePayload,
+      restoresHistoryId: selected.historyId,
+    );
+    switch (selected.eventType) {
+      case RecoverableUserEventType.meal:
+        final next = _meals
+            .where((meal) => meal.id != selected.recordId)
+            .toList(growable: true);
+        if (selected.beforePayload != null) {
+          next.insert(
+            0,
+            Meal.fromJson(Map<String, dynamic>.from(selected.beforePayload!)),
+          );
+        }
+        final result = await _commitMeals(
+          'restoreMeal',
+          next,
+          revision: revision,
+          afterApply: selected.beforePayload == null
+              ? () => _mealCheckCache.remove(selected.recordId)
+              : null,
+        );
+        return result.status;
+      case RecoverableUserEventType.intake:
+        final next = _intakes
+            .where((intake) => intake.id != selected.recordId)
+            .toList(growable: true);
+        if (selected.beforePayload != null) {
+          next.insert(
+            0,
+            Intake.fromJson(Map<String, dynamic>.from(selected.beforePayload!)),
+          );
+        }
+        final result = await _commitIntakes(
+          'restoreIntake',
+          next,
+          revision: revision,
+        );
+        return result.status;
+    }
   }
 
   Future<InteractionResult> checkMeal(Meal meal) async {
@@ -896,14 +1455,15 @@ class AppState extends ChangeNotifier {
     Duration? windowDuration,
   }) async {
     // We pass `nextMealAt` as the orchestrator's `now` so its window-based
-    // scoring evaluates against the *target* time, not wall-clock. That
+    // educational trace evaluates the *target* time, not wall-clock. That
     // matches what users mean when they say "I plan to eat at 19:00".
     final mode = useLocalAi
         ? RecommendationMode.hybridLocalLlm
         : RecommendationMode.conservativeOnly;
     // When the user supplies a window duration, build a user-defined window
-    // [nextMealAt, nextMealAt + duration] so mechanistic-primary scoring can
-    // activate. The engine never picks the window; the user does.
+    // [nextMealAt, nextMealAt + duration] so the educational mechanistic trace
+    // can run. The model neither picks the window nor changes recommendation
+    // order; the user supplies the window.
     UserDefinedMealWindow? window;
     if (windowDuration != null && windowDuration.inMinutes > 0) {
       final startMin = dateTimeToMinute(nextMealAt);
@@ -923,7 +1483,7 @@ class AppState extends ChangeNotifier {
         intakes: _intakes,
         now: nextMealAt,
         mode: mode,
-        userConsentedToAi: useLocalAi && _userProfile.localAiConsentEnabled,
+        userConsentedToAi: useLocalAi && _userProfile.hasCurrentLocalAiConsent,
         userDefinedWindow: window,
       ),
       candidateFoods: services.foodRepository.allFoods,
@@ -939,7 +1499,7 @@ class AppState extends ChangeNotifier {
         intakes: _intakes,
         now: DateTime.now(),
         mode: RecommendationMode.auto,
-        userConsentedToAi: _userProfile.localAiConsentEnabled,
+        userConsentedToAi: _userProfile.hasCurrentLocalAiConsent,
       ),
       candidateFoods: services.foodRepository.allFoods,
     );

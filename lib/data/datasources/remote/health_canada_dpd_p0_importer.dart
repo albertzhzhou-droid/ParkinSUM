@@ -153,7 +153,8 @@ class HealthCanadaDpdP0Importer {
           formByCode['${row['pharmaceutical_form_code'] ?? ''}'] ??
           'unspecified';
       final routeName =
-          routeByCode['${row['route_of_administration_code'] ?? ''}'] ?? 'oral';
+          routeByCode['${row['route_of_administration_code'] ?? ''}'] ??
+          'unspecified';
       final statusName = statusByCode['${row['drug_status_code'] ?? ''}'] ?? '';
 
       if (conceptIds.add(conceptId)) {

@@ -1,0 +1,216 @@
+{
+  "$schema": "parkinsum.algorithm-surface-allowlist/1",
+  "scope": "Every Dart source under lib is either owned by an AlgorithmDescriptor, excluded in AlgorithmRegistry with a specific reason, or reviewed here as non-independent algorithm code.",
+  "categories": [
+    {
+      "id": "application_wiring",
+      "reason": "Application bootstrap, routing, platform configuration, and dependency wiring delegate result computation to registered algorithms.",
+      "paths": [
+        "lib/app/account_owned_route_registry.dart",
+        "lib/app/app.dart",
+        "lib/app/bootstrap_attempt_controller.dart",
+        "lib/app/bootstrap_gate.dart",
+        "lib/firebase_options.dart",
+        "lib/main.dart"
+      ]
+    },
+    {
+      "id": "static_data_or_localization",
+      "reason": "Declarative source data, replay fixtures, profile options, and translations contain no independent runtime selection formula.",
+      "paths": [
+        "lib/core/constants/clinical_evidence_source_seed.dart",
+        "lib/core/constants/local_ai_replay_scenarios.dart",
+        "lib/core/constants/mechanistic_replay_scenarios.dart",
+        "lib/core/constants/p0_food_source_seed.dart",
+        "lib/core/constants/profile_options.dart",
+        "lib/core/constants/regional_master_data.dart",
+        "lib/core/i18n/app_i18n.dart",
+        "lib/core/i18n/app_i18n_context.dart",
+        "lib/core/i18n/app_i18n_full_translations.dart"
+      ]
+    },
+    {
+      "id": "persistence_or_transport",
+      "reason": "Persistence adapters, backend transports, and repository seams execute already-decided mutations without changing scores, ranks, risks, or recommendations.",
+      "paths": [
+        "lib/core/db/app_database.dart",
+        "lib/core/db/app_database_factory.dart",
+        "lib/core/db/app_database_factory_stub.dart",
+        "lib/core/db/app_database_firestore.dart",
+        "lib/core/db/app_database_memory.dart",
+        "lib/core/db/app_database_native.dart",
+        "lib/core/db/app_database_web.dart",
+        "lib/core/db/recoverable_user_event_store.dart",
+        "lib/core/db/cdss_database.dart",
+        "lib/core/db/cdss_database_factory.dart",
+        "lib/core/db/cdss_database_factory_stub.dart",
+        "lib/core/db/cdss_database_firestore.dart",
+        "lib/core/db/cdss_database_memory.dart",
+        "lib/core/db/cdss_database_native.dart",
+        "lib/core/db/cdss_database_web.dart",
+        "lib/core/services/data_service.dart",
+        "lib/core/services/firebase_backend.dart",
+        "lib/core/services/firebase_user_data_paths.dart",
+        "lib/core/services/firestore_data_service.dart",
+        "lib/core/security/protected_secret_store.dart",
+        "lib/core/services/personal_log_handoff_document_service.dart",
+        "lib/core/services/privacy_safe_support_snapshot_service.dart",
+        "lib/core/services/portable_data_export_sink.dart",
+        "lib/core/services/portable_data_export_sink_io.dart",
+        "lib/core/services/portable_data_export_sink_stub.dart",
+        "lib/core/services/portable_data_export_sink_web.dart",
+        "lib/core/services/user_data_service.dart",
+        "lib/data/datasources/local/app_local_datasource.dart",
+        "lib/data/datasources/local/cdss_local_datasource.dart",
+        "lib/data/repositories_impl/app_repository_impl.dart",
+        "lib/domain/repositories/app_repository.dart"
+      ]
+    },
+    {
+      "id": "state_and_account_workflow",
+      "reason": "State transactions, authentication coordination, reminder lifecycle, and user-owned data-package services orchestrate persistence, serialization, or registered policies rather than define a separate result algorithm.",
+      "paths": [
+        "lib/core/models/atomic_onboarding_commit.dart",
+        "lib/core/models/purpose_bound_consent.dart",
+        "lib/core/services/atomic_onboarding_commit_coordinator.dart",
+        "lib/core/services/auth_service.dart",
+        "lib/core/services/portable_data_owner_scope_service.dart",
+        "lib/core/services/reminder_activation_inbox.dart",
+        "lib/core/services/reminder_notification_privacy_policy.dart",
+        "lib/core/services/reminder_activation_store_factory.dart",
+        "lib/core/services/reminder_activation_store_io.dart",
+        "lib/core/services/reminder_activation_store_stub.dart",
+        "lib/core/services/services.dart",
+        "lib/core/services/user_clinical_audit_service.dart",
+        "lib/core/services/user_logging_reminder_service.dart",
+        "lib/core/state/active_drug_selection_transaction.dart",
+        "lib/core/state/app_state.dart",
+        "lib/core/state/app_state_slices.dart",
+        "lib/core/state/persisted_list_mutation.dart",
+        "lib/core/state/persisted_value_mutation.dart",
+        "lib/domain/usecases/personal_log_handoff_summary_service.dart",
+        "lib/domain/usecases/privacy_safe_support_bundle_service.dart",
+        "lib/domain/usecases/recoverable_event_restore_impact_service.dart",
+        "lib/domain/usecases/user_portable_data_package_service.dart"
+      ]
+    },
+    {
+      "id": "platform_and_import_transport",
+      "reason": "Platform locators, archive readers, fetch clients, source URL tables, and smoke diagnostics transport bytes but do not resolve or score their contents.",
+      "paths": [
+        "lib/core/utils/local_p0_import_locator.dart",
+        "lib/core/utils/local_p0_import_locator_io.dart",
+        "lib/core/utils/local_p0_import_locator_stub.dart",
+        "lib/data/datasources/remote/archive_import_support.dart",
+        "lib/data/datasources/remote/catalog_interaction_audit.dart",
+        "lib/data/datasources/remote/live_source_smoke.dart",
+        "lib/data/datasources/remote/p0_import_models.dart",
+        "lib/data/datasources/remote/p0_source_urls.dart",
+        "lib/data/datasources/remote/secondary_source_registry.dart",
+        "lib/data/datasources/remote/source_fetch_client.dart"
+      ]
+    },
+    {
+      "id": "declarative_data_model",
+      "reason": "These files define immutable records, serialization, or view-state containers; result-changing transformations are owned by their registered producer algorithms.",
+      "paths": [
+        "lib/core/models/drug_definition.dart",
+        "lib/core/models/food_item.dart",
+        "lib/core/models/intake.dart",
+        "lib/core/models/interaction_result.dart",
+        "lib/core/models/meal.dart",
+        "lib/core/models/recoverable_user_event.dart",
+        "lib/core/models/user_profile.dart",
+        "lib/data/models/interaction_rule_record.dart",
+        "lib/domain/entities/cdss_records.dart",
+        "lib/domain/entities/cdss_runtime.dart",
+        "lib/domain/entities/contribution_safety_router.dart",
+        "lib/domain/entities/evidence_graph.dart",
+        "lib/domain/entities/evidence_trace_bundle.dart",
+        "lib/domain/entities/explanation_copy.dart",
+        "lib/domain/entities/fhir_inspired_medication_knowledge_view.dart",
+        "lib/domain/entities/fhir_inspired_nutrition_intake_view.dart",
+        "lib/domain/entities/food_recommendation.dart",
+        "lib/domain/entities/input_quality.dart",
+        "lib/domain/entities/label_section_code.dart",
+        "lib/domain/entities/local_privacy_preflight.dart",
+        "lib/domain/entities/localization_safety_lint.dart",
+        "lib/domain/entities/meal_composition.dart",
+        "lib/domain/entities/mechanistic_candidate_score.dart",
+        "lib/domain/entities/mechanistic_conflict_result.dart",
+        "lib/domain/entities/medication_entry_validation.dart",
+        "lib/domain/entities/next_meal_recommendation_models.dart",
+        "lib/domain/entities/protein_trend_point.dart",
+        "lib/domain/entities/ranker_eligibility.dart",
+        "lib/domain/entities/recommendation_benchmark_models.dart",
+        "lib/domain/entities/recommendation_replay_models.dart",
+        "lib/domain/entities/resolved_variant.dart",
+        "lib/domain/entities/runtime_context.dart",
+        "lib/domain/entities/safe_copy_template.dart",
+        "lib/domain/entities/source_metadata.dart",
+        "lib/domain/entities/source_version_drift.dart",
+        "lib/domain/entities/synthetic_scenario_fuzzer.dart"
+      ]
+    },
+    {
+      "id": "algorithm_contract_metadata",
+      "reason": "Manifest and trace-node schemas describe algorithms and provider evidence but do not themselves alter a user result.",
+      "paths": [
+        "lib/domain/entities/algorithm_descriptor.dart",
+        "lib/domain/entities/algorithm_trace_node.dart"
+      ]
+    },
+    {
+      "id": "offline_governance_artifact",
+      "reason": "Offline upgrade-queue and source-access artifacts are release or planning evidence and never enter production result computation.",
+      "paths": [
+        "lib/domain/entities/product_upgrade_queue.dart",
+        "lib/domain/entities/source_access_contract.dart"
+      ]
+    },
+    {
+      "id": "ui_delegation",
+      "reason": "These widgets collect inputs or render outputs while delegating search, scoring, risk, ordering, and trace construction to registered algorithms.",
+      "paths": [
+        "lib/features/analytics/analytics_page.dart",
+        "lib/features/auth/auth_page.dart",
+        "lib/features/catalog/catalog_detail_pages.dart",
+        "lib/features/catalog/catalog_page.dart",
+        "lib/features/dashboard/dashboard_page.dart",
+        "lib/features/diagnostics/data_integrity_page.dart",
+        "lib/features/diagnostics/engineering_diagnostics_page.dart",
+        "lib/features/diagnostics/rule_audit_trail_page.dart",
+        "lib/features/entry/entry_page.dart",
+        "lib/features/import/import_page.dart",
+        "lib/features/legal/privacy_disclaimer_page.dart",
+        "lib/features/main_shell/dashboard_page.dart",
+        "lib/features/main_shell/lazy_indexed_stack.dart",
+        "lib/features/main_shell/main_shell.dart",
+        "lib/features/main_shell/main_tab_route.dart",
+        "lib/features/meals/meal_page.dart",
+        "lib/features/medications/medication_page.dart",
+        "lib/features/medications/medication_product_picker.dart",
+        "lib/features/next_meal/next_meal_page.dart",
+        "lib/features/onboarding/onboarding_flow.dart",
+        "lib/features/onboarding/onboarding_page.dart",
+        "lib/features/reminders/reminder_center_page.dart",
+        "lib/features/settings/change_password_dialog.dart",
+        "lib/features/settings/personal_log_handoff_page.dart",
+        "lib/features/settings/portable_data_package_page.dart",
+        "lib/features/settings/privacy_safe_support_bundle_page.dart",
+        "lib/features/settings/purpose_bound_consent_page.dart",
+        "lib/features/settings/recoverable_event_history_page.dart",
+        "lib/features/settings/settings_capability_page.dart",
+        "lib/features/timeline/timeline_page.dart"
+      ]
+    },
+    {
+      "id": "rendering_support",
+      "reason": "Theme and texture capability helpers change rendering mechanics only; algorithm-specific visual semantics are registered separately.",
+      "paths": [
+        "lib/core/theme/liquid_glass_theme.dart",
+        "lib/core/utils/texture_support.dart"
+      ]
+    }
+  ]
+}

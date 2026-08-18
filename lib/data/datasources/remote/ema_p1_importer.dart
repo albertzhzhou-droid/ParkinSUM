@@ -641,12 +641,15 @@ class EmaP1Importer {
   }
 
   String _inferRoute(Map<String, dynamic> row) {
+    // Route is an independent applicability predicate. A tablet/capsule form
+    // is not sufficient evidence of oral administration (for example,
+    // sublingual and buccal products exist), so never infer route from form.
     final text = _firstNonEmpty(row, const [
       'route',
       'administration_route',
-      'pharmaceutical_form',
-      'dosage_form',
     ]).toLowerCase();
+    if (text.isEmpty) return 'unspecified';
+    if (text.contains('oral') || text.contains('by mouth')) return 'oral';
     if (text.contains('transdermal') || text.contains('patch')) {
       return 'transdermal';
     }
@@ -654,7 +657,7 @@ class EmaP1Importer {
       return 'injection';
     }
     if (text.contains('nasal')) return 'nasal';
-    return 'oral';
+    return text.trim().replaceAll(RegExp(r'[\s-]+'), '_');
   }
 
   String _inferDosageForm(Map<String, dynamic> row) {

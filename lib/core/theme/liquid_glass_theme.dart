@@ -50,7 +50,11 @@ class LiquidGlass {
       scaffoldBackgroundColor: Colors.transparent,
       canvasColor: Colors.transparent,
       splashFactory: InkSparkle.splashFactory,
-      visualDensity: VisualDensity.adaptivePlatformDensity,
+      visualDensity: VisualDensity.standard,
+      materialTapTargetSize: MaterialTapTargetSize.padded,
+      focusColor: seed.withValues(alpha: 0.20),
+      hoverColor: seed.withValues(alpha: 0.10),
+      highlightColor: seed.withValues(alpha: 0.16),
     );
     return base.copyWith(
       textTheme: base.textTheme.apply(
@@ -99,9 +103,16 @@ class LiquidGlass {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
           padding: const WidgetStatePropertyAll(
             EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           ),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return const BorderSide(color: onSurface, width: 2.5);
+            }
+            return BorderSide.none;
+          }),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(radiusXl),
@@ -118,8 +129,14 @@ class LiquidGlass {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: ButtonStyle(
-          side: WidgetStatePropertyAll(
-            BorderSide(color: scheme.primary.withValues(alpha: 0.55)),
+          minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
+          side: WidgetStateProperty.resolveWith(
+            (states) => BorderSide(
+              color: scheme.primary.withValues(
+                alpha: states.contains(WidgetState.focused) ? 1 : 0.55,
+              ),
+              width: states.contains(WidgetState.focused) ? 2.5 : 1,
+            ),
           ),
           padding: const WidgetStatePropertyAll(
             EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -129,6 +146,34 @@ class LiquidGlass {
               borderRadius: BorderRadius.circular(radiusXl),
             ),
           ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(Size(48, 48)),
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return seed.withValues(alpha: 0.18);
+            }
+            return null;
+          }),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return BorderSide(color: scheme.primary, width: 2);
+            }
+            return BorderSide.none;
+          }),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          minimumSize: const WidgetStatePropertyAll(Size.square(48)),
+          side: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.focused)) {
+              return BorderSide(color: scheme.primary, width: 2.5);
+            }
+            return BorderSide.none;
+          }),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -378,7 +423,7 @@ class GlassSelectOption<T> {
 /// - Hover / focus / press shows a subtle seed-tinted highlight on the
 ///   pointed item.
 /// - The currently-selected item gets a check mark + a stronger seed tint.
-class GlassSelectField<T> extends StatelessWidget {
+class GlassSelectField<T> extends StatefulWidget {
   final String label;
   final T value;
   final List<GlassSelectOption<T>> options;
@@ -394,72 +439,97 @@ class GlassSelectField<T> extends StatelessWidget {
     this.helper,
   });
 
-  GlassSelectOption<T>? get _selected => options
+  GlassSelectOption<T>? get selected => options
       .where((o) => o.value == value)
       .cast<GlassSelectOption<T>?>()
       .firstWhere((_) => true, orElse: () => null);
 
   @override
+  State<GlassSelectField<T>> createState() => _GlassSelectFieldState<T>();
+}
+
+class _GlassSelectFieldState<T> extends State<GlassSelectField<T>> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
-    final selected = _selected;
+    final selected = widget.selected;
+    final scheme = Theme.of(context).colorScheme;
     return Semantics(
-      label: label,
+      label: widget.label,
+      value: selected?.label,
+      hint: widget.helper,
       button: true,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(LiquidGlass.radiusMd),
-          onTap: () async {
-            final picked = await LiquidGlass.showGlassDialog<T>(
-              context: context,
-              builder: (ctx) => _GlassSelectSheet<T>(
-                title: label,
-                helper: helper,
-                options: options,
-                currentValue: value,
-              ),
-            );
-            if (picked != null && picked != value) onChanged(picked);
-          },
-          child: GlassSurface(
-            borderRadius: LiquidGlass.radiusMd,
-            blurSigma: LiquidGlass.blurSm,
-            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: LiquidGlass.onSurfaceMuted,
-                          letterSpacing: -0.1,
+      excludeSemantics: true,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(LiquidGlass.radiusMd + 3),
+          border: Border.all(
+            color: _focused ? scheme.primary : Colors.transparent,
+            width: _focused ? 2.5 : 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(2),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onFocusChange: (focused) => setState(() => _focused = focused),
+            borderRadius: BorderRadius.circular(LiquidGlass.radiusMd),
+            onTap: () async {
+              final picked = await LiquidGlass.showGlassDialog<T>(
+                context: context,
+                builder: (ctx) => _GlassSelectSheet<T>(
+                  title: widget.label,
+                  helper: widget.helper,
+                  options: widget.options,
+                  currentValue: widget.value,
+                ),
+              );
+              if (picked != null && picked != widget.value) {
+                widget.onChanged(picked);
+              }
+            },
+            child: GlassSurface(
+              borderRadius: LiquidGlass.radiusMd,
+              blurSigma: LiquidGlass.blurSm,
+              padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          widget.label,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: LiquidGlass.onSurfaceMuted,
+                            letterSpacing: -0.1,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        selected?.label ?? '—',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: LiquidGlass.onSurface,
-                          letterSpacing: -0.1,
+                        const SizedBox(height: 2),
+                        Text(
+                          selected?.label ?? '—',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: LiquidGlass.onSurface,
+                            letterSpacing: -0.1,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(
-                  Icons.unfold_more_rounded,
-                  size: 20,
-                  color: LiquidGlass.onSurfaceMuted,
-                ),
-              ],
+                  const Icon(
+                    Icons.unfold_more_rounded,
+                    size: 20,
+                    color: LiquidGlass.onSurfaceMuted,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -695,80 +765,43 @@ class _FrostedBarrier extends StatelessWidget {
   }
 }
 
-/// Animated multi-radial-gradient wallpaper used as the global background.
+/// Static multi-radial-gradient wallpaper used as the global background.
 /// All glass surfaces (cards, app bars, nav bars) sample the colour from
-/// this layer through a `BackdropFilter`.
-class LiquidGlassBackground extends StatefulWidget {
+/// this layer through a `BackdropFilter`. It deliberately does not animate:
+/// an endlessly moving decorative background would need a pause control and
+/// can trigger vestibular symptoms.
+class LiquidGlassBackground extends StatelessWidget {
   final Widget child;
 
   const LiquidGlassBackground({super.key, required this.child});
 
   @override
-  State<LiquidGlassBackground> createState() => _LiquidGlassBackgroundState();
-}
-
-class _LiquidGlassBackgroundState extends State<LiquidGlassBackground>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 22),
-  )..repeat();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        final t = _controller.value;
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            const ColoredBox(color: LiquidGlass.background),
-            // Three slow-drifting radial blooms.
-            _bloom(
-              alignment: Alignment(
-                -0.7 + 0.3 * _wave(t, 0),
-                -0.6 + 0.2 * _wave(t, 0.33),
-              ),
-              color: LiquidGlass.tintA,
-              radius: 0.9,
-              opacity: 0.65,
-            ),
-            _bloom(
-              alignment: Alignment(
-                0.6 + 0.25 * _wave(t, 0.5),
-                -0.4 + 0.3 * _wave(t, 0.66),
-              ),
-              color: LiquidGlass.tintB,
-              radius: 0.95,
-              opacity: 0.55,
-            ),
-            _bloom(
-              alignment: Alignment(
-                -0.2 + 0.4 * _wave(t, 0.75),
-                0.7 + 0.2 * _wave(t, 0.1),
-              ),
-              color: LiquidGlass.tintC,
-              radius: 1.0,
-              opacity: 0.55,
-            ),
-            widget.child,
-          ],
-        );
-      },
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const ColoredBox(color: LiquidGlass.background),
+        _bloom(
+          alignment: const Alignment(-0.62, -0.52),
+          color: LiquidGlass.tintA,
+          radius: 0.9,
+          opacity: 0.65,
+        ),
+        _bloom(
+          alignment: const Alignment(0.52, -0.28),
+          color: LiquidGlass.tintB,
+          radius: 0.95,
+          opacity: 0.55,
+        ),
+        _bloom(
+          alignment: const Alignment(-0.08, 0.72),
+          color: LiquidGlass.tintC,
+          radius: 1.0,
+          opacity: 0.55,
+        ),
+        child,
+      ],
     );
-  }
-
-  static double _wave(double t, double phase) {
-    final v = (t + phase) % 1.0;
-    // smooth triangle: 0 → 1 → 0
-    return v < 0.5 ? v * 2 : 2 - v * 2;
   }
 
   Widget _bloom({
@@ -891,7 +924,7 @@ class GlassCard extends StatelessWidget {
 }
 
 /// Pill-shaped frosted button.
-class GlassButton extends StatelessWidget {
+class GlassButton extends StatefulWidget {
   final Widget label;
   final VoidCallback? onPressed;
   final IconData? leadingIcon;
@@ -904,42 +937,64 @@ class GlassButton extends StatelessWidget {
   });
 
   @override
+  State<GlassButton> createState() => _GlassButtonState();
+}
+
+class _GlassButtonState extends State<GlassButton> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
-    final disabled = onPressed == null;
+    final disabled = widget.onPressed == null;
+    final scheme = Theme.of(context).colorScheme;
     return Opacity(
       opacity: disabled ? 0.6 : 1.0,
-      child: GlassSurface(
-        borderRadius: LiquidGlass.radiusXl,
-        blurSigma: LiquidGlass.blurSm,
-        padding: EdgeInsets.zero,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(LiquidGlass.radiusXl),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (leadingIcon != null) ...[
-                    Icon(leadingIcon, size: 18),
-                    const SizedBox(width: 8),
-                  ],
-                  // Flexible (not Expanded) keeps mainAxisSize.min intact while
-                  // letting a long label shrink/wrap instead of overflowing the
-                  // row. Labels are localized, so width varies a lot per locale
-                  // and grows further with large text scales.
-                  Flexible(
-                    child: DefaultTextStyle.merge(
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.1,
-                      ),
-                      child: label,
-                    ),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(LiquidGlass.radiusXl + 3),
+          border: Border.all(
+            color: _focused ? scheme.primary : Colors.transparent,
+            width: _focused ? 2.5 : 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(2),
+        child: GlassSurface(
+          borderRadius: LiquidGlass.radiusXl,
+          blurSigma: LiquidGlass.blurSm,
+          padding: EdgeInsets.zero,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onPressed,
+              onFocusChange: (focused) => setState(() => _focused = focused),
+              borderRadius: BorderRadius.circular(LiquidGlass.radiusXl),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minHeight: 48),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
                   ),
-                ],
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (widget.leadingIcon != null) ...[
+                        Icon(widget.leadingIcon, size: 18),
+                        const SizedBox(width: 8),
+                      ],
+                      Flexible(
+                        child: DefaultTextStyle.merge(
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.1,
+                          ),
+                          child: widget.label,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -958,10 +1013,19 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   const GlassAppBar({super.key, this.title, this.actions, this.leading});
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 8);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 20);
 
   @override
   Widget build(BuildContext context) {
+    final resolvedLeading =
+        leading ??
+        (Navigator.of(context).canPop()
+            ? IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: () => Navigator.of(context).maybePop(),
+                icon: const Icon(Icons.arrow_back),
+              )
+            : null);
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -972,7 +1036,8 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           child: Row(
             children: [
-              ?leading,
+              ?resolvedLeading,
+              if (resolvedLeading != null) const SizedBox(width: 4),
               if (title != null)
                 Expanded(
                   child: DefaultTextStyle.merge(
@@ -1017,18 +1082,42 @@ class GlassNavBar extends StatelessWidget {
         borderRadius: LiquidGlass.radiusXl,
         blurSigma: LiquidGlass.blurLg,
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            for (var i = 0; i < destinations.length; i++)
-              Expanded(
-                child: _GlassNavItem(
-                  destination: destinations[i],
-                  selected: i == selectedIndex,
-                  onTap: () => onDestinationSelected(i),
-                ),
-              ),
-          ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final textScale = MediaQuery.textScalerOf(context).scale(1);
+            final useTwoRows = textScale >= 1.5 || constraints.maxWidth < 348;
+            if (useTwoRows) {
+              final itemWidth = constraints.maxWidth / 3;
+              return Wrap(
+                children: [
+                  for (var i = 0; i < destinations.length; i++)
+                    SizedBox(
+                      width: itemWidth,
+                      child: _GlassNavItem(
+                        key: ValueKey<String>('main-tab-${destinations[i].id}'),
+                        destination: destinations[i],
+                        selected: i == selectedIndex,
+                        onTap: () => onDestinationSelected(i),
+                      ),
+                    ),
+                ],
+              );
+            }
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                for (var i = 0; i < destinations.length; i++)
+                  Expanded(
+                    child: _GlassNavItem(
+                      key: ValueKey<String>('main-tab-${destinations[i].id}'),
+                      destination: destinations[i],
+                      selected: i == selectedIndex,
+                      onTap: () => onDestinationSelected(i),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1036,70 +1125,94 @@ class GlassNavBar extends StatelessWidget {
 }
 
 class GlassNavDestination {
+  final String id;
   final IconData icon;
   final IconData? selectedIcon;
   final String label;
 
   const GlassNavDestination({
+    required this.id,
     required this.icon,
     required this.label,
     this.selectedIcon,
   });
 }
 
-class _GlassNavItem extends StatelessWidget {
+class _GlassNavItem extends StatefulWidget {
   final GlassNavDestination destination;
   final bool selected;
   final VoidCallback onTap;
 
   const _GlassNavItem({
+    super.key,
     required this.destination,
     required this.selected,
     required this.onTap,
   });
 
   @override
+  State<_GlassNavItem> createState() => _GlassNavItemState();
+}
+
+class _GlassNavItemState extends State<_GlassNavItem> {
+  bool _focused = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final color = selected ? scheme.primary : LiquidGlass.onSurfaceMuted;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(LiquidGlass.radiusLg),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(LiquidGlass.radiusLg),
-            color: selected
-                ? scheme.primary.withValues(alpha: 0.12)
-                : Colors.transparent,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected
-                    ? (destination.selectedIcon ?? destination.icon)
-                    : destination.icon,
-                color: color,
-                size: 22,
+    final color = widget.selected ? scheme.primary : LiquidGlass.onSurfaceMuted;
+    return Semantics(
+      button: true,
+      selected: widget.selected,
+      label: widget.destination.label,
+      excludeSemantics: true,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          onFocusChange: (focused) => setState(() => _focused = focused),
+          borderRadius: BorderRadius.circular(LiquidGlass.radiusLg),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeOut,
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(LiquidGlass.radiusLg),
+              color: widget.selected
+                  ? scheme.primary.withValues(alpha: 0.12)
+                  : Colors.transparent,
+              border: Border.all(
+                color: _focused ? scheme.primary : Colors.transparent,
+                width: _focused ? 2.5 : 1,
               ),
-              const SizedBox(height: 2),
-              Text(
-                destination.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -0.1,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  widget.selected
+                      ? (widget.destination.selectedIcon ??
+                            widget.destination.icon)
+                      : widget.destination.icon,
                   color: color,
+                  size: 22,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  widget.destination.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.1,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

@@ -12,6 +12,8 @@ import 'package:parkinsum_companion/domain/usecases/medication_entry_validator.d
 import 'package:parkinsum_companion/domain/usecases/metadata_completeness_gate.dart';
 import 'package:parkinsum_companion/domain/usecases/time_axis_builder.dart';
 
+import 'helpers/mechanistic_context_fixtures.dart';
+
 /// P5 — FDC nutrient provenance tier → FoodVariantMetadata + completeness +
 /// ranking. Verifies the tier is explicit/serializable on the metadata, that the
 /// completeness gate orders analytical > calculated > imputed > unknown, that
@@ -206,7 +208,9 @@ void main() {
             medicationContext: v,
           ),
         ],
-        mealInputs: const [],
+        mealInputs: [
+          fixtureDoseTimeMealInput(now.subtract(const Duration(minutes: 60))),
+        ],
         userDefinedWindow: UserDefinedMealWindow(
           window: TimelineWindow(
             startMinute: dateTimeToMinute(now) + 60,
@@ -256,13 +260,20 @@ void main() {
       );
     }
 
-    double scoreOf(List<MechanisticCandidateScore> s, String id) =>
-        s.firstWhere((e) => e.candidateFoodId == id).finalCandidateScore;
+    double scoreOf(List<MechanisticCandidateScore> scores, String id) {
+      final score = scores.firstWhere((item) => item.candidateFoodId == id);
+      expect(
+        score.hasModeledOutput,
+        isTrue,
+        reason: '$id unexpectedly abstained',
+      );
+      return score.modeledFinalCandidateScore!;
+    }
 
     test('identical candidates: analytical ranks >= imputed/assumed', () {
       final scores = scorer.score(
         baseContext: ctx(),
-        baseMealCompositionsById: const {},
+        baseMealCompositionsById: fixtureDoseTimeCompositions,
         candidates: [food('analytical'), food('imputed')],
         candidateMetadata: {
           'analytical': metaForTier(NutrientConfidenceTier.analytical),
@@ -280,7 +291,7 @@ void main() {
       // overpower the dominant conflict-overlap term (same invariant as PR #38).
       final scores = scorer.score(
         baseContext: ctx(),
-        baseMealCompositionsById: const {},
+        baseMealCompositionsById: fixtureDoseTimeCompositions,
         candidates: [food('analytical'), food('imputed')],
         candidateMetadata: {
           'analytical': metaForTier(NutrientConfidenceTier.analytical),

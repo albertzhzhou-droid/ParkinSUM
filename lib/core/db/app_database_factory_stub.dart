@@ -2,11 +2,16 @@ import '../models/drug_definition.dart';
 import '../models/food_item.dart';
 import '../models/intake.dart';
 import '../models/meal.dart';
+import '../models/atomic_onboarding_commit.dart';
 import '../models/user_profile.dart';
 import '../../data/models/interaction_rule_record.dart';
 import 'app_database.dart';
 
 class UnsupportedAppDatabase implements AppDatabase {
+  @override
+  Future<void> commitOnboarding(AtomicOnboardingCommit commit) =>
+      throw UnsupportedError('App database is unsupported on this platform.');
+
   @override
   Future<void> initialize({
     required List<FoodItem> seedFoods,
