@@ -6,7 +6,9 @@
 
 [![CI](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml)
 
-A provenance-first Parkinson medication-food interaction prototype for explainable CDSS architecture, Firebase governance, and synthetic-data demos.
+A provenance-first Parkinson medication-food interaction prototype for
+deterministic rule tracing, read-only algorithm observability, Firebase
+governance, and synthetic-data demos.
 
 **Educational architecture prototype only. Not medical advice or a clinical decision tool.**
 
@@ -16,7 +18,10 @@ A provenance-first Parkinson medication-food interaction prototype for explainab
 ![Synthetic Data Only](https://img.shields.io/badge/Data-Synthetic%20Only-green)
 ![Public Showcase](https://img.shields.io/badge/Mode-Public%20Showcase-purple)
 
-ParkinSUM Companion is a local-first Flutter prototype that demonstrates how a health-adjacent app can combine synthetic meal logging, medication context, deterministic rule checks, evidence-oriented explanations, and release safety guardrails without making clinical claims.
+ParkinSUM Companion is a local-first Flutter prototype that demonstrates how a
+health-adjacent app can combine synthetic meal logging, medication context,
+deterministic rule checks, a read-only Algorithm Observatory, evidence-oriented
+explanations, and release safety guardrails without making clinical claims.
 
 It is a production-architecture prototype designed for educational demonstrations, software architecture review, and academic discussion of local-first digital health prototypes. It is not a medical device and must not be used for diagnosis, treatment, medication timing, dietary guidance, clinical decision-making, patient care, or emergency support.
 
@@ -27,6 +32,8 @@ Public demos should use synthetic or sample data only.
 - Meal logging and medication-context capture for a Parkinson's disease education scenario.
 - Deterministic food-drug interaction checks instead of black-box medical advice.
 - Evidence-oriented explanations that show why a prototype rule fired.
+- A read-only Algorithm Observatory that exposes registry coverage, production-path
+  traces, fixed non-personal scenarios, and explicit model limitations.
 - Local-first app behavior for public demos and development.
 - Optional Firebase-backed paths for internal operator validation and governance.
 - Public-release guardrails around disclaimers, security, contribution rules, and synthetic data.
@@ -38,6 +45,12 @@ sits inside it, and every educational rule that fires carries a structured
 explanation with source references, provenance, the input fields actually
 used, any missing or uncertain inputs, an explicit limitation, and a hard
 not-advice boundary.
+
+Conflict classifications, scores, safety gates, and evidence remain
+deterministic. With explicit user consent, an optional loopback model may only
+rerank the rule-screened, non-`BLOCK` candidate whitelist or polish wording that
+the deterministic path has already produced. It cannot change medication data,
+conflict decisions, scores, rules, evidence, or safety gates.
 
 Medication context must be **catalog-backed and unit-explicit** before any
 food-medication rule is evaluated. A bare numeric dose such as `100`, an
@@ -159,6 +172,23 @@ SBOM attestation, and complete cross-platform NOTICE verification remain open.
 See [docs/OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md](docs/OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md)
 and [docs/SOURCE_ACCESS_AND_LICENSES.md](docs/SOURCE_ACCESS_AND_LICENSES.md).
 
+## Algorithm Observatory
+
+The read-only Algorithm Observatory makes the deterministic runtime easier to
+audit without changing its decisions. At capture commit `23619f1`, the registry
+contains **58 algorithm descriptors**. Reviewers can compare three fixed,
+non-personal scenarios, inspect the production-path trace and explanation tree,
+and review the result-affecting registry inventory. Live production-path output
+and static registry contracts are labeled separately so a declared contract is
+not mistaken for a runtime observation.
+
+The interface keeps severity, confidence, and missingness separate. Its gastric
+and absorption curves are unitless educational sensitivity views—not gastric-
+emptying tests, absorbed-dose estimates, plasma concentrations, symptom
+predictions, or advice. The responsive screenshot below demonstrates browser
+layout reflow only; it is not physical-device, native-platform, accessibility,
+or clinical validation.
+
 ## Multi-Jurisdiction Metadata & Protein Redistribution
 
 ParkinSUM's importer layer is multi-jurisdiction: source-adapter specs cover
@@ -200,8 +230,10 @@ UI and replay.
 ## Evidence & Traceability Architecture
 
 ParkinSUM's most reviewable surface is its **evidence and provenance layer**.
-Every educational output is deterministic, source-linked, and serializable for
-review — without any patient data.
+Conflict classifications, scores, safety gates, evidence links, and production
+traces are deterministic, source-linked, and serializable for review—without
+patient data. Any consent-gated loopback AI remains outside that decision path
+and is limited to the screened-whitelist and wording roles described above.
 
 - **Deterministic mechanistic replay** — 41 synthetic scenarios, banned-phrase
   scanned (`docs/REPLAY_RUNNER.md`).
@@ -235,37 +267,53 @@ validation, and the source-quality report is **not** a clinical dashboard.
 
 ## Demo Media
 
-The screenshots below use synthetic local demo data only. Real account identifiers are redacted or replaced with a synthetic demo address. They show the current public prototype flow and are not medical advice, clinical validation, or patient data.
+These are commit-identified runtime web captures from a local-mode build using
+fresh synthetic onboarding data and fixed, non-personal Observatory fixtures.
+They document the interface at `main@23619f1`; they do not establish clinical
+accuracy, physical-device compatibility, native-platform behavior,
+accessibility conformance, or a deployed-backend result.
 
-| Feature shown | Demo screenshot | What it demonstrates |
-| --- | --- | --- |
-| Account entry | ![ParkinSUM sign-in screen with synthetic local demo styling](docs/assets/screenshots/auth-sign-in.png) | Authentication shell and privacy/disclaimer entry point. |
-| Next-meal setup | ![Next-meal setup screen with time-window controls and local AI toggle](docs/assets/screenshots/next-meal-setup.png) | User-provided meal timing window, conservative path, and optional local-AI wording polish. |
-| Next-meal results | ![Next-meal recommendation results with ranked synthetic food candidates](docs/assets/screenshots/next-meal-results.png) | Ranked food candidates, allow labels, and explanation bullets from the deterministic recommendation flow. |
-| Timeline overview | ![Meal and medication timeline showing synthetic medication and meal events](docs/assets/screenshots/timeline-overview.png) | Meal-medication chronology, nearest-event context, and editing controls. |
-| Timeline action state | ![Timeline action state with add-meal and log-medication controls](docs/assets/screenshots/timeline-action-state.png) | Floating meal and medication logging actions in the timeline workflow. |
-| Medication catalog | ![Medication list with selected synthetic levodopa-combination context](docs/assets/screenshots/medications-catalog.png) | Medication catalog entries, jurisdiction source labels, and selected medication context. |
-| Search/catalog showcase | ![Catalog page with ParkinSUM branded showcase module and searchable foods](docs/assets/screenshots/catalog-showcase.png) | GitHub-style branded repository module integrated into catalog search. |
-| Conflict explanation | ![Meal check conflict explanation dialog with conservative high-risk educational copy](docs/assets/screenshots/conflict-explanation.png) | Evidence-oriented safety explanation, rule weights, model trace, and non-clinical boundary copy. |
-| Analytics and local AI | ![Analytics screen with localization status and local AI configuration fields](docs/assets/screenshots/analytics-local-ai.png) | Localization status, local AI provider settings, model names, endpoints, and conservative recommendation path. |
+<p align="center">
+  <img src="docs/assets/screenshots/algorithm-observatory-overview-desktop.png" alt="Algorithm Observatory overview showing 58 registered algorithms, fixed scenario comparison, and a unitless gastric curve" width="100%">
+  <br>
+  <sub>Algorithm Observatory overview: fixed scenarios, production-path trace, and registry snapshot at the capture commit.</sub>
+</p>
 
-Capture requirements are tracked in [docs/media-capture-checklist.md](docs/media-capture-checklist.md), with asset-folder notes in [docs/assets/screenshots/README.md](docs/assets/screenshots/README.md) and [docs/assets/demo/README.md](docs/assets/demo/README.md).
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/screenshots/algorithm-observatory-explanation-desktop.png" alt="Algorithm conflict composition and expandable explanation tree">
+      <br><sub>Conflict composition and explanation tree expose inputs, outputs, evidence, and limitations.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/screenshots/algorithm-observatory-coverage-desktop.png" alt="Result-affecting algorithm coverage inventory showing 58 of 58 descriptors">
+      <br><sub>Registry-backed coverage distinguishes live traces from static contracts.</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/assets/screenshots/capability-center-desktop.png" alt="Settings and capability center in the local-mode runtime">
+      <br><sub>Capability Center surfaces local-mode configuration and implementation boundaries.</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/assets/screenshots/algorithm-observatory-responsive.png" alt="Algorithm Observatory scenario comparison at a 390 by 844 responsive browser viewport">
+      <br><sub>Responsive browser viewport (390×844); layout evidence only, not a physical-device claim.</sub>
+    </td>
+  </tr>
+</table>
+
+<details>
+  <summary>Open the fresh local-mode dashboard capture</summary>
+  <p align="center">
+    <img src="docs/assets/screenshots/runtime-dashboard-desktop.png" alt="Fresh local-mode ParkinSUM dashboard with synthetic onboarding data" width="100%">
+  </p>
+</details>
+
+Capture provenance, privacy review, and evidence limits are recorded in
+[docs/assets/screenshots/README.md](docs/assets/screenshots/README.md) and
+[docs/media-capture-checklist.md](docs/media-capture-checklist.md).
 
 ## Quick Start
-
-## High-Impact Contribution Request
-
-The current priority is [Issue #8](https://github.com/albertzhzhou-droid/ParkinSUM/issues/8): mapping one educational rule explanation to explicit evidence fields.
-
-The most valuable contribution right now is not adding new medical rules. Instead, contributors should help make existing rule explanations more traceable and reviewable by improving:
-
-- source references
-- provenance clarity
-- limitation text
-- safety-boundary wording
-- negative tests that prevent unsupported clinical claims
-
-See [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for the contributor-facing rule explanation template and worked example.
 
 Install Flutter, Node.js, and npm first. Then run these commands from the repository root:
 
@@ -329,6 +377,8 @@ flowchart LR
   Data["Local-first Data Layer"]
   Rules["Deterministic Rule Engine"]
   Evidence["Evidence Explanation Layer"]
+  Observatory["Read-only Algorithm Observatory"]
+  AI["Consent-gated Loopback AI"]
   Output["Educational Awareness Output"]
 
   UI --> State
@@ -336,9 +386,18 @@ flowchart LR
   Data --> Rules
   Rules --> Evidence
   Evidence --> Output
+  Rules --> Observatory
+  Evidence --> Observatory
+  Rules -->|"screened non-BLOCK whitelist"| AI
+  AI -->|"rerank or wording only"| Output
 ```
 
-The app separates user-facing screens, app state, local data handling, deterministic rule evaluation, and evidence-oriented explanation copy. Firebase services are available for internal validation, but the public prototype should be evaluated with synthetic data and conservative claims.
+The app separates user-facing screens, app state, local data handling,
+deterministic rule evaluation, read-only observability, and evidence-oriented
+explanation copy. The optional AI branch cannot write back to medication data,
+rules, classifications, scores, evidence, or safety gates. Firebase services
+are available for internal validation, but the public prototype should be
+evaluated with synthetic data and conservative claims.
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for more detail.
 
@@ -384,7 +443,8 @@ Public GitHub visibility does not claim external clinical, legal, privacy, regul
 
 Near-term work is tracked in [ROADMAP.md](ROADMAP.md). Current priorities include:
 
-- Capture clean synthetic-data screenshots and a short demo GIF.
+- Maintain commit-identified local-mode desktop/responsive captures and keep
+  unsafe legacy media retired.
 - Keep the rule engine evidence-linked and auditable.
 - Improve accessibility, localization, and caregiver-oriented educational flows.
 - Expand sample-data walkthroughs without adding real patient data.
