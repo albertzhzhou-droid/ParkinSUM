@@ -25,7 +25,7 @@ dependencies:
 
   # 本地持久化（DataService 的 SharedPreferences 实现）
   shared_preferences: ^2.5.5
-  flutter_secure_storage: ^10.3.1
+  flutter_secure_storage: ^11.0.0
   sqflite: ^2.4.3
   path: ^1.9.0
   yaml: ^3.1.2
