@@ -19,12 +19,776 @@
       "id": "parkinsum.algorithm-configuration",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "versioned",
-      "currentVersion": 2,
-      "compatibility": "Configuration identity changes require a new schema URI and digest review.",
+      "currentVersion": 6,
+      "compatibility": "Schema v6 adds the typed gastric-emptying configuration, generator structure and output-integrity contract to the existing exact completeness-witness boundary. Consumers must reject unsupported versions; digest agreement proves configuration identity and engineering review scope only, not physiological calibration, scientific validity, clinical validity or medication advice.",
       "source": "lib/algorithm_sdk/algorithm_configuration_identity.dart",
       "versionEvidence": [
         {
           "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.levodopa-absorption-opportunity-parameters",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact prototype IR parameter names, units, bounds, ordering, immutable canonical serialization, version and review date define this configuration contract. Incompatible changes require a new schema version; the values are educational heuristics, not fitted patient parameters or medication advice.",
+      "source": "lib/domain/entities/levodopa_absorption_opportunity_parameters.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.levodopa-absorption-generator-structure",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Applicability binding, residual-load comparisons and rounding, window branches, uncertainty merge, openness construction, abstention states, source references, and output codes form one deterministic prototype structure. Incompatible changes require a new schema version and requalification; this declaration is not a PK or clinical-validity claim.",
+      "source": "lib/domain/usecases/levodopa_absorption_opportunity_model.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.absorption-opportunity-output-contract",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Availability, integrity rejection, sample ordering and bounds, peak consistency, interpolation, zero-width abstention, null-wire encoding, and reason-code requirements are one output contract. Incompatible changes require a new schema version; passing this contract is engineering evidence only.",
+      "source": "lib/domain/entities/absorption_opportunity.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-trace-surface-manifest",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Provider, fixture, lifecycle, route, UI-surface ownership, production-trace membership, static-only disposition, registry-surface digest, and manifest digest drift fail closed. A production trace remains synthetic execution evidence and never implies clinical validation.",
+      "source": "lib/domain/entities/algorithm_descriptor.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-result-root-manifest",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 binds every registered algorithm exactly once to an application-owned logical root and result sink plus its conservative primary-library package URI. Unknown fields, missing or stale registry members, duplicate identities, unsafe paths, URI aliases, analyzer-owned identities and non-library declarations fail closed. This root phase does not claim a transitive closure, runtime call graph, exact data flow, scientific validity, clinical validity or medication advice.",
+      "source": "lib/domain/entities/algorithm_result_root_manifest.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmResultRootManifestSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-dependency-compatibility-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 binds the exact analyzer archive, reviewed Dart and Flutter versions, root-manifest, lockfile, package-config and analysis-options identities, public API contract, per-context session rule, typed result state, error-diagnostic policy and all root-resolution observations. Compatibility acceptance deliberately leaves the ParkinSUM edge generator and transitive closure held.",
+      "source": "lib/domain/entities/algorithm_dependency_compatibility.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmDependencyCompatibilityReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-observatory-snapshot",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The fixed non-personal scenario set, production engine graph and algorithm-bound trace-node projection define fixture revision synthetic-observatory-v5. Incompatible fixture or projection changes require a new schema or revision and a reviewed trace-surface manifest update; this fixture is not patient or clinical evidence.",
+      "source": "lib/domain/usecases/algorithm_observatory_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.signed-capability-manifest",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact-key manifest and signature envelope bind issuer, environment, sequence, predecessor digest, closed capability IDs, UTC validity, reason, rollback target, key ID, algorithm and canonical Ed25519 signature. Unknown fields, unsupported schemas, invalid trust, expiry, replay, downgrade or chain drift fail closed; incompatible changes require a new schema version and explicit activation migration. Signature validity is release-control evidence, not clinical validation.",
+      "source": "lib/domain/entities/signed_capability_manifest.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "signedCapabilityManifestSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.capability-activation-state",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "acceptedLegacyVersions": [
+        1
+      ],
+      "compatibility": "Schema v2 binds the durable last-known-good signed manifest and bounded exact history to an optional accepted distribution endpoint, exact-response SHA-256 strong ETag, manifest digest and UTC acceptance time. The validator is written and read back in the same activation transaction and is restored only for the same configured endpoint and still-verified active manifest. Schema v1 is read without a validator and migrates only after a newly fetched candidate passes verification and durable read-back; unsupported or malformed states fail closed.",
+      "source": "lib/core/services/capability_rollout_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "capabilityActivationStateSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-applicability-manifest",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Question of interest, context of use, provider and predicate membership, observable and decision-influence boundaries, dispositions, evidence identity, review state, and digest are one fail-closed runtime contract. Incompatible changes require a new schema version and separate requalification evidence; a matching digest is not clinical validation.",
+      "source": "lib/domain/entities/mechanistic_medication_applicability.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.context-of-use-requalification-ledger",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Manifest, configuration, semantic-diff, affected-provider and predicate identities, evidence lanes, release disposition, reviewer decision, rollback and revocation semantics are one fail-closed contract. Unsupported schemas, identity drift, incomplete evidence matrices, or unsafe approval fail closed; a passing ledger check is not scientific validation, qualification, regulatory review, or external approval.",
+      "source": "lib/domain/entities/context_of_use_requalification.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.prospective-model-credibility-plan",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Question of interest, context of use, exact manifest and configuration identity, model influence, decision consequence, overall risk, factor goals, dataset and independence identities, prospective adequacy decision, execution results and independent post-study adequacy decision are one fail-closed contract. Unsupported schemas, identity drift, incomplete factor matrices, hidden or unreviewed results, backdating, or unsafe promotion fail closed. Passing is engineering governance evidence only, not scientific or clinical validation, qualification, regulatory review, external approval, or medical advice.",
+      "source": "lib/domain/entities/prospective_model_credibility_plan.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-evidence-execution-attestation",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Prospective-plan, applicability-manifest, configuration, source-bundle, raw and derived dataset, partition, transformation, cutoff, access-order, planned-outcome and result identities are one fail-closed synthetic execution contract. Cross-split subject, relation, site, acquisition, device or row overlap, time or preprocessing leakage, early or unauthorized access, result-aware amendment, selective omission, malformed identity, revocation, or future incompatible fields fail closed. Passing is mechanically observed engineering evidence only, not representativeness, independent review, scientific or clinical validation, qualification, regulatory acceptance, or patient-specific safety.",
+      "source": "lib/domain/entities/credibility_evidence_execution_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-protocol-transparency-ledger",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact prospective plan, evidence-execution attestation, runtime identities, analysis plan, dataset and code are bound to an append-only event chain. Every protocol baseline, amendment, deviation, correction, analysis change, dataset lock, result update, withdrawal, reviewer decision and revocation retains actor, authority, reviewer, reason, UTC occurrence/observation order, result visibility, affected factors/outcomes and predecessor digest. Unsupported schemas, broken chains, time replay, concurrent unresolved changes, missing review or acknowledgement, role escalation, post-result prospective relabelling, correction erasure, result-before-lock, omission or revocation fail closed while retaining the last accepted state. This synthetic audit trail is not a clinical-trial registry, GCP conformance, scientific validation, regulatory acceptance or clinical-safety evidence.",
+      "source": "lib/domain/entities/credibility_protocol_transparency_ledger.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-blinded-replication-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The last accepted protocol revision, execution attestation, locked inputs, analysis plan, runtime identities, code, environment, dependency lock, command, output schema, seed, tolerance policy, expected-result commitment, creator authority and expiry are one content-addressed capsule that excludes expected values and raw participant data. Separately authorized responses preserve complete reported, null, failed and adverse outcomes before unblinding; exact comparison classifies code, data, environment, dependency, analysis, protocol, stochastic, clock, authorization and unknown discrepancies; append-only adjudication retains agreement, holds, corrections, reruns, rejection and revocation. Unsupported schemas, identity drift, leakage, same-actor replication, replay, partial execution, unsafe logs, clock errors, commitment failure, post-result tolerance changes or false agreement fail closed. Passing is synthetic engineering reproducibility evidence only, not external scientific replication, model credibility, clinical validation, regulatory acceptance or patient safety.",
+      "source": "lib/domain/entities/credibility_blinded_replication.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-replication-output",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Synthetic replication outcomes use the declared output schema and retain reported, null, failed, adverse and missing states without clinical interpretation. Incompatible output fields or semantics require a new schema version and corresponding capsule, comparator and adjudication review.",
+      "source": "lib/domain/entities/credibility_blinded_replication.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-statistical-analysis-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The prospective plan, accepted protocol ledger, blinded replication package, runtime configuration, source bundle, analysis plan, dataset, code and environment are bound to explicit estimands, intercurrent-event strategies, endpoint hierarchy, analysis sets, estimators, missing-data methods, family-wise alpha allocation, multiplicity, confidence level, interim-look plan, sample-size assumptions, complete outcome states, same-estimand sensitivity analyses and an append-only deviation chain. Unsupported schemas, identity drift, incomplete or post-result contracts, alpha inflation, unadjusted multiplicity, result omission, interval and p-value disagreement, denominator drift, estimand switching, unplanned sensitivity analysis, broken history, protected post-result change or revocation fail closed. Passing is synthetic statistical-governance evidence only, not statistical or clinical validation, causal proof, regulatory acceptance, patient safety or medical advice.",
+      "source": "lib/domain/entities/credibility_statistical_analysis.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-randomization-interim-firewall-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact statistical package and runtime identities are bound to a prospectively locked randomization contract, concealed seed and assignment commitments, opaque eligibility-gated assignment chain, closed actor roles, append-only access history, emergency-unblinding policy, interim boundary and alpha-spending plan, independent committee roster and conflicts, quorum-bound recommendations, sponsor responses and revocation. Public serialization excludes the seed, commitment salt and future assignment codes. Unsupported schemas, identity drift, prospective-lock failure, commitment forgery, seed or future-assignment exposure, predictable or replayed assignment, ineligible enrollment, role collapse, unauthorized access, invalid emergency unblinding, sponsor interim exposure, committee conflict, boundary or alpha drift, repeated looks, inadequate quorum, recommendation tampering, override, broken decision history or revocation fail closed. Passing is fixed synthetic operational-governance evidence only, not proof of allocation concealment, committee independence, GCP compliance, scientific or clinical validity, regulatory acceptance, benefit, safety or medical advice.",
+      "source": "lib/domain/entities/credibility_randomization_interim_firewall.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-adaptive-design-simulation-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact governed randomization/interim and statistical packages, runtime identities, prospectively locked decision rule, inherited look timing and efficacy/futility thresholds, analysis model, RNG, secret-free seed commitment, twelve-family scenario catalog, retained operating-characteristic results, Monte Carlo precision and manufactured decision oracle are one fail-closed synthetic contract. Unsupported schemas, identity or threshold drift, post-lock scenario changes, insufficient repetitions, selective result retention, arithmetic disagreement, type-I inflation, inadequate scenario power, bias or coverage failure, invalid sample-size or selection behavior, oracle disagreement, broken chronology or revocation fail closed. Passing is finite synthetic simulation-governance evidence only, not study adequacy, universal error control, statistical or clinical validation, GCP compliance, regulatory acceptance, benefit, safety or medical advice; ICH E20 remains draft and not for implementation.",
+      "source": "lib/domain/entities/credibility_adaptive_design_simulation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-bayesian-borrowing-calibration-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact adaptive-design package and runtime identities are bound to a prospectively locked robust Beta-mixture prior, weak reference prior, external-evidence inclusion and exclusion ledger, quality and relevance thresholds, dynamic conflict discounting, borrowing and prior-ESS caps, binomial likelihood, estimand, missingness strategy, posterior success threshold, closed-form computation, secret-free seed commitment, ten-family scenario grid, complete posterior and frequentist operating-characteristic results, and five manufactured oracle vectors. Unsupported schemas, identity or hyperparameter drift, prior cherry-picking, duplicate or unsuitable external cohorts, population/outcome/estimand mismatch, overborrowing, disabled discounting, conflict suppression, post-lock scenario change, under-repetition, selective posterior reporting, arithmetic disagreement, false convergence, false-positive inflation, inadequate power, bias or coverage, oracle disagreement, broken chronology or revocation fail closed. Passing is synthetic methodology-governance evidence only, not Bayesian validity, a clinical conclusion, GCP compliance, regulatory acceptance, benefit, safety or medical advice; FDA January 2026 Bayesian guidance remains Draft — Not for Implementation.",
+      "source": "lib/domain/entities/credibility_bayesian_borrowing_calibration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-bayesian-multisource-model-criticism-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact Bayesian borrowing package and runtime identities are bound to a prospectively frozen seven-source discovery ledger retaining included, excluded, duplicate, dependent, unavailable and contradictory evidence; source-specific cohort linkage, outcome and estimand mapping, covariates, effect modifiers, data level, quality, relevance, completeness, overlap, temporal drift, bias risk and exchangeability assumptions; dependency discounting, bias adjustment and capped borrowing; prior predictive checks, simulation-based calibration, posterior predictive checks, alternative priors, multiple ESS views, leave-one-source-out analyses, source-order invariance, a negative control and deliberate incompatibility; six-family operating characteristics with Monte Carlo uncertainty; and an independently written Python stdlib oracle. Unsupported schemas, identity drift, post-result selection, omission, duplicate or unsuitable inclusion, dependency laundering, transportability or exchangeability overclaim, arithmetic drift, overborrowing, failed or omitted criticism, false-positive inflation, inadequate power, bias or coverage, independent-script or result mismatch, broken chronology or revocation fail closed. Passing is synthetic methodology-governance evidence only and cannot establish exchangeability, causal transportability, Bayesian validity, clinical effect, safety, GCP compliance or regulatory acceptance; FDA January 2026 Bayesian guidance remains Draft — Not for Implementation.",
+      "source": "lib/domain/entities/credibility_bayesian_multisource_model_criticism.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-target-population-transportability-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact upstream multi-source package, algorithm configuration and runtime identities are bound to a prospectively frozen synthetic target-population contract declaring eligibility, causal contrast, treatment versions, comparator, outcome, follow-up, censoring, sampling mechanism, covariates, effect modifiers, causal graph, seven identification assumptions, weight and balance limits, models, estimator code and independent-script identity. A disjoint 260-record randomized-trial sample and 360-record outcome-free target sample drive explicit overlap, support, unknown-covariate, influential-weight, effective-sample-size and before/after balance diagnostics; trial-only, outcome-regression, inverse-odds-of-sampling and augmented inverse-odds estimators; truncation sensitivity; seven scenario families with Monte Carlo uncertainty; and an independently written Python stdlib oracle. Unsupported schemas, identity or chronology drift, target-outcome leakage, duplicate or nonsynthetic records, covariate omission, structural non-overlap laundering, unknown target covariates, excessive weights, ineffective balance, estimator omission or arithmetic drift, doubly robust overclaim, sensitivity or scenario omission, calibration failure, estimation under non-identifiability, independent-script mismatch, result loss, boundary overclaim or revocation fail closed. Passing is synthetic methodology-governance evidence only and cannot prove identification assumptions, causal transportability, absence of unmeasured effect modification, clinical effect, benefit, safety, GCP compliance or regulatory acceptance.",
+      "source": "lib/domain/entities/credibility_target_population_transportability.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.credibility-transportability-sensitivity-package",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact target-population transportability parent and runtime identities are bound to a prospectively frozen bias-function contract, five result-blind axes, three attributed elicitation records, a complete 2625-point Cartesian grid with retained exclusion reasons, six local manufactured cases, first-order and total-effect global sensitivity indices, partial-identification and tipping regions, eight 10000-repetition operating scenarios, two explicit no-estimate held states, and an independently written Python stdlib oracle. Unsupported schemas, identity or chronology drift, sign or axis changes, post-result elicitation, grid omission, arithmetic drift, exclusion laundering, local/global/bound drift, scenario or calibration loss, estimation under structural positivity failure or incompatible elicitation, independent-script mismatch, result loss, overclaim or revocation fail closed. Passing is synthetic methodology-governance evidence only and cannot establish conditional transportability, identify an unknown clinical effect, repair structural positivity, prove benefit or safety, or support regulatory acceptance.",
+      "source": "lib/domain/entities/credibility_transportability_sensitivity.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.xorshift32-box-muller",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The RNG identifier binds the exact deterministic XorShift32 uniform generator and Box-Muller normal transform used by the synthetic operating-characteristics fixture. Any state transition, seeding, uniform mapping, transform, spare-value reuse or numeric behavior change requires a new identifier and full scenario/oracle regeneration. This identifier supports reproducibility only; it is not a cryptographic RNG, validated statistical package, clinical simulation platform or regulatory qualification.",
+      "source": "lib/domain/usecases/adaptive_design_operating_characteristics_simulator.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.evidence-currency-registry",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Claim identity, exact source revision, affected providers and predicates, correction status, status-resolution method, observation and review deadlines, reviewer, update notice, applicability boundary, sunset disposition, and canonical digests are one fail-closed reviewed-snapshot contract. As-of evaluation never uses a status observed after the requested time; future-observed status is unknown and quarantined. Incompatible changes require an explicit schema migration and requalification; a current status is not scientific validity, clinical validation, regulatory acceptance, or medical advice.",
+      "source": "lib/domain/entities/evidence_currency.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.claim-evidence-synthesis-registry",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Claim kind, outcome and effect-measure identity, expected direction, study design, source revision, independence group, explicit source-referenced study-dependency edges, connected-component independent-family counting, PICOS narrative, risk-of-bias, applicability, precision, reporting-bias, declared body certainty, dual-review artifacts, review deadline, disposition, canonical digest, and evidence-currency binding are one fail-closed contract. Incompatible changes require an explicit schema migration and requalification. Passing permits at most a governed research trace and is not clinical validation, causal proof, regulatory acceptance, or medical advice.",
+      "source": "lib/domain/entities/evidence_synthesis.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-bp-mapper",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 maps only a local blood-pressure observation to FHIR R4 Observation under the official BP profile and emits the LOINC code-system version (2.83) on panel/component Coding entries. The implementation pins UCUM specification 2.2 locally, but FHIR R4 Quantity has no version element, so the UCUM release is not carried on the wire and no UCUM terminology validation is claimed. The Patient reference must be supplied explicitly and is not resolved or created. UCUM mm[Hg], effective/issued instants and unknown/not-measured reasons are preserved. Non-blood-pressure inputs and unsupported references/units fail closed. The mapper omits free-text notes and recorder identity, marks the result preliminary, and does not establish FHIR server interoperability, clinical validation or patient identity.",
+      "source": "lib/domain/usecases/fhir_r4_blood_pressure_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-observation-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 previews only an exact FHIR R4 blood-pressure Observation subset in memory, binding caller-declared source base, FHIR release, jurisdiction and expected Patient reference while retaining resource metadata, terminology versions, displays, timestamps and distinct component absent reasons. Unsupported fields, unsupported statuses, mismatched identities, invalid timestamps, unknown absent reasons, comparators or unsupported units are held. The decoded numeric preview is not a lossless archive of the original JSON decimal spelling; no data is persisted, no CDSS algorithm consumes the preview, and no network SMART exchange, server conformance or clinical validity is established.",
+      "source": "lib/domain/entities/fhir_r4_observation_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-bp-collection-mapper",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "compatibility": "Schema v3 packages one to twelve chronological blood-pressure Observation resources as an immutable FHIR R4 collection Bundle using the versioned local BP mapper and an explicitly supplied Patient reference. Generated Bundle fullUrls and Observation IDs are independent of local record IDs. Embedded LOINC panel/component Codings identify release 2.83; the UCUM release is not represented on FHIR R4 Quantity. Empty, oversized, duplicate-ID, non-BP and unsupported inputs fail closed. The Bundle is a local preview artifact, not a transaction, server exchange, patient-identity resolution or full clinical-record export.",
+      "source": "lib/domain/usecases/fhir_r4_blood_pressure_collection_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-medication-statement-collection",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 packages account-entered, unverified medication discussion items as FHIR R4 MedicationStatement resources in an immutable collection Bundle. It requires an explicit Patient reference and owner-bound entries, omits local IDs, categories, ingredient labels and questions, and carries only entered name and dose/schedule text without terminology coding or reconciliation. This is a local handoff preview, not proof of medication use, FHIR server interoperability, or clinical validation.",
+      "source": "lib/domain/usecases/fhir_r4_medication_statement_collection_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-medication-statement-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one MedicationStatement or a collection Bundle of at most 32 statements and 128 KiB input. It binds a caller-declared R4 release, jurisdiction and exact Patient reference, hashes the exact pasted bytes, preserves source status and lexical time precision, and holds every known-but-unprojected or unknown field. Medication references are unresolved; dosage text is not parsed; no record is persisted, sent or algorithm-eligible. Previewability is an engineering subset check, not FHIR validation, source authenticity, proof of administration or clinical reconciliation.",
+      "source": "lib/domain/entities/fhir_r4_medication_statement_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-medication-request-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one FHIR R4 MedicationRequest or a collection Bundle of at most 32 requests and 128 KiB input. It binds a caller-declared R4 release, jurisdiction and exact Patient reference; preserves request status, intent and lexical authoredOn precision separately from MedicationStatement; and holds entered-in-error, modifier, known-but-unprojected and unknown fields. Medication references are unresolved; dosage instruction text is not parsed; no record is persisted, sent or algorithm-eligible. This preview is not FHIR validation, prescription validation, proof of dispensing or administration, or clinical reconciliation.",
+      "source": "lib/domain/entities/fhir_r4_medication_request_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-allergy-intolerance-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one FHIR R4 AllergyIntolerance or a collection Bundle of at most 32 entries and 128 KiB input. It binds caller-declared release, ISO 3166-1 alpha-2 jurisdiction and exact Patient reference; preserves clinicalStatus and verificationStatus as separate source-reported concepts; checks their R4 required value-set bindings without terminology lookup; and retains supplied terminology and lexical date precision. entered-in-error, patient mismatches, invalid choice or status constraints, and unknown or known-but-unprojected fields are held. No record is persisted, sent, reconciled or algorithm-eligible. This is not an allergy conclusion, FHIR conformance validation, or clinical interpretation.",
+      "source": "lib/domain/entities/fhir_r4_allergy_intolerance_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-condition-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one FHIR R4 Condition or a collection Bundle of at most 32 entries and 128 KiB input. It binds caller-declared release, ISO 3166-1 alpha-2 jurisdiction and exact Patient reference; preserves clinicalStatus separately from verificationStatus, source code/category codings and lexical dateTime precision; checks required R4 status bindings and selected problem-list, entered-in-error and abatement constraints without terminology lookup. Patient mismatches, invalid status constraints, and unknown or known-but-unprojected fields are held. No record is persisted, sent, reconciled or algorithm-eligible. This is not a diagnosis conclusion, FHIR conformance validation, or clinical interpretation.",
+      "source": "lib/domain/entities/fhir_r4_condition_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-encounter-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one FHIR R4 Encounter or a collection Bundle of at most 32 entries and 128 KiB input. It binds caller-declared FHIR 4.0.1, two-letter jurisdiction syntax and exact Patient reference; preserves source status, Encounter.class Coding fields and lexical period endpoints without terminology lookup or time conversion. entered-in-error, Patient mismatches, invalid status/dateTime/resource choices, and unknown or known-but-unprojected fields are held. The source Patient reference is not exposed. No record is persisted, sent, resolved, interpreted or algorithm-eligible. This is not FHIR conformance validation or clinical interpretation.",
+      "source": "lib/domain/entities/fhir_r4_encounter_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-medication-administration-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one FHIR R4 MedicationAdministration or a collection Bundle of at most 32 entries and 128 KiB input. It binds caller-declared release, ISO 3166-1 alpha-2 jurisdiction and exact Patient reference; retains source status, medicationCodeableConcept coding, category, statusReason and lexical effective[x] precision without terminology lookup. entered-in-error, Patient mismatches, invalid choices and unknown or known-but-unprojected fields (including dosage and medicationReference) are held. No record is persisted, sent or algorithm-eligible. This is not proof of administration, FHIR conformance validation or medication reconciliation.",
+      "source": "lib/domain/entities/fhir_r4_medication_administration_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-medication-dispense-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 accepts one FHIR R4 MedicationDispense or a collection Bundle of at most 32 entries and 128 KiB input. It binds caller-declared release, ISO 3166-1 alpha-2 jurisdiction and exact Patient reference; retains source status, medicationCodeableConcept coding, category, type, statusReason, source quantity and daysSupply without conversion, plus lexical whenPrepared and whenHandedOver precision. entered-in-error, Patient mismatches, invalid choices, impossible handover chronology and unknown or known-but-unprojected fields (including dosageInstruction and medicationReference) are held. No record is persisted, sent or algorithm-eligible. This is not proof of pickup, medication use, adherence, FHIR conformance or medication reconciliation.",
+      "source": "lib/domain/entities/fhir_r4_medication_dispense_import_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-personal-collection",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 combines bounded owner-entered blood-pressure, symptom and self-reported motor-state Observations in a chronological immutable FHIR R4 collection Bundle. Every entry uses a generated UUID fullUrl and resource ID independent of local IDs and the caller's explicit Patient reference. Empty, oversized, duplicate and unsupported inputs fail closed. Project-local codes are not LOINC or SNOMED mappings, and the Bundle is a local preview rather than general FHIR conformance or verified patient identity.",
+      "source": "lib/domain/usecases/fhir_r4_personal_observation_collection_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-symptom-motor-collection",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 packages a bounded chronological collection of account-entered symptom and self-reported motor-state Observations using an explicit Patient reference and generated Bundle-entry UUIDs without exporting local record or recorder IDs. Blood-pressure and unsupported observations, empty input, duplicate IDs and oversized collections fail closed. Project-local codes remain illustrative, not standard terminology mappings or a constrained FHIR profile.",
+      "source": "lib/domain/usecases/fhir_r4_symptom_motor_observation_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-symptom-motor-mapper",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 maps account-entered symptoms and self-reported motor states to preliminary FHIR R4 Observation resources with explicit Patient references, local illustrative codes, event/recorded times and explicit unknown/not-measured reasons. It is not a standard terminology mapping, constrained profile, diagnosis, or verified clinical observation; unsupported kinds and references fail closed.",
+      "source": "lib/domain/usecases/fhir_r4_symptom_motor_observation_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.food-composition-candidate-set-snapshot",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 5,
+      "compatibility": "Schema v5 binds ordered caller or built-in P0 inputs, projected local records, merged FoodItem content, merge collisions, jurisdiction context, merge policy and tie-break into an in-memory result snapshot with a canonical SHA-256. It adds a local projection query audit for the six queryTable reads, including table names, no-WHERE/no-ORDER-BY query shape, adapter-returned record IDs and order, row counts, canonical row-set digests, and implemented selection and last-wins rules; only the volatile _synced_at field is excluded from row hashes. The reads remain sequential and are not transaction-scoped, and caller query and filters are not captured. Projected foods retain available per-nutrient observation IDs and evidence plus linked source-document ownership, license notes, source metadata and payload-text SHA-256, linked preparation/sampling scope, and recorded concept/variant crosswalk evidence. FDC source-reported foodPortions fields are projected as separate FoodPortionEvidence with source document and food identifiers; the original complete raw payload text is not copied into candidate records. The existing registry checksum is retained as supplied and the payload digest identifies only persisted raw-payload UTF-8 text after ingestion, not a complete catalog release. Non-exact nutrient rows and portion records are evidence only and do not alter legacy ranking. Crosswalk confidence is recorded metadata, not validated match accuracy. The snapshot reports unavailable upstream catalog release, caller-side query/filters, selected serving, validated food matching and nutrient conversion, sample counts and quantitative measurement uncertainty. It is not a catalog freeze, does not establish rank stability and is not a persisted record.",
+      "source": "lib/domain/entities/food_composition_candidate_set_snapshot.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.food-portion-composition-projection",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 is a non-persisted preview bound to a captured candidate snapshot, an explicitly named FoodData Central Foundation portion record, and a selected exact nutrient observation from the same source food and document. It applies the per-100-g edible-portion formula only when source type, identifiers, basis, unit, scope, and any paired source extrema agree. Other data types and incomplete or conflicting evidence are held. The preview has no ranking effect, does not select a user serving, and treats source sample extrema as extrema rather than confidence or probability limits; portion-weight uncertainty is not quantified. Each serialized report carries a canonical SHA-256 over the result fields using lexically sorted object keys and an explicit IEEE-754 binary64 hexadecimal tag for every JSON numeric value, so Dart and JavaScript reproduce the same digest independently. The digest binds the explicit portion locator and candidate-snapshot digest.",
+      "source": "lib/domain/entities/food_portion_composition_projection.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cdss-food-projection-query-audit",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 records the six sequential CdssDatabase.queryTable operations used by food projection, their no-WHERE/no-ORDER-BY shape, returned primary-key IDs and order, row counts, content hashes and exact implemented food selection and last-wins filters. Table hashes exclude only volatile _synced_at fields. Reads are not transaction-scoped and do not establish an atomic database snapshot; caller-side query/filters and upstream catalog release identity remain unavailable. Raw row payloads are hashed but are not copied into the audit.",
+      "source": "lib/domain/usecases/cdss_catalog_projection_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r5-dose-quantity-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 projects one exact, owner-confirmed local administration quantity to an offline FHIR R5 Dosage doseQuantity fragment for four bounded UCUM code identifiers. A content-addressed path ledger classifies every FHIR R5 Dosage element as mapped, partially mapped, unsupported, or not projected, including extensions, sequence, the one-entry doseAndRate bound, dose ranges, rate Ratio/Range/Quantity, Timing, maxima, route, method, and site. Dosage.text is only a partial dose token, not a full SIG. The ledger covers the bounded Dosage element paths; it is not a complete FHIR resource/profile inventory or nested datatype validator. The preview remains a fragment, not a FHIR resource, independent validator result, full profile, RxNorm mapping or exchange artifact; resource_or_exchange_eligible is always false. UCUM table/parser redistribution, general conformance, license clearance and clinical correctness are not established.",
+      "source": "lib/domain/entities/fhir_r5_dose_quantity_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r5-dose-quantity-preview-profile",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Manifest schema v2 content-addresses the bounded four-code UCUM preview, FHIR Core and UCUM release identifiers, official definition/license references, and a per-element FHIR R5 Dosage disposition ledger. It describes a development-only Dosage quantity fragment, not a validator result, validated profile, terminology service, legal clearance, or exchangeable resource.",
+      "source": "lib/domain/entities/fhir_r5_dose_quantity_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r5-medication-product-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "compatibility": "Schema v3 projects a product display, dose-form display, and known ingredient names into a development-only FHIR R5 Medication fragment. The FhirInspiredMedicationKnowledgeView path keeps all strength outside FHIR; an opt-in MedicationProductPack path projects strengthQuantity only for an exact raw source lexeme, matching positive numerator, exact g/mg/ug unit, host-checked importer identity, absent or unitless numeric-one denominator, and exact tablet form. For openFDA products, strength projection additionally requires a unique exact match to a row in the content-addressed local source manifest; the preview binds the asset, manifest, and selected NDC/product/SPL/ingredient-row/parser digests. A local byte match does not verify source truth or currentness. All other strengths remain local evidence. The content-addressed profile manifest references FHIR Core 5.0.0 and UCUM 2.2/license 1.1 but does not redistribute UCUM artifacts or establish license clearance. Coding, profile validation, terminology equivalence, exchange, and clinical interpretation are not established; resource_or_exchange_eligible and algorithm_eligible are always false.",
+      "source": "lib/domain/entities/fhir_r5_medication_product_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r5-medication-product-preview-profile",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "compatibility": "Manifest schema v3 content-addresses FHIR Core 5.0.0, official Medication/Quantity definitions, UCUM 2.2 and license 1.1 references, bounded Medication path dispositions, and the openFDA source-row manifest contract. It records text-only identity, the exact tablet strengthQuantity subset, exact local asset/product/SPL/ingredient-row binding when an openFDA row is supplied, separate held strength evidence, omitted denominator, coding, package and batch fields, and false exchange/algorithm eligibility; it is not a validator result, complete resource/profile, source verification, UCUM license clearance, RxNorm mapping, or clinical determination.",
+      "source": "lib/domain/entities/fhir_r5_medication_product_preview.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r5-nutrition-intake-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 is a local single-meal FHIR R5 NutritionIntake-shaped preview with required unknown status, an exact user-supplied Patient reference, text-only food/category concepts, and recorded gram amounts. It omits local identifiers, derived nutrients, default or migrated occurrence times, and local wall-clock times without a UTC offset beyond date precision. The preview is immutable and copy-on-request; it is not validated against the official validator or a specific profile, does not establish base-resource conformance, terminology equivalence, clinical validity, or interoperability, and is never persisted, uploaded, or used by algorithms.",
+      "source": "lib/domain/usecases/fhir_r5_nutrition_intake_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.openfda-strength-expression-parse-result",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 preserves the exact source string for the openFDA NDC active-ingredient strength field and exposes anchored lexical tokens only, with a parser-result digest. It assigns no unit, denominator, dosage-form or clinical semantics; source identity remains caller-bound. Every result is held and never eligible for FHIR strength, administration dose or algorithm use.",
+      "source": "lib/domain/entities/openfda_strength_expression.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.openfda-strength-expression-source-manifest",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 binds each lexical strength parse to the exact source asset digest, product NDC, product ID, SPL ID, ingredient index and ingredient display. Duplicate or incomplete source identities fail closed. The manifest preserves FDA and openFDA limitations, does not verify source data, and marks clinical or algorithm use ineligible.",
+      "source": "lib/domain/entities/openfda_strength_expression_source_manifest.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.knowledge-approval",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The strict Ed25519 approval statement binds exact pack/rule, content, suite and engine digests to role, decision, issuer, environment, subject, validity window and expected sequence/predecessor. Trusted subjects and scoped grants are supplied externally; signatures and an append-only local ledger do not establish professional licensure, clinical correctness or nonrepudiation.",
+      "source": "lib/domain/entities/knowledge_approval_envelope.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "knowledgeApprovalSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.knowledge-governance-state",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 stores complete immutable packages, independent per-rule review receipts and hash-linked lifecycle events. A separate sticky anchor detects document loss, rollback, truncation and torn writes; any corrupt or inconsistent journal holds the runtime. Local persistence is not a trusted timestamp service, independent transparency log or clinical approval authority.",
+      "source": "lib/domain/entities/knowledge_governance_state.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "knowledgeGovernanceSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.knowledge-pack",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 binds the complete declarative rule set, source revisions, declared author, engine identity and per-rule positive, negative, missing-input and boundary cases to a content digest. Each new rule requires independent case review before resolution as an authorized complete set. Cases exercise the current engine and do not establish correctness, clinical evidence, professional review or historical executable replay.",
+      "source": "lib/domain/entities/knowledge_pack.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "knowledgePackSchemaVersion"
         }
       ]
     },
@@ -46,11 +810,164 @@
       ]
     },
     {
-      "id": "parkinsum.mechanistic-event-ledger",
+      "id": "parkinsum.mechanistic-model-verification-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "The invariant specification, declared observable and unit, tolerance, method, source identity, fixed-scenario set, probe-to-algorithm binding, observed probe identity, executed algorithm identity, per-check result, algorithm coverage status, configuration binding, and non-clinical boundary are versioned together. Version 2 fails closed when a specification label is not authorized by the independently recorded production probe binding. Incompatible fields or semantics require a new schema version and reviewed specification digest; passing is implementation and calculation verification only.",
+      "source": "lib/domain/usecases/mechanistic_model_verification_gate.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "mechanisticModelVerificationSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-executable-contract-report",
       "surfaceKind": "governance-artifact",
       "versionStatus": "versioned",
       "currentVersion": 1,
-      "compatibility": "Event kind, value-state distinctions, original and canonical units, timestamp and equal-time ordering, source and revision identity, full audit digest, and canonical replay digest are one versioned contract. Unsupported versions, fields, units, identities, ordering, timestamps, or either digest mismatch fail closed; the ledger is read-only replay evidence and never a dose schedule.",
+      "compatibility": "The fixed synthetic contract specification, relation kind, expected and observed digests, per-algorithm status, configuration and registered-source identities, deterministic failure codes, and non-clinical boundary are versioned together. Missing, extra, malformed, non-finite, blocked, or identity-drifted observations fail closed. Passing is software behavior verification only, not scientific truth, model quality, clinical calibration, patient-level accuracy, benefit, safety, or medical advice.",
+      "source": "lib/domain/usecases/algorithm_executable_contract_gate.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmExecutableContractSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-contract-relation-registry",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Relation identity, input-domain preconditions, transformation, expected relation, observation shape, rationale, review window, source identity, known false-relation risks, intermediate-representation mutation operators, scheduler cases, and non-clinical boundary are versioned together. Unknown evaluators, duplicates, missing review fields, stale review or malformed mutations fail closed.",
+      "source": "lib/domain/entities/algorithm_contract_independent_oracle_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmContractRelationRegistrySchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-contract-independent-oracle-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Registry, independent Node implementation, executable specification, algorithm configuration, registered source bundle and report identities; per-relation results; mutation survivors; deliberately invalid relations; scheduler interleavings; and the offline non-clinical boundary are one fail-closed attestation. Passing is cross-runtime software verification over fixed synthetic observations, not a live in-app Node execution or scientific, clinical, regulatory or patient-safety evidence.",
+      "source": "lib/domain/entities/algorithm_contract_independent_oracle_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmContractIndependentOracleReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-relation-domain-sampling-plan",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Generator identity and version, deterministic per-relation seeds, five domain partitions, explicit precondition boundary, invalid-input HOLD disposition, shrink strategy, minimum diversity budget, defective-relation fixtures, synthetic-only data boundary, paired Dart production execution, and independent observation-IR evaluation are versioned together. Membership drift, duplicate seeds, missing partitions, real-health-data authorization, or ambiguous production execution claims fail closed.",
+      "source": "lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmRelationDomainSamplingPlanSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-relation-domain-sampling-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema URI revision, numeric schema_version, Dart consumer constant and catalog version must agree before evidence is consumed. Sampling-plan, relation-registry, sampler, fixed production anchor, parameterized production-execution report, runner, executor, executable specification, configuration, registered source bundle, report identities, per-seed and per-partition production input/output digests, independent relation decisions, precondition HOLDs, reviewed IR mutation classifications and a locked defective-relation calibration policy are one fail-closed offline attestation. The 96/128 diagnostic-exposure result counts incorrect alarms generated by deliberately defective synthetic relations so those fixtures can be rejected; it is not an estimated production false-positive rate or clinical error rate. Passing covers the declared synthetic partitions only and does not close exhaustive production-domain, scientific, clinical, regulatory or patient-safety claims.",
+      "source": "lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmRelationDomainSamplingReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.defective-relation-calibration-policy",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The locked synthetic fixture scope, metric kind, production and clinical interpretation statuses, per-class failure modes, integer numerator and denominator, exact rational result and pass rule are versioned together. Missing, malformed, reordered by meaning, or drifted policy fields fail the combined relation-domain sampling report. The diagnostic-exposure rate measures deliberately defective relation fixtures only; it is not a production false-positive rate, clinical error rate, correctness proof or safety claim.",
+      "source": "lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-relation-production-sampling-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact plan, registry, Dart runner, production executor, algorithm configuration and source bundle identities; per-case source/follow-up input and output digests; API invocation counts; precondition HOLDs; synthetic-data boundary; and pending independent-oracle status are versioned together. This Dart report records execution only and cannot self-certify the relation result.",
+      "source": "lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "algorithmRelationProductionSamplingReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.local-time-resolution",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 binds Gregorian timezone-naive civil components to one explicit IANA zone, caller-declared tzdb/provider identity, a digest of the exact zone rule tables, explicit UTC offset, resolved UTC instant, resolver identity, fold choice, and a canonical SHA-256 over the complete evidence body. DST gaps, unknown zones, offset-zone disagreement, malformed rules and ambiguous folds without an explicit earlier or later choice fail closed. This evidence can be optionally bound to owner-observation projection schema v2 and copied into supplemental mechanistic replay events when the caller supplies an exact record mapping; it does not backfill older observations or cover dose, meal, context, or reminder events; it does not parse RFC 9557, and never creates or reschedules reminders or medication events; passing is timezone-engineering evidence only.",
+      "source": "lib/domain/entities/local_time_resolution.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "localTimeResolutionSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-event-ledger",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "acceptedLegacyVersions": [
+        1,
+        2
+      ],
+      "compatibility": "Schema v3 adds strict pressure and ordinal-severity dimensions and supports privacy-minimized owner-observation event supplements while preserving the exact engine-input binding, full audit digest, and canonical replay digest. Supplemental owner observations are digest-bound replay annotations; they do not extend the engine-input binding or enter conflict, ranking, or recommendation calculations. Schemas v1 and v2 remain catalogued as historical evidence but are not authorized by the current parser. Unsupported versions, fields, units, identities, ordering, timestamps, input bindings, or digests fail closed; the ledger never creates or changes a dose schedule.",
       "source": "lib/domain/entities/mechanistic_event_ledger.dart",
       "versionEvidence": [
         {
@@ -63,11 +980,165 @@
       ]
     },
     {
-      "id": "parkinsum.open-source-influence-inventory",
+      "id": "parkinsum.mechanistic-ledger-authorization",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The expected and ledger configuration identities, exact input-binding identity, readable projection checks, round-trip identities, counts, opaque-but-bound field inventory, findings, status, and report digest are versioned together. Any drift blocks numerical mechanistic output. Authorization establishes integrity only; the readable projection is not a lossless replay schema and passing is not clinical validation.",
+      "source": "lib/domain/usecases/mechanistic_event_ledger_authorization.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "mechanisticLedgerAuthorizationSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-ledger-input-binding",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact TimeAxisConflictContext JSON and sorted full MealComposition map are canonicalized and SHA-256 bound. Any field, nested collection, map key, or value drift changes the identity. This binding supports integrity authorization only and is not a portable lossless replay format or a standards-conformance claim.",
+      "source": "lib/domain/entities/mechanistic_event_ledger.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-replay-capsule",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The complete schema-v3 ledger, exact TimeAxisConflictContext, sorted full MealComposition map, canonicalization profile, generation instant, explicit timezone limitation and capsule digest are one self-contained envelope. Supplemental owner-observation annotations survive the capsule round trip while remaining outside the engine-input binding and numerical evaluator. Integers are canonical decimal strings and finite doubles are exact IEEE-754 binary64 bit strings inside reserved typed wrappers; native payload numbers, reserved-key collision, unknown fields, incompatible versions, digest drift, lossy reconstruction, configuration drift or input-binding drift fail closed before numerical evaluation. Historical offset replay is not IANA/tzdb future-civil-time conformance, and passing is not scientific or clinical validation.",
+      "source": "lib/domain/entities/mechanistic_replay_capsule.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "mechanisticReplayCapsuleSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.jcs-safe-lossless-scalars",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "This deliberately narrow JCS-safe profile permits strings, booleans, null, arrays and string-keyed objects while representing all payload integers and finite binary64 values through reserved exact wrappers. Keys are deterministically sorted and strings are preserved without Unicode normalization. It is designed for this replay schema and does not claim full RFC 8785 conformance for arbitrary JSON numbers or property names.",
+      "source": "lib/domain/entities/mechanistic_replay_capsule.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-replay-cross-runtime-vectors",
       "surfaceKind": "governance-artifact",
       "versionStatus": "versioned",
       "currentVersion": 1,
-      "compatibility": "The upstream identity, pinned commit, license evidence, artifact class, transfer disposition, authorization, local paths, obligations, and release boundary are one fail-closed governance contract. Incompatible fields require a new schema version; a passing inventory is release hygiene, not legal advice or scientific validation.",
+      "compatibility": "Three fixed synthetic Observatory scenarios retain the complete canonical capsule bytes, capsule digest, embedded ledger digest and input-binding digest after Dart serialization, strict parse and object reconstruction. Missing scenarios, failed round trips, incompatible schema, unknown root fields or digest mutations fail closed. These vectors are synthetic engineering fixtures, not platform, scientific or clinical evidence.",
+      "source": "lib/domain/entities/mechanistic_replay_capsule.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "mechanisticReplayCrossRuntimeVectorsSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.mechanistic-replay-cross-runtime-conformance",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "An independently written Node implementation recomputes canonical bytes and SHA-256 for every Dart vector and exercises property reordering, binary64-bit drift, native-number injection, null-versus-missing and Unicode-code-point mutations. Any missing vector, digest mismatch, scalar-profile violation or surviving mutation fails closed. Passing covers Dart VM plus Node fixtures only and does not establish every release platform, IANA/tzdb replay, biological truth, clinical calibration, benefit, safety or regulatory qualification.",
+      "source": "lib/domain/entities/mechanistic_replay_capsule.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "mechanisticReplayCrossRuntimeConformanceSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-structural-uncertainty-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The measured observable, modality, units, model structure, parameter authority, evidence identity, fit authorization, trajectory availability, pairwise disagreement, event-ledger identity, production-output before/after digests, and non-clinical boundary are versioned together. Unsupported schemas, observable or modality conflation, ungoverned fitting, invalid trajectories, incomplete model coverage, or production-output mutation fail closed; passing is read-only engineering sensitivity evidence, not individual prediction, validation, diagnosis, or treatment guidance.",
+      "source": "lib/domain/entities/gastric_structural_uncertainty.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "gastricStructuralUncertaintySchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-high-precision-reference-check",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The independent arithmetic identity, decimal precision, transcendental method, source fixture and configuration digests, per-structure manufactured vectors, tolerance, mutation result, and non-clinical boundary are versioned together. Incompatible fields or arithmetic semantics require a new schema version; passing is precision-diverse calculation verification only and cannot establish identifiability, biological validity, calibration, or patient-specific fitness.",
+      "source": "lib/domain/entities/gastric_high_precision_reference_contract.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "gastricHighPrecisionReferenceSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.open-source-drift-review-decision",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 records one human decision bound to the exact canonical proposal digest, inventory digest, influence identity, reviewer, UTC time, rationale, classification, and HTTPS evidence references. Decision values distinguish accepted, rejected, deferred, and revoked; accepted decisions require evidence. The reviewer identity is self-asserted and not authenticated by this format. It contains no patient data and cannot approve a release, transfer, legal conclusion, or clinical claim.",
+      "source": "tool/open_source_drift_decision_ledger.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.open-source-drift-review-ledger",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 preserves a sequential append-only decision chain with exact previous-event and canonical event SHA-256 digests, proposal and inventory bindings, and latest-decision revocation. A projected baseline is accepted only when every exact influence has a current accepted event and the retained ledger contains the corresponding hashed event and anchor; the hashes do not cryptographically authenticate reviewers or prove immutability outside a retained chain anchor. Unsupported fields, identities, chronology, evidence URLs, decisions, missing sources, digest drift, partial review, or revocation fail closed. The artifact is release-governance evidence only, not legal approval, scientific validity, clinical effectiveness, or regulatory clearance.",
+      "source": "tool/open_source_drift_decision_ledger.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.open-source-influence-inventory",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 7,
+      "compatibility": "Schema v7 preserves the v6 influence, source-pin, transfer, and artifact-license boundaries and adds one file-level record for every locally transferred asset path. Each record binds the path and local SHA-256 to its unique pinned artifact-license owner and, for fonts, the applicable NOTICE file; missing, duplicate, unsafe, symlinked, mismatched, or byte-drifted files fail closed. Local hashes do not prove byte equivalence to upstream sources. Mixed font collections retain NOASSERTION at repository level and each family keeps its own terms. Derived fonts still require reserved-font-name resolution. Concept-only references may keep unresolved asset licenses; release-linked influences, development tools, and concept-only references remain disjoint. Incompatible fields require a new catalog version; a passing inventory is release hygiene, not legal advice or scientific validation.",
       "source": "lib/domain/entities/product_upgrade_queue.dart",
       "versionEvidence": [
         {
@@ -76,6 +1147,40 @@
         {
           "kind": "dart-int-constant",
           "symbol": "openSourceInfluenceInventorySchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.open-source-release-evidence",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "compatibility": "Schema v3 binds built Web and Android artifacts to Flutter-generated NOTICE hashes and CycloneDX 1.7 documents containing Pub dependency evidence, artifact digests, and an explicitly incomplete composition. It verifies exact NOTICE bytes by reconstructing the pinned Flutter LicenseCollector behavior from local package roots, the CI-pinned Flutter version, matching SDK source revision and collector/asset/manifest source files, package NOTICE/LICENSE inputs, and manifest-declared additional licenses in Flutter's dependency traversal order. Top-level NOTICE/LICENSE inputs are scanned from the complete package configuration, while additional license files follow the pinned asset builder's runtime/dev dependency selection. This replaces schema v2's coarse normalized-whitespace text-presence scan. A match does not verify extracted cache bytes against hosted archive hashes, classify SPDX terms, establish source completeness, or constitute legal approval. The Android BOM also includes the resolved :app debugRuntimeClasspath graph, Maven coordinates and published artifact hashes, plus Flutter plugin projects mapped to Pub packages. Each resolved Maven archive also records paths, sizes, and SHA-256 digests for embedded license/notice documents when present; this is document-presence evidence and does not classify terms or prove legal completeness. Hard failures include missing or empty notices, invalid Android gzip, Web/Android notice mismatch, collector reconstruction mismatch, missing hosted package hashes, Pub graph/lock drift, unsupported or unclosed Android graph identities, or contract-version drift. Unreachable Dart dev-only packages, Gradle buildscript/plugin classpaths, SDK/NDK, Node tooling, and other release platforms remain outside scope; target-binary inclusion is not asserted. Every package license remains NOASSERTION, and generated BOMs are unsigned release-hygiene evidence rather than legal approval or a complete artifact SBOM.",
+      "source": "lib/domain/entities/product_upgrade_queue.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "openSourceReleaseEvidenceSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.android-gradle-runtime-dependency-graph",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 records the resolved :app debugRuntimeClasspath dependency graph, Maven coordinates and published Maven artifact file hashes, plus paths, sizes and SHA-256 digests for license/notice documents embedded in each resolved Maven archive. Flutter plugin projects map to Pub identities whose source archives are bound by pubspec.lock. Unmapped project or unsupported component identities, dangling edges, unreachable nodes, malformed archive-member paths, invalid document digests, and plugin-to-lock mismatches fail closed. This records locally present document evidence only; it does not classify license terms, prove legal completeness, or establish target-binary inclusion. Local Gradle project output files are not separately hashed; the graph excludes Gradle buildscript/plugin classpaths and Android SDK/NDK inputs.",
+      "source": "lib/domain/entities/product_upgrade_queue.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "androidGradleRuntimeDependencyGraphSchemaVersion"
         }
       ]
     },
@@ -96,7 +1201,7 @@
       "id": "parkinsum.algorithm-parameter-provenance",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "versioned",
-      "currentVersion": 1,
+      "currentVersion": 2,
       "compatibility": "Parameter records are read under their explicit schema URI; incompatible changes require a new version.",
       "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
       "versionEvidence": [
@@ -109,12 +1214,95 @@
       "id": "parkinsum.algorithm-parameter-manifest",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "versioned",
-      "currentVersion": 1,
+      "currentVersion": 2,
       "compatibility": "Manifest consumers must bind records to the declared manifest schema and configuration digest.",
       "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
       "versionEvidence": [
         {
           "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-configuration-coverage",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 keeps the exhaustive registry partition and adds an optional, exactly validated completeness witness plus a dynamic complete-per-field count. Field, sink, source, section, bundle, or dependency digest drift invalidates completion; coverage does not establish numerical, biological, clinical, safety, efficacy, or patient-benefit validity.",
+      "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-configuration-completeness-witness",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Exact field records, affected and required result sinks, owned source files and SHA-256 values, configuration section, registered source bundle, dependency contracts, review evidence, boundary, limitation and derived witness digest form one fail-closed attestation. Incompatible changes require a new schema version; a valid witness closes only its declared engineering configuration boundary.",
+      "source": "lib/algorithm_sdk/algorithm_parameter_provenance.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.algorithm-configuration-change-impact",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Semantic changes, impact relationships, replay states, verification obligations, and closure semantics are pinned by the schema URI; incompatible changes require a new version.",
+      "source": "lib/domain/entities/algorithm_configuration_change_impact.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.configuration-baseline-promotion-receipt",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Signing payload, reviewer authorities, approval scope, obligation bindings and transition semantics are fixed by the schema URI; incompatible changes require a new version.",
+      "source": "lib/domain/entities/configuration_baseline_registry.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "final class ConfigurationBaselinePromotionReceipt",
+          "endAnchor": "final class ConfigurationBaselineRegistryEvent"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion",
+          "anchor": "final class ConfigurationBaselinePromotionReceipt",
+          "endAnchor": "final class ConfigurationBaselineRegistryEvent"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.configuration-baseline-registry",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Event-chain, active-pointer, predecessor and registry digest semantics are fixed by the schema URI; incompatible changes require a new version.",
+      "source": "lib/domain/entities/configuration_baseline_registry.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "final class ConfigurationBaselineRegistryState"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion",
+          "anchor": "final class ConfigurationBaselineRegistryState"
         }
       ]
     },
@@ -132,18 +1320,64 @@
       ]
     },
     {
+      "id": "parkinsum.gastric-emptying-configuration",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The parameter-set identity, generator-structure contract and output-integrity contract are versioned as one gastric-emptying configuration surface. Incompatible changes require a new schema version and reviewed configuration identity; this contract describes deterministic educational software and does not claim physiological calibration, individual prediction or clinical validity.",
+      "source": "lib/domain/usecases/gastric_emptying_model.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-emptying-generator-structure",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Meal-evidence gating, fat and size calculations, modifier comparators, component-form branching, component weighting, uncertainty thresholds and aggregate policy form one deterministic generator-structure contract. Incompatible changes require a new schema version and requalification; catalog registration is engineering traceability, not biological or clinical validation.",
+      "source": "lib/domain/usecases/gastric_emptying_model.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-emptying-output-contract",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Availability states, fraction integrity, residence-curve semantics, derived windows, sensitivity bounds, arrival-rate calculation and unavailable-wire behavior are versioned together. Incompatible changes require a new schema version; passing this contract is deterministic engineering evidence only and does not establish scientific, clinical or patient-specific validity.",
+      "source": "lib/domain/entities/gastric_emptying_profile.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
       "id": "parkinsum.gastric-parameter-set",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "semantic-versioned",
-      "currentVersion": "2026.08.17-v2",
-      "compatibility": "The semantic parameter-set identity is emitted inside the algorithm envelope; it is not a population calibration version.",
+      "currentVersion": "2026.09.02-v3",
+      "schemaUriVersion": 1,
+      "compatibility": "Schema URI v1 and semantic parameter-set identity 2026.09.02-v3 are independently checked: the former defines the serialized field contract and the latter identifies this reviewed default value set. Any field-contract incompatibility requires a new schema URI version, while any reviewed-value change requires a new semantic version; this identity is not a population calibration or clinical-validity claim.",
       "source": "lib/domain/entities/gastric_emptying_parameters.dart",
       "versionEvidence": [
         {
-          "kind": "dart-named-string-argument",
-          "argument": "version",
-          "anchor": "factory GastricEmptyingParameterSet.literatureInformedDefault()",
-          "endAnchor": "Map<String, dynamic> toJson()"
+          "kind": "dart-string-constant",
+          "symbol": "reviewedDefaultVersion",
+          "anchor": "final class GastricEmptyingParameterSet",
+          "endAnchor": "factory GastricEmptyingParameterSet.literatureInformedDefault()"
+        },
+        {
+          "kind": "schema-uri",
+          "catalogVersionField": "schemaUriVersion",
+          "anchor": "final class GastricEmptyingParameterSet",
+          "endAnchor": "factory GastricEmptyingParameterSet.literatureInformedDefault()"
         }
       ]
     },
@@ -158,16 +1392,99 @@
       "versionEvidence": []
     },
     {
+      "id": "parkinsum.care-workspace",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 5,
+      "acceptedLegacyVersions": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "compatibility": "Schema v5 adds bounded account-owner self-reported medication-list review marks for current selections, over-the-counter medicines, vitamins/supplements, and stopped/uncertain-use items; each mark is category-unique, owner-bound and time-stamped, and means only that the owner marked the category as reviewed. It does not establish completeness, accuracy, clinician review, or a medication change, and is not a rule input. Schema v4 retains its bounded append-only owner-reported discussion-outcome history; schema v3 retains user-entered ingredient labels; text matching remains exact/case/space-only and never infers ingredient identity, duplicate therapy, or interaction. Schema-v1 through v4 workspaces load read-only and migrate on the next successful change; earlier versions receive no inferred review marks. Strict keys, entry references, owner bindings, unique IDs/sections, bounded payloads and fail-closed handling remain. The account-local workspace stays outside portable-data backups and provides no cloud caregiver access or clinician verification.",
+      "source": "lib/core/services/care_workspace_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "careWorkspaceSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.decision-support-followup-ledger",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "acceptedLegacyVersions": [
+        1,
+        2
+      ],
+      "compatibility": "Schema v2 introduced separate owner-selected not-applicable and declined workflow states. Schema v3 requires an owner-selected reason category on new dismissed, not-applicable and declined feedback while retaining the required free-text reason; labels organize the person's report and do not verify the underlying claim. Schema-v1 and v2 ledgers load and migrate to v3 on the next successful change, and earlier feedback remains explicitly unclassified without inferred categories. Schema-v1 ledgers cannot contain v2-only states. The ledger binds immutable prompt identities to owner scope, actual rule version, input snapshot digest, source references and the explanation shown, with ordered explicit feedback history. Unsupported versions, owner mismatches, duplicate identities, invalid transitions and oversized ledgers are rejected. Feedback describes only recorded workflow choices; it does not confirm clinical correctness, applicability, recommendation acceptance or following, medication change, or professional role authentication.",
+      "source": "lib/domain/entities/decision_support_followup.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.personal-observation",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 preserves explicit observation and recording timestamps, original timezone, recorder and source, typed symptom or self-reported motor-state fields, and blood-pressure values with unit and posture. Unknown and unmeasured values remain distinct from recorded measurements; unsupported versions, unexpected fields and inconsistent typed values are rejected. User-owned portable package schema v4 exports the current local observation snapshot while replacing recorder ID with the package-owner role; v2/v3 packages explicitly mark the source observation history unavailable. These records do not establish a diagnosis, sensor verification or medication adjustment.",
+      "source": "lib/domain/entities/personal_observation.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.personal-observation-event-ledger",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 creates a read-only in-memory projection from current-owner (owner-filtered) PersonalObservation records. It retains UTC occurrence and recording instants, the caller-declared timezone label, source and entry status, hashes record identity, preserves unknown separately from not-collected, and supports only bounded mm[Hg]/kPa pressure conversion. A caller may supply local-time resolution evidence by selected record ID; the projection binds the evidence only when its IANA zone and resolved UTC instant match the stored event, and the ledger digest covers that evidence. It excludes owner ID, recorder ID, symptom labels and notes. It is not the engine-bound mechanistic ledger or an algorithm input. MechanisticObservationEventImporter can append it as digest-bound supplemental audit/replay rows, including the optional evidence, while rows remain outside the exact engine-input binding and do not enter algorithm calculations. Older observations are never backfilled; caller-supplied tzdb/provider labels are not independently attested. The projection is not an external laboratory/FHIR importer or durable storage, and a timezone label alone is not validated against tzdb.",
+      "source": "lib/domain/entities/personal_observation_event_ledger.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "personalObservationEventLedgerSchemaVersion"
+        }
+      ]
+    },
+    {
       "id": "parkinsum.personal-log-handoff",
       "surfaceKind": "public-envelope",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Generated handoff artifacts bind a reviewed source revision and explicit schema version. Incompatible semantic or rendering changes require a new version; this is not a medical-record or IPS conformance claim.",
+      "currentVersion": 3,
+      "compatibility": "Schema v3 retains the v2 parseable-dose versus confirmation-, assertion-, and as-of-gated result eligibility boundary and adds an optional, user-selected, date-bounded personal-observations section for symptom, self-reported motor-state, and blood-pressure records. That section is omitted by default, preserves occurrence and entry timestamps, original timezone, source, status, entered values, units and posture, excludes record and recorder identifiers, and limits free-text notes to detailed redaction. It calculates no trend, diagnosis, threshold interpretation, treatment response, or causal relationship. Generated artifacts bind the selected source revision and explicit schema version; incompatible semantic or rendering changes require a new version. This is not a medical-record or IPS conformance claim.",
       "source": "lib/domain/usecases/personal_log_handoff_summary_service.dart",
       "versionEvidence": [
         {
           "kind": "dart-int-constant",
           "symbol": "personalLogHandoffSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.personal-log-handoff-semantic-document",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 contains ordered headings, paragraphs, warnings, and lists derived from one owner-bound handoff snapshot. It serializes to self-contained offline HTML with escaped text and no remote resources. Language annotations beyond the English document shell, full bidirectional shaping, tagged PDF, PDF/UA, and assistive-technology conformance are not claimed.",
+      "source": "lib/domain/usecases/personal_log_handoff_summary_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "personalLogHandoffDocumentSchemaVersion"
         }
       ]
     },
@@ -185,6 +1502,23 @@
         {
           "kind": "dart-int-constant",
           "symbol": "privacySafeSupportBundleSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.operational-observability-envelope",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Only closed-enum operational categories, coarse duration buckets, bounded aggregate counts, capability states, reviewed release identity, and reviewed export-policy facts are accepted. Exact timestamps, account or session identity, health content, free text, raw exceptions, credentials, endpoints, unknown fields, stale consent, emergency-disabled policy, unsupported schemas, or digest drift fail closed. A valid envelope is operational evidence only, never clinical evidence.",
+      "source": "lib/domain/entities/operational_observability.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "operationalObservabilityEnvelopeSchemaVersion"
         }
       ]
     },
@@ -260,17 +1594,149 @@
       "id": "parkinsum.user-portable-data-package",
       "surfaceKind": "public-envelope",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Import preview rejects unsupported versions and only proposes reviewed future migrations; current code performs no import writes.",
+      "currentVersion": 4,
+      "acceptedLegacyVersions": [
+        2,
+        3
+      ],
+      "compatibility": "Schema v4 retains the v3 envelope, dose-truth and reminder contracts, adds a current local owner-entered observation snapshot, and explicitly excludes raw recorder IDs while preserving recorded values, notes, source, timestamps, timezone, status, unit and posture. Unknown and not-measured values remain distinct from measurements; migrated v2/v3 packages are marked unavailable_in_source_schema rather than presented as empty histories. Schema v2 reminder presentation receives frozen minimal-English defaults. Versions 2 and 3 are readable through deterministic preview-only migrations; schema v1 remains unsupported. Inspection performs no permission request, native scheduling, persistence, network operation or durable import write. The artifact contains sensitive health information and remains unsigned and unencrypted.",
       "source": "lib/domain/usecases/user_portable_data_package_service.dart",
       "versionEvidence": [
         {
           "kind": "dart-int-constant",
           "symbol": "userPortableDataPackageSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-migration-registry",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The accepted v2/v3/v4 schema URIs, exact versioned file inventories, envelope and reminder-field projections, v4 observation container/record fields, structural-contract digests, semantic-policy digests, validator identities, v2-to-v3, v3-to-v4 and composed v2-to-v4 preview migrations, preservation invariants and registry digest are frozen together. V3-to-v4 adds an explicit unavailable observation marker and updates scope/exclusion metadata without inferring an empty history. Unknown, missing, mixed-version, integrity-drifted or unsupported inputs fail closed. JSON Schema structure remains distinct from ParkinSUM cross-field semantics and sorted-key-json-v1 remains distinct from RFC 8785/JCS.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
         },
         {
-          "kind": "versioned-string",
-          "prefix": "parkinsum-portable-package-v"
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaMigrationRegistrySchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-migration-receipt",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "A privacy-bounded receipt binds exact source bytes, decoded canonical source, deterministic output, source and target validators, migration and semantic diff, warnings, held fields and the preview-only user decision. Receipt digest drift fails closed. It contains no record values or account identifier and proves neither issuer authenticity nor durable import or clinical correctness.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-migration-cross-runtime-vectors",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Frozen synthetic v2 and v3 documents migrate to v4 with an unavailable observation marker; a current v4 document carries a captured owner-entered observation snapshot with recorder ID excluded. The three fixtures retain null-versus-zero meaning, reminder and observation migration behavior, registry identities, deterministic outputs and receipts. One additional Dart VM numeric fixture freezes integer-versus-double spelling, negative zero, exponent output and signed-64-bit canonicalization boundaries. Eight Dart mutation and invariant classes cover ordering, unknown, omitted, mixed-version, duplicate-member, future-version, receipt-digest and null-versus-zero behavior.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaMigrationCrossRuntimeVectorsSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-migration-cross-runtime-conformance",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "An independent Node implementation rejects duplicate object members before JSON.parse, recomputes registry, validator, source, output and receipt identities, reproduces v2/v3-to-v4 outputs, checks the versioned envelope and observation record/missingness/order contract, matches the frozen Dart VM numeric fixture, ignores stale numeric-token metadata after mutation and runs nine mutation/invariant classes including Unicode code-point preservation. Passing is bounded Dart/Node engineering evidence, not Dart web or every release platform, complete semantic validation of every portable file, issuer authenticity, encryption, durable import, FHIR conformance or clinical correctness.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaMigrationCrossRuntimeConformanceSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-differential-fuzz-plan",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The generator version, fixed regression seeds, lexical and semantic partitions, current v4 package plus v2/v3 migration inputs, production-matched package, node, depth, width, source-string-token, decoded-string, decoded-key and number-token budgets, post-return elapsed observation threshold, runtime lanes, privacy defaults, promotion contract and explicit release-artifact boundary are frozen together. The elapsed threshold is not a preemptive timeout. Exploratory seeds are opt-in and unretained by default.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaDifferentialFuzzPlanSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-fuzz-regression-corpus",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Retained cases are synthetic JSON covered by an explicit corpus-level privacy review and are never user-derived by default. Each case binds a stable id, partition, expected disposition and expected reason code; this first corpus does not claim per-case minimization provenance. Corpus changes require reviewed versioned evidence.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaFuzzRegressionCorpusSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-differential-fuzz-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The Dart production-preview campaign binds plan, corpus, migration registry, generator, fixed seeds, partition coverage, synthetic source digests, expected dispositions and reason codes, migration output and receipt identities. Per-case elapsed time is compared with a post-return observation threshold but omitted from the report identity; the runner cannot preempt a hung synchronous parser.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaDifferentialFuzzReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.portable-schema-differential-fuzz-conformance",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "An independent Node recursive-descent parser must agree with the Dart production preview and frozen expectation for every retained synthetic case, enforce source-string-token, decoded-string, decoded-key and number-token limits incrementally, accept only the four JSON whitespace code points, validate unique manifest inventory, frozen owner/integrity/privacy and reminder safety scalars, and check the v4 observation envelope, missingness, timestamps, order and recorder-role contract. It preserves tested Dart VM integer-versus-double canonicalization and compound lexical/EOF/width/unsupported-version/extra-field/integrity precedence and independently recomputes raw-source, canonical output and receipt identities. A disagreement is blocking and exposes only a quarantine source digest; automatic minimization/promotion remains held until cross-runtime replay exists. Passing remains finite Dart/Node evidence, not complete independent semantics for every portable file, continuous coverage-guided, preemptive-timeout or every-platform release-artifact evidence.",
+      "source": "lib/domain/entities/portable_schema_migration.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "portableSchemaDifferentialFuzzConformanceSchemaVersion"
         }
       ]
     },
@@ -338,13 +1804,160 @@
       "id": "parkinsum.intake-record",
       "surfaceKind": "persisted-envelope",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Serialized intake records carry a version, while legacy optional fields remain source-reader policy.",
+      "currentVersion": 3,
+      "acceptedLegacyVersions": [
+        1,
+        2
+      ],
+      "compatibility": "Schema v3 adds an optional medication-reconciliation envelope containing immutable source assertions and append-only review decisions. Schema v2 adds the exact-shape dose-confirmation receipt; schema v1 remains readable as an unconfirmed legacy record. Missing confirmation or source evidence can never be inferred from a numeric note.",
       "source": "lib/core/models/intake.dart",
       "versionEvidence": [
         {
           "kind": "dart-int-constant",
           "symbol": "currentSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.administration-dose-confirmation",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The exact receipt binds one explicit confirmation action to an account-scoped intake revision, parser identity, structured value and unit, product snapshot, administration time, and record digest. Unsupported or malformed receipts fail closed; the receipt is not a prescription, MedicationAdministration, clinician signature, or proof that a dose was taken.",
+      "source": "lib/core/models/administration_dose_confirmation.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "administrationDoseConfirmationSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.medication-package-dose-derivation",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "An optional product-selection snapshot records source system, source URL and retrieval time, exact ingredient-strength text and parsed numerator/denominator, denominator disposition, confirmed discrete dosage-unit count, formula identity and result. The existing administration-dose receipt binds the complete product snapshot digest. Older records remain readable without a trace; malformed traces are dropped during parsing and therefore cannot preserve a matching receipt digest. This is source-linked arithmetic evidence only, not source verification or clinical validation.",
+      "source": "lib/core/models/medication_product_pack.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.administration-dose-record-binding",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The canonical record-binding payload identifies only the intake fields that the confirmation receipt covers. Field, normalization, or meaning changes require a new URI version and receipt migration; a matching digest does not prove ingestion or clinical correctness.",
+      "source": "lib/core/models/administration_dose_confirmation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.dose-expression-parse-result",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 preserves accepted, held, and rejected states plus grammar identity, reasons, and exact local unit-mapping evidence. Mapping identity includes source and canonical codes, versions, source revision, exactness, jurisdiction, review date, license state, dimensions, and rational conversion. Older parser or mapping revisions fail closed for result use. This is a ParkinSUM local vocabulary, not UCUM or clinical dose validation.",
+      "source": "lib/domain/entities/dose_expression.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.versioned-dose-unit-mapping",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 records exact mapping provenance between an accepted local dose token and its canonical local unit and base-unit conversion. Unknown, approximate, ambiguous, stale, unlicensed, dimensionally invalid, or revision-drifted records cannot supply an algorithm quantity. The ParkinSUM-local vocabulary does not claim UCUM conformance or third-party terminology equivalence.",
+      "source": "lib/domain/entities/versioned_dose_unit_mapping.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.medication-assertion",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "acceptedLegacyVersions": [
+        1
+      ],
+      "compatibility": "Each content-addressed assertion preserves medication, product, optional dose, source artifact and revision, actor role, derivation and lifecycle links, effective-time interval and uncertainty, assertion/import/record clocks, and status. Version 2 optionally persists a bounded user-entered source display label and binds it into new labeled assertion identities; version 1 identities remain unchanged and unnamed on migration. A source label is not issuer authenticity proof, adherence evidence, or clinical reconciliation; unsupported or malformed nodes fail closed.",
+      "source": "lib/domain/entities/medication_assertion_reconciliation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "'parkinsum.medication-assertion/2'"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "medicationAssertionSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.medication-reconciliation-decision",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "An append-only decision binds the exact conflict-graph revision and the assertions and blocking edges shown to the user. Acknowledgement never deletes evidence, resolves a clinical discrepancy, or releases a still-conflicting numeric dose to an algorithm.",
+      "source": "lib/domain/entities/medication_assertion_reconciliation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "medicationReconciliationDecisionSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.medication-assertion-conflict-graph",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The deterministic graph enumerates corroboration, duplication, dose, time, product, status, source-revision, future-date, clock, timezone, derivation, supersession and retraction relationships without a universal source hierarchy. Graph identity changes whenever nodes, edges, or integrity findings change.",
+      "source": "lib/domain/usecases/medication_assertion_reconciliation_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.medication-assertion-bitemporal-projection",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 3,
+      "compatibility": "The read-only projection separates clinical valid time from the knowledge cutoff, withholds later assertion and decision payloads, and rebuilds the conflict graph from only cutoff-visible assertions and decisions using validAt for temporal edges. Aggregate integrity markers without an independent knowledge timestamp are reported as unresolved at the cutoff, omitted from the historical graph, and disclosed as an incomplete projection. It is not dose eligible; changes to cutoff, graph reconstruction, temporal-integrity disclosure, or withholding semantics require a new URI version.",
+      "source": "lib/domain/usecases/medication_assertion_reconciliation_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.medication-reconciliation-envelope",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The Intake-owned envelope persists bounded immutable assertions and append-only review decisions through local, web, Firestore, recovery and portable-data paths. Incompatible shape or meaning changes require a new URI version and explicit migration.",
+      "source": "lib/core/models/intake.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
         }
       ]
     },
@@ -371,20 +1984,13 @@
       "id": "parkinsum.reminder-plan",
       "surfaceKind": "persisted-envelope",
       "versionStatus": "versioned",
-      "currentVersion": 3,
-      "compatibility": "Reminder rows are persisted under an account-scoped v3 key; v2 rows migrate once with privacy mode defaulting to minimal and the notification locale snapshot defaulting to English, while unsupported versions fail closed.",
+      "currentVersion": 4,
+      "compatibility": "Reminder rows are persisted under an account-scoped v4 key. V2 rows migrate once with minimal privacy and English scheduled/decision locales; v3 rows preserve their scheduled locale and derive the durable locale-decision language family. The v4 contract keeps the actual scheduled-copy locale separate from the last App-locale decision, while malformed and future versions fail closed.",
       "source": "lib/domain/entities/user_logging_reminder.dart",
       "versionEvidence": [
         {
-          "kind": "dart-json-int-field",
-          "field": "schemaVersion",
-          "anchor": "class UserLoggingReminder {",
-          "endAnchor": "factory UserLoggingReminder.fromJson"
-        },
-        {
-          "kind": "versioned-string",
-          "source": "lib/core/services/user_logging_reminder_service.dart",
-          "prefix": "parkinsum.user_logging_reminders.v"
+          "kind": "dart-int-constant",
+          "symbol": "userLoggingReminderSchemaVersion"
         }
       ]
     },
@@ -392,32 +1998,149 @@
       "id": "parkinsum.reminder-notification-payload",
       "surfaceKind": "public-envelope",
       "versionStatus": "versioned",
-      "currentVersion": 2,
-      "compatibility": "Notification activation routing accepts only the explicit payload version and opaque capability token shape.",
-      "source": "lib/core/services/user_logging_reminder_service.dart",
+      "currentVersion": 3,
+      "compatibility": "New notification activation payloads use v3 and bind the opaque one-time plan capability, reminder id, and exact system-visible presentation digest. Already captured v2 payloads remain accepted only when their capability still matches the current enabled plan; malformed, future, stale-capability, and stale-presentation payloads fail closed.",
+      "source": "lib/core/services/reminder_notification_payload.dart",
       "versionEvidence": [
         {
-          "kind": "versioned-string",
-          "prefix": "parkinsum-reminder:v"
+          "kind": "dart-int-constant",
+          "symbol": "reminderNotificationPayloadSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-notification-presentation",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The digest identity binds privacy mode, resolved language, exact system-visible title/body, requested Android secure-lock-screen visibility, and the Darwin system-control boundary. Any incompatible presentation meaning requires a new schema URI version; the digest is identity and drift evidence, not proof of visible delivery or effective concealment.",
+      "source": "lib/core/services/reminder_notification_privacy_policy.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-notification-capability-matrix",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "The exhaustive Android, iOS, macOS, Web, Windows, Linux, and unknown-platform matrix is the production gateway and UI truth source. Unsupported schemas, unknown fields, boundary changes, missing or duplicate profiles, partial capability maps, and unknown targets fail closed to local plan-only behavior. App-level permission inspection is implemented-unverified on scheduled targets; request results, inspection state, and plugin identity never prove visible delivery. Schema v2 additionally separates platform support, pinned-plugin support and product enablement for seven behaviors, and pins the plugin archive and lockfile identities; v1 is not accepted as current capability evidence.",
+      "source": "lib/core/services/reminder_notification_capability_matrix.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "final class ReminderNotificationCapabilityMatrix",
+          "endAnchor": "enum ReminderNotificationCapabilityBindingKind"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion",
+          "anchor": "final class ReminderNotificationCapabilityMatrix",
+          "endAnchor": "enum ReminderNotificationCapabilityBindingKind"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reminder-delivery-readiness",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "The identifier-free readiness envelope binds a canonical capability contract and separates local plan state, schedule request including rollback, permission request outcome, current app-level permission inspection, plugin registry, and visible-delivery evidence. Contradictory states and unbound artifact verification fail closed; request completion and registry agreement never promote visible delivery.",
+      "source": "lib/core/services/reminder_notification_capability_matrix.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "class ReminderDeliveryReadiness"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion",
+          "anchor": "class ReminderDeliveryReadiness"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.android-reminder-run-attestation",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 4,
+      "compatibility": "Schema v4 is a hard exact-key replacement for historical local v1, v2 and v3 evidence. It binds one run-scoped v4 integration observation to Git source state, an isolated reminder-attestation application ID and visible label, APK and installed-base digests and sizes, compiled APK manifest-tree digest and facts, Android SDK and ABI facts, notification capability identities, warnings-fatal one-signer APK signature verification, certificate digest, verified schemes, exact apksigner/build-tools identity, and the nested execution-isolation v2 contract. Build output and device application resources require distinct resource-key and owner-token digests; the exact private lease-evidence digest, nine ordered ownership checkpoints, bounded heartbeat staleness, continuous ownership, drained child processes, and device cleanup while owned are mandatory. Linux process-start identity permits at most two stale reclaims; macOS no-reclaim mode permits none. The isolated package sandbox must be absent before installation and removed after the run. Candidate evidence additionally requires clean source and a reviewed attestation-certificate match; development signer observations remain explicitly unreviewed and every integration-entrypoint run remains release-ineligible. Historical v1, v2 or v3 evidence, production package IDs, permission requests, real-user-data access, visible-delivery claims, system-visible results without inspection, registry counts other than seven then zero, identity drift, incompatible SDK or ABI, artifact replacement, signer, manifest, lease digest, resource ownership or checkpoint drift, and unsupported schemas fail closed. Passing is scheduler, plugin-registry, compiled-manifest, APK-signature-integrity and local execution-isolation evidence only, not crash-durable publication, visible delivery, production signing trust, device integrity, reproducible-build provenance, clinical validation, or regulatory acceptance.",
+      "source": "lib/core/services/reminder_notification_run_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "final class ReminderNotificationRunAttestation {"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion",
+          "anchor": "final class ReminderNotificationRunAttestation {"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.android-reminder-execution-isolation",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 is a hard exact-key replacement for historical local v1 evidence because it adds the required private lease-evidence SHA-256. It binds a process-start owner identity, exact private lease-evidence digest, heartbeat and stale thresholds, bounded stale-reclaim count, exactly one build-output and one device-application resource with mutually unique resource-key and owner-token digests, nine ordered lifecycle ownership checkpoints, continuous ownership, drained child processes before device cleanup, and cleanup while still owned. Only Linux proc-stat identity or macOS no-reclaim mode is accepted; macOS cannot claim stale recovery. Historical v1, missing, duplicate, reordered, unknown, future, weakly identified, prematurely stale, reclaimed-on-macOS, ownership-lost or lease-digest drift evidence fails closed. Publication is permitted only after child drain, heartbeat stop, successful lease release and a final signal check; release or signal failure makes zero finalizer calls. Passing is local in-process mutual-exclusion evidence for one attestation execution only; it is not crash-durable multi-file publication, distributed locking, device integrity, reproducible-build provenance, or release eligibility.",
+      "source": "lib/core/services/reminder_notification_run_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "final class ReminderNotificationRunExecutionIsolation {",
+          "endAnchor": "final class ReminderNotificationRunSource {"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion",
+          "anchor": "final class ReminderNotificationRunExecutionIsolation {",
+          "endAnchor": "final class ReminderNotificationRunSource {"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.android-reminder-integration-observation",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 4,
+      "compatibility": "Schema v4 replaces the ambiguous v3 system-visible-copy boolean with separate configured-copy, system-inspection, and nullable system-result fields. The run-scoped reportData observation binds one 8-to-96-character safe run identity and source-state digest to the Android capability schema, manifest and profile, no-user-storage boundary, no-permission-request state, exactly seven pending plugin requests followed by zero, a configured label-free minimal copy, and explicitly uninspected system-visible and lock-screen behavior. Unknown fields, unsupported schemas, digest drift, permission requests, real-user-data access, different registry counts, configured user labels, non-null system results without inspection, or visible-delivery promotion fail closed. The observation is an input to the outer checksum-bound attestation and is not independently an artifact, source, device, delivery, signing, or clinical proof.",
+      "source": "lib/core/services/reminder_notification_run_attestation.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "final class ReminderNotificationRunIntegrationObservation",
+          "endAnchor": "final class ReminderNotificationRunClaims"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "currentReportSchemaVersion",
+          "anchor": "final class ReminderNotificationRunIntegrationObservation",
+          "endAnchor": "final class ReminderNotificationRunClaims"
         }
       ]
     },
     {
       "id": "parkinsum.reminder-schedule-manifest",
       "surfaceKind": "runtime-contract",
-      "versionStatus": "unversioned",
-      "currentVersion": null,
-      "compatibility": "Deterministic in-memory preflight contract only; no independently versioned serialized manifest exists.",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Version 1 is a deterministic in-memory preflight and installation-fingerprint identity contract. It binds ordered reminder payload and plan identities, privacy mode, presentation identity, and timezone context; it is not a serialized or persisted manifest and does not prove native OS delivery.",
       "source": "lib/core/services/reminder_schedule_manifest.dart",
-      "surfaceMarker": "class ReminderScheduleManifest",
-      "versionEvidence": []
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
     },
     {
       "id": "parkinsum.app-database-native",
       "surfaceKind": "database-schema",
       "versionStatus": "versioned",
-      "currentVersion": 8,
-      "compatibility": "SQLite onUpgrade statements govern supported transitions; catalog presence does not prove every historical migration path.",
+      "currentVersion": 11,
+      "compatibility": "SQLite schema v11 adds a digest-keyed immutable mechanistic replay capsule table; v10 adds the nullable medication-reconciliation JSON envelope and v9 adds dose confirmation. Capsule reads strictly re-parse canonical bytes and verify digest identity. Older rows remain readable with absent evidence rather than invented confirmation. onUpgrade statements govern supported transitions; catalog presence does not prove every historical migration path.",
       "source": "lib/core/db/app_database_native.dart",
       "versionEvidence": [
         {
@@ -525,6 +2248,240 @@
           "argument": "schemaVersion",
           "anchor": "return ProductUpgradeQueue(",
           "endAnchor": "List<ProductUpgradeItem> get activeItems"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-rule-test-case",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 is a bounded synthetic-only fixture with exact context keys, explicit nullable inputs and offset-bearing timestamps, a fixed synthetic subject, authored expected target decisions/winners/missing fields, and exact rule-pack source/version/content binding. Unknown schemas, unsupported fields or units and malformed values are rejected. Absent expectations are not verification; changing the case invalidates prior run evidence.",
+      "source": "lib/domain/entities/rule_test_case.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleTestCaseSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-rule-test-pack",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 freezes complete declarative rule JSON and binds its source, bundle version, canonical content digest and unique per-rule versions. Imported bindings must match the content. This is an isolated current-engine replay pack, not an installed knowledge database, authenticated review, source-document archive or clinical activation approval. The synthetic-json-binary64-v1 profile type-tags every node, sorts object keys and represents finite safe-range numeric values as binary64 bytes; integral doubles and signed zero are normalized for desktop/web identity. Malformed Unicode and out-of-range numbers reject.",
+      "source": "lib/domain/entities/rule_test_case.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleTestRuleSetSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-rule-test-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 reports exact case/input/rule content identities, current engine identity, explicit execution status selection and expected/actual assertion results. A binding mismatch or missing/excluded trace cannot verify an assertion. No expectations means notVerified. It does not restore historical executables or source-document bodies and does not establish clinical correctness or independent review.",
+      "source": "lib/domain/usecases/synthetic_rule_test_runner.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleTestRunReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-rule-test-suite",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 is a strict synthetic-only suite of one to sixteen independently bound rule cases with unique IDs and a bounded encoded size. Unknown or missing fields, duplicate IDs, empty or oversized suites and unsupported versions fail closed. The suite is a test input and carries no persistence or activation authority.",
+      "source": "lib/domain/entities/rule_test_suite.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleTestSuiteSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-rule-test-suite-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 records sequential per-case current-engine results, independent case status counts, selected binding and explicit no-persistence/no-activation boundaries. Missing assertions and binding mismatches do not count as passes. The report is synthetic engineering evidence, not clinical validation or independent review.",
+      "source": "lib/domain/usecases/synthetic_rule_test_suite_runner.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleTestSuiteReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.rule-set-structural-diff",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 reports added/removed/changed IDs, exact JSON Pointer field changes with presence flags, complete array order and same-version content-drift warnings. Null is distinct from absence; limit violations reject the comparison without truncation. This report establishes structural differences only, not semantic equivalence, clinical impact or source authenticity.",
+      "source": "lib/domain/entities/rule_set_diff.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleSetDiffReportSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.rxnorm-release-identity",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 content-addresses NLM RxNorm Current Prescribable Content release metadata, official filename, publisher checksum, release notes, enumerated scope and terms. The archive was not downloaded or locally verified, no terminology rows or product mappings are included, and absence from the active subset remains unresolved, not retired. Release drift holds for review. This metadata pin is not bound into algorithm identity and does not establish RxNorm/FHIR conformance, dose appropriateness, prescription validity, administration, adherence or clinical correctness.",
+      "source": "tool/rxnorm_release_identity.mjs",
+      "versionEvidence": [
+        {
+          "kind": "versioned-string",
+          "prefix": "parkinsum.rxnorm-release-identity/"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.infoods-tagname-source-identity",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 content-addresses a source-currency observation for the official FAO/INFOODS tagnames page. The page reports a 2022-10-20 update, records additions through 2010, and still marks proposed tags and a consolidated Excel list as coming soon; this does not establish a complete current vocabulary or released tagname package. The remote page was not archived or hashed, no tagname rows or mappings are downloaded or bundled, and mapping remains on hold until a versioned complete source is reviewed. This metadata artifact does not establish INFOODS conformance or clinical correctness.",
+      "source": "tool/infoods_tagname_source_identity.mjs",
+      "versionEvidence": [
+        {
+          "kind": "versioned-string",
+          "prefix": "parkinsum.infoods-tagname-source-identity/"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.catalog-version-change-diff",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 compares caller-supplied old/current catalog record-set captures using exact codes and explicit, snapshot-bound transition evidence. Record-set and diff SHA-256 values are deterministic content identities only: they are not signatures, publisher archive verification, or proof of source completeness. Changed-code classification trusts caller-declared review and license states plus a well-formed evidence digest and matching capture bindings; those declarations and references are not independently authenticated. Retirement is explicit, absent codes stay unresolved, and name similarity never creates a mapping. Split, merge, ambiguous, stale, unreviewed, unlicensed and missing evidence remain held for an owner decision. The Data Integrity page accepts this schema as an ephemeral local preview: it recomputes capture digests, rejects unknown fields, and does not mutate saved medication records. A separate explicit local action scans active medication identities and intake identity fields and emits aggregate exact-source-code reference counts only. These rows do not bind the source catalog release, so matches are potential references rather than confirmed affected records; multiple changed-code matches remain unattributed. The result exposes no record identifiers, names, or dose details, and the scan is not persisted, sent, or applied. The UI lists at most 20 changed codes and clears on input or relevant owner-state edits. No mapping is applied, persisted, or verified as a publisher release; unresolved updates are not wired to runtime algorithm abstention. Catalog completeness, terminology conformance and clinical correctness are not established.",
+      "source": "lib/domain/entities/catalog_version_change_diff.dart",
+      "versionEvidence": [
+        {
+          "kind": "versioned-string",
+          "prefix": "parkinsum.catalog-version-change-diff/"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-cds-hooks-challenge",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 is an ephemeral challenge preview for exactly one fixed synthetic information card. It binds the input digest and canonical card SHA-256, requires one bounded reason code and rationale, exists only in the current diagnostics page memory, is not saved or transmitted, and does not change the response or rule outcome. Real health or personal data must not be entered. This contract provides no human-factors, clinical-validation, or CDS Hooks conformance evidence.",
+      "source": "lib/domain/usecases/synthetic_cds_hooks_challenge_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "syntheticCdsHooksChallengeSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cql-concept-template-draft",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 accepts one typed FHIR R4 Patient-scoped Observation template with an explicit, versioned ValueSet and integer count comparator. It generates CQL and a draft Library with Patient and code-filtered Observation data requirements, translates to ELM with pinned CQF CQL, and evaluates fixed in-memory synthetic cases through pinned cql-execution and cql-exec-fhir. Unsupported fields, modifiers and mismatched synthetic outcomes fail closed. The translation terminology warning remains explicit; the fixed synthetic ValueSet is not an external terminology resolution. No network, real patient data, persistence, FHIR validation or runtime activation occurs, and the artifact makes no clinical validity claim.",
+      "source": "tool/cql_concept_template_preview.mjs",
+      "versionEvidence": [
+        {
+          "kind": "versioned-string",
+          "prefix": "parkinsum.cql-concept-template-draft/"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.evidence-currency-runtime-binding",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Schema v1 binds a mechanistic result to the exact offline evidence-currency registry version and digests, UTC as-of time, sorted provider and claim identities, disposition, explicit boundary, and binding digest. Unknown or missing fields, unsupported schema, malformed values, unsorted identities or digest mismatch fail closed. The digest is tamper-evident content identity, not a signature, source-validity claim, durable history, clinical validation or treatment recommendation.",
+      "source": "lib/domain/entities/evidence_currency.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.administration-dose-expression",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 4,
+      "compatibility": "Grammar v4 binds the exact local unit mapping and rejects unsupported, ambiguous or adjacent Unicode unit text. It preserves the original note and holds nonconforming expressions from result-affecting algorithms; parsing is not a dose recommendation.",
+      "source": "lib/domain/usecases/dosage_note_parser.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "grammarVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.protein-trend-aggregation",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Version 1 records ascending Meal.effectiveOccurredAt ordering, grams per meal from computeTotals, and arithmetic mean with zero for an empty list. It is a local descriptive aggregation, not a clinical adequacy or outcome claim.",
+      "source": "lib/domain/usecases/get_protein_trend_usecase.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.food-rank-sensitivity-assessment",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Version 1 is an in-memory bounded source-range stress-test report bound to the exact candidate snapshot digest. Missing, stale or observed order-change evidence withholds ranked presentation; a no-change report does not establish full rank stability, confidence, probability or clinical benefit.",
+      "source": "lib/domain/entities/food_rank_sensitivity_assessment.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.fhir-r4-medication-intake-statement",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Version 1 projects an owner-entered intake as a FHIR R4 MedicationStatement with unknown status, display-text medication identity and an explicit Patient reference. Local timestamps without a retained offset become date-only. Record identifiers, dose receipts, terminology codes and product details are excluded; the output does not verify administration or clinical correctness.",
+      "source": "lib/domain/usecases/fhir_r4_medication_intake_statement_mapper.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-rule-test-suite-checkpoint",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Version 1 binds a bounded synthetic-only suite checkpoint to suite identity and SHA-256 digest, selected rule binding, execution mode and unique completed cases. Unknown fields, versions, oversized inputs and malformed identities fail closed. Checkpoints grant no persistence or runtime activation authority and are not clinical validation.",
+      "source": "lib/domain/entities/rule_test_suite.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "ruleTestSuiteCheckpointSchemaVersion"
         }
       ]
     }

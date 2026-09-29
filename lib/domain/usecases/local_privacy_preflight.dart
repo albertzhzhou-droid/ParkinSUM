@@ -162,7 +162,7 @@ class LocalPrivacyPreflight {
       .any((d) => path.startsWith(d) || path.contains('/$d'));
 
   bool _isFirebaseConfig(String path, LocalPrivacyPreflightConfig c) =>
-      c.knownPublicFirebaseConfigPaths.contains(path);
+      c.firebaseClientConfigPaths.contains(path);
 
   bool _isSafePolicyValue(String value, LocalPrivacyPreflightConfig c) {
     final v = value.toLowerCase();
@@ -394,18 +394,7 @@ class LocalPrivacyPreflight {
         }
       }
       if (_googleApiKey.hasMatch(raw)) {
-        if (_isFirebaseConfig(path, config)) {
-          out.add(
-            f(
-              LocalPrivacySeverity.warn,
-              'firebase_web_api_key_present',
-              ln,
-              'Firebase Web API key in a public client config (expected).',
-              category: LocalPrivacyCategory.secret,
-              allow: 'known_public_firebase_client_config',
-            ),
-          );
-        } else if (underGen) {
+        if (underGen) {
           out.add(
             f(
               LocalPrivacySeverity.warn,
@@ -416,13 +405,25 @@ class LocalPrivacyPreflight {
               allow: 'generated_dir',
             ),
           );
+        } else if (_isFirebaseConfig(path, config)) {
+          out.add(
+            f(
+              LocalPrivacySeverity.blocker,
+              'firebase_client_api_key_committed',
+              ln,
+              'Firebase client API key is committed in tracked source.',
+              category: LocalPrivacyCategory.secret,
+              fix:
+                  'Inject the restricted client key at build time; use Security Rules and App Check for authorization.',
+            ),
+          );
         } else {
           out.add(
             f(
               LocalPrivacySeverity.blocker,
               'api_key_like_secret',
               ln,
-              'API-key-like value outside known Firebase client config.',
+              'API-key-like value in tracked repository source.',
               category: LocalPrivacyCategory.secret,
             ),
           );

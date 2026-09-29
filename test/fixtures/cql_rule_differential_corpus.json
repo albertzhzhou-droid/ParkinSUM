@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 2,
+  "scope": "synthetic-engineering-comparison",
+  "cases": [
+    {
+      "id": "dose_true",
+      "class": "truth_value",
+      "when": {"cmp": {"path": "drug.daily_dose_mg", "op": "gte", "value": 200}},
+      "input": {"dailyDoseMg": 250},
+      "cql": "250 >= 200",
+      "expectedCql": "true",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": [],
+      "expectedRuntimeMatch": true,
+      "expectedReview": false
+    },
+    {
+      "id": "dose_false",
+      "class": "truth_value",
+      "when": {"cmp": {"path": "drug.daily_dose_mg", "op": "gte", "value": 200}},
+      "input": {"dailyDoseMg": 150},
+      "cql": "150 >= 200",
+      "expectedCql": "false",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": ["criterion_not_met"],
+      "expectedRuntimeMatch": false,
+      "expectedReview": false
+    },
+    {
+      "id": "dose_unknown",
+      "class": "truth_value",
+      "when": {"cmp": {"path": "drug.daily_dose_mg", "op": "gte", "value": 200}},
+      "input": {"dailyDoseMg": null},
+      "cql": "null >= 200",
+      "expectedCql": "unknown",
+      "expectedResponseErrors": ["evaluation_indeterminate"],
+      "expectedResponseWarnings": [],
+      "expectedRuntimeMatch": false,
+      "expectedReview": true
+    },
+    {
+      "id": "unit_g_below_boundary",
+      "class": "unit_boundary",
+      "when": {"dose_band": {"path": "drug.daily_dose_mg", "unit": "mg/day", "threshold": {"value": 0.2, "unit": "g"}, "op": "gte"}},
+      "input": {"dailyDoseMg": 199.99},
+      "cql": "199.99 >= (0.2 * 1000)",
+      "expectedCql": "false",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": ["criterion_not_met"],
+      "expectedRuntimeMatch": false,
+      "expectedReview": false
+    },
+    {
+      "id": "unit_g_at_boundary",
+      "class": "unit_boundary",
+      "when": {"dose_band": {"path": "drug.daily_dose_mg", "unit": "mg/day", "threshold": {"value": 0.2, "unit": "g"}, "op": "gte"}},
+      "input": {"dailyDoseMg": 200},
+      "cql": "200 >= (0.2 * 1000)",
+      "expectedCql": "true",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": [],
+      "expectedRuntimeMatch": true,
+      "expectedReview": false
+    },
+    {
+      "id": "unit_unsupported",
+      "class": "unsupported_unit",
+      "when": {"dose_band": {"path": "drug.daily_dose_mg", "unit": "oz/day", "threshold": {"value": 200, "unit": "mg"}, "op": "gte"}},
+      "input": {"dailyDoseMg": 250},
+      "cql": "(case 'oz/day' when 'mg/day' then 250 when 'g/day' then 250 * 1000 when 'mcg/day' then 250 / 1000 else null end) >= 200",
+      "expectedCql": "unknown",
+      "expectedResponseErrors": ["evaluation_indeterminate"],
+      "expectedResponseWarnings": [],
+      "expectedRuntimeMatch": false,
+      "expectedReview": false
+    },
+    {
+      "id": "time_exactly_60_minutes",
+      "class": "date_boundary",
+      "when": {"between": {"left_path": "timestamps.drug_time", "right_path": "timestamps.meal_time", "unit": "minutes", "low": 0, "high": 60}},
+      "input": {"drugTime": "2026-09-20T09:00:00.000Z", "mealTime": "2026-09-20T08:00:00.000Z"},
+      "cql": "(difference in minutes between @2026-09-20T08:00:00.000Z and @2026-09-20T09:00:00.000Z) >= 0 and (difference in minutes between @2026-09-20T08:00:00.000Z and @2026-09-20T09:00:00.000Z) <= 60",
+      "expectedCql": "true",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": [],
+      "expectedRuntimeMatch": true,
+      "expectedReview": false
+    },
+    {
+      "id": "time_61_minutes",
+      "class": "date_boundary",
+      "when": {"between": {"left_path": "timestamps.drug_time", "right_path": "timestamps.meal_time", "unit": "minutes", "low": 0, "high": 60}},
+      "input": {"drugTime": "2026-09-20T09:01:00.000Z", "mealTime": "2026-09-20T08:00:00.000Z"},
+      "cql": "(difference in minutes between @2026-09-20T08:00:00.000Z and @2026-09-20T09:01:00.000Z) >= 0 and (difference in minutes between @2026-09-20T08:00:00.000Z and @2026-09-20T09:01:00.000Z) <= 60",
+      "expectedCql": "false",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": ["criterion_not_met"],
+      "expectedRuntimeMatch": false,
+      "expectedReview": false
+    },
+    {
+      "id": "time_unknown",
+      "class": "date_missing",
+      "when": {"between": {"left_path": "timestamps.drug_time", "right_path": "timestamps.meal_time", "unit": "minutes", "low": 0, "high": 60}},
+      "input": {"drugTime": null, "mealTime": "2026-09-20T08:00:00.000Z"},
+      "cql": "(difference in minutes between @2026-09-20T08:00:00.000Z and (null as DateTime)) >= 0 and (difference in minutes between @2026-09-20T08:00:00.000Z and (null as DateTime)) <= 60",
+      "expectedCql": "unknown",
+      "expectedResponseErrors": ["evaluation_indeterminate"],
+      "expectedResponseWarnings": [],
+      "expectedRuntimeMatch": false,
+      "expectedReview": true
+    }
+  ]
+}

@@ -52,9 +52,10 @@ final class AminoAcidProfile {
   final List<String> nutrientIds; // upstream nutrient numbers (e.g. FDC 505)
   final List<String> sourceRefs;
 
-  /// True when one or more amino-acid values lacked an explicit unit and were
-  /// accepted only provisionally. Such a profile is treated as partial and
-  /// lowers confidence rather than being trusted as precise.
+  /// True when one or more recognized amino-acid rows were held because their
+  /// amount/unit was invalid or ambiguous, or because the field was repeated.
+  /// Held values stay null (missing, never coerced to grams), so downstream
+  /// models can reject the partial profile or widen uncertainty explicitly.
   final bool partial;
 
   /// Optional per-nutrient FDC provenance keyed by amino-acid field name
@@ -125,7 +126,7 @@ final class AminoAcidProfile {
 
   /// True when at least one but not all six competing LNAA fields are present.
   /// Such a profile is treated as partial (uncertainty widened), distinct from
-  /// the `partial` flag which marks unit-ambiguous values.
+  /// the `partial` flag which marks recognized upstream rows held fail-closed.
   bool get hasPartialLnaaFields {
     final n = presentLnaaFieldCount;
     return n > 0 && n < 6;
@@ -133,12 +134,42 @@ final class AminoAcidProfile {
 
   /// Return a copy scaled to a serving of [grams], assuming this profile is on
   /// a `per_100g` basis. Each present amino-acid value is multiplied by
-  /// `grams / 100`; absent values stay null (missing ≠ zero). When the basis is
-  /// not `per_100g`, the profile is returned unchanged to avoid wrong math.
-  /// Used to express absolute competing LNAA grams for a logged serving.
-  AminoAcidProfile scaledToGrams(double grams) {
-    if (basis != 'per_100g' || grams <= 0) return this;
+  /// `grams / 100`; absent values stay null (missing ≠ zero). A true zero-gram
+  /// serving therefore produces true zeros for fields that were present.
+  ///
+  /// Returns null when the unit or basis is incompatible, [grams] is negative
+  /// or non-finite, any present source value is negative/non-finite, or
+  /// scaling would overflow. Returning the unchanged profile in those cases
+  /// would silently relabel an unknown-unit, per-100g, or unrelated serving
+  /// value as the logged serving.
+  AminoAcidProfile? scaledToGrams(double grams) {
+    if (unit.trim().toLowerCase() != 'g' ||
+        basis != 'per_100g' ||
+        !grams.isFinite ||
+        grams < 0) {
+      return null;
+    }
+    final presentValues = <double>[
+      ?leucine,
+      ?isoleucine,
+      ?valine,
+      ?phenylalanine,
+      ?tyrosine,
+      ?tryptophan,
+      ?histidine,
+      ?methionine,
+      ?threonine,
+      ?lysine,
+      ?cystine,
+      ?arginine,
+    ];
+    if (presentValues.any((value) => !value.isFinite || value < 0)) {
+      return null;
+    }
     final f = grams / 100.0;
+    if (!f.isFinite || presentValues.any((value) => !(value * f).isFinite)) {
+      return null;
+    }
     double? s(double? v) => v == null ? null : v * f;
     return AminoAcidProfile(
       leucine: s(leucine),

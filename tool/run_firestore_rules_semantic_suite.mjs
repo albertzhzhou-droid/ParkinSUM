@@ -9,8 +9,10 @@ export const requiredFirestoreSemanticCases = Object.freeze([
   'owner can create and read a fully structured intake',
   'cross-user and unauthenticated intake access is denied',
   'malformed structured products, unsafe amounts, and extra fields fail closed',
+  'medication reconciliation accepts bounded v3 evidence and rejects malformed envelopes',
   'clinical audit is owner-bound and append-only',
   'record history is owner-bound, strict, and append-only',
+  'mechanistic replay capsules are owner-bound and append-only',
   'atomic onboarding marker is owner-bound and terminal',
   'catalog is signed-in readable and only privileged claims may write',
 ]);

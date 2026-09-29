@@ -6,21 +6,12 @@ import '../../core/i18n/app_i18n.dart';
 import '../../core/services/firebase_backend.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/persisted_value_mutation.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/product_upgrade_queue.dart';
-import '../algorithm_observatory/algorithm_observatory_page.dart';
-import '../diagnostics/data_integrity_page.dart';
-import '../diagnostics/engineering_diagnostics_page.dart';
-import '../import/import_page.dart';
-import '../legal/privacy_disclaimer_page.dart';
+import '../main_shell/app_destinations.dart';
+import 'local_ai_connection_panel.dart';
 import '../onboarding/onboarding_flow.dart';
-import '../reminders/reminder_center_page.dart';
 import 'change_password_dialog.dart';
-import 'personal_log_handoff_page.dart';
-import 'privacy_safe_support_bundle_page.dart';
-import 'portable_data_package_page.dart';
-import 'purpose_bound_consent_page.dart';
-import 'recoverable_event_history_page.dart';
 
 class SettingsCapabilityPage extends StatefulWidget {
   const SettingsCapabilityPage({super.key, this.initialQueue});
@@ -58,6 +49,10 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
               .loadString('config/complete_app_upgrade_queue.json')
               .then(ProductUpgradeQueue.fromJsonText)
         : Future<ProductUpgradeQueue>.value(widget.initialQueue);
+    // The queue section is built lazily (it sits below the fold on narrow
+    // layouts). Mark a load failure as observed so it is not reported as an
+    // uncaught error; the FutureBuilder still shows it once visible.
+    _queueFuture!.ignore();
     _didLoad = true;
   }
 
@@ -74,79 +69,149 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('settings.title'))),
+      appBar: PaperAppBar(title: Text(i18n.tr('settings.title'))),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 32, 16, 32),
-          children: [
-            Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1120),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final insets = paperPageInsets(
+              constraints.maxWidth,
+              maxWidth: 1180,
+              top: 8,
+            );
+            final wide = constraints.maxWidth - insets.horizontal >= 900;
+            final profile = <Widget>[
+              _sectionTitle(
+                context,
+                Icons.manage_accounts_outlined,
+                i18n.tr('settings.profile'),
+              ),
+              const SizedBox(height: 10),
+              PaperCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _sectionTitle(
-                      context,
-                      Icons.hub_outlined,
-                      i18n.tr('settings.capabilities'),
-                    ),
-                    const SizedBox(height: 10),
-                    _capabilityGrid(i18n),
-                    const SizedBox(height: 24),
-                    _sectionTitle(
-                      context,
-                      Icons.manage_accounts_outlined,
-                      i18n.tr('settings.profile'),
-                    ),
-                    const SizedBox(height: 10),
-                    GlassCard(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _profileFields(i18n),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: FilledButton.icon(
-                              key: const ValueKey('settings-save-profile'),
-                              onPressed: state.isSavingUserProfile
-                                  ? null
-                                  : _saveProfile,
-                              icon: state.isSavingUserProfile
-                                  ? const SizedBox.square(
-                                      dimension: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Icon(Icons.save_outlined),
-                              label: Text(i18n.tr('common.save')),
-                            ),
-                          ),
-                        ],
+                    _profileFields(i18n),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: FilledButton.icon(
+                        key: const ValueKey('settings-save-profile'),
+                        onPressed: state.isSavingUserProfile
+                            ? null
+                            : _saveProfile,
+                        icon: state.isSavingUserProfile
+                            ? const SizedBox.square(
+                                dimension: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.save_outlined),
+                        label: Text(i18n.tr('common.save')),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    _sectionTitle(
-                      context,
-                      Icons.account_circle_outlined,
-                      i18n.tr('settings.account'),
-                    ),
-                    const SizedBox(height: 10),
-                    _accountCard(state, i18n),
-                    const SizedBox(height: 24),
-                    _sectionTitle(
-                      context,
-                      Icons.route_outlined,
-                      i18n.tr('settings.queue'),
-                    ),
-                    const SizedBox(height: 10),
-                    _upgradeQueue(i18n),
                   ],
                 ),
               ),
-            ),
-          ],
+            ];
+            final account = <Widget>[
+              _sectionTitle(
+                context,
+                Icons.account_circle_outlined,
+                i18n.tr('settings.account'),
+              ),
+              const SizedBox(height: 10),
+              _accountCard(state, i18n),
+            ];
+            final queue = <Widget>[
+              _sectionTitle(
+                context,
+                Icons.route_outlined,
+                i18n.tr('settings.queue'),
+              ),
+              const SizedBox(height: 10),
+              _upgradeQueue(i18n),
+            ];
+            // Tools used to be a grid of large tiles at the top of this page
+            // (the only way to reach them). They now live in the sidebar and
+            // ⌘K palette too, so here they are a compact grouped index.
+            final tools = <Widget>[
+              _sectionTitle(
+                context,
+                Icons.hub_outlined,
+                i18n.tr('settings.capabilities'),
+              ),
+              const SizedBox(height: 10),
+              _toolIndex(i18n),
+            ];
+            // Operator-level connection settings for the optional local AI
+            // path, folded away by default (moved here from Analytics).
+            final advanced = <Widget>[
+              PaperCard(
+                padding: EdgeInsets.zero,
+                child: ExpansionTile(
+                  key: const ValueKey('settings-local-ai-advanced'),
+                  leading: const Icon(
+                    Icons.memory_rounded,
+                    color: Paper.accent,
+                  ),
+                  title: Text(i18n.tr('settings.local_ai_advanced')),
+                  childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  children: const [LocalAiConnectionPanel()],
+                ),
+              ),
+            ];
+            const gap = SizedBox(height: 24);
+            if (!wide) {
+              return ListView(
+                padding: insets,
+                children: [
+                  ...profile,
+                  gap,
+                  ...account,
+                  const SizedBox(height: 12),
+                  ...advanced,
+                  gap,
+                  ...tools,
+                  gap,
+                  ...queue,
+                ],
+              );
+            }
+            return ListView(
+              padding: insets,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 7,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ...profile,
+                          gap,
+                          ...account,
+                          const SizedBox(height: 12),
+                          ...advanced,
+                          gap,
+                          ...queue,
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    Expanded(
+                      flex: 5,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: tools,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -156,13 +221,13 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        GlassSelectField<String>(
+        PaperSelectField<String>(
           label: i18n.tr('onboarding.registration_region'),
           helper: i18n.tr('onboarding.registration_region_help'),
           value: _registrationRegion,
           options: [
             for (final region in kSupportedRegistrationRegions)
-              GlassSelectOption(value: region, label: i18n.regionLabel(region)),
+              PaperSelectOption(value: region, label: i18n.regionLabel(region)),
           ],
           onChanged: (value) => setState(() {
             _registrationRegion = value;
@@ -170,35 +235,35 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
           }),
         ),
         const SizedBox(height: 12),
-        GlassSelectField<String>(
+        PaperSelectField<String>(
           label: i18n.tr('onboarding.display_language'),
           helper: i18n.tr('onboarding.display_language_help'),
           value: _displayLocale,
           options: [
             for (final locale in kSupportedDisplayLocales)
-              GlassSelectOption(value: locale, label: i18n.localeLabel(locale)),
+              PaperSelectOption(value: locale, label: i18n.localeLabel(locale)),
           ],
           onChanged: (value) => setState(() => _displayLocale = value),
         ),
         const SizedBox(height: 12),
-        GlassSelectField<String>(
+        PaperSelectField<String>(
           label: i18n.tr('onboarding.diet_profile_region'),
           helper: i18n.tr('onboarding.diet_profile_region_help'),
           value: _dietProfileRegion,
           options: [
             for (final region in kSupportedRegistrationRegions)
-              GlassSelectOption(value: region, label: i18n.regionLabel(region)),
+              PaperSelectOption(value: region, label: i18n.regionLabel(region)),
           ],
           onChanged: (value) => setState(() => _dietProfileRegion = value),
         ),
         const SizedBox(height: 12),
-        GlassSelectField<String>(
+        PaperSelectField<String>(
           label: i18n.tr('onboarding.swallowing_texture_mode'),
           helper: i18n.tr('onboarding.swallowing_texture_mode_help'),
           value: _textureMode,
           options: [
             for (final mode in kSupportedTextureModes)
-              GlassSelectOption(
+              PaperSelectOption(
                 value: mode,
                 label: i18n.textureModeLabel(mode),
               ),
@@ -227,97 +292,52 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
     );
   }
 
-  Widget _capabilityGrid(AppI18n i18n) {
-    final links = <_CapabilityLink>[
-      _CapabilityLink(
-        icon: Icons.insights_outlined,
-        title: i18n.tr('observatory.title'),
-        pageBuilder: (_) => const AlgorithmObservatoryPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.data_thresholding_outlined,
-        title: i18n.tr('settings.data_integrity'),
-        pageBuilder: (_) => const DataIntegrityPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.science_outlined,
-        title: i18n.tr('diagnostics.title'),
-        pageBuilder: (_) => const EngineeringDiagnosticsPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.cloud_download_outlined,
-        title: i18n.tr('settings.data_import'),
-        pageBuilder: (_) => const ImportPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.notifications_active_outlined,
-        title: i18n.tr('reminders.title'),
-        pageBuilder: (_) => const ReminderCenterPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.inventory_2_outlined,
-        title: i18n.tr('portable.title'),
-        pageBuilder: (_) => const PortableDataPackagePage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.picture_as_pdf_outlined,
-        title: i18n.tr('handoff.title'),
-        pageBuilder: (_) => const PersonalLogHandoffPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.support_agent_outlined,
-        title: i18n.tr('support.title'),
-        pageBuilder: (_) => const PrivacySafeSupportBundlePage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.fact_check_outlined,
-        title: i18n.tr('consent.title'),
-        pageBuilder: (_) => const PurposeBoundConsentPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.history_outlined,
-        title: i18n.tr('history.title'),
-        pageBuilder: (_) => const RecoverableEventHistoryPage(),
-      ),
-      _CapabilityLink(
-        icon: Icons.privacy_tip_outlined,
-        title: i18n.tr('privacy.title'),
-        pageBuilder: (_) => const PrivacyDisclaimerPage(),
-      ),
-    ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth >= 720
-            ? (constraints.maxWidth - 12) / 2
-            : constraints.maxWidth;
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final link in links)
-              SizedBox(
-                width: width,
-                child: GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: ListTile(
-                    minTileHeight: 72,
-                    leading: Icon(link.icon, color: LiquidGlass.seed),
-                    title: Text(link.title),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => Navigator.of(
-                      context,
-                    ).push(MaterialPageRoute<void>(builder: link.pageBuilder)),
-                  ),
+  Widget _toolIndex(AppI18n i18n) {
+    final tools = appTools(i18n).where((tool) => tool.id != 'settings');
+    final groups = <AppToolGroup, List<AppTool>>{};
+    for (final tool in tools) {
+      groups.putIfAbsent(tool.group, () => []).add(tool);
+    }
+    return PaperCard(
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final entry in groups.entries) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+              child: Text(
+                appToolGroupLabel(i18n, entry.key).toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.3,
+                  color: Paper.accentInk,
                 ),
               ),
+            ),
+            for (final tool in entry.value)
+              ListTile(
+                dense: true,
+                visualDensity: VisualDensity.compact,
+                leading: Icon(tool.icon, size: 20, color: Paper.accent),
+                title: Text(tool.label),
+                subtitle: tool.subtitle == null ? null : Text(tool.subtitle!),
+                trailing: const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: Paper.inkFaint,
+                ),
+                onTap: () => tool.open(context),
+              ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 
   Widget _accountCard(AppState state, AppI18n i18n) {
-    return GlassCard(
+    return PaperCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -407,7 +427,7 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError || snapshot.data == null) {
-          return GlassCard(child: Text(i18n.tr('common.error')));
+          return PaperCard(child: Text(i18n.tr('common.error')));
         }
         final queue = snapshot.data!;
         final items = [...queue.items]
@@ -417,7 +437,7 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
             ).compareTo(_statusRank(right.status));
             return status != 0 ? status : right.score.compareTo(left.score);
           });
-        return GlassCard(
+        return PaperCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -540,7 +560,7 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
   Widget _sectionTitle(BuildContext context, IconData icon, String title) {
     return Row(
       children: [
-        Icon(icon, color: LiquidGlass.seed),
+        Icon(icon, color: Paper.accent),
         const SizedBox(width: 8),
         Expanded(
           child: Text(title, style: Theme.of(context).textTheme.titleLarge),
@@ -548,18 +568,6 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
       ],
     );
   }
-}
-
-class _CapabilityLink {
-  const _CapabilityLink({
-    required this.icon,
-    required this.title,
-    required this.pageBuilder,
-  });
-
-  final IconData icon;
-  final String title;
-  final WidgetBuilder pageBuilder;
 }
 
 class _UpgradeQueueTile extends StatelessWidget {

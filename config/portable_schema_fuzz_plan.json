@@ -1,0 +1,52 @@
+{
+  "$schema": "parkinsum.portable-schema-differential-fuzz-plan/1",
+  "schemaVersion": 1,
+  "generatorVersion": 1,
+  "fixedRegressionSeeds": [270544960, 1432778632, 2578103244],
+  "exploratorySeedPolicy": {
+    "enabledByDefault": false,
+    "retainedByDefault": false,
+    "source": "explicit local operator input only"
+  },
+  "partitions": [
+    "current_v4_valid",
+    "legacy_v2_valid_migration",
+    "legacy_v3_valid_migration",
+    "property_order_and_json_whitespace",
+    "duplicate_member_literal_and_escaped",
+    "unicode_scalar_and_noncharacter",
+    "number_token_and_malformed_json",
+    "unsupported_future_version",
+    "unknown_or_mixed_schema_field",
+    "maximum_depth",
+    "maximum_object_width",
+    "maximum_string_bytes",
+    "integrity_and_contract_semantics",
+    "canonical_output_and_receipt_drift"
+  ],
+  "resourceBudgets": {
+    "packageBytes": 33554432,
+    "jsonNodes": 500000,
+    "jsonDepth": 24,
+    "objectFields": 128,
+    "stringTokenBytes": 65536,
+    "decodedStringUtf8Bytes": 65536,
+    "keyUtf8Bytes": 256,
+    "numberTokenCharacters": 128,
+    "caseObservationMilliseconds": 2000
+  },
+  "runtimes": [
+    "dart-production-preview",
+    "node-independent-recursive-descent"
+  ],
+  "corpusPath": "test/fixtures/portable_schema_regression_corpus.json",
+  "promotion": {
+    "syntheticOnly": true,
+    "privacyReviewRequired": true,
+    "userDerivedAllowedByDefault": false,
+    "deterministicMinimizationRequiredBeforePromotion": true,
+    "crossRuntimeReplayRequiredBeforePromotion": true,
+    "rawFailureJsonRetentionByDefault": false
+  },
+  "boundary": "This fixed local Dart/Node campaign is not continuous coverage-guided fuzzing and does not exercise browser, Android, iOS or desktop release artifacts. Passing does not prove exhaustive parser correctness, issuer authenticity, clinical validity or safe durable import."
+}

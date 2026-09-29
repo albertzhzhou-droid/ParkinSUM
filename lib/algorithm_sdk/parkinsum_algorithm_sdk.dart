@@ -3,6 +3,8 @@ library;
 export 'algorithm_configuration_identity.dart';
 export 'algorithm_component_graph_identity.dart';
 export 'algorithm_parameter_provenance.dart';
+export '../domain/entities/levodopa_absorption_opportunity_parameters.dart';
+export '../domain/usecases/legacy_food_recommendation_parameters.dart';
 
 import 'dart:convert';
 
@@ -23,7 +25,7 @@ import '../domain/usecases/mechanistic_conflict_engine.dart';
 class ParkinSumAlgorithmSdk {
   static const String evaluationSchema = 'parkinsum.algorithm-evaluation/4';
   static const String defaultEngineVersion =
-      'mechanistic-conflict/2026.08.17-v2';
+      'mechanistic-conflict/2026.08.18-v3';
 
   final MechanisticConflictEngine engine;
   final String engineVersion;

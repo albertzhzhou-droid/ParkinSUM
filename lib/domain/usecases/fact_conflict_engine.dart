@@ -183,7 +183,34 @@ class FactConflictEngine {
       );
     }
 
-    for (final fact in existingFacts) {
+    final relevantFacts = existingFacts
+        .where((fact) => fact.attributeCode == observation.attributeCode)
+        .toList(growable: false);
+    if (relevantFacts.isEmpty) {
+      return const FactConflictResult(
+        type: FactConflictType.variation,
+        reason:
+            'No existing facts for this key; treat as first candidate fact.',
+        rejectedRationaleJson: '[]',
+        autoResolved: true,
+      );
+    }
+
+    final sameScopeFacts = relevantFacts
+        .where((fact) => fact.scopeHash == observation.scopeHash)
+        .toList(growable: false);
+    if (sameScopeFacts.isEmpty) {
+      return const FactConflictResult(
+        type: FactConflictType.coexistVariant,
+        reason:
+            'Observation belongs to a different comparable scope and should co-exist as a variant.',
+        rejectedRationaleJson:
+            '[{"rationale":"different_scope_coexists","scope_dimensions":["jurisdiction","dosage_form","release_type","route","preparation_state"]}]',
+        autoResolved: true,
+      );
+    }
+
+    for (final fact in sameScopeFacts) {
       // 手工覆盖优先于自动解析；后续完整版本应把覆盖链与审计原因写得更细。
       if (fact.manualOverride) {
         return FactConflictResult(
@@ -192,18 +219,6 @@ class FactConflictEngine {
               'Existing resolved fact ${fact.factId} is marked as manual override.',
           rejectedRationaleJson:
               '[{"rationale":"manual_override_preserved","fact_id":"${fact.factId}"}]',
-          autoResolved: true,
-        );
-      }
-
-      // scope 不同先按“可并存变体”处理，避免把跨辖区/跨加工态差异误判成冲突。
-      if (fact.scopeHash != observation.scopeHash) {
-        return const FactConflictResult(
-          type: FactConflictType.coexistVariant,
-          reason:
-              'Observation belongs to a different comparable scope and should co-exist as a variant.',
-          rejectedRationaleJson:
-              '[{"rationale":"different_scope_coexists","scope_dimensions":["jurisdiction","dosage_form","release_type","route","preparation_state"]}]',
           autoResolved: true,
         );
       }
@@ -221,23 +236,13 @@ class FactConflictEngine {
       }
     }
 
-    if (existingFacts.isNotEmpty) {
-      // 这里的 contradiction 仍是保守的一刀切判定。
-      // 未来应改为 cluster 级别分析，再决定是否 auto-resolve 或 escalate。
-      return const FactConflictResult(
-        type: FactConflictType.contradiction,
-        reason: 'Observation does not overlap any co-existing resolved fact.',
-        rejectedRationaleJson:
-            '[{"rationale":"cross_source_or_cross_scope_contradiction","needs_human_review":true}]',
-        needsManualReview: true,
-      );
-    }
-
+    // 同实体、同属性、同 scope 的既有事实均不重叠，保守保留矛盾。
     return const FactConflictResult(
-      type: FactConflictType.variation,
-      reason: 'No existing facts for this key; treat as first candidate fact.',
-      rejectedRationaleJson: '[]',
-      autoResolved: true,
+      type: FactConflictType.contradiction,
+      reason: 'Observation does not overlap any comparable resolved fact.',
+      rejectedRationaleJson:
+          '[{"rationale":"same_scope_non_overlapping_contradiction","needs_human_review":true}]',
+      needsManualReview: true,
     );
   }
 

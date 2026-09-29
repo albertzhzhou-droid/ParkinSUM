@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/mechanistic_candidate_score.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
+import '../../domain/entities/food_rank_sensitivity_assessment.dart';
+import 'candidate_set_snapshot_card.dart';
 import '../shared/mechanistic_trace_view.dart';
 
 /// Exact, one-to-one projection of model traces onto the heuristic order that
@@ -168,12 +170,16 @@ class _NextMealPageState extends State<NextMealPage> {
     final i18n = context.appI18n;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('next_meal.title'))),
+      appBar: PaperAppBar(
+        chapterTabs: PaperShellScope.showsChapters(context),
+        title: Text(i18n.tr('next_meal.title')),
+      ),
       body: SafeArea(
         bottom: false,
-        child: ListView(
-          key: ValueKey<String>(
+        // Controls stay beside the results on wide screens, so changing the
+        // time or window never scrolls the answer out of view.
+        child: PaperSplit(
+          secondaryKey: ValueKey<String>(
             _error != null
                 ? 'next-meal-state-error'
                 : _result != null
@@ -182,8 +188,8 @@ class _NextMealPageState extends State<NextMealPage> {
                 ? 'next-meal-state-generating'
                 : 'next-meal-state-idle',
           ),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-          children: [
+          primaryWidth: 400,
+          primary: [
             _SubtitleBlock(i18n: i18n),
             const SizedBox(height: 16),
             _ControlsCard(
@@ -196,7 +202,7 @@ class _NextMealPageState extends State<NextMealPage> {
               onGenerate: _generate,
             ),
             const SizedBox(height: 12),
-            GlassCard(
+            PaperCard(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,16 +212,13 @@ class _NextMealPageState extends State<NextMealPage> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: LiquidGlass.onSurface,
+                      color: Paper.ink,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     i18n.tr('next_meal.window_help'),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: LiquidGlass.onSurfaceMuted,
-                    ),
+                    style: TextStyle(fontSize: 11, color: Paper.inkMuted),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -238,13 +241,18 @@ class _NextMealPageState extends State<NextMealPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+          ],
+          secondary: [
             if (_error != null) _ErrorCard(i18n: i18n, error: _error!),
             if (_result != null)
-              _ResultBlock(
-                i18n: i18n,
-                result: _result!,
-                windowProvided: _windowMinutes > 0,
+              // A fresh result settles into view each time it is generated.
+              PaperReveal(
+                key: ObjectKey(_result),
+                child: _ResultBlock(
+                  i18n: i18n,
+                  result: _result!,
+                  windowProvided: _windowMinutes > 0,
+                ),
               ),
             if (_result == null && !_generating && _error == null)
               _EmptyCard(i18n: i18n),
@@ -261,21 +269,21 @@ class _SubtitleBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
           const Icon(
             Icons.auto_awesome_outlined,
             size: 22,
-            color: LiquidGlass.onSurfaceMuted,
+            color: Paper.inkMuted,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               i18n.tr('next_meal.subtitle'),
               style: const TextStyle(
-                color: LiquidGlass.onSurfaceMuted,
+                color: Paper.inkMuted,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -314,7 +322,7 @@ class _ControlsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -324,7 +332,7 @@ class _ControlsCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: LiquidGlass.onSurfaceMuted,
+              color: Paper.inkMuted,
               letterSpacing: -0.1,
             ),
           ),
@@ -341,7 +349,7 @@ class _ControlsCard extends StatelessWidget {
                 alignment: AlignmentDirectional.centerStart,
                 padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(LiquidGlass.radiusMd),
+                  borderRadius: BorderRadius.circular(Paper.radiusMd),
                 ),
               ),
               child: Row(
@@ -352,7 +360,7 @@ class _ControlsCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: LiquidGlass.onSurface,
+                        color: Paper.ink,
                         letterSpacing: -0.1,
                       ),
                     ),
@@ -360,7 +368,7 @@ class _ControlsCard extends StatelessWidget {
                   const Icon(
                     Icons.event_outlined,
                     size: 20,
-                    color: LiquidGlass.onSurfaceMuted,
+                    color: Paper.inkMuted,
                   ),
                 ],
               ),
@@ -374,14 +382,14 @@ class _ControlsCard extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: LiquidGlass.onSurface,
+                color: Paper.ink,
               ),
             ),
             subtitle: Text(
               i18n.tr('next_meal.use_local_ai_help'),
               style: const TextStyle(
                 fontSize: 12,
-                color: LiquidGlass.onSurfaceMuted,
+                color: Paper.inkMuted,
                 height: 1.35,
               ),
             ),
@@ -391,7 +399,7 @@ class _ControlsCard extends StatelessWidget {
           const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerRight,
-            child: GlassButton(
+            child: PaperButton(
               key: const ValueKey('next-meal-generate'),
               onPressed: generating ? null : onGenerate,
               leadingIcon: generating ? null : Icons.auto_fix_high_rounded,
@@ -414,14 +422,14 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
       child: Column(
         children: [
           const Icon(
             Icons.restaurant_menu_outlined,
             size: 40,
-            color: LiquidGlass.onSurfaceMuted,
+            color: Paper.inkMuted,
           ),
           const SizedBox(height: 12),
           Text(
@@ -429,7 +437,7 @@ class _EmptyCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 14,
-              color: LiquidGlass.onSurfaceMuted,
+              color: Paper.inkMuted,
               height: 1.4,
             ),
           ),
@@ -449,7 +457,7 @@ class _ErrorCard extends StatelessWidget {
     return Semantics(
       key: const ValueKey('next-meal-error'),
       liveRegion: true,
-      child: GlassCard(
+      child: PaperCard(
         padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,10 +483,7 @@ class _ErrorCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     error,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: LiquidGlass.onSurfaceMuted,
-                    ),
+                    style: const TextStyle(fontSize: 12, color: Paper.inkMuted),
                   ),
                 ],
               ),
@@ -504,19 +509,27 @@ class _ResultBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final copy = ResponseCopyService(i18n: i18n);
     final scheme = Theme.of(context).colorScheme;
-    final explanationLines = result.explanations
-        .where((line) => line.trim().isNotEmpty)
-        .map(copy.recommendationMessage)
-        .toList(growable: false);
+    final rankPresentationWithheld = shouldWithholdRankedFoodPresentation(
+      candidateSetSha256: result.candidateSetSnapshot.sha256Digest,
+      assessment: result.rankSensitivityAssessment,
+    );
+    final explanationLines = rankPresentationWithheld
+        ? const <String>[]
+        : result.explanations
+              .where((line) => line.trim().isNotEmpty)
+              .map(copy.recommendationMessage)
+              .toList(growable: false);
     final gateLines = result.gateReasons
         .where((line) => line.trim().isNotEmpty)
         .map(copy.recommendationMessage)
         .toList(growable: false);
     final traceAlignment = alignMechanisticCandidateTraces(
-      recommendationFoodIds: result.recommendations
-          .take(5)
-          .map((recommendation) => recommendation.food.id)
-          .toList(growable: false),
+      recommendationFoodIds: rankPresentationWithheld
+          ? const <String>[]
+          : result.recommendations
+                .take(5)
+                .map((recommendation) => recommendation.food.id)
+                .toList(growable: false),
       candidateScores:
           result.mechanisticCandidateScores ??
           const <MechanisticCandidateScore>[],
@@ -527,7 +540,7 @@ class _ResultBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         // Path + AI badge header.
-        GlassCard(
+        PaperCard(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,7 +566,7 @@ class _ResultBlock extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: LiquidGlass.onSurface,
+                        color: Paper.ink,
                       ),
                     ),
                   ),
@@ -565,16 +578,25 @@ class _ResultBlock extends StatelessWidget {
                 '${i18n.recommendationPathLabel(result.decisionPath)}',
                 style: const TextStyle(
                   fontSize: 12,
-                  color: LiquidGlass.onSurfaceMuted,
+                  color: Paper.inkMuted,
                   height: 1.35,
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 10),
+        CandidateSetSnapshotCard(
+          snapshot: result.candidateSetSnapshot,
+          rankSensitivityAssessment: result.rankSensitivityAssessment,
+        ),
+        if (rankPresentationWithheld) ...[
+          const SizedBox(height: 10),
+          const RankedFoodPresentationWithheldNotice(),
+        ],
         if (explanationLines.isNotEmpty) ...[
           const SizedBox(height: 12),
-          GlassCard(
+          PaperCard(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -584,7 +606,7 @@ class _ResultBlock extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: LiquidGlass.onSurface,
+                    color: Paper.ink,
                     letterSpacing: -0.1,
                   ),
                 ),
@@ -597,14 +619,14 @@ class _ResultBlock extends StatelessWidget {
                       children: [
                         const Text(
                           '• ',
-                          style: TextStyle(color: LiquidGlass.onSurfaceMuted),
+                          style: TextStyle(color: Paper.inkMuted),
                         ),
                         Expanded(
                           child: Text(
                             line,
                             style: const TextStyle(
                               fontSize: 13,
-                              color: LiquidGlass.onSurface,
+                              color: Paper.ink,
                               height: 1.45,
                             ),
                           ),
@@ -618,7 +640,7 @@ class _ResultBlock extends StatelessWidget {
         ],
         if (gateLines.isNotEmpty) ...[
           const SizedBox(height: 12),
-          GlassCard(
+          PaperCard(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,7 +661,7 @@ class _ResultBlock extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: LiquidGlass.onSurface,
+                          color: Paper.ink,
                         ),
                       ),
                     ),
@@ -653,7 +675,7 @@ class _ResultBlock extends StatelessWidget {
                       '• $line',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: LiquidGlass.onSurfaceMuted,
+                        color: Paper.inkMuted,
                         height: 1.4,
                       ),
                     ),
@@ -663,99 +685,105 @@ class _ResultBlock extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 12),
-        // Top recommendation cards.
-        Text(
-          i18n.tr('next_meal.candidates'),
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: LiquidGlass.onSurfaceMuted,
-            letterSpacing: -0.1,
+        if (!rankPresentationWithheld) ...[
+          Text(
+            i18n.tr('next_meal.candidates'),
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Paper.inkMuted,
+              letterSpacing: -0.1,
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        if (result.recommendations.isEmpty)
-          GlassCard(
+          const SizedBox(height: 8),
+        ],
+        if (!rankPresentationWithheld && result.recommendations.isEmpty)
+          PaperCard(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
             child: Text(
               i18n.tr('next_meal.no_candidates'),
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: LiquidGlass.onSurfaceMuted,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Paper.inkMuted, fontSize: 13),
             ),
           ),
-        for (final rec in result.recommendations.take(5))
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: GlassCard(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          i18n.foodName(rec.food.id, rec.food.name),
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: LiquidGlass.onSurface,
-                            letterSpacing: -0.1,
+        if (!rankPresentationWithheld)
+          for (final rec in result.recommendations.take(5))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: PaperCard(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            i18n.foodName(rec.food.id, rec.food.name),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Paper.ink,
+                              letterSpacing: -0.1,
+                            ),
                           ),
                         ),
-                      ),
-                      _DecisionChip(
-                        label: i18n.decisionLabel(rec.decision),
-                        tone: rec.decision,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    i18n.tr('dashboard.recommendation_macro_line', {
-                      'protein': rec.food.proteinG.toStringAsFixed(1),
-                      'carbs': rec.food.carbsG.toStringAsFixed(1),
-                      'fat': rec.food.fatG.toStringAsFixed(1),
-                    }),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: LiquidGlass.onSurfaceMuted,
+                        _DecisionChip(
+                          label: i18n.decisionLabel(rec.decision),
+                          tone: rec.decision,
+                        ),
+                      ],
                     ),
-                  ),
-                  if (rec.reasons.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    for (final reason in rec.reasons.take(3))
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Text(
-                          '· ${copy.recommendationMessage(reason)}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: LiquidGlass.onSurface,
-                            height: 1.4,
+                    CandidateRankUncertaintyBadge(
+                      candidateId: rec.food.id,
+                      candidateSetSha256:
+                          result.candidateSetSnapshot.sha256Digest,
+                      assessment: result.rankSensitivityAssessment,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      i18n.tr('dashboard.recommendation_macro_line', {
+                        'protein': rec.food.proteinG.toStringAsFixed(1),
+                        'carbs': rec.food.carbsG.toStringAsFixed(1),
+                        'fat': rec.food.fatG.toStringAsFixed(1),
+                      }),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Paper.inkMuted,
+                      ),
+                    ),
+                    if (rec.reasons.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      for (final reason in rec.reasons.take(3))
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            '· ${copy.recommendationMessage(reason)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Paper.ink,
+                              height: 1.4,
+                            ),
                           ),
                         ),
-                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
         if (result.mechanisticTrace != null) ...[
           const SizedBox(height: 12),
           MechanisticConflictTraceCard(typedResult: result.mechanisticTrace),
         ],
-        if (traceAlignment.alignedScores.isNotEmpty) ...[
+        if (!rankPresentationWithheld &&
+            traceAlignment.alignedScores.isNotEmpty) ...[
           const SizedBox(height: 12),
           const Text(
             'Model trace per candidate (educational)',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: LiquidGlass.onSurfaceMuted,
+              color: Paper.inkMuted,
             ),
           ),
           const SizedBox(height: 6),
@@ -765,7 +793,8 @@ class _ResultBlock extends StatelessWidget {
               child: MechanisticCandidateScoreLine(score: s),
             ),
         ],
-        if ((result.mechanisticCandidateScores?.isNotEmpty ?? false) &&
+        if (!rankPresentationWithheld &&
+            (result.mechanisticCandidateScores?.isNotEmpty ?? false) &&
             !traceAlignment.complete) ...[
           const SizedBox(height: 4),
           const Text(
@@ -773,7 +802,7 @@ class _ResultBlock extends StatelessWidget {
             'one-to-one ID match with the displayed heuristic order could '
             'not be established.',
             key: ValueKey('next-meal-trace-alignment-withheld'),
-            style: TextStyle(fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+            style: TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
         ],
         if (result.rankerUsed != null) ...[
@@ -781,10 +810,7 @@ class _ResultBlock extends StatelessWidget {
           Text(
             'Recommendation ranker: ${result.rankerUsed} · '
             'mechanistic trace changes order: no',
-            style: const TextStyle(
-              fontSize: 11,
-              color: LiquidGlass.onSurfaceMuted,
-            ),
+            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
         ],
         if (result.rankerEligibility != null &&
@@ -799,10 +825,7 @@ class _ResultBlock extends StatelessWidget {
                       '${result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ').isEmpty ? 'none beyond the trace-only boundary' : result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ')}.'
                 : 'The mechanistic trace is unavailable for this request '
                       '(${result.rankerEligibility!.fallbackReasons.join(', ')}).',
-            style: const TextStyle(
-              fontSize: 11,
-              color: LiquidGlass.onSurfaceMuted,
-            ),
+            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
         ],
         if (result.mechanisticCandidateScores == null &&
@@ -817,10 +840,7 @@ class _ResultBlock extends StatelessWidget {
                       '(insufficient or out-of-domain context). Recommendations '
                       'remain on the conservative heuristic. '
                       'This is not medical advice.',
-            style: const TextStyle(
-              fontSize: 11,
-              color: LiquidGlass.onSurfaceMuted,
-            ),
+            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
         ],
       ],
@@ -859,7 +879,7 @@ class _DecisionChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         border: Border.all(color: color.withValues(alpha: 0.45)),
-        borderRadius: BorderRadius.circular(LiquidGlass.radiusXl),
+        borderRadius: BorderRadius.circular(Paper.radiusXl),
       ),
       child: Text(
         label,

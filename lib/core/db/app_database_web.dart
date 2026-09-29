@@ -10,6 +10,7 @@ import '../models/meal.dart';
 import '../models/recoverable_user_event.dart';
 import '../models/user_profile.dart';
 import '../../data/models/interaction_rule_record.dart';
+import '../../domain/entities/mechanistic_replay_capsule.dart';
 import 'app_database.dart';
 import 'recoverable_user_event_store.dart';
 
@@ -23,9 +24,12 @@ class WebAppDatabase implements AppDatabase, RecoverableUserEventStore {
   static const _kRules = 'db.rules';
   static const _kUserProfile = 'db.user_profile';
   static const _kUserState = 'db.user_state.v1';
+  static const _kMechanisticReplayCapsules =
+      'db.mechanistic_replay_capsules.v1';
 
   SharedPreferences? _prefs;
   Future<void> _userStateTail = Future<void>.value();
+  static Future<void> _replayCapsuleTail = Future<void>.value();
 
   Future<SharedPreferences> _ensure() async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -200,6 +204,74 @@ class WebAppDatabase implements AppDatabase, RecoverableUserEventStore {
   @override
   Future<void> saveIntakes(List<Intake> intakes) async {
     await _mutateUserState((current) => current.copyWith(intakes: intakes));
+  }
+
+  @override
+  Future<void> saveMechanisticReplayCapsule(MechanisticReplayCapsule capsule) {
+    final snapshot = canonicalMechanisticReplayCapsuleSnapshot(capsule);
+    final operation = _replayCapsuleTail.then((_) async {
+      final prefs = await _ensure();
+      final capsules = _readMechanisticReplayCapsules(prefs).toList();
+      final prior = capsules
+          .where((entry) => entry.capsuleSha256 == snapshot.capsuleSha256)
+          .firstOrNull;
+      if (prior != null) {
+        if (prior.canonicalJson != snapshot.canonicalJson) {
+          throw StateError('Replay capsule digest collision.');
+        }
+        return;
+      }
+      capsules.add(snapshot);
+      capsules.sort(compareMechanisticReplayCapsulesByGeneratedAt);
+      final saved = await prefs.setString(
+        _kMechanisticReplayCapsules,
+        jsonEncode(capsules.map((entry) => entry.toJson()).toList()),
+      );
+      if (!saved) {
+        throw StateError('Web replay capsule persistence was rejected.');
+      }
+    });
+    _replayCapsuleTail = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
+  }
+
+  @override
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules() async {
+    await _replayCapsuleTail;
+    final capsules = _readMechanisticReplayCapsules(await _ensure()).toList()
+      ..sort(compareMechanisticReplayCapsulesByGeneratedAt);
+    return List<MechanisticReplayCapsule>.unmodifiable(capsules);
+  }
+
+  List<MechanisticReplayCapsule> _readMechanisticReplayCapsules(
+    SharedPreferences prefs,
+  ) {
+    final raw = prefs.getString(_kMechanisticReplayCapsules);
+    if (raw == null) return const <MechanisticReplayCapsule>[];
+    final decoded = jsonDecode(raw);
+    if (decoded is! List) {
+      throw const FormatException('Stored replay capsule set is malformed.');
+    }
+    final capsules = decoded
+        .map((value) {
+          if (value is! Map) {
+            throw const FormatException('Stored replay capsule is malformed.');
+          }
+          return MechanisticReplayCapsule.fromJson(
+            Map<String, Object?>.from(value),
+          );
+        })
+        .toList(growable: false);
+    final digests = capsules.map((entry) => entry.capsuleSha256).toSet();
+    if (digests.length != capsules.length) {
+      throw const FormatException(
+        'Stored replay capsule digest is duplicated.',
+      );
+    }
+    return capsules;
   }
 
   @override

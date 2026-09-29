@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 
 class PrivacyDisclaimerPage extends StatelessWidget {
   const PrivacyDisclaimerPage({super.key});
@@ -13,12 +13,12 @@ class PrivacyDisclaimerPage extends StatelessWidget {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: const GlassAppBar(title: Text('Privacy & Disclaimer')),
+      appBar: const PaperAppBar(title: Text('Privacy & Disclaimer')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           children: [
-            GlassCard(
+            PaperCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +39,7 @@ class PrivacyDisclaimerPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            GlassCard(
+            PaperCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,7 +59,7 @@ class PrivacyDisclaimerPage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            GlassCard(
+            PaperCard(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

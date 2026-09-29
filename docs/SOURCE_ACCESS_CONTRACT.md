@@ -38,7 +38,10 @@ Each source record declares:
 Fixture validation, optional live smoke, and production use are separate states.
 A parser tested against fixtures is not production-ready. A live smoke checks
 shape only and does not establish full ingestion, license clearance, or
-clinical correctness.
+clinical correctness. The separate
+`implemented_user_initiated_live_lookup` status denotes a bounded, ephemeral
+public-label lookup that requires in-app consent; it does not mark a source
+production-ready or establish clinical meaning.
 
 API keys and account credentials must never be committed. Sources requiring
 them remain explicitly flagged in the registry. License or legal review flags

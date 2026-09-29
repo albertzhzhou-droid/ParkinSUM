@@ -1,0 +1,10 @@
+{
+  "services": [
+    {
+      "hook": "patient-view",
+      "title": "ParkinSUM synthetic patient-view",
+      "description": "Test-only discovery metadata; this service id has no executable endpoint.",
+      "id": "parkinsum-synthetic-patient-view"
+    }
+  ]
+}

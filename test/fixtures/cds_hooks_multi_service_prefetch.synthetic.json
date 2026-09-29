@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "patientId": "synthetic-patient-001",
+  "queryResults": {
+    "Patient/{{context.patientId}}": {
+      "resourceType": "Patient",
+      "id": "synthetic-patient-001"
+    },
+    "Condition?patient={{context.patientId}}&_count=2": {
+      "resourceType": "Bundle",
+      "type": "searchset",
+      "total": 0,
+      "entry": []
+    }
+  }
+}

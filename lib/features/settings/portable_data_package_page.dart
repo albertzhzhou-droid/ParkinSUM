@@ -11,7 +11,8 @@ import '../../core/services/portable_data_export_sink.dart';
 import '../../core/services/portable_data_owner_scope_service.dart';
 import '../../core/services/user_logging_reminder_service.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
+import '../../domain/entities/portable_schema_migration.dart';
 import '../../domain/usecases/user_portable_data_package_service.dart';
 
 abstract interface class PortableDataClipboard {
@@ -182,7 +183,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('portable.title'))),
+      appBar: PaperAppBar(title: Text(i18n.tr('portable.title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 28, 16, 36),
@@ -194,6 +195,8 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _boundaryCard(context, i18n),
+                    const SizedBox(height: 16),
+                    _schemaFuzzCampaignCard(context, i18n),
                     const SizedBox(height: 16),
                     _exportCard(context, state, i18n),
                     const SizedBox(height: 16),
@@ -209,7 +212,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
   }
 
   Widget _boundaryCard(BuildContext context, AppI18n i18n) {
-    return GlassCard(
+    return PaperCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -238,9 +241,65 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     );
   }
 
+  Widget _schemaFuzzCampaignCard(BuildContext context, AppI18n i18n) {
+    final theme = Theme.of(context);
+    return PaperCard(
+      key: const ValueKey('portable-schema-fuzz-campaign'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.science_outlined, color: theme.colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  i18n.tr('portable.fuzz_title'),
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            i18n.tr('portable.fuzz_summary', {
+              'seeds': '${PortableSchemaFuzzCampaignSummary.fixedSeedCount}',
+              'partitions':
+                  '${PortableSchemaFuzzCampaignSummary.lexicalAndSemanticPartitionCount}',
+              'cases':
+                  '${PortableSchemaFuzzCampaignSummary.retainedSyntheticCaseCount}',
+              'runtimes':
+                  '${PortableSchemaFuzzCampaignSummary.independentRuntimeCount}',
+            }),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            i18n.tr('portable.fuzz_runtime', {
+              'runtime': PortableSchemaFuzzCampaignSummary.runtimeLabel,
+            }),
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            i18n.tr('portable.fuzz_unicode'),
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            i18n.tr('portable.fuzz_boundary'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _exportCard(BuildContext context, AppState state, AppI18n i18n) {
     final artifact = _artifact;
-    return GlassCard(
+    return PaperCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -373,7 +432,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     AppI18n i18n,
   ) {
     final preview = _currentBoundPreview(state);
-    return GlassCard(
+    return PaperCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -467,6 +526,22 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
                       'unsupported': '${preview.unsupportedFields.length}',
                     }),
                   ),
+                  if (preview.schemaMigrationReceipt != null) ...[
+                    const SizedBox(height: 12),
+                    _schemaMigrationReceiptPreview(
+                      context,
+                      i18n,
+                      preview.schemaMigrationReceipt!,
+                    ),
+                  ],
+                  if (preview.reminderPresentation.totalCount > 0) ...[
+                    const SizedBox(height: 12),
+                    _reminderPresentationPreview(
+                      context,
+                      i18n,
+                      preview.reminderPresentation,
+                    ),
+                  ],
                   if (preview.unsupportedFields.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
@@ -504,6 +579,145 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     );
   }
 
+  Widget _reminderPresentationPreview(
+    BuildContext context,
+    AppI18n i18n,
+    UserPortableReminderPresentationSummary summary,
+  ) {
+    final theme = Theme.of(context);
+    return Container(
+      key: const ValueKey('portable-reminder-presentation-preview'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.notifications_none_outlined, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  i18n.tr('portable.reminder_presentation_title'),
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            i18n.tr('portable.reminder_presentation_summary', {
+              'total': '${summary.totalCount}',
+              'enabled': '${summary.enabledIntentCount}',
+              'consent': '${summary.targetConsentRequiredCount}',
+            }),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            i18n.tr('portable.reminder_presentation_modes', {
+              'modes': summary.privacyModes.join(', '),
+              'languages': summary.scheduledLanguageCodes.join(', '),
+            }),
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            i18n.tr('portable.reminder_presentation_policy', {
+              'match': '${summary.currentPolicyMatchCount}',
+              'drift': '${summary.currentPolicyDriftCount}',
+              'decisions': '${summary.localeDecisionMismatchCount}',
+            }),
+            style: theme.textTheme.bodySmall,
+          ),
+          if (summary.legacyDefaultCount > 0) ...[
+            const SizedBox(height: 4),
+            Text(
+              i18n.tr('portable.reminder_presentation_legacy', {
+                'count': '${summary.legacyDefaultCount}',
+              }),
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+          const SizedBox(height: 8),
+          Text(
+            i18n.tr('portable.reminder_target_consent'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _schemaMigrationReceiptPreview(
+    BuildContext context,
+    AppI18n i18n,
+    PortableSchemaMigrationReceipt receipt,
+  ) {
+    final theme = Theme.of(context);
+    return Container(
+      key: const ValueKey('portable-schema-migration-receipt'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.account_tree_outlined, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  i18n.tr('portable.migration_receipt_title'),
+                  style: theme.textTheme.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            i18n.tr('portable.migration_receipt_summary', {
+              'source': '${receipt.sourceVersion}',
+              'target': '${receipt.targetVersion}',
+              'decision': receipt.decision,
+            }),
+          ),
+          const SizedBox(height: 4),
+          SelectableText(
+            i18n.tr('portable.migration_receipt_identity', {
+              'receipt': receipt.receiptSha256.substring(0, 16),
+              'validator': receipt.sourceValidatorIdentity.substring(0, 16),
+            }),
+            style: theme.textTheme.bodySmall,
+          ),
+          if (receipt.warnings.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            for (final warning in receipt.warnings)
+              Text('• $warning', style: theme.textTheme.bodySmall),
+          ],
+          const SizedBox(height: 6),
+          Text(
+            i18n.tr('portable.migration_receipt_boundary'),
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _generate(AppState state, AppI18n i18n) async {
     final lease = _captureLease(state);
     if (lease == null) {
@@ -526,6 +740,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       final artifact = widget.packageService.create(
         snapshot: UserPortableDataSnapshot(
           userScope: owner.effectiveOpaqueScope,
+          doseOwnerScope: lease.rawScope,
           scopeKind: owner.scopeKind,
           profile: current.userProfile,
           activeDrugIds: current.activeDrugIds,
@@ -534,12 +749,14 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
           medicationCatalog: current.medRepo.allDrugs,
           foodCatalog: current.foodRepo.allFoods,
           reminders: reminders,
+          observations: current.observations,
         ),
         generatedAt: _now,
       );
       final selfCheck = await widget.packageService.inspectAsync(
         packageJson: artifact.canonicalJson,
         currentUserScope: owner.effectiveOpaqueScope,
+        currentDoseOwnerScope: lease.rawScope,
         currentScopeKind: owner.scopeKind,
       );
       if (!_isLeaseCurrent(lease)) return;
@@ -801,6 +1018,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       final preview = await widget.packageService.inspectAsync(
         packageJson: raw,
         currentUserScope: owner.effectiveOpaqueScope,
+        currentDoseOwnerScope: lease.rawScope,
         currentScopeKind: owner.scopeKind,
         existingRecordIds: beforeSnapshot.recordIds,
       );
@@ -874,6 +1092,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     final preview = await widget.packageService.inspectAsync(
       packageJson: artifact.prettyJson,
       currentUserScope: owner.effectiveOpaqueScope,
+      currentDoseOwnerScope: lease.rawScope,
       currentScopeKind: owner.scopeKind,
     );
     if (!_isLeaseCurrent(lease)) return null;

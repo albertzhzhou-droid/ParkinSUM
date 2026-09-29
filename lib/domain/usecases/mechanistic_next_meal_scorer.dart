@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../entities/algorithm_component_identity_witness.dart';
+import '../entities/evidence_currency.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/mechanistic_medication_applicability.dart';
@@ -127,7 +128,13 @@ class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
     required List<CandidateFood> candidates,
     UserDefinedMealWindow? userDefinedWindow,
     Map<String, CandidateMetadata>? candidateMetadata,
+    DateTime? evidenceAsOfUtc,
+    EvidenceCurrencyRegistry? evidenceCurrencyRegistry,
   }) {
+    final effectiveEvidenceAsOfUtc =
+        evidenceAsOfUtc?.toUtc() ?? DateTime.now().toUtc();
+    final effectiveEvidenceCurrencyRegistry =
+        evidenceCurrencyRegistry ?? engine.evidenceCurrencyRegistry;
     final window = userDefinedWindow ?? baseContext.userDefinedWindow;
     if (window == null) {
       return candidates
@@ -184,6 +191,8 @@ class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
           userDefinedWindow: window,
           sampleOffsets: sampleOffsets,
           candidateMetadata: candidateMetadata,
+          evidenceAsOfUtc: effectiveEvidenceAsOfUtc,
+          evidenceCurrencyRegistry: effectiveEvidenceCurrencyRegistry,
         ),
       );
     }
@@ -235,6 +244,8 @@ class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
     required UserDefinedMealWindow userDefinedWindow,
     required List<int> sampleOffsets,
     Map<String, CandidateMetadata>? candidateMetadata,
+    required DateTime evidenceAsOfUtc,
+    required EvidenceCurrencyRegistry evidenceCurrencyRegistry,
   }) {
     final candidateCompositionId = 'candidate_${candidate.id}';
     final collidesWithBaseComposition =
@@ -277,6 +288,9 @@ class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
         mealCompositionsById: mergedCompositions,
         resultId: 'cand_${candidate.id}_$offset',
         preferredMealId: candidateMealId,
+        evidenceAsOfUtc: evidenceAsOfUtc,
+        additionalEvidenceProviderIds: const {'mechanistic_candidate_scorer'},
+        evidenceCurrencyRegistry: evidenceCurrencyRegistry,
       );
       if (!result.hasModeledOutput) {
         return _insufficient(

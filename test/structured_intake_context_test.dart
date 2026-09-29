@@ -3,10 +3,12 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/db/app_database_native.dart';
+import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/medication_product_pack.dart';
 import 'package:parkinsum_companion/domain/usecases/dosage_note_parser.dart';
+import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 import 'package:parkinsum_companion/domain/usecases/intake_dose_context_builder.dart';
 
 const _legacyV5IntakesSchema = '''
@@ -180,9 +182,9 @@ void main() {
 
     test('round-trips structured fields through real SQLite', () async {
       await _runSqlite(databasePath, nativeIntakesCreateTableSql);
-      final original = IntakeDoseContextBuilder()
+      final unconfirmed = IntakeDoseContextBuilder()
           .build(
-            id: "intake'quoted",
+            id: 'intake_quoted',
             drugId: drug.id,
             takenAt: DateTime.utc(2026, 8, 16, 12, 30),
             dosageNote: '0.5 g',
@@ -194,7 +196,7 @@ void main() {
               identifierSystem: 'ndcPackage',
               identifierValue: '72865-362-01',
               displayName: 'Carbidopa and Levodopa',
-              labelerName: 'Example labeler',
+              labelerName: "Example's labeler",
               strengthDisplay: 'CARBIDOPA 25 mg + LEVODOPA 100 mg',
               packageDescription: '100 TABLET in 1 BOTTLE',
               doseBasisIngredient: 'LEVODOPA',
@@ -202,6 +204,21 @@ void main() {
               unitLabel: 'TABLET',
             ),
           );
+      final original = AdministrationDoseConfirmationCoordinator()
+          .prepare(
+            draft: unconfirmed,
+            current: null,
+            expectedRecordRevisionDigest:
+                administrationDoseConfirmationAbsentRevisionDigest,
+            ownerScope: 'native_fixture_account',
+            operationId: 'event_op_native_intake_fixture',
+            confirmationRequested: true,
+            assertionSource: AdministrationDoseAssertionSource.packageDerived,
+            confirmationAction: 'test.explicit_confirmation',
+            uiContractVersion: 'native-dose-confirmation:1',
+            confirmedAt: DateTime.utc(2026, 8, 16, 12, 31),
+          )
+          .intake!;
 
       await _insertIntake(databasePath, nativeIntakeToSqliteRow(original));
       final restored = nativeIntakeFromSqliteRow(
@@ -216,6 +233,12 @@ void main() {
       final originalFields = original.toJson()..remove('takenAt');
       expect(restoredFields, originalFields);
       expect(DosageNoteParser().milligramsForIntake(restored), 500);
+      expect(
+        AdministrationDoseConfirmationCoordinator()
+            .evaluate(restored, ownerScope: 'native_fixture_account')
+            .confirmed,
+        isTrue,
+      );
     });
 
     test('v5 migration keeps legacy dose context unknown', () async {
@@ -230,6 +253,9 @@ void main() {
       for (final statement in nativeIntakeSchemaV7MigrationStatements) {
         await _runSqlite(databasePath, statement);
       }
+      for (final statement in nativeIntakeSchemaV9MigrationStatements) {
+        await _runSqlite(databasePath, statement);
+      }
 
       final restored = nativeIntakeFromSqliteRow(
         await _readIntake(databasePath),
@@ -241,6 +267,7 @@ void main() {
       expect(restored.route, isNull);
       expect(restored.releaseType, isNull);
       expect(restored.productSelection, isNull);
+      expect(restored.doseConfirmation, isNull);
     });
   });
 }

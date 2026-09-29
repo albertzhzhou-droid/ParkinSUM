@@ -6,6 +6,7 @@ import '../../core/models/atomic_onboarding_commit.dart';
 import '../../core/models/user_profile.dart';
 import '../../core/models/recoverable_user_event.dart';
 import '../../data/models/interaction_rule_record.dart';
+import '../entities/mechanistic_replay_capsule.dart';
 
 abstract class AppRepository {
   Future<void> initialize({
@@ -28,6 +29,9 @@ abstract class AppRepository {
 
   Future<List<Intake>> loadIntakes();
   Future<void> saveIntakes(List<Intake> intakes);
+
+  Future<void> saveMechanisticReplayCapsule(MechanisticReplayCapsule capsule);
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules();
 
   Future<List<FoodItem>> loadFoods();
   Future<List<DrugDefinition>> loadMedications();

@@ -23,11 +23,58 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.normalize,
       visualization: AlgorithmVisualization.decisionFlow,
       sourcePath: 'lib/domain/usecases/dosage_note_parser.dart',
+      additionalSourcePaths: [
+        'lib/domain/entities/dose_expression.dart',
+        'lib/domain/entities/versioned_dose_unit_mapping.dart',
+      ],
       userVisibleImpact: 'Accepts or rejects structured dose text.',
       inputs: 'Dose note text',
-      outputs: 'Value, unit, or parse failure',
+      outputs: 'Versioned typed quantity or explicit held reason',
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
+      limitation:
+          'Local syntax and unit vocabulary only; it never verifies or recommends a dose.',
+    ),
+    AlgorithmDescriptor(
+      id: 'administration_dose_confirmation_reconciliation',
+      name: 'Administration-dose confirmation reconciliation',
+      stage: AlgorithmStage.resolve,
+      visualization: AlgorithmVisualization.provenanceGraph,
+      sourcePath:
+          'lib/domain/usecases/administration_dose_confirmation_coordinator.dart',
+      additionalSourcePaths: [
+        'lib/core/models/administration_dose_confirmation.dart',
+      ],
+      userVisibleImpact:
+          'Controls whether one explicitly confirmed dose remains bound to the same account, medication, product, time, parser, and record revision.',
+      inputs:
+          'Intake revision, accepted dose AST, account scope, product snapshot, confirmation action, and grammar identity',
+      outputs:
+          'Immutable confirmation receipt plus a combined assertion-aware result-use gate, or an explicit unconfirmed, held, stale, drifted, conflicted, or mismatched state',
       hasLiveTrace: false,
-      limitation: 'Syntax parsing only; it never recommends a dose.',
+      limitation:
+          'Confirms a local user assertion only; it does not validate a prescription, clinical appropriateness, digital signature, or actual administration.',
+    ),
+    AlgorithmDescriptor(
+      id: 'medication_assertion_source_temporal_reconciliation',
+      name: 'Medication assertion source and temporal reconciliation',
+      stage: AlgorithmStage.resolve,
+      visualization: AlgorithmVisualization.provenanceGraph,
+      sourcePath:
+          'lib/domain/usecases/medication_assertion_reconciliation_service.dart',
+      additionalSourcePaths: [
+        'lib/domain/entities/medication_assertion_reconciliation.dart',
+        'lib/features/timeline/medication_assertion_reconciliation_page.dart',
+      ],
+      userVisibleImpact:
+          'Retains source, status, product, dose, event-time, assertion-time, import-time, and revision disagreements and holds numeric model input while any conflict remains unresolved.',
+      inputs:
+          'Immutable local, reported, imported, request, dispense, device, package, and formal-administration-labelled assertions',
+      outputs:
+          'Content-addressed conflict graph, blocking edges, stale acknowledgements, and a fail-closed result-use gate',
+      hasLiveTrace: false,
+      limitation:
+          'No universal source hierarchy and no adherence inference; acknowledgement does not perform clinical medication reconciliation or erase a claim.',
     ),
     AlgorithmDescriptor(
       id: 'medication_entry_validator',
@@ -39,7 +86,8 @@ class AlgorithmRegistry {
           'Controls whether medication context reaches modeling.',
       inputs: 'Ingredient, strength, unit, form, route, release type',
       outputs: 'Validated context and issue codes',
-      hasLiveTrace: false,
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
       limitation: 'Metadata completeness is not clinical validation.',
     ),
     AlgorithmDescriptor(
@@ -53,7 +101,8 @@ class AlgorithmRegistry {
           'Prevents levodopa-specific model curves, scores, and ranking outside the supported medication domain.',
       inputs:
           'Exact active ingredients plus route, dosage form, and release type',
-      outputs: 'Applicability state, modeled release profile, and reason codes',
+      outputs:
+          'Applicability state, per-predicate outcomes, reason codes, and a versioned manifest digest',
       hasLiveTrace: false,
       limitation:
           'A passing metadata gate establishes model input scope, not clinical suitability or predictive validity.',
@@ -64,13 +113,16 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.normalize,
       visualization: AlgorithmVisualization.decisionFlow,
       sourcePath: 'lib/domain/usecases/medication_package_dose_calculator.dart',
+      additionalSourcePaths: ['lib/core/models/medication_product_pack.dart'],
       userVisibleImpact:
-          'Converts a confirmed package selection into ingredient amounts.',
-      inputs: 'Confirmed product and unit count',
-      outputs: 'Component dose quantities',
+          'Calculates an ingredient amount from a confirmed discrete dosage-unit count and records a source-linked derivation trace.',
+      inputs:
+          'Product source fields, exact ingredient strength, discrete dose form, and confirmed unit count',
+      outputs:
+          'Ingredient amount, denominator disposition, formula identity, and source-linked arithmetic trace',
       hasLiveTrace: false,
       limitation:
-          'Runs only after explicit confirmation; not a dosing calculator.',
+          'Only recognized tablets, capsules, and caplets are supported. Missing denominators are explicitly assumed to be one dosage unit; liquid, volume-denominator, mismatched, and unsupported cases are held. Source and clinical correctness are not verified.',
     ),
     AlgorithmDescriptor(
       id: 'meal_composition_normalizer',
@@ -98,7 +150,8 @@ class AlgorithmRegistry {
           'Places validated meals and medication on one UTC minute axis.',
       inputs: 'Timestamps and validated contexts',
       outputs: 'Ordered conflict timeline',
-      hasLiveTrace: false,
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
       limitation:
           'Omitted timestamps widen uncertainty; time is never invented.',
     ),
@@ -125,8 +178,51 @@ class AlgorithmRegistry {
           'Allows or withholds an educational trace; never changes food order.',
       inputs: 'Eight context-quality dimensions',
       outputs: 'Eligibility, blockers, and fallback reasons',
-      hasLiveTrace: false,
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
       limitation: 'Assesses input sufficiency, not medical correctness.',
+    ),
+    AlgorithmDescriptor(
+      id: 'mechanistic_ledger_authorization',
+      name: 'Mechanistic input-ledger authorization gate',
+      stage: AlgorithmStage.decide,
+      visualization: AlgorithmVisualization.provenanceGraph,
+      sourcePath:
+          'lib/domain/usecases/mechanistic_event_ledger_authorization.dart',
+      additionalSourcePaths: [
+        'lib/domain/entities/mechanistic_event_ledger.dart',
+        'lib/domain/usecases/mechanistic_event_ledger_builder.dart',
+      ],
+      userVisibleImpact:
+          'Blocks mechanistic numerical output when the exact engine-facing context, meal composition, ledger, or configuration identity drifts.',
+      inputs:
+          'Validated time-axis context, complete meal-composition map, schema-v3 ledger, and configuration SHA-256',
+      outputs:
+          'Authorized short-lived input view or typed integrity-blocked assessment',
+      hasLiveTrace: false,
+      limitation:
+          'Content binding and projection checks are not lossless replay, biological truth, clinical calibration, or validation.',
+    ),
+    AlgorithmDescriptor(
+      id: 'mechanistic_lossless_replay_capsule',
+      name: 'Lossless mechanistic input replay capsule',
+      stage: AlgorithmStage.normalize,
+      visualization: AlgorithmVisualization.provenanceGraph,
+      sourcePath: 'lib/domain/entities/mechanistic_replay_capsule.dart',
+      additionalSourcePaths: [
+        'lib/domain/usecases/mechanistic_replay_capsule_service.dart',
+        'lib/domain/usecases/mechanistic_event_ledger_authorization.dart',
+      ],
+      userVisibleImpact:
+          'Serializes and reconstructs the complete engine input before authorization so omitted side-object fields cannot silently influence numerical output.',
+      inputs:
+          'Complete schema-v3 ledger, time-axis context, meal compositions, configuration identity, and exact binary64 values',
+      outputs:
+          'Digest-bound schema-v1 replay capsule plus reconstructed ledger, context, and composition map',
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
+      limitation:
+          'Dart/Node replay evidence is not IANA/tzdb or every-platform conformance, biological truth, clinical calibration, or validation.',
     ),
     AlgorithmDescriptor(
       id: 'gastric_emptying',
@@ -148,6 +244,28 @@ class AlgorithmRegistry {
           'Population-informed educational sensitivity model, not a gastric-emptying test.',
     ),
     AlgorithmDescriptor(
+      id: 'gastric_structural_uncertainty_shadow_ensemble',
+      name: 'Gastric structural-uncertainty shadow ensemble',
+      stage: AlgorithmStage.model,
+      visualization: AlgorithmVisualization.liveCurve,
+      sourcePath:
+          'lib/domain/usecases/gastric_structural_uncertainty_service.dart',
+      additionalSourcePaths: [
+        'lib/domain/entities/gastric_structural_uncertainty.dart',
+        'lib/features/algorithm_observatory/algorithm_observatory_page.dart',
+      ],
+      userVisibleImpact:
+          'Shows how observable-matched gastric curve structures disagree without changing the production result.',
+      inputs:
+          'Immutable mechanistic event ledger, unchanged production gastric profile, exact observable and measurement modality',
+      outputs:
+          'Read-only trajectories, fit authorization states, pairwise structural disagreement, and explicit observable holds',
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
+      limitation:
+          'Model-form sensitivity only; not an ensemble accuracy gain, individual test, confidence interval, plasma concentration, symptom prediction, or clinical validation.',
+    ),
+    AlgorithmDescriptor(
       id: 'levodopa_absorption_opportunity',
       name: 'Levodopa absorption opportunity',
       stage: AlgorithmStage.model,
@@ -156,6 +274,7 @@ class AlgorithmRegistry {
           'lib/domain/usecases/levodopa_absorption_opportunity_model.dart',
       additionalSourcePaths: [
         'lib/domain/entities/absorption_opportunity.dart',
+        'lib/domain/entities/levodopa_absorption_opportunity_parameters.dart',
       ],
       userVisibleImpact:
           'Models a possible small-intestinal opportunity window.',
@@ -198,7 +317,8 @@ class AlgorithmRegistry {
           'Balances modeled overlap against a protein-adequacy proxy.',
       inputs: 'Modeled overlap, candidate protein, and time-window hint',
       outputs: 'Window role, redistribution score, adequacy contribution',
-      hasLiveTrace: false,
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
       limitation: 'Does not prescribe restriction or a daily protein target.',
     ),
     AlgorithmDescriptor(
@@ -242,12 +362,21 @@ class AlgorithmRegistry {
       sourcePath:
           'lib/domain/usecases/next_meal_recommendation_orchestrator.dart',
       userVisibleImpact:
-          'Selects deterministic, local-AI polish, or conservative fallback path.',
-      inputs: 'Gate status, deterministic results, consent, local endpoint',
-      outputs: 'Path, visible reasons, and bounded result',
+          'Selects a conservative or consented AI path and withholds order claims when bounded nutrient-range replays reveal unresolved ranking sensitivity.',
+      inputs:
+          'Gate status, candidate snapshot, source-bound nutrient intervals, production score breakpoints, consent, and local endpoint',
+      outputs:
+          'Path, bounded result, replayed rank swaps and top-K changes, unresolved sensitivity reasons, and rank-withholding state',
       hasLiveTrace: false,
+      additionalSourcePaths: [
+        'lib/core/models/food_item.dart',
+        'lib/domain/entities/food_composition_candidate_set_snapshot.dart',
+        'lib/domain/entities/next_meal_recommendation_models.dart',
+        'lib/domain/entities/food_rank_sensitivity_assessment.dart',
+        'lib/domain/usecases/food_rank_sensitivity_service.dart',
+      ],
       limitation:
-          'Local AI may reorder only a whitelist and cannot bypass safety gates.',
+          'Sensitivity replays are bounded stress tests, not probabilities or stability guarantees. Local AI may reorder only a whitelist and cannot bypass safety gates; AI order is not covered by the heuristic replay.',
     ),
     AlgorithmDescriptor(
       id: 'runtime_rule_engine',
@@ -344,13 +473,16 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.decide,
       visualization: AlgorithmVisualization.scoreBreakdown,
       sourcePath: 'lib/domain/usecases/get_food_recommendations_usecase.dart',
+      additionalSourcePaths: [
+        'lib/domain/usecases/legacy_food_recommendation_parameters.dart',
+      ],
       userVisibleImpact:
           'Scores legacy food candidates by nutrition, timing, region, repetition, and provenance.',
       inputs: 'History, catalog foods, medications, and user profile',
       outputs: 'Ranked legacy candidate explanations',
       hasLiveTrace: false,
       limitation:
-          'Compatibility scoring is heuristic and subordinate to safety and mechanistic gates.',
+          'Bounded 0–100 compatibility points are heuristic, not a probability, and remain subordinate to safety and mechanistic gates.',
     ),
     AlgorithmDescriptor(
       id: 'local_ai_adapter',
@@ -417,11 +549,16 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.decide,
       visualization: AlgorithmVisualization.liveCurve,
       sourcePath: 'lib/domain/usecases/get_protein_trend_usecase.dart',
+      additionalSourcePaths: [
+        'lib/core/models/meal.dart',
+        'lib/domain/entities/protein_trend_point.dart',
+      ],
       userVisibleImpact:
           'Aggregates logged meal protein into the analytics trend.',
       inputs: 'Stored meals with nutrient totals',
       outputs: 'Time-ordered protein series',
-      hasLiveTrace: false,
+      hasLiveTrace: true,
+      traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
       limitation: 'Descriptive aggregation, not intake adequacy assessment.',
     ),
     AlgorithmDescriptor(
@@ -498,6 +635,9 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.resolve,
       visualization: AlgorithmVisualization.provenanceGraph,
       sourcePath: 'lib/domain/usecases/cdss_catalog_projection_service.dart',
+      additionalSourcePaths: <String>[
+        'lib/domain/entities/food_composition_candidate_set_snapshot.dart',
+      ],
       userVisibleImpact:
           'Projects versioned evidence into user-facing catalog details.',
       inputs: 'Published snapshot facts and provenance',
@@ -654,6 +794,40 @@ class AlgorithmRegistry {
       hasLiveTrace: false,
       limitation:
           'Text matching improves retrieval speed; it does not establish product identity.',
+    ),
+    AlgorithmDescriptor(
+      id: 'evidence_source_metadata_search',
+      name: 'Evidence source metadata search',
+      stage: AlgorithmStage.resolve,
+      visualization: AlgorithmVisualization.resolutionTable,
+      sourcePath: 'lib/domain/usecases/evidence_source_metadata_search.dart',
+      userVisibleImpact:
+          'Orders local source metadata matches with a bounded BM25F-style lexical search.',
+      inputs: 'Source metadata fields and a bounded user query',
+      outputs: 'Deterministically ordered source matches and matched terms',
+      hasLiveTrace: false,
+      limitation:
+          'Lexical relevance is not evidence quality, clinical applicability, or source validity.',
+    ),
+    AlgorithmDescriptor(
+      id: 'food_portion_composition_preview',
+      name: 'Source-bound food portion calculation',
+      stage: AlgorithmStage.normalize,
+      visualization: AlgorithmVisualization.qualityMatrix,
+      sourcePath:
+          'lib/domain/usecases/food_portion_composition_projection_service.dart',
+      additionalSourcePaths: [
+        'lib/domain/entities/food_portion_composition_projection.dart',
+      ],
+      userVisibleImpact:
+          'Declares the standalone nutrient-preview calculation for one explicitly bound FDC source portion; no app UI currently calls this service.',
+      inputs:
+          'Candidate snapshot, source-bound nutrient evidence, and source portion mass',
+      outputs:
+          'Per-portion nutrient amount and source-sample bounds, or an explicit hold',
+      hasLiveTrace: false,
+      limitation:
+          'Standalone tested preview service with no app UI wiring. It does not select a serving, modify foods, change recommendation order, or establish dietary advice.',
     ),
     AlgorithmDescriptor(
       id: 'medication_catalog_search',
@@ -832,6 +1006,8 @@ class AlgorithmRegistry {
       sourcePath:
           'lib/features/algorithm_observatory/algorithm_observatory_page.dart',
       additionalSourcePaths: [
+        'lib/features/shared/administration_dose_confirmation_panel.dart',
+        'lib/features/shared/dose_expression_status_card.dart',
         'lib/features/shared/interaction_result_view.dart',
         'lib/features/shared/mechanistic_trace_view.dart',
       ],
@@ -904,12 +1080,22 @@ class AlgorithmRegistry {
         'Static legacy lookup storage; ranking is registered separately.',
     'lib/core/analysis/medication_repository.dart':
         'Static legacy lookup storage; interaction logic is registered separately.',
-    'lib/domain/entities/mechanistic_event_ledger.dart':
-        'Versioned read-only event audit contract; it does not feed production scoring or recommendations.',
     'lib/domain/usecases/algorithm_observatory_service.dart':
         'Read-only synthetic trace fixture; never participates in app results.',
     'lib/domain/usecases/algorithm_numerical_verification_oracle.dart':
         'Read-only independent calculation verifier around registered production algorithms; never participates in app results.',
+    'lib/domain/usecases/dose_input_invariant_probe.dart':
+        'Read-only manufactured black-box probe around registered dose-input algorithms; never participates in app results.',
+    'lib/domain/usecases/amino_acid_extraction_invariant_probe.dart':
+        'Read-only manufactured black-box probe around the registered FDC amino-acid extractor; never participates in app results.',
+    'lib/domain/usecases/catalog_candidate_projection_invariant_probe.dart':
+        'Read-only manufactured black-box probe around the registered catalog-to-candidate projection; never participates in app results.',
+    'lib/domain/usecases/legacy_food_recommendation_invariant_probe.dart':
+        'Read-only manufactured black-box probe around the registered legacy recommendation scorer; never participates in app results.',
+    'lib/domain/usecases/mechanistic_model_verification_gate.dart':
+        'Read-only invariant and unit verifier around fixed synthetic production traces; never participates in app results.',
+    'lib/domain/usecases/algorithm_executable_contract_gate.dart':
+        'Read-only executable-contract verifier around fixed synthetic production calls; never participates in app results.',
     'lib/domain/usecases/algorithm_registry.dart':
         'Coverage metadata for algorithms, not an algorithm itself.',
     'lib/domain/usecases/catalog_inventory_diagnostics.dart':
@@ -940,8 +1126,6 @@ class AlgorithmRegistry {
         'Read-only localization diagnostics.',
     'lib/domain/usecases/localization_safety_lint.dart':
         'Offline release gate; runtime copy selection is registered separately.',
-    'lib/domain/usecases/mechanistic_event_ledger_builder.dart':
-        'Read-only projection of validated production context into an audit ledger; it cannot alter runtime results.',
     'lib/domain/usecases/mechanistic_replay_runner.dart':
         'Deterministic verification harness around registered production models.',
     'lib/domain/usecases/model_assumption_registry.dart':

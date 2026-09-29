@@ -7,7 +7,8 @@ import 'dosage_note_parser.dart';
 class DataIntegrityReport {
   const DataIntegrityReport({
     required this.intakeCount,
-    required this.intakesWithComputableDose,
+    required this.intakesWithParseableDose,
+    required this.intakesWithResultEligibleDose,
     required this.intakesWithFormulationSnapshot,
     required this.orphanedIntakeCount,
     required this.mealCount,
@@ -24,7 +25,13 @@ class DataIntegrityReport {
   });
 
   final int intakeCount;
-  final int intakesWithComputableDose;
+  final int intakesWithParseableDose;
+  final int intakesWithResultEligibleDose;
+
+  /// Compatibility name retained for existing UI call sites. "Computable"
+  /// now means the confirmation- and assertion-gated result-use state, not
+  /// merely that a legacy string parser found a number and unit.
+  int get intakesWithComputableDose => intakesWithResultEligibleDose;
   final int intakesWithFormulationSnapshot;
   final int orphanedIntakeCount;
   final int mealCount;
@@ -39,7 +46,7 @@ class DataIntegrityReport {
   final int traceableMedicationCount;
   final int medicationsWithIncompleteFormulation;
 
-  int get missingDoseCount => intakeCount - intakesWithComputableDose;
+  int get missingDoseCount => intakeCount - intakesWithResultEligibleDose;
   int get missingFormulationSnapshotCount =>
       intakeCount - intakesWithFormulationSnapshot;
   int get unresolvedMealItemCount => mealItemCount - resolvedMealItemCount;
@@ -50,7 +57,10 @@ class DataIntegrityReport {
       emptyMealCount > 0 ||
       unresolvedMealItemCount > 0;
 
-  double? get doseCoverage => _coverage(intakesWithComputableDose, intakeCount);
+  double? get parseableDoseCoverage =>
+      _coverage(intakesWithParseableDose, intakeCount);
+  double? get doseCoverage =>
+      _coverage(intakesWithResultEligibleDose, intakeCount);
   double? get formulationSnapshotCoverage =>
       _coverage(intakesWithFormulationSnapshot, intakeCount);
   double? get mealTimeCoverage => _coverage(mealsWithExplicitTime, mealCount);
@@ -66,6 +76,7 @@ class DataIntegrityReport {
     required List<Meal> meals,
     required List<FoodItem> foods,
     required List<DrugDefinition> medications,
+    required bool Function(Intake intake) doseResultEligibility,
     DosageNoteParser? dosageNoteParser,
   }) {
     final parser = dosageNoteParser ?? DosageNoteParser();
@@ -75,8 +86,11 @@ class DataIntegrityReport {
 
     return DataIntegrityReport(
       intakeCount: intakes.length,
-      intakesWithComputableDose: intakes
+      intakesWithParseableDose: intakes
           .where((intake) => parser.parseIntake(intake).explicit)
+          .length,
+      intakesWithResultEligibleDose: intakes
+          .where(doseResultEligibility)
           .length,
       intakesWithFormulationSnapshot: intakes
           .where(

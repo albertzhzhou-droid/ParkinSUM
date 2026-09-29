@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "fhirVersion": "5.0.0",
+  "operation": "ActivityDefinition/$apply",
+  "request": {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "activityDefinition",
+        "resource": {
+          "resourceType": "ActivityDefinition",
+          "id": "synthetic-r5-activity",
+          "url": "https://example.org/fhir/ActivityDefinition/ParkinSUMSyntheticR5Activity",
+          "version": "1.0.0",
+          "status": "draft",
+          "kind": "RequestOrchestration"
+        }
+      },
+      {
+        "name": "subject",
+        "valueReference": {
+          "reference": "Patient/synthetic-r5-subject"
+        }
+      }
+    ]
+  },
+  "response": {
+    "resourceType": "RequestOrchestration",
+    "id": "synthetic-r5-activity-apply-result",
+    "instantiatesCanonical": [
+      "https://example.org/fhir/ActivityDefinition/ParkinSUMSyntheticR5Activity|1.0.0"
+    ],
+    "status": "draft",
+    "intent": "proposal",
+    "subject": {
+      "reference": "Patient/synthetic-r5-subject"
+    }
+  }
+}

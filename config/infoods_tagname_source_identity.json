@@ -1,0 +1,50 @@
+{
+  "schemaUri": "parkinsum.infoods-tagname-source-identity/1",
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-24",
+  "terminology": {
+    "id": "FAO/INFOODS Food Component Tagnames",
+    "publisher": "Food and Agriculture Organization of the United Nations",
+    "jurisdictionScope": "global"
+  },
+  "sourcePage": {
+    "url": "https://www.fao.org/infoods/infoods/standards-guidelines/food-component-identifiers-tagnames/en/",
+    "reportedLastUpdated": "2022-10-20",
+    "baseWork": "Identification of Food Components for INFOODS Data Interchange",
+    "baseWorkYear": 1989,
+    "baseListUpdatedThroughYear": 2007,
+    "publishedAdditions": [
+      {
+        "year": 2008,
+        "count": 142
+      },
+      {
+        "year": 2010,
+        "count": 156
+      }
+    ],
+    "proposedAdditionalTagnameCount": 130,
+    "proposedTagnameState": "coming_soon",
+    "consolidatedExcelListState": "coming_soon"
+  },
+  "sourceVerification": {
+    "pageReviewedOnline": true,
+    "pageArchivedLocally": false,
+    "remotePageDigest": null,
+    "completeTagnameListDownloaded": false,
+    "tagnameRowsBundled": false,
+    "releaseIdentity": "not_established"
+  },
+  "consumptionBoundary": {
+    "mappingRecordsShipped": false,
+    "algorithmIdentityBound": false,
+    "currentVocabularyCompletenessEstablished": false,
+    "terminologyConformance": false,
+    "mappingDisposition": "hold_no_mapping_until_a_versioned_complete_source_is_reviewed"
+  },
+  "contentAddress": {
+    "algorithm": "SHA-256",
+    "canonicalization": "parkinsum-sorted-json-v1",
+    "digestHex": "847815ccb1ff06b96982478acaff469d09eca07e2f53240a8f064f8337838d8d"
+  }
+}

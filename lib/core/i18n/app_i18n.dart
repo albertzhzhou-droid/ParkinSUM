@@ -148,6 +148,8 @@ class AppI18n {
         return tr('recommend.runtime.enteral_conservative');
       case 'Local AI path not enabled by user consent.':
         return tr('recommend.runtime.local_ai_not_consented');
+      case 'Local AI probe skipped by signed capability policy.':
+        return tr('recommend.runtime.local_ai_rollout_disabled');
       case 'Local AI endpoint unavailable.':
         return tr('recommend.runtime.local_ai_unavailable');
       case 'Returned deterministic conservative recommendations instead.':
@@ -460,7 +462,8 @@ class AppI18n {
 /// of this map, so picking any of them flips the whole UI into that
 /// language instead of showing English fallbacks. Switched from `const` to
 /// `final` so the spread can compose at startup.
-final Map<String, Map<String, String>> _strings = {
+final Map<String, Map<String, String>>
+_strings = _mergeFoodCatalogProvenanceTranslations({
   'zh': {
     'app.welcome': '欢迎',
     'app.loading': '加载中...',
@@ -502,7 +505,7 @@ final Map<String, Map<String, String>> _strings = {
     'onboarding.initial_intake_time': '服药时间',
     'onboarding.change_time': '更改时间',
     'onboarding.initial_intake_note': '剂量备注',
-    'onboarding.initial_intake_note_help': '例如 100/25 mg，或留空。',
+    'onboarding.initial_intake_note_help': '例如 100 mg，或留空；组合强度不会当作单次剂量。',
     'onboarding.no_medications_available': '当前药品目录为空。',
     'onboarding.step_preferences': '饮食与安全偏好',
     'onboarding.step_preferences_subtitle': '设置饮食地区、质地安全和内容覆盖',
@@ -539,6 +542,63 @@ final Map<String, Map<String, String>> _strings = {
     'nav.meds': '药品',
     'nav.catalog': '目录',
     'nav.next_meal': '下餐推荐',
+    'shell.tagline': '伴侣应用 · 研究原型',
+    'shell.workspace': '工作区',
+    'shell.care_workspace': '就诊准备与待核实事项',
+    'shell.boundary_note': '教育研究原型，不构成医疗建议。健康相关决定请与专业临床人员核实。',
+    'dashboard.greeting_morning': '早上好',
+    'dashboard.greeting_afternoon': '下午好',
+    'dashboard.greeting_evening': '晚上好',
+    'dashboard.subtitle': '已记录的餐食、服药记录，以及每条解释背后的规则概览。',
+    'dashboard.stat_meals': '已记录餐次',
+    'dashboard.stat_drugs': '在用药物',
+    'dashboard.stat_intakes': '已记录服药',
+    'shell.new_entry': '新建记录',
+    'shell.search': '搜索',
+    'shell.search_hint': '搜索页面、工具与操作',
+    'shell.search_empty': '没有匹配的页面、工具或操作',
+    'shell.menu': '菜单',
+    'shell.group.evidence': '证据与规则',
+    'shell.group.data': '我的数据',
+    'shell.group.operations': '运行管理',
+    'shell.group.pages': '页面',
+    'shell.action.observation': '记录观察',
+    'dashboard.stat_protein': '每餐平均蛋白质',
+    'dashboard.show_details': '展开详情',
+    'dashboard.hide_details': '收起详情',
+    'dashboard.quick_log': '快速记录',
+    'dashboard.today': '近期记录',
+    'insights.title': '洞察',
+    'insights.subtitle': '仅根据你自己的记录呈现的规律。',
+    'insights.range_7': '7 天',
+    'insights.range_30': '30 天',
+    'insights.meals': '餐食',
+    'insights.intakes': '服药记录',
+    'insights.observations': '观察',
+    'insights.avg_protein': '每餐平均蛋白质',
+    'insights.rhythm_title': '记录节奏',
+    'insights.rhythm_subtitle': '每日记录数',
+    'insights.protein_title': '每餐蛋白质',
+    'insights.protein_subtitle': '每次记录餐食的克数（由旧到新）',
+    'insights.daypart_title': '时段分布',
+    'insights.daypart_subtitle': '餐食与服药记录的时间段',
+    'insights.morning': '早上',
+    'insights.midday': '中午',
+    'insights.evening': '傍晚',
+    'insights.night': '夜间',
+    'insights.empty': '此时间段内尚无记录。',
+    'insights.boundary': '以上仅为你自身记录的描述性汇总，并非临床测量、目标或建议；健康相关决定请与专业临床人员核实。',
+    'settings.local_ai_advanced': '高级 · 本地 AI 连接',
+    'nav.today': '今日',
+    'nav.library': '资料库',
+    'dashboard.log_prompt': '想要记录什么？',
+    'dashboard.log_meal_hint': '食物与份量，并按教育性规则进行检查',
+    'dashboard.log_intake_hint': '你已服用的一次药物剂量',
+    'dashboard.log_observation_hint': '血压、症状或运动状态',
+    'dashboard.open_timeline': '打开时间线',
+    'dashboard.open_next_meal': '打开下餐推荐',
+    'library.my_medications': '我的药物',
+    'library.catalog': '食物与药物',
     'observatory.title': '算法观测台',
     'observatory.boundary.title': '{count} 个算法 · 一份可审计 UI 契约',
     'observatory.boundary.body':
@@ -558,6 +618,47 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.comparison.bands': '严重度 / 置信度',
     'observatory.coverage.title': '影响结果的算法覆盖',
     'observatory.coverage.body': '所有可改变分类、评分、排序、安全门、回退、身份解析或解释的算法，都必须在下方有可见表示。',
+    'observatory.trace_surface.title': '生产轨迹表面契约',
+    'observatory.trace_surface.summary':
+        '{live} / {total} 个算法拥有生产引擎轨迹 · {static} 个仅有静态审计契约',
+    'observatory.trace_surface.body':
+        '“生产轨迹”要求固定合成场景实际执行应用生产引擎并发出绑定算法 ID 的轨迹节点；静态图示不会被计入实时覆盖。',
+    'observatory.trace_surface.identity':
+        '清单 schema v{schema} · SHA-256 {digest}…',
+    'observatory.trace_surface.details': '查看 provider 生命周期与边界',
+    'observatory.trace_surface.provider': 'Provider',
+    'observatory.trace_surface.fixture': 'Fixture',
+    'observatory.trace_surface.lifecycle': '生命周期',
+    'observatory.trace_surface.route': 'UI 路由',
+    'observatory.trace_surface.classification_boundary':
+        '生产轨迹仅证明固定合成 fixture 经过生产代码路径；不证明临床校准、患者准确性、获益、安全性或医疗建议。',
+    'observatory.trace_surface.semantics':
+        '算法轨迹表面：{live}/{total} 个生产轨迹，{static} 个静态契约；provider {provider}；schema {schema}。',
+    'observatory.dependency_closure.title': '依赖闭包就绪度',
+    'observatory.dependency_closure.loading': '正在加载已检入的根清单 · 闭包 HOLD',
+    'observatory.dependency_closure.unavailable': 'HOLD · 已检入的根清单不可用',
+    'observatory.dependency_closure.loading_semantics':
+        '正在加载稳定的算法结果根清单。依赖闭包仍处于 HOLD 状态。',
+    'observatory.dependency_closure.unavailable_semantics':
+        '稳定的算法结果根清单不可用。依赖闭包处于 HOLD 状态。',
+    'observatory.dependency_closure.semantics':
+        '{count} 个稳定的已注册算法根。Analyzer {analyzer} 是声明的精确版本审查目标；离线兼容性证据未在此视图中打包或执行。传递依赖闭包在等待 ParkinSUM 边生成器期间保持 HOLD。',
+    'observatory.dependency_closure.summary':
+        '{count} / {total} 个稳定根 · 声明的 Analyzer 目标 {analyzer} · 传递闭包 HOLD',
+    'observatory.dependency_closure.identity': '{schema} · {digest}… · {state}',
+    'observatory.dependency_closure.registry_chip': 'Registry 映射：结构有效',
+    'observatory.dependency_closure.edge_chip': '边生成器：HOLD',
+    'observatory.dependency_closure.closure_chip': '正向/反向闭包：HOLD',
+    'observatory.dependency_closure.details': '无障碍稳定根表',
+    'observatory.dependency_closure.details_subtitle': '仅包含主库种子；没有生成的依赖边。',
+    'observatory.dependency_closure.table_semantics':
+        '稳定算法根表。列为算法、逻辑根、结果汇点和规范包 URI。',
+    'observatory.dependency_closure.column_algorithm': '算法',
+    'observatory.dependency_closure.column_root': '逻辑根',
+    'observatory.dependency_closure.column_sink': '结果汇点',
+    'observatory.dependency_closure.column_uri': '包 URI',
+    'observatory.dependency_closure.boundary':
+        '此视图仅证明已检入的 Registry 到根的结构契约。离线 Analyzer 兼容性证据未在此处打包或执行；此视图不展示或声称调用图、强连通分量、正向/反向闭包、执行、精确数据流、科学证实、临床适用性证明、安全性、获益或医疗建议。',
     'observatory.atlas.count': '显示 {visible} / {total} 个算法',
     'observatory.atlas.search': '搜索算法图谱',
     'observatory.atlas.search_hint': '名称、输入、输出、影响或源文件',
@@ -578,7 +679,78 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.candidate.title': '5 · 候选评分拆解',
     'observatory.candidate.body': '最差采样重叠保持主导；蛋白分布和来源质量只能有限修正，不能覆盖它。',
     'observatory.parameters.title': '6 · 版本化参数证据',
-    'observatory.oracle.title': '7 · 独立数值真值闸',
+    'observatory.invariant.title': '7 · 数学不变量与单位闸',
+    'observatory.invariant.body':
+        '通过三个固定合成场景及与 probe 绑定的黑盒生产调用，逐项检查有限值、边界、质量守恒、曲线顺序、单位维度、阈值身份和缺失值停算。',
+    'observatory.invariant.summary': '{passed} / {total} 个检查通过',
+    'observatory.invariant.algorithms_summary': '{covered} / {total} 个算法进入可执行闸',
+    'observatory.invariant.scenarios': '{count} 个固定合成场景',
+    'observatory.invariant.manifest': '不变量规范 SHA-256：{digest}',
+    'observatory.invariant.configuration': '绑定配置 SHA-256：{digest}',
+    'observatory.invariant.tolerance': '绝对容差',
+    'observatory.invariant.sources': '规范来源',
+    'observatory.invariant.failures': '失败代码',
+    'observatory.invariant.boundary':
+        '通过只表示声明的合成可观测量在固定工程检查中保持数学一致；不证明生物学有效、临床准确、患者获益或医疗建议。',
+    'observatory.invariant.passed': '数学不变量与单位检查通过',
+    'observatory.invariant.failed': '数学不变量或单位检查失败',
+    'observatory.invariant.not_covered': '尚未纳入可执行不变量闸',
+    'observatory.executable.title': '8 · 非数值算法可执行契约闸',
+    'observatory.executable.body':
+        '用固定合成输入检查规则、目录、来源、冲突、推荐编排和本地 AI 的行为、顺序、schema、来源与安全关系。',
+    'observatory.executable.pending': '正在运行隔离的生产 API 契约；不会打开网络连接。',
+    'observatory.executable.blocked': '可执行契约未完成，当前结果保持阻断。',
+    'observatory.executable.summary': '{passed} / {total} 个契约通过',
+    'observatory.executable.algorithms_summary': '合并覆盖 {covered} / {total} 个算法',
+    'observatory.executable.not_covered_count': '{count} 个算法仍未覆盖',
+    'observatory.executable.manifest': '契约规范 SHA-256：{digest}',
+    'observatory.executable.configuration': '绑定配置 SHA-256：{digest}',
+    'observatory.executable.source_bundle': '绑定源码包 SHA-256：{digest}',
+    'observatory.executable.observation': '观测 SHA-256',
+    'observatory.executable.failures': '失败代码',
+    'observatory.executable.boundary':
+        '通过只表示固定合成输入满足声明的软件关系；不证明科学真实性、模型质量、临床校准、个体准确性、获益、安全性或医疗建议。',
+    'observatory.executable.passed': '非数值可执行契约通过',
+    'observatory.executable.failed': '非数值可执行契约失败',
+    'observatory.executable.blocked_status': '非数值可执行契约已阻断',
+    'observatory.executable.pending_status': '非数值可执行契约运行中',
+    'observatory.executable.not_covered': '尚无非数值可执行契约',
+    'observatory.independent_contract.title': '9 · 跨运行时独立关系闸',
+    'observatory.independent_contract.body':
+        '展示已提交的离线 Node 独立核对：不导入生产 Dart，重新评价关系、中间表示变异、错误关系和异步终止顺序。',
+    'observatory.independent_contract.status': '{status} · {findings} 个发现',
+    'observatory.independent_contract.relations': '{passed} / {total} 个关系通过',
+    'observatory.independent_contract.mutations': '{killed} / {total} 个变异被检出',
+    'observatory.independent_contract.survivors': '{count} 个幸存变异',
+    'observatory.independent_contract.scheduler': '{passed} / {total} 个异步顺序通过',
+    'observatory.independent_contract.invalid_relations':
+        '{rejected} / {total} 个错误关系被拒绝',
+    'observatory.independent_contract.identities':
+        '关系表 {registry} · Node oracle {oracle} · 报告 {report}',
+    'observatory.relation_sampling.title': '10 · 关系域采样与缺陷关系诊断',
+    'observatory.relation_sampling.body':
+        'Schema v2 锁定夹具闸对适用的合成域分区样本成对执行 Dart 生产算法 API，再由独立 Node 判定器核对；前置条件 HOLD、IR 变异灵敏度与故意错误关系的诊断暴露单独报告。',
+    'observatory.relation_sampling.status':
+        '{status} · {findings} 个发现 · 已核对声明样本，完整生产域覆盖仍开放',
+    'observatory.relation_sampling.cases': '{count} 个样本 · {relations} 个关系',
+    'observatory.relation_sampling.holds': '{count} 个前置条件 HOLD',
+    'observatory.relation_sampling.production_cases':
+        '{passed} / {count} 个生产样本通过独立核对',
+    'observatory.relation_sampling.production_invocations':
+        '{count} 次生产 API 调用',
+    'observatory.relation_sampling.production_holds': '{count} 个生产样本执行前 HOLD',
+    'observatory.relation_sampling.mutations': '{killed} / {total} 个采样变异被检出',
+    'observatory.relation_sampling.survivors': '{count} 个采样幸存变异',
+    'observatory.relation_sampling.false_relations':
+        '{rejected} / {total} 个错误关系被拒绝',
+    'observatory.relation_sampling.false_alarms':
+        '缺陷关系诊断暴露：{count} / {total}（{rate}%）；它统计故意错误关系对有效合成夹具产生的错误报警，以证明这些关系应被拒绝，不是生产误报率。',
+    'observatory.relation_sampling.production_boundary':
+        '逐样本生产 API 执行：{cases}；独立关系评价：{evaluations}；另有 {anchors} 个固定生产关系锚点。',
+    'observatory.relation_sampling.generator': '生成器 {id} · v{version}',
+    'observatory.relation_sampling.identities':
+        '计划 {plan} · sampler {sampler} · 汇总报告 {report} · 生产报告 {production} · 执行器 {executor}',
+    'observatory.oracle.title': '11 · 独立数值真值闸',
     'observatory.oracle.body': '独立写出的解析向量与生产算法输出逐项比较；任何缺失、额外、非有限或超差结果都会阻断验证。',
     'observatory.oracle.summary': '{passed} / {total} 个向量通过',
     'observatory.oracle.algorithms_summary': '{verified} / {total} 个算法已核对',
@@ -590,7 +762,7 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.oracle.mismatch': '数值向量不一致',
     'observatory.oracle.not_covered': '尚无独立数值向量',
     'observatory.oracle.blocked': '数值验证已阻断',
-    'observatory.ledger.title': '8 · 单位感知的不可变事件账本',
+    'observatory.ledger.title': '12 · 单位感知的不可变事件账本',
     'observatory.ledger.body':
         '把同一生产场景中的餐食、剂量与上下文投影为有原始值、canonical 单位、时区偏移、同刻顺序、来源和修订身份的只读事件。',
     'observatory.ledger.event_count': '{count} 个有序事件',
@@ -598,11 +770,222 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.ledger.digest': '账本 SHA-256：{digest}',
     'observatory.ledger.replay_digest': '规范化回放 SHA-256：{digest}',
     'observatory.ledger.configuration': '绑定配置 SHA-256：{digest}',
+    'observatory.ledger.authorization_verified': '生产输入账本授权已核验',
+    'observatory.ledger.authorization_blocked': '生产输入账本授权已阻断',
+    'observatory.ledger.authorization_detail':
+        '完整输入绑定：{binding} · 授权报告：{report}',
+    'observatory.ledger.authorization_boundary':
+        '引擎只读取通过绑定复核的同一份不可变上下文；当前可读事件投影仍不是完整的无损回放格式。',
+    'observatory.replay_capsule.title': '13 · 无损机械输入回放胶囊',
+    'observatory.replay_capsule.body':
+        '计算前先序列化并重新构建完整账本、时间轴、药物扩展来源、餐食组成、食物组件与窗口，再执行输入授权。',
+    'observatory.replay_capsule.verified': '无损生产输入回放已核验',
+    'observatory.replay_capsule.digest': '胶囊 SHA-256：{digest}',
+    'observatory.replay_capsule.coverage':
+        '覆盖：完整账本 · 药物元数据 · 餐食/食物组件 · 食物时间线 · 缺失状态 · 窗口 · 来源与同刻顺序',
+    'observatory.replay_capsule.scalar_profile':
+        '标量规范：整数使用规范十进制；浮点使用精确 IEEE-754 binary64 十六进制；属性按确定性顺序哈希。',
+    'observatory.replay_capsule.timezone_boundary':
+        '时区边界：回放胶囊没有统一时区身份；用户观察事件仅在明确提供解析凭据时携带 IANA/tzdb/DST fold 信息，不会推断未来本地时间意图。',
+    'observatory.replay_capsule.credibility_boundary':
+        '无损重放证明工程输入可重建，不证明生物学真实性、临床校准、获益、安全性、监管资格或医疗建议。',
+    'observatory.cou.title': '使用情境变更与再认证账本',
+    'observatory.cou.blocked_semantics': '研究轨迹因证据不完整而保持阻断。',
+    'observatory.cou.approved_semantics': '研究轨迹已获明确批准。',
+    'observatory.cou.blocked': '发布阻断 · {disposition}',
+    'observatory.cou.approved': '研究轨迹已批准 · {disposition}',
+    'observatory.cou.integrity_verified': '账本完整性已核验 · 0 项漂移',
+    'observatory.cou.integrity_failed': '账本漂移 · {count} 项：{reasons}',
+    'observatory.cou.evidence_complete': '所需证据已完整。',
+    'observatory.cou.evidence_incomplete': '仍缺所需证据：{evidence}',
+    'observatory.credibility.title': '前瞻模型可信度计划与研究后充分性门禁',
+    'observatory.credibility.blocked':
+        '研究执行与推广保持阻断 · 前瞻判断 {prospective} · 研究后判断 {postStudy}',
+    'observatory.credibility.integrity_verified': '计划完整性已核验 · 0 项漂移',
+    'observatory.credibility.integrity_failed': '计划完整性失败 · {count} 项',
+    'observatory.credibility.risk':
+        '模型影响：{influence} · 错误决策后果：{consequence} · 风险：{risk} · 未完成因子：{incomplete}',
+    'observatory.credibility.decision_separation':
+        '前瞻充分性：{prospective} · 研究后充分性：{postStudy}。两项判断独立记录，不能由测试通过自动合并或推断。',
+    'observatory.execution.title': '可信度证据执行证明与泄漏门禁',
+    'observatory.execution.status': '执行独立性：{status} · 科学可信度使用：{scientific}',
+    'observatory.execution.summary':
+        '{records} 条合成记录 · {splits} 个数据分区 · {steps} 个预处理步骤 · {access} 条访问轨迹 · {findings} 项泄漏发现',
+    'observatory.execution.dimensions': '逐维独立性状态',
+    'observatory.execution.access_order':
+        '计划冻结：{freeze}\n锁定测试集首次访问：{holdout}\n结果首次访问：{result}',
+    'observatory.transparency.title': '协议修订、执行偏差与结果透明度账本',
+    'observatory.transparency.status':
+        '账本状态：{status} · 最近接受序号：{accepted} · GCP 符合性声明：{gcp}',
+    'observatory.transparency.summary':
+        '{events} 条不可变事件 · {outcomes} 个结局记录 · {findings} 项完整性发现',
+    'observatory.transparency.timeline': '计划、数据锁与结果可见性时间线',
+    'observatory.transparency.outcomes': '结局披露状态（缺失不等于零）',
+    'observatory.replication.title': '盲化独立复现胶囊与差异裁决',
+    'observatory.replication.status':
+        '复现状态：{status} · {findings} 项完整性发现 · {discrepancies} 项差异',
+    'observatory.replication.summary':
+        '内容寻址胶囊 {capsule}… · {responses} 份独立响应 · {outcomes} 个保留结局',
+    'observatory.replication.lanes': '六条可审计证据泳道',
+    'observatory.replication.lane.capsule': '胶囊身份',
+    'observatory.replication.lane.blinding': '结果盲化',
+    'observatory.replication.lane.independentResponse': '独立响应',
+    'observatory.replication.lane.environmentMatch': '环境与依赖',
+    'observatory.replication.lane.comparison': '逐项比较',
+    'observatory.replication.lane.adjudication': '差异裁决',
+    'observatory.replication.outcomes': '保留的阳性、阴性、失败与不良结局',
+    'observatory.statistics.title': '统计分析、误差控制与不确定性治理',
+    'observatory.statistics.status':
+        '统计治理状态：{status} · {findings} 项完整性发现 · 不生成临床推断',
+    'observatory.statistics.summary':
+        '{estimands} 个目标估量 · {endpoints} 个预设终点 · {results} 个完整结局 · {sensitivities} 项同估量敏感性分析',
+    'observatory.statistics.lanes': '七条可审计统计证据泳道',
+    'observatory.statistics.lane.design': '前瞻设计与锁定',
+    'observatory.statistics.lane.estimand': '目标估量与伴随事件',
+    'observatory.statistics.lane.estimate': '估计值与完整结局',
+    'observatory.statistics.lane.uncertainty': '区间与不确定性',
+    'observatory.statistics.lane.errorControl': '多重性与 I 类错误',
+    'observatory.statistics.lane.sensitivity': '同估量敏感性分析',
+    'observatory.statistics.lane.deviations': '偏差与变更账本',
+    'observatory.statistics.outcomes': '阳性、阴性、不确定、失败、矛盾与不良结局计数',
+    'observatory.randomization.title': '随机化、分配隐藏与期中访问防火墙',
+    'observatory.randomization.status':
+        '运行治理状态：{status} · {findings} 项完整性发现 · 不生成 GCP 符合性声明',
+    'observatory.randomization.summary':
+        '{assignments} 次已发放不透明分配 · {access} 条访问事件 · {completed}/{planned} 次期中查看 · {members} 名独立委员会成员 · {emergency} 次紧急揭盲',
+    'observatory.randomization.lanes': '七条可审计运行治理泳道',
+    'observatory.randomization.lane.randomizationIdentity': '随机化身份',
+    'observatory.randomization.lane.concealment': '分配隐藏',
+    'observatory.randomization.lane.roleSeparation': '角色分离',
+    'observatory.randomization.lane.accessHistory': '访问历史',
+    'observatory.randomization.lane.interimBoundaries': '期中边界',
+    'observatory.randomization.lane.committeeRecommendation': '委员会建议',
+    'observatory.randomization.lane.adjudication': '响应与裁决',
+    'observatory.randomization.concealment':
+        '仅展示承诺摘要：分配计划 {schedule}… · 期中边界 {plan}…；种子与未来分配从公开载荷中排除。',
+    'observatory.adaptive.title': '自适应设计运行特征模拟与决策规则校准',
+    'observatory.adaptive.status':
+        '模拟治理状态：{status} · {findings} 项完整性发现 · 不生成临床或监管声明',
+    'observatory.adaptive.summary':
+        '{scenarios} 个预设场景（{nulls} 个零假设、{alternatives} 个备择）· {repetitions} 次确定性模拟 · {oracles} 个独立决策向量',
+    'observatory.adaptive.lanes': '七条可审计运行特征泳道',
+    'observatory.adaptive.lane.designIdentity': '设计、代码与种子身份',
+    'observatory.adaptive.lane.scenarioCoverage': '场景覆盖与前瞻锁定',
+    'observatory.adaptive.lane.monteCarloPrecision': 'Monte Carlo 精度',
+    'observatory.adaptive.lane.errorControl': 'I 类错误控制',
+    'observatory.adaptive.lane.powerAndBias': '效能、偏倚与覆盖率',
+    'observatory.adaptive.lane.sampleSizeAndSelection': '样本量与选择行为',
+    'observatory.adaptive.lane.oracleAndAdjudication': '决策真值与裁决',
+    'observatory.adaptive.precision':
+        '最大 MCSE {mcse} · 零假设 95% 上界最大值 {nullUpper} · 备择 95% 下界最小值 {alternativeLower}',
+    'observatory.adaptive.boundary':
+        '信息时点 {looks} · efficacy Z {efficacy} · futility Z {futility}。边界：{boundary}',
+    'observatory.bayesian.title': 'Bayesian 先验、外部借用冲突与后验决策校准',
+    'observatory.bayesian.status':
+        '方法治理状态：{status} · {findings} 项完整性发现 · Bayesian、临床与监管声明均被阻断',
+    'observatory.bayesian.summary':
+        '{external} 条外部证据记录 · {scenarios} 个预设场景（{nulls} 个零假设）· {repetitions} 次确定性模拟 · {oracles} 个独立决策向量',
+    'observatory.bayesian.lanes': '八条相互独立的 Bayesian 方法审计泳道',
+    'observatory.bayesian.lane.priorProvenance': '先验来源与前瞻锁定',
+    'observatory.bayesian.lane.externalDataSuitability': '外部数据质量与适用性',
+    'observatory.bayesian.lane.borrowing': '动态借用与有效样本量',
+    'observatory.bayesian.lane.priorDataConflict': '先验—数据冲突',
+    'observatory.bayesian.lane.computation': '计算可靠性与 Monte Carlo 精度',
+    'observatory.bayesian.lane.posteriorDecision': '后验概率与决策阈值',
+    'observatory.bayesian.lane.frequentistCalibration': '频率学校准与不确定性',
+    'observatory.bayesian.lane.oracleAndAdjudication': '独立真值与裁决',
+    'observatory.bayesian.conflict':
+        '平均动态借用权重：无冲突 {none} → 轻度冲突 {mild} → 严重冲突 {severe}；最大平均借用 ESS {ess}',
+    'observatory.bayesian.calibration':
+        '零假设决策率最大值 {nullMax} · 备择决策率最小值 {alternativeMin} · 最大 MCSE {mcse} · 后验成功阈值 {posterior}',
+    'observatory.bayesian.draft':
+        'FDA 2026 Bayesian guidance：Draft — Not for Implementation',
+    'observatory.multisource.title': '多来源 Bayesian 可迁移性、交换性与模型批判',
+    'observatory.multisource.status':
+        '方法治理状态：{status} · {findings} 项完整性发现 · 可迁移性、临床与监管声明均被阻断',
+    'observatory.multisource.summary':
+        '{sources} 条冻结来源（{included} 条纳入）· {groups} 个依赖组 · {checks} 项模型批判 · {scenarios} 个场景 / {repetitions} 次模拟 · {independent} 个独立复算案例',
+    'observatory.multisource.lanes': '十条相互独立的多来源方法治理泳道',
+    'observatory.multisource.lane.sourceDiscovery': '来源发现、冻结与保留',
+    'observatory.multisource.lane.dependency': '队列重复与功能依赖',
+    'observatory.multisource.lane.transportability': '重叠、时间漂移与可迁移性',
+    'observatory.multisource.lane.exchangeability': '来源特异交换性假设',
+    'observatory.multisource.lane.biasAdjustment': '偏倚参数与借用惩罚',
+    'observatory.multisource.lane.priorPredictiveCriticism': '先验预测与 SBC',
+    'observatory.multisource.lane.posteriorPredictiveCriticism': '后验预测批判',
+    'observatory.multisource.lane.sensitivityAndNegativeControls':
+        '敏感性、逐来源剔除与负对照',
+    'observatory.multisource.lane.computation': '运行特征与 Monte Carlo 精度',
+    'observatory.multisource.lane.independentReplication': '独立统计语言复算',
+    'observatory.multisource.ledger': '冻结来源账本：纳入、排除、重复、依赖、不可用与矛盾记录均保留',
+    'observatory.multisource.criticism':
+        '先验预测 {prior} · SBC 最大秩偏差 {sbc} · 后验预测差异 {posterior} · 负对照绝对效应 {negative} · 总借用 ESS {ess}',
+    'observatory.multisource.operating':
+        '零假设决策率最大值 {nullMax} · 备择决策率最小值 {alternativeMin} · 最大 MCSE {mcse} · 合成后验对照均值 {posterior}',
+    'observatory.multisource.independent':
+        '{language} 标准库独立复算：{cases} 个制造案例一致 · 脚本 {digest}…',
+    'observatory.transport.title': '目标人群因果可迁移性、Positivity 与双重稳健估计',
+    'observatory.transport.status':
+        '识别与估计治理状态：{status} · {findings} 项完整性发现 · 因果、临床与监管声明均被阻断',
+    'observatory.transport.summary':
+        '{trial} 条合成试验记录 + {target} 条无结局目标记录 · {assumptions} 项识别假设 · {cases} 个制造案例 · {scenarios} 个场景 / {repetitions} 次重复',
+    'observatory.transport.lanes': '九条相互独立的目标人群方法治理泳道',
+    'observatory.transport.lane.identification': '目标人群、因果图与识别假设',
+    'observatory.transport.lane.overlap': '选择 Positivity 与结构支持',
+    'observatory.transport.lane.weighting': '逆选择赔率权重与协变量平衡',
+    'observatory.transport.lane.outcomeModeling': '结局回归与模型设定',
+    'observatory.transport.lane.estimatorAgreement': 'OR、IOSW 与增广估计器一致性',
+    'observatory.transport.lane.sensitivity': '权重截断、偏倚与不可识别敏感性',
+    'observatory.transport.lane.operatingCharacteristics': '偏差、方差、覆盖率与 MCSE',
+    'observatory.transport.lane.independentReplication': '独立统计语言制造案例复算',
+    'observatory.transport.lane.unresolvedLimitations': '未测量修饰因子与真实世界限制',
+    'observatory.transport.identification':
+        '目标：{target} · 对比量：{contrast} · 下列箭头是前瞻声明的合成因果图，不是从数据证明的结构。',
+    'observatory.transport.overlap':
+        '选择分数 {minScore}–{maxScore} · 最大逆赔率权重 {maxWeight} · 加权 ESS {ess} · 最大 SMD {before} → {after} · 结构支持违例 {violations}',
+    'observatory.transport.estimators':
+        '模型均正确的制造案例：试验原始、结局回归、逆选择赔率和增广逆赔率估计分别显示',
+    'observatory.transport.sensitivity': '权重截断上限:估计值/ESS（none 表示未截断）：{values}',
+    'observatory.transport.operating': '增广逆赔率估计器的七类运行特征；结构性无重叠必须显示 HELD 而不是数值',
+    'observatory.transport.independent':
+        '{language} 标准库独立复算：{cases} 个制造案例一致 · 脚本 {digest}…',
+    'observatory.transportSensitivity.title': '目标可迁移性偏倚函数、全局敏感性与部分识别',
+    'observatory.transportSensitivity.status':
+        '敏感性治理状态：{status} · {findings} 项完整性发现 · 未识别、临床与监管声明均被阻断',
+    'observatory.transportSensitivity.summary':
+        '{axes} 个结果盲参数轴 · {grid} 个完整网格点（{admissible} 可采纳 / {excluded} 保留排除原因）· {scenarios} 个场景 / {repetitions} 次重复',
+    'observatory.transportSensitivity.lanes': '十条相互独立的偏倚与不可识别治理泳道',
+    'observatory.transportSensitivity.lane.assumptions': '目标估计量、偏倚函数与符号方向',
+    'observatory.transportSensitivity.lane.elicitation': '结果盲范围与专家来源',
+    'observatory.transportSensitivity.lane.parameterSpace': '完整参数空间与排除原因',
+    'observatory.transportSensitivity.lane.localSensitivity': '局部制造案例与阈值翻转',
+    'observatory.transportSensitivity.lane.globalSensitivity': '全局一阶与总效应指数',
+    'observatory.transportSensitivity.lane.partialIdentification':
+        '部分识别区间与不确定性包络',
+    'observatory.transportSensitivity.lane.tippingRegion': '决策阈值与跨零区域',
+    'observatory.transportSensitivity.lane.operatingCharacteristics':
+        '偏差、覆盖率、翻转率与 MCSE',
+    'observatory.transportSensitivity.lane.independentReplication':
+        '独立 Python 网格与案例复算',
+    'observatory.transportSensitivity.lane.unresolvedLimitations':
+        '条件可迁移性与结构性 Positivity 限制',
+    'observatory.transportSensitivity.assumptions': '前瞻冻结的估计量、偏倚函数、方向与调整公式',
+    'observatory.transportSensitivity.elicitation': '结果可见前冻结的三条范围征询记录',
+    'observatory.transportSensitivity.parameterSpace': '五维完整网格；没有把偏好值伪装成学习结果',
+    'observatory.transportSensitivity.local': '六个局部偏倚函数案例（条长为绝对调整效应）',
+    'observatory.transportSensitivity.global': '完整独立网格上的方差分解一阶/总效应指数',
+    'observatory.transportSensitivity.bounds': '所有可采纳组合的部分识别范围、零点与决策阈值',
+    'observatory.transportSensitivity.tipping': '可采纳网格中的决策翻转与跨零比例',
+    'observatory.transportSensitivity.operating':
+        '八个前瞻场景；不可识别或无共识时必须 HELD 且不输出估计',
+    'observatory.transportSensitivity.independent': '独立标准库 Python 复算与脚本内容身份',
     'observatory.minutes_after_meal': '餐后分钟数',
     'observatory.minutes_in_window': '模型时间窗内分钟数',
     'observatory.chart.data_table': '查看图表数据表',
     'observatory.chart.data_table_help': '提供与曲线相同的逐点数值，供键盘和辅助技术读取。',
     'observatory.chart.data_table_semantics': '图表的等价逐点数据表',
+    'observatory.chart.long_description': '图表详细说明',
+    'observatory.chart.long_description_semantics': '图表的可见详细文字说明',
     'observatory.chart.events': '事件',
     'observatory.stage.normalize': '1 · 归一化与验证',
     'observatory.stage.model': '2 · 机制建模',
@@ -677,6 +1060,12 @@ final Map<String, Map<String, String>> _strings = {
     'timeline.medication': '药品',
     'timeline.active_medication_option': '{name}（已激活）',
     'timeline.dosage_note': '剂量说明',
+    'timeline.package_dose_source': '来源：{source} · 获取时间：{retrieved} · {url}',
+    'timeline.package_dose_derivation':
+        '换算依据：{strength} × {quantity} {unit} = {amount} {resultUnit}',
+    'timeline.package_dose_assumed_denominator':
+        '来源未提供分母；暂按一个离散剂型单位（{unit}）计算。确认前请核对药品标签。',
+    'timeline.package_dose_retrieval_unknown': '未记录',
     'timeline.taken_at': '服用时间',
     'timeline.edit_taken_at': '编辑服用时间',
     'timeline.save_intake': '保存服药记录',
@@ -742,6 +1131,56 @@ final Map<String, Map<String, String>> _strings = {
     'reminders.web_title': '此平台不支持周期性系统通知',
     'reminders.web_body':
         '你的提醒计划仍会保存在本设备，但 Web、Windows 和 Linux 版本目前不会在应用关闭时发送周期性提醒。',
+    'reminders.readiness_title': '系统提醒送达准备度',
+    'reminders.readiness_contract': '{platform} 能力合同 · {digest}',
+    'reminders.readiness_boundary': '调度请求完成或插件身份一致，都不能证明通知已在屏幕、锁屏或后台真实送达。',
+    'reminders.readiness_platform_android': 'Android',
+    'reminders.readiness_platform_ios': 'iOS',
+    'reminders.readiness_platform_macos': 'macOS',
+    'reminders.readiness_platform_web': 'Web',
+    'reminders.readiness_platform_windows': 'Windows',
+    'reminders.readiness_platform_linux': 'Linux',
+    'reminders.readiness_platform_unknown': '未知平台或自定义网关',
+    'reminders.readiness_local_plan': '本地计划',
+    'reminders.readiness_adapter': '调度适配器',
+    'reminders.readiness_schedule_request': '调度请求',
+    'reminders.readiness_permission_request': '权限请求',
+    'reminders.readiness_permission_inspection': '当前权限检查',
+    'reminders.readiness_body_tap': '通知正文点击',
+    'reminders.readiness_cold_start': '由通知冷启动应用',
+    'reminders.readiness_background_action': '通知后台操作',
+    'reminders.readiness_registry': '插件待处理注册表',
+    'reminders.readiness_visible_delivery': '可见送达',
+    'reminders.readiness_local_none': '尚未配置本地计划',
+    'reminders.readiness_local_saved': '已保存在本设备',
+    'reminders.readiness_adapter_plan_only': '仅保存计划；不会调用系统通知接口',
+    'reminders.readiness_evidence_artifact_verified': '已由绑定制品的目标平台证据核验',
+    'reminders.readiness_evidence_implemented_unverified': '已实现，但尚无绑定制品的目标设备核验',
+    'reminders.readiness_evidence_unavailable': '不可用或尚未实现',
+    'reminders.readiness_request_not_requested': '尚未提交',
+    'reminders.readiness_request_applied': '插件请求已完成；不代表真实送达',
+    'reminders.readiness_request_rolled_back': '新请求已回滚，旧计划已恢复；不证明送达',
+    'reminders.readiness_request_superseded': '已被较新的账户或计划取代',
+    'reminders.readiness_request_unsupported': '此能力合同为仅保存计划',
+    'reminders.readiness_request_failed': '请求失败或身份尚未核对',
+    'reminders.readiness_request_recovery_required': '需要重新核对后才能依赖',
+    'reminders.readiness_permission_not_requested': '本次会话尚未请求',
+    'reminders.readiness_permission_granted': '权限请求调用返回允许；请以当前权限检查为准',
+    'reminders.readiness_permission_denied': '权限请求调用未返回允许；不代表已确认用户拒绝',
+    'reminders.readiness_permission_unavailable': '权限请求适配器不可用或此能力合同不请求权限',
+    'reminders.readiness_permission_failed': '权限请求调用失败；不代表用户拒绝',
+    'reminders.readiness_inspection_not_inspected': '尚未检查当前权限',
+    'reminders.readiness_inspection_enabled': '插件当前检查返回已启用；不证明送达',
+    'reminders.readiness_inspection_disabled': '插件当前检查返回未启用',
+    'reminders.readiness_inspection_unavailable': '当前权限检查适配器不可用',
+    'reminders.readiness_inspection_failed': '当前权限检查失败',
+    'reminders.readiness_registry_not_inspected': '尚未读取',
+    'reminders.readiness_registry_matched': '插件报告与本地计划一致；不是 OS 送达证明',
+    'reminders.readiness_registry_drift': '插件报告与本地计划不一致',
+    'reminders.readiness_registry_uninspectable': '无法读取插件身份',
+    'reminders.readiness_registry_unsupported': '此能力合同不读取 native 注册表',
+    'reminders.readiness_visible_unverified': '未验证',
+    'reminders.readiness_visible_artifact_verified': '目标平台制品证据已核验',
     'reminders.empty_title': '尚无记录提醒',
     'reminders.empty_body': '可以添加由你自定时间的进餐记录或服药记录提示。',
     'reminders.kind': '记录类型',
@@ -758,6 +1197,13 @@ final Map<String, Map<String, String>> _strings = {
         'Android 会请求安全锁屏不显示通知内容；Apple 平台仍遵循用户的系统通知预览设置。',
     'reminders.privacy_generic_boundary':
         'Android 会请求锁屏仅显示基本信息；Apple 平台仍遵循用户的系统通知预览设置。',
+    'reminders.locale_reconciliation_title': '系统提醒语言已不同',
+    'reminders.locale_reconciliation_body':
+        'App 语言已改变。你可以保留当前系统提醒文案，或以原子方式更新本设备的全部提醒；两种选择都不会显示你写的标签。',
+    'reminders.locale_retain_action': '保留当前提醒语言',
+    'reminders.locale_update_action': '全部更新为当前语言',
+    'reminders.locale_retained_confirmation': '已保留当前系统提醒语言。',
+    'reminders.locale_updated_confirmation': '全部系统提醒已请求更新为当前语言。',
     'reminders.days': '重复日期',
     'reminders.next': '下次',
     'reminders.validation': '请输入提醒文字并至少选择一天。',
@@ -1005,9 +1451,11 @@ final Map<String, Map<String, String>> _strings = {
     'handoff.title': '个人日志交接摘要',
     'handoff.boundary_title': '由你选择和确认的个人日志副本',
     'handoff.boundary_body':
-        '此摘要仅整理你记录的用药与进餐信息，未经临床核验，不是病历、诊断、治疗计划或建议。未知值不会被补成 0。',
+        '此摘要仅整理你记录的用药和进餐信息；个人观察需单独选择后才会包含。摘要未经临床核验，不是病历、诊断、治疗计划或建议。未知值不会被补成 0。',
     'handoff.raster_limit':
         'PDF 使用与本页相同的离线字体回退进行图像化渲染；内容与预览一致，但 PDF 文字目前不可搜索，也不是带标签的无障碍 PDF。',
+    'handoff.html_boundary':
+        '另可生成离线 HTML 文件，文字可选择，并保留标题和列表结构。它不是带标签 PDF；语言标记、读屏软件表现和双向文本仍需在目标设备上验证。系统分享结果不证明接收方已保存或收到文件。',
     'handoff.configure': '选择范围、章节与脱敏级别',
     'handoff.start_date': '开始：{date}',
     'handoff.end_date': '结束：{date}',
@@ -1020,16 +1468,24 @@ final Map<String, Map<String, String>> _strings = {
     'handoff.section.historicalMedications': '本范围内仅历史引用的药物',
     'handoff.section.intakeLog': '服药记录',
     'handoff.section.mealLog': '进餐记录',
+    'handoff.section.personalObservations': '个人观察（可选，默认不包含）',
     'handoff.section.dataQualityAndProvenance': '缺失、单位与来源说明',
     'handoff.generate': '生成冻结预览',
     'handoff.exact_preview': '将要复制、打印或保存的精确页面',
     'handoff.preview_meta': '{pages} 页 · 内容 SHA-256 {digest}',
+    'handoff.reading_preview': '结构化文本预览（可选择）',
+    'handoff.reading_preview_note': '保留 HTML 文档的标题、段落与列表阅读顺序。',
+    'handoff.important_boundary': '重要说明。',
+    'handoff.list': '列表',
     'handoff.copy': '复制精确文本',
+    'handoff.share_html': '保存 / 分享结构化 HTML',
     'handoff.print': '打印',
     'handoff.save_share': '保存 / 分享 PDF',
     'handoff.delivery.copied': '已复制当前已验证摘要。',
     'handoff.delivery.print_requested': '打印流程已完成。',
     'handoff.delivery.save_share_requested': '系统保存 / 分享流程已完成。',
+    'handoff.delivery.html_share_requested': '系统 HTML 分享流程已启动；不表示接收方已保存或收到文件。',
+    'handoff.delivery.unavailable': '此平台不支持 HTML 文件分享；你仍可复制文本。',
     'handoff.delivery.cancelled': '操作已取消；未宣称已保存或打印。',
     'handoff.error': '未生成或交付任何新摘要（{code}）。',
     'support.title': '隐私安全支持包',
@@ -1057,6 +1513,74 @@ final Map<String, Map<String, String>> _strings = {
     'support.error_source_changed': '诊断或构建状态已变化；旧预览已清除，请重新生成。',
     'support.error_copy': '未能安全复制支持包；没有自动重试或上传。',
     'support.error_save': '未能安全保存支持包；没有覆盖或删除现有文件。',
+    'operations.title': '隐私边界运行观测',
+    'operations.local_title': '本机运行诊断',
+    'operations.local_boundary':
+        '仅在进程内保留 24 小时内的粗粒度结果、时长桶和能力状态；不保存账号、健康内容或精确时间。',
+    'operations.local_collection': '收集本机会话诊断',
+    'operations.local_collection_help': '关闭会立即清空本机会话计数；工程诊断页面仍可使用。',
+    'operations.export_title': '离机运行遥测',
+    'operations.export_disabled':
+        '默认关闭且当前没有网络发送路径。未来导出必须通过独立版本化同意、区域、采样、保留、访问、删除和紧急关闭门禁。',
+    'operations.allowed_title': '唯一允许的聚合类别',
+    'operations.excluded_title': '禁止进入诊断信封',
+    'operations.notice_identity': '离机用途告知版本 {version} · SHA-256 {digest}…',
+    'operations.snapshot_title': '当前本机会话聚合',
+    'operations.snapshot_summary': '{window} 分钟窗口 · {count} 个事件；没有精确时间或用户标识。',
+    'operations.snapshot_overflow': '本地维度预算已满，已丢弃 {count} 个事件；此快照在清除或过期前不可导出。',
+    'operations.snapshot_empty': '当前没有聚合事件。',
+    'operations.refresh': '刷新本机聚合',
+    'operations.release_boundary':
+        '平台 {platform} · 后端 {backend} · 算法源 {source}…；这些是运行可靠性证据，不是临床证据。',
+    'rollout.title': '签名能力发布中心',
+    'rollout.status_heading': '设备上的受管能力状态',
+    'rollout.status': '激活状态',
+    'rollout.reason': '原因代码',
+    'rollout.trust': '本地信任根',
+    'rollout.trust_configured': '已配置 Ed25519 公钥',
+    'rollout.trust_unconfigured': '未配置；远程策略未生效，所有受管决策关闭；既有的本地同意功能仍由本地设置管理',
+    'rollout.signature': '签名状态',
+    'rollout.signature_verified': '已验证当前清单',
+    'rollout.signature_inactive': '没有生效的已验证清单',
+    'rollout.distribution': '签名清单分发',
+    'rollout.distribution_configured': '已配置严格 HTTPS 发布端点',
+    'rollout.distribution_endpoint': '允许的精确端点',
+    'rollout.distribution_none': '未配置',
+    'rollout.fetch_status': '最近下载状态',
+    'rollout.fetch_etag': '缓存 ETag',
+    'rollout.etag_none': '无',
+    'rollout.fetch_bytes': '已接收字节',
+    'rollout.cache_state': '已验证缓存状态',
+    'rollout.cache_none': '无；不会发送条件验证器',
+    'rollout.cache_persisted': '已与当前签名清单原子绑定',
+    'rollout.cache_accepted_at': '缓存接受时间（UTC）',
+    'rollout.cache_manifest_digest': '绑定的清单 SHA-256',
+    'rollout.manifest': '清单',
+    'rollout.source': '签发者 / 密钥',
+    'rollout.environment': '环境',
+    'rollout.expiry': '到期时间（UTC）',
+    'rollout.rollback': '回滚目标',
+    'rollout.rollback_none': '无',
+    'rollout.capabilities': '唯一可受管的可选能力',
+    'rollout.local_ai': '本地 AI 安全候选重排',
+    'rollout.catalog_refresh': '外部公共目录刷新',
+    'rollout.telemetry': '离机运行遥测',
+    'rollout.enabled': '启用',
+    'rollout.disabled': '关闭',
+    'rollout.import_title': '验证并原子激活清单',
+    'rollout.import_body':
+        '粘贴完整签名 JSON。未知字段、错误环境、过期、重放、降级、撤销密钥或签名失败都会保留上一份已验证清单；不会上传输入。',
+    'rollout.manifest_json': '签名能力清单 JSON',
+    'rollout.reload': '重新读取',
+    'rollout.clear': '紧急关闭到本地默认值',
+    'rollout.verify_activate': '验证并激活',
+    'rollout.fetch_activate': '从可信端点获取并激活',
+    'rollout.boundary_title': '不可远程改变的边界',
+    'rollout.boundary_body':
+        '清单只能关闭或启用固定白名单中的可选网络/UI能力，不能包含用户定向，也不能修改临床算法公式、参数、适用域、证据或安全文案。清除只影响此设备并立即恢复保守关闭默认值。',
+    'rollout.distribution_boundary':
+        '请求代码仅向构建时允许的专用跨源 HTTPS 主机执行无正文 GET，不添加账号、健康正文或授权头；浏览器与网络层元数据、Cookie 行为仍需在目标环境审计。请求不跟随重定向，并限制类型、大小与超时；只有通过本地签名、序列、回滚和原子读回的响应才会保存 ETag，紧急清除会使更早开始的下载失效。',
+    'rollout.history': '此设备保留 {count} 个已验证历史身份用于严格回滚。',
     'consent.title': '可选功能同意中心',
     'consent.local_ai_title': '本地 AI 重排与文案润色',
     'consent.local_ai_purpose':
@@ -1124,6 +1648,14 @@ final Map<String, Map<String, String>> _strings = {
         '数据包可能包含进餐、用药、剂量说明和提醒文字。请只保存到你控制的位置；SHA-256 可以发现内容变化，但不能加密或隐藏内容。',
     'portable.boundary':
         '此功能只生成用户可读 JSON 和无写入导入预检，不会删除账户、恢复数据或证明法规合规。本地账户绑定使用保存在本设备的随机令牌，因此换设备后可能无法验证。',
+    'portable.fuzz_title': '可携带 Schema 差分测试边界',
+    'portable.fuzz_summary':
+        '生成器 v1 · {seeds} 个固定种子 · {partitions} 个词法/语义分区 · {cases} 个纳入语料库级隐私审查的合成回归样例 · {runtimes} 个运行时。',
+    'portable.fuzz_runtime': '已配置的离线门禁：{runtime}；Node 不会在 App 内运行。',
+    'portable.fuzz_unicode':
+        '生产预解析会拒绝重复成员、孤立 surrogate、Unicode noncharacter，以及超出包大小、节点、深度、宽度、源字符串 token、解码字符串、字段名或数字 token 预算的输入；固定差分语料还覆盖复合错误优先级、唯一 manifest 清单及完整性契约。',
+    'portable.fuzz_boundary':
+        '这是编译期范围说明，不是本设备最近运行的收据。耗时阈值只在调用返回后检查，不能终止挂起解析器；跨运行时重放最小化、浏览器、Android、iOS 与桌面发布产物解析器仍未验证。',
     'portable.export_title': '生成当前数据快照',
     'portable.export_body':
         '导出当前已加载的资料、偏好、用药选择、服药、进餐、本设备提醒和关系链接。UID、邮箱、提醒激活令牌与本地 AI endpoint 不会写入；所有者绑定是带域分隔的单向假名绑定，不代表匿名。',
@@ -1157,6 +1689,23 @@ final Map<String, Map<String, String>> _strings = {
     'portable.status_corrupt': '数据包损坏或格式无效',
     'portable.preview_summary':
         '记录 {records} · 冲突 {conflicts} · 不支持字段 {unsupported}',
+    'portable.migration_receipt_title': '冻结 schema 校验与迁移凭证',
+    'portable.migration_receipt_summary':
+        '源版本 v{source} → 目标版本 v{target} · 决定：{decision}',
+    'portable.migration_receipt_identity': '凭证 {receipt}… · 源校验器 {validator}…',
+    'portable.migration_receipt_boundary':
+        '凭证只证明确定性的本地校验/预检；不会写入、调度、联网，也不证明签发者身份或临床正确性。',
+    'portable.reminder_presentation_title': '提醒呈现意图预检',
+    'portable.reminder_presentation_summary':
+        '共 {total} 条提醒；源设备启用意图 {enabled} 条；其中 {consent} 条在目标设备调度前需要明确同意。',
+    'portable.reminder_presentation_modes':
+        '隐私模式：{modes} · 已保存通知语言：{languages}',
+    'portable.reminder_presentation_policy':
+        '与当前文案策略一致 {match} 条 · 需重算 {drift} 条 · 语言决定与已保存文案不同 {decisions} 条',
+    'portable.reminder_presentation_legacy':
+        '{count} 条旧版 schema v2 提醒仅在预检中按 minimal / English 解释。',
+    'portable.reminder_target_consent':
+        '本预检不会申请通知权限或创建系统提醒。目标设备必须先重新检查能力、语言和隐私设置，再由你明确确认调度；源设备 token 和通知 ID 永不复用。',
     'portable.unsupported_fields': '不支持字段',
     'portable.no_write': '预检保证：本次操作没有修改任何持久化数据。',
     'portable.error_scope': '当前账户或设备范围不可用。',
@@ -1238,6 +1787,8 @@ final Map<String, Map<String, String>> _strings = {
     'severity.high': '高',
     'severity.critical': '严重',
     'missing.dose': '剂量',
+    'data_integrity.dose_parseable': '可解析剂量文本',
+    'data_integrity.dose_result_eligible': '可用于结果的确认剂量',
     'missing.formulation': '剂型',
     'missing.time': '用药时间',
     'missing.meal_time': '进食时间',
@@ -1326,6 +1877,7 @@ final Map<String, Map<String, String>> _strings = {
         '最近一餐记录了淀粉型增稠剂，因此保持确定性安全审核。',
     'recommend.runtime.enteral_conservative': '当前存在连续肠内营养背景，因此保持确定性审核。',
     'recommend.runtime.local_ai_not_consented': '用户尚未启用本地 AI 重排。',
+    'recommend.runtime.local_ai_rollout_disabled': '签名能力策略当前关闭了本地 AI 请求。',
     'recommend.runtime.local_ai_unavailable': '本地 AI endpoint 当前不可用。',
     'recommend.runtime.returned_conservative': '已返回确定性的保守推荐结果。',
     'recommend.runtime.ai_validation_failed': '本地 AI 的结构化输出未通过白名单校验。',
@@ -1542,7 +2094,8 @@ final Map<String, Map<String, String>> _strings = {
     'onboarding.initial_intake_time': 'Intake time',
     'onboarding.change_time': 'Change time',
     'onboarding.initial_intake_note': 'Dose note',
-    'onboarding.initial_intake_note_help': 'For example 100/25 mg, or blank.',
+    'onboarding.initial_intake_note_help':
+        'For example 100 mg, or blank; combination strength is not treated as an administration dose.',
     'onboarding.no_medications_available':
         'No medications are available in the catalog.',
     'onboarding.step_preferences': 'Diet and safety preferences',
@@ -1582,6 +2135,69 @@ final Map<String, Map<String, String>> _strings = {
     'nav.meds': 'Medications',
     'nav.catalog': 'Catalog',
     'nav.next_meal': 'Next meal',
+    'shell.tagline': 'Companion · research prototype',
+    'shell.workspace': 'Workspace',
+    'shell.care_workspace': 'Visit preparation & follow-ups',
+    'shell.boundary_note':
+        'Educational prototype — not medical advice. Review health decisions with a qualified clinician.',
+    'dashboard.greeting_morning': 'Good morning',
+    'dashboard.greeting_afternoon': 'Good afternoon',
+    'dashboard.greeting_evening': 'Good evening',
+    'dashboard.subtitle':
+        'An overview of your logged meals, medication intakes and the rules behind each explanation.',
+    'dashboard.stat_meals': 'Meals logged',
+    'dashboard.stat_drugs': 'Active medications',
+    'dashboard.stat_intakes': 'Intakes logged',
+    'shell.new_entry': 'New entry',
+    'shell.search': 'Search',
+    'shell.search_hint': 'Search pages, tools and actions',
+    'shell.search_empty': 'No matching pages, tools or actions',
+    'shell.menu': 'Menu',
+    'shell.group.evidence': 'Evidence & rules',
+    'shell.group.data': 'Your data',
+    'shell.group.operations': 'Operations',
+    'shell.group.pages': 'Pages',
+    'shell.action.observation': 'Record observation',
+    'dashboard.stat_protein': 'Avg protein per meal',
+    'dashboard.show_details': 'Show details',
+    'dashboard.hide_details': 'Hide details',
+    'dashboard.quick_log': 'Quick log',
+    'dashboard.today': 'Recent activity',
+    'insights.title': 'Insights',
+    'insights.subtitle':
+        'Patterns in what you have logged, drawn only from your own entries.',
+    'insights.range_7': '7 days',
+    'insights.range_30': '30 days',
+    'insights.meals': 'Meals',
+    'insights.intakes': 'Medication intakes',
+    'insights.observations': 'Observations',
+    'insights.avg_protein': 'Avg protein per meal',
+    'insights.rhythm_title': 'Logging rhythm',
+    'insights.rhythm_subtitle': 'Entries per day',
+    'insights.protein_title': 'Protein per meal',
+    'insights.protein_subtitle': 'Grams per logged meal, oldest to newest',
+    'insights.daypart_title': 'Time of day',
+    'insights.daypart_subtitle':
+        'When meals and medication intakes were logged',
+    'insights.morning': 'Morning',
+    'insights.midday': 'Midday',
+    'insights.evening': 'Evening',
+    'insights.night': 'Night',
+    'insights.empty': 'Nothing logged in this period yet.',
+    'insights.boundary':
+        'These are descriptive summaries of your own entries. They are not clinical measurements, targets or advice; review health decisions with a qualified clinician.',
+    'settings.local_ai_advanced': 'Advanced · Local AI connection',
+    'nav.today': 'Today',
+    'nav.library': 'Library',
+    'dashboard.log_prompt': 'What would you like to log?',
+    'dashboard.log_meal_hint':
+        'Foods and portions, checked against the educational rules',
+    'dashboard.log_intake_hint': 'A medication dose you took',
+    'dashboard.log_observation_hint': 'Blood pressure, symptoms or motor state',
+    'dashboard.open_timeline': 'Open timeline',
+    'dashboard.open_next_meal': 'Open next meal',
+    'library.my_medications': 'My medications',
+    'library.catalog': 'Foods & drugs',
     'observatory.title': 'Algorithm Observatory',
     'observatory.boundary.title':
         '{count} algorithms · one auditable UI contract',
@@ -1604,6 +2220,53 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.coverage.title': 'Result-affecting algorithm coverage',
     'observatory.coverage.body':
         'Every algorithm that can change a classification, score, rank, gate, fallback, identity, or explanation has a visible representation below.',
+    'observatory.trace_surface.title': 'Production trace surface contract',
+    'observatory.trace_surface.summary':
+        '{live} / {total} algorithms have production-engine traces · {static} are static audit contracts only',
+    'observatory.trace_surface.body':
+        'A production trace requires a fixed synthetic scenario to execute the application engine and emit an algorithm-bound trace node. Static diagrams are not counted as live coverage.',
+    'observatory.trace_surface.identity':
+        'Manifest schema v{schema} · SHA-256 {digest}…',
+    'observatory.trace_surface.details':
+        'Inspect provider lifecycle and boundary',
+    'observatory.trace_surface.provider': 'Provider',
+    'observatory.trace_surface.fixture': 'Fixture',
+    'observatory.trace_surface.lifecycle': 'Lifecycle',
+    'observatory.trace_surface.route': 'UI route',
+    'observatory.trace_surface.classification_boundary':
+        'Production trace proves only that a fixed synthetic fixture traversed production code. It does not establish clinical calibration, patient accuracy, benefit, safety, or medical advice.',
+    'observatory.trace_surface.semantics':
+        'Algorithm trace surface: {live} of {total} production traces and {static} static contracts; provider {provider}; schema {schema}.',
+    'observatory.dependency_closure.title': 'Dependency closure readiness',
+    'observatory.dependency_closure.loading':
+        'Loading checked-in root manifest · closure HOLD',
+    'observatory.dependency_closure.unavailable':
+        'HOLD · checked-in root manifest unavailable',
+    'observatory.dependency_closure.loading_semantics':
+        'Stable algorithm result-root manifest loading. Dependency closure remains held.',
+    'observatory.dependency_closure.unavailable_semantics':
+        'Stable algorithm result-root manifest unavailable. Dependency closure is held.',
+    'observatory.dependency_closure.semantics':
+        '{count} stable registered algorithm roots. Analyzer {analyzer} is the declared exact review target. Offline compatibility evidence is not bundled or executed in this view. Transitive dependency closure is held pending the ParkinSUM edge generator.',
+    'observatory.dependency_closure.summary':
+        '{count} / {total} stable roots · declared Analyzer target {analyzer} · transitive closure HOLD',
+    'observatory.dependency_closure.identity': '{schema} · {digest}… · {state}',
+    'observatory.dependency_closure.registry_chip':
+        'registry mapping: structurally valid',
+    'observatory.dependency_closure.edge_chip': 'edge generator: HOLD',
+    'observatory.dependency_closure.closure_chip':
+        'forward/reverse closure: HOLD',
+    'observatory.dependency_closure.details': 'Accessible stable-root table',
+    'observatory.dependency_closure.details_subtitle':
+        'Primary-library seeds only; no generated dependency edges.',
+    'observatory.dependency_closure.table_semantics':
+        'Stable algorithm roots table. Columns are algorithm, logical root, result sink, and canonical package URI.',
+    'observatory.dependency_closure.column_algorithm': 'Algorithm',
+    'observatory.dependency_closure.column_root': 'Logical root',
+    'observatory.dependency_closure.column_sink': 'Result sink',
+    'observatory.dependency_closure.column_uri': 'Package URI',
+    'observatory.dependency_closure.boundary':
+        'This view proves only a checked-in Registry-to-root structural contract. Offline Analyzer compatibility evidence is not bundled or executed here. It does not show or claim a call graph, SCC, forward/reverse closure, execution, exact data flow, scientific or clinical validation, safety, benefit, or medical advice.',
     'observatory.atlas.count': 'Showing {visible} of {total} algorithms',
     'observatory.atlas.search': 'Search the algorithm atlas',
     'observatory.atlas.search_hint':
@@ -1629,7 +2292,104 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.candidate.body':
         'Worst sampled overlap remains dominant; protein distribution and provenance can refine but cannot overpower it.',
     'observatory.parameters.title': '6 · Versioned parameter evidence',
-    'observatory.oracle.title': '7 · Independent numerical truth gate',
+    'observatory.invariant.title': '7 · Mathematical invariant + unit gate',
+    'observatory.invariant.body':
+        'Checks finite values, bounds, mass conservation, curve order, unit dimensions, threshold identity, and missing-data abstention across three fixed synthetic scenarios plus probe-bound black-box production calls.',
+    'observatory.invariant.summary': '{passed} / {total} checks passed',
+    'observatory.invariant.algorithms_summary':
+        '{covered} / {total} algorithms under executable gate',
+    'observatory.invariant.scenarios': '{count} fixed synthetic scenarios',
+    'observatory.invariant.manifest':
+        'Invariant specification SHA-256: {digest}',
+    'observatory.invariant.configuration':
+        'Bound configuration SHA-256: {digest}',
+    'observatory.invariant.tolerance': 'Absolute tolerance',
+    'observatory.invariant.sources': 'Specification sources',
+    'observatory.invariant.failures': 'Failure codes',
+    'observatory.invariant.boundary':
+        'Passing shows mathematical consistency only for declared synthetic observables under fixed engineering checks—not biological validity, clinical accuracy, patient benefit, or medical advice.',
+    'observatory.invariant.passed':
+        'Mathematical invariant and unit checks passed',
+    'observatory.invariant.failed':
+        'Mathematical invariant or unit check failed',
+    'observatory.invariant.not_covered':
+        'Not yet covered by the executable invariant gate',
+    'observatory.executable.title':
+        '8 · Executable contracts for non-numerical algorithms',
+    'observatory.executable.body':
+        'Fixed synthetic inputs exercise behavioral, ordering, schema, provenance, and safety relations across rules, catalogs, sources, conflicts, orchestration, and the bounded local-AI adapter.',
+    'observatory.executable.pending':
+        'Running isolated production-API contracts; no network socket is opened.',
+    'observatory.executable.blocked':
+        'Executable contracts did not complete; the result remains blocked.',
+    'observatory.executable.summary': '{passed} / {total} contracts passed',
+    'observatory.executable.algorithms_summary':
+        'Combined coverage {covered} / {total} algorithms',
+    'observatory.executable.not_covered_count':
+        '{count} algorithms remain uncovered',
+    'observatory.executable.manifest':
+        'Contract specification SHA-256: {digest}',
+    'observatory.executable.configuration':
+        'Bound configuration SHA-256: {digest}',
+    'observatory.executable.source_bundle':
+        'Bound source bundle SHA-256: {digest}',
+    'observatory.executable.observation': 'Observation SHA-256',
+    'observatory.executable.failures': 'Failure codes',
+    'observatory.executable.boundary':
+        'Passing means only that fixed synthetic inputs satisfy the declared software relations. It does not establish scientific truth, model quality, clinical calibration, patient-level accuracy, benefit, safety, or medical advice.',
+    'observatory.executable.passed': 'Non-numerical executable contract passed',
+    'observatory.executable.failed': 'Non-numerical executable contract failed',
+    'observatory.executable.blocked_status':
+        'Non-numerical executable contract blocked',
+    'observatory.executable.pending_status':
+        'Non-numerical executable contract pending',
+    'observatory.executable.not_covered':
+        'No non-numerical executable contract yet',
+    'observatory.independent_contract.title':
+        '9 · Independent cross-runtime relation gate',
+    'observatory.independent_contract.body':
+        'Shows the committed offline Node verification: it imports no production Dart and independently evaluates relations, intermediate-representation mutations, invalid relations, and asynchronous terminal orderings.',
+    'observatory.independent_contract.status': '{status} · {findings} findings',
+    'observatory.independent_contract.relations':
+        '{passed} / {total} relations passed',
+    'observatory.independent_contract.mutations':
+        '{killed} / {total} mutations detected',
+    'observatory.independent_contract.survivors': '{count} surviving mutations',
+    'observatory.independent_contract.scheduler':
+        '{passed} / {total} async orderings passed',
+    'observatory.independent_contract.invalid_relations':
+        '{rejected} / {total} invalid relations rejected',
+    'observatory.independent_contract.identities':
+        'Registry {registry} · Node oracle {oracle} · report {report}',
+    'observatory.relation_sampling.title':
+        '10 · Relation-domain sampling and defective-relation diagnostics',
+    'observatory.relation_sampling.body':
+        'A schema-v2 locked fixture gate runs paired Dart production algorithm APIs for applicable synthetic domain-partition samples, then checks them with an independent Node evaluator. Precondition HOLDs, IR mutation sensitivity, and deliberately defective-relation diagnostic exposures are reported separately.',
+    'observatory.relation_sampling.status':
+        '{status} · {findings} findings · declared samples verified; full production-domain coverage remains open',
+    'observatory.relation_sampling.cases':
+        '{count} cases · {relations} relations',
+    'observatory.relation_sampling.holds': '{count} precondition HOLDs',
+    'observatory.relation_sampling.production_cases':
+        '{passed} / {count} production samples passed independent evaluation',
+    'observatory.relation_sampling.production_invocations':
+        '{count} production API invocations',
+    'observatory.relation_sampling.production_holds':
+        '{count} production samples held before execution',
+    'observatory.relation_sampling.mutations':
+        '{killed} / {total} sampled mutations detected',
+    'observatory.relation_sampling.survivors':
+        '{count} sampled mutation survivors',
+    'observatory.relation_sampling.false_relations':
+        '{rejected} / {total} defective relations rejected',
+    'observatory.relation_sampling.false_alarms':
+        'Defective-relation diagnostic exposures: {count} / {total} ({rate}%); these are incorrect alarms generated by deliberately bad relations so those relations can be rejected, not a production false-positive estimate.',
+    'observatory.relation_sampling.production_boundary':
+        'Per-case production API executions: {cases}; independent relation evaluations: {evaluations}; plus {anchors} fixed production relation anchors.',
+    'observatory.relation_sampling.generator': 'Generator {id} · v{version}',
+    'observatory.relation_sampling.identities':
+        'Plan {plan} · sampler {sampler} · combined report {report} · production report {production} · executor {executor}',
+    'observatory.oracle.title': '11 · Independent numerical truth gate',
     'observatory.oracle.body':
         'Separately authored analytic vectors are compared with production outputs; missing, extra, non-finite, or out-of-tolerance results fail closed.',
     'observatory.oracle.summary': '{passed} / {total} vectors passed',
@@ -1645,7 +2405,7 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.oracle.mismatch': 'Numerical vector mismatch',
     'observatory.oracle.not_covered': 'No independent numerical vector yet',
     'observatory.oracle.blocked': 'Numerical verification blocked',
-    'observatory.ledger.title': '8 · Unit-aware immutable event ledger',
+    'observatory.ledger.title': '12 · Unit-aware immutable event ledger',
     'observatory.ledger.body':
         'Projects meals, doses, and context from the same production scenario into read-only events with original and canonical units, timezone offset, equal-time order, source, and revision identity.',
     'observatory.ledger.event_count': '{count} ordered events',
@@ -1653,6 +2413,299 @@ final Map<String, Map<String, String>> _strings = {
     'observatory.ledger.digest': 'Ledger SHA-256: {digest}',
     'observatory.ledger.replay_digest': 'Canonical replay SHA-256: {digest}',
     'observatory.ledger.configuration': 'Bound configuration SHA-256: {digest}',
+    'observatory.ledger.authorization_verified':
+        'PRODUCTION INPUT LEDGER AUTHORIZED',
+    'observatory.ledger.authorization_blocked':
+        'PRODUCTION INPUT LEDGER BLOCKED',
+    'observatory.ledger.authorization_detail':
+        'Complete input binding: {binding} · authorization report: {report}',
+    'observatory.ledger.authorization_boundary':
+        'The engine reads only the same immutable context after binding verification; the readable event projection is not yet a lossless replay format.',
+    'observatory.replay_capsule.title':
+        '13 · Lossless mechanistic input replay capsule',
+    'observatory.replay_capsule.body':
+        'Before computation, the app serializes and reconstructs the complete ledger, timeline, extended medication provenance, meal composition, food components, and window, then authorizes the rebuilt input.',
+    'observatory.replay_capsule.verified':
+        'LOSSLESS PRODUCTION INPUT REPLAY VERIFIED',
+    'observatory.replay_capsule.digest': 'Capsule SHA-256: {digest}',
+    'observatory.replay_capsule.coverage':
+        'Coverage: complete ledger · medication metadata · meal/food components · food timeline · missingness · window · provenance and equal-time order',
+    'observatory.replay_capsule.scalar_profile':
+        'Scalar profile: canonical decimal integers; exact IEEE-754 binary64 hexadecimal floats; deterministic property-order hashing.',
+    'observatory.replay_capsule.timezone_boundary':
+        'Timezone boundary: the capsule has no global timezone identity. Owner-observation events carry IANA/tzdb/DST-fold evidence only when a caller supplies an explicit resolution receipt; future civil-time intent is never inferred.',
+    'observatory.replay_capsule.credibility_boundary':
+        'Lossless replay proves engineering input reconstruction—not biological truth, clinical calibration, benefit, safety, regulatory qualification, or medical advice.',
+    'observatory.cou.title': 'Context-of-use requalification ledger',
+    'observatory.cou.blocked_semantics':
+        'Research trace promotion remains blocked pending evidence.',
+    'observatory.cou.approved_semantics':
+        'Research trace promotion has explicit approval.',
+    'observatory.cou.blocked': 'PROMOTION BLOCKED · {disposition}',
+    'observatory.cou.approved': 'RESEARCH TRACE APPROVED · {disposition}',
+    'observatory.cou.integrity_verified':
+        'LEDGER INTEGRITY VERIFIED · 0 drift findings',
+    'observatory.cou.integrity_failed':
+        'LEDGER DRIFT · {count} findings: {reasons}',
+    'observatory.cou.evidence_complete': 'Required evidence complete.',
+    'observatory.cou.evidence_incomplete':
+        'Incomplete required evidence: {evidence}',
+    'observatory.credibility.title':
+        'Prospective model credibility plan and post-study adequacy gate',
+    'observatory.credibility.blocked':
+        'STUDY + PROMOTION BLOCKED · prospective {prospective} · post-study {postStudy}',
+    'observatory.credibility.integrity_verified':
+        'PLAN INTEGRITY VERIFIED · 0 drift findings',
+    'observatory.credibility.integrity_failed':
+        'PLAN INTEGRITY FAILED · {count} findings',
+    'observatory.credibility.risk':
+        'Model influence: {influence} · wrong-decision consequence: {consequence} · risk: {risk} · incomplete factors: {incomplete}',
+    'observatory.credibility.decision_separation':
+        'Prospective adequacy: {prospective} · post-study adequacy: {postStudy}. The two decisions stay separate and cannot be inferred or collapsed from passing tests.',
+    'observatory.execution.title':
+        'Credibility-evidence execution attestation and leakage gate',
+    'observatory.execution.status':
+        'EXECUTION INDEPENDENCE · {status} · scientific credibility use {scientific}',
+    'observatory.execution.summary':
+        '{records} synthetic records · {splits} data splits · {steps} preprocessing step(s) · {access} access events · {findings} leakage findings',
+    'observatory.execution.dimensions': 'Dimension-by-dimension independence',
+    'observatory.execution.access_order':
+        'Plan frozen: {freeze}\nLocked test first accessed: {holdout}\nResults first accessed: {result}',
+    'observatory.transparency.title':
+        'Protocol amendment, deviation, and result-transparency ledger',
+    'observatory.transparency.status':
+        'LEDGER STATUS · {status} · last accepted sequence {accepted} · GCP conformance claim {gcp}',
+    'observatory.transparency.summary':
+        '{events} immutable events · {outcomes} outcome records · {findings} integrity findings',
+    'observatory.transparency.timeline':
+        'Plan, dataset-lock, and result-visibility timeline',
+    'observatory.transparency.outcomes':
+        'Outcome disclosure states (missing is not zero)',
+    'observatory.replication.title':
+        'Blinded independent replication capsule and discrepancy adjudication',
+    'observatory.replication.status':
+        'REPLICATION STATUS · {status} · {findings} integrity findings · {discrepancies} discrepancies',
+    'observatory.replication.summary':
+        'Content-addressed capsule {capsule}… · {responses} independent response(s) · {outcomes} retained outcomes',
+    'observatory.replication.lanes': 'Six auditable evidence lanes',
+    'observatory.replication.lane.capsule': 'Capsule identity',
+    'observatory.replication.lane.blinding': 'Result blinding',
+    'observatory.replication.lane.independentResponse': 'Independent response',
+    'observatory.replication.lane.environmentMatch':
+        'Environment + dependencies',
+    'observatory.replication.lane.comparison': 'Outcome comparison',
+    'observatory.replication.lane.adjudication': 'Discrepancy adjudication',
+    'observatory.replication.outcomes':
+        'Retained positive, null, failed, and adverse outcomes',
+    'observatory.statistics.title':
+        'Statistical analysis, error control, and uncertainty governance',
+    'observatory.statistics.status':
+        'STATISTICAL GOVERNANCE · {status} · {findings} integrity finding(s) · clinical inference blocked',
+    'observatory.statistics.summary':
+        '{estimands} estimand(s) · {endpoints} prespecified endpoint(s) · {results} retained result(s) · {sensitivities} same-estimand sensitivity analyses',
+    'observatory.statistics.lanes':
+        'Seven auditable statistical evidence lanes',
+    'observatory.statistics.lane.design': 'Prospective design + lock',
+    'observatory.statistics.lane.estimand': 'Estimand + intercurrent events',
+    'observatory.statistics.lane.estimate': 'Estimates + complete outcomes',
+    'observatory.statistics.lane.uncertainty': 'Intervals + uncertainty',
+    'observatory.statistics.lane.errorControl': 'Multiplicity + type-I error',
+    'observatory.statistics.lane.sensitivity':
+        'Same-estimand sensitivity analysis',
+    'observatory.statistics.lane.deviations': 'Deviation + change ledger',
+    'observatory.statistics.outcomes':
+        'Reported, null, inconclusive, failed, contradictory, and adverse outcomes',
+    'observatory.randomization.title':
+        'Randomization, allocation concealment, and interim-access firewall',
+    'observatory.randomization.status':
+        'OPERATIONAL GOVERNANCE · {status} · {findings} integrity finding(s) · no GCP conformance claim',
+    'observatory.randomization.summary':
+        '{assignments} opaque assignment(s) issued · {access} access events · {completed}/{planned} interim looks · {members} independent committee members · {emergency} emergency unblinding events',
+    'observatory.randomization.lanes':
+        'Seven auditable operational-governance lanes',
+    'observatory.randomization.lane.randomizationIdentity':
+        'Randomization identity',
+    'observatory.randomization.lane.concealment': 'Allocation concealment',
+    'observatory.randomization.lane.roleSeparation': 'Role separation',
+    'observatory.randomization.lane.accessHistory': 'Access history',
+    'observatory.randomization.lane.interimBoundaries': 'Interim boundaries',
+    'observatory.randomization.lane.committeeRecommendation':
+        'Committee recommendation',
+    'observatory.randomization.lane.adjudication': 'Response + adjudication',
+    'observatory.randomization.concealment':
+        'Commitments only: schedule {schedule}… · interim plan {plan}…; seed and future assignments are excluded from the public payload.',
+    'observatory.adaptive.title':
+        'Adaptive-design operating characteristics and decision-rule calibration',
+    'observatory.adaptive.status':
+        'SIMULATION GOVERNANCE · {status} · {findings} integrity finding(s) · clinical and regulatory claims blocked',
+    'observatory.adaptive.summary':
+        '{scenarios} prespecified scenarios ({nulls} null, {alternatives} alternative) · {repetitions} deterministic simulations · {oracles} independent decision vectors',
+    'observatory.adaptive.lanes':
+        'Seven auditable operating-characteristic lanes',
+    'observatory.adaptive.lane.designIdentity':
+        'Design, code, and seed identity',
+    'observatory.adaptive.lane.scenarioCoverage':
+        'Scenario coverage + prospective lock',
+    'observatory.adaptive.lane.monteCarloPrecision': 'Monte Carlo precision',
+    'observatory.adaptive.lane.errorControl': 'Type-I error control',
+    'observatory.adaptive.lane.powerAndBias': 'Power, bias, and coverage',
+    'observatory.adaptive.lane.sampleSizeAndSelection':
+        'Sample size + selection behavior',
+    'observatory.adaptive.lane.oracleAndAdjudication':
+        'Decision oracle + adjudication',
+    'observatory.adaptive.precision':
+        'Maximum MCSE {mcse} · largest null 95% upper bound {nullUpper} · smallest alternative 95% lower bound {alternativeLower}',
+    'observatory.adaptive.boundary':
+        'Information looks {looks} · efficacy Z {efficacy} · futility Z {futility}. Boundary: {boundary}',
+    'observatory.bayesian.title':
+        'Bayesian prior, external borrowing conflict, and posterior-decision calibration',
+    'observatory.bayesian.status':
+        'METHODOLOGY GOVERNANCE · {status} · {findings} integrity finding(s) · Bayesian, clinical, and regulatory claims blocked',
+    'observatory.bayesian.summary':
+        '{external} external-evidence records · {scenarios} prespecified scenarios ({nulls} null) · {repetitions} deterministic simulations · {oracles} independent decision vectors',
+    'observatory.bayesian.lanes':
+        'Eight independent Bayesian-methodology audit lanes',
+    'observatory.bayesian.lane.priorProvenance':
+        'Prior provenance + prospective lock',
+    'observatory.bayesian.lane.externalDataSuitability':
+        'External-data quality + suitability',
+    'observatory.bayesian.lane.borrowing':
+        'Dynamic borrowing + effective sample size',
+    'observatory.bayesian.lane.priorDataConflict': 'Prior-data conflict',
+    'observatory.bayesian.lane.computation':
+        'Computational reliability + Monte Carlo precision',
+    'observatory.bayesian.lane.posteriorDecision':
+        'Posterior probability + decision threshold',
+    'observatory.bayesian.lane.frequentistCalibration':
+        'Frequentist calibration + uncertainty',
+    'observatory.bayesian.lane.oracleAndAdjudication':
+        'Independent oracle + adjudication',
+    'observatory.bayesian.conflict':
+        'Mean dynamic borrowing weight: no conflict {none} → mild {mild} → severe {severe}; maximum mean borrowed ESS {ess}',
+    'observatory.bayesian.calibration':
+        'Largest null decision rate {nullMax} · smallest alternative decision rate {alternativeMin} · maximum MCSE {mcse} · posterior success threshold {posterior}',
+    'observatory.bayesian.draft':
+        'FDA 2026 Bayesian guidance: Draft — Not for Implementation',
+    'observatory.multisource.title':
+        'Bayesian multi-source transportability, exchangeability, and model criticism',
+    'observatory.multisource.status':
+        'METHODOLOGY GOVERNANCE · {status} · {findings} integrity finding(s) · transportability, clinical, and regulatory claims blocked',
+    'observatory.multisource.summary':
+        '{sources} frozen sources ({included} included) · {groups} dependency groups · {checks} model-criticism checks · {scenarios} scenarios / {repetitions} simulations · {independent} independent cases',
+    'observatory.multisource.lanes':
+        'Ten independent multi-source methodology-governance lanes',
+    'observatory.multisource.lane.sourceDiscovery':
+        'Source discovery, freeze, and retention',
+    'observatory.multisource.lane.dependency':
+        'Cohort duplication + functional dependency',
+    'observatory.multisource.lane.transportability':
+        'Overlap, temporal drift + transportability',
+    'observatory.multisource.lane.exchangeability':
+        'Source-specific exchangeability assumptions',
+    'observatory.multisource.lane.biasAdjustment':
+        'Bias parameters + borrowing penalties',
+    'observatory.multisource.lane.priorPredictiveCriticism':
+        'Prior predictive checks + SBC',
+    'observatory.multisource.lane.posteriorPredictiveCriticism':
+        'Posterior predictive criticism',
+    'observatory.multisource.lane.sensitivityAndNegativeControls':
+        'Sensitivity, leave-one-out + negative controls',
+    'observatory.multisource.lane.computation':
+        'Operating characteristics + Monte Carlo precision',
+    'observatory.multisource.lane.independentReplication':
+        'Independent statistical-language replication',
+    'observatory.multisource.ledger':
+        'Frozen source ledger: included, excluded, duplicate, dependent, unavailable, and contradictory records remain visible',
+    'observatory.multisource.criticism':
+        'Prior predictive {prior} · maximum SBC rank deviation {sbc} · posterior predictive discrepancy {posterior} · negative-control absolute effect {negative} · total borrowed ESS {ess}',
+    'observatory.multisource.operating':
+        'Largest null decision rate {nullMax} · smallest alternative decision rate {alternativeMin} · maximum MCSE {mcse} · synthetic posterior control mean {posterior}',
+    'observatory.multisource.independent':
+        '{language} stdlib independent oracle: {cases} manufactured cases agree · script {digest}…',
+    'observatory.transport.title':
+        'Target-population causal transportability, positivity, and doubly robust estimation',
+    'observatory.transport.status':
+        'IDENTIFICATION + ESTIMATION GOVERNANCE · {status} · {findings} integrity finding(s) · causal, clinical, and regulatory claims blocked',
+    'observatory.transport.summary':
+        '{trial} synthetic trial records + {target} outcome-free target records · {assumptions} identification assumptions · {cases} manufactured cases · {scenarios} scenarios / {repetitions} repetitions',
+    'observatory.transport.lanes':
+        'Nine independent target-population methodology-governance lanes',
+    'observatory.transport.lane.identification':
+        'Target population, causal graph + identification assumptions',
+    'observatory.transport.lane.overlap':
+        'Selection positivity + structural support',
+    'observatory.transport.lane.weighting':
+        'Inverse-odds sampling weights + covariate balance',
+    'observatory.transport.lane.outcomeModeling':
+        'Outcome regression + model specification',
+    'observatory.transport.lane.estimatorAgreement':
+        'OR, IOSW + augmented estimator agreement',
+    'observatory.transport.lane.sensitivity':
+        'Weight truncation, bias + nonidentifiability sensitivity',
+    'observatory.transport.lane.operatingCharacteristics':
+        'Bias, variance, coverage + MCSE',
+    'observatory.transport.lane.independentReplication':
+        'Independent statistical-language manufactured cases',
+    'observatory.transport.lane.unresolvedLimitations':
+        'Unmeasured effect modifiers + real-world limitations',
+    'observatory.transport.identification':
+        'Target: {target} · contrast: {contrast} · arrows below are a prospectively declared synthetic causal graph, not a data-proven structure.',
+    'observatory.transport.overlap':
+        'Sampling scores {minScore}–{maxScore} · maximum inverse-odds weight {maxWeight} · weighted ESS {ess} · maximum SMD {before} → {after} · structural support violations {violations}',
+    'observatory.transport.estimators':
+        'Both-models-correct manufactured case: trial-only, outcome-regression, inverse-odds, and augmented inverse-odds estimates',
+    'observatory.transport.sensitivity':
+        'Weight cap:estimate/ESS (none is untruncated): {values}',
+    'observatory.transport.operating':
+        'Seven augmented inverse-odds operating scenarios; structural non-overlap must read HELD rather than emit a number',
+    'observatory.transport.independent':
+        '{language} stdlib independent oracle: {cases} manufactured cases agree · script {digest}…',
+    'observatory.transportSensitivity.title':
+        'Target-transportability bias functions, global sensitivity, and partial identification',
+    'observatory.transportSensitivity.status':
+        'SENSITIVITY GOVERNANCE · {status} · {findings} integrity finding(s) · unidentified, clinical, and regulatory claims blocked',
+    'observatory.transportSensitivity.summary':
+        '{axes} result-blind axes · {grid} complete grid points ({admissible} admissible / {excluded} retained exclusions) · {scenarios} scenarios / {repetitions} repetitions',
+    'observatory.transportSensitivity.lanes':
+        'Ten independent bias and nonidentifiability governance lanes',
+    'observatory.transportSensitivity.lane.assumptions':
+        'Target estimand, bias functions + sign direction',
+    'observatory.transportSensitivity.lane.elicitation':
+        'Result-blind ranges + expert provenance',
+    'observatory.transportSensitivity.lane.parameterSpace':
+        'Complete parameter space + retained exclusions',
+    'observatory.transportSensitivity.lane.localSensitivity':
+        'Local manufactured cases + threshold reversals',
+    'observatory.transportSensitivity.lane.globalSensitivity':
+        'Global first-order + total-effect indices',
+    'observatory.transportSensitivity.lane.partialIdentification':
+        'Partial-identification range + uncertainty envelope',
+    'observatory.transportSensitivity.lane.tippingRegion':
+        'Decision threshold + null-crossing region',
+    'observatory.transportSensitivity.lane.operatingCharacteristics':
+        'Bias, coverage, reversal rates + MCSE',
+    'observatory.transportSensitivity.lane.independentReplication':
+        'Independent Python grid + case replication',
+    'observatory.transportSensitivity.lane.unresolvedLimitations':
+        'Conditional transportability + structural positivity limits',
+    'observatory.transportSensitivity.assumptions':
+        'Prospectively frozen estimand, bias functions, direction, and adjustment formula',
+    'observatory.transportSensitivity.elicitation':
+        'Three range-elicitation records frozen before reference-result access',
+    'observatory.transportSensitivity.parameterSpace':
+        'Five-dimensional complete grid; no preferred value is presented as learned',
+    'observatory.transportSensitivity.local':
+        'Six local bias-function cases (bar length is absolute adjusted effect)',
+    'observatory.transportSensitivity.global':
+        'Variance-decomposition first-order and total-effect indices on the complete independent grid',
+    'observatory.transportSensitivity.bounds':
+        'Partial-identification range, null, and decision threshold across every admissible combination',
+    'observatory.transportSensitivity.tipping':
+        'Decision reversal and null-crossing fractions among admissible points',
+    'observatory.transportSensitivity.operating':
+        'Eight prospective scenarios; nonidentifiability or no consensus must be HELD without an estimate',
+    'observatory.transportSensitivity.independent':
+        'Independent stdlib-only Python reproduction and script content identity',
     'observatory.minutes_after_meal': 'minutes after meal',
     'observatory.minutes_in_window': 'minutes across modeled window',
     'observatory.chart.data_table': 'View chart data table',
@@ -1660,6 +2713,9 @@ final Map<String, Map<String, String>> _strings = {
         'The same point-by-point values as the curve, available to keyboard and assistive technology users.',
     'observatory.chart.data_table_semantics':
         'Equivalent point-by-point data table for this chart',
+    'observatory.chart.long_description': 'Detailed chart description',
+    'observatory.chart.long_description_semantics':
+        'Visible detailed text description for this chart',
     'observatory.chart.events': 'Events',
     'observatory.stage.normalize': '1 · Normalize and validate',
     'observatory.stage.model': '2 · Model mechanisms',
@@ -1739,6 +2795,13 @@ final Map<String, Map<String, String>> _strings = {
     'timeline.medication': 'Medication',
     'timeline.active_medication_option': '{name} (active)',
     'timeline.dosage_note': 'Dosage note',
+    'timeline.package_dose_source':
+        'Source: {source} · Retrieved: {retrieved} · {url}',
+    'timeline.package_dose_derivation':
+        'Calculation: {strength} × {quantity} {unit} = {amount} {resultUnit}',
+    'timeline.package_dose_assumed_denominator':
+        'The source did not report a denominator; one discrete {unit} is assumed. Check the product label before confirming.',
+    'timeline.package_dose_retrieval_unknown': 'not recorded',
     'timeline.taken_at': 'Taken at',
     'timeline.edit_taken_at': 'Edit taken time',
     'timeline.save_intake': 'Save intake',
@@ -1810,6 +2873,83 @@ final Map<String, Map<String, String>> _strings = {
     'reminders.web_title': 'Recurring system delivery is unavailable here',
     'reminders.web_body':
         'Your reminder plan remains saved on this device, but the Web, Windows, and Linux builds do not currently deliver recurring alerts while the app is closed.',
+    'reminders.readiness_title': 'System reminder delivery readiness',
+    'reminders.readiness_contract': '{platform} capability contract · {digest}',
+    'reminders.readiness_boundary':
+        'A completed schedule request or matching plugin identity does not prove visible, lock-screen, or background delivery.',
+    'reminders.readiness_platform_android': 'Android',
+    'reminders.readiness_platform_ios': 'iOS',
+    'reminders.readiness_platform_macos': 'macOS',
+    'reminders.readiness_platform_web': 'Web',
+    'reminders.readiness_platform_windows': 'Windows',
+    'reminders.readiness_platform_linux': 'Linux',
+    'reminders.readiness_platform_unknown':
+        'Unknown platform or custom gateway',
+    'reminders.readiness_local_plan': 'Local plan',
+    'reminders.readiness_adapter': 'Scheduling adapter',
+    'reminders.readiness_schedule_request': 'Schedule request',
+    'reminders.readiness_permission_request': 'Permission request',
+    'reminders.readiness_permission_inspection':
+        'Current permission inspection',
+    'reminders.readiness_body_tap': 'Notification body tap',
+    'reminders.readiness_cold_start': 'Notification cold start',
+    'reminders.readiness_background_action': 'Background notification action',
+    'reminders.readiness_registry': 'Plugin pending registry',
+    'reminders.readiness_visible_delivery': 'Visible delivery',
+    'reminders.readiness_local_none': 'No local plan configured',
+    'reminders.readiness_local_saved': 'Saved on this device',
+    'reminders.readiness_adapter_plan_only':
+        'Plan-only; no system notification API is called',
+    'reminders.readiness_evidence_artifact_verified':
+        'Verified by target-platform, artifact-bound evidence',
+    'reminders.readiness_evidence_implemented_unverified':
+        'Implemented; no target-device, artifact-bound verification',
+    'reminders.readiness_evidence_unavailable':
+        'Unavailable or not implemented',
+    'reminders.readiness_request_not_requested': 'Not submitted',
+    'reminders.readiness_request_applied':
+        'Plugin request completed; delivery is not proven',
+    'reminders.readiness_request_rolled_back':
+        'New request rolled back; previous plan restored; delivery is not proven',
+    'reminders.readiness_request_superseded':
+        'Superseded by a newer account or plan',
+    'reminders.readiness_request_unsupported': 'This contract is plan-only',
+    'reminders.readiness_request_failed':
+        'Request failed or identity unverified',
+    'reminders.readiness_request_recovery_required':
+        'Reconciliation is required before reliance',
+    'reminders.readiness_permission_not_requested':
+        'Not requested in this session',
+    'reminders.readiness_permission_granted':
+        'Permission request call returned allowed; use current inspection state',
+    'reminders.readiness_permission_denied':
+        'Permission request call returned not allowed; user denial is not proven',
+    'reminders.readiness_permission_unavailable':
+        'Permission adapter unavailable or this contract does not request it',
+    'reminders.readiness_permission_failed':
+        'Permission request call failed; user denial is not proven',
+    'reminders.readiness_inspection_not_inspected':
+        'Current permission has not been inspected',
+    'reminders.readiness_inspection_enabled':
+        'Plugin inspection reports enabled; delivery is not proven',
+    'reminders.readiness_inspection_disabled':
+        'Plugin inspection reports not enabled',
+    'reminders.readiness_inspection_unavailable':
+        'Current-permission inspection adapter unavailable',
+    'reminders.readiness_inspection_failed':
+        'Current-permission inspection failed',
+    'reminders.readiness_registry_not_inspected': 'Not inspected',
+    'reminders.readiness_registry_matched':
+        'Plugin report matches the local plan; not OS delivery proof',
+    'reminders.readiness_registry_drift':
+        'Plugin report differs from the local plan',
+    'reminders.readiness_registry_uninspectable':
+        'Plugin identities could not be read',
+    'reminders.readiness_registry_unsupported':
+        'This capability contract does not inspect a native registry',
+    'reminders.readiness_visible_unverified': 'Unverified',
+    'reminders.readiness_visible_artifact_verified':
+        'Verified by target-platform artifact evidence',
     'reminders.empty_title': 'No logging reminders yet',
     'reminders.empty_body':
         'Add your own prompt to log a meal or medication intake.',
@@ -1829,6 +2969,15 @@ final Map<String, Map<String, String>> _strings = {
         'Android requests no notification content on a secure lock screen. Apple platforms still follow the user’s system preview setting.',
     'reminders.privacy_generic_boundary':
         'Android requests basic-only lock-screen visibility. Apple platforms still follow the user’s system preview setting.',
+    'reminders.locale_reconciliation_title': 'System reminder language differs',
+    'reminders.locale_reconciliation_body':
+        'The App language changed. Keep the current system-reminder copy or atomically update every reminder on this device. Neither choice exposes your authored labels.',
+    'reminders.locale_retain_action': 'Keep current reminder language',
+    'reminders.locale_update_action': 'Update all to current language',
+    'reminders.locale_retained_confirmation':
+        'Current system-reminder language retained.',
+    'reminders.locale_updated_confirmation':
+        'All system reminders were requested in the current language.',
     'reminders.days': 'Repeat on',
     'reminders.next': 'Next',
     'reminders.validation': 'Enter reminder text and select at least one day.',
@@ -2110,9 +3259,11 @@ final Map<String, Map<String, String>> _strings = {
     'handoff.title': 'Personal log handoff summary',
     'handoff.boundary_title': 'A personal-log copy you select and review',
     'handoff.boundary_body':
-        'This summary only organizes medication and meal information you recorded. It is not clinically verified and is not a medical record, diagnosis, treatment plan, or recommendation. Unknown values are never filled with zero.',
+        'This summary organizes your medication and meal records. Personal observations are included only if you select that section. The summary is not clinically verified and is not a medical record, diagnosis, treatment plan, or recommendation. Unknown values are never filled with zero.',
     'handoff.raster_limit':
         'The PDF uses the same offline font fallback and rasterized pages shown here. Content matches the preview, but PDF text is not yet searchable and this is not a tagged accessible PDF.',
+    'handoff.html_boundary':
+        'An offline HTML file is also available with selectable text and heading/list structure. It is not a tagged PDF; language tags, screen-reader behavior, and bidirectional text still need target-device review. A system share result does not prove that a recipient received or saved the file.',
     'handoff.configure': 'Choose range, sections, and redaction',
     'handoff.start_date': 'Start: {date}',
     'handoff.end_date': 'End: {date}',
@@ -2126,18 +3277,30 @@ final Map<String, Map<String, String>> _strings = {
         'Historical-only medications in this range',
     'handoff.section.intakeLog': 'Medication intake log',
     'handoff.section.mealLog': 'Meal log',
+    'handoff.section.personalObservations':
+        'Personal observations (optional; off by default)',
     'handoff.section.dataQualityAndProvenance':
         'Missingness, units, and provenance',
     'handoff.generate': 'Generate frozen preview',
     'handoff.exact_preview': 'Exact pages to copy, print, or save',
     'handoff.preview_meta': '{pages} pages · content SHA-256 {digest}',
+    'handoff.reading_preview': 'Structured text preview (selectable)',
+    'handoff.reading_preview_note':
+        'Keeps the HTML document’s heading, paragraph, and list reading order.',
+    'handoff.important_boundary': 'Important boundary.',
+    'handoff.list': 'List',
     'handoff.copy': 'Copy exact text',
+    'handoff.share_html': 'Save / share structured HTML',
     'handoff.print': 'Print',
     'handoff.save_share': 'Save / share PDF',
     'handoff.delivery.copied': 'The current verified summary was copied.',
     'handoff.delivery.print_requested': 'The print flow completed.',
     'handoff.delivery.save_share_requested':
         'The system save / share flow completed.',
+    'handoff.delivery.html_share_requested':
+        'The system HTML share flow was handed off; recipient delivery or saving is not confirmed.',
+    'handoff.delivery.unavailable':
+        'HTML file sharing is unavailable on this platform; you can still copy the text.',
     'handoff.delivery.cancelled':
         'The action was cancelled; no save or print is claimed.',
     'handoff.error': 'No new summary was generated or delivered ({code}).',
@@ -2176,6 +3339,82 @@ final Map<String, Map<String, String>> _strings = {
         'The support bundle could not be copied safely. Nothing was uploaded or retried automatically.',
     'support.error_save':
         'The support bundle could not be saved safely. No existing file was overwritten or deleted.',
+    'operations.title': 'Privacy-bounded operations',
+    'operations.local_title': 'On-device operational diagnostics',
+    'operations.local_boundary':
+        'Keeps only coarse outcomes, duration buckets, and capability state in process memory for 24 hours. It stores no account, health content, or exact event time.',
+    'operations.local_collection': 'Collect local session diagnostics',
+    'operations.local_collection_help':
+        'Turning this off immediately clears local session counts. Engineering diagnostics remain available.',
+    'operations.export_title': 'Off-device operational telemetry',
+    'operations.export_disabled':
+        'Off by default, with no network sender implemented. Any future export must pass separate versioned consent plus region, sampling, retention, access, deletion, and emergency-disable gates.',
+    'operations.allowed_title': 'Only permitted aggregate categories',
+    'operations.excluded_title': 'Never permitted in the envelope',
+    'operations.notice_identity':
+        'Off-device notice version {version} · SHA-256 {digest}…',
+    'operations.snapshot_title': 'Current local-session aggregate',
+    'operations.snapshot_summary':
+        '{window}-minute window · {count} events; no exact time or user identifier.',
+    'operations.snapshot_overflow':
+        'The local cardinality budget was full. Dropped event count: {count}. This snapshot cannot be exported until it is cleared or expires.',
+    'operations.snapshot_empty': 'No aggregate events are currently retained.',
+    'operations.refresh': 'Refresh local aggregate',
+    'operations.release_boundary':
+        'Platform {platform} · backend {backend} · algorithm source {source}… These are operational-reliability facts, never clinical evidence.',
+    'rollout.title': 'Signed capability rollout',
+    'rollout.status_heading': 'Managed capability state on this device',
+    'rollout.status': 'Activation status',
+    'rollout.reason': 'Reason code',
+    'rollout.trust': 'Local trust root',
+    'rollout.trust_configured': 'Ed25519 public key configured',
+    'rollout.trust_unconfigured':
+        'Not configured; remote policy is inactive and every managed decision is disabled. Existing locally consented behavior remains governed by local settings',
+    'rollout.signature': 'Signature status',
+    'rollout.signature_verified': 'Current manifest verified',
+    'rollout.signature_inactive': 'No verified manifest is active',
+    'rollout.distribution': 'Signed-manifest distribution',
+    'rollout.distribution_configured':
+        'Strict HTTPS release endpoint configured',
+    'rollout.distribution_endpoint': 'Exact allowed endpoint',
+    'rollout.distribution_none': 'Not configured',
+    'rollout.fetch_status': 'Latest download status',
+    'rollout.fetch_etag': 'Cache ETag',
+    'rollout.etag_none': 'None',
+    'rollout.fetch_bytes': 'Bytes received',
+    'rollout.cache_state': 'Verified cache state',
+    'rollout.cache_none': 'None; no conditional validator will be sent',
+    'rollout.cache_persisted':
+        'Atomically bound to the current signed manifest',
+    'rollout.cache_accepted_at': 'Cache accepted at (UTC)',
+    'rollout.cache_manifest_digest': 'Bound manifest SHA-256',
+    'rollout.manifest': 'Manifest',
+    'rollout.source': 'Issuer / key',
+    'rollout.environment': 'Environment',
+    'rollout.expiry': 'Expiry (UTC)',
+    'rollout.rollback': 'Rollback target',
+    'rollout.rollback_none': 'None',
+    'rollout.capabilities': 'Only optional capabilities that may be managed',
+    'rollout.local_ai': 'Local AI safe-candidate reranking',
+    'rollout.catalog_refresh': 'External public-catalog refresh',
+    'rollout.telemetry': 'Off-device operational telemetry',
+    'rollout.enabled': 'Enabled',
+    'rollout.disabled': 'Disabled',
+    'rollout.import_title': 'Verify and atomically activate a manifest',
+    'rollout.import_body':
+        'Paste the complete signed JSON. Unknown fields, wrong environment, expiry, replay, downgrade, revoked keys, or signature failure retain the previous verified manifest. Input is never uploaded.',
+    'rollout.manifest_json': 'Signed capability manifest JSON',
+    'rollout.reload': 'Reload',
+    'rollout.clear': 'Emergency-disable to local defaults',
+    'rollout.verify_activate': 'Verify and activate',
+    'rollout.fetch_activate': 'Fetch from trusted endpoint and activate',
+    'rollout.boundary_title': 'Boundary that cannot be changed remotely',
+    'rollout.boundary_body':
+        'A manifest can only enable or disable the fixed allowlist of optional network/UI capabilities. It cannot target users or change clinical-algorithm formulas, parameters, applicability, evidence, or safety copy. Clearing affects this device only and immediately restores conservative disabled defaults.',
+    'rollout.distribution_boundary':
+        'Request code makes a bodyless GET only to a dedicated cross-origin, build-allowlisted HTTPS host and adds no account, health-body, or authorization fields. Browser and network metadata and cookie behavior still require target-environment audit. It follows no redirect and limits type, size, and time. An ETag is stored only after signature, sequence, rollback, atomic write, and exact read-back pass; emergency clear invalidates an earlier in-flight fetch.',
+    'rollout.history':
+        'This device retains {count} verified historical identities for strict rollback.',
     'consent.title': 'Optional-feature consent center',
     'consent.local_ai_title': 'Local AI reranking and copy polish',
     'consent.local_ai_purpose':
@@ -2263,6 +3502,15 @@ final Map<String, Map<String, String>> _strings = {
         'The package may contain meals, medication logs, dose notes, and reminder text. Save it only somewhere you control. SHA-256 detects changes; it does not encrypt or hide the content.',
     'portable.boundary':
         'This feature creates user-readable JSON and a no-write import preview. It does not delete an account, restore data, or certify legal compliance. Local-account binding uses a random token kept on this device, so another device may not validate it.',
+    'portable.fuzz_title': 'Portable-schema differential test boundary',
+    'portable.fuzz_summary':
+        'Generator v1 · {seeds} fixed seeds · {partitions} lexical/semantic partitions · {cases} synthetic regression cases under corpus-level privacy review · {runtimes} runtimes.',
+    'portable.fuzz_runtime':
+        'Configured offline gate: {runtime}. Node never runs in the app.',
+    'portable.fuzz_unicode':
+        'Production preflight rejects duplicate members, isolated surrogates, Unicode noncharacters, and inputs beyond package, node, depth, width, source-string-token, decoded-string, key, or number-token budgets. The fixed differential campaign also covers compound-error precedence, unique manifest inventory, and the integrity contract.',
+    'portable.fuzz_boundary':
+        'This is compiled scope, not a receipt from a recent on-device run. Elapsed thresholds are checked only after return and cannot terminate a hung parser. Cross-runtime replay minimization and browser, Android, iOS, and desktop release-artifact parsers remain unverified.',
     'portable.export_title': 'Create a current data snapshot',
     'portable.export_body':
         'Exports the currently loaded profile, preferences, medication selections, intakes, meals, this-device reminders, and relationship links. UID, email, reminder activation tokens, and local-AI endpoints are excluded. The domain-separated one-way owner binding is pseudonymous, not anonymous.',
@@ -2299,6 +3547,26 @@ final Map<String, Map<String, String>> _strings = {
     'portable.status_corrupt': 'Package is corrupt or invalid',
     'portable.preview_summary':
         '{records} records · {conflicts} conflicts · {unsupported} unsupported fields',
+    'portable.migration_receipt_title':
+        'Frozen schema validation and migration receipt',
+    'portable.migration_receipt_summary':
+        'Source v{source} → target v{target} · decision: {decision}',
+    'portable.migration_receipt_identity':
+        'Receipt {receipt}… · source validator {validator}…',
+    'portable.migration_receipt_boundary':
+        'This receipt proves deterministic local validation/preview only. It performs no write, scheduling, or network action and does not prove issuer identity or clinical correctness.',
+    'portable.reminder_presentation_title':
+        'Reminder presentation intent preview',
+    'portable.reminder_presentation_summary':
+        '{total} reminder plans · {enabled} enabled on the source · {consent} require explicit target-device consent before scheduling.',
+    'portable.reminder_presentation_modes':
+        'Privacy modes: {modes} · saved notification languages: {languages}',
+    'portable.reminder_presentation_policy':
+        '{match} match the current copy policy · {drift} need recomputation · {decisions} locale decisions differ from saved copy',
+    'portable.reminder_presentation_legacy':
+        '{count} legacy schema-v2 reminder(s) are interpreted as minimal / English for preview only.',
+    'portable.reminder_target_consent':
+        'This preview requests no notification permission and creates no system reminder. The target device must re-check capability, language, and privacy before you explicitly approve scheduling; source tokens and notification IDs are never reused.',
     'portable.unsupported_fields': 'Unsupported fields',
     'portable.no_write':
         'Preview guarantee: this operation changed no durable data.',
@@ -2397,6 +3665,8 @@ final Map<String, Map<String, String>> _strings = {
     'severity.high': 'High',
     'severity.critical': 'Critical',
     'missing.dose': 'dose',
+    'data_integrity.dose_parseable': 'Parseable dose text',
+    'data_integrity.dose_result_eligible': 'Confirmed result-eligible dose',
     'missing.formulation': 'formulation',
     'missing.time': 'medication time',
     'missing.meal_time': 'meal time',
@@ -2534,6 +3804,8 @@ final Map<String, Map<String, String>> _strings = {
         'Continuous enteral feeding context is active, so deterministic review is kept.',
     'recommend.runtime.local_ai_not_consented':
         'Local AI reranking has not been enabled by the user.',
+    'recommend.runtime.local_ai_rollout_disabled':
+        'The signed capability policy currently disables Local AI requests.',
     'recommend.runtime.local_ai_unavailable':
         'The local AI endpoint is currently unavailable.',
     'recommend.runtime.returned_conservative':
@@ -2809,6 +4081,71 @@ final Map<String, Map<String, String>> _strings = {
     'nav.meds': 'Medicaments',
     'nav.catalog': 'Catalogue',
     'nav.next_meal': 'Repas suivant',
+    'shell.tagline': 'Compagnon · prototype de recherche',
+    'shell.workspace': 'Espace de travail',
+    'shell.care_workspace': 'Préparation de consultation et suivis',
+    'shell.boundary_note':
+        'Prototype éducatif — pas un avis médical. Vérifiez toute décision de santé avec un clinicien qualifié.',
+    'dashboard.greeting_morning': 'Bonjour',
+    'dashboard.greeting_afternoon': 'Bon après-midi',
+    'dashboard.greeting_evening': 'Bonsoir',
+    'dashboard.subtitle':
+        'Un aperçu de vos repas, prises de médicaments et des règles derrière chaque explication.',
+    'dashboard.stat_meals': 'Repas enregistrés',
+    'dashboard.stat_drugs': 'Médicaments actifs',
+    'dashboard.stat_intakes': 'Prises enregistrées',
+    'shell.new_entry': 'Nouvelle entrée',
+    'shell.search': 'Rechercher',
+    'shell.search_hint': 'Rechercher pages, outils et actions',
+    'shell.search_empty':
+        'Aucune page, aucun outil ni aucune action correspondants',
+    'shell.menu': 'Menu',
+    'shell.group.evidence': 'Données probantes et règles',
+    'shell.group.data': 'Vos données',
+    'shell.group.operations': 'Exploitation',
+    'shell.group.pages': 'Pages',
+    'shell.action.observation': 'Noter une observation',
+    'dashboard.stat_protein': 'Protéines moyennes par repas',
+    'dashboard.show_details': 'Afficher les détails',
+    'dashboard.hide_details': 'Masquer les détails',
+    'dashboard.quick_log': 'Saisie rapide',
+    'dashboard.today': 'Activité récente',
+    'insights.title': 'Aperçus',
+    'insights.subtitle':
+        'Tendances dans ce que vous avez noté, tirées uniquement de vos propres entrées.',
+    'insights.range_7': '7 jours',
+    'insights.range_30': '30 jours',
+    'insights.meals': 'Repas',
+    'insights.intakes': 'Prises de médicaments',
+    'insights.observations': 'Observations',
+    'insights.avg_protein': 'Protéines moyennes par repas',
+    'insights.rhythm_title': 'Rythme de saisie',
+    'insights.rhythm_subtitle': 'Entrées par jour',
+    'insights.protein_title': 'Protéines par repas',
+    'insights.protein_subtitle':
+        'Grammes par repas noté, du plus ancien au plus récent',
+    'insights.daypart_title': 'Moment de la journée',
+    'insights.daypart_subtitle': 'Quand les repas et les prises ont été notés',
+    'insights.morning': 'Matin',
+    'insights.midday': 'Midi',
+    'insights.evening': 'Soir',
+    'insights.night': 'Nuit',
+    'insights.empty': 'Rien de noté sur cette période.',
+    'insights.boundary':
+        'Il s\'agit de résumés descriptifs de vos propres entrées. Ce ne sont ni des mesures cliniques, ni des objectifs, ni des conseils ; vérifiez toute décision de santé avec un clinicien qualifié.',
+    'settings.local_ai_advanced': 'Avancé · Connexion IA locale',
+    'nav.today': 'Aujourd\'hui',
+    'nav.library': 'Bibliothèque',
+    'dashboard.log_prompt': 'Que souhaitez-vous noter ?',
+    'dashboard.log_meal_hint':
+        'Aliments et portions, vérifiés selon les règles éducatives',
+    'dashboard.log_intake_hint': 'Une dose de médicament prise',
+    'dashboard.log_observation_hint':
+        'Tension artérielle, symptômes ou état moteur',
+    'dashboard.open_timeline': 'Ouvrir la chronologie',
+    'dashboard.open_next_meal': 'Ouvrir le repas suivant',
+    'library.my_medications': 'Mes médicaments',
+    'library.catalog': 'Aliments et médicaments',
     'next_meal.title': 'Recommandation du prochain repas',
     'next_meal.subtitle':
         'Choisissez l\'heure prevue du prochain repas. Le chemin de regles conservateur garde l\'ordre des candidats ; le modele mecanistique ajoute seulement une trace temporelle educative et ne reclasse rien. L\'IA locale est un reclassement optionnel et separe sur liste sure.',
@@ -2928,6 +4265,86 @@ final Map<String, Map<String, String>> _strings = {
     'reminders.web_title': 'Rappels systeme recurrents indisponibles ici',
     'reminders.web_body':
         "Le plan reste enregistre sur cet appareil, mais les versions Web, Windows et Linux n'envoient pas encore d'alertes recurrentes lorsque l'application est fermee.",
+    'reminders.readiness_title':
+        'Preparation de la livraison des rappels systeme',
+    'reminders.readiness_contract': 'Contrat de capacite {platform} · {digest}',
+    'reminders.readiness_boundary':
+        "Une requete terminee ou une identite de plugin correspondante ne prouve pas la livraison visible, sur l'ecran verrouille ou en arriere-plan.",
+    'reminders.readiness_platform_android': 'Android',
+    'reminders.readiness_platform_ios': 'iOS',
+    'reminders.readiness_platform_macos': 'macOS',
+    'reminders.readiness_platform_web': 'Web',
+    'reminders.readiness_platform_windows': 'Windows',
+    'reminders.readiness_platform_linux': 'Linux',
+    'reminders.readiness_platform_unknown':
+        'Plateforme inconnue ou passerelle personnalisee',
+    'reminders.readiness_local_plan': 'Plan local',
+    'reminders.readiness_adapter': 'Adaptateur de planification',
+    'reminders.readiness_schedule_request': 'Requete de planification',
+    'reminders.readiness_permission_request': "Demande d'autorisation",
+    'reminders.readiness_permission_inspection':
+        "Controle actuel de l'autorisation",
+    'reminders.readiness_body_tap': 'Appui sur le corps de la notification',
+    'reminders.readiness_cold_start':
+        "Demarrage de l'application par notification",
+    'reminders.readiness_background_action':
+        'Action de notification en arriere-plan',
+    'reminders.readiness_registry': 'Registre en attente du plugin',
+    'reminders.readiness_visible_delivery': 'Livraison visible',
+    'reminders.readiness_local_none': 'Aucun plan local configure',
+    'reminders.readiness_local_saved': 'Enregistre sur cet appareil',
+    'reminders.readiness_adapter_plan_only':
+        "Plan local uniquement; aucune API de notification systeme n'est appelee",
+    'reminders.readiness_evidence_artifact_verified':
+        'Verifie par une preuve liee au livrable de la plateforme cible',
+    'reminders.readiness_evidence_implemented_unverified':
+        'Implemente; aucune verification liee au livrable sur appareil cible',
+    'reminders.readiness_evidence_unavailable':
+        'Indisponible ou non implemente',
+    'reminders.readiness_request_not_requested': 'Non soumise',
+    'reminders.readiness_request_applied':
+        'Requete du plugin terminee; livraison non prouvee',
+    'reminders.readiness_request_rolled_back':
+        "Nouvelle requete annulee; ancien plan restaure; livraison non prouvee",
+    'reminders.readiness_request_superseded':
+        'Remplacee par un compte ou un plan plus recent',
+    'reminders.readiness_request_unsupported':
+        'Ce contrat conserve seulement le plan',
+    'reminders.readiness_request_failed':
+        'Echec de la requete ou identite non verifiee',
+    'reminders.readiness_request_recovery_required':
+        'Une reconciliation est requise avant de pouvoir compter dessus',
+    'reminders.readiness_permission_not_requested':
+        'Non demandee pendant cette session',
+    'reminders.readiness_permission_granted':
+        "L'appel a renvoye autorise; utilisez le controle de l'etat actuel",
+    'reminders.readiness_permission_denied':
+        "L'appel n'a pas renvoye autorise; un refus explicite n'est pas prouve",
+    'reminders.readiness_permission_unavailable':
+        "Adaptateur indisponible ou ce contrat ne demande pas d'autorisation",
+    'reminders.readiness_permission_failed':
+        "Echec de l'appel d'autorisation; un refus n'est pas prouve",
+    'reminders.readiness_inspection_not_inspected':
+        "L'autorisation actuelle n'a pas ete controlee",
+    'reminders.readiness_inspection_enabled':
+        'Le plugin signale active; la livraison n est pas prouvee',
+    'reminders.readiness_inspection_disabled': 'Le plugin signale non active',
+    'reminders.readiness_inspection_unavailable':
+        "Adaptateur de controle d'autorisation indisponible",
+    'reminders.readiness_inspection_failed':
+        "Echec du controle de l'autorisation actuelle",
+    'reminders.readiness_registry_not_inspected': 'Non inspecte',
+    'reminders.readiness_registry_matched':
+        'Le rapport du plugin correspond au plan local; ce n est pas une preuve de livraison OS',
+    'reminders.readiness_registry_drift':
+        'Le rapport du plugin differe du plan local',
+    'reminders.readiness_registry_uninspectable':
+        'Les identites du plugin ne peuvent pas etre lues',
+    'reminders.readiness_registry_unsupported':
+        "Ce contrat de capacite n'inspecte pas de registre natif",
+    'reminders.readiness_visible_unverified': 'Non verifiee',
+    'reminders.readiness_visible_artifact_verified':
+        'Verifiee par une preuve du livrable de la plateforme cible',
     'reminders.empty_title': 'Aucun rappel de journalisation',
     'reminders.empty_body':
         'Ajoutez votre propre invite pour consigner un repas ou une prise de medicament.',
@@ -2947,6 +4364,16 @@ final Map<String, Map<String, String>> _strings = {
         "Android demande de ne montrer aucun contenu sur un ecran verrouille securise. Les plateformes Apple suivent toujours le reglage d'apercu de l'utilisateur.",
     'reminders.privacy_generic_boundary':
         "Android demande un affichage limite aux informations de base. Les plateformes Apple suivent toujours le reglage d'apercu de l'utilisateur.",
+    'reminders.locale_reconciliation_title':
+        'La langue des rappels systeme est differente',
+    'reminders.locale_reconciliation_body':
+        "La langue de l'app a change. Conservez le texte actuel ou mettez a jour atomiquement tous les rappels de cet appareil. Aucun choix n'affiche vos libelles.",
+    'reminders.locale_retain_action': 'Conserver la langue actuelle',
+    'reminders.locale_update_action': 'Tout mettre a jour',
+    'reminders.locale_retained_confirmation':
+        'La langue actuelle des rappels systeme a ete conservee.',
+    'reminders.locale_updated_confirmation':
+        'Tous les rappels systeme ont ete demandes dans la langue actuelle.',
     'reminders.days': 'Repeter le',
     'reminders.next': 'Prochain',
     'reminders.validation':
@@ -3294,6 +4721,9 @@ final Map<String, Map<String, String>> _strings = {
     'severity.high': 'Eleve',
     'severity.critical': 'Critique',
     'missing.dose': 'dose',
+    'data_integrity.dose_parseable': 'Texte de dose analysable',
+    'data_integrity.dose_result_eligible':
+        'Dose confirmee admissible pour le resultat',
     'missing.formulation': 'formulation',
     'missing.time': 'heure de prise',
     'missing.meal_time': 'heure du repas',
@@ -3598,6 +5028,38 @@ final Map<String, Map<String, String>> _strings = {
         'Association fixe contenant de la levodopa. Appliquer la meme prudence sur proteines elevees et separation du fer que pour les autres produits a base de levodopa.',
     'medication_note.drug_levodopa_benserazide':
         'Association a base de levodopa utilisee hors des Etats-Unis. Appliquer la meme prudence de timing proteique et de separation du fer.',
+    'observatory.dependency_closure.title':
+        'Préparation de la fermeture des dépendances',
+    'observatory.dependency_closure.loading':
+        'Chargement du manifeste de racines enregistré · fermeture HOLD',
+    'observatory.dependency_closure.unavailable':
+        'HOLD · manifeste de racines enregistré indisponible',
+    'observatory.dependency_closure.loading_semantics':
+        'Chargement du manifeste stable des racines de résultats algorithmiques. La fermeture des dépendances reste en état HOLD.',
+    'observatory.dependency_closure.unavailable_semantics':
+        'Le manifeste stable des racines de résultats algorithmiques est indisponible. La fermeture des dépendances est en état HOLD.',
+    'observatory.dependency_closure.semantics':
+        '{count} racines d’algorithme stables et enregistrées. Analyzer {analyzer} est la version exacte déclarée comme cible de revue. Les preuves de compatibilité hors ligne ne sont ni intégrées ni exécutées dans cette vue. La fermeture transitive des dépendances reste en état HOLD dans l’attente du générateur d’arêtes ParkinSUM.',
+    'observatory.dependency_closure.summary':
+        '{count} / {total} racines stables · cible Analyzer déclarée {analyzer} · fermeture transitive HOLD',
+    'observatory.dependency_closure.identity': '{schema} · {digest}… · {state}',
+    'observatory.dependency_closure.registry_chip':
+        'correspondance Registry : structurellement valide',
+    'observatory.dependency_closure.edge_chip': 'générateur d’arêtes : HOLD',
+    'observatory.dependency_closure.closure_chip':
+        'fermeture avant/arrière : HOLD',
+    'observatory.dependency_closure.details':
+        'Tableau accessible des racines stables',
+    'observatory.dependency_closure.details_subtitle':
+        'Uniquement les graines des bibliothèques principales ; aucune arête de dépendance générée.',
+    'observatory.dependency_closure.table_semantics':
+        'Tableau des racines d’algorithme stables. Les colonnes sont l’algorithme, la racine logique, le puits de résultat et l’URI canonique du paquet.',
+    'observatory.dependency_closure.column_algorithm': 'Algorithme',
+    'observatory.dependency_closure.column_root': 'Racine logique',
+    'observatory.dependency_closure.column_sink': 'Puits de résultat',
+    'observatory.dependency_closure.column_uri': 'URI du paquet',
+    'observatory.dependency_closure.boundary':
+        'Cette vue prouve uniquement un contrat structurel Registry-racine enregistré dans le dépôt. Les preuves de compatibilité Analyzer hors ligne ne sont ni intégrées ni exécutées ici. Elle ne présente ni ne revendique un graphe d’appels, des SCC, une fermeture avant/arrière, une exécution, un flux de données exact, une validation scientifique ou clinique, la sécurité, un bénéfice ou un avis médical.',
   },
   'ja': {
     'app.welcome': 'ようこそ',
@@ -3689,6 +5151,65 @@ final Map<String, Map<String, String>> _strings = {
     'nav.meds': '薬',
     'nav.catalog': 'カタログ',
     'nav.next_meal': '次の食事',
+    'shell.tagline': 'コンパニオン・研究用プロトタイプ',
+    'shell.workspace': 'ワークスペース',
+    'shell.care_workspace': '受診準備と確認事項',
+    'shell.boundary_note':
+        '教育目的のプロトタイプであり、医療上の助言ではありません。健康に関する判断は資格のある臨床医と確認してください。',
+    'dashboard.greeting_morning': 'おはようございます',
+    'dashboard.greeting_afternoon': 'こんにちは',
+    'dashboard.greeting_evening': 'こんばんは',
+    'dashboard.subtitle': '記録した食事と服薬、各説明の根拠となるルールの概要です。',
+    'dashboard.stat_meals': '記録した食事',
+    'dashboard.stat_drugs': '服用中の薬',
+    'dashboard.stat_intakes': '記録した服薬',
+    'shell.new_entry': '新規記録',
+    'shell.search': '検索',
+    'shell.search_hint': 'ページ・ツール・操作を検索',
+    'shell.search_empty': '一致するページ、ツール、操作はありません',
+    'shell.menu': 'メニュー',
+    'shell.group.evidence': 'エビデンスとルール',
+    'shell.group.data': 'あなたのデータ',
+    'shell.group.operations': '運用',
+    'shell.group.pages': 'ページ',
+    'shell.action.observation': '観察を記録',
+    'dashboard.stat_protein': '1食あたりの平均たんぱく質',
+    'dashboard.show_details': '詳細を表示',
+    'dashboard.hide_details': '詳細を隠す',
+    'dashboard.quick_log': 'クイック記録',
+    'dashboard.today': '最近の記録',
+    'insights.title': 'インサイト',
+    'insights.subtitle': '自分の記録だけから見える傾向です。',
+    'insights.range_7': '7日',
+    'insights.range_30': '30日',
+    'insights.meals': '食事',
+    'insights.intakes': '服薬記録',
+    'insights.observations': '観察',
+    'insights.avg_protein': '1食あたりの平均たんぱく質',
+    'insights.rhythm_title': '記録のリズム',
+    'insights.rhythm_subtitle': '1日あたりの記録数',
+    'insights.protein_title': '1食あたりのたんぱく質',
+    'insights.protein_subtitle': '記録した食事ごとのグラム数（古い順）',
+    'insights.daypart_title': '時間帯',
+    'insights.daypart_subtitle': '食事と服薬を記録した時間帯',
+    'insights.morning': '朝',
+    'insights.midday': '昼',
+    'insights.evening': '夕方',
+    'insights.night': '夜間',
+    'insights.empty': 'この期間の記録はまだありません。',
+    'insights.boundary':
+        'これらはご自身の記録の記述的な集計であり、臨床測定・目標・助言ではありません。健康に関する判断は資格のある臨床医と確認してください。',
+    'settings.local_ai_advanced': '詳細設定 · ローカルAI接続',
+    'nav.today': '今日',
+    'nav.library': 'ライブラリ',
+    'dashboard.log_prompt': '何を記録しますか？',
+    'dashboard.log_meal_hint': '食品と量（教育用ルールで確認）',
+    'dashboard.log_intake_hint': '服用した薬の1回分',
+    'dashboard.log_observation_hint': '血圧、症状、運動状態',
+    'dashboard.open_timeline': 'タイムラインを開く',
+    'dashboard.open_next_meal': '次の食事を開く',
+    'library.my_medications': '自分の薬',
+    'library.catalog': '食品と薬',
     'next_meal.title': '次の食事のおすすめ',
     'next_meal.subtitle':
         '次に食べる予定時刻を選んでください。保守的なルール経路は候補順を維持し、機序モデルは教育用の時間重なりトレースだけを追加して並べ替えません。ローカル AI は別系統の任意の安全リスト内再ランクです。',
@@ -3798,6 +5319,63 @@ final Map<String, Map<String, String>> _strings = {
     'reminders.web_title': 'この環境では定期システム通知を利用できません',
     'reminders.web_body':
         '予定はこの端末に保存されますが、Web 版、Windows 版、Linux 版ではアプリ終了中の定期通知を現在配信できません。',
+    'reminders.readiness_title': 'システム通知の配信準備状況',
+    'reminders.readiness_contract': '{platform} 能力契約 · {digest}',
+    'reminders.readiness_boundary':
+        '予定要求の完了やプラグイン識別情報の一致は、画面・ロック画面・バックグラウンドへの実配信を証明しません。',
+    'reminders.readiness_platform_android': 'Android',
+    'reminders.readiness_platform_ios': 'iOS',
+    'reminders.readiness_platform_macos': 'macOS',
+    'reminders.readiness_platform_web': 'Web',
+    'reminders.readiness_platform_windows': 'Windows',
+    'reminders.readiness_platform_linux': 'Linux',
+    'reminders.readiness_platform_unknown': '不明な環境またはカスタムゲートウェイ',
+    'reminders.readiness_local_plan': 'ローカル予定',
+    'reminders.readiness_adapter': '予定アダプター',
+    'reminders.readiness_schedule_request': '予定要求',
+    'reminders.readiness_permission_request': '権限要求',
+    'reminders.readiness_permission_inspection': '現在の権限確認',
+    'reminders.readiness_body_tap': '通知本文のタップ',
+    'reminders.readiness_cold_start': '通知によるコールドスタート',
+    'reminders.readiness_background_action': '通知のバックグラウンド操作',
+    'reminders.readiness_registry': 'プラグインの保留中レジストリ',
+    'reminders.readiness_visible_delivery': '画面への実配信',
+    'reminders.readiness_local_none': 'ローカル予定は未設定です',
+    'reminders.readiness_local_saved': 'この端末に保存済みです',
+    'reminders.readiness_adapter_plan_only': '予定の保存のみ。システム通知 API は呼び出しません',
+    'reminders.readiness_evidence_artifact_verified': '対象環境の成果物に結び付いた証拠で確認済み',
+    'reminders.readiness_evidence_implemented_unverified':
+        '実装済みですが、対象端末の成果物に結び付いた確認はありません',
+    'reminders.readiness_evidence_unavailable': '利用不可または未実装です',
+    'reminders.readiness_request_not_requested': '未送信です',
+    'reminders.readiness_request_applied': 'プラグイン要求は完了しました。実配信は未証明です',
+    'reminders.readiness_request_rolled_back':
+        '新しい要求を取り消して以前の予定を復元しました。実配信は未証明です',
+    'reminders.readiness_request_superseded': '新しいアカウントまたは予定に置き換えられました',
+    'reminders.readiness_request_unsupported': 'この能力契約では予定のみ保存します',
+    'reminders.readiness_request_failed': '要求失敗または識別情報未確認です',
+    'reminders.readiness_request_recovery_required': '依存する前に再照合が必要です',
+    'reminders.readiness_permission_not_requested': 'このセッションでは未要求です',
+    'reminders.readiness_permission_granted':
+        '権限要求の呼び出しは許可を返しました。現在の確認状態を参照してください',
+    'reminders.readiness_permission_denied':
+        '権限要求は許可を返しませんでした。利用者の明示的な拒否は未証明です',
+    'reminders.readiness_permission_unavailable':
+        '権限アダプターが利用できないか、この契約では権限を要求しません',
+    'reminders.readiness_permission_failed': '権限要求の呼び出しに失敗しました。利用者の拒否は未証明です',
+    'reminders.readiness_inspection_not_inspected': '現在の権限は未確認です',
+    'reminders.readiness_inspection_enabled': 'プラグイン確認では有効です。実配信は未証明です',
+    'reminders.readiness_inspection_disabled': 'プラグイン確認では有効になっていません',
+    'reminders.readiness_inspection_unavailable': '現在権限の確認アダプターを利用できません',
+    'reminders.readiness_inspection_failed': '現在権限の確認に失敗しました',
+    'reminders.readiness_registry_not_inspected': '未確認です',
+    'reminders.readiness_registry_matched':
+        'プラグイン報告はローカル予定と一致します。OS 配信の証明ではありません',
+    'reminders.readiness_registry_drift': 'プラグイン報告はローカル予定と一致しません',
+    'reminders.readiness_registry_uninspectable': 'プラグインの識別情報を読み取れません',
+    'reminders.readiness_registry_unsupported': 'この能力契約ではネイティブレジストリを確認しません',
+    'reminders.readiness_visible_unverified': '未確認です',
+    'reminders.readiness_visible_artifact_verified': '対象環境の成果物証拠で確認済みです',
     'reminders.empty_title': '記録リマインダーはまだありません',
     'reminders.empty_body': '食事または服薬の記録を促す文面と時刻を自分で設定できます。',
     'reminders.kind': '記録の種類',
@@ -3814,6 +5392,13 @@ final Map<String, Map<String, String>> _strings = {
         'Android では安全なロック画面に通知内容を表示しないよう要求します。Apple プラットフォームでは利用者のシステムプレビュー設定に従います。',
     'reminders.privacy_generic_boundary':
         'Android ではロック画面に基本情報だけを表示するよう要求します。Apple プラットフォームでは利用者のシステムプレビュー設定に従います。',
+    'reminders.locale_reconciliation_title': 'システム通知の言語が異なります',
+    'reminders.locale_reconciliation_body':
+        'アプリの言語が変更されました。現在の通知文を維持するか、この端末の全リマインダーを一括更新できます。どちらも入力したラベルは表示しません。',
+    'reminders.locale_retain_action': '現在の通知言語を維持',
+    'reminders.locale_update_action': 'すべて現在の言語に更新',
+    'reminders.locale_retained_confirmation': '現在のシステム通知言語を維持しました。',
+    'reminders.locale_updated_confirmation': '全システム通知を現在の言語で更新するよう要求しました。',
     'reminders.days': '繰り返す曜日',
     'reminders.next': '次回',
     'reminders.validation': '文面を入力し、曜日を1つ以上選択してください。',
@@ -4125,6 +5710,8 @@ final Map<String, Map<String, String>> _strings = {
     'severity.high': '高',
     'severity.critical': '重大',
     'missing.dose': '用量',
+    'data_integrity.dose_parseable': '解析可能な用量テキスト',
+    'data_integrity.dose_result_eligible': '結果利用可能な確認済み用量',
     'missing.formulation': '製剤情報',
     'missing.time': '服薬時刻',
     'missing.meal_time': '食事時刻',
@@ -4365,6 +5952,34 @@ final Map<String, Map<String, String>> _strings = {
         '固定用量のレボドパ配合剤です。他のレボドパ製剤と同様に高たんぱく食と鉄剤分離の注意を適用します。',
     'medication_note.drug_levodopa_benserazide':
         '米国外で使われるレボドパ配合剤です。他のレボドパ治療と同様にたんぱく質タイミングと鉄剤分離の注意を適用します。',
+    'observatory.dependency_closure.title': '依存関係クロージャの準備状況',
+    'observatory.dependency_closure.loading':
+        'チェックイン済みルートマニフェストを読み込み中 · クロージャ HOLD',
+    'observatory.dependency_closure.unavailable':
+        'HOLD · チェックイン済みルートマニフェストを利用できません',
+    'observatory.dependency_closure.loading_semantics':
+        '安定したアルゴリズム結果ルートのマニフェストを読み込んでいます。依存関係クロージャは HOLD のままです。',
+    'observatory.dependency_closure.unavailable_semantics':
+        '安定したアルゴリズム結果ルートのマニフェストを利用できません。依存関係クロージャは HOLD されています。',
+    'observatory.dependency_closure.semantics':
+        '安定して登録されたアルゴリズムルートが {count} 件あります。Analyzer {analyzer} は、宣言された完全一致バージョンのレビュー対象です。オフライン互換性エビデンスはこのビューにバンドルされず、ここでは実行されません。推移的依存関係クロージャは、ParkinSUM エッジジェネレーターの実装待ちで HOLD されています。',
+    'observatory.dependency_closure.summary':
+        '安定したルート {count} / {total} · 宣言済み Analyzer 対象 {analyzer} · 推移的クロージャ HOLD',
+    'observatory.dependency_closure.identity': '{schema} · {digest}… · {state}',
+    'observatory.dependency_closure.registry_chip': 'Registry マッピング：構造的に有効',
+    'observatory.dependency_closure.edge_chip': 'エッジジェネレーター：HOLD',
+    'observatory.dependency_closure.closure_chip': '順方向／逆方向クロージャ：HOLD',
+    'observatory.dependency_closure.details': 'アクセシブルな安定ルート表',
+    'observatory.dependency_closure.details_subtitle':
+        'プライマリライブラリのシードのみ。生成済み依存関係エッジはありません。',
+    'observatory.dependency_closure.table_semantics':
+        '安定したアルゴリズムルートの表です。列はアルゴリズム、論理ルート、結果シンク、正規パッケージ URI です。',
+    'observatory.dependency_closure.column_algorithm': 'アルゴリズム',
+    'observatory.dependency_closure.column_root': '論理ルート',
+    'observatory.dependency_closure.column_sink': '結果シンク',
+    'observatory.dependency_closure.column_uri': 'パッケージ URI',
+    'observatory.dependency_closure.boundary':
+        'このビューが証明するのは、チェックイン済みの Registry-ルート構造契約だけです。オフラインの Analyzer 互換性エビデンスはここにバンドルされず、実行もされません。コールグラフ、SCC、順方向／逆方向クロージャ、実行、正確なデータフロー、科学的または臨床的検証、安全性、利益、医療上の助言を表示または主張するものではありません。',
   },
   // ko / hi / es / vi / th / id / ru / pl / ar are now sourced from
   // `app_i18n_full_translations.dart`. They cover every visible UI key the
@@ -4380,6 +5995,172 @@ final Map<String, Map<String, String>> _strings = {
   'ru': kFullLocaleUiTranslationsExtra['ru']!,
   'pl': kFullLocaleUiTranslationsExtra['pl']!,
   'ar': kFullLocaleUiTranslationsExtra['ar']!,
+});
+
+Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
+  Map<String, Map<String, String>> translations,
+) => {
+  for (final entry in translations.entries)
+    entry.key: <String, String>{
+      ...?kPortableDataPackageUiTranslations[entry.key],
+      ...entry.value,
+      ...?kFoodCatalogProvenanceUiTranslations[entry.key],
+      ...?kFoodCandidateSnapshotUiTranslations[entry.key],
+      ...?_replayCapsuleSaveTranslations[entry.key],
+    },
+};
+
+const Map<String, Map<String, String>> _replayCapsuleSaveTranslations = {
+  'zh': {
+    'observatory.replay_capsule.save_action': '保存此合成重放',
+    'observatory.replay_capsule.save_already_saved': '此合成重放已保存',
+    'observatory.replay_capsule.saved_count': '已保存的合成重放：{count}',
+    'observatory.replay_capsule.save_disclosure':
+        '点击后才会将当前固定合成场景的重放胶囊写入本应用当前数据存储；不会自动保存。',
+    'observatory.replay_capsule.save_failure': '未能保存此合成重放胶囊，请重试。',
+    'observatory.replay_capsule.save_saving': '正在保存…',
+  },
+  'en': {
+    'observatory.replay_capsule.save_action': 'Save synthetic replay',
+    'observatory.replay_capsule.save_already_saved':
+        'This synthetic replay is saved',
+    'observatory.replay_capsule.saved_count':
+        'Saved synthetic replays: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Click to save this fixed synthetic scenario to the app’s current data store. Nothing is saved automatically.',
+    'observatory.replay_capsule.save_failure':
+        'Could not save this synthetic replay capsule. Try again.',
+    'observatory.replay_capsule.save_saving': 'Saving…',
+  },
+  'fr': {
+    'observatory.replay_capsule.save_action':
+        'Enregistrer cette relecture synthétique',
+    'observatory.replay_capsule.save_already_saved':
+        'Cette relecture synthétique est enregistrée',
+    'observatory.replay_capsule.saved_count':
+        'Relectures synthétiques enregistrées : {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Cliquez pour enregistrer ce scénario synthétique fixe dans le stockage actuel de l’application. Aucun enregistrement automatique.',
+    'observatory.replay_capsule.save_failure':
+        'Impossible d’enregistrer cette capsule de relecture synthétique. Réessayez.',
+    'observatory.replay_capsule.save_saving': 'Enregistrement…',
+  },
+  'ja': {
+    'observatory.replay_capsule.save_action': '合成リプレイを保存',
+    'observatory.replay_capsule.save_already_saved': 'この合成リプレイは保存済みです',
+    'observatory.replay_capsule.saved_count': '保存済みの合成リプレイ：{count}',
+    'observatory.replay_capsule.save_disclosure':
+        'クリックすると、固定された合成シナリオをアプリの現在のデータ保存先に保存します。自動保存は行いません。',
+    'observatory.replay_capsule.save_failure':
+        '合成リプレイカプセルを保存できませんでした。もう一度お試しください。',
+    'observatory.replay_capsule.save_saving': '保存中…',
+  },
+  'ko': {
+    'observatory.replay_capsule.save_action': '합성 재생 저장',
+    'observatory.replay_capsule.save_already_saved': '이 합성 재생은 저장되어 있습니다',
+    'observatory.replay_capsule.saved_count': '저장된 합성 재생: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        '클릭하면 고정된 합성 시나리오를 앱의 현재 데이터 저장소에 저장합니다. 자동 저장은 없습니다.',
+    'observatory.replay_capsule.save_failure':
+        '합성 재생 캡슐을 저장하지 못했습니다. 다시 시도하세요.',
+    'observatory.replay_capsule.save_saving': '저장 중…',
+  },
+  'hi': {
+    'observatory.replay_capsule.save_action': 'सिंथेटिक रीप्ले सहेजें',
+    'observatory.replay_capsule.save_already_saved':
+        'यह सिंथेटिक रीप्ले पहले से सहेजा गया है',
+    'observatory.replay_capsule.saved_count':
+        'सहेजे गए सिंथेटिक रीप्ले: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'क्लिक करने पर यह स्थिर सिंथेटिक परिदृश्य ऐप के मौजूदा डेटा स्टोर में सहेजा जाएगा। स्वतः सहेजना नहीं होता।',
+    'observatory.replay_capsule.save_failure':
+        'सिंथेटिक रीप्ले कैप्सूल सहेजा नहीं जा सका। फिर कोशिश करें।',
+    'observatory.replay_capsule.save_saving': 'सहेजा जा रहा है…',
+  },
+  'es': {
+    'observatory.replay_capsule.save_action': 'Guardar reproducción sintética',
+    'observatory.replay_capsule.save_already_saved':
+        'Esta reproducción sintética ya está guardada',
+    'observatory.replay_capsule.saved_count':
+        'Reproducciones sintéticas guardadas: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Al hacer clic, se guarda este escenario sintético fijo en el almacenamiento de datos actual de la aplicación. No se guarda automáticamente.',
+    'observatory.replay_capsule.save_failure':
+        'No se pudo guardar la cápsula de reproducción sintética. Inténtalo de nuevo.',
+    'observatory.replay_capsule.save_saving': 'Guardando…',
+  },
+  'vi': {
+    'observatory.replay_capsule.save_action': 'Lưu bản phát lại tổng hợp',
+    'observatory.replay_capsule.save_already_saved':
+        'Bản phát lại tổng hợp này đã được lưu',
+    'observatory.replay_capsule.saved_count':
+        'Số bản phát lại tổng hợp đã lưu: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Nhấn để lưu kịch bản tổng hợp cố định này vào kho dữ liệu hiện tại của ứng dụng. Ứng dụng không tự động lưu.',
+    'observatory.replay_capsule.save_failure':
+        'Không thể lưu gói phát lại tổng hợp. Hãy thử lại.',
+    'observatory.replay_capsule.save_saving': 'Đang lưu…',
+  },
+  'th': {
+    'observatory.replay_capsule.save_action': 'บันทึกการเล่นซ้ำสังเคราะห์',
+    'observatory.replay_capsule.save_already_saved':
+        'บันทึกการเล่นซ้ำสังเคราะห์นี้แล้ว',
+    'observatory.replay_capsule.saved_count':
+        'การเล่นซ้ำสังเคราะห์ที่บันทึกแล้ว: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'คลิกเพื่อบันทึกสถานการณ์สังเคราะห์แบบคงที่นี้ลงในที่เก็บข้อมูลปัจจุบันของแอป ไม่มีการบันทึกอัตโนมัติ',
+    'observatory.replay_capsule.save_failure':
+        'บันทึกแคปซูลการเล่นซ้ำสังเคราะห์ไม่ได้ โปรดลองอีกครั้ง',
+    'observatory.replay_capsule.save_saving': 'กำลังบันทึก…',
+  },
+  'id': {
+    'observatory.replay_capsule.save_action': 'Simpan pemutaran ulang sintetis',
+    'observatory.replay_capsule.save_already_saved':
+        'Pemutaran ulang sintetis ini sudah tersimpan',
+    'observatory.replay_capsule.saved_count':
+        'Pemutaran ulang sintetis tersimpan: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Klik untuk menyimpan skenario sintetis tetap ini ke penyimpanan data aplikasi saat ini. Tidak ada penyimpanan otomatis.',
+    'observatory.replay_capsule.save_failure':
+        'Kapsul pemutaran ulang sintetis tidak dapat disimpan. Coba lagi.',
+    'observatory.replay_capsule.save_saving': 'Menyimpan…',
+  },
+  'ru': {
+    'observatory.replay_capsule.save_action': 'Сохранить синтетический повтор',
+    'observatory.replay_capsule.save_already_saved':
+        'Этот синтетический повтор уже сохранён',
+    'observatory.replay_capsule.saved_count':
+        'Сохранено синтетических повторов: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Нажмите, чтобы сохранить этот фиксированный синтетический сценарий в текущее хранилище данных приложения. Автосохранения нет.',
+    'observatory.replay_capsule.save_failure':
+        'Не удалось сохранить капсулу синтетического повтора. Повторите попытку.',
+    'observatory.replay_capsule.save_saving': 'Сохранение…',
+  },
+  'pl': {
+    'observatory.replay_capsule.save_action': 'Zapisz syntetyczne odtworzenie',
+    'observatory.replay_capsule.save_already_saved':
+        'To syntetyczne odtworzenie jest już zapisane',
+    'observatory.replay_capsule.saved_count':
+        'Zapisane syntetyczne odtworzenia: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'Kliknij, aby zapisać ten stały scenariusz syntetyczny w bieżącym magazynie danych aplikacji. Zapis nie odbywa się automatycznie.',
+    'observatory.replay_capsule.save_failure':
+        'Nie udało się zapisać kapsuły syntetycznego odtworzenia. Spróbuj ponownie.',
+    'observatory.replay_capsule.save_saving': 'Zapisywanie…',
+  },
+  'ar': {
+    'observatory.replay_capsule.save_action': 'حفظ إعادة التشغيل الاصطناعية',
+    'observatory.replay_capsule.save_already_saved':
+        'إعادة التشغيل الاصطناعية هذه محفوظة بالفعل',
+    'observatory.replay_capsule.saved_count':
+        'عمليات إعادة التشغيل الاصطناعية المحفوظة: {count}',
+    'observatory.replay_capsule.save_disclosure':
+        'انقر لحفظ هذا السيناريو الاصطناعي الثابت في مخزن البيانات الحالي للتطبيق. لا يتم الحفظ تلقائيًا.',
+    'observatory.replay_capsule.save_failure':
+        'تعذر حفظ كبسولة إعادة التشغيل الاصطناعية. حاول مرة أخرى.',
+    'observatory.replay_capsule.save_saving': 'جارٍ الحفظ…',
+  },
 };
 
 const Map<String, String> _zhMedicationNameByGeneric = {

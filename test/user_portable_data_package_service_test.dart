@@ -2,12 +2,17 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
+import 'package:parkinsum_companion/domain/entities/personal_observation.dart';
+import 'package:parkinsum_companion/domain/entities/medication_assertion_reconciliation.dart';
 import 'package:parkinsum_companion/domain/entities/user_logging_reminder.dart';
+import 'package:parkinsum_companion/domain/usecases/portable_schema_migration_registry.dart';
+import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 import 'package:parkinsum_companion/domain/usecases/user_portable_data_package_service.dart';
 
 void main() {
@@ -28,16 +33,72 @@ void main() {
     expect(second.packageId, first.packageId);
     expect(second.contentSha256, first.contentSha256);
     expect(first.files.map((file) => file.path), userPortableDataFilePaths);
+    final exportedObservations =
+        _files(first.prettyJson)['observations.json'] as Map;
+    final observationRows = exportedObservations['records'] as List;
+    expect(
+      exportedObservations['availability'],
+      'captured_current_local_snapshot',
+    );
+    expect(observationRows, hasLength(4));
+    expect(first.prettyJson, isNot(contains('recorder_private_id')));
+    final symptom = observationRows.cast<Map>().singleWhere(
+      (row) => row['kind'] == 'symptom',
+    );
+    expect(symptom, isNot(contains('recorderId')));
+    expect(symptom['recorderRole'], 'package_owner');
+    expect(symptom['notes'], 'Owner-entered note retained in local export.');
+    final unknown = observationRows.cast<Map>().singleWhere(
+      (row) => row['kind'] == 'selfReportedMotorState',
+    );
+    expect(unknown['status'], 'unknown');
+    expect(unknown['motorState'], isNull);
 
     final preview = service.inspect(
       packageJson: first.prettyJson,
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.ready);
     expect(preview.mayProceedToFutureImport, isTrue);
     expect(preview.findings.last, contains('no record'));
   });
+
+  test(
+    'self-resigned observations preserve strict missingness and identity boundaries',
+    () {
+      final artifact = service.create(
+        snapshot: _snapshot(),
+        generatedAt: generatedAt,
+      );
+      final root = _root(artifact.prettyJson);
+      final files = Map<String, Object?>.from(root['files'] as Map);
+      final observations = Map<String, Object?>.from(
+        files['observations.json'] as Map,
+      );
+      final records = List<Object?>.from(observations['records'] as List);
+      final unknownMotor = Map<String, Object?>.from(
+        records.singleWhere(
+              (row) => (row as Map)['id'] == 'observation_motor_unknown',
+            )
+            as Map,
+      )..['motorState'] = 'off';
+      records[2] = unknownMotor;
+      observations['records'] = records;
+      files['observations.json'] = observations;
+      root['files'] = files;
+
+      final preview = service.inspect(
+        packageJson: _resign(root),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(preview.status, UserPortableDataPreviewStatus.corrupt);
+      expect(preview.findings.join(' '), contains('semantically invalid'));
+    },
+  );
 
   test(
     'async inspection preserves the synchronous validation result',
@@ -50,6 +111,7 @@ void main() {
       final preview = await service.inspectAsync(
         packageJson: artifact.prettyJson,
         currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
         currentScopeKind: _scopeKind,
       );
 
@@ -112,6 +174,451 @@ void main() {
     },
   );
 
+  test('portable package preserves and validates a local dose receipt', () {
+    final prepared = AdministrationDoseConfirmationCoordinator().prepare(
+      draft: Intake(
+        id: 'intake_confirmed',
+        drugId: 'drug_test',
+        takenAt: DateTime.utc(2026, 8, 17, 10),
+        dosageNote: '0.25 g',
+      ),
+      current: null,
+      expectedRecordRevisionDigest:
+          administrationDoseConfirmationAbsentRevisionDigest,
+      ownerScope: _scope,
+      operationId: 'portable_dose_fixture',
+      confirmationRequested: true,
+      assertionSource: AdministrationDoseAssertionSource.typed,
+      confirmationAction: 'timeline.explicit_checkbox',
+      uiContractVersion: 'timeline-dose-confirmation:1',
+      confirmedAt: DateTime.utc(2026, 8, 17, 10, 1),
+    );
+    final confirmed = prepared.intake!;
+    final artifact = service.create(
+      snapshot: _snapshot(intakes: <Intake>[confirmed]),
+      generatedAt: generatedAt,
+    );
+    final row =
+        ((_files(artifact.prettyJson)['intakes.json'] as List).single as Map);
+    final envelope = row['doseConfirmation'] as Map;
+    final receipt = envelope['receipt'] as Map;
+
+    expect(envelope['evidenceStatus'], 'receipt_present_unverified');
+    expect(envelope['invalidEvidenceDigest'], isNull);
+    expect(envelope['meaningBoundary'], contains('not FHIR conformance'));
+    final reconciliation = row['medicationReconciliation'] as Map;
+    final reconciliationEnvelope = reconciliation['envelope'] as Map;
+    expect(reconciliation['evidenceStatus'], 'envelope_present');
+    expect(reconciliationEnvelope['assertions'], hasLength(1));
+    expect(reconciliationEnvelope['decisions'], isEmpty);
+    final truth = row['doseTruth'] as Map;
+    expect((truth['parseability'] as Map)['status'], 'accepted');
+    expect((truth['confirmationVerification'] as Map)['status'], 'confirmed');
+    expect((truth['resultUse'] as Map)['eligible'], isTrue);
+    expect((truth['canonicalQuantity'] as Map)['value'], 250.0);
+    expect((truth['canonicalQuantity'] as Map)['unit'], 'mg');
+    final parseability = truth['parseability'] as Map;
+    final parseExpression = parseability['expression'] as Map;
+    final parsedUnit = parseExpression['unit'] as Map;
+    final parsedMapping = parsedUnit['mappingEvidence'] as Map;
+    final canonicalMapping =
+        (truth['canonicalQuantity'] as Map)['unitMappingEvidence'] as Map;
+    expect(parsedMapping['conversionNumerator'], 1000);
+    expect(parsedMapping['conversionDenominator'], 1);
+    expect(parsedMapping['sourceRevision'], parseability['grammar_digest']);
+    expect(canonicalMapping, parsedMapping);
+    expect(
+      receipt['receipt_digest'],
+      confirmed.doseConfirmation!.receiptDigest,
+    );
+    expect(receipt['owner_scope_digest'], isNot(_scope));
+    expect(artifact.prettyJson, isNot(contains(_scope)));
+    expect(
+      service
+          .inspect(
+            packageJson: artifact.prettyJson,
+            currentUserScope: _scope,
+            currentDoseOwnerScope: _scope,
+            currentScopeKind: _scopeKind,
+          )
+          .status,
+      UserPortableDataPreviewStatus.ready,
+    );
+  });
+
+  test(
+    'portable package preserves labeled v2 and accepts unnamed v1 assertions',
+    () {
+      MedicationAssertionNode sourceAssertion(
+        Intake intake, {
+        String? sourceDisplayLabel,
+      }) => MedicationAssertionNode.create(
+        ownerScope: _scope,
+        intakeId: intake.id,
+        medicationId: intake.drugId,
+        productIdentityDigest: medicationAssertionSnapshotDigest(null),
+        doseValue: null,
+        doseUnit: null,
+        route: null,
+        dosageForm: null,
+        releaseType: null,
+        evidenceClass: MedicationAssertionEvidenceClass.importedStatement,
+        sourceDisplayLabel: sourceDisplayLabel,
+        sourceArtifactId: 'source_portal',
+        sourceArtifactDigest: medicationAssertionSnapshotDigest('portal'),
+        sourceRevisionDigest: medicationAssertionSnapshotDigest('portal:1'),
+        actorIdentity: 'importer',
+        actorRole: MedicationAssertionActorRole.importer,
+        effectiveStart: intake.takenAt,
+        effectiveEnd: intake.takenAt,
+        timePrecision: MedicationAssertionTimePrecision.exact,
+        timeUncertaintyMinutes: 0,
+        timezoneOffsetMinutes: 0,
+        timezoneSource: MedicationAssertionTimezoneSource.sourceDeclared,
+        assertedAt: intake.takenAt,
+        importedAt: intake.takenAt,
+        recordedAt: intake.takenAt,
+        status: MedicationAssertionStatus.unknown,
+      );
+
+      final base = _intakes.first;
+      final labeledIntake = base.copyWith(
+        medicationAssertions: <MedicationAssertionNode>[
+          sourceAssertion(base, sourceDisplayLabel: 'Patient portal record'),
+        ],
+      );
+      final labeledArtifact = service.create(
+        snapshot: _snapshot(intakes: <Intake>[labeledIntake]),
+        generatedAt: generatedAt,
+      );
+      final labeledRow =
+          ((_files(labeledArtifact.prettyJson)['intakes.json'] as List).single
+              as Map);
+      final labeledEnvelope =
+          ((labeledRow['medicationReconciliation'] as Map)['envelope'] as Map);
+      final labeledAssertion =
+          ((labeledEnvelope['assertions'] as List).single as Map);
+      expect(labeledAssertion['schema_version'], 2);
+      expect(labeledAssertion['source_display_label'], 'Patient portal record');
+      expect(
+        service
+            .inspect(
+              packageJson: labeledArtifact.prettyJson,
+              currentUserScope: _scope,
+              currentDoseOwnerScope: _scope,
+              currentScopeKind: _scopeKind,
+            )
+            .status,
+        UserPortableDataPreviewStatus.ready,
+      );
+
+      final legacyIntake = base.copyWith(
+        medicationAssertions: <MedicationAssertionNode>[sourceAssertion(base)],
+      );
+      final legacyArtifact = service.create(
+        snapshot: _snapshot(intakes: <Intake>[legacyIntake]),
+        generatedAt: generatedAt,
+      );
+      final legacyRoot = _root(legacyArtifact.prettyJson);
+      final files = Map<String, Object?>.from(legacyRoot['files'] as Map);
+      final rows = List<Object?>.from(files['intakes.json'] as List);
+      final row = Map<String, Object?>.from(rows.single as Map);
+      final reconciliation = Map<String, Object?>.from(
+        row['medicationReconciliation'] as Map,
+      );
+      final envelope = Map<String, Object?>.from(
+        reconciliation['envelope'] as Map,
+      );
+      final assertions = List<Object?>.from(envelope['assertions'] as List);
+      final legacyJson = Map<String, Object?>.from(assertions.single as Map)
+        ..remove('identity_schema_version')
+        ..remove('source_display_label')
+        ..['schema'] = 'parkinsum.medication-assertion/1'
+        ..['schema_version'] = 1;
+      envelope['assertions'] = <Object?>[legacyJson];
+      reconciliation['envelope'] = envelope;
+      row['medicationReconciliation'] = reconciliation;
+      rows[0] = row;
+      files['intakes.json'] = rows;
+      legacyRoot['files'] = files;
+
+      final legacyPreview = service.inspect(
+        packageJson: _resign(legacyRoot),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(
+        legacyPreview.status,
+        UserPortableDataPreviewStatus.ready,
+        reason: legacyPreview.findings.join('; '),
+      );
+    },
+  );
+
+  test(
+    'self-consistent rehash cannot authorize a changed dose-unit factor',
+    () {
+      final confirmed = _confirmedDose(
+        id: 'intake_mapping_tamper',
+        dose: '0.25 g',
+        ownerScope: _scope,
+        confirmedAt: DateTime.utc(2026, 8, 17, 10, 1),
+      );
+      final artifact = service.create(
+        snapshot: _snapshot(intakes: <Intake>[confirmed]),
+        generatedAt: generatedAt,
+      );
+      final root = _root(artifact.prettyJson);
+      final files = Map<String, Object?>.from(root['files'] as Map);
+      final rows = List<Object?>.from(files['intakes.json'] as List);
+      final row = Map<String, Object?>.from(rows.single as Map);
+      final doseTruth = Map<String, Object?>.from(row['doseTruth'] as Map);
+      final parseability = Map<String, Object?>.from(
+        doseTruth['parseability'] as Map,
+      );
+      final expression = Map<String, Object?>.from(
+        parseability['expression'] as Map,
+      );
+      final unit = Map<String, Object?>.from(expression['unit'] as Map);
+      final parsedMapping = Map<String, Object?>.from(
+        unit['mappingEvidence'] as Map,
+      )..['conversionNumerator'] = 1;
+      unit['mappingEvidence'] = parsedMapping;
+      expression['unit'] = unit;
+      parseability['expression'] = expression;
+      doseTruth['parseability'] = parseability;
+      final canonical = Map<String, Object?>.from(
+        doseTruth['canonicalQuantity'] as Map,
+      );
+      final canonicalMapping = Map<String, Object?>.from(
+        canonical['unitMappingEvidence'] as Map,
+      )..['conversionNumerator'] = 1;
+      canonical['unitMappingEvidence'] = canonicalMapping;
+      doseTruth['canonicalQuantity'] = canonical;
+      row['doseTruth'] = doseTruth;
+      rows[0] = row;
+      files['intakes.json'] = rows;
+      root['files'] = files;
+
+      final preview = service.inspect(
+        packageJson: _resign(root),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(preview.status, UserPortableDataPreviewStatus.corrupt);
+      expect(preview.findings.join(' '), contains('unitMappingEvidence'));
+      expect(preview.mayProceedToFutureImport, isFalse);
+    },
+  );
+
+  test(
+    'schema v4 keeps package owner and raw dose owner separate and private',
+    () {
+      final confirmed = _confirmedDose(
+        id: 'intake_dual_scope',
+        dose: '100 mg',
+        ownerScope: _scope,
+        confirmedAt: DateTime.utc(2026, 8, 17, 10, 1),
+      );
+      final artifact = service.create(
+        snapshot: _snapshot(
+          userScope: _packageScope,
+          doseOwnerScope: _scope,
+          intakes: <Intake>[confirmed],
+        ),
+        generatedAt: generatedAt,
+      );
+
+      expect(artifact.prettyJson, isNot(contains(_packageScope)));
+      expect(artifact.prettyJson, isNot(contains(_scope)));
+      expect(
+        service
+            .inspect(
+              packageJson: artifact.prettyJson,
+              currentUserScope: _packageScope,
+              currentDoseOwnerScope: _scope,
+              currentScopeKind: _scopeKind,
+            )
+            .status,
+        UserPortableDataPreviewStatus.ready,
+      );
+      expect(
+        service
+            .inspect(
+              packageJson: artifact.prettyJson,
+              currentUserScope: _scope,
+              currentDoseOwnerScope: _scope,
+              currentScopeKind: _scopeKind,
+            )
+            .status,
+        UserPortableDataPreviewStatus.wrongOwner,
+      );
+      final wrongDoseOwner = service.inspect(
+        packageJson: artifact.prettyJson,
+        currentUserScope: _packageScope,
+        currentDoseOwnerScope: 'different_raw_dose_owner',
+        currentScopeKind: _scopeKind,
+      );
+      expect(wrongDoseOwner.status, UserPortableDataPreviewStatus.corrupt);
+      expect(wrongDoseOwner.findings.join(' '), contains('doseTruth.binding'));
+    },
+  );
+
+  test(
+    'low-entropy raw dose owner is excluded while stable digest linkability is disclosed',
+    () {
+      const localEmailScope = 'local_user@example.test';
+      final confirmed = _confirmedDose(
+        id: 'intake_low_entropy_owner',
+        dose: '100 mg',
+        ownerScope: localEmailScope,
+        confirmedAt: DateTime.utc(2026, 8, 17, 10, 1),
+      );
+      final first = service.create(
+        snapshot: _snapshot(
+          userScope: _packageScope,
+          doseOwnerScope: localEmailScope,
+          intakes: <Intake>[confirmed],
+        ),
+        generatedAt: generatedAt,
+      );
+      final second = service.create(
+        snapshot: _snapshot(
+          userScope: _packageScope,
+          doseOwnerScope: localEmailScope,
+          intakes: <Intake>[confirmed],
+        ),
+        generatedAt: generatedAt.add(const Duration(minutes: 1)),
+      );
+      Map receipt(String source) =>
+          (((_files(source)['intakes.json'] as List).single
+                      as Map)['doseConfirmation']
+                  as Map)['receipt']
+              as Map;
+      final privacy =
+          (_root(first.prettyJson)['manifest'] as Map)['privacyBoundary']
+              as Map;
+
+      expect(first.prettyJson, isNot(contains(localEmailScope)));
+      expect(second.prettyJson, isNot(contains(localEmailScope)));
+      expect(
+        receipt(first.prettyJson)['owner_scope_digest'],
+        receipt(second.prettyJson)['owner_scope_digest'],
+      );
+      expect(privacy['excluded'], contains('raw_dose_owner_scope'));
+      expect(privacy['identityLinkability'], contains('link artifacts'));
+      expect(privacy['identityLinkability'], contains('dictionary-matched'));
+      expect(privacy['notAClaim'], contains('anonymous or unlinkable'));
+    },
+  );
+
+  test('combined result gate holds stale raw dose despite a valid receipt', () {
+    final confirmed = _confirmedDose(
+      id: 'intake_stale_raw',
+      dose: '100 mg',
+      ownerScope: _scope,
+      confirmedAt: DateTime.utc(2026, 8, 17, 10, 1),
+    );
+    final staleRaw = confirmed.copyWith(dosageNote: '200 mg');
+    final artifact = service.create(
+      snapshot: _snapshot(intakes: <Intake>[staleRaw]),
+      generatedAt: generatedAt,
+    );
+    final row =
+        (_files(artifact.prettyJson)['intakes.json'] as List).single as Map;
+    final truth = row['doseTruth'] as Map;
+    final resultUse = truth['resultUse'] as Map;
+
+    expect(
+      (row['doseConfirmation'] as Map)['evidenceStatus'],
+      'receipt_present_unverified',
+    );
+    expect(resultUse['eligible'], isFalse);
+    expect(
+      resultUse['reasonCodes'],
+      contains('dose_confirmation.raw_expression_mismatch'),
+    );
+    expect(truth['canonicalQuantity'], isNull);
+    expect(
+      service
+          .inspect(
+            packageJson: artifact.prettyJson,
+            currentUserScope: _scope,
+            currentDoseOwnerScope: _scope,
+            currentScopeKind: _scopeKind,
+          )
+          .status,
+      UserPortableDataPreviewStatus.ready,
+    );
+  });
+
+  test('manifest createdAt is the dose-truth as-of boundary', () {
+    final futureConfirmed = _confirmedDose(
+      id: 'intake_future_confirmation',
+      dose: '100 mg',
+      ownerScope: _scope,
+      confirmedAt: generatedAt.add(const Duration(minutes: 1)),
+    );
+    final artifact = service.create(
+      snapshot: _snapshot(intakes: <Intake>[futureConfirmed]),
+      generatedAt: generatedAt,
+    );
+    final root = _root(artifact.prettyJson);
+    final row = ((root['files'] as Map)['intakes.json'] as List).single as Map;
+    final truth = row['doseTruth'] as Map;
+    final reasons = ((truth['resultUse'] as Map)['reasonCodes'] as List);
+
+    expect(
+      (root['manifest'] as Map)['createdAt'],
+      generatedAt.toIso8601String(),
+    );
+    expect(truth['observedAtUtc'], generatedAt.toIso8601String());
+    expect(reasons, contains('dose_confirmation.confirmed_after_observation'));
+    expect(reasons, contains('assertion_graph.evidence_after_observation'));
+    expect(truth['canonicalQuantity'], isNull);
+    expect(
+      service
+          .inspect(
+            packageJson: artifact.prettyJson,
+            currentUserScope: _scope,
+            currentDoseOwnerScope: _scope,
+            currentScopeKind: _scopeKind,
+          )
+          .status,
+      UserPortableDataPreviewStatus.ready,
+    );
+  });
+
+  test(
+    'canonical quantity normalizes mass to mg and preserves volume as mL',
+    () {
+      final volume = _confirmedDose(
+        id: 'intake_volume',
+        dose: '2.5 mL',
+        ownerScope: _scope,
+        confirmedAt: DateTime.utc(2026, 8, 17, 10, 1),
+      );
+      final artifact = service.create(
+        snapshot: _snapshot(intakes: <Intake>[volume]),
+        generatedAt: generatedAt,
+      );
+      final row =
+          (_files(artifact.prettyJson)['intakes.json'] as List).single as Map;
+      final canonical = (row['doseTruth'] as Map)['canonicalQuantity'] as Map;
+
+      expect(canonical['value'], 2.5);
+      expect(canonical['unit'], 'mL');
+      expect(canonical['milligrams'], isNull);
+      expect(canonical['dimension'], 'volume');
+      final mapping = canonical['unitMappingEvidence'] as Map;
+      expect(mapping['baseUnitCode'], 'mL');
+      expect(mapping['sourceDimension'], 'volume');
+      expect(mapping['targetDimension'], 'volume');
+    },
+  );
+
   test(
     'historical intake medication remains a truthful inactive selection target',
     () {
@@ -151,6 +658,7 @@ void main() {
             .inspect(
               packageJson: artifact.prettyJson,
               currentUserScope: _scope,
+              currentDoseOwnerScope: _scope,
               currentScopeKind: _scopeKind,
             )
             .status,
@@ -188,7 +696,169 @@ void main() {
         (_files(artifact.prettyJson)['reminders.json'] as List).single as Map;
     expect(reminder, isNot(contains('activationToken')));
     expect(reminder['activationTokenStatus'], 'excluded_from_portable_package');
+    expect(reminder['notificationPrivacyMode'], 'generic');
+    expect(reminder['notificationLocaleCode'], 'ar');
+    expect(reminder['notificationLocaleDecisionCode'], 'en');
+    expect(
+      reminder['sourcePresentationSha256'],
+      matches(RegExp(r'^[a-f0-9]{64}$')),
+    );
+    expect(
+      reminder['presentationIdentityStatus'],
+      'source_digest_only_recompute_on_target',
+    );
+    expect(
+      reminder['targetSchedulingConsentStatus'],
+      'required_before_target_permission_or_scheduling',
+    );
   });
+
+  test('schema v2 migrates to v4 preview and marks absent observations', () {
+    final artifact = service.create(
+      snapshot: _snapshot(),
+      generatedAt: generatedAt,
+    );
+    final preview = service.inspect(
+      packageJson: _legacyV2(artifact.prettyJson),
+      currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
+      currentScopeKind: _scopeKind,
+    );
+
+    expect(preview.status, UserPortableDataPreviewStatus.ready);
+    expect(preview.schemaVersion, 2);
+    expect(preview.schemaMigrationReceipt, isNotNull);
+    expect(preview.schemaMigrationReceipt?.sourceVersion, 2);
+    expect(preview.schemaMigrationReceipt?.targetVersion, 4);
+    expect(preview.schemaMigrationReceipt?.decision, 'preview_only_no_write');
+    expect(preview.proposedMigrations, hasLength(2));
+    expect(preview.proposedMigrations.first, contains('minimal English'));
+    expect(
+      preview.proposedMigrations.last,
+      contains('does not contain personal observations'),
+    );
+    expect(preview.reminderPresentation.totalCount, 1);
+    expect(preview.reminderPresentation.enabledIntentCount, 1);
+    expect(preview.reminderPresentation.targetConsentRequiredCount, 1);
+    expect(preview.reminderPresentation.legacyDefaultCount, 1);
+    expect(preview.reminderPresentation.privacyModes, ['minimal']);
+    expect(preview.reminderPresentation.scheduledLanguageCodes, ['en']);
+    expect(
+      (preview.schemaMigrationReceipt?.warnings ?? const <String>[]).last,
+      contains('marks them unavailable'),
+    );
+    expect(
+      preview.findings.join(' '),
+      contains('no record, preference, reminder, or account state was changed'),
+    );
+  });
+
+  test(
+    'schema v3 migration marks observations unavailable without inference',
+    () {
+      final artifact = service.create(
+        snapshot: _snapshot(),
+        generatedAt: generatedAt,
+      );
+      final preview = service.inspect(
+        packageJson: _legacyV3(artifact.prettyJson),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+
+      expect(preview.status, UserPortableDataPreviewStatus.ready);
+      expect(preview.schemaVersion, 3);
+      expect(preview.schemaMigrationReceipt?.targetVersion, 4);
+      expect(
+        preview.schemaMigrationReceipt?.warnings.single,
+        contains('marks them unavailable'),
+      );
+      expect(
+        preview.proposedMigrations.single,
+        contains('does not contain personal observations'),
+      );
+    },
+  );
+
+  test(
+    'presentation intent validates shape while source policy drift stays visible',
+    () {
+      final artifact = service.create(
+        snapshot: _snapshot(),
+        generatedAt: generatedAt,
+      );
+      final invalid = _root(artifact.prettyJson);
+      final invalidFiles = Map<String, Object?>.from(invalid['files'] as Map);
+      final invalidRows = List<Object?>.from(
+        invalidFiles['reminders.json'] as List,
+      );
+      final invalidReminder = Map<String, Object?>.from(
+        invalidRows.single as Map,
+      )..['notificationPrivacyMode'] = 'public_details';
+      invalidRows[0] = invalidReminder;
+      invalidFiles['reminders.json'] = invalidRows;
+      invalid['files'] = invalidFiles;
+      final invalidPreview = service.inspect(
+        packageJson: _resign(invalid),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(invalidPreview.status, UserPortableDataPreviewStatus.corrupt);
+      expect(
+        invalidPreview.findings.join(' '),
+        contains('notificationPrivacyMode'),
+      );
+
+      final unsupportedLocale = _root(artifact.prettyJson);
+      final unsupportedFiles = Map<String, Object?>.from(
+        unsupportedLocale['files'] as Map,
+      );
+      final unsupportedRows = List<Object?>.from(
+        unsupportedFiles['reminders.json'] as List,
+      );
+      final unsupportedReminder = Map<String, Object?>.from(
+        unsupportedRows.single as Map,
+      )..['notificationLocaleCode'] = 'de';
+      unsupportedRows[0] = unsupportedReminder;
+      unsupportedFiles['reminders.json'] = unsupportedRows;
+      unsupportedLocale['files'] = unsupportedFiles;
+      final unsupportedPreview = service.inspect(
+        packageJson: _resign(unsupportedLocale),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(unsupportedPreview.status, UserPortableDataPreviewStatus.corrupt);
+      expect(
+        unsupportedPreview.findings.join(' '),
+        contains('notificationLocaleCode'),
+      );
+
+      final drift = _root(artifact.prettyJson);
+      final driftFiles = Map<String, Object?>.from(drift['files'] as Map);
+      final driftRows = List<Object?>.from(
+        driftFiles['reminders.json'] as List,
+      );
+      final driftReminder = Map<String, Object?>.from(driftRows.single as Map)
+        ..['sourcePresentationSha256'] =
+            '0000000000000000000000000000000000000000000000000000000000000000';
+      driftRows[0] = driftReminder;
+      driftFiles['reminders.json'] = driftRows;
+      drift['files'] = driftFiles;
+      final driftPreview = service.inspect(
+        packageJson: _resign(drift),
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(driftPreview.status, UserPortableDataPreviewStatus.ready);
+      expect(driftPreview.reminderPresentation.currentPolicyMatchCount, 0);
+      expect(driftPreview.reminderPresentation.currentPolicyDriftCount, 1);
+      expect(driftPreview.reminderPresentation.localeDecisionMismatchCount, 1);
+    },
+  );
 
   test('owner mismatch and checksum tampering fail closed', () {
     final artifact = service.create(
@@ -198,6 +868,7 @@ void main() {
     final wrongOwner = service.inspect(
       packageJson: artifact.prettyJson,
       currentUserScope: 'different_scope',
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(wrongOwner.status, UserPortableDataPreviewStatus.wrongOwner);
@@ -212,6 +883,7 @@ void main() {
     final corrupt = service.inspect(
       packageJson: jsonEncode(tampered),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(corrupt.status, UserPortableDataPreviewStatus.corrupt);
@@ -223,10 +895,11 @@ void main() {
       snapshot: _snapshot(),
       generatedAt: generatedAt,
     );
-    final newer = _root(artifact.prettyJson)..['schemaVersion'] = 2;
+    final newer = _root(artifact.prettyJson)..['schemaVersion'] = 5;
     final newerPreview = service.inspect(
       packageJson: jsonEncode(newer),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(
@@ -234,11 +907,27 @@ void main() {
       UserPortableDataPreviewStatus.unsupportedSchema,
     );
     expect(newerPreview.mayProceedToFutureImport, isFalse);
+    expect(newerPreview.proposedMigrations, isEmpty);
+
+    final legacyV1 = _root(artifact.prettyJson)..['schemaVersion'] = 1;
+    final legacyPreview = service.inspect(
+      packageJson: jsonEncode(legacyV1),
+      currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
+      currentScopeKind: _scopeKind,
+    );
+    expect(
+      legacyPreview.status,
+      UserPortableDataPreviewStatus.unsupportedSchema,
+    );
+    expect(legacyPreview.proposedMigrations.single, contains('schema 1 to 4'));
+    expect(legacyPreview.mayProceedToFutureImport, isFalse);
 
     final fractional = _root(artifact.prettyJson)..['schemaVersion'] = 1.5;
     final fractionalPreview = service.inspect(
       packageJson: jsonEncode(fractional),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(
@@ -250,6 +939,7 @@ void main() {
     final unknownPreview = service.inspect(
       packageJson: jsonEncode(unknown),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(
@@ -276,6 +966,7 @@ void main() {
     final preview = service.inspect(
       packageJson: jsonEncode(root),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.corrupt);
@@ -285,6 +976,7 @@ void main() {
       () => service.create(
         snapshot: UserPortableDataSnapshot(
           userScope: _scope,
+          doseOwnerScope: _scope,
           scopeKind: 'unreviewed_scope',
           profile: UserProfile.defaults(),
           activeDrugIds: const <String>[],
@@ -319,6 +1011,7 @@ void main() {
     final preview = service.inspect(
       packageJson: _resign(root),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.unsupportedSchema);
@@ -431,6 +1124,7 @@ void main() {
       final preview = service.inspect(
         packageJson: _resign(root),
         currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
         currentScopeKind: _scopeKind,
       );
       expect(
@@ -460,6 +1154,7 @@ void main() {
     final countPreview = service.inspect(
       packageJson: jsonEncode(countRoot),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(countPreview.status, UserPortableDataPreviewStatus.corrupt);
@@ -473,6 +1168,7 @@ void main() {
     final kindPreview = service.inspect(
       packageJson: jsonEncode(kindRoot),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(kindPreview.status, isNot(UserPortableDataPreviewStatus.ready));
@@ -492,6 +1188,7 @@ void main() {
     final preview = service.inspect(
       packageJson: jsonEncode(root),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.corrupt);
@@ -504,6 +1201,7 @@ void main() {
     final preview = service.inspect(
       packageJson: '{"private":"$privateSentinel","invalid":tru}',
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.corrupt);
@@ -525,11 +1223,57 @@ void main() {
     final preview = guarded.inspect(
       packageJson: '{"format":"a","\\u0066ormat":"b"}',
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.corrupt);
     expect(preview.findings.single, contains('Duplicate JSON object keys'));
     expect(decodeCalls, 0);
+  });
+
+  test('non-interoperable Unicode is rejected before document decoding', () {
+    for (final source in <String>[
+      r'{"value":"\ud800"}',
+      r'{"value":"\udc00"}',
+      r'{"value":"\ufdd0"}',
+      r'{"value":"\ud83f\udffe"}',
+      '{"value":"${String.fromCharCode(0xd800)}"}',
+    ]) {
+      var decodeCalls = 0;
+      final guarded = UserPortableDataPackageService(
+        decodeJson: (value) {
+          decodeCalls += 1;
+          return jsonDecode(value);
+        },
+      );
+      final preview = guarded.inspect(
+        packageJson: source,
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(preview.status, UserPortableDataPreviewStatus.corrupt);
+      expect(preview.findings.single, contains('Unicode'));
+      expect(decodeCalls, 0);
+    }
+  });
+
+  test('a valid escaped non-BMP scalar reaches the full decoder', () {
+    var decodeCalls = 0;
+    final guarded = UserPortableDataPackageService(
+      decodeJson: (source) {
+        decodeCalls += 1;
+        return jsonDecode(source);
+      },
+    );
+    final preview = guarded.inspect(
+      packageJson: r'{"value":"\ud83d\ude80"}',
+      currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
+      currentScopeKind: _scopeKind,
+    );
+    expect(preview.status, UserPortableDataPreviewStatus.corrupt);
+    expect(decodeCalls, 1);
   });
 
   test('oversize numeric token is rejected before document decoding', () {
@@ -544,6 +1288,7 @@ void main() {
       packageJson:
           '{"value":${List<String>.filled(userPortableDataMaxNumberTokenChars + 1, '1').join()}}',
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(preview.status, UserPortableDataPreviewStatus.corrupt);
@@ -565,6 +1310,7 @@ void main() {
     final preview = guarded.inspect(
       packageJson: source,
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     stopwatch.stop();
@@ -585,6 +1331,7 @@ void main() {
       final preview = service.inspect(
         packageJson: artifact.canonicalJson,
         currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
         currentScopeKind: _scopeKind,
         existingRecordIds: const <String, Set<String>>{
           'intakes.json': <String>{'intake_zero'},
@@ -646,6 +1393,7 @@ void main() {
       final preview = service.inspect(
         packageJson: resigned,
         currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
         currentScopeKind: _scopeKind,
       );
       expect(preview.status, UserPortableDataPreviewStatus.corrupt);
@@ -658,6 +1406,7 @@ void main() {
     final bytes = tiny.inspect(
       packageJson: '{"padding":"${List.filled(80, 'x').join()}"}',
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(bytes.status, UserPortableDataPreviewStatus.corrupt);
@@ -674,6 +1423,7 @@ void main() {
     final obviousOversize = decoderSpy.inspect(
       packageJson: List<String>.filled(65, 'x').join(),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(obviousOversize.status, UserPortableDataPreviewStatus.corrupt);
@@ -684,6 +1434,7 @@ void main() {
           '${List.filled(userPortableDataMaxJsonDepth + 1, '[').join()}'
           '${List.filled(userPortableDataMaxJsonDepth + 1, ']').join()}',
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(deep.status, UserPortableDataPreviewStatus.corrupt);
@@ -694,6 +1445,7 @@ void main() {
         'value': List.filled(userPortableDataMaxStringBytes + 1, 'x').join(),
       }),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(longString.status, UserPortableDataPreviewStatus.corrupt);
@@ -704,6 +1456,7 @@ void main() {
         for (var i = 0; i <= userPortableDataMaxMapFields; i++) 'f$i': i,
       }),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(wideMap.status, UserPortableDataPreviewStatus.corrupt);
@@ -733,14 +1486,16 @@ void main() {
     final records = service.inspect(
       packageJson: jsonEncode(overRecords),
       currentUserScope: _scope,
+      currentDoseOwnerScope: _scope,
       currentScopeKind: _scopeKind,
     );
     expect(records.status, UserPortableDataPreviewStatus.corrupt);
-    expect(records.findings.single, contains('limit is'));
+    expect(records.findings.join(' '), contains('limit is'));
   });
 }
 
 const _scope = 'firebase_uid_Q7yN8Zx5X2';
+const _packageScope = 'opaque_export_capability_R4m2V9k8P6';
 const _scopeKind = 'firebase_authenticated_account';
 const _patientId = 'patient-id-that-must-not-export';
 const _email = 'sensitive@example.test';
@@ -772,6 +1527,8 @@ UserPortableDataSnapshot _snapshot({
   bool reverse = false,
   Iterable<String>? activeDrugIds,
   Iterable<Intake>? intakes,
+  String userScope = _scope,
+  String doseOwnerScope = _scope,
 }) {
   var values = intakes?.toList() ?? List<Intake>.from(_intakes);
   if (reverse) values = values.reversed.toList();
@@ -833,6 +1590,60 @@ UserPortableDataSnapshot _snapshot({
       weekdays: {1, 3, 5},
       enabled: true,
       activationToken: _activationToken,
+      notificationPrivacyMode: ReminderNotificationPrivacyMode.generic,
+      notificationLocaleCode: 'ar',
+      notificationLocaleDecisionCode: 'en',
+    ),
+  ];
+  var observations = <PersonalObservation>[
+    PersonalObservation.create(
+      id: 'observation_symptom',
+      kind: PersonalObservationKind.symptom,
+      occurredAt: DateTime.utc(2026, 8, 17, 9),
+      recordedAt: DateTime.utc(2026, 8, 17, 9, 5),
+      originalTimezone: 'America/Toronto',
+      source: PersonalObservationSource.selfReported,
+      recorderId: 'recorder_private_id',
+      status: PersonalObservationStatus.recorded,
+      symptomLabel: 'Tremor',
+      severity: 4,
+      notes: 'Owner-entered note retained in local export.',
+    ),
+    PersonalObservation.create(
+      id: 'observation_bp',
+      kind: PersonalObservationKind.bloodPressure,
+      occurredAt: DateTime.utc(2026, 8, 17, 10),
+      recordedAt: DateTime.utc(2026, 8, 17, 10, 2),
+      originalTimezone: 'America/Toronto',
+      source: PersonalObservationSource.deviceManual,
+      recorderId: 'recorder_private_id',
+      status: PersonalObservationStatus.recorded,
+      systolic: 122.5,
+      diastolic: 81,
+      unit: PersonalObservation.bloodPressureUnit,
+      posture: BloodPressurePosture.sitting,
+    ),
+    PersonalObservation.create(
+      id: 'observation_motor_unknown',
+      kind: PersonalObservationKind.selfReportedMotorState,
+      occurredAt: DateTime.utc(2026, 8, 17, 11),
+      recordedAt: DateTime.utc(2026, 8, 17, 11, 1),
+      originalTimezone: 'America/Toronto',
+      source: PersonalObservationSource.selfReported,
+      recorderId: 'recorder_private_id',
+      status: PersonalObservationStatus.unknown,
+    ),
+    PersonalObservation.create(
+      id: 'observation_bp_unmeasured',
+      kind: PersonalObservationKind.bloodPressure,
+      occurredAt: DateTime.utc(2026, 8, 17, 12),
+      recordedAt: DateTime.utc(2026, 8, 17, 12, 2),
+      originalTimezone: 'America/Toronto',
+      source: PersonalObservationSource.caregiverReported,
+      recorderId: 'recorder_private_id',
+      status: PersonalObservationStatus.notMeasured,
+      unit: PersonalObservation.bloodPressureUnit,
+      posture: BloodPressurePosture.unknown,
     ),
   ];
   final drugs = <DrugDefinition>[
@@ -854,9 +1665,11 @@ UserPortableDataSnapshot _snapshot({
     foods.setAll(0, foods.reversed.toList());
     drugs.setAll(0, drugs.reversed.toList());
     reminders.setAll(0, reminders.reversed.toList());
+    observations = observations.reversed.toList();
   }
   return UserPortableDataSnapshot(
-    userScope: _scope,
+    userScope: userScope,
+    doseOwnerScope: doseOwnerScope,
     scopeKind: _scopeKind,
     profile: UserProfile.defaults()
         .copyWith(
@@ -877,7 +1690,35 @@ UserPortableDataSnapshot _snapshot({
     medicationCatalog: drugs,
     foodCatalog: foods,
     reminders: reminders,
+    observations: observations,
   );
+}
+
+Intake _confirmedDose({
+  required String id,
+  required String dose,
+  required String ownerScope,
+  required DateTime confirmedAt,
+}) {
+  final prepared = AdministrationDoseConfirmationCoordinator().prepare(
+    draft: Intake(
+      id: id,
+      drugId: 'drug_test',
+      takenAt: DateTime.utc(2026, 8, 17, 10),
+      dosageNote: dose,
+    ),
+    current: null,
+    expectedRecordRevisionDigest:
+        administrationDoseConfirmationAbsentRevisionDigest,
+    ownerScope: ownerScope,
+    operationId: 'portable_$id',
+    confirmationRequested: true,
+    assertionSource: AdministrationDoseAssertionSource.typed,
+    confirmationAction: 'timeline.explicit_checkbox',
+    uiContractVersion: 'timeline-dose-confirmation:1',
+    confirmedAt: confirmedAt,
+  );
+  return prepared.intake!;
 }
 
 Map<String, Object?> _root(String json) =>
@@ -885,6 +1726,53 @@ Map<String, Object?> _root(String json) =>
 
 Map<String, Object?> _files(String json) =>
     Map<String, Object?>.from(_root(json)['files'] as Map);
+
+String _legacyV2(String source) {
+  final root = _root(source)..['schemaVersion'] = 2;
+  final files = Map<String, Object?>.from(root['files'] as Map);
+  files.remove('observations.json');
+  final rows = List<Object?>.from(files['reminders.json'] as List);
+  for (var index = 0; index < rows.length; index++) {
+    final row = Map<String, Object?>.from(rows[index] as Map)
+      ..remove('notificationPrivacyMode')
+      ..remove('notificationLocaleCode')
+      ..remove('notificationLocaleDecisionCode')
+      ..remove('sourcePresentationSchema')
+      ..remove('sourcePresentationSha256')
+      ..remove('presentationIdentityStatus')
+      ..remove('targetSchedulingConsentStatus');
+    rows[index] = row;
+  }
+  files['reminders.json'] = rows;
+  root['files'] = files;
+  final manifest = Map<String, Object?>.from(root['manifest'] as Map);
+  final privacy = Map<String, Object?>.from(manifest['privacyBoundary'] as Map)
+    ..['scope'] =
+        'Current loaded profile, selections, intakes, meals, this-device reminders, and relationship audit links.'
+    ..['excluded'] = PortableSchemaMigrationRegistry.excludedValuesForVersion(
+      2,
+    );
+  manifest['privacyBoundary'] = privacy;
+  root['manifest'] = manifest;
+  return _resign(root);
+}
+
+String _legacyV3(String source) {
+  final root = _root(source)..['schemaVersion'] = 3;
+  final files = Map<String, Object?>.from(root['files'] as Map)
+    ..remove('observations.json');
+  root['files'] = files;
+  final manifest = Map<String, Object?>.from(root['manifest'] as Map);
+  final privacy = Map<String, Object?>.from(manifest['privacyBoundary'] as Map)
+    ..['scope'] =
+        'Current loaded profile, selections, intakes, meals, this-device reminders, and relationship audit links.'
+    ..['excluded'] = PortableSchemaMigrationRegistry.excludedValuesForVersion(
+      3,
+    );
+  manifest['privacyBoundary'] = privacy;
+  root['manifest'] = manifest;
+  return _resign(root);
+}
 
 String _resign(Map<String, Object?> root) {
   final files = Map<String, Object?>.from(root['files'] as Map);
@@ -894,12 +1782,15 @@ String _resign(Map<String, Object?> root) {
   final contentSha = _digest(_canonical(files));
   integrity['contentSha256'] = contentSha;
   final packageId = _digest(
-    'parkinsum-portable-package-v1|${owner['bindingSha256']}|$contentSha',
+    'parkinsum-portable-package-v${root['schemaVersion']}|'
+    '${owner['bindingSha256']}|$contentSha',
   );
   manifest['packageId'] = packageId;
   manifest['integrity'] = integrity;
   manifest['files'] = <Object?>[
-    for (final path in userPortableDataFilePaths)
+    for (final path in PortableSchemaMigrationRegistry.filePathsForVersion(
+      root['schemaVersion'] as int,
+    ))
       <String, Object?>{
         'path': path,
         'sha256': _digest(_canonical(files[path])),
@@ -912,6 +1803,12 @@ String _resign(Map<String, Object?> root) {
 
 int _count(Object? value) {
   if (value is List) return value.length;
+  if (value is Map && value['records'] is List) {
+    return (value['records'] as List).length;
+  }
+  if (value is Map && value['records'] is List) {
+    return (value['records'] as List).length;
+  }
   if (value is Map && value['links'] is List) {
     return (value['links'] as List).length;
   }

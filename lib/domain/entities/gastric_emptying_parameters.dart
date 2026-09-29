@@ -9,6 +9,62 @@ library;
 
 import '../usecases/model_assumption_registry.dart';
 
+/// Stable field identities for the complete reviewed gastric-emptying
+/// configuration boundary.
+///
+/// The two structural records are emitted by the configuration provenance
+/// manifest, while the trace-provider record is emitted from the algorithm
+/// registry. Together with the fourteen numeric records they form the exact
+/// declared field set used by the completeness witness.
+abstract final class GastricEmptyingParameterIds {
+  static const String solidLagMinutes = 'ge.solid.lag_minutes';
+  static const String solidHalfMinutes = 'ge.solid.half_minutes';
+  static const String liquidLagMinutes = 'ge.liquid.lag_minutes';
+  static const String liquidHalfMinutes = 'ge.liquid.half_minutes';
+  static const String referenceMealCalories = 'ge.size.reference_kcal';
+  static const String fatSlowdownMultiplier = 'ge.fat.slowdown_multiplier';
+  static const String fatFractionThreshold = 'ge.fat.fraction_threshold';
+  static const String fiberSlowdownMultiplier = 'ge.fiber.slowdown_multiplier';
+  static const String mixedMealUncertaintyBoost =
+      'ge.mixed_meal.uncertainty_boost';
+  static const String overlapUncertaintyBoost = 'ge.overlap.uncertainty_boost';
+  static const String fatUncertaintyBoost = 'ge.fat.uncertainty_boost';
+  static const String highCalorieUncertaintyBoost =
+      'ge.highcal.uncertainty_boost';
+  static const String highCalorieFractionThreshold =
+      'ge.highcal.fraction_threshold';
+  static const String timeScaleSensitivityFraction =
+      'ge.population.time_scale_sensitivity_fraction';
+  static const String generatorStructure = 'gastric.structure.generator';
+  static const String outputIntegrityContract =
+      'gastric.structure.output_integrity';
+  static const String traceProvider = 'trace_provider.gastric_emptying';
+
+  static const Set<String> numeric = <String>{
+    solidLagMinutes,
+    solidHalfMinutes,
+    liquidLagMinutes,
+    liquidHalfMinutes,
+    referenceMealCalories,
+    fatSlowdownMultiplier,
+    fatFractionThreshold,
+    fiberSlowdownMultiplier,
+    mixedMealUncertaintyBoost,
+    overlapUncertaintyBoost,
+    fatUncertaintyBoost,
+    highCalorieUncertaintyBoost,
+    highCalorieFractionThreshold,
+    timeScaleSensitivityFraction,
+  };
+
+  static const Set<String> completeCoverage = <String>{
+    ...numeric,
+    generatorStructure,
+    outputIntegrityContract,
+    traceProvider,
+  };
+}
+
 final class GastricEmptyingParameter<T extends num> {
   final String id;
   final String label;
@@ -40,6 +96,11 @@ final class GastricEmptyingParameter<T extends num> {
 }
 
 final class GastricEmptyingParameterSet {
+  static const String schema = 'parkinsum.gastric-parameter-set/1';
+  static const String reviewedDefaultId =
+      'gastric_emptying_population_sensitivity';
+  static const String reviewedDefaultVersion = '2026.09.02-v3';
+
   final String id;
   final String version;
   final String lastReviewed;
@@ -84,11 +145,11 @@ final class GastricEmptyingParameterSet {
   /// with substantial inter-subject variance, not single fitted constants.
   factory GastricEmptyingParameterSet.literatureInformedDefault() {
     return GastricEmptyingParameterSet(
-      id: 'gastric_emptying_population_sensitivity',
-      version: '2026.08.17-v2',
-      lastReviewed: '2026-08-17',
+      id: reviewedDefaultId,
+      version: reviewedDefaultVersion,
+      lastReviewed: '2026-09-02',
       solidLagMinutes: GastricEmptyingParameter<double>(
-        id: 'ge.solid.lag_minutes',
+        id: GastricEmptyingParameterIds.solidLagMinutes,
         label: 'Solid meal lag (minutes before linear emptying begins)',
         value: 20.0,
         sourceRefs: [
@@ -104,7 +165,7 @@ final class GastricEmptyingParameterSet {
             'variance; chosen value is a midrange illustrative anchor.',
       ),
       solidHalfMinutes: GastricEmptyingParameter<double>(
-        id: 'ge.solid.half_minutes',
+        id: GastricEmptyingParameterIds.solidHalfMinutes,
         label: 'Solid meal half-emptying time (minutes)',
         value: 90.0,
         sourceRefs: [
@@ -120,7 +181,7 @@ final class GastricEmptyingParameterSet {
             'and broad population ranges; 90 minutes is an illustrative anchor.',
       ),
       liquidLagMinutes: GastricEmptyingParameter<double>(
-        id: 'ge.liquid.lag_minutes',
+        id: GastricEmptyingParameterIds.liquidLagMinutes,
         label: 'Liquid meal lag (minutes)',
         value: 0.0,
         sourceRefs: [
@@ -133,7 +194,7 @@ final class GastricEmptyingParameterSet {
             'zero minutes is an illustrative selected value.',
       ),
       liquidHalfMinutes: GastricEmptyingParameter<double>(
-        id: 'ge.liquid.half_minutes',
+        id: GastricEmptyingParameterIds.liquidHalfMinutes,
         label: 'Liquid meal half-emptying time (minutes)',
         value: 15.0,
         sourceRefs: [
@@ -146,7 +207,7 @@ final class GastricEmptyingParameterSet {
             'illustrative anchor in the 10–20 min direction.',
       ),
       referenceMealCalories: GastricEmptyingParameter<double>(
-        id: 'ge.size.reference_kcal',
+        id: GastricEmptyingParameterIds.referenceMealCalories,
         label: 'Reference meal calories used for the size multiplier',
         value: 400.0,
         sourceRefs: ['src.internal.prototype.heuristic'],
@@ -156,7 +217,7 @@ final class GastricEmptyingParameterSet {
             'reality but treated as monotonic here.',
       ),
       fatSlowdownMultiplier: GastricEmptyingParameter<double>(
-        id: 'ge.fat.slowdown_multiplier',
+        id: GastricEmptyingParameterIds.fatSlowdownMultiplier,
         label:
             'Multiplier applied to half-emptying when fat ≥ threshold fraction',
         value: 1.5,
@@ -171,7 +232,7 @@ final class GastricEmptyingParameterSet {
             'exact multiplier is illustrative.',
       ),
       fatFractionThreshold: GastricEmptyingParameter<double>(
-        id: 'ge.fat.fraction_threshold',
+        id: GastricEmptyingParameterIds.fatFractionThreshold,
         label:
             'Fraction of total kcal from fat above which the multiplier applies',
         value: 0.3,
@@ -180,7 +241,7 @@ final class GastricEmptyingParameterSet {
         limitation: 'Threshold is illustrative.',
       ),
       fiberSlowdownMultiplier: GastricEmptyingParameter<double>(
-        id: 'ge.fiber.slowdown_multiplier',
+        id: GastricEmptyingParameterIds.fiberSlowdownMultiplier,
         label: 'Multiplier applied to half-emptying for high-fiber meals',
         value: 1.1,
         sourceRefs: [
@@ -193,7 +254,7 @@ final class GastricEmptyingParameterSet {
             'multiplier is small and illustrative.',
       ),
       mixedMealUncertaintyBoost: GastricEmptyingParameter<int>(
-        id: 'ge.mixed_meal.uncertainty_boost',
+        id: GastricEmptyingParameterIds.mixedMealUncertaintyBoost,
         label:
             'Integer increment added to the uncertainty score when fiber is high',
         value: 1,
@@ -202,7 +263,7 @@ final class GastricEmptyingParameterSet {
         limitation: 'Integer step is illustrative.',
       ),
       overlapUncertaintyBoost: GastricEmptyingParameter<int>(
-        id: 'ge.overlap.uncertainty_boost',
+        id: GastricEmptyingParameterIds.overlapUncertaintyBoost,
         label:
             'Integer increment added to the uncertainty score for overlapping meals',
         value: 1,
@@ -213,7 +274,7 @@ final class GastricEmptyingParameterSet {
             'uncertainty; magnitude is illustrative.',
       ),
       fatUncertaintyBoost: GastricEmptyingParameter<int>(
-        id: 'ge.fat.uncertainty_boost',
+        id: GastricEmptyingParameterIds.fatUncertaintyBoost,
         label:
             'Integer increment added to the uncertainty score when fat ≥ threshold',
         value: 1,
@@ -228,7 +289,7 @@ final class GastricEmptyingParameterSet {
             'step. Magnitude is illustrative.',
       ),
       highCalorieUncertaintyBoost: GastricEmptyingParameter<int>(
-        id: 'ge.highcal.uncertainty_boost',
+        id: GastricEmptyingParameterIds.highCalorieUncertaintyBoost,
         label:
             'Integer increment added to the uncertainty score for high-calorie meals',
         value: 1,
@@ -243,7 +304,7 @@ final class GastricEmptyingParameterSet {
             'step. Magnitude is illustrative.',
       ),
       highCalorieFractionThreshold: GastricEmptyingParameter<double>(
-        id: 'ge.highcal.fraction_threshold',
+        id: GastricEmptyingParameterIds.highCalorieFractionThreshold,
         label:
             'Multiple of the reference meal calories above which a meal is "high calorie"',
         value: 1.5,
@@ -252,7 +313,7 @@ final class GastricEmptyingParameterSet {
         limitation: 'Threshold (×reference kcal) is illustrative.',
       ),
       timeScaleSensitivityFraction: GastricEmptyingParameter<double>(
-        id: 'ge.population.time_scale_sensitivity_fraction',
+        id: GastricEmptyingParameterIds.timeScaleSensitivityFraction,
         label: 'One-way time-scale sensitivity fraction',
         value: 0.24,
         sourceRefs: [
@@ -312,9 +373,14 @@ final class GastricEmptyingParameterSet {
         errors.add('parameter_limitation_empty:${parameter.id}');
       }
       if (parameter.sourceRefs.isEmpty ||
-          parameter.sourceRefs.any((source) => source.trim().isEmpty)) {
+          parameter.sourceRefs.any((source) => source.trim().isEmpty) ||
+          parameter.sourceRefs.toSet().length != parameter.sourceRefs.length) {
         errors.add('parameter_source_refs_invalid:${parameter.id}');
       }
+    }
+    if (semanticIds.length != GastricEmptyingParameterIds.numeric.length ||
+        !semanticIds.containsAll(GastricEmptyingParameterIds.numeric)) {
+      errors.add('parameter_id_set_incomplete_or_unsupported');
     }
 
     void bounded(
@@ -364,6 +430,7 @@ final class GastricEmptyingParameterSet {
   }
 
   Map<String, dynamic> toJson() => {
+    r'$schema': schema,
     'parameter_set_id': id,
     'parameter_set_version': version,
     'last_reviewed': lastReviewed,

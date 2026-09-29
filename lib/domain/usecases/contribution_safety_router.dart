@@ -101,8 +101,12 @@ class ContributionSafetyRouter {
       }
 
       // Keyword risk scanning over added content + pre-matched keywords.
-      final hay = ('${c.addedContent}\n${c.matchedKeywords.join('\n')}')
-          .toLowerCase();
+      // Keep both views separate for medical-claim phrases: addedContent owns
+      // the surrounding text, while matchedKeywords may be a context-free
+      // collector hint and must not erase a boundary established by that text.
+      final addedContent = c.addedContent.toLowerCase();
+      final matchedKeywords = c.matchedKeywords.join('\n').toLowerCase();
+      final hay = '$addedContent\n$matchedKeywords';
       _scan(
         c,
         hay,
@@ -113,16 +117,12 @@ class ContributionSafetyRouter {
         'Possible clinical-advice phrasing.',
         'Replace with non-prescriptive, scanner-safe boundary text.',
       );
-      _scan(
+      _scanMedicalClaims(
         c,
-        hay,
-        _medicalClaimPhrases,
-        ContributionRiskCategory.medicalClaimRisk,
+        addedContent,
+        matchedKeywords,
         categories,
         findings,
-        'Possible unsupported medical/clinical claim.',
-        'Use "not clinically calibrated" / "carries no clinical-validation '
-            'claim" instead.',
       );
       _scan(
         c,
@@ -318,15 +318,95 @@ class ContributionSafetyRouter {
   /// real match — `medication_schedule: ...` and `mrn: ...` still fire.
   static final Map<String, RegExp> _phraseMatchers = {};
 
+  /// Exact non-claim boundaries for medical phrases that otherwise look like
+  /// positive claims to a lexical scanner.
+  ///
+  /// These are deliberately complete constructions rather than a generic
+  /// `not ... phrase` exception. New wording remains blocked until it is
+  /// reviewed and added explicitly.
+  static final Map<String, List<RegExp>> _medicalBoundaryMatchers = {
+    'clinically validated': [
+      RegExp(
+        r'(?<![A-Za-z0-9_])not\s+clinically\s+validated(?![A-Za-z0-9_])',
+        caseSensitive: false,
+      ),
+    ],
+    'clinical validation claim': [
+      RegExp(
+        r'(?<![A-Za-z0-9_])not\s+a\s+scientific\s+or\s+clinical\s+validation\s+claim(?![A-Za-z0-9_])',
+        caseSensitive: false,
+      ),
+      RegExp(
+        r'(?<![A-Za-z0-9_])carries\s+no\s+clinical(?:-|\s+)validation\s+claim(?![A-Za-z0-9_])',
+        caseSensitive: false,
+      ),
+    ],
+  };
+
   bool _containsPhrase(String hay, String phrase) {
-    final matcher = _phraseMatchers.putIfAbsent(
+    return _phraseMatcher(phrase).hasMatch(hay);
+  }
+
+  RegExp _phraseMatcher(String phrase) {
+    return _phraseMatchers.putIfAbsent(
       phrase,
       () => RegExp(
         '(?<![A-Za-z0-9_])${RegExp.escape(phrase)}(?![A-Za-z0-9_])',
         caseSensitive: false,
       ),
     );
-    return matcher.hasMatch(hay);
+  }
+
+  void _scanMedicalClaims(
+    ContributionChange c,
+    String addedContent,
+    String matchedKeywords,
+    Set<String> categories,
+    List<ContributionRiskFinding> findings,
+  ) {
+    for (final phrase in _medicalClaimPhrases) {
+      final phraseMatches = _phraseMatcher(phrase).allMatches(addedContent);
+      final boundaryMatches = <RegExpMatch>[
+        for (final matcher in _medicalBoundaryMatchers[phrase] ?? const [])
+          ...matcher.allMatches(addedContent),
+      ];
+      final hasUnsafeContentMatch = phraseMatches.any(
+        (match) => !boundaryMatches.any(
+          (boundary) =>
+              boundary.start <= match.start && boundary.end >= match.end,
+        ),
+      );
+
+      // A collector hint has no sentence context. Preserve it as fail-closed
+      // evidence only when the authoritative added text does not contain an
+      // exact reviewed boundary for the same phrase. Any unsafe occurrence in
+      // addedContent always wins, including when a safe boundary also exists.
+      final hasRecognizedBoundary = boundaryMatches.isNotEmpty;
+      final hasContextFreeMatch =
+          _containsPhrase(matchedKeywords, phrase) && !hasRecognizedBoundary;
+
+      if (hasUnsafeContentMatch || hasContextFreeMatch) {
+        categories.add(ContributionRiskCategory.medicalClaimRisk);
+        findings.add(
+          _f(
+            c.allowlisted
+                ? ContributionRiskSeverity.info
+                : ContributionRiskSeverity.blocker,
+            ContributionRiskCategory.medicalClaimRisk,
+            c.path,
+            c.allowlisted
+                ? 'Possible unsupported medical/clinical claim. '
+                      '(allowlisted detector/scanner file — informational).'
+                : 'Possible unsupported medical/clinical claim.',
+            matched: phrase,
+            review:
+                'Use "not clinically calibrated" / "carries no '
+                'clinical-validation claim" instead.',
+          ),
+        );
+        return; // one medical-claim finding per change is enough.
+      }
+    }
   }
 
   void _scan(

@@ -1,12 +1,26 @@
 plugins {
     id("com.android.application")
-    // START: FlutterFire Configuration
-    id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val isReminderAttestationBuild =
+    providers.gradleProperty("PARKINSUM_REMINDER_ATTESTATION")
+        .map { it.equals("true", ignoreCase = true) }
+        .getOrElse(false)
+val configuredApplicationId =
+    if (isReminderAttestationBuild) {
+        "com.parkinsum.companion.reminderattestation"
+    } else {
+        "com.parkinsum.companion"
+    }
+val configuredApplicationLabel =
+    if (isReminderAttestationBuild) {
+        "ParkinSUM Reminder Attestation"
+    } else {
+        "ParkinSUM Companion"
+    }
 
 android {
     namespace = "com.parkinsum.companion"
@@ -24,7 +38,8 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.parkinsum.companion"
+        applicationId = configuredApplicationId
+        manifestPlaceholders["applicationLabel"] = configuredApplicationLabel
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

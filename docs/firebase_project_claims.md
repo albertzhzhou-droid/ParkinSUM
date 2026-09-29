@@ -13,9 +13,11 @@ Use separate Firebase projects for real dev/stage/prod isolation.
 | stage | production-like acceptance | `parkinsum-companion-stage` | test users and accepted test snapshots |
 | prod | real release | `parkinsum-companion` | production access control and retention |
 
-Current local config includes web Firebase options for `parkinsum-companion-dev`,
-`parkinsum-companion-stage`, and `parkinsum-companion`. Dev/stage non-web app
-configs are not generated and intentionally fail fast at runtime.
+Current local config includes keyless web Firebase metadata for
+`parkinsum-companion-dev`, `parkinsum-companion-stage`, and
+`parkinsum-companion`. The restricted client key is injected per build through
+`PARKINSUM_FIREBASE_API_KEY`. Dev/stage non-web app configs are not generated
+and intentionally fail fast at runtime.
 
 Dev status as of 2026-05-21:
 

@@ -61,6 +61,9 @@ jobs:
       - name: Build local-mode Android debug APK
         run: flutter build apk --debug --dart-define=PARKINSUM_BACKEND=local
 
+      - name: Export resolved Android runtime dependency graph
+        run: npm run open-source:android-gradle-graph
+
       # The source contract is checked in verify:all, but only this job owns a
       # real merged Android manifest. Comparing artifact permissions and the
       # deny-backup attributes here prevents merge-time drift from bypassing
@@ -70,6 +73,17 @@ jobs:
           node tool/store_privacy_contract_check.mjs
           --android-manifest
           build/app/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml
+
+      - name: Verify Flutter-generated notices in release artifacts
+        run: npm run open-source:release-evidence:test && npm run open-source:release-evidence
+
+      - name: Upload open-source release evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: open-source-release-evidence
+          path: build/open_source_release_evidence/
+          if-no-files-found: warn
 
   node-preflight:
     name: Node public preflight
@@ -96,7 +110,14 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Set up Java for Firestore Emulator
+      - name: Set up Go for the independent CQL parser check
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.8'
+          cache: true
+          cache-dependency-path: tool/google_cql_differential/go.sum
+
+      - name: Set up Java 21 for Firestore Emulator and CQF JVM checks
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -106,6 +127,9 @@ jobs:
         run: |
           flutter pub get
           npm ci
+
+      - name: Compare synthetic CQL across CQL execution paths
+        run: npm run cql:diff
 
       - name: Run public repository preflight
         run: npm run public:preflight
@@ -190,7 +214,7 @@ jobs:
       # locally. The report is timestamp-free and diffs cleanly.
       - name: Upload verification report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: verify-all-report
           path: build/verify_all/

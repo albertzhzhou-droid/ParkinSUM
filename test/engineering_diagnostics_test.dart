@@ -61,7 +61,8 @@ void main() {
       await pumpFeaturePage(
         tester,
         const EngineeringDiagnosticsPage(),
-        surfaceSize: const Size(1170, 5200),
+        surfaceSize: const Size(1170, 10000),
+        devicePixelRatio: 1,
       );
       // The checks run in a post-frame callback.
       await tester.pump();
@@ -77,17 +78,92 @@ void main() {
         'Mechanistic replay',
         'Safe-copy template registry',
       ]) {
-        expect(find.text(title), findsOneWidget, reason: '$title missing');
+        final check = find.text(title);
+        await tester.scrollUntilVisible(
+          check,
+          240,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(check, findsOneWidget, reason: '$title missing');
       }
+      final evidenceSearch = find.byKey(
+        const Key('open-evidence-source-metadata-search'),
+      );
+      await tester.scrollUntilVisible(
+        evidenceSearch,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(evidenceSearch, findsOneWidget);
+      await tester.tap(evidenceSearch);
+      await tester.pumpAndSettle();
+      expect(find.text('Evidence source search'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      final conditionPreview = find.byKey(
+        const Key('open-fhir-r4-condition-preview'),
+      );
+      await tester.scrollUntilVisible(
+        conditionPreview,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(conditionPreview, findsOneWidget);
+      await tester.tap(conditionPreview);
+      await tester.pumpAndSettle();
+      expect(find.text('FHIR R4 Condition preview'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      final encounterPreview = find.byKey(
+        const Key('open-fhir-r4-encounter-preview'),
+      );
+      await tester.scrollUntilVisible(
+        encounterPreview,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(encounterPreview);
+      await tester.pumpAndSettle();
+      expect(find.text('FHIR R4 Encounter preview'), findsOneWidget);
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      final medicationAdministration = find.byKey(
+        const Key('open-fhir-r4-medication-administration-preview'),
+      );
+      await tester.scrollUntilVisible(
+        medicationAdministration,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(medicationAdministration);
+      await tester.pumpAndSettle();
+      expect(
+        find.text('FHIR R4 MedicationAdministration preview'),
+        findsOneWidget,
+      );
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      final medicationDispense = find.byKey(
+        const Key('open-fhir-r4-medication-dispense-preview'),
+      );
+      await tester.scrollUntilVisible(
+        medicationDispense,
+        240,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(medicationDispense);
+      await tester.pumpAndSettle();
+      expect(find.text('FHIR R4 MedicationDispense preview'), findsOneWidget);
     });
 
     testWidgets('reports pass when the gates are clean', (tester) async {
       await pumpFeaturePage(
         tester,
         const EngineeringDiagnosticsPage(),
-        surfaceSize: const Size(1170, 5200),
+        surfaceSize: const Size(1170, 8000),
+        devicePixelRatio: 1,
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
       // A clean tree should show no blocker/error labels anywhere.
       expect(find.textContaining('blocker'), findsNothing);
       expect(find.text('error'), findsNothing);

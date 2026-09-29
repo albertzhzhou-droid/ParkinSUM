@@ -31,14 +31,22 @@ final class PrivacySafeSupportCollectionException implements Exception {
 /// stack traces, paths, endpoints, and account state are neither retained nor
 /// accepted by [PrivacySafeSupportSnapshot].
 final class PrivacySafeSupportSnapshotService {
-  const PrivacySafeSupportSnapshotService({this.beforeCopyDiagnostic});
+  const PrivacySafeSupportSnapshotService({
+    this.beforeCopyDiagnostic,
+    this.stopwatchFactory,
+  });
 
   /// Test seam proving that arbitrary failures are reduced to stable codes.
   /// Production leaves this null and no thrown object is retained.
   final void Function()? beforeCopyDiagnostic;
 
+  /// Makes budget checks deterministic in tests without changing the production
+  /// wall-clock budget or diagnostic work.
+  @visibleForTesting
+  final Stopwatch Function()? stopwatchFactory;
+
   PrivacySafeSupportSnapshot collect() {
-    final stopwatch = Stopwatch()..start();
+    final stopwatch = (stopwatchFactory?.call() ?? Stopwatch())..start();
     final checks = <PrivacySafeSupportDiagnosticCheck>[];
 
     int? safeCopyTemplateCount;

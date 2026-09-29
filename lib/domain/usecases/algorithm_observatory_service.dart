@@ -1,19 +1,33 @@
 import '../../algorithm_sdk/algorithm_component_graph_identity.dart';
 import '../../algorithm_sdk/algorithm_configuration_identity.dart';
+import '../../core/models/food_item.dart';
+import '../../core/models/meal.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/algorithm_descriptor.dart';
 import '../entities/algorithm_trace_node.dart';
+import '../entities/dose_expression.dart';
 import '../entities/gastric_emptying_parameters.dart';
+import '../entities/gastric_structural_uncertainty.dart';
+import '../entities/input_quality.dart';
+import '../entities/medication_entry_validation.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/mechanistic_event_ledger.dart';
+import '../entities/mechanistic_replay_capsule.dart';
 import '../entities/meal_composition.dart';
+import '../entities/protein_distribution.dart';
 import '../entities/protein_source.dart';
 import '../entities/time_axis_events.dart';
+import 'dosage_note_parser.dart';
 import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
+import 'mechanistic_event_ledger_authorization.dart';
 import 'mechanistic_event_ledger_builder.dart';
+import 'mechanistic_replay_capsule_service.dart';
 import 'mechanistic_next_meal_scorer.dart';
 import 'medication_entry_validator.dart';
+import 'input_quality_gate.dart';
+import 'gastric_structural_uncertainty_service.dart';
+import 'get_protein_trend_usecase.dart';
 import 'time_axis_builder.dart';
 
 enum ObservatoryScenario { mixedReference, highFatProtein, incompleteData }
@@ -30,6 +44,9 @@ class AlgorithmObservatorySnapshot {
   final AlgorithmConfigurationIdentity configurationIdentity;
   final AlgorithmTraceNode explanationTree;
   final MechanisticEventLedger eventLedger;
+  final MechanisticLedgerAuthorizationAssessment ledgerAuthorization;
+  final MechanisticReplayCapsule replayCapsule;
+  final GastricStructuralUncertaintyReport? gastricStructuralUncertainty;
 
   const AlgorithmObservatorySnapshot({
     required this.scenario,
@@ -41,30 +58,76 @@ class AlgorithmObservatorySnapshot {
     required this.configurationIdentity,
     required this.explanationTree,
     required this.eventLedger,
+    required this.ledgerAuthorization,
+    required this.replayCapsule,
+    required this.gastricStructuralUncertainty,
   });
 }
 
 /// Builds deterministic, non-personal demonstration traces with the production
 /// models. The fixed anchor makes screenshots and tests replayable.
 class AlgorithmObservatoryService {
-  static const AlgorithmTraceProviderContract traceProviderContract =
-      AlgorithmTraceProviderContract(
-        providerId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
-        algorithmIds: [
-          'meal_composition_normalizer',
-          'gastric_emptying',
-          'levodopa_absorption_opportunity',
-          'amino_acid_competition',
-          'mechanistic_conflict',
-          'mechanistic_candidate_scorer',
-        ],
-      );
+  static const AlgorithmTraceProviderContract
+  traceProviderContract = AlgorithmTraceProviderContract(
+    providerId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
+    algorithmIds: [
+      'meal_composition_normalizer',
+      'medication_entry_validator',
+      'input_quality_gate',
+      'time_axis_builder',
+      'gastric_emptying',
+      'levodopa_absorption_opportunity',
+      'amino_acid_competition',
+      'mechanistic_conflict',
+      'mechanistic_candidate_scorer',
+      'mechanistic_lossless_replay_capsule',
+      'protein_trend',
+      'dosage_note_parser',
+      'gastric_structural_uncertainty_shadow_ensemble',
+      'protein_distribution',
+    ],
+    fixtureSchema: 'parkinsum.algorithm-observatory-snapshot/1',
+    fixtureRevision: 'synthetic-observatory-v5',
+    lifecycle:
+        'register_eager_snapshot_for_each_declared_scenario;dispose_immutable_value_not_applicable',
+    routeId: 'app-tools.observatory',
+    routeSourcePath: 'lib/features/main_shell/app_destinations.dart',
+    providerSourcePath:
+        'lib/domain/usecases/algorithm_observatory_service.dart',
+    uiSurfaceKeysByAlgorithm: {
+      'meal_composition_normalizer': 'observatory-explanation-tree',
+      'medication_entry_validator': 'observatory-explanation-tree',
+      'input_quality_gate': 'observatory-explanation-tree',
+      'time_axis_builder': 'observatory-explanation-tree',
+      'gastric_emptying': 'chart-panel-gastric-emptying',
+      'levodopa_absorption_opportunity': 'chart-panel-absorption-competition',
+      'amino_acid_competition': 'chart-panel-absorption-competition',
+      'mechanistic_conflict': 'observatory-conflict-panel',
+      'mechanistic_candidate_scorer': 'observatory-candidate-panel',
+      'mechanistic_lossless_replay_capsule':
+          'observatory-mechanistic-lossless-replay-capsule',
+      'protein_trend': 'observatory-explanation-tree',
+      'dosage_note_parser': 'observatory-explanation-tree',
+      'gastric_structural_uncertainty_shadow_ensemble':
+          'chart-panel-gastric-structural-uncertainty',
+      'protein_distribution': 'observatory-explanation-tree',
+    },
+    executableTestPaths: [
+      'test/algorithm_observatory_service_test.dart',
+      'test/algorithm_registry_coverage_test.dart',
+      'test/algorithm_observatory_page_test.dart',
+      'test/mechanistic_replay_capsule_test.dart',
+    ],
+  );
 
   final MealCompositionNormalizer normalizer;
   final MedicationEntryValidator medicationValidator;
   final TimeAxisBuilder timeAxisBuilder;
   final MechanisticConflictEngine conflictEngine;
   final MechanisticNextMealScorer candidateScorer;
+  final GastricStructuralUncertaintyService gastricStructuralUncertaintyService;
+  final MechanisticLedgerAuthorizer ledgerAuthorizer;
+  final MechanisticReplayCapsuleRoundTripper replayRoundTripper;
   late final AlgorithmConfigurationIdentity configurationIdentity;
 
   AlgorithmObservatoryService({
@@ -73,20 +136,33 @@ class AlgorithmObservatoryService {
     TimeAxisBuilder? timeAxisBuilder,
     MechanisticConflictEngine? conflictEngine,
     MechanisticNextMealScorer? candidateScorer,
+    GastricStructuralUncertaintyService? gastricStructuralUncertaintyService,
+    MechanisticLedgerAuthorizer? ledgerAuthorizer,
+    MechanisticReplayCapsuleRoundTripper? replayRoundTripper,
     AlgorithmConfigurationIdentity? configurationIdentity,
   }) : normalizer = normalizer ?? MealCompositionNormalizer(),
        medicationValidator = medicationValidator ?? MedicationEntryValidator(),
        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
        conflictEngine = conflictEngine ?? MechanisticConflictEngine(),
        candidateScorer =
-           candidateScorer ??
-           MechanisticNextMealScorer(engine: conflictEngine) {
+           candidateScorer ?? MechanisticNextMealScorer(engine: conflictEngine),
+       gastricStructuralUncertaintyService =
+           gastricStructuralUncertaintyService ??
+           const GastricStructuralUncertaintyService(),
+       ledgerAuthorizer =
+           ledgerAuthorizer ??
+           const MechanisticEventLedgerAuthorizationService(),
+       replayRoundTripper =
+           replayRoundTripper ?? const MechanisticReplayCapsuleService() {
     final hasInjectedComponent =
         normalizer != null ||
         medicationValidator != null ||
         timeAxisBuilder != null ||
         conflictEngine != null ||
-        candidateScorer != null;
+        candidateScorer != null ||
+        gastricStructuralUncertaintyService != null ||
+        ledgerAuthorizer != null ||
+        replayRoundTripper != null;
     if (hasInjectedComponent && configurationIdentity == null) {
       throw ArgumentError(
         'Every injected Observatory component requires an explicit matching '
@@ -98,6 +174,7 @@ class AlgorithmObservatoryService {
         AlgorithmConfigurationIdentity.defaults(
           gastricParameters:
               this.conflictEngine.gastricEmptyingModel.parameters,
+          absorptionParameters: this.conflictEngine.absorptionModel.parameters,
           scoringParameters: this.candidateScorer.scoringParameters,
         );
     AlgorithmComponentGraphIdentityValidator.validateExecutionGraph(
@@ -122,6 +199,9 @@ class AlgorithmObservatoryService {
     );
 
     final anchor = DateTime.utc(2026, 1, 1, 8);
+    // Keep evidence-currency evaluation stable for this synthetic replay while
+    // the production engine uses a caller-supplied or current assessment time.
+    final evidenceAsOfUtc = DateTime.utc(2026, 8, 19);
     final medication = medicationValidator.validate(
       const RawMedicationEntry(
         activeIngredients: ['carbidopa', 'levodopa'],
@@ -171,59 +251,115 @@ class AlgorithmObservatoryService {
       ],
       userDefinedWindow: window,
     );
-    final conflict = conflictEngine.evaluate(
-      context: context,
-      mealCompositionsById: {composition.id: composition},
-      resultId: 'observatory_${scenario.name}',
-    );
-    final candidateScores = candidateScorer.score(
-      baseContext: context,
-      baseMealCompositionsById: {composition.id: composition},
-      candidates: _candidates,
-      userDefinedWindow: window,
-      candidateMetadata: {
-        'oats': CandidateMetadata(
-          completeness: 1,
-          authorityScore: 0.8,
-          jurisdictionMatchScore: 1,
-          provenanceQuality: 0.8,
-          jurisdiction: 'US',
-        ),
-        'yogurt': CandidateMetadata(
-          completeness: 1,
-          authorityScore: 0.8,
-          jurisdictionMatchScore: 1,
-          provenanceQuality: 0.8,
-          jurisdiction: 'US',
-        ),
-      },
-    );
+    final inputQuality =
+        InputQualityGate(medicationValidator: medicationValidator).evaluate(
+          InputQualityGateInput(
+            medicationValidation: medication,
+            productStrengthMetadataOnly: true,
+            mealComposition: composition,
+            candidateMetadataPresent: true,
+            userDefinedWindow: window,
+          ),
+        );
     final gastricParameters = conflictEngine.gastricEmptyingModel.parameters;
+    final compositions = <String, MealComposition>{composition.id: composition};
     final eventLedger = const MechanisticEventLedgerBuilder().build(
       ledgerId: 'observatory_${scenario.name}_ledger',
       context: context,
-      mealCompositionsById: {composition.id: composition},
+      mealCompositionsById: compositions,
       configurationDigest: configurationIdentity.sha256Digest,
       createdAtUtc: anchor,
       sourceId: 'synthetic:observatory',
       revisionId: 'observatory_fixture_v1',
       synthetic: true,
     );
+    final replay = replayRoundTripper.captureAndRestore(
+      capsuleId: 'observatory_${scenario.name}_replay',
+      generatedAtUtc: anchor,
+      ledger: eventLedger,
+      context: context,
+      mealCompositionsById: compositions,
+      expectedConfigurationSha256: configurationIdentity.sha256Digest,
+    );
+    final authorization = ledgerAuthorizer.authorize(
+      ledger: replay.restored.ledger,
+      context: replay.restored.context,
+      mealCompositionsById: replay.restored.mealCompositionsById,
+      expectedConfigurationSha256: configurationIdentity.sha256Digest,
+    );
+    final authorizedView = authorization.view;
+    final conflict = authorizedView == null
+        ? MechanisticConflictResult.blockedIntegrity(
+            id: 'observatory_${scenario.name}',
+            reason: MechanisticInteractionType.insufficientMealContext,
+            integrityReasons: authorization.assessment.findings,
+            sourceRefs: const [mechanisticLedgerAuthorizationSchema],
+          )
+        : conflictEngine.evaluate(
+            context: authorizedView.context,
+            mealCompositionsById: authorizedView.mealCompositionsById,
+            resultId: 'observatory_${scenario.name}',
+            evidenceAsOfUtc: evidenceAsOfUtc,
+          );
+    final candidateScores = authorizedView == null
+        ? const <MechanisticCandidateScore>[]
+        : candidateScorer.score(
+            baseContext: authorizedView.context,
+            baseMealCompositionsById: authorizedView.mealCompositionsById,
+            candidates: _candidates,
+            userDefinedWindow: window,
+            evidenceAsOfUtc: evidenceAsOfUtc,
+            candidateMetadata: {
+              'oats': CandidateMetadata(
+                completeness: 1,
+                authorityScore: 0.8,
+                jurisdictionMatchScore: 1,
+                provenanceQuality: 0.8,
+                jurisdiction: 'US',
+              ),
+              'yogurt': CandidateMetadata(
+                completeness: 1,
+                authorityScore: 0.8,
+                jurisdictionMatchScore: 1,
+                provenanceQuality: 0.8,
+                jurisdiction: 'US',
+              ),
+            },
+          );
+    final primaryEmptyingProfile = conflict.primaryEmptyingProfile;
+    final gastricStructuralUncertainty =
+        primaryEmptyingProfile == null ||
+            !primaryEmptyingProfile.hasModeledOutput
+        ? null
+        : gastricStructuralUncertaintyService.build(
+            reportId: 'observatory_${scenario.name}_gastric_structures',
+            generatedAtUtc: anchor,
+            eventLedger: replay.restored.ledger,
+            productionProfile: primaryEmptyingProfile,
+            physicalForm: composition.mealPhysicalForm,
+          );
     return AlgorithmObservatorySnapshot(
       scenario: scenario,
-      context: context,
-      composition: composition,
+      context: replay.restored.context,
+      composition: replay.restored.mealCompositionsById[composition.id]!,
       conflict: conflict,
       candidateScores: candidateScores,
       gastricParameters: gastricParameters,
       configurationIdentity: configurationIdentity,
       explanationTree: _buildExplanationTree(
-        context: context,
-        composition: composition,
+        context: replay.restored.context,
+        composition: replay.restored.mealCompositionsById[composition.id]!,
         conflict: conflict,
         candidateScores: candidateScores,
+        medicationValidation: medication,
+        inputQuality: inputQuality,
+        replayCapsule: replay.capsule,
+        gastricStructuralUncertainty: gastricStructuralUncertainty,
       ),
-      eventLedger: eventLedger,
+      eventLedger: replay.restored.ledger,
+      ledgerAuthorization: authorization.assessment,
+      replayCapsule: replay.capsule,
+      gastricStructuralUncertainty: gastricStructuralUncertainty,
     );
   }
 
@@ -232,6 +368,10 @@ class AlgorithmObservatoryService {
     required MealComposition composition,
     required MechanisticConflictResult conflict,
     required List<MechanisticCandidateScore> candidateScores,
+    required MedicationContextValidationResult medicationValidation,
+    required MealMedicationInputQualityResult inputQuality,
+    required MechanisticReplayCapsule replayCapsule,
+    required GastricStructuralUncertaintyReport? gastricStructuralUncertainty,
   }) {
     final emptying = conflict.primaryEmptyingProfile;
     final absorption = conflict.absorptionOpportunityWindow;
@@ -266,6 +406,22 @@ class AlgorithmObservatoryService {
       limitation: conflict.limitationText,
       children: [
         AlgorithmTraceNode(
+          id: 'mechanistic_lossless_replay_capsule',
+          algorithmId: 'mechanistic_lossless_replay_capsule',
+          providerId: traceProviderContract.providerId,
+          label: 'Reconstruct complete mechanistic input',
+          inputs: const [
+            'schema-v2 ledger',
+            'complete time-axis context',
+            'complete meal-composition map',
+          ],
+          output:
+              'lossless round trip ${replayCapsule.capsuleSha256.substring(0, 12)}…',
+          sourceRefs: const [mechanisticReplayCapsuleSchema],
+          limitation:
+              'Replay equality is engineering integrity evidence, not biological or clinical validity.',
+        ),
+        AlgorithmTraceNode(
           id: 'meal_composition_normalizer',
           algorithmId: 'meal_composition_normalizer',
           providerId: traceProviderContract.providerId,
@@ -281,6 +437,12 @@ class AlgorithmObservatoryService {
           limitation:
               'Normalization preserves missingness; it does not infer a clinical measurement.',
         ),
+        _inputQualityTrace(inputQuality),
+        _medicationEntryValidationTrace(medicationValidation),
+        _dosageNoteParserTrace(),
+        _timeAxisTrace(context),
+        _proteinTrendTrace(),
+        _proteinDistributionTrace(candidateScores),
         if (emptying != null)
           AlgorithmTraceNode(
             id: 'gastric_emptying',
@@ -298,6 +460,10 @@ class AlgorithmObservatoryService {
             limitation:
                 'Sensitivity curve only; it is not an individual gastric-emptying test.',
           ),
+        _gastricStructuralUncertaintyTrace(
+          report: gastricStructuralUncertainty,
+          conflictAvailability: conflict.availability.name,
+        ),
         if (absorption != null)
           AlgorithmTraceNode(
             id: 'levodopa_absorption_opportunity',
@@ -369,6 +535,398 @@ class AlgorithmObservatoryService {
           ],
         ),
       ],
+    );
+  }
+
+  AlgorithmTraceNode _inputQualityTrace(
+    MealMedicationInputQualityResult assessment,
+  ) {
+    final dimensionSummary = assessment.dimensionScores
+        .map((dimension) => '${dimension.dimension}=${dimension.status}')
+        .join('; ');
+    return AlgorithmTraceNode(
+      id: 'input_quality_gate',
+      algorithmId: 'input_quality_gate',
+      providerId: traceProviderContract.providerId,
+      label: 'Assess synthetic context completeness',
+      inputs: [
+        '${assessment.dimensionScores.length} context-quality dimensions',
+        dimensionSummary,
+        'product strength treated as metadata, not an intake dose',
+      ],
+      output:
+          '${assessment.overallStatus}; completeness '
+          '${(assessment.overallScore * 100).round()}%; '
+          '${assessment.mechanisticPrimaryEligible ? 'gate eligible' : 'gate held'}; '
+          '${assessment.blockerCount} blocker(s); '
+          '${assessment.fallbackReasons.length} fallback reason(s)',
+      sourceRefs: const [],
+      limitation:
+          'Exact result from the input-completeness assessment on fixed '
+          'synthetic inputs. The product-strength-only case is held because '
+          'no intake dose is supplied. This standalone assessment is not '
+          'used to authorize or veto the other Observatory traces and is not '
+          'medical advice or clinical validation.',
+    );
+  }
+
+  AlgorithmTraceNode _medicationEntryValidationTrace(
+    MedicationContextValidationResult validation,
+  ) {
+    final normalized = validation.normalized;
+    final contextFields = normalized == null
+        ? 'normalized context absent'
+        : '${normalized.activeIngredients.length} ingredient token(s); '
+              'strength/unit, product variant, form, route, and release type present';
+    return AlgorithmTraceNode(
+      id: 'medication_entry_validator',
+      algorithmId: 'medication_entry_validator',
+      providerId: traceProviderContract.providerId,
+      label: 'Validate synthetic medication context',
+      inputs: ['fixed synthetic structured entry', contextFields],
+      output:
+          '${validation.validity.name}; '
+          '${validation.eligibleForRuleEvaluation ? 'eligible for educational model input' : 'held from educational model input'}; '
+          '${validation.issues.length} validation issue(s)',
+      sourceRefs: const [],
+      limitation:
+          'This is the validator result for a fixed synthetic entry. '
+          'Structural eligibility does not verify real-world medication '
+          'identity, prescription validity, or clinical appropriateness.',
+    );
+  }
+
+  AlgorithmTraceNode _timeAxisTrace(TimeAxisConflictContext context) {
+    final anchorMinute = context.mealEvents.isEmpty
+        ? context.referenceMinute
+        : context.mealEvents.first.minute;
+    String relativeMinute(int minute) {
+      final offset = minute - anchorMinute;
+      final signedOffset = offset > 0 ? '+$offset' : '$offset';
+      return '$signedOffset min';
+    }
+
+    String offsets(Iterable<int> minutes) {
+      final values = minutes.map(relativeMinute).toList(growable: false);
+      return values.isEmpty ? 'none' : values.join(', ');
+    }
+
+    final eventSummary =
+        'meals ${offsets(context.mealEvents.map((event) => event.minute))}; '
+        'medications ${offsets(context.medicationEvents.map((event) => event.minute))}; '
+        'food components ${offsets(context.foodComponentEvents.map((event) => event.minute))}';
+    final window = context.userDefinedWindow?.window;
+    final windowSummary = window == null
+        ? 'no caller-defined window'
+        : 'caller window ${relativeMinute(window.startMinute)} to '
+              '${relativeMinute(window.endMinute)}';
+
+    return AlgorithmTraceNode(
+      id: 'time_axis_builder',
+      algorithmId: 'time_axis_builder',
+      providerId: traceProviderContract.providerId,
+      label: 'Build deterministic time axis',
+      inputs: [
+        '${context.mealEvents.length} meal event(s)',
+        '${context.medicationEvents.length} medication event(s)',
+        '${context.foodComponentEvents.length} food component event(s)',
+        context.userDefinedWindow == null
+            ? 'caller-defined window absent'
+            : 'caller-defined window present',
+        'missing or rejected input field count ${context.missingFields.length}',
+      ],
+      output: 'relative event offsets: $eventSummary; $windowSummary',
+      sourceRefs: const [],
+      limitation:
+          'Fixed synthetic scenario only. Offsets are relative; absolute '
+          'timestamps and event identifiers are omitted. Missing or rejected '
+          'inputs are counted, not inferred or repaired. This is not '
+          'patient-specific timing or a clinical recommendation.',
+    );
+  }
+
+  AlgorithmTraceNode _proteinTrendTrace() {
+    final anchor = DateTime.utc(2026, 1, 1, 12);
+    Meal syntheticMeal({
+      required String fixtureId,
+      required DateTime eatenAt,
+      required double proteinGrams,
+      DateTime? recordedAt,
+      DateTime? occurredAt,
+      DateTime? occurredRangeStart,
+    }) => Meal(
+      id: 'synthetic:protein-trend:$fixtureId',
+      eatenAt: eatenAt,
+      recordedAt: recordedAt,
+      occurredAt: occurredAt,
+      occurredRangeStart: occurredRangeStart,
+      title: 'Synthetic protein trend fixture',
+      items: [
+        MealItem(
+          foodId: 'synthetic:protein-trend-item:$fixtureId',
+          foodName: 'synthetic fixture item',
+          foodCategory: FoodCategory.other,
+          quantityFactor: 1,
+          foodTags: const [],
+          proteinPer100g: proteinGrams,
+          carbsPer100g: 0,
+          fatPer100g: 0,
+          fiberPer100g: 0,
+          sodiumPer100g: 0,
+        ),
+      ],
+    );
+
+    // Input order is intentionally different from effective occurrence order.
+    final meals = [
+      syntheticMeal(
+        fixtureId: 'eaten-at-fallback',
+        eatenAt: anchor.add(const Duration(days: 3)),
+        recordedAt: anchor.add(const Duration(days: 3, hours: 1)),
+        proteinGrams: 30,
+      ),
+      syntheticMeal(
+        fixtureId: 'occurred-at',
+        eatenAt: anchor.add(const Duration(days: 4)),
+        recordedAt: anchor.add(const Duration(days: 4, hours: 2)),
+        occurredAt: anchor.add(const Duration(days: 1)),
+        proteinGrams: 10,
+      ),
+      syntheticMeal(
+        fixtureId: 'range-start',
+        eatenAt: anchor.add(const Duration(days: 4)),
+        recordedAt: anchor.add(const Duration(days: 4, hours: 1)),
+        occurredRangeStart: anchor.add(const Duration(days: 2)),
+        proteinGrams: 20,
+      ),
+    ];
+    final useCase = GetProteinTrendUseCase();
+    final points = useCase.call(meals);
+    final firstTime = points.first.time;
+    final offsets = points
+        .map((point) {
+          final relativeDay = point.time.difference(firstTime).inDays;
+          return '${relativeDay}d:${point.protein.toStringAsFixed(1)}g';
+        })
+        .join(' → ');
+
+    return AlgorithmTraceNode(
+      id: 'protein_trend',
+      algorithmId: 'protein_trend',
+      providerId: traceProviderContract.providerId,
+      label: 'Aggregate synthetic meal-protein trend',
+      inputs: const [
+        '3 fixed synthetic Meal rows; totals use Meal.computeTotals()',
+        'effective time precedence: occurredAt → range start → eatenAt',
+        'meal IDs, titles, food names, and absolute timestamps omitted',
+      ],
+      output:
+          '${points.length} chronologically sorted point(s); relative series '
+          '$offsets; arithmetic mean '
+          '${useCase.averageProtein(meals).toStringAsFixed(1)} g per meal',
+      sourceRefs: const [],
+      limitation:
+          'This calls the production aggregation on fixed synthetic inputs. '
+          'The descriptive per-meal series is not a dietary adequacy target, '
+          'clinical interpretation, or recommendation.',
+    );
+  }
+
+  AlgorithmTraceNode _proteinDistributionTrace(
+    List<MechanisticCandidateScore> candidateScores,
+  ) {
+    const limitation =
+        'This read-only projection uses protein-distribution outputs already '
+        'computed by the production candidate scorer on fixed synthetic '
+        'fixtures. It is not dietary advice, a daily protein target, clinical '
+        'validation, or a recommendation, and it does not alter scores or '
+        'ranking.';
+    final traced = <({int index, ProteinDistributionTrace result})>[];
+    var held = 0;
+    for (var index = 0; index < candidateScores.length; index++) {
+      final score = candidateScores[index];
+      final result = score.modeledProteinDistribution;
+      if (result == null || !result.optimizationActive) {
+        held++;
+        continue;
+      }
+      traced.add((index: index + 1, result: result));
+    }
+    final roles = <String, int>{};
+    for (final entry in traced) {
+      roles.update(
+        entry.result.windowRole.name,
+        (count) => count + 1,
+        ifAbsent: () => 1,
+      );
+    }
+    final roleSummary = roles.entries.toList()
+      ..sort((left, right) => left.key.compareTo(right.key));
+    final redistributionMean = traced.isEmpty
+        ? null
+        : traced
+                  .map((entry) => entry.result.redistributionScore)
+                  .reduce((left, right) => left + right) /
+              traced.length;
+    final adequacyMean = traced.isEmpty
+        ? null
+        : traced
+                  .map((entry) => entry.result.nutritionAdequacyContribution)
+                  .reduce((left, right) => left + right) /
+              traced.length;
+
+    return AlgorithmTraceNode(
+      id: 'protein_distribution',
+      algorithmId: 'protein_distribution',
+      providerId: traceProviderContract.providerId,
+      label: 'Inspect protein redistribution model outputs',
+      inputs: [
+        '${candidateScores.length} fixed synthetic candidate result(s) from the production scorer',
+        '${traced.length} modeled result(s); $held held or unavailable',
+        'candidate names, identifiers, catalog references, protein grams, and absolute timestamps omitted',
+        'projects stored production outputs; it does not recompute or feed ranking',
+      ],
+      output: traced.isEmpty
+          ? 'not run; no modeled production protein-distribution output'
+          : '${traced.length} modeled result(s); roles '
+                '${roleSummary.map((entry) => '${entry.key}=${entry.value}').join(', ')}; '
+                'mean redistribution ${(redistributionMean! * 100).toStringAsFixed(1)}%; '
+                'mean adequacy contribution ${(adequacyMean! * 100).toStringAsFixed(1)}%',
+      sourceRefs: const [],
+      limitation: limitation,
+      children: [
+        for (final entry in traced)
+          AlgorithmTraceNode(
+            id: 'synthetic_candidate_${entry.index}',
+            label: 'Fixed synthetic candidate ${entry.index}',
+            inputs: const [
+              'candidate identity and protein input withheld',
+              'role derives primarily from modeled overlap; hour only refines the low-overlap label',
+            ],
+            output:
+                'role ${entry.result.windowRole.name}; '
+                'redistribution ${(entry.result.redistributionScore * 100).toStringAsFixed(1)}%; '
+                'adequacy contribution ${(entry.result.nutritionAdequacyContribution * 100).toStringAsFixed(1)}%',
+            sourceRefs: const [],
+            limitation: limitation,
+          ),
+      ],
+    );
+  }
+
+  AlgorithmTraceNode _dosageNoteParserTrace() {
+    final parser = DosageNoteParser();
+    // These arbitrary syntax tokens exercise parser dispositions only. Their
+    // raw strings and parsed quantities are deliberately excluded from trace.
+    final results = [
+      parser.inspect('7 mg'),
+      parser.inspect('2-4 mg'),
+      parser.inspect('~7 mg'),
+      parser.inspect('1 mg and 2 mg'),
+      parser.inspect(''),
+    ];
+    final accepted = results
+        .where((result) => result.status == DoseExpressionParseStatus.accepted)
+        .length;
+    final empty = results
+        .where((result) => result.status == DoseExpressionParseStatus.empty)
+        .length;
+    final held = results
+        .where((result) => result.status == DoseExpressionParseStatus.held)
+        .length;
+    final reasonCounts = <String, int>{};
+    for (final result in results) {
+      final reason = result.primaryReasonCode;
+      if (reason != null) {
+        reasonCounts.update(reason, (count) => count + 1, ifAbsent: () => 1);
+      }
+    }
+    final reasonSummary = reasonCounts.entries.toList()
+      ..sort((left, right) => left.key.compareTo(right.key));
+
+    return AlgorithmTraceNode(
+      id: 'dosage_note_parser',
+      algorithmId: 'dosage_note_parser',
+      providerId: traceProviderContract.providerId,
+      label: 'Inspect fixed dose-expression syntax examples',
+      inputs: const [
+        '5 fixed synthetic parser cases; raw strings and quantities withheld',
+        'one exact quantity, one range, one comparator, multiple values, and empty input',
+        'standalone parser probe; not the medication context used by other traces',
+      ],
+      output:
+          'grammar v${DosageNoteParser.grammarVersion}; ${results.length} cases; '
+          'accepted $accepted, empty $empty, held $held; reason counts '
+          '${reasonSummary.map((entry) => '${entry.key}=${entry.value}').join(', ')}',
+      sourceRefs: const [],
+      limitation:
+          'This executes the production parser on fixed synthetic syntax only. '
+          'Acceptance means local grammar recognition, not medication identity, '
+          'prescription validity, dose appropriateness, or confirmed administration. '
+          'This standalone probe does not feed the other Observatory traces.',
+    );
+  }
+
+  AlgorithmTraceNode _gastricStructuralUncertaintyTrace({
+    required GastricStructuralUncertaintyReport? report,
+    required String conflictAvailability,
+  }) {
+    const algorithmId = 'gastric_structural_uncertainty_shadow_ensemble';
+    const limitation =
+        'Read-only model-form sensitivity does not alter the production curve '
+        'or authorize fitting. It is not an ensemble accuracy gain, individual '
+        'test, confidence interval, plasma concentration, symptom prediction, '
+        'or clinical validation.';
+    if (report == null) {
+      return AlgorithmTraceNode(
+        id: algorithmId,
+        algorithmId: algorithmId,
+        providerId: traceProviderContract.providerId,
+        label: 'Synthetic gastric structure-sensitivity diagnostic',
+        inputs: [
+          'production gastric profile unavailable',
+          'conflict availability $conflictAvailability',
+        ],
+        output:
+            'not run; no modeled primary gastric profile; no shadow trajectory was generated',
+        sourceRefs: [],
+        limitation: limitation,
+      );
+    }
+
+    final comparableCount = report.trajectories
+        .where(
+          (trajectory) =>
+              trajectory.availability ==
+              GastricTrajectoryAvailability.available,
+        )
+        .length;
+    final heldCount = report.trajectories.length - comparableCount;
+    final integrityReasons = report.integrityReasons;
+    final sourceRefs = <String>{
+      ...report.observationSeries.sourceIds,
+      ...report.trajectories.expand(
+        (trajectory) => trajectory.structure.evidenceSourceIds,
+      ),
+    }.toList()..sort();
+    return AlgorithmTraceNode(
+      id: algorithmId,
+      algorithmId: algorithmId,
+      providerId: traceProviderContract.providerId,
+      label: 'Synthetic gastric structure-sensitivity diagnostic',
+      inputs: [
+        'observable ${report.observationSeries.observable.name}',
+        'modality ${report.observationSeries.modality.name}',
+        '${report.observationSeries.points.length} fixed synthetic observation points',
+        'production output ${report.productionOutputDigestBefore == report.productionOutputDigestAfter ? 'unchanged' : 'changed'}',
+      ],
+      output: integrityReasons.isNotEmpty
+          ? 'held: report integrity ${integrityReasons.join(', ')}'
+          : '$comparableCount/${report.trajectories.length} observable-matched structures; '
+                '$heldCount held by the observable gate; '
+                'report ${report.sha256Digest.substring(0, 12)}…',
+      sourceRefs: sourceRefs,
+      limitation: limitation,
     );
   }
 

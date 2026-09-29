@@ -2,14 +2,14 @@
   "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
   "schemaVersion": 1,
   "review": {
-    "reviewedAt": "2026-08-18",
-    "reviewerRole": "repository_privacy_engineering_review",
+    "reviewedAt": "2026-09-29",
+    "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository and locally built artifact facts only; this is not an App Store Connect or Play Console submission receipt."
+    "approvalScope": "Repository source facts refreshed for the public source update; previously recorded built-artifact facts are not re-attested. This automated review is not human privacy approval or an App Store Connect or Play Console submission receipt."
   },
   "lockIdentities": {
-    "pubspec.lock": "1d772ccc4e84cfcd6b9804e97760cc26a14e3fa193bf3b2d6a611ca8e709b5a8",
-    "package-lock.json": "cf791de0c70e48a1f85e35e8de84a471020e1114d67ba42fe8a5c1d2e4d1217c",
+    "pubspec.lock": "270beb8b2ea01f4eb8d02827f06228577c129125c9fb7bb151afc28bc502e17b",
+    "package-lock.json": "c3e5439063f8c3f4312e78bf4da95a1c64808d01a27cd2ef6afbbc99a06b5f8c",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
   },
@@ -17,6 +17,7 @@
     "archive": "archive_import_and_export",
     "cloud_firestore": "first_party_firebase_backend",
     "crypto": "local_integrity_hashing",
+    "cryptography": "local_ed25519_capability_manifest_verification",
     "csv": "local_import_parsing",
     "cupertino_icons": "ui_asset",
     "firebase_app_check": "first_party_backend_abuse_protection",
@@ -33,9 +34,11 @@
     "printing": "user_initiated_system_print_and_share",
     "provider": "local_state_management",
     "shared_preferences": "noncritical_local_preferences",
+    "share_plus": "user_initiated_system_share_of_reviewed_local_html",
     "sqflite": "local_structured_persistence",
     "timezone": "local_schedule_calculation",
     "xml": "local_import_parsing",
+    "web": "wasm_compatible_browser_download_interop",
     "yaml": "local_configuration_parsing"
   },
   "operatorDependencies": {
@@ -56,6 +59,22 @@
     "trackingDomains": [],
     "appRequiredReasonApis": [],
     "reviewedThirdPartyPrivacyManifests": {
+      "share_plus_ios": {
+        "package": "share_plus",
+        "manifestPath": "ios/share_plus/Sources/share_plus/PrivacyInfo.xcprivacy",
+        "accessedApiCategory": null,
+        "reason": null,
+        "manifestSha256": "6d2da0d8d930227d428c1d9363b0ad6e3a12e2c9b68c5ce297158a7412fc8c31",
+        "reviewBoundary": "source_manifest_only_user_initiated_system_share_no_store_approval"
+      },
+      "share_plus_macos": {
+        "package": "share_plus",
+        "manifestPath": "macos/share_plus/Sources/share_plus/PrivacyInfo.xcprivacy",
+        "accessedApiCategory": null,
+        "reason": null,
+        "manifestSha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+        "reviewBoundary": "source_manifest_only_user_initiated_system_share_no_store_approval"
+      },
       "flutter_local_notifications": {
         "accessedApiCategory": "NSPrivacyAccessedAPICategoryUserDefaults",
         "reason": "CA92.1"
@@ -104,7 +123,7 @@
     }
   },
   "android": {
-    "sourceManifestSha256": "7e2281a537e116e2711f658f514c0b802f6eed629802bc7cc4f638c00faf4c95",
+    "sourceManifestSha256": "c1eb9d0cde005a3084ddc24e8960bbd18fce9f94852e0922c45dc11324bad1a7",
     "dataExtractionRules": {
       "path": "android/app/src/main/res/xml/data_extraction_rules.xml",
       "sha256": "9bd907668d74ac2a01475758d4833624d7cbe067769877f211516eeae339cabb",
@@ -125,7 +144,7 @@
     ],
     "permissions": {
       "android.permission.ACCESS_NETWORK_STATE": "backend_connectivity_state",
-      "android.permission.INTERNET": "first_party_backend_and_user_initiated_catalog_fetch",
+      "android.permission.INTERNET": "first_party_backend_user_initiated_catalog_fetch_and_debug_only_public_smart_metadata_discovery_and_separately_consented_openfda_label_text_rxnorm_name_candidate_selected_concept_property_history_and_selected_rxnorm_candidate_label_lookup",
       "android.permission.POST_NOTIFICATIONS": "user_enabled_local_logging_reminders",
       "android.permission.RECEIVE_BOOT_COMPLETED": "restore_enabled_local_reminder_schedules",
       "android.permission.VIBRATE": "local_notification_delivery",
@@ -134,6 +153,12 @@
     }
   },
   "networkDestinations": {
+    "runtimeEgressPolicyManifest": {
+      "path": "config/runtime_network_egress_policy.json",
+      "policyVersion": "2026.09.25-v6",
+      "status": "application_layer_gate_partial",
+      "sha256": "d03f0c5ae523781af78195505c386d87775d2bdf03ad075fd451cc6dde78b6fd"
+    },
     "literalHosts": [
       "127.0.0.1",
       "api.fda.gov",
@@ -141,16 +166,30 @@
       "cdsco.gov.in",
       "dailymed.nlm.nih.gov",
       "ebasis.eurofir.org",
+      "ehr.example.org",
       "entrepot.recherche.data.gouv.fr",
+      "example.org",
       "fdc.nal.usda.gov",
+      "github.com",
       "health-products.canada.ca",
+      "hl7.org",
       "inmu2.mahidol.ac.th",
       "ion.ru",
+      "json-schema.org",
       "koreanfood.rda.go.kr",
+      "launch.smarthealthit.org",
+      "loinc.org",
       "medlineplus.gov",
       "nlc.chinanutri.cn",
+      "open.fda.gov",
+      "pharmacy.example.org",
+      "pub.dev",
       "pubmed.ncbi.nlm.nih.gov",
       "roszdravnadzor.gov.ru",
+      "rxnav.nlm.nih.gov",
+      "terminology.hl7.org",
+      "ucum.org",
+      "unitsofmeasure.org",
       "world.openfoodfacts.org",
       "www.aemps.gob.es",
       "www.bedca.net",
@@ -192,10 +231,58 @@
         "data": ["user_selected_meal_and_medication_context"],
         "purpose": "separately_consented_on_device_or_loopback_response_polish"
       },
+      "schema_identifier_only": {
+        "hostPatterns": ["json-schema.org"],
+        "data": [],
+        "purpose": "static_schema_dialect_identifier_no_runtime_fetch"
+      },
+      "developer_documentation_identifier_only": {
+        "hostPatterns": ["pub.dev"],
+        "data": [],
+        "purpose": "static_reviewed_analyzer_dependency_and_public_api_evidence_no_runtime_fetch"
+      },
+      "fda_official_documentation_link": {
+        "hostPatterns": ["open.fda.gov"],
+        "data": [],
+        "purpose": "static_user_visible_official_label_api_documentation_link_no_runtime_request"
+      },
       "catalog_and_evidence_sources": {
         "hostPatterns": ["literalHosts"],
         "data": ["public_catalog_query_identifiers", "operator_supplied_api_key_where_required"],
         "purpose": "user_or_operator_initiated_public_catalog_import_no_account_or_health_payload"
+      },
+      "user_consented_openfda_label_lookup": {
+        "hostPatterns": ["api.fda.gov"],
+        "data": ["user_entered_generic_drug_names", "ordinary_network_metadata_outside_application_payload"],
+        "purpose": "separate_user_opt_in_public_label_text_search_without_saved_medication_or_account_context"
+      },
+      "user_consented_rxnorm_candidate_openfda_label_lookup": {
+        "hostPatterns": ["api.fda.gov"],
+        "data": ["two_user_selected_rxnorm_candidate_display_names", "ordinary_network_metadata_outside_application_payload"],
+        "purpose": "separate_user_opt_in_openfda_label_text_search_using_two_explicitly_selected_rxnorm_display_names_without_saved_medication_or_account_context"
+      },
+      "user_consented_rxnorm_name_candidate_lookup": {
+        "hostPatterns": ["rxnav.nlm.nih.gov"],
+        "data": ["user_entered_generic_drug_names", "ordinary_network_metadata_outside_application_payload"],
+        "purpose": "separate_user_opt_in_active_rxnorm_lexical_candidates_without_saved_medication_or_account_context"
+      },
+      "user_consented_rxnorm_concept_properties_lookup": {
+        "hostPatterns": ["rxnav.nlm.nih.gov"],
+        "data": ["user_selected_rxnorm_concept_identifier", "ordinary_network_metadata_outside_application_payload"],
+        "purpose": "separate_user_opt_in_current_concept_properties_for_an_individually_selected_candidate_without_saved_medication_or_account_context"
+      },
+      "user_consented_rxnorm_concept_history_lookup": {
+        "hostPatterns": ["rxnav.nlm.nih.gov"],
+        "data": ["user_selected_rxnorm_concept_identifier", "ordinary_network_metadata_outside_application_payload"],
+        "purpose": "separate_user_opt_in_historical_status_and_replacement_candidates_for_one_recent_rxnorm_candidate_without_saved_medication_or_account_context"
+      },
+      "signed_capability_manifest_distribution": {
+        "hostPatterns": ["build_time_exact_public_dns_allowlist"],
+        "data": [
+          "public_content_sha256_etag_cache_validator",
+          "ordinary_network_metadata_outside_application_payload"
+        ],
+        "purpose": "optional_release_manifest_get_no_application_account_or_health_body_or_authorization_fields_cookie_behavior_requires_target_audit"
       }
     }
   },
@@ -231,7 +318,7 @@
     {
       "id": "personal_log_handoff",
       "location": "user_selected_operating_system_destination",
-      "fields": ["user_reviewed_personal_log_summary", "rendered_pdf"],
+      "fields": ["user_reviewed_personal_log_summary", "rendered_pdf", "rendered_html"],
       "purpose": "user_initiated_copy_print_or_share",
       "thirdParty": false
     },
@@ -253,6 +340,86 @@
       "fields": ["random_owner_capability", "key_id", "revision", "owner_lookup_digest"],
       "purpose": "local_account_portable_package_owner_binding",
       "thirdParty": false
+    },
+    {
+      "id": "operational_diagnostics_local",
+      "location": "process_memory_only",
+      "fields": [
+        "closed_operational_category",
+        "coarse_duration_bucket",
+        "bounded_aggregate_count",
+        "capability_state",
+        "nonsemantic_outcome"
+      ],
+      "purpose": "user_visible_local_reliability_diagnostics",
+      "thirdParty": false
+    },
+    {
+      "id": "device_capability_rollout_state",
+      "location": "on_device",
+      "fields": [
+        "signed_manifest_identity",
+        "closed_capability_boolean_values",
+        "signature_key_id",
+        "activation_reason",
+        "expiry_and_rollback_identity",
+        "accepted_public_content_sha256_etag_and_endpoint_identity"
+      ],
+      "purpose": "local_release_safety_and_last_known_good_recovery_no_user_targeting",
+      "thirdParty": false
+    },
+    {
+      "id": "capability_manifest_distribution",
+      "location": "none_until_build_time_endpoint_is_configured",
+      "fields": [
+        "public_content_sha256_etag_cache_validator",
+        "unsigned_transport_status_without_account_or_health_payload",
+        "ordinary_network_metadata_outside_application_payload"
+      ],
+      "purpose": "optional_signed_release_manifest_retrieval",
+      "thirdParty": false
+    },
+    {
+      "id": "smart_sandbox_discovery",
+      "location": "public_smart_health_it_sandbox",
+      "fields": ["fixed_public_fhir_base_url", "ordinary_network_metadata_outside_application_payload"],
+      "purpose": "user_initiated_debug_only_smart_metadata_discovery_without_account_or_health_payload",
+      "thirdParty": true
+    },
+    {
+      "id": "openfda_label_lookup",
+      "location": "public_us_fda_openfda_api",
+      "fields": ["two_user_entered_generic_drug_names", "ordinary_network_metadata_outside_application_payload"],
+      "purpose": "user_consented_public_label_text_search_no_saved_medication_context",
+      "thirdParty": true
+    },
+    {
+      "id": "rxnorm_candidate_openfda_label_lookup",
+      "location": "public_us_fda_openfda_api",
+      "fields": ["two_user_selected_rxnorm_candidate_display_names", "ordinary_network_metadata_outside_application_payload"],
+      "purpose": "separately_consented_public_label_text_search_using_two_selected_rxnorm_display_names_no_rxnorm_identifiers_or_saved_medication_context",
+      "thirdParty": true
+    },
+    {
+      "id": "rxnorm_name_candidate_lookup",
+      "location": "public_us_nlm_rxnav_api",
+      "fields": ["two_user_entered_generic_drug_names", "ordinary_network_metadata_outside_application_payload"],
+      "purpose": "separately_consented_active_rxnorm_lexical_candidate_discovery_without_saved_medication_context",
+      "thirdParty": true
+    },
+    {
+      "id": "rxnorm_selected_concept_properties_lookup",
+      "location": "public_us_nlm_rxnav_api",
+      "fields": ["user_selected_rxnorm_concept_identifier", "ordinary_network_metadata_outside_application_payload"],
+      "purpose": "separately_consented_single_candidate_current_concept_property_inspection_without_saved_medication_context",
+      "thirdParty": true
+    },
+    {
+      "id": "rxnorm_selected_concept_history_lookup",
+      "location": "public_us_nlm_rxnav_api",
+      "fields": ["user_selected_rxnorm_concept_identifier", "ordinary_network_metadata_outside_application_payload"],
+      "purpose": "separately_consented_single_candidate_historical_status_and_unselected_replacement_candidates_without_saved_medication_context",
+      "thirdParty": true
     },
     {
       "id": "operational_telemetry",

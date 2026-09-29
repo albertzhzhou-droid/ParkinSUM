@@ -126,6 +126,57 @@ void main() {
     expect(noAa.aminoAcidSummary.competingLnaaGrams, isNull);
   });
 
+  test('4b. partial or structurally incomplete profiles are never actual', () {
+    const rejectedProfiles = <AminoAcidProfile>[
+      AminoAcidProfile(
+        leucine: 2.1,
+        isoleucine: 1.2,
+        valine: 1.3,
+        phenylalanine: 1.0,
+        tyrosine: 0.9,
+        tryptophan: 0.3,
+        basis: 'per_serving',
+        partial: true,
+      ),
+      AminoAcidProfile(
+        leucine: 2.1,
+        isoleucine: 1.2,
+        valine: 1.3,
+        phenylalanine: 1.0,
+        tyrosine: 0.9,
+        tryptophan: 0.3,
+        unit: 'mg',
+        basis: 'per_serving',
+      ),
+      AminoAcidProfile(
+        leucine: 2.1,
+        isoleucine: 1.2,
+        valine: 1.3,
+        phenylalanine: 1.0,
+        tyrosine: 0.9,
+        basis: 'per_serving',
+      ),
+    ];
+
+    for (final profile in rejectedProfiles) {
+      final summary = mapper
+          .fromMealComposition(buildComposition(aa: profile))
+          .aminoAcidSummary;
+      expect(summary.aminoAcidDataMode, 'none');
+      expect(summary.competingLnaaGrams, isNull);
+      expect(summary.aminoAcidNutrientIds, isEmpty);
+      expect(summary.lnaaValues, isEmpty);
+    }
+
+    final unknownProtein = mapper
+        .fromMealComposition(
+          buildComposition(aa: analyticalProfile(), protein: null),
+        )
+        .aminoAcidSummary;
+    expect(unknownProtein.aminoAcidDataMode, 'none');
+    expect(unknownProtein.competingLnaaGrams, isNull);
+  });
+
   test('5. preserves sourceRefs + derivation/provenance', () {
     final view = mapper.fromMealComposition(
       buildComposition(aa: analyticalProfile()),

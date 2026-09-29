@@ -209,7 +209,7 @@ class SourceAdapterRegistry {
       isFoodSource: true,
       implemented: true,
       knownLimitations: [
-        'Amino-acid nutrient numbers exist upstream but not yet extracted.',
+        'Recognized amino-acid rows with ambiguous values, units, or duplicate fields are held fail-closed and mark mixed profiles partial.',
       ],
       sourceRefs: ['src.fdc.api.amino_acid_fields'],
     ),

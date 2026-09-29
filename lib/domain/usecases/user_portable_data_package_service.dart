@@ -1,36 +1,51 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart' show compute;
 
 import '../../core/models/drug_definition.dart';
+import '../../core/models/administration_dose_confirmation.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/medication_product_pack.dart';
 import '../../core/models/user_profile.dart';
 import '../../core/constants/profile_options.dart';
+import '../../core/services/reminder_notification_privacy_policy.dart';
+import '../entities/dose_expression.dart';
+import '../entities/medication_assertion_reconciliation.dart';
 import '../entities/nutrient_derivation.dart';
+import '../entities/personal_observation.dart';
+import '../entities/portable_schema_migration.dart';
+import '../entities/versioned_dose_unit_mapping.dart';
 import '../entities/user_logging_reminder.dart';
+import 'administration_dose_confirmation_coordinator.dart';
+import 'dosage_note_parser.dart';
+import 'portable_schema_migration_registry.dart';
 
 const userPortableDataPackageFormat = 'parkinsum_user_portable_data_package';
-const userPortableDataPackageSchemaVersion = 1;
+const userPortableDataPackageSchemaVersion = 4;
+const userPortableDataLegacyReadableVersion = 2;
+const Set<int> userPortableDataLegacyReadableVersions = <int>{2, 3};
 const userPortableDataCanonicalization = 'sorted-key-json-v1';
 const userPortableDataMaxPackageBytes = 32 * 1024 * 1024;
 const userPortableDataMaxJsonDepth = 24;
 const userPortableDataMaxStringBytes = 64 * 1024;
+const userPortableDataMaxKeyBytes = 256;
 const userPortableDataMaxNumberTokenChars = 128;
 const userPortableDataMaxMapFields = 128;
 const userPortableDataMaxJsonNodes = 500000;
-const userPortableDataMaxTotalRecords = 175000;
+const userPortableDataMaxTotalRecords = 185000;
 
 const Set<String> _userPortableDataScopeKinds = <String>{
   'firebase_authenticated_account',
   'local_device_account',
 };
-const List<String> _userPortableDataExcludedValues = <String>[
+const List<String> _userPortableDataLegacyExcludedValues = <String>[
   'raw_account_uid',
-  'email',
+  'raw_email',
+  'raw_dose_owner_scope',
   'profile.patientId',
   'credentials',
   'reminder.activationToken',
@@ -39,10 +54,31 @@ const List<String> _userPortableDataExcludedValues = <String>[
 ];
 const String _userPortableDataScopeDescription =
     'Current loaded profile, selections, intakes, meals, this-device reminders, and relationship audit links.';
+const String _userPortableDataV4ScopeDescription =
+    'Current loaded profile, selections, intakes, meals, this-device reminders, owner-entered personal observations, and relationship audit links.';
+const List<String> _userPortableDataV4ExcludedValues = <String>[
+  ..._userPortableDataLegacyExcludedValues,
+  'personalObservation.recorderId',
+];
+const String _userPortableDataObservationRecorderRole = 'package_owner';
 const String _userPortableDataNotAClaim =
-    'Not an encrypted backup, account deletion receipt, complete cloud export, clinical record, or legal-compliance certification.';
+    'Not an encrypted backup, anonymous or unlinkable dataset, account deletion receipt, complete cloud export, clinical record, or legal-compliance certification.';
+const String _userPortableDataIdentityLinkabilityBoundary =
+    'Raw account identifiers are excluded, but current dose receipts and medication assertions retain stable unsalted owner-scope digests for integrity verification. Those pseudonymous digests can link artifacts from the same scope and can be dictionary-matched when the source scope, such as a local email-derived identifier, has low entropy.';
 const String _userPortableDataReminderBoundary =
     'User-authored logging prompt only; not a prescribed medication time and not proof of operating-system delivery.';
+const String _userPortableReminderTargetConsentStatus =
+    'required_before_target_permission_or_scheduling';
+const String _userPortableReminderPresentationIdentityStatus =
+    'source_digest_only_recompute_on_target';
+const String _userPortableDataDoseConfirmationBoundary =
+    'ParkinSUM local user-assertion receipt with a stable pseudonymous owner-scope digest; not anonymous or unlinkable; not FHIR conformance, a prescription, clinician verification, digital signature, or proof of administration.';
+const String _userPortableDataReconciliationBoundary =
+    'Immutable source assertions and append-only review decisions are retained as evidence; they are not proof of administration, adherence, or clinical reconciliation.';
+const String _userPortableDataReconciliationEnvelopeBoundary =
+    'Source-conflict history only; not proof of administration, adherence, or clinical reconciliation.';
+const String _userPortableDataDoseTruthBoundary =
+    'Raw and parseable dose evidence is preserved without becoming a result. Canonical quantity requires a row-bound owner-scoped confirmation, a conflict-free assertion graph, and evidence available by the export observation time.';
 const String _userPortableDataAuditReason =
     'The current cross-backend repository does not expose a complete, consistent user clinical-audit read contract.';
 const String _userPortableDataProductMeaningBoundary =
@@ -60,6 +96,7 @@ const Map<String, int> userPortableDataRecordLimits = <String, int>{
   'meals.json': 25000,
   'reminders.json': 512,
   'audit_links.json': 100000,
+  'observations.json': 5000,
 };
 
 const List<String> userPortableDataFilePaths = <String>[
@@ -70,17 +107,21 @@ const List<String> userPortableDataFilePaths = <String>[
   'meals.json',
   'reminders.json',
   'audit_links.json',
+  'observations.json',
 ];
 
 /// Immutable, already-account-scoped state captured from the visible app.
 ///
-/// The service deliberately receives the account scope separately from the
-/// profile. The raw scope is used only to derive a one-way binding and is never
-/// serialized. This keeps a Firebase uid, local email-derived id, and the
-/// legacy `patientId` field out of the portable artifact.
+/// [userScope] is the effective package-owner capability used to derive the
+/// manifest binding. [doseOwnerScope] is the distinct raw authenticated scope
+/// already bound into dose receipts and assertions. The latter is used only
+/// for in-memory verification and is never serialized. This keeps a Firebase
+/// uid, local email-derived id, and the legacy `patientId` field out of the
+/// portable artifact.
 class UserPortableDataSnapshot {
   const UserPortableDataSnapshot({
     required this.userScope,
+    required this.doseOwnerScope,
     required this.scopeKind,
     required this.profile,
     required this.activeDrugIds,
@@ -89,9 +130,17 @@ class UserPortableDataSnapshot {
     required this.medicationCatalog,
     required this.foodCatalog,
     required this.reminders,
+    this.observations = const <PersonalObservation>[],
   });
 
   final String userScope;
+
+  /// Raw authenticated owner used only to re-evaluate dose evidence in memory.
+  ///
+  /// This value is deliberately separate from [userScope], which can be a
+  /// protected opaque export capability. It is never serialized into the
+  /// portable package.
+  final String doseOwnerScope;
   final String scopeKind;
   final UserProfile profile;
   final Iterable<String> activeDrugIds;
@@ -100,6 +149,7 @@ class UserPortableDataSnapshot {
   final Iterable<DrugDefinition> medicationCatalog;
   final Iterable<FoodItem> foodCatalog;
   final Iterable<UserLoggingReminder> reminders;
+  final Iterable<PersonalObservation> observations;
 }
 
 class UserPortableDataFileSummary {
@@ -153,6 +203,8 @@ class UserPortableDataImportPreview {
     required this.unsupportedFields,
     required this.proposedMigrations,
     required this.findings,
+    required this.reminderPresentation,
+    required this.schemaMigrationReceipt,
   });
 
   final UserPortableDataPreviewStatus status;
@@ -163,12 +215,62 @@ class UserPortableDataImportPreview {
   final List<String> unsupportedFields;
   final List<String> proposedMigrations;
   final List<String> findings;
+  final UserPortableReminderPresentationSummary reminderPresentation;
+  final PortableSchemaMigrationReceipt? schemaMigrationReceipt;
 
   bool get mayProceedToFutureImport =>
       status == UserPortableDataPreviewStatus.ready;
 
   int get conflictCount =>
       conflicts.values.fold<int>(0, (sum, ids) => sum + ids.length);
+}
+
+class UserPortableReminderPresentationSummary {
+  const UserPortableReminderPresentationSummary({
+    required this.totalCount,
+    required this.enabledIntentCount,
+    required this.targetConsentRequiredCount,
+    required this.legacyDefaultCount,
+    required this.currentPolicyMatchCount,
+    required this.currentPolicyDriftCount,
+    required this.localeDecisionMismatchCount,
+    required this.privacyModes,
+    required this.scheduledLanguageCodes,
+  });
+
+  static const empty = UserPortableReminderPresentationSummary(
+    totalCount: 0,
+    enabledIntentCount: 0,
+    targetConsentRequiredCount: 0,
+    legacyDefaultCount: 0,
+    currentPolicyMatchCount: 0,
+    currentPolicyDriftCount: 0,
+    localeDecisionMismatchCount: 0,
+    privacyModes: <String>[],
+    scheduledLanguageCodes: <String>[],
+  );
+
+  final int totalCount;
+  final int enabledIntentCount;
+  final int targetConsentRequiredCount;
+  final int legacyDefaultCount;
+  final int currentPolicyMatchCount;
+  final int currentPolicyDriftCount;
+  final int localeDecisionMismatchCount;
+  final List<String> privacyModes;
+  final List<String> scheduledLanguageCodes;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'totalCount': totalCount,
+    'enabledIntentCount': enabledIntentCount,
+    'targetConsentRequiredCount': targetConsentRequiredCount,
+    'legacyDefaultCount': legacyDefaultCount,
+    'currentPolicyMatchCount': currentPolicyMatchCount,
+    'currentPolicyDriftCount': currentPolicyDriftCount,
+    'localeDecisionMismatchCount': localeDecisionMismatchCount,
+    'privacyModes': privacyModes,
+    'scheduledLanguageCodes': scheduledLanguageCodes,
+  };
 }
 
 /// Builds and inspects a single-file, JSON user-data package.
@@ -197,6 +299,14 @@ class UserPortableDataPackageService {
         snapshot.userScope,
         'snapshot.userScope',
         'An account/device scope is required.',
+      );
+    }
+    final doseOwnerScope = snapshot.doseOwnerScope.trim();
+    if (doseOwnerScope.isEmpty) {
+      throw ArgumentError.value(
+        snapshot.doseOwnerScope,
+        'snapshot.doseOwnerScope',
+        'The authenticated dose-owner scope is required.',
       );
     }
     final scopeKind = snapshot.scopeKind.trim();
@@ -236,6 +346,18 @@ class UserPortableDataPackageService {
       ..sort((left, right) => left.id.compareTo(right.id));
     final reminders = snapshot.reminders.toList()
       ..sort((left, right) => left.id.compareTo(right.id));
+    final observations = snapshot.observations.toList()
+      ..sort((left, right) {
+        final occurred = left.occurredAt.compareTo(right.occurredAt);
+        if (occurred != 0) return occurred;
+        final recorded = left.recordedAt.compareTo(right.recordedAt);
+        return recorded == 0 ? left.id.compareTo(right.id) : recorded;
+      });
+    final generatedUtc = generatedAt.toUtc();
+    final doseParser = DosageNoteParser();
+    final doseCoordinator = AdministrationDoseConfirmationCoordinator(
+      parser: doseParser,
+    );
 
     final files = <String, Object?>{
       'profile.json': _profile(snapshot.profile),
@@ -250,12 +372,26 @@ class UserPortableDataPackageService {
       ],
       'intakes.json': <Object?>[
         for (final intake in intakes)
-          _intake(intake, medications[intake.drugId]),
+          _intake(
+            intake,
+            medications[intake.drugId],
+            doseOwnerScope: doseOwnerScope,
+            observedAt: generatedUtc,
+            parser: doseParser,
+            coordinator: doseCoordinator,
+          ),
       ],
       'meals.json': <Object?>[for (final meal in meals) _meal(meal, foods)],
       'reminders.json': <Object?>[
         for (final reminder in reminders) _reminder(reminder),
       ],
+      'observations.json': <String, Object?>{
+        'availability': 'captured_current_local_snapshot',
+        'records': <Object?>[
+          for (final observation in observations)
+            _portableObservation(observation),
+        ],
+      },
       'audit_links.json': _auditLinks(
         intakes: intakes,
         meals: meals,
@@ -267,7 +403,12 @@ class UserPortableDataPackageService {
     _requireKnownIdentifiers(files);
     final schemaFindings = <String>[];
     final unsupportedFields = <String>[];
-    _validateKnownFileShapes(files, schemaFindings, unsupportedFields);
+    _validateKnownFileShapes(
+      files,
+      schemaFindings,
+      unsupportedFields,
+      schemaVersion: userPortableDataPackageSchemaVersion,
+    );
     if (schemaFindings.isNotEmpty || unsupportedFields.isNotEmpty) {
       throw FormatException(
         schemaFindings.isNotEmpty
@@ -286,9 +427,9 @@ class UserPortableDataPackageService {
     ];
     final contentSha256 = _sha256(_canonicalJson(files));
     final packageId = _sha256(
-      'parkinsum-portable-package-v1|$ownerScopeSha256|$contentSha256',
+      'parkinsum-portable-package-v$userPortableDataPackageSchemaVersion|'
+      '$ownerScopeSha256|$contentSha256',
     );
-    final generatedUtc = generatedAt.toUtc();
     final manifest = <String, Object?>{
       'packageId': packageId,
       'createdAt': generatedUtc.toIso8601String(),
@@ -317,8 +458,9 @@ class UserPortableDataPackageService {
       'privacyBoundary': <String, Object?>{
         'encryption': 'none',
         'containsSensitiveUserData': true,
-        'excluded': _userPortableDataExcludedValues,
-        'scope': _userPortableDataScopeDescription,
+        'excluded': _userPortableDataV4ExcludedValues,
+        'identityLinkability': _userPortableDataIdentityLinkabilityBoundary,
+        'scope': _userPortableDataV4ScopeDescription,
         'notAClaim': _userPortableDataNotAClaim,
       },
     };
@@ -365,6 +507,7 @@ class UserPortableDataPackageService {
   UserPortableDataImportPreview inspect({
     required String packageJson,
     required String currentUserScope,
+    required String currentDoseOwnerScope,
     required String currentScopeKind,
     Map<String, Set<String>> existingRecordIds = const <String, Set<String>>{},
   }) {
@@ -372,6 +515,8 @@ class UserPortableDataPackageService {
     final unsupportedFields = <String>[];
     final recordCounts = <String, int>{};
     final conflicts = <String, List<String>>{};
+    var reminderPresentation = UserPortableReminderPresentationSummary.empty;
+    PortableSchemaMigrationReceipt? schemaMigrationReceipt;
     int? schemaVersion;
     String? packageId;
 
@@ -387,6 +532,8 @@ class UserPortableDataPackageService {
       unsupportedFields: List<String>.unmodifiable(unsupportedFields),
       proposedMigrations: List<String>.unmodifiable(proposedMigrations),
       findings: List<String>.unmodifiable(findings),
+      reminderPresentation: reminderPresentation,
+      schemaMigrationReceipt: schemaMigrationReceipt,
     );
 
     try {
@@ -434,7 +581,9 @@ class UserPortableDataPackageService {
       }
       final rawVersion = root['schemaVersion'];
       schemaVersion = rawVersion is int ? rawVersion : null;
-      if (schemaVersion != userPortableDataPackageSchemaVersion) {
+      if (schemaVersion == null ||
+          schemaVersion != userPortableDataPackageSchemaVersion &&
+              !userPortableDataLegacyReadableVersions.contains(schemaVersion)) {
         findings.add(
           schemaVersion == null
               ? 'The package schemaVersion is missing or invalid.'
@@ -473,12 +622,15 @@ class UserPortableDataPackageService {
         r'$.manifest',
         unsupportedFields,
       );
+      final schemaPaths = PortableSchemaMigrationRegistry.filePathsForVersion(
+        schemaVersion,
+      );
       for (final key in files.keys) {
-        if (!userPortableDataFilePaths.contains(key)) {
+        if (!schemaPaths.contains(key)) {
           unsupportedFields.add(r'$.files.' + key);
         }
       }
-      for (final path in userPortableDataFilePaths) {
+      for (final path in schemaPaths) {
         if (!files.containsKey(path)) {
           findings.add('Required embedded file is missing: $path.');
         } else {
@@ -539,6 +691,7 @@ class UserPortableDataPackageService {
           'encryption',
           'containsSensitiveUserData',
           'excluded',
+          'identityLinkability',
           'scope',
           'notAClaim',
         },
@@ -558,9 +711,16 @@ class UserPortableDataPackageService {
           privacy['containsSensitiveUserData'] != true ||
           !_sameStringList(
             privacy['excluded'],
-            _userPortableDataExcludedValues,
+            schemaVersion >= 4
+                ? _userPortableDataV4ExcludedValues
+                : _userPortableDataLegacyExcludedValues,
           ) ||
-          privacy['scope'] != _userPortableDataScopeDescription ||
+          privacy['identityLinkability'] !=
+              _userPortableDataIdentityLinkabilityBoundary ||
+          privacy['scope'] !=
+              (schemaVersion >= 4
+                  ? _userPortableDataV4ScopeDescription
+                  : _userPortableDataScopeDescription) ||
           privacy['notAClaim'] != _userPortableDataNotAClaim) {
         findings.add('The owner or integrity contract is unsupported.');
         return result(UserPortableDataPreviewStatus.corrupt);
@@ -591,6 +751,7 @@ class UserPortableDataPackageService {
             'encryption',
             'containsSensitiveUserData',
             'excluded',
+            'identityLinkability',
             'scope',
             'notAClaim',
           }) ||
@@ -601,8 +762,10 @@ class UserPortableDataPackageService {
         return result(UserPortableDataPreviewStatus.corrupt);
       }
       final expectedScope = currentUserScope.trim();
+      final expectedDoseOwnerScope = currentDoseOwnerScope.trim();
       final expectedScopeKind = currentScopeKind.trim();
       if (expectedScope.isEmpty ||
+          expectedDoseOwnerScope.isEmpty ||
           !_userPortableDataScopeKinds.contains(expectedScopeKind)) {
         findings.add('The current account/device scope is unavailable.');
         return result(UserPortableDataPreviewStatus.wrongOwner);
@@ -621,7 +784,8 @@ class UserPortableDataPackageService {
         return result(UserPortableDataPreviewStatus.corrupt);
       }
       final expectedPackageId = _sha256(
-        'parkinsum-portable-package-v1|${owner['bindingSha256']}|$contentSha256',
+        'parkinsum-portable-package-v$schemaVersion|'
+        '${owner['bindingSha256']}|$contentSha256',
       );
       if (packageId != expectedPackageId) {
         findings.add('The package id does not match its owner and content.');
@@ -657,20 +821,14 @@ class UserPortableDataPackageService {
         }
         byPath[path] = mapped;
       }
-      if (byPath.keys
-              .toSet()
-              .difference(userPortableDataFilePaths.toSet())
-              .isNotEmpty ||
-          userPortableDataFilePaths
-              .toSet()
-              .difference(byPath.keys.toSet())
-              .isNotEmpty) {
+      if (byPath.keys.toSet().difference(schemaPaths.toSet()).isNotEmpty ||
+          schemaPaths.toSet().difference(byPath.keys.toSet()).isNotEmpty) {
         findings.add(
           'Manifest file inventory does not match the package schema.',
         );
         return result(UserPortableDataPreviewStatus.corrupt);
       }
-      for (final path in userPortableDataFilePaths) {
+      for (final path in schemaPaths) {
         final row = byPath[path]!;
         if (row['sha256'] != _sha256(_canonicalJson(files[path])) ||
             row['recordCount'] != _recordCount(files[path])) {
@@ -679,7 +837,14 @@ class UserPortableDataPackageService {
         }
       }
 
-      _validateKnownFileShapes(files, findings, unsupportedFields);
+      _validateKnownFileShapes(
+        files,
+        findings,
+        unsupportedFields,
+        schemaVersion: schemaVersion,
+        doseOwnerScope: expectedDoseOwnerScope,
+        observedAt: DateTime.parse(manifest['createdAt'] as String),
+      );
       _validateKnownIdentifiers(files, findings);
       if (findings.isNotEmpty) {
         return result(UserPortableDataPreviewStatus.corrupt);
@@ -690,6 +855,55 @@ class UserPortableDataPackageService {
         );
         return result(UserPortableDataPreviewStatus.unsupportedSchema);
       }
+      final migrationAssessment = PortableSchemaMigrationRegistry.assess(
+        sourceJson: packageJson,
+        sourceDocument: root,
+      );
+      if (!migrationAssessment.accepted ||
+          migrationAssessment.receipt == null ||
+          migrationAssessment.outputDocument == null) {
+        findings.addAll(migrationAssessment.findings);
+        findings.add(
+          'The frozen portable-schema registry could not authorize this preview.',
+        );
+        return result(UserPortableDataPreviewStatus.corrupt);
+      }
+      if (migrationAssessment.receipt!.targetVersion != schemaVersion) {
+        final migratedRoot = migrationAssessment.outputDocument!;
+        final migratedFiles = Map<String, Object?>.from(
+          migratedRoot['files'] as Map,
+        );
+        final migratedFindings = <String>[];
+        final migratedUnsupported = <String>[];
+        _validateKnownFileShapes(
+          migratedFiles,
+          migratedFindings,
+          migratedUnsupported,
+          schemaVersion: migrationAssessment.receipt!.targetVersion,
+          doseOwnerScope: expectedDoseOwnerScope,
+          observedAt: DateTime.parse(manifest['createdAt'] as String),
+        );
+        _validateKnownIdentifiers(migratedFiles, migratedFindings);
+        if (migratedFindings.isNotEmpty || migratedUnsupported.isNotEmpty) {
+          findings.add(
+            'The deterministic migration output did not satisfy the target schema.',
+          );
+          return result(UserPortableDataPreviewStatus.corrupt);
+        }
+      }
+      final migrationReceipt = migrationAssessment.receipt!;
+      schemaMigrationReceipt = migrationReceipt;
+      developer.log(
+        'source=v${migrationReceipt.sourceVersion} '
+        'target=v${migrationReceipt.targetVersion} '
+        'decision=${migrationReceipt.decision} '
+        'receipt=${migrationReceipt.receiptSha256.substring(0, 12)}',
+        name: 'parkinsum.portable_schema_migration',
+      );
+      reminderPresentation = _reminderPresentationSummary(
+        files['reminders.json'],
+        schemaVersion: schemaVersion,
+      );
       for (final entry in existingRecordIds.entries) {
         final incoming = _ids(files[entry.key]);
         final overlapping = incoming.intersection(entry.value).toList()..sort();
@@ -703,7 +917,16 @@ class UserPortableDataPackageService {
       findings.add(
         'Dry-run only: no record, preference, reminder, or account state was changed.',
       );
-      return result(UserPortableDataPreviewStatus.ready);
+      return result(
+        UserPortableDataPreviewStatus.ready,
+        proposedMigrations: schemaVersion < userPortableDataPackageSchemaVersion
+            ? <String>[
+                if (schemaVersion == 2 && reminderPresentation.totalCount > 0)
+                  'Schema 2 reminders have no portable presentation fields; preview defaults them to minimal English intent and still requires explicit target-device scheduling consent.',
+                'Schema $schemaVersion does not contain personal observations; the preview marks them unavailable and preserves no claim that the source history was empty.',
+              ]
+            : const <String>[],
+      );
     } on FormatException {
       findings.add(
         'The package is not valid JSON or exceeds a structural safety budget.',
@@ -729,6 +952,7 @@ class UserPortableDataPackageService {
   Future<UserPortableDataImportPreview> inspectAsync({
     required String packageJson,
     required String currentUserScope,
+    required String currentDoseOwnerScope,
     required String currentScopeKind,
     Map<String, Set<String>> existingRecordIds = const <String, Set<String>>{},
   }) async {
@@ -736,6 +960,7 @@ class UserPortableDataPackageService {
       return inspect(
         packageJson: packageJson,
         currentUserScope: currentUserScope,
+        currentDoseOwnerScope: currentDoseOwnerScope,
         currentScopeKind: currentScopeKind,
         existingRecordIds: existingRecordIds,
       );
@@ -743,6 +968,7 @@ class UserPortableDataPackageService {
     final raw = await compute(_inspectPortablePackageWorker, <String, Object?>{
       'packageJson': packageJson,
       'currentUserScope': currentUserScope,
+      'currentDoseOwnerScope': currentDoseOwnerScope,
       'currentScopeKind': currentScopeKind,
       'maxPackageBytes': maxPackageBytes,
       'existingRecordIds': <String, Object?>{
@@ -806,9 +1032,19 @@ class UserPortableDataPackageService {
 
   static Map<String, Object?> _intake(
     Intake intake,
-    DrugDefinition? medication,
-  ) {
+    DrugDefinition? medication, {
+    required String doseOwnerScope,
+    required DateTime observedAt,
+    required DosageNoteParser parser,
+    required AdministrationDoseConfirmationCoordinator coordinator,
+  }) {
     final product = intake.productSelection;
+    final parseResult = parser.inspect(intake.dosageNote);
+    final resultUse = coordinator.evaluateForResultUse(
+      intake,
+      ownerScope: doseOwnerScope,
+      observedAt: observedAt,
+    );
     return <String, Object?>{
       'id': intake.id,
       'drugId': intake.drugId,
@@ -838,6 +1074,13 @@ class UserPortableDataPackageService {
               'unitLabel': product.unitLabel,
               'meaningBoundary': _userPortableDataProductMeaningBoundary,
             },
+      'doseConfirmation': _doseConfirmationEvidence(intake),
+      'medicationReconciliation': _medicationReconciliationEvidence(intake),
+      'doseTruth': _doseTruth(
+        parseResult: parseResult,
+        resultUse: resultUse,
+        observedAt: observedAt,
+      ),
       'medicationCatalogProvenance': medication == null
           ? <String, Object?>{'status': 'unresolved_at_export'}
           : <String, Object?>{
@@ -846,6 +1089,92 @@ class UserPortableDataPackageService {
               'sourceProductCode': medication.sourceProductCode,
               'jurisdiction': medication.jurisdiction,
             },
+    };
+  }
+
+  static Map<String, Object?> _doseConfirmationEvidence(Intake intake) {
+    final receipt = intake.doseConfirmation;
+    final invalidEvidence = intake.invalidDoseConfirmationEvidence;
+    return <String, Object?>{
+      'evidenceStatus': receipt != null
+          ? 'receipt_present_unverified'
+          : invalidEvidence != null
+          ? 'invalid_evidence_quarantined'
+          : 'absent',
+      'receipt': receipt?.toJson(),
+      'invalidEvidenceDigest': invalidEvidence == null
+          ? null
+          : AdministrationDoseConfirmationReceipt.digestSnapshot(
+              invalidEvidence,
+            ),
+      'meaningBoundary': _userPortableDataDoseConfirmationBoundary,
+    };
+  }
+
+  static Map<String, Object?> _medicationReconciliationEvidence(Intake intake) {
+    final invalidEvidence = intake.invalidMedicationReconciliationEvidence;
+    final serialized = intake.toJson()['medicationReconciliation'];
+    final envelope = invalidEvidence == null && serialized is Map
+        ? Map<String, Object?>.from(serialized)
+        : null;
+    return <String, Object?>{
+      'evidenceStatus': invalidEvidence != null
+          ? 'invalid_evidence_quarantined'
+          : envelope != null
+          ? 'envelope_present'
+          : 'absent',
+      'envelope': envelope,
+      'invalidEvidenceDigest': invalidEvidence == null
+          ? null
+          : AdministrationDoseConfirmationReceipt.digestSnapshot(
+              invalidEvidence,
+            ),
+      'meaningBoundary': _userPortableDataReconciliationBoundary,
+    };
+  }
+
+  static Map<String, Object?> _doseTruth({
+    required DoseExpressionParseResult parseResult,
+    required AdministrationDoseResultUseEvaluation resultUse,
+    required DateTime observedAt,
+  }) {
+    final expression = parseResult.expression;
+    final canonicalValue = resultUse.milligrams ?? resultUse.value;
+    final canonicalUnit = resultUse.milligrams != null ? 'mg' : resultUse.unit;
+    final canonicalQuantity = resultUse.eligible
+        ? <String, Object?>{
+            'value': canonicalValue,
+            'unit': canonicalUnit,
+            'milligrams': resultUse.milligrams,
+            'dimension': resultUse.milligrams != null
+                ? DoseExpressionDimension.mass.name
+                : expression?.unit.dimension.name,
+            'unitSystem': expression?.unit.system,
+            'unitSystemVersion': expression?.unit.version,
+            'unitMappingEvidence': expression?.unit.mappingEvidence.toJson(),
+          }
+        : null;
+    return <String, Object?>{
+      'observedAtUtc': observedAt.toUtc().toIso8601String(),
+      'rawEvidenceStatus': 'preserved_not_result_eligible_by_itself',
+      'parseability': parseResult.toJson(),
+      'confirmationVerification': <String, Object?>{
+        'status': resultUse.confirmation.status.name,
+        'reasonCode': resultUse.confirmation.reasonCode,
+      },
+      'reconciliationVerification': <String, Object?>{
+        'graphDigest': resultUse.assertionGraph.graphDigest,
+        'resultAffectingDoseEligible':
+            resultUse.assertionGraph.resultAffectingDoseEligible,
+        'resultGateReasons': resultUse.assertionGraph.resultGateReasons,
+        'staleDecisionCount': resultUse.assertionGraph.staleDecisionCount,
+      },
+      'resultUse': <String, Object?>{
+        'eligible': resultUse.eligible,
+        'reasonCodes': resultUse.reasonCodes,
+      },
+      'canonicalQuantity': canonicalQuantity,
+      'meaningBoundary': _userPortableDataDoseTruthBoundary,
     };
   }
 
@@ -939,17 +1268,111 @@ class UserPortableDataPackageService {
     };
   }
 
-  static Map<String, Object?> _reminder(UserLoggingReminder reminder) =>
-      <String, Object?>{
-        'id': reminder.id,
-        'kind': reminder.kind.name,
-        'label': reminder.label,
-        'minuteOfDay': reminder.minuteOfDay,
-        'weekdays': reminder.weekdays.toList()..sort(),
-        'enabled': reminder.enabled,
-        'activationTokenStatus': 'excluded_from_portable_package',
-        'deliveryBoundary': _userPortableDataReminderBoundary,
-      };
+  static Map<String, Object?> _reminder(UserLoggingReminder reminder) {
+    final presentation = ReminderNotificationPrivacyPolicy.resolve(
+      mode: reminder.notificationPrivacyMode,
+      localeName: reminder.notificationLocaleCode,
+    );
+    return <String, Object?>{
+      'id': reminder.id,
+      'kind': reminder.kind.name,
+      'label': reminder.label,
+      'minuteOfDay': reminder.minuteOfDay,
+      'weekdays': reminder.weekdays.toList()..sort(),
+      'enabled': reminder.enabled,
+      'notificationPrivacyMode': reminder.notificationPrivacyMode.name,
+      'notificationLocaleCode': presentation.languageCode,
+      'notificationLocaleDecisionCode': reminderNotificationLanguageCode(
+        reminder.notificationLocaleDecisionCode,
+      ),
+      'sourcePresentationSchema':
+          ReminderNotificationPrivacyPolicy.identitySchema,
+      'sourcePresentationSha256': presentation.identitySha256,
+      'presentationIdentityStatus':
+          _userPortableReminderPresentationIdentityStatus,
+      'targetSchedulingConsentStatus': _userPortableReminderTargetConsentStatus,
+      'activationTokenStatus': 'excluded_from_portable_package',
+      'deliveryBoundary': _userPortableDataReminderBoundary,
+    };
+  }
+
+  static Map<String, Object?> _portableObservation(
+    PersonalObservation observation,
+  ) {
+    final fields = Map<String, Object?>.from(observation.toJson())
+      ..remove('recorderId')
+      ..['recorderRole'] = _userPortableDataObservationRecorderRole;
+    return fields;
+  }
+
+  static int _comparePortableObservations(
+    PersonalObservation left,
+    PersonalObservation right,
+  ) {
+    final occurred = left.occurredAt.compareTo(right.occurredAt);
+    if (occurred != 0) return occurred;
+    final recorded = left.recordedAt.compareTo(right.recordedAt);
+    return recorded == 0 ? left.id.compareTo(right.id) : recorded;
+  }
+
+  static UserPortableReminderPresentationSummary _reminderPresentationSummary(
+    Object? raw, {
+    required int schemaVersion,
+  }) {
+    final rows = (raw as List).cast<Map>();
+    var enabledIntentCount = 0;
+    var currentPolicyMatchCount = 0;
+    var currentPolicyDriftCount = 0;
+    var localeDecisionMismatchCount = 0;
+    final privacyModes = <String>{};
+    final languageCodes = <String>{};
+    for (final untyped in rows) {
+      final row = Map<String, Object?>.from(untyped);
+      final enabled = row['enabled'] as bool;
+      if (enabled) enabledIntentCount += 1;
+      final mode = schemaVersion >= 3
+          ? ReminderNotificationPrivacyMode.values.byName(
+              row['notificationPrivacyMode'] as String,
+            )
+          : ReminderNotificationPrivacyMode.minimal;
+      final languageCode = schemaVersion >= 3
+          ? row['notificationLocaleCode'] as String
+          : 'en';
+      final decisionCode = schemaVersion >= 3
+          ? row['notificationLocaleDecisionCode'] as String
+          : 'en';
+      privacyModes.add(mode.name);
+      languageCodes.add(languageCode);
+      if (languageCode != decisionCode) localeDecisionMismatchCount += 1;
+      if (schemaVersion >= 3) {
+        final currentPresentation = ReminderNotificationPrivacyPolicy.resolve(
+          mode: mode,
+          localeName: languageCode,
+        );
+        if (row['sourcePresentationSha256'] ==
+            currentPresentation.identitySha256) {
+          currentPolicyMatchCount += 1;
+        } else {
+          currentPolicyDriftCount += 1;
+        }
+      }
+    }
+    final sortedModes = privacyModes.toList()..sort();
+    final sortedLanguages = languageCodes.toList()..sort();
+    return UserPortableReminderPresentationSummary(
+      totalCount: rows.length,
+      enabledIntentCount: enabledIntentCount,
+      targetConsentRequiredCount: enabledIntentCount,
+      legacyDefaultCount: schemaVersion == userPortableDataLegacyReadableVersion
+          ? rows.length
+          : 0,
+      currentPolicyMatchCount: currentPolicyMatchCount,
+      currentPolicyDriftCount: currentPolicyDriftCount,
+      localeDecisionMismatchCount: localeDecisionMismatchCount,
+      privacyModes: List<String>.unmodifiable(sortedModes),
+      scheduledLanguageCodes: List<String>.unmodifiable(sortedLanguages),
+    );
+  }
 
   static Map<String, Object?> _auditLinks({
     required Iterable<Intake> intakes,
@@ -991,8 +1414,11 @@ class UserPortableDataPackageService {
   static void _validateKnownFileShapes(
     Map<String, Object?> files,
     List<String> findings,
-    List<String> unsupportedFields,
-  ) {
+    List<String> unsupportedFields, {
+    required int schemaVersion,
+    String? doseOwnerScope,
+    DateTime? observedAt,
+  }) {
     if (files['profile.json'] is! Map ||
         files['preferences.json'] is! Map ||
         files['audit_links.json'] is! Map) {
@@ -1096,6 +1522,9 @@ class UserPortableDataPackageService {
         'dosageNote',
         'dose',
         'productSelection',
+        'doseConfirmation',
+        'medicationReconciliation',
+        'doseTruth',
         'medicationCatalogProvenance',
       },
       unsupportedFields,
@@ -1123,6 +1552,61 @@ class UserPortableDataPackageService {
             'unitLabel',
             'meaningBoundary',
           },
+          unsupportedFields,
+        );
+        final confirmation = _mapAt(
+          row['doseConfirmation'],
+          '$path.doseConfirmation',
+          const <String>{
+            'evidenceStatus',
+            'receipt',
+            'invalidEvidenceDigest',
+            'meaningBoundary',
+          },
+          unsupportedFields,
+        );
+        if (confirmation != null) {
+          _mapAt(
+            confirmation['receipt'],
+            '$path.doseConfirmation.receipt',
+            const <String>{
+              'schema_version',
+              'receipt_id',
+              'receipt_digest',
+              'operation_id',
+              'owner_scope_digest',
+              'intake_id',
+              'expected_record_revision_digest',
+              'record_binding_digest',
+              'medication_id',
+              'product_snapshot_digest',
+              'raw_expression',
+              'parsed_expression',
+              'grammar_id',
+              'grammar_version',
+              'grammar_digest',
+              'unit_system',
+              'unit_system_version',
+              'structured_value',
+              'structured_unit',
+              'administration_at_utc',
+              'confirmed_at_utc',
+              'assertion_source',
+              'confirmation_action',
+              'ui_contract_version',
+              'meaning_boundary',
+            },
+            unsupportedFields,
+          );
+        }
+        _collectMedicationReconciliationUnsupported(
+          row['medicationReconciliation'],
+          '$path.medicationReconciliation',
+          unsupportedFields,
+        );
+        _collectDoseTruthUnsupported(
+          row['doseTruth'],
+          '$path.doseTruth',
           unsupportedFields,
         );
         _mapAt(
@@ -1251,19 +1735,130 @@ class UserPortableDataPackageService {
     _forEachMapRow(
       files['reminders.json'],
       r'$.files.reminders.json',
-      const <String>{
+      <String>{
         'id',
         'kind',
         'label',
         'minuteOfDay',
         'weekdays',
         'enabled',
+        if (schemaVersion >= 3) ...<String>{
+          'notificationPrivacyMode',
+          'notificationLocaleCode',
+          'notificationLocaleDecisionCode',
+          'sourcePresentationSchema',
+          'sourcePresentationSha256',
+          'presentationIdentityStatus',
+          'targetSchedulingConsentStatus',
+        },
         'activationTokenStatus',
         'deliveryBoundary',
       },
       unsupportedFields,
       (_, _) {},
     );
+
+    if (schemaVersion >= 4) {
+      final observations = _mapAt(
+        files['observations.json'],
+        r'$.files.observations.json',
+        const <String>{'availability', 'records'},
+        unsupportedFields,
+      );
+      if (observations == null) {
+        findings.add('Portable observations container is invalid.');
+      } else {
+        final availability = observations['availability'];
+        if (availability != 'captured_current_local_snapshot' &&
+            availability != 'unavailable_in_source_schema') {
+          findings.add('Portable observation availability is invalid.');
+        }
+        final records = observations['records'];
+        if (records is! List) {
+          findings.add('Portable observations are not a record list.');
+        } else {
+          if (availability == 'unavailable_in_source_schema' &&
+              records.isNotEmpty) {
+            findings.add(
+              'Observations unavailable in the source schema cannot contain rows.',
+            );
+          }
+          PersonalObservation? previous;
+          for (var index = 0; index < records.length; index++) {
+            final raw = records[index];
+            if (raw is! Map) {
+              findings.add('Portable observation row $index is not an object.');
+              continue;
+            }
+            final row = Map<String, Object?>.from(raw);
+            const observationFields = <String>{
+              'schemaVersion',
+              'id',
+              'kind',
+              'occurredAt',
+              'recordedAt',
+              'originalTimezone',
+              'source',
+              'recorderRole',
+              'status',
+              'symptomLabel',
+              'severity',
+              'notes',
+              'motorState',
+              'systolic',
+              'diastolic',
+              'unit',
+              'posture',
+            };
+            _collectUnsupportedKeys(
+              row,
+              observationFields,
+              r'$.files.observations.json.records['
+              '$index]',
+              unsupportedFields,
+            );
+            if (!_hasRequiredKeys(row, observationFields)) {
+              findings.add('Portable observation row $index is incomplete.');
+              continue;
+            }
+            if (row['recorderRole'] !=
+                _userPortableDataObservationRecorderRole) {
+              findings.add(
+                'Portable observation row $index has an invalid recorder role.',
+              );
+              continue;
+            }
+            final modelFields = Map<String, Object?>.from(row)
+              ..remove('recorderRole')
+              ..['recorderId'] = 'portable-package-owner';
+            try {
+              final observation = PersonalObservation.fromJson(
+                Map<String, dynamic>.from(modelFields),
+              );
+              if (observation.occurredAt.toIso8601String() !=
+                      row['occurredAt'] ||
+                  observation.recordedAt.toIso8601String() !=
+                      row['recordedAt']) {
+                findings.add(
+                  'Portable observation row $index timestamps must use canonical UTC instants.',
+                );
+              }
+              if (previous != null &&
+                  _comparePortableObservations(previous, observation) > 0) {
+                findings.add(
+                  'Portable observations are not chronologically ordered.',
+                );
+              }
+              previous = observation;
+            } on Object {
+              findings.add(
+                'Portable observation row $index is semantically invalid.',
+              );
+            }
+          }
+        }
+      }
+    }
 
     final audit = _mapAt(
       files['audit_links.json'],
@@ -1291,7 +1886,233 @@ class UserPortableDataPackageService {
         (_, _) {},
       );
     }
-    _validateKnownFileScalars(files, findings);
+    _validateKnownFileScalars(
+      files,
+      findings,
+      schemaVersion: schemaVersion,
+      doseOwnerScope: doseOwnerScope,
+      observedAt: observedAt,
+    );
+  }
+
+  static void _collectMedicationReconciliationUnsupported(
+    Object? raw,
+    String path,
+    List<String> unsupportedFields,
+  ) {
+    final reconciliation = _mapAt(raw, path, const <String>{
+      'evidenceStatus',
+      'envelope',
+      'invalidEvidenceDigest',
+      'meaningBoundary',
+    }, unsupportedFields);
+    if (reconciliation == null) return;
+    final envelope = _mapAt(
+      reconciliation['envelope'],
+      '$path.envelope',
+      const <String>{
+        'schema',
+        'schemaVersion',
+        'assertions',
+        'decisions',
+        'meaningBoundary',
+      },
+      unsupportedFields,
+    );
+    if (envelope == null) return;
+    _forEachMapRow(
+      envelope['assertions'],
+      '$path.envelope.assertions',
+      const <String>{
+        'schema',
+        'schema_version',
+        'assertion_id',
+        'assertion_digest',
+        'owner_scope_digest',
+        'intake_id',
+        'medication_id',
+        'product_identity_digest',
+        'dose_value',
+        'dose_unit',
+        'route',
+        'dosage_form',
+        'release_type',
+        'evidence_class',
+        'identity_schema_version',
+        'source_display_label',
+        'source_artifact_id',
+        'source_artifact_digest',
+        'source_revision_digest',
+        'actor_identity_digest',
+        'actor_role',
+        'derived_from_assertion_ids',
+        'supersedes_assertion_ids',
+        'retracts_assertion_ids',
+        'effective_start_utc',
+        'effective_end_utc',
+        'time_precision',
+        'time_uncertainty_minutes',
+        'timezone_offset_minutes',
+        'timezone_source',
+        'asserted_at_utc',
+        'imported_at_utc',
+        'recorded_at_utc',
+        'status',
+        'lifecycle',
+        'local_confirmation_receipt_digest',
+        'meaning_boundary',
+      },
+      unsupportedFields,
+      (_, _) {},
+    );
+    _forEachMapRow(
+      envelope['decisions'],
+      '$path.envelope.decisions',
+      const <String>{
+        'schema',
+        'schema_version',
+        'decision_id',
+        'decision_digest',
+        'owner_scope_digest',
+        'intake_id',
+        'graph_digest',
+        'acknowledged_assertion_ids',
+        'acknowledged_blocking_edge_ids',
+        'resolution',
+        'reason_code',
+        'decided_at_utc',
+        'meaning_boundary',
+      },
+      unsupportedFields,
+      (_, _) {},
+    );
+  }
+
+  static void _collectDoseTruthUnsupported(
+    Object? raw,
+    String path,
+    List<String> unsupportedFields,
+  ) {
+    final truth = _mapAt(raw, path, const <String>{
+      'observedAtUtc',
+      'rawEvidenceStatus',
+      'parseability',
+      'confirmationVerification',
+      'reconciliationVerification',
+      'resultUse',
+      'canonicalQuantity',
+      'meaningBoundary',
+    }, unsupportedFields);
+    if (truth == null) return;
+    final parseability =
+        _mapAt(truth['parseability'], '$path.parseability', const <String>{
+          'schema',
+          'raw_text',
+          'normalized_text',
+          'grammar_id',
+          'grammar_version',
+          'grammar_digest',
+          'status',
+          'reason_codes',
+          'expression',
+          'boundary',
+        }, unsupportedFields);
+    final expression = _mapAt(
+      parseability?['expression'],
+      '$path.parseability.expression',
+      const <String>{'value', 'unit', 'role', 'source_span'},
+      unsupportedFields,
+    );
+    final unit = _mapAt(
+      expression?['unit'],
+      '$path.parseability.expression.unit',
+      const <String>{
+        'display',
+        'system',
+        'code',
+        'version',
+        'dimension',
+        'mappingEvidence',
+      },
+      unsupportedFields,
+    );
+    const doseUnitMappingFields = <String>{
+      'schema',
+      'sourceSystemUri',
+      'sourceCode',
+      'sourceDisplay',
+      'sourceTerminologyVersion',
+      'canonicalSystemUri',
+      'canonicalCode',
+      'canonicalDisplay',
+      'canonicalTerminologyVersion',
+      'baseUnitSystemUri',
+      'baseUnitCode',
+      'baseUnitDisplay',
+      'baseUnitTerminologyVersion',
+      'sourceRevision',
+      'mappingType',
+      'jurisdiction',
+      'reviewDate',
+      'licenseState',
+      'sourceDimension',
+      'targetDimension',
+      'conversionNumerator',
+      'conversionDenominator',
+    };
+    _mapAt(
+      unit?['mappingEvidence'],
+      '$path.parseability.expression.unit.mappingEvidence',
+      doseUnitMappingFields,
+      unsupportedFields,
+    );
+    _mapAt(
+      expression?['source_span'],
+      '$path.parseability.expression.source_span',
+      const <String>{'start', 'end'},
+      unsupportedFields,
+    );
+    _mapAt(
+      truth['confirmationVerification'],
+      '$path.confirmationVerification',
+      const <String>{'status', 'reasonCode'},
+      unsupportedFields,
+    );
+    _mapAt(
+      truth['reconciliationVerification'],
+      '$path.reconciliationVerification',
+      const <String>{
+        'graphDigest',
+        'resultAffectingDoseEligible',
+        'resultGateReasons',
+        'staleDecisionCount',
+      },
+      unsupportedFields,
+    );
+    _mapAt(truth['resultUse'], '$path.resultUse', const <String>{
+      'eligible',
+      'reasonCodes',
+    }, unsupportedFields);
+    final canonical = _mapAt(
+      truth['canonicalQuantity'],
+      '$path.canonicalQuantity',
+      const <String>{
+        'value',
+        'unit',
+        'milligrams',
+        'dimension',
+        'unitSystem',
+        'unitSystemVersion',
+        'unitMappingEvidence',
+      },
+      unsupportedFields,
+    );
+    _mapAt(
+      canonical?['unitMappingEvidence'],
+      '$path.canonicalQuantity.unitMappingEvidence',
+      doseUnitMappingFields,
+      unsupportedFields,
+    );
   }
 
   static Map<String, Object?>? _mapAt(
@@ -1371,8 +2192,11 @@ class UserPortableDataPackageService {
 
   static void _validateKnownFileScalars(
     Map<String, Object?> files,
-    List<String> findings,
-  ) {
+    List<String> findings, {
+    required int schemaVersion,
+    String? doseOwnerScope,
+    DateTime? observedAt,
+  }) {
     final profile = _schemaMap(
       files['profile.json'],
       r'$.files.profile.json',
@@ -1636,6 +2460,9 @@ class UserPortableDataPackageService {
           'dosageNote',
           'dose',
           'productSelection',
+          'doseConfirmation',
+          'medicationReconciliation',
+          'doseTruth',
           'medicationCatalogProvenance',
         },
         path,
@@ -1744,6 +2571,72 @@ class UserPortableDataPackageService {
             _invalid(findings, '$path.productSelection.confirmedQuantity');
           }
         }
+      }
+      final confirmation = _schemaMap(
+        row['doseConfirmation'],
+        '$path.doseConfirmation',
+        const <String>{
+          'evidenceStatus',
+          'receipt',
+          'invalidEvidenceDigest',
+          'meaningBoundary',
+        },
+        findings,
+      );
+      if (confirmation != null) {
+        final status = confirmation['evidenceStatus'];
+        _checkString(
+          status,
+          '$path.doseConfirmation.evidenceStatus',
+          findings,
+          allowed: const <String>{
+            'absent',
+            'receipt_present_unverified',
+            'invalid_evidence_quarantined',
+          },
+        );
+        if (confirmation['meaningBoundary'] !=
+            _userPortableDataDoseConfirmationBoundary) {
+          _invalid(findings, '$path.doseConfirmation.meaningBoundary');
+        }
+        final receiptRaw = confirmation['receipt'];
+        final invalidDigest = confirmation['invalidEvidenceDigest'];
+        if (status == 'receipt_present_unverified') {
+          if (receiptRaw is! Map || invalidDigest != null) {
+            _invalid(findings, '$path.doseConfirmation.receipt');
+          } else {
+            try {
+              AdministrationDoseConfirmationReceipt.fromJson(
+                Map<String, dynamic>.from(receiptRaw),
+              );
+            } on Object {
+              _invalid(findings, '$path.doseConfirmation.receipt');
+            }
+          }
+        } else if (status == 'invalid_evidence_quarantined') {
+          if (receiptRaw != null ||
+              invalidDigest is! String ||
+              !RegExp(r'^[a-f0-9]{64}$').hasMatch(invalidDigest)) {
+            _invalid(findings, '$path.doseConfirmation.invalidEvidenceDigest');
+          }
+        } else if (receiptRaw != null || invalidDigest != null) {
+          _invalid(findings, '$path.doseConfirmation.evidenceStatus');
+        }
+      }
+      _validateMedicationReconciliationEvidence(
+        row['medicationReconciliation'],
+        '$path.medicationReconciliation',
+        findings,
+      );
+      _validateDoseTruthScalars(row['doseTruth'], '$path.doseTruth', findings);
+      if (doseOwnerScope != null && observedAt != null) {
+        _validatePortableDoseTruthBinding(
+          row,
+          path,
+          doseOwnerScope: doseOwnerScope,
+          observedAt: observedAt,
+          findings: findings,
+        );
       }
       _validateCatalogProvenance(
         row['medicationCatalogProvenance'],
@@ -1921,13 +2814,22 @@ class UserPortableDataPackageService {
       final row = reminderRows[index];
       _requireKeys(
         row,
-        const <String>{
+        <String>{
           'id',
           'kind',
           'label',
           'minuteOfDay',
           'weekdays',
           'enabled',
+          if (schemaVersion >= 3) ...<String>{
+            'notificationPrivacyMode',
+            'notificationLocaleCode',
+            'notificationLocaleDecisionCode',
+            'sourcePresentationSchema',
+            'sourcePresentationSha256',
+            'presentationIdentityStatus',
+            'targetSchedulingConsentStatus',
+          },
           'activationTokenStatus',
           'deliveryBoundary',
         },
@@ -1966,6 +2868,58 @@ class UserPortableDataPackageService {
         sorted: true,
       );
       _checkBool(row['enabled'], '$path.enabled', findings);
+      if (schemaVersion >= 3) {
+        _checkString(
+          row['notificationPrivacyMode'],
+          '$path.notificationPrivacyMode',
+          findings,
+          allowed: ReminderNotificationPrivacyMode.values
+              .map((value) => value.name)
+              .toSet(),
+        );
+        final locale = row['notificationLocaleCode'];
+        final decisionLocale = row['notificationLocaleDecisionCode'];
+        _checkString(locale, '$path.notificationLocaleCode', findings);
+        _checkString(
+          decisionLocale,
+          '$path.notificationLocaleDecisionCode',
+          findings,
+        );
+        if (locale is String &&
+            (!isReminderNotificationLocaleCodeValid(locale) ||
+                reminderNotificationLanguageCode(locale) != locale ||
+                ReminderNotificationPrivacyPolicy.supportedLanguageCode(
+                      locale,
+                    ) !=
+                    locale)) {
+          _invalid(findings, '$path.notificationLocaleCode');
+        }
+        if (decisionLocale is String &&
+            (!isReminderNotificationLocaleCodeValid(decisionLocale) ||
+                reminderNotificationLanguageCode(decisionLocale) !=
+                    decisionLocale ||
+                ReminderNotificationPrivacyPolicy.supportedLanguageCode(
+                      decisionLocale,
+                    ) !=
+                    decisionLocale)) {
+          _invalid(findings, '$path.notificationLocaleDecisionCode');
+        }
+        if (row['sourcePresentationSchema'] !=
+            ReminderNotificationPrivacyPolicy.identitySchema) {
+          _invalid(findings, '$path.sourcePresentationSchema');
+        }
+        if (!_isSha256(row['sourcePresentationSha256'])) {
+          _invalid(findings, '$path.sourcePresentationSha256');
+        }
+        if (row['presentationIdentityStatus'] !=
+            _userPortableReminderPresentationIdentityStatus) {
+          _invalid(findings, '$path.presentationIdentityStatus');
+        }
+        if (row['targetSchedulingConsentStatus'] !=
+            _userPortableReminderTargetConsentStatus) {
+          _invalid(findings, '$path.targetSchedulingConsentStatus');
+        }
+      }
       if (row['activationTokenStatus'] != 'excluded_from_portable_package') {
         _invalid(findings, '$path.activationTokenStatus');
       }
@@ -1981,6 +2935,652 @@ class UserPortableDataPackageService {
       mealRows: mealRows,
       reminderRows: reminderRows,
       findings: findings,
+    );
+  }
+
+  static void _validateMedicationReconciliationEvidence(
+    Object? raw,
+    String path,
+    List<String> findings,
+  ) {
+    final reconciliation = _schemaMap(raw, path, const <String>{
+      'evidenceStatus',
+      'envelope',
+      'invalidEvidenceDigest',
+      'meaningBoundary',
+    }, findings);
+    if (reconciliation == null) return;
+    final status = reconciliation['evidenceStatus'];
+    _checkString(
+      status,
+      '$path.evidenceStatus',
+      findings,
+      allowed: const <String>{
+        'absent',
+        'envelope_present',
+        'invalid_evidence_quarantined',
+      },
+    );
+    if (reconciliation['meaningBoundary'] !=
+        _userPortableDataReconciliationBoundary) {
+      _invalid(findings, '$path.meaningBoundary');
+    }
+    final envelopeRaw = reconciliation['envelope'];
+    final invalidDigest = reconciliation['invalidEvidenceDigest'];
+    if (status == 'envelope_present') {
+      if (envelopeRaw is! Map || invalidDigest != null) {
+        _invalid(findings, '$path.envelope');
+        return;
+      }
+      final envelope = _schemaMap(envelopeRaw, '$path.envelope', const <String>{
+        'schema',
+        'schemaVersion',
+        'assertions',
+        'decisions',
+        'meaningBoundary',
+      }, findings);
+      if (envelope == null) return;
+      if (envelope['schema'] !=
+              'parkinsum.medication-reconciliation-envelope/1' ||
+          envelope['schemaVersion'] != 1 ||
+          envelope['meaningBoundary'] !=
+              _userPortableDataReconciliationEnvelopeBoundary ||
+          envelope['assertions'] is! List ||
+          envelope['decisions'] is! List) {
+        _invalid(findings, '$path.envelope');
+        return;
+      }
+      final assertions = envelope['assertions'] as List;
+      final decisions = envelope['decisions'] as List;
+      if (assertions.length > 64 || decisions.length > 128) {
+        _invalid(findings, '$path.envelope');
+        return;
+      }
+      try {
+        for (var index = 0; index < assertions.length; index++) {
+          final item = assertions[index];
+          if (item is! Map) throw const FormatException();
+          final assertion = MedicationAssertionNode.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+          if (item['schema_version'] == medicationAssertionSchemaVersion &&
+              _canonicalJson(assertion.toJson()) != _canonicalJson(item)) {
+            throw const FormatException();
+          }
+        }
+        for (var index = 0; index < decisions.length; index++) {
+          final item = decisions[index];
+          if (item is! Map) throw const FormatException();
+          final decision = MedicationReconciliationDecision.fromJson(
+            Map<String, dynamic>.from(item),
+          );
+          if (_canonicalJson(decision.toJson()) != _canonicalJson(item)) {
+            throw const FormatException();
+          }
+        }
+      } on Object {
+        _invalid(findings, '$path.envelope');
+      }
+    } else if (status == 'invalid_evidence_quarantined') {
+      if (envelopeRaw != null || !_isSha256(invalidDigest)) {
+        _invalid(findings, '$path.invalidEvidenceDigest');
+      }
+    } else if (envelopeRaw != null || invalidDigest != null) {
+      _invalid(findings, '$path.evidenceStatus');
+    }
+  }
+
+  static void _validateDoseTruthScalars(
+    Object? raw,
+    String path,
+    List<String> findings,
+  ) {
+    final truth = _schemaMap(raw, path, const <String>{
+      'observedAtUtc',
+      'rawEvidenceStatus',
+      'parseability',
+      'confirmationVerification',
+      'reconciliationVerification',
+      'resultUse',
+      'canonicalQuantity',
+      'meaningBoundary',
+    }, findings);
+    if (truth == null) return;
+    _checkTimestamp(truth['observedAtUtc'], '$path.observedAtUtc', findings);
+    if (truth['rawEvidenceStatus'] !=
+        'preserved_not_result_eligible_by_itself') {
+      _invalid(findings, '$path.rawEvidenceStatus');
+    }
+    if (truth['meaningBoundary'] != _userPortableDataDoseTruthBoundary) {
+      _invalid(findings, '$path.meaningBoundary');
+    }
+    final parseability =
+        _schemaMap(truth['parseability'], '$path.parseability', const <String>{
+          'schema',
+          'raw_text',
+          'normalized_text',
+          'grammar_id',
+          'grammar_version',
+          'grammar_digest',
+          'status',
+          'reason_codes',
+          'expression',
+          'boundary',
+        }, findings);
+    Object? expressionRaw;
+    VersionedDoseUnitMapping? doseUnitMappingEvidence;
+    if (parseability != null) {
+      _checkString(
+        parseability['raw_text'],
+        '$path.parseability.raw_text',
+        findings,
+        allowEmpty: true,
+      );
+      _checkString(
+        parseability['normalized_text'],
+        '$path.parseability.normalized_text',
+        findings,
+        allowEmpty: true,
+      );
+      if (parseability['schema'] !=
+              'parkinsum.dose-expression-parse-result/2' ||
+          parseability['grammar_id'] != DosageNoteParser.grammarId ||
+          parseability['grammar_version'] != DosageNoteParser.grammarVersion ||
+          parseability['grammar_digest'] != DosageNoteParser.grammarDigest) {
+        _invalid(findings, '$path.parseability.grammar');
+      }
+      final parseStatus = parseability['status'];
+      _checkString(
+        parseStatus,
+        '$path.parseability.status',
+        findings,
+        allowed: DoseExpressionParseStatus.values
+            .map((value) => value.name)
+            .toSet(),
+      );
+      final parseReasons = _checkStringList(
+        parseability['reason_codes'],
+        '$path.parseability.reason_codes',
+        findings,
+        unique: true,
+        sorted: true,
+      );
+      expressionRaw = parseability['expression'];
+      if (parseStatus == DoseExpressionParseStatus.accepted.name) {
+        if (parseReasons?.isNotEmpty ?? true) {
+          _invalid(findings, '$path.parseability.reason_codes');
+        }
+        final expression = _schemaMap(
+          expressionRaw,
+          '$path.parseability.expression',
+          const <String>{'value', 'unit', 'role', 'source_span'},
+          findings,
+        );
+        if (expression != null) {
+          _checkNumber(
+            expression['value'],
+            '$path.parseability.expression.value',
+            findings,
+            minExclusive: 0,
+          );
+          if (expression['role'] !=
+              DoseExpressionRole.administrationDose.name) {
+            _invalid(findings, '$path.parseability.expression.role');
+          }
+          final unit = _schemaMap(
+            expression['unit'],
+            '$path.parseability.expression.unit',
+            const <String>{
+              'display',
+              'system',
+              'code',
+              'version',
+              'dimension',
+              'mappingEvidence',
+            },
+            findings,
+          );
+          if (unit != null) {
+            _checkString(
+              unit['display'],
+              '$path.parseability.expression.unit.display',
+              findings,
+            );
+            if (unit['system'] != DosageNoteParser.localUnitSystem ||
+                unit['version'] != DosageNoteParser.localUnitVersion) {
+              _invalid(findings, '$path.parseability.expression.unit.system');
+            }
+            _checkString(
+              unit['code'],
+              '$path.parseability.expression.unit.code',
+              findings,
+              allowed: const <String>{'mg', 'g', 'mcg', 'mL'},
+            );
+            _checkString(
+              unit['dimension'],
+              '$path.parseability.expression.unit.dimension',
+              findings,
+              allowed: DoseExpressionDimension.values
+                  .map((value) => value.name)
+                  .toSet(),
+            );
+            doseUnitMappingEvidence = VersionedDoseUnitMapping.tryFromJson(
+              unit['mappingEvidence'],
+            );
+            final mappingErrors = doseUnitMappingEvidence?.validationErrors(
+              expectedSourceRevision: DosageNoteParser.grammarDigest,
+              evaluatedAt: DateTime.now().toUtc(),
+            );
+            if (doseUnitMappingEvidence == null ||
+                mappingErrors == null ||
+                mappingErrors.isNotEmpty ||
+                doseUnitMappingEvidence.canonicalCode != unit['code'] ||
+                doseUnitMappingEvidence.sourceDisplay != unit['display'] ||
+                doseUnitMappingEvidence.sourceDimension.name !=
+                    unit['dimension']) {
+              _invalid(
+                findings,
+                '$path.parseability.expression.unit.mappingEvidence',
+              );
+            }
+          }
+          final span = _schemaMap(
+            expression['source_span'],
+            '$path.parseability.expression.source_span',
+            const <String>{'start', 'end'},
+            findings,
+          );
+          if (span != null) {
+            _checkInt(
+              span['start'],
+              '$path.parseability.expression.source_span.start',
+              findings,
+              min: 0,
+            );
+            _checkInt(
+              span['end'],
+              '$path.parseability.expression.source_span.end',
+              findings,
+              min: 1,
+            );
+            if (span['start'] is int &&
+                span['end'] is int &&
+                (span['end'] as int) <= (span['start'] as int)) {
+              _invalid(findings, '$path.parseability.expression.source_span');
+            }
+          }
+        }
+      } else {
+        if (expressionRaw != null || (parseReasons?.isEmpty ?? true)) {
+          _invalid(findings, '$path.parseability.expression');
+        }
+      }
+    }
+    final confirmation = _schemaMap(
+      truth['confirmationVerification'],
+      '$path.confirmationVerification',
+      const <String>{'status', 'reasonCode'},
+      findings,
+    );
+    if (confirmation != null) {
+      _checkString(
+        confirmation['status'],
+        '$path.confirmationVerification.status',
+        findings,
+        allowed: AdministrationDoseEvaluationStatus.values
+            .map((value) => value.name)
+            .toSet(),
+      );
+      _checkString(
+        confirmation['reasonCode'],
+        '$path.confirmationVerification.reasonCode',
+        findings,
+      );
+    }
+    final reconciliation = _schemaMap(
+      truth['reconciliationVerification'],
+      '$path.reconciliationVerification',
+      const <String>{
+        'graphDigest',
+        'resultAffectingDoseEligible',
+        'resultGateReasons',
+        'staleDecisionCount',
+      },
+      findings,
+    );
+    if (reconciliation != null) {
+      if (!_isSha256(reconciliation['graphDigest'])) {
+        _invalid(findings, '$path.reconciliationVerification.graphDigest');
+      }
+      _checkBool(
+        reconciliation['resultAffectingDoseEligible'],
+        '$path.reconciliationVerification.resultAffectingDoseEligible',
+        findings,
+      );
+      _checkStringList(
+        reconciliation['resultGateReasons'],
+        '$path.reconciliationVerification.resultGateReasons',
+        findings,
+        unique: true,
+        sorted: true,
+      );
+      _checkInt(
+        reconciliation['staleDecisionCount'],
+        '$path.reconciliationVerification.staleDecisionCount',
+        findings,
+        min: 0,
+      );
+    }
+    final resultUse = _schemaMap(
+      truth['resultUse'],
+      '$path.resultUse',
+      const <String>{'eligible', 'reasonCodes'},
+      findings,
+    );
+    bool? eligible;
+    if (resultUse != null) {
+      _checkBool(resultUse['eligible'], '$path.resultUse.eligible', findings);
+      eligible = resultUse['eligible'] as bool?;
+      final reasons = _checkStringList(
+        resultUse['reasonCodes'],
+        '$path.resultUse.reasonCodes',
+        findings,
+        unique: true,
+        sorted: true,
+      );
+      if (eligible == true && (reasons?.isNotEmpty ?? true) ||
+          eligible == false && (reasons?.isEmpty ?? true)) {
+        _invalid(findings, '$path.resultUse.reasonCodes');
+      }
+    }
+    final canonicalRaw = truth['canonicalQuantity'];
+    if (eligible == true) {
+      final canonical =
+          _schemaMap(canonicalRaw, '$path.canonicalQuantity', const <String>{
+            'value',
+            'unit',
+            'milligrams',
+            'dimension',
+            'unitSystem',
+            'unitSystemVersion',
+            'unitMappingEvidence',
+          }, findings);
+      if (canonical != null) {
+        _checkNumber(
+          canonical['value'],
+          '$path.canonicalQuantity.value',
+          findings,
+          minExclusive: 0,
+        );
+        _checkString(
+          canonical['unit'],
+          '$path.canonicalQuantity.unit',
+          findings,
+          // Schema v2 has one canonical mass unit. The original typed unit is
+          // retained in parseability and receipt evidence, while result-facing
+          // mass is always normalized to milligrams. Volume remains mL and is
+          // never silently converted to mass without concentration evidence.
+          allowed: const <String>{'mg', 'mL'},
+        );
+        _checkNumber(
+          canonical['milligrams'],
+          '$path.canonicalQuantity.milligrams',
+          findings,
+          nullable: true,
+          minExclusive: 0,
+        );
+        _checkString(
+          canonical['dimension'],
+          '$path.canonicalQuantity.dimension',
+          findings,
+          allowed: DoseExpressionDimension.values
+              .map((value) => value.name)
+              .toSet(),
+        );
+        if (canonical['unitSystem'] != DosageNoteParser.localUnitSystem ||
+            canonical['unitSystemVersion'] !=
+                DosageNoteParser.localUnitVersion) {
+          _invalid(findings, '$path.canonicalQuantity.unitSystem');
+        }
+        final canonicalMappingRaw = canonical['unitMappingEvidence'];
+        final canonicalMapping = VersionedDoseUnitMapping.tryFromJson(
+          canonicalMappingRaw,
+        );
+        final canonicalMappingErrors = canonicalMapping?.validationErrors(
+          expectedSourceRevision: DosageNoteParser.grammarDigest,
+          evaluatedAt: DateTime.now().toUtc(),
+        );
+        if (canonicalMapping == null ||
+            canonicalMappingErrors == null ||
+            canonicalMappingErrors.isNotEmpty ||
+            doseUnitMappingEvidence == null ||
+            AdministrationDoseConfirmationReceipt.digestSnapshot(
+                  canonicalMappingRaw,
+                ) !=
+                AdministrationDoseConfirmationReceipt.digestSnapshot(
+                  doseUnitMappingEvidence.toJson(),
+                ) ||
+            canonicalMapping.baseUnitCode != canonical['unit'] ||
+            canonicalMapping.targetDimension.name != canonical['dimension']) {
+          _invalid(findings, '$path.canonicalQuantity.unitMappingEvidence');
+        } else {
+          final quantity = expressionRaw is Map ? expressionRaw['value'] : null;
+          final converted = quantity is num
+              ? canonicalMapping.convertToBaseUnit(
+                  quantity.toDouble(),
+                  expectedSourceRevision: DosageNoteParser.grammarDigest,
+                  evaluatedAt: DateTime.now().toUtc(),
+                )
+              : null;
+          if (converted == null ||
+              !_sameNumber(converted, canonical['value'])) {
+            _invalid(findings, '$path.canonicalQuantity.value');
+          }
+        }
+        if (canonical['unit'] == 'mL') {
+          if (canonical['dimension'] != DoseExpressionDimension.volume.name ||
+              canonical['milligrams'] != null) {
+            _invalid(findings, '$path.canonicalQuantity.dimension');
+          }
+        } else if (canonical['unit'] != 'mg' ||
+            canonical['dimension'] != DoseExpressionDimension.mass.name ||
+            canonical['milligrams'] == null ||
+            !_sameNumber(canonical['value'], canonical['milligrams'])) {
+          _invalid(findings, '$path.canonicalQuantity.dimension');
+        }
+      }
+    } else if (canonicalRaw != null) {
+      _invalid(findings, '$path.canonicalQuantity');
+    }
+  }
+
+  static void _validatePortableDoseTruthBinding(
+    Map<String, Object?> row,
+    String path, {
+    required String doseOwnerScope,
+    required DateTime observedAt,
+    required List<String> findings,
+  }) {
+    try {
+      final intake = _portableIntakeFromRow(row);
+      final parser = DosageNoteParser();
+      final coordinator = AdministrationDoseConfirmationCoordinator(
+        parser: parser,
+      );
+      final expectedTruth = _doseTruth(
+        parseResult: parser.inspect(intake.dosageNote),
+        resultUse: coordinator.evaluateForResultUse(
+          intake,
+          ownerScope: doseOwnerScope,
+          observedAt: observedAt,
+        ),
+        observedAt: observedAt,
+      );
+      if (_canonicalJson(row['doseTruth']) != _canonicalJson(expectedTruth)) {
+        _invalid(findings, '$path.doseTruth.binding');
+      }
+
+      final confirmation = Map<String, Object?>.from(
+        row['doseConfirmation'] as Map,
+      );
+      if (confirmation['evidenceStatus'] != 'invalid_evidence_quarantined') {
+        if (_canonicalJson(confirmation) !=
+            _canonicalJson(_doseConfirmationEvidence(intake))) {
+          _invalid(findings, '$path.doseConfirmation.binding');
+        }
+      }
+      final reconciliation = Map<String, Object?>.from(
+        row['medicationReconciliation'] as Map,
+      );
+      if (reconciliation['evidenceStatus'] != 'invalid_evidence_quarantined') {
+        if (!_medicationReconciliationBindingMatches(reconciliation, intake)) {
+          _invalid(findings, '$path.medicationReconciliation.binding');
+        }
+      }
+    } on Object {
+      _invalid(findings, '$path.doseTruth.binding');
+    }
+  }
+
+  static bool _medicationReconciliationBindingMatches(
+    Map<String, Object?> actual,
+    Intake intake,
+  ) {
+    final expected = _medicationReconciliationEvidence(intake);
+    if (_canonicalJson(actual) == _canonicalJson(expected)) return true;
+    if (actual['evidenceStatus'] != 'envelope_present') return false;
+    final actualEnvelopeRaw = actual['envelope'];
+    final expectedEnvelopeRaw = expected['envelope'];
+    if (actualEnvelopeRaw is! Map || expectedEnvelopeRaw is! Map) return false;
+    final actualMetadata = Map<String, Object?>.from(actual)
+      ..remove('envelope');
+    final expectedMetadata = Map<String, Object?>.from(expected)
+      ..remove('envelope');
+    if (_canonicalJson(actualMetadata) != _canonicalJson(expectedMetadata)) {
+      return false;
+    }
+
+    // Intake serialization migrates accepted v1 assertions to v2. Validate the
+    // old node's exact shape and digest, then bind it by its preserved identity.
+    final actualEnvelope = Map<String, Object?>.from(actualEnvelopeRaw);
+    final expectedEnvelope = Map<String, Object?>.from(expectedEnvelopeRaw);
+    final actualEnvelopeMetadata = Map<String, Object?>.from(actualEnvelope)
+      ..remove('assertions');
+    final expectedEnvelopeMetadata = Map<String, Object?>.from(expectedEnvelope)
+      ..remove('assertions');
+    if (_canonicalJson(actualEnvelopeMetadata) !=
+        _canonicalJson(expectedEnvelopeMetadata)) {
+      return false;
+    }
+    final rawAssertions = actualEnvelope['assertions'];
+    final expectedAssertions = intake.medicationAssertions;
+    if (rawAssertions is! List ||
+        rawAssertions.length != expectedAssertions.length) {
+      return false;
+    }
+    try {
+      for (var index = 0; index < rawAssertions.length; index++) {
+        final raw = rawAssertions[index];
+        if (raw is! Map) return false;
+        final parsed = MedicationAssertionNode.fromJson(
+          Map<String, dynamic>.from(raw),
+        );
+        final expectedAssertion = expectedAssertions[index];
+        if (parsed.assertionId != expectedAssertion.assertionId ||
+            parsed.assertionDigest != expectedAssertion.assertionDigest ||
+            parsed.identitySchemaVersion !=
+                expectedAssertion.identitySchemaVersion ||
+            parsed.sourceDisplayLabel != expectedAssertion.sourceDisplayLabel ||
+            (raw['schema_version'] == medicationAssertionSchemaVersion &&
+                _canonicalJson(parsed.toJson()) != _canonicalJson(raw))) {
+          return false;
+        }
+      }
+    } on Object {
+      return false;
+    }
+    return true;
+  }
+
+  static Intake _portableIntakeFromRow(Map<String, Object?> row) {
+    final dose = Map<String, Object?>.from(row['dose'] as Map);
+    final confirmation = Map<String, Object?>.from(
+      row['doseConfirmation'] as Map,
+    );
+    AdministrationDoseConfirmationReceipt? receipt;
+    Map<String, Object?>? invalidConfirmation;
+    if (confirmation['evidenceStatus'] == 'receipt_present_unverified') {
+      receipt = AdministrationDoseConfirmationReceipt.fromJson(
+        Map<String, dynamic>.from(confirmation['receipt'] as Map),
+      );
+    } else if (confirmation['evidenceStatus'] ==
+        'invalid_evidence_quarantined') {
+      invalidConfirmation = <String, Object?>{
+        'portable_invalid_evidence_digest':
+            confirmation['invalidEvidenceDigest'],
+      };
+    }
+
+    final reconciliation = Map<String, Object?>.from(
+      row['medicationReconciliation'] as Map,
+    );
+    var assertions = const <MedicationAssertionNode>[];
+    var decisions = const <MedicationReconciliationDecision>[];
+    Map<String, Object?>? invalidReconciliation;
+    if (reconciliation['evidenceStatus'] == 'envelope_present') {
+      final envelope = Map<String, Object?>.from(
+        reconciliation['envelope'] as Map,
+      );
+      assertions = (envelope['assertions'] as List)
+          .map(
+            (item) => MedicationAssertionNode.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false);
+      decisions = (envelope['decisions'] as List)
+          .map(
+            (item) => MedicationReconciliationDecision.fromJson(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
+          .toList(growable: false);
+    } else if (reconciliation['evidenceStatus'] ==
+        'invalid_evidence_quarantined') {
+      invalidReconciliation = <String, Object?>{
+        'portable_invalid_evidence_digest':
+            reconciliation['invalidEvidenceDigest'],
+      };
+    }
+
+    MedicationProductSelection? product;
+    final productRaw = row['productSelection'];
+    if (productRaw is Map) {
+      final productJson = Map<String, dynamic>.from(productRaw)
+        ..remove('meaningBoundary');
+      product = MedicationProductSelection.fromJson(productJson);
+      if (product == null) throw const FormatException();
+    }
+    final rawAmount = dose['amount'];
+    return Intake(
+      id: row['id'] as String,
+      drugId: row['drugId'] as String,
+      takenAt: DateTime.parse(row['takenAt'] as String),
+      dosageNote: row['dosageNote'] as String,
+      // Preserve a literal zero in the raw export. Intake.fromJson deliberately
+      // normalizes non-positive values to null and therefore cannot be used for
+      // this verification reconstruction.
+      doseAmount: rawAmount is num ? rawAmount.toDouble() : null,
+      doseUnit: dose['unit'] as String?,
+      dosageForm: dose['dosageForm'] as String?,
+      route: dose['route'] as String?,
+      releaseType: dose['releaseType'] as String?,
+      productSelection: product,
+      doseConfirmation: receipt,
+      invalidDoseConfirmationEvidence: invalidConfirmation,
+      medicationAssertions: assertions,
+      medicationReconciliationDecisions: decisions,
+      invalidMedicationReconciliationEvidence: invalidReconciliation,
     );
   }
 
@@ -2902,7 +4502,8 @@ class UserPortableDataPackageService {
   }
 
   static void _invalid(List<String> findings, String path) {
-    final finding = '$path has a missing or invalid schema-v1 value.';
+    final finding =
+        '$path has a missing or invalid portable schema-v$userPortableDataPackageSchemaVersion value.';
     if (!findings.contains(finding)) findings.add(finding);
   }
 
@@ -2941,9 +4542,13 @@ class UserPortableDataPackageService {
       'intakes.json',
       'meals.json',
       'reminders.json',
+      'observations.json',
     ];
     for (final path in idFiles) {
-      final rows = files[path];
+      final raw = files[path];
+      final rows = path == 'observations.json' && raw is Map
+          ? raw['records']
+          : raw;
       if (rows is! List) continue;
       final seen = <String>{};
       for (var index = 0; index < rows.length; index++) {
@@ -3051,8 +4656,10 @@ class UserPortableDataPackageService {
         }
         for (final entry in value.entries) {
           if (entry.key is! String) return '$path contains a non-string key.';
-          if (utf8.encode(entry.key as String).length > 256) {
-            return '$path contains a field name longer than 256 bytes.';
+          if (utf8.encode(entry.key as String).length >
+              userPortableDataMaxKeyBytes) {
+            return '$path contains a field name longer than '
+                '$userPortableDataMaxKeyBytes bytes.';
           }
           final finding = visit(entry.value, depth + 1, '$path.${entry.key}');
           if (finding != null) return finding;
@@ -3072,8 +4679,12 @@ class UserPortableDataPackageService {
   }
 
   static Set<String> _ids(Object? data) {
-    if (data is! List) return const <String>{};
-    return data
+    final rows = data is List
+        ? data
+        : data is Map && data['records'] is List
+        ? data['records'] as List
+        : const <Object?>[];
+    return rows
         .whereType<Map>()
         .map((row) => row['id'])
         .whereType<String>()
@@ -3094,6 +4705,8 @@ class UserPortableDataPackageService {
   static int _recordCount(Object? value) {
     if (value is List) return value.length;
     if (value is Map) {
+      final records = value['records'];
+      if (records is List) return records.length;
       final links = value['links'];
       return links is List ? links.length : 1;
     }
@@ -3165,6 +4778,7 @@ Map<String, Object?> _inspectPortablePackageWorker(
       ).inspect(
         packageJson: request['packageJson'] as String,
         currentUserScope: request['currentUserScope'] as String,
+        currentDoseOwnerScope: request['currentDoseOwnerScope'] as String,
         currentScopeKind: request['currentScopeKind'] as String,
         existingRecordIds: <String, Set<String>>{
           for (final entry in rawExisting.entries)
@@ -3180,26 +4794,50 @@ Map<String, Object?> _inspectPortablePackageWorker(
     'unsupportedFields': preview.unsupportedFields,
     'proposedMigrations': preview.proposedMigrations,
     'findings': preview.findings,
+    'reminderPresentation': preview.reminderPresentation.toJson(),
+    'schemaMigrationReceipt': preview.schemaMigrationReceipt?.toJson(),
   };
 }
 
-UserPortableDataImportPreview _previewFromTransfer(Map<String, Object?> raw) =>
-    UserPortableDataImportPreview(
-      status: UserPortableDataPreviewStatus.values.byName(
-        raw['status'] as String,
-      ),
-      schemaVersion: raw['schemaVersion'] as int?,
-      packageId: raw['packageId'] as String?,
-      recordCounts: Map<String, Object?>.from(
-        raw['recordCounts'] as Map,
-      ).map((key, value) => MapEntry(key, value as int)),
-      conflicts: Map<String, Object?>.from(
-        raw['conflicts'] as Map,
-      ).map((key, value) => MapEntry(key, (value as List).cast<String>())),
-      unsupportedFields: (raw['unsupportedFields'] as List).cast<String>(),
-      proposedMigrations: (raw['proposedMigrations'] as List).cast<String>(),
-      findings: (raw['findings'] as List).cast<String>(),
-    );
+UserPortableDataImportPreview _previewFromTransfer(Map<String, Object?> raw) {
+  final reminder = Map<String, Object?>.from(
+    raw['reminderPresentation'] as Map,
+  );
+  return UserPortableDataImportPreview(
+    status: UserPortableDataPreviewStatus.values.byName(
+      raw['status'] as String,
+    ),
+    schemaVersion: raw['schemaVersion'] as int?,
+    packageId: raw['packageId'] as String?,
+    recordCounts: Map<String, Object?>.from(
+      raw['recordCounts'] as Map,
+    ).map((key, value) => MapEntry(key, value as int)),
+    conflicts: Map<String, Object?>.from(
+      raw['conflicts'] as Map,
+    ).map((key, value) => MapEntry(key, (value as List).cast<String>())),
+    unsupportedFields: (raw['unsupportedFields'] as List).cast<String>(),
+    proposedMigrations: (raw['proposedMigrations'] as List).cast<String>(),
+    findings: (raw['findings'] as List).cast<String>(),
+    reminderPresentation: UserPortableReminderPresentationSummary(
+      totalCount: reminder['totalCount'] as int,
+      enabledIntentCount: reminder['enabledIntentCount'] as int,
+      targetConsentRequiredCount: reminder['targetConsentRequiredCount'] as int,
+      legacyDefaultCount: reminder['legacyDefaultCount'] as int,
+      currentPolicyMatchCount: reminder['currentPolicyMatchCount'] as int,
+      currentPolicyDriftCount: reminder['currentPolicyDriftCount'] as int,
+      localeDecisionMismatchCount:
+          reminder['localeDecisionMismatchCount'] as int,
+      privacyModes: (reminder['privacyModes'] as List).cast<String>(),
+      scheduledLanguageCodes: (reminder['scheduledLanguageCodes'] as List)
+          .cast<String>(),
+    ),
+    schemaMigrationReceipt: raw['schemaMigrationReceipt'] == null
+        ? null
+        : PortableSchemaMigrationReceipt.fromJson(
+            Map<String, Object?>.from(raw['schemaMigrationReceipt'] as Map),
+          ),
+  );
+}
 
 /// A bounded recursive-descent JSON preflight that runs before [jsonDecode].
 ///
@@ -3291,8 +4929,11 @@ class _PortableJsonPreflightParser {
           '$userPortableDataMaxMapFields.',
         );
       }
-      if (utf8.encode(key).length > 256) {
-        _fail('A JSON field name exceeds the 256-byte limit.');
+      if (utf8.encode(key).length > userPortableDataMaxKeyBytes) {
+        _fail(
+          'A JSON field name exceeds the '
+          '$userPortableDataMaxKeyBytes-byte limit.',
+        );
       }
       if (!keys.add(key)) {
         _fail('Duplicate JSON object keys are not supported.');
@@ -3343,15 +4984,26 @@ class _PortableJsonPreflightParser {
         final escaped = source.codeUnitAt(_index);
         sourceBytes += 1;
         if (escaped == 0x75) {
-          for (var offset = 1; offset <= 4; offset++) {
-            final hexIndex = _index + offset;
-            if (hexIndex >= source.length ||
-                !_isHex(source.codeUnitAt(hexIndex))) {
-              _syntaxFailure();
-            }
-            sourceBytes += 1;
-          }
+          final first = _unicodeEscapeCodeUnit(_index + 1);
+          sourceBytes += 4;
           _index += 5;
+          int scalar;
+          if (_isHighSurrogate(first)) {
+            if (_index + 5 >= source.length ||
+                source.codeUnitAt(_index) != 0x5c ||
+                source.codeUnitAt(_index + 1) != 0x75) {
+              _unicodeScalarFailure();
+            }
+            final second = _unicodeEscapeCodeUnit(_index + 2);
+            if (!_isLowSurrogate(second)) _unicodeScalarFailure();
+            scalar = 0x10000 + ((first - 0xd800) << 10) + (second - 0xdc00);
+            sourceBytes += 6;
+            _index += 6;
+          } else {
+            if (_isLowSurrogate(first)) _unicodeScalarFailure();
+            scalar = first;
+          }
+          if (_isUnicodeNoncharacter(scalar)) _unicodeScalarFailure();
         } else {
           if (escaped != 0x22 &&
               escaped != 0x5c &&
@@ -3376,9 +5028,17 @@ class _PortableJsonPreflightParser {
           _index + 1 < source.length &&
           source.codeUnitAt(_index + 1) >= 0xdc00 &&
           source.codeUnitAt(_index + 1) <= 0xdfff) {
+        final low = source.codeUnitAt(_index + 1);
+        final scalar = 0x10000 + ((unit - 0xd800) << 10) + (low - 0xdc00);
+        if (_isUnicodeNoncharacter(scalar)) _unicodeScalarFailure();
         sourceBytes += 4;
         _index += 2;
       } else {
+        if (_isHighSurrogate(unit) ||
+            _isLowSurrogate(unit) ||
+            _isUnicodeNoncharacter(unit)) {
+          _unicodeScalarFailure();
+        }
         sourceBytes += 3;
         _index += 1;
       }
@@ -3390,6 +5050,37 @@ class _PortableJsonPreflightParser {
     }
     _syntaxFailure();
   }
+
+  int _unicodeEscapeCodeUnit(int start) {
+    if (start + 4 > source.length) _syntaxFailure();
+    var value = 0;
+    for (var offset = 0; offset < 4; offset++) {
+      final unit = source.codeUnitAt(start + offset);
+      if (!_isHex(unit)) _syntaxFailure();
+      value = (value << 4) | _hexValue(unit);
+    }
+    return value;
+  }
+
+  static int _hexValue(int unit) {
+    if (unit >= 0x30 && unit <= 0x39) return unit - 0x30;
+    if (unit >= 0x41 && unit <= 0x46) return unit - 0x41 + 10;
+    return unit - 0x61 + 10;
+  }
+
+  static bool _isHighSurrogate(int value) => value >= 0xd800 && value <= 0xdbff;
+
+  static bool _isLowSurrogate(int value) => value >= 0xdc00 && value <= 0xdfff;
+
+  static bool _isUnicodeNoncharacter(int scalar) =>
+      (scalar >= 0xfdd0 && scalar <= 0xfdef) ||
+      (scalar & 0xffff) == 0xfffe ||
+      (scalar & 0xffff) == 0xffff;
+
+  Never _unicodeScalarFailure() => _fail(
+    'JSON strings must contain paired Unicode scalar values and no Unicode '
+    'noncharacters.',
+  );
 
   void _parseNumber() {
     final tokenStart = _index;

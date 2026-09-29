@@ -5,6 +5,7 @@ import '../models/meal.dart';
 import '../models/atomic_onboarding_commit.dart';
 import '../models/user_profile.dart';
 import '../../data/models/interaction_rule_record.dart';
+import '../../domain/entities/mechanistic_replay_capsule.dart';
 import 'app_database.dart';
 
 class UnsupportedAppDatabase implements AppDatabase {
@@ -53,6 +54,14 @@ class UnsupportedAppDatabase implements AppDatabase {
 
   @override
   Future<void> saveIntakes(List<Intake> intakes) async {}
+
+  @override
+  Future<void> saveMechanisticReplayCapsule(MechanisticReplayCapsule capsule) =>
+      throw UnsupportedError('App database is unsupported on this platform.');
+
+  @override
+  Future<List<MechanisticReplayCapsule>>
+  loadMechanisticReplayCapsules() async => <MechanisticReplayCapsule>[];
 
   @override
   Future<void> saveMeals(List<Meal> meals) async {}

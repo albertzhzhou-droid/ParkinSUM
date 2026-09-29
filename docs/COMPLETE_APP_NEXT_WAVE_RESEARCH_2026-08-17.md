@@ -1,5 +1,97 @@
 # Complete-app next-wave research
 
+## 2026-08-27 medication-input continuation
+
+The dose-expression slice now has a versioned fail-closed typed AST, visible
+accepted/held UI, and a neutral Dart/JavaScript differential corpus. The
+worktree now also implements the first administration-dose confirmation
+receipt and reconciliation slice; see
+`docs/ADMINISTRATION_DOSE_CONFIRMATION_PROVENANCE_RESEARCH_2026-08-27.md` and
+queue item `administration_dose_confirmation_receipt_and_reconciliation`.
+
+This remains a local user-assertion and provenance design. It is not a FHIR
+conformance, medication-administration, prescription-validation, or clinical
+accuracy claim.
+
+## 2026-08-27 algorithm-configuration ownership continuation
+
+The canonical configuration identity now maps every one of 111 explicit
+parameter/provider records to registered algorithm consumers and partitions all
+63 registered algorithms into eleven with at least one explicit field record
+and 52 source-bundle-only fallbacks. The Algorithm Observatory exposes both
+states and two exact complete-per-field witnesses: gastric emptying over 17
+declared fields and levodopa absorption opportunity over 13; the remaining 61
+algorithms, including the legacy scorer, stay explicitly incomplete. See
+`docs/ALGORITHM_CONFIGURATION_OWNERSHIP_AND_CHANGE_IMPACT_RESEARCH_2026-08-27.md`.
+
+Research also added
+`algorithm_transitive_result_dependency_closure`. The current source bundle is
+the union of manually declared descriptor paths, so it cannot prove that a new
+helper, callback, initializer, polymorphic target, generated bridge or external
+configuration edge was not omitted. The proposed pinned Dart-analyzer gate
+derives conservative forward and reverse closures and treats every reachable
+unresolved edge as a HOLD; see
+`docs/ALGORITHM_TRANSITIVE_RESULT_DEPENDENCY_CLOSURE_RESEARCH_2026-09-02.md`.
+
+The legacy scorer slice binds 33 numeric score, bound, threshold and Top-K
+leaves plus its stable tie policy to production execution, configuration
+identity and visible provenance. Future research added
+`food_composition_candidate_set_snapshot_and_rank_uncertainty_gate` because a
+fixed scorer cannot reproduce or justify an order if catalog releases, food
+matches, preparation/portion basis, missing/LOQ semantics or candidate
+eligibility drift. See
+`docs/FOOD_COMPOSITION_CANDIDATE_SET_SNAPSHOT_AND_RANK_UNCERTAINTY_RESEARCH_2026-09-02.md`.
+
+A narrower production-adapter slice is now shipped under canonical
+configuration `2026.09.02-v40`
+(`56cf755398784e7067c32bc1eb1d197f2b2c737868b6b015aaa431018959ceaf`)
+and registered source bundle
+`fc9eebdaa016136f558f4a07c7c0b70254092633a25ca1bf26312a104a9d4bdf`.
+The 23rd mathematical/unit invariant calls the real catalog-candidate adapters
+and verifies that source-missing markers override stale nutrient and energy
+numbers, an unmarked true zero remains zero, and a source value `V` in grams
+per 100 g is projected to a valid `W`-gram serving as
+`N=(V×W)/100`. Only exact `per_100g` input is eligible. USDA's
+[Foundation Foods](https://fdc.nal.usda.gov/Foundation_Foods_Documentation/)
+and [Global Branded Foods](https://fdc.nal.usda.gov/GBFPD_Documentation/)
+documentation distinguishes 100 g from 100 mL bases, the
+[FDC API](https://fdc.nal.usda.gov/api-spec/fdc_api.html) defines the transport
+surface, and the [BIPM SI Brochure](https://www.bipm.org/en/publications/si-brochure/)
+keeps quantity and unit identity explicit. Therefore `per_100mL`, unknown unit
+or basis, invalid source values, and invalid serving masses remain null; no
+density is invented. The visible report is now 23/23, 22/63 mathematical/unit,
+and 30/63 combined with the eight direct executable contracts; 33 algorithms
+remain uncovered.
+
+This slice does not close the candidate-set snapshot/rank-uncertainty work. It
+does not freeze a catalog release, prove match or eligibility completeness,
+verify that every importer supplies correct missing/basis metadata, implement a
+repository-wide typed quantity algebra, reproduce the result externally, or
+establish biological/clinical validity or utility.
+
+The NextMeal UI now labels baseline candidates whose relative order or
+display-set membership changed in the snapshot-bound, bounded source-range
+scenarios. The labels appear in all 13 shipped languages, but they do not
+change the deterministic order or close the wider uncertainty gate.
+
+The local `algorithm_configuration_change_impact_and_requalification_matrix`
+is now shipped: it enumerates semantic differences, traverses explicit field →
+algorithm → output relationships, retains before/after null and failure states,
+and assigns separate verification, validation, human-factors and
+requalification obligations. Its manufactured candidate remains promotion
+blocked. The next baseline-governance gap is
+`configuration_baseline_durable_store_and_transparency_witness`; the current
+registry is not yet a crash-atomic multi-writer authority or externally
+witnessed transparency log.
+
+The next researched medication-input layer is multi-source assertion and
+temporal reconciliation. It retains patient/caregiver reports, imported lists,
+requests, dispenses and formal administration evidence as distinct claims,
+preserves conflicting event/assertion/import/recorded times, and never infers
+adherence. See
+`docs/MEDICATION_ASSERTION_SOURCE_TEMPORAL_RECONCILIATION_RESEARCH_2026-08-27.md`
+and queue item `medication_assertion_source_temporal_reconciliation`.
+
 Reviewed: 2026-08-18
 
 Status: architecture and queue evidence only
@@ -15,12 +107,14 @@ data asset is authorized for copying by this review.
 
 ## 1. Runtime model applicability and abstention
 
-The production path needs a versioned, machine-enforced applicability manifest
-for every result-affecting algorithm. A context-of-use statement in a research
-document is not a runtime guard. Unknown release type, route, formulation,
-observable, unit, timing domain, or unsupported input should yield an explicit
-`notApplicable` result rather than silently choosing a familiar curve and only
-widening uncertainty.
+The current worktree now includes a versioned, SHA-256-bound applicability
+manifest for all six live mechanistic providers, embeds it in canonical
+algorithm identity, propagates it into source references, emits live medication
+predicate outcomes, and renders the declared context in the Observatory. The
+remaining gap is complete per-provider runtime outcome coverage plus governed
+external product/terminology/label/population identity and independent
+promotion authority. A context-of-use statement or matching digest alone is
+not clinical qualification.
 
 The [FDA 2023 final computational-model credibility guidance](https://www.fda.gov/media/154985/download)
 separates context of use, model risk, applicability, code verification,
@@ -82,9 +176,20 @@ Relevant official boundaries:
 - The [FAO INFOODS tagname page](https://www.fao.org/infoods/infoods/standards-guidelines/food-component-identifiers-tagnames/en/)
   contains dated and separately extended lists, so online presence is not proof
   of a complete current vocabulary.
-- [FHIR R5 NutritionIntake](https://fhir.hl7.org/fhir/nutritionintake-definitions.html)
-  is Trial Use. Existing ParkinSUM views must remain labelled FHIR-inspired
-  until a pinned profile and validator prove conformance.
+- A page-currency review on 2026-09-24 found that the official page reports a
+  2022-10-20 update, gives a base list updated through 2007, and lists 142 and
+  156 additions in 2008 and 2010; it still labels 130 proposed tags and the
+  consolidated Excel list "coming soon." The content-addressed
+  `parkinsum.infoods-tagname-source-identity/1` artifact records only this
+  page-level observation. It does not archive or hash the remote page, establish
+  a complete current release, or authorize tag mappings.
+- [FHIR R5 NutritionIntake](https://hl7.org/fhir/R5/nutritionintake.html) is
+  Trial Use. The existing aggregate view remains labelled FHIR-inspired. A
+  separate owner-scoped timeline action now creates a narrow local
+  NutritionIntake-shaped preview using uncoded text, unknown status, an explicit
+  Patient reference, and only supported time/amount precision. It has no pinned
+  implementation profile or official validator result, so it does not claim
+  FHIR conformance or interoperability.
 
 Required future control:
 
@@ -182,6 +287,60 @@ Required future control:
 - expose what was collected and allow the user to revoke future collection;
   consent to research, support, or reminders never implies telemetry consent.
 
+### Current worktree slice (2026-08-18)
+
+The worktree now implements a schema-v1, process-memory-only ledger and a
+Settings surface for startup, backend, notification, and model-availability
+outcomes. The ledger keeps only closed categories, coarse duration buckets,
+capability state, and bounded counts for 24 hours. Turning collection off
+clears it immediately. If the 32-cell local cardinality budget is exhausted,
+the UI reports the dropped count and the export-envelope gate refuses the
+incomplete snapshot rather than crashing or silently under-reporting it.
+
+Bootstrap and reminder-response initialization now write only non-semantic
+local outcomes. The deterministic export envelope is deliberately unusable by
+default and requires an exact notice identity, current authorization receipt,
+reviewed release identity, sampling, retention, region, access, deletion, and
+emergency-disable policy before bytes can be materialized. There is no sender,
+collector, credential, endpoint deployment, dashboard, or off-device data
+flow. This proves a bounded local contract and a fail-closed future envelope;
+it does not prove consent, production telemetry privacy, deletion, or support
+effectiveness.
+
+### 6A. Aggregate privacy budget and small-cohort suppression
+
+Closed fields and aggregate counts are useful minimization controls, but they
+do not by themselves prevent a rare platform/failure combination from
+identifying a person or repeated queries from revealing a small cohort. The
+[NIST differential-privacy introduction](https://www.nist.gov/blogs/cybersecurity-insights/differential-privacy-privacy-preserving-data-analysis-introduction-our)
+notes that ordinary aggregation protects only under limited group-size
+conditions and remains vulnerable to privacy attacks.
+
+[NIST SP 800-226](https://csrc.nist.gov/pubs/sp/800/226/final) treats epsilon
+as a privacy-loss upper bound and describes composition across repeated
+analyses. It also emphasizes that a real guarantee depends on the protected
+entity, neighboring-dataset definition, contribution bounds, mechanism,
+implementation, parameter choice, and privacy/utility trade-off. ParkinSUM has
+none of those mechanisms today and must not label a cardinality cap,
+suppression threshold, or hashed identifier as differential privacy.
+
+Required future control:
+
+- suppress unsupported and undersized cohorts before any dashboard release,
+  with reviewed rare-event and auxiliary-information threat models;
+- define the protected entity, neighboring datasets, contribution bounds,
+  clipping, query identity, retention, and reset policy across accounts,
+  devices, retries, and releases;
+- if differential privacy is used, version the mechanism, epsilon, delta,
+  sensitivity, randomness source, composition accountant, total budget, and
+  privacy/utility evidence, and fail closed when the accountant is unavailable
+  or exhausted;
+- test repeated differencing, membership inference, rare platform slices,
+  malicious queries, concurrent budget use, restart, rollback, and deletion;
+- preserve explicit consent, access, store-declaration, and operational-only
+  boundaries. Statistical privacy never converts telemetry into clinical
+  evidence or anonymous individual data.
+
 ## 7. Cross-platform performance and energy budgets
 
 Passing widget tests does not show that the registered-user journey is usable
@@ -220,7 +379,44 @@ is a useful vendor-neutral lifecycle and typed-evaluation reference, including
 default values on abnormal execution. ParkinSUM needs stricter health-data and
 algorithm boundaries than the generic specification.
 
-Required future control:
+The current worktree now implements the local verification and recovery core:
+a strict schema-v1 manifest and envelope, canonical Ed25519 signatures through
+the pinned Dart [`cryptography` package](https://pub.dev/packages/cryptography),
+a closed list of three global boolean
+capabilities, exact issuer/environment/key trust, expiry and clock-skew bounds,
+replay/downgrade/chain rejection, explicit key rotation and revocation,
+last-known-good persistence with exact read-back, bounded exact rollback
+history, conservative defaults, and an operator page. The managed Local AI
+adapter consults this policy when a trust root is configured. There is no user
+or health-data targeting. With no trust root, remote policy is inactive and
+the existing separately consented local-only behavior remains locally governed
+rather than being silently relabeled as remotely managed.
+
+The worktree also has an optional strict retrieval client for one exact
+build-allowlisted, public-DNS, dedicated cross-origin HTTPS endpoint. It uses a
+bodyless GET, rejects redirects and ambiguous URLs, enforces JSON, strict UTF-8,
+a 64 KiB streamed limit, and one monotonic timeout budget, and requires the
+strong ETag to equal the quoted SHA-256 of the exact response bytes. A matching
+`304` may reuse only the client's accepted ETag; a new body still must pass all
+signed-manifest checks. The schema-v2 activation state commits the accepted
+endpoint, exact-body ETag, active-manifest digest and UTC acceptance time in the
+same durable transaction, restores it across restart only for the same endpoint
+and still-valid manifest, and migrates schema v1 only after a new verified
+fetch. A transport-valid but signature-invalid response cannot poison the
+validator. Concurrent fetches serialize through validator commit, while clear
+or manual activation advances a generation immediately so an older in-flight
+response cannot reactivate after emergency clear. Request code adds no account, health-body, or
+authorization fields, but browser/network metadata and Cookie behavior still
+need target-environment audit.
+
+This is narrower than [The Update Framework specification](https://theupdateframework.github.io/specification/latest/):
+it borrows rollback, freeze, expiry and key-lifecycle principles but is not a
+TUF client or conformant repository. Ed25519 verification proves only that the
+bytes match a configured public key; it does not prove safe private-key
+custody, signer authority, complete distribution, clinical validity, or
+scientific accuracy.
+
+Remaining required control:
 
 - accept only signed, versioned, unexpired manifests whose key, environment,
   capability ID, type, constraints, and rollback target are locally trusted;
@@ -234,6 +430,16 @@ Required future control:
   safety copy outside the normal reviewed promotion and digest process;
 - make current state, source, expiry, reason, and rollback visible to operators
   and test offline, clock-skew, key-rotation, replay, and rollback scenarios.
+
+The still-open production boundary includes an offline or threshold recovery
+root, private-key custody and signer authorization, a production publication
+service and endpoint, immutable/versioned distribution, multi-region and
+mirror consistency proof, browser/CDN/service-worker cache conformance,
+cookie-free target verification, crash/power-loss
+and target-device drills, server-side audit evidence, consumer wiring for
+catalog refresh and telemetry, and independently reviewed compromise recovery.
+Follow-on queue items separately cover key transparency and fleet convergence
+so those controls are not conflated with the local verifier.
 
 ## 9. Reproducible release SBOM and signed attestation
 
@@ -338,12 +544,60 @@ Required future control:
   restore, and deletion without converting observed technical location into a
   legal residency or compliance claim.
 
+## 13. Context-of-use change impact and requalification ledger
+
+A versioned applicability manifest identifies the declared boundary, and a
+configuration digest identifies executable bytes and parameters. Neither proves
+that evidence accepted for an older question, formulation, population,
+observable, or decision influence remains adequate after a change.
+
+FDA's final CM&S credibility guidance uses a risk-informed framework for a
+particular context of use. EMA's PBPK reporting guidance ties platform
+qualification and specific model performance to intended use. The
+[FDA-recognized ASME V&V 40-2018 entry](https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfstandards/detail.cfm?standard__identification_no=38534)
+describes a framework for assessing the relevance and adequacy of completed
+verification and validation activities. These sources motivate a change-control
+pattern; they do not qualify ParkinSUM.
+
+Required future control:
+
+- create an immutable old/new manifest and configuration record with semantic
+  diff, affected providers/predicates, question and context of use, model risk,
+  decision influence, author, review time, and release artifact;
+- derive required code/calculation verification, validation, qualification,
+  uncertainty, human-factors, and independent-review activities, and block
+  promotion while any required evidence is absent, stale, conflicting, or
+  unapproved;
+- prohibit silent evidence carry-forward across product, component,
+  formulation, route, population, fed state, observable, terminology,
+  parameter source, or decision influence;
+- show implementation verification, scientific validation, platform/model
+  qualification, regulatory review, and external approval as separate states;
+- preserve rollback, revocation, last-known-good identity, and rejected-claim
+  history through concurrent review, partial deployment, offline recovery, and
+  acknowledgement loss.
+
+Current worktree status (2026-08-18): the first schema-v1 governed-baseline
+record now binds the exact manifest, configuration, semantic diff, affected
+providers and predicates, model risk, evidence lanes, decision and record
+digests. A deterministic release gate blocks identity drift and unsafe
+approval, and the Observatory shows each evidence lane independently. The
+record intentionally remains `blockedPendingEvidence`: implementation and
+calculation verification are complete, while uncertainty, human factors,
+scientific validation, model qualification and independent review remain
+incomplete. Durable multi-release history, signed reviewer authority,
+evidence expiry/equivalence, rollback/revocation and failure-recovery evidence
+remain open; the current gate is not requalification by itself.
+
 ## Dependency order
 
 ```text
 parameter provenance + canonical configuration identity
   -> runtime applicability/abstention
   -> independent numerical oracle
+  -> evidence currency and source-status review
+  -> claim evidence contradiction and synthesis adjudication
+  -> context-of-use change and requalification ledger
 
 terminology + unit firewall
   -> unit-aware event ledger
@@ -359,6 +613,7 @@ artifact privacy inventory
 
 privacy-safe observability schema
   -> release telemetry envelope tests
+  -> aggregate privacy budget and small-cohort suppression
   -> production support dashboards and alerts
 
 artifact-level journeys
@@ -381,6 +636,119 @@ server-authoritative provenance + store privacy inventory
   -> verified deletion and residency evidence
 ```
 
+## 14. Evidence currency, correction, retraction and claim sunset
+
+Code, parameter and applicability identities can remain byte-for-byte stable
+while the evidence used to justify a provider or boundary changes. The
+[NLM policy for errata, retractions and linked citations](https://www.nlm.nih.gov/bsd/policy/errata.html)
+shows that PubMed records can carry retraction, correction and expression-of-
+concern relationships. [Crossmark](https://www.crossref.org/services/crossmark/)
+similarly exposes corrections, retractions and other updates that affect how a
+work should be interpreted. The EMA PBPK page preserves a current effective
+version and document history, while its guideline says qualification is tied
+to intended purpose and platform version. These services help identify status;
+they do not independently establish that a source is scientifically adequate
+for ParkinSUM.
+
+The current worktree now binds five reviewed claims across all six live
+providers to exact source revisions, affected providers and predicates,
+applicability rationale, status-resolution method, observed-at and review-by
+times, reviewer, expiry and sunset disposition. Its deterministic gate holds
+corrected evidence and blocks superseded, retracted, withdrawn, expression-of-
+concern, expired, unavailable or unknown evidence, then opens context-of-use
+requalification even when code and manifest hashes are unchanged. It remains
+an offline unsigned initial snapshot, not an exhaustive claim catalog or a
+live status service. Production completion still requires archived refresh
+artifacts, append-only signed history, reviewer authority, durable provider
+disablement and independent review. Network failure and the absence of a
+notice can never promote evidence or imply scientific validity. As-of
+evaluation also rejects future-observed status: a record observed after the
+requested snapshot resolves to unknown and quarantines its affected providers.
+The mechanistic engine now evaluates this offline status snapshot before
+emitting its educational trace; corrections hold the affected trace for review,
+while adverse, expired, unknown, future-observed, or malformed evidence blocks
+it. Candidate samples use the same assessment time. Blocked results carry the
+snapshot digest in their abstention reasons. Successful and currency-blocked
+results now carry a strict schema-v1 receipt binding registry version and digests,
+UTC assessment time, exact provider and claim sets, disposition, and a
+tamper-evident binding digest; deterministic replay fixes and reports its own
+assessment time. The receipt is unsigned and in-memory, so it does not provide
+append-only history, durable cross-session quarantine, independent review, or
+live source refresh. This runtime gate does not change the conservative
+recommendation rank or safety rules.
+The diagnostics source search exposes only exact source-ID-linked claim rows and
+keeps unmatched source metadata explicitly unassessed; this is not a live status
+refresh or provider-disablement attestation.
+
+## 15. Claim-level contradiction, certainty and applicability adjudication
+
+Evidence currency and evidence adequacy are different questions. A source may
+have no recorded correction or retraction while still being at high risk of
+bias, indirect for the modeled population or observable, imprecise, duplicated
+with another publication, or directionally inconsistent with other current
+evidence. The
+[Cochrane Handbook, Chapter 14](https://training.cochrane.org/handbook/current/chapter-14)
+requires outcome-specific certainty judgments and explicit reasons across risk
+of bias, inconsistency, indirectness, imprecision and publication bias. This is
+a review method, not proof that a ParkinSUM claim has high certainty.
+
+[AHRQ's applicability methods guidance](https://effectivehealthcare.ahrq.gov/products/methods-guidance-applicability/methods)
+treats applicability as a separate, structured judgment tied to population,
+intervention, comparator, outcomes and setting, and warns that no single
+universal checklist resolves every review. Its
+[grading guidance](https://effectivehealthcare.ahrq.gov/products/methods-guidance-tests-grading/methods)
+also separates the strength of a body of evidence from the quality of one
+study. These sources support a governance pattern; they do not authorize
+automated clinical grading or substitute for independent domain review.
+
+The current worktree now implements the first offline, schema-v1 fail-closed
+adjudicator. It binds each governed claim to an exact outcome and measure,
+population, intervention/exposure, comparator, study design, source revision,
+independence group, affected provider, risk-of-bias, applicability, precision,
+reporting-bias, declared certainty, reviewer artifacts and expiry. Support,
+null, opposing and adverse directions remain separate. Contradiction, adverse
+findings, source withdrawal and outcome/measure mismatch block; duplicate
+cohorts, insufficient independent families, indirectness, imprecision,
+unassessed domains, stale review and reviewer disagreement hold. The current
+five bodies are intentionally held pending independent dual review, and the
+Observatory and COU ledger show that hold rather than a favorable grade.
+
+This is not a complete evidence-synthesis program. Exhaustive searching,
+independent extraction, validated risk-of-bias instruments, normalized effect
+estimates and units, a governed cohort/publication dependency graph, signed
+append-only reviewer decisions, durable provider quarantine and rollback, live
+source refresh, clinical/domain review, prospective validation and regulatory
+qualification remain open. The system must never promote a claim by citation
+count, silently average incommensurable studies, or translate an evidence-
+governance state into clinical validity, treatment advice, regulatory review or
+approval.
+
 No queue item should move to shipped because its document exists. Each item
 requires executable fail-closed acceptance evidence in the actual production
 path or release artifact.
+
+## 2026-09-28 algorithm-configuration coverage update
+
+The current schema-v6 identity emits 119 parameter/provenance records for all
+63 registered algorithms. Sixteen algorithms have at least one explicit field
+record, while 47 remain source-bundle-only; the protein-trend record binds the
+effective-occurrence time basis, protein grams per meal, ordering, mean formula
+and empty-input value. Only gastric emptying and
+levodopa-absorption opportunity retain complete witnesses within their
+declared boundaries. A new prototype-heuristic record binds the local dose
+parser's grammar ID, version, digest, unit-system URI, and unit-map version.
+It does not claim that every parser branch is represented or that the grammar
+establishes prescription or dose validity. The current identity is
+`2026.09.29-v52` (`77d2a1d030443c12f125e0ee9606f25a085dab76ef73d7a20fb62d7c9019a99d`)
+with source-bundle digest
+`15a293f7efa3501b0d206570d651b1abecc828e2d796751debd5225cece4bd6d`.
+The v52 identity also binds the mechanistic trace evidence-currency gate and
+its unsigned result receipt; the earlier v51 manifest bound the protein-trend aggregation contract and its
+direct meal and output-point sources, plus a standalone production-parser trace
+provider. The fixed parser syntax cases omit raw text and parsed values, and do
+not feed the other Observatory scenarios. These records add no clinical
+interpretation.
+The P0 configuration-identity queue item remains open: 61 algorithms still
+lack complete-per-field witnesses, and transitive dependency closure,
+independent calibration-data governance, and external source normalization
+remain unresolved.

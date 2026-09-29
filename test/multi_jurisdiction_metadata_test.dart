@@ -200,6 +200,25 @@ void main() {
       );
     });
 
+    test('non-finite or non-positive strength is insufficient', () {
+      expect(
+        gate.scoreMedicationContext(drug(strength: double.nan)),
+        MetadataCompletenessScore.insufficient,
+      );
+      expect(
+        gate.scoreMedicationContext(drug(strength: double.infinity)),
+        MetadataCompletenessScore.insufficient,
+      );
+      expect(
+        gate.scoreMedicationContext(drug(strength: 0)),
+        MetadataCompletenessScore.insufficient,
+      );
+      expect(
+        gate.scoreMedicationContext(drug(strength: -1)),
+        MetadataCompletenessScore.insufficient,
+      );
+    });
+
     test('missing release type + provenance downgrades', () {
       final score = gate.scoreMedicationContext(
         drug(release: 'unknown', refs: const []),

@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/recoverable_user_event.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/usecases/recoverable_event_restore_impact_service.dart';
 
 class RecoverableEventHistoryPage extends StatefulWidget {
@@ -30,7 +30,7 @@ class _RecoverableEventHistoryPageState
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('history.title'))),
+      appBar: PaperAppBar(title: Text(i18n.tr('history.title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 32, 16, 32),
@@ -41,7 +41,7 @@ class _RecoverableEventHistoryPageState
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GlassCard(
+                    PaperCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -92,7 +92,7 @@ class _RecoverableEventHistoryPageState
                     ),
                     const SizedBox(height: 16),
                     if (revisions.isEmpty)
-                      GlassCard(child: Text(i18n.tr('history.empty')))
+                      PaperCard(child: Text(i18n.tr('history.empty')))
                     else
                       for (final revision in revisions) ...[
                         _RevisionCard(
@@ -348,7 +348,7 @@ class _RevisionCard extends StatelessWidget {
     final mutationLabel = i18n.tr(
       'history.event_${revision.mutationType.name}',
     );
-    return GlassCard(
+    return PaperCard(
       child: Semantics(
         container: true,
         label: '$eventLabel, $mutationLabel, ${title ?? revision.recordId}',

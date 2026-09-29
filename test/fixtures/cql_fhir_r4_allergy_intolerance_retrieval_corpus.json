@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-allergy-intolerance-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([AllergyIntolerance]) + clinicalStatus and verificationStatus coding predicates",
+  "cases": [
+    {
+      "id": "clinical_active_unconfirmed",
+      "patientContextId": "synthetic-patient-clinical-active-unconfirmed",
+      "expectedOutcomes": {
+        "hasAnyAllergyIntolerance": true,
+        "hasClinicalStatusActive": true,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": true,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          { "resource": { "resourceType": "Patient", "id": "synthetic-patient-clinical-active-unconfirmed" } },
+          { "resource": {
+            "resourceType": "AllergyIntolerance",
+            "id": "synthetic-ai-clinical-active-unconfirmed",
+            "clinicalStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "code": "active" }] },
+            "verificationStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", "code": "unconfirmed" }] },
+            "patient": { "reference": "Patient/synthetic-patient-clinical-active-unconfirmed" }
+          } }
+        ]
+      }
+    },
+    {
+      "id": "clinical_inactive_confirmed",
+      "patientContextId": "synthetic-patient-clinical-inactive-confirmed",
+      "expectedOutcomes": {
+        "hasAnyAllergyIntolerance": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusInactive": true,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusConfirmed": true,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          { "resource": { "resourceType": "Patient", "id": "synthetic-patient-clinical-inactive-confirmed" } },
+          { "resource": {
+            "resourceType": "AllergyIntolerance",
+            "id": "synthetic-ai-clinical-inactive-confirmed",
+            "clinicalStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "code": "inactive" }] },
+            "verificationStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", "code": "confirmed" }] },
+            "patient": { "reference": "Patient/synthetic-patient-clinical-inactive-confirmed" }
+          } }
+        ]
+      }
+    },
+    {
+      "id": "clinical_resolved_refuted",
+      "patientContextId": "synthetic-patient-clinical-resolved-refuted",
+      "expectedOutcomes": {
+        "hasAnyAllergyIntolerance": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusResolved": true,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": true,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          { "resource": { "resourceType": "Patient", "id": "synthetic-patient-clinical-resolved-refuted" } },
+          { "resource": {
+            "resourceType": "AllergyIntolerance",
+            "id": "synthetic-ai-clinical-resolved-refuted",
+            "clinicalStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "code": "resolved" }] },
+            "verificationStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", "code": "refuted" }] },
+            "patient": { "reference": "Patient/synthetic-patient-clinical-resolved-refuted" }
+          } }
+        ]
+      }
+    },
+    {
+      "id": "verification_entered_in_error",
+      "patientContextId": "synthetic-patient-verification-entered-in-error",
+      "expectedOutcomes": {
+        "hasAnyAllergyIntolerance": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          { "resource": { "resourceType": "Patient", "id": "synthetic-patient-verification-entered-in-error" } },
+          { "resource": {
+            "resourceType": "AllergyIntolerance",
+            "id": "synthetic-ai-verification-entered-in-error",
+            "verificationStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", "code": "entered-in-error" }] },
+            "patient": { "reference": "Patient/synthetic-patient-verification-entered-in-error" }
+          } }
+        ]
+      }
+    },
+    {
+      "id": "no_allergy_intolerance",
+      "patientContextId": "synthetic-patient-no-allergy-intolerance",
+      "expectedOutcomes": {
+        "hasAnyAllergyIntolerance": false,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          { "resource": { "resourceType": "Patient", "id": "synthetic-patient-no-allergy-intolerance" } }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_allergy_intolerance",
+      "patientContextId": "synthetic-patient-foreign-subject-allergy-intolerance",
+      "expectedOutcomes": {
+        "hasAnyAllergyIntolerance": false,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          { "resource": { "resourceType": "Patient", "id": "synthetic-patient-foreign-subject-allergy-intolerance" } },
+          { "resource": {
+            "resourceType": "AllergyIntolerance",
+            "id": "synthetic-ai-foreign-subject-allergy-intolerance",
+            "clinicalStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-clinical", "code": "active" }] },
+            "verificationStatus": { "coding": [{ "system": "http://terminology.hl7.org/CodeSystem/allergyintolerance-verification", "code": "confirmed" }] },
+            "patient": { "reference": "Patient/synthetic-patient-other" }
+          } }
+        ]
+      }
+    }
+  ]
+}

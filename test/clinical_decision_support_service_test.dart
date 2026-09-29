@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
 import 'package:parkinsum_companion/core/constants/clinical_evidence_source_seed.dart';
@@ -14,6 +15,8 @@ import 'package:parkinsum_companion/domain/usecases/clinical_decision_support_se
 import 'package:parkinsum_companion/domain/usecases/cdss_catalog_projection_service.dart';
 import 'package:parkinsum_companion/domain/usecases/fact_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/get_food_recommendations_usecase.dart';
+import 'package:parkinsum_companion/domain/usecases/knowledge_approval_verifier.dart';
+import 'package:parkinsum_companion/domain/usecases/knowledge_governance_service.dart';
 import 'package:parkinsum_companion/domain/usecases/imported_label_rule_provider.dart';
 import 'package:parkinsum_companion/domain/usecases/rule_registry_compiler.dart';
 import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
@@ -265,6 +268,22 @@ class FailingResolvedFactCdssDatabase extends RecordingCdssDatabase {
   @override
   Future<void> insertResolvedFact(ResolvedFactRecord record) async {
     throw StateError('injected resolved-fact persistence failure');
+  }
+}
+
+class MutatingGovernanceCdssDatabase extends RecordingCdssDatabase {
+  MutatingGovernanceCdssDatabase(this.store);
+
+  final MemoryKnowledgeGovernanceStore store;
+  bool mutated = false;
+
+  @override
+  Future<List<Map<String, Object?>>> queryTable(String table) async {
+    if (!mutated && table == 'region_jurisdiction_map') {
+      mutated = true;
+      store.document = '{"schema_version":1,"events":[]}';
+    }
+    return super.queryTable(table);
   }
 }
 
@@ -1881,6 +1900,407 @@ void main() {
   );
 
   test(
+    'food projection retains qualified nutrient observations and exact inputs',
+    () async {
+      final db = RecordingCdssDatabase();
+      await db.insertFoodConcept(
+        const FoodConceptRecord(
+          foodConceptId: 'FOOD_EVIDENCE',
+          canonicalNameEn: 'evidence food',
+          canonicalNameZh: '证据食品',
+          foodGroup: 'grain',
+        ),
+      );
+      await db.insertFoodVariant(
+        const FoodVariantRecord(
+          foodVariantId: 'FOOD_EVIDENCE#US#FDC#123',
+          foodConceptId: 'FOOD_EVIDENCE',
+          jurisdiction: 'US',
+          sourceFamily: 'USDA_FDC',
+          sourceFoodCode: '123',
+          displayNameLocal: 'Evidence food',
+          isAuthoritativeForRegion: true,
+          isAuthoritativeFallback: false,
+          status: 'active',
+          fallbackChainJson: '[]',
+        ),
+      );
+      db.tables['food_variant']!.single['source_food_code'] = '123';
+      const storedPayload =
+          '{"foods":[{"fdcId":123,"description":"Evidence food"}],'
+          '"food_portions_audit":[{"fdc_id":"123","parsed_portions":['
+          '{"record_locator":"123:foodPortions:0","sequence_number":1,'
+          '"amount":1.0,"measure_unit_id":99,"measure_unit_name":"cup",'
+          '"measure_unit_abbreviation":"c","portion_description":'
+          '"chopped","modifier":"chopped","gram_weight":91.0,'
+          '"data_points":3,"footnote":"source note",'
+          '"min_year_acquired":2020,"source_fields":{"amount":1.0,'
+          '"gramWeight":91.0,"modifier":"chopped"}}]}]}';
+      db.tables['source_document']!.add({
+        'source_doc_id': 'doc_food_composition',
+        'source_family': 'USDA_FDC',
+        'data_tier': 'p0',
+        'ingestion_strategy': 'authoritative_direct',
+        'organization': 'USDA FoodData Central',
+        'jurisdiction': 'US',
+        'doc_type': 'catalog_import',
+        'title': 'Foundation Foods record 123',
+        'origin_url': 'https://fdc.nal.usda.gov/food-details/123/nutrients',
+        'published_at': 1735689600000,
+        'effective_at': 1735689600000,
+        'language': 'en',
+        'license_note': 'US government work; source terms retained',
+        'checksum': 'deadbeef',
+        'source_status': 'active',
+        'raw_payload': storedPayload,
+      });
+      db.tables['variant_scope']!.add({
+        'scope_hash': 'scope_evidence',
+        'jurisdiction': 'US',
+        'brand': 'Example brand',
+        'preparation_state': 'raw',
+        'cooking_state': 'uncooked',
+        'plant_part': 'whole',
+        'cultivar': 'example cultivar',
+        'sampling_frame': 'Foundation Foods',
+      });
+      db.tables['concept_variant_crosswalk']!.addAll([
+        {
+          'crosswalk_id': 'cw_food_older',
+          'domain': 'food',
+          'app_entity_id': 'food_legacy_id',
+          'concept_id': 'FOOD_EVIDENCE',
+          'variant_id': 'FOOD_EVIDENCE#US#FDC#123',
+          'external_id_system': 'USDA_FDC',
+          'external_id_value': '123',
+          'jurisdiction': 'US',
+          'source_doc_id': 'doc_food_composition',
+          'import_run_id': 'run_food_1',
+          'confidence': 0.72,
+          'status': 'active',
+          'mapping_payload_json': '{"reason":"source id"}',
+          'created_at': 1735689600000,
+        },
+        {
+          'crosswalk_id': 'cw_food_selected',
+          'domain': 'food',
+          'app_entity_id': 'food_fdc_123',
+          'concept_id': 'FOOD_EVIDENCE',
+          'variant_id': 'FOOD_EVIDENCE#US#FDC#123',
+          'external_id_system': 'USDA_FDC',
+          'external_id_value': '123',
+          'jurisdiction': 'US',
+          'source_doc_id': 'doc_food_composition',
+          'import_run_id': 'run_food_1',
+          'confidence': 0.91,
+          'status': 'active',
+          'mapping_payload_json': '{"reason":"exact source code"}',
+          'created_at': 1735689600001,
+        },
+      ]);
+      db.tables['observation']!.addAll([
+        {
+          'observation_id': 'obs_protein_older',
+          'domain': 'food',
+          'entity_type': 'food_variant',
+          'entity_key': 'FOOD_EVIDENCE#US#FDC#123',
+          'attribute_code': 'protein_g',
+          'value_type': 'numeric_interval',
+          'value_num': 8.0,
+          'low': 8.0,
+          'high': 8.0,
+          'qualifier_kind': 'exact',
+          'raw_value_text': '8',
+          'unit': 'g',
+          'basis_type': 'per_100g_edible_part',
+          'basis_amount': 100.0,
+          'scope_hash': 'scope_evidence',
+          'source_doc_id': 'doc_food_composition',
+          'record_locator': '123:protein_g:older',
+          'method_code': 'composition_method',
+          'extraction_confidence': 1.0,
+        },
+        {
+          'observation_id': 'obs_protein_selected',
+          'domain': 'food',
+          'entity_type': 'food_variant',
+          'entity_key': 'FOOD_EVIDENCE#US#FDC#123',
+          'attribute_code': 'protein_g',
+          'value_type': 'numeric_interval',
+          'value_num': 12.0,
+          'low': 12.0,
+          'high': 12.0,
+          'qualifier_kind': 'exact',
+          'raw_value_text': '12',
+          'unit': 'g',
+          'basis_type': 'per_100g_edible_part',
+          'basis_amount': 100.0,
+          'scope_hash': 'scope_evidence',
+          'source_doc_id': 'doc_food_composition',
+          'record_locator': '123:protein_g:selected',
+          'method_code': 'composition_method',
+          'extraction_confidence': 0.95,
+        },
+        {
+          'observation_id': 'obs_protein_source_range',
+          'domain': 'food',
+          'entity_type': 'food_variant',
+          'entity_key': 'FOOD_EVIDENCE#US#FDC#123',
+          'attribute_code': 'protein_g',
+          'value_type': 'numeric_interval',
+          'value_num': null,
+          'low': 10.0,
+          'high': 15.0,
+          'qualifier_kind': 'range',
+          'raw_value_text': 'source_min=10; source_max=15; data_points=6',
+          'unit': 'g',
+          'basis_type': 'per_100g_edible_part',
+          'basis_amount': 100.0,
+          'scope_hash': 'scope_evidence',
+          'source_doc_id': 'doc_food_composition',
+          'record_locator': '123:protein_g:sample_range',
+          'method_code': 'composition_method',
+          'extraction_confidence': 1.0,
+        },
+        {
+          'observation_id': 'obs_carbohydrate_range',
+          'domain': 'food',
+          'entity_type': 'food_variant',
+          'entity_key': 'FOOD_EVIDENCE#US#FDC#123',
+          'attribute_code': 'carbohydrate_g',
+          'value_type': 'numeric_interval',
+          'value_num': null,
+          'low': 20.0,
+          'high': 30.0,
+          'qualifier_kind': 'range',
+          'raw_value_text': '20-30',
+          'unit': 'g',
+          'basis_type': 'per_100g_edible_part',
+          'basis_amount': 100.0,
+          'scope_hash': 'scope_evidence',
+          'source_doc_id': 'doc_food_composition',
+          'record_locator': '123:carbohydrate_g',
+          'method_code': null,
+          'extraction_confidence': 1.0,
+        },
+        {
+          'observation_id': 'obs_fiber_missing',
+          'domain': 'food',
+          'entity_type': 'food_variant',
+          'entity_key': 'FOOD_EVIDENCE#US#FDC#123',
+          'attribute_code': 'fiber_g',
+          'value_type': 'numeric_interval',
+          'value_num': null,
+          'low': null,
+          'high': null,
+          'qualifier_kind': 'missing',
+          'raw_value_text': 'missing',
+          'unit': 'g',
+          'basis_type': 'per_100g_edible_part',
+          'basis_amount': 100.0,
+          'scope_hash': 'scope_evidence',
+          'source_doc_id': 'doc_food_composition',
+          'record_locator': '123:fiber_g',
+          'method_code': null,
+          'extraction_confidence': 1.0,
+        },
+        {
+          'observation_id': 'obs_vitamin_c_unresolved_links',
+          'domain': 'food',
+          'entity_type': 'food_variant',
+          'entity_key': 'FOOD_EVIDENCE#US#FDC#123',
+          'attribute_code': 'vitamin_c_mg',
+          'value_type': 'numeric_interval',
+          'value_num': 1.0,
+          'low': 1.0,
+          'high': 1.0,
+          'qualifier_kind': 'exact',
+          'raw_value_text': '1',
+          'unit': 'mg',
+          'basis_type': 'per_100g_edible_part',
+          'basis_amount': 100.0,
+          'scope_hash': 'scope_not_imported',
+          'source_doc_id': 'doc_not_imported',
+          'record_locator': '123:vitamin_c_mg',
+          'method_code': null,
+          'extraction_confidence': 1.0,
+        },
+      ]);
+
+      final projection = await CdssCatalogProjectionService(
+        database: db,
+      ).projectFoodsWithAudit();
+      final projected = projection.foods;
+      final queryAudit = projection.queryAudit;
+      expect(
+        queryAudit['schema_id'],
+        'parkinsum.cdss-food-projection-query-audit/1',
+      );
+      expect(
+        queryAudit['read_consistency'],
+        contains('no transaction-scoped snapshot'),
+      );
+      final tableReads =
+          queryAudit['table_reads'] as List<Map<String, Object?>>;
+      expect(tableReads.map((read) => read['table']).toList(), <String>[
+        'food_variant',
+        'food_concept',
+        'observation',
+        'concept_variant_crosswalk',
+        'source_document',
+        'variant_scope',
+      ]);
+      final variantRead = tableReads.first;
+      expect(variantRead['where_predicate'], 'none');
+      expect(variantRead['order_by'], 'none');
+      expect(variantRead['ordered_record_ids'], <String>[
+        'FOOD_EVIDENCE#US#FDC#123',
+      ]);
+      expect(variantRead['rows_sha256'], hasLength(64));
+      final selectionContract =
+          queryAudit['selection_contract'] as Map<String, Object?>;
+      expect(
+        selectionContract['numeric_nutrient_filter'],
+        contains("qualifier_kind == 'exact'"),
+      );
+      expect(
+        selectionContract['food_crosswalk_projected_id_winner'],
+        contains('last eligible row'),
+      );
+      final food = projected.single;
+      final evidenceById = {
+        for (final evidence in food.nutrientObservationEvidence)
+          evidence.observationId: evidence,
+      };
+
+      // Existing ranking inputs still use the same last exact numeric row.
+      expect(food.proteinG, 12.0);
+      expect(food.carbsG, 0.0);
+      expect(food.foodPortionEvidence, hasLength(1));
+      final portion = food.foodPortionEvidence.single;
+      expect(portion.sourceDocId, 'doc_food_composition');
+      expect(portion.sourceFoodId, '123');
+      expect(portion.recordLocator, '123:foodPortions:0');
+      expect(portion.sequenceNumber, 1);
+      expect(portion.amount, 1.0);
+      expect(portion.measureUnitId, 99);
+      expect(portion.measureUnitName, 'cup');
+      expect(portion.measureUnitAbbreviation, 'c');
+      expect(portion.portionDescription, 'chopped');
+      expect(portion.gramWeight, 91.0);
+      expect(portion.dataPoints, 3);
+      expect(portion.footnote, 'source note');
+      expect(portion.minYearAcquired, 2020);
+      expect(food.isNutrientMissing('carbsG'), isTrue);
+      expect(food.qualifierKind, isNull);
+      expect(food.id, 'food_fdc_123');
+      expect(evidenceById, hasLength(6));
+      expect(
+        evidenceById['obs_protein_older']!.selectedForLegacyPointProjection,
+        isFalse,
+      );
+      expect(
+        evidenceById['obs_protein_selected']!.selectedForLegacyPointProjection,
+        isTrue,
+      );
+      expect(
+        evidenceById['obs_protein_source_range']!
+            .selectedForLegacyPointProjection,
+        isFalse,
+      );
+      expect(evidenceById['obs_protein_source_range']!.qualifierKind, 'range');
+      expect(evidenceById['obs_protein_source_range']!.low, 10.0);
+      expect(evidenceById['obs_protein_source_range']!.high, 15.0);
+      expect(
+        evidenceById['obs_protein_selected']!.sourceDocId,
+        'doc_food_composition',
+      );
+      expect(
+        evidenceById['obs_protein_selected']!.recordLocator,
+        '123:protein_g:selected',
+      );
+      expect(evidenceById['obs_protein_selected']!.basisAmount, 100.0);
+      expect(evidenceById['obs_carbohydrate_range']!.qualifierKind, 'range');
+      expect(evidenceById['obs_carbohydrate_range']!.low, 20.0);
+      expect(evidenceById['obs_carbohydrate_range']!.high, 30.0);
+      expect(evidenceById['obs_fiber_missing']!.qualifierKind, 'missing');
+      expect(evidenceById['obs_fiber_missing']!.rawValueText, 'missing');
+      expect(
+        evidenceById['obs_vitamin_c_unresolved_links']!.sourceDocId,
+        'doc_not_imported',
+      );
+
+      final catalogEvidence = food.catalogProvenanceEvidence!;
+      expect(catalogEvidence.sourceDocuments, hasLength(2));
+      final resolvedSource = catalogEvidence.sourceDocuments.singleWhere(
+        (item) => item.sourceDocId == 'doc_food_composition',
+      );
+      final missingSource = catalogEvidence.sourceDocuments.singleWhere(
+        (item) => item.sourceDocId == 'doc_not_imported',
+      );
+      expect(resolvedSource.organization, 'USDA FoodData Central');
+      expect(resolvedSource.licenseNote, contains('US government work'));
+      expect(resolvedSource.sourceRegistryChecksum, 'deadbeef');
+      expect(
+        resolvedSource.payloadSha256,
+        sha256.convert(utf8.encode(storedPayload)).toString(),
+      );
+      expect(resolvedSource.storedPayloadPresent, isTrue);
+      expect(missingSource.resolutionStatus, 'missing_source_document_row');
+      expect(catalogEvidence.variantScopes, hasLength(2));
+      final resolvedScope = catalogEvidence.variantScopes.singleWhere(
+        (item) => item.scopeHash == 'scope_evidence',
+      );
+      expect(resolvedScope.brand, 'Example brand');
+      expect(resolvedScope.preparationState, 'raw');
+      expect(resolvedScope.samplingFrame, 'Foundation Foods');
+      expect(
+        catalogEvidence.variantScopes
+            .singleWhere((item) => item.scopeHash == 'scope_not_imported')
+            .resolutionStatus,
+        'missing_variant_scope_row',
+      );
+      expect(catalogEvidence.conceptVariantMatches, hasLength(2));
+      expect(
+        catalogEvidence.conceptVariantMatches
+            .singleWhere((item) => item.crosswalkId == 'cw_food_selected')
+            .selectedForProjectedFoodId,
+        isTrue,
+      );
+      expect(
+        catalogEvidence.conceptVariantMatches
+            .singleWhere((item) => item.crosswalkId == 'cw_food_older')
+            .selectedForProjectedFoodId,
+        isFalse,
+      );
+      expect(
+        catalogEvidence.conceptVariantMatches
+            .singleWhere((item) => item.crosswalkId == 'cw_food_selected')
+            .recordedConfidence,
+        0.91,
+      );
+      expect(food.toJson().containsKey('raw_payload'), isFalse);
+      expect(jsonEncode(food.toJson()), isNot(contains(storedPayload)));
+
+      final roundTrip = FoodItem.fromJson(
+        jsonDecode(jsonEncode(food.toJson())) as Map<String, dynamic>,
+      );
+      expect(
+        roundTrip.nutrientObservationEvidence.map((item) => item.toJson()),
+        food.nutrientObservationEvidence.map((item) => item.toJson()),
+      );
+      expect(
+        roundTrip.catalogProvenanceEvidence?.toJson(),
+        food.catalogProvenanceEvidence?.toJson(),
+      );
+      expect(
+        roundTrip.foodPortionEvidence.map((item) => item.toJson()),
+        food.foodPortionEvidence.map((item) => item.toJson()),
+      );
+    },
+  );
+
+  test(
     'catalog drug projection preserves a missing route as unspecified',
     () async {
       final db = RecordingCdssDatabase();
@@ -1986,6 +2406,156 @@ void main() {
     expect((rejected['tolerance'] as Map)['out_of_tolerance'], isTrue);
     expect('${rejected['ranking_explanation']}', contains('scope_mismatch'));
   });
+
+  test('governed runtime ignores database and caller rule injection', () async {
+    final db = RecordingCdssDatabase();
+    await db.insertRuleRegistry(
+      _runtimeRuleRow(
+        ruleId: 'db.unreviewed.override',
+        version: 'baseline_cdss_rules_v1',
+        decision: 'BLOCK',
+      ),
+    );
+    final governance = KnowledgeGovernanceService(
+      store: MemoryKnowledgeGovernanceStore(),
+      verifier: KnowledgeApprovalVerifier(
+        trustPolicy: KnowledgeApprovalTrustPolicy(
+          issuer: 'parkinsum',
+          environment: 'test',
+          trustedKeys: const <String, KnowledgeApprovalTrustedKey>{},
+        ),
+      ),
+    );
+    final service = ClinicalDecisionSupportService(
+      database: db,
+      factConflictEngine: FactConflictEngine(),
+      runtimeRuleEngine: RuntimeRuleEngine(),
+      knowledgeGovernanceService: governance,
+    );
+    final injected = RuleRegistryCompiler().compileJsonList([
+      _runtimeRuleJson(ruleId: 'caller.unreviewed.override', decision: 'BLOCK'),
+    ], rulesVersion: 'attacker_supplied');
+
+    final output = await service.run(
+      context: _runtimeContextForDbRule(),
+      rules: injected,
+      factsVersion: 'facts_v1',
+      rulesVersion: 'attacker_supplied',
+    );
+
+    expect(
+      output.alertsJson['compiled_rule_source'],
+      'exact_governed_prototype_baseline',
+    );
+    expect(
+      output.alertsJson['snapshot']['rules_version'],
+      'baseline_cdss_rules_v1',
+    );
+    final emittedIds = output.alerts.expand((alert) => alert.ruleIds);
+    expect(emittedIds, isNot(contains('db.unreviewed.override')));
+    expect(emittedIds, isNot(contains('caller.unreviewed.override')));
+    expect(
+      (output.alertsJson['knowledge_governance'] as Map)['allowed'],
+      isTrue,
+    );
+  });
+
+  test(
+    'corrupt governance state holds instead of caller-rule fallback',
+    () async {
+      final db = RecordingCdssDatabase();
+      final governance = KnowledgeGovernanceService(
+        store: MemoryKnowledgeGovernanceStore(
+          document: '{"schema_version":1,"events":[]}',
+          anchor: 'tampered',
+        ),
+        verifier: KnowledgeApprovalVerifier(
+          trustPolicy: KnowledgeApprovalTrustPolicy(
+            issuer: 'parkinsum',
+            environment: 'test',
+            trustedKeys: const <String, KnowledgeApprovalTrustedKey>{},
+          ),
+        ),
+      );
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+        knowledgeGovernanceService: governance,
+      );
+      final injected = RuleRegistryCompiler().compileJsonList([
+        _runtimeRuleJson(
+          ruleId: 'caller.unreviewed.override',
+          decision: 'ALLOW',
+        ),
+      ], rulesVersion: 'baseline_cdss_rules_v1');
+
+      final output = await service.run(
+        context: _runtimeContextForDbRule(),
+        rules: injected,
+        factsVersion: 'facts_v1',
+        rulesVersion: 'baseline_cdss_rules_v1',
+      );
+
+      expect(output.alerts, hasLength(1));
+      expect(output.alerts.single.decision, RuntimeDecisionType.requireReview);
+      expect(output.alerts.single.ruleIds, isEmpty);
+      expect(
+        (output.alertsJson['knowledge_governance'] as Map)['allowed'],
+        isFalse,
+      );
+    },
+  );
+
+  test(
+    'governance change during evaluation replaces the result with a hold',
+    () async {
+      final store = MemoryKnowledgeGovernanceStore();
+      final db = MutatingGovernanceCdssDatabase(store);
+      final governance = KnowledgeGovernanceService(
+        store: store,
+        verifier: KnowledgeApprovalVerifier(
+          trustPolicy: KnowledgeApprovalTrustPolicy(
+            issuer: 'parkinsum',
+            environment: 'test',
+            trustedKeys: const <String, KnowledgeApprovalTrustedKey>{},
+          ),
+        ),
+      );
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: RuntimeRuleEngine(),
+        knowledgeGovernanceService: governance,
+      );
+
+      final output = await service.run(
+        context: _runtimeContextForDbRule(),
+        rules: RuleRegistryCompiler().compileJsonList([
+          _runtimeRuleJson(
+            ruleId: 'caller.unreviewed.allow',
+            decision: 'ALLOW',
+          ),
+        ], rulesVersion: 'baseline_cdss_rules_v1'),
+        factsVersion: 'facts_v1',
+        rulesVersion: 'attacker_supplied',
+      );
+
+      expect(db.mutated, isTrue);
+      expect(output.alerts, hasLength(1));
+      expect(output.alerts.single.decision, RuntimeDecisionType.requireReview);
+      expect(output.alerts.single.ruleIds, isEmpty);
+      expect(output.alertsJson['compiled_rule_source'], 'governance_held');
+      expect(
+        (output.alertsJson['knowledge_governance'] as Map)['allowed'],
+        isFalse,
+      );
+      expect(
+        (output.alertsJson['knowledge_governance'] as Map)['reason'],
+        'knowledge_governance_changed_during_run',
+      );
+    },
+  );
 }
 
 Map<String, dynamic> _runtimeRuleRow({

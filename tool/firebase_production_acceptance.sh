@@ -66,6 +66,11 @@ fi
   --dart-define=PARKINSUM_ENV="$ENVIRONMENT" \
   --dart-define=PARKINSUM_FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID"
 
+OPEN_SOURCE_EVIDENCE_PATH="build/open_source_release_evidence/production_acceptance.json"
+node tool/open_source_release_evidence.mjs \
+  --web-only \
+  --output "$OPEN_SOURCE_EVIDENCE_PATH"
+
 MANIFEST_PATH="$(node tool/release_manifest.mjs \
   --release-id "$RELEASE_ID" \
   --env "$ENVIRONMENT" \
@@ -78,4 +83,5 @@ MANIFEST_PATH="$(node tool/release_manifest.mjs \
 
 echo "Local/static Firebase production acceptance preflight completed."
 echo "release_manifest=$MANIFEST_PATH"
+echo "open_source_release_evidence=$OPEN_SOURCE_EVIDENCE_PATH"
 echo "Manual live checks still required: stage/prod rule probes, claims grant/removal verification, backup export, monitoring review, and browser smoke."

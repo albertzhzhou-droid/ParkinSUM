@@ -5,21 +5,30 @@ ParkinSUM Companion. The wording is intentionally conservative: ParkinSUM is an
 educational software prototype using synthetic/demo data, not medical advice,
 not a medical device, and no clinical validation is claimed.
 
-## Short Repository Description
+## Verified GitHub Metadata — 2026-09-29
 
-Recommended GitHub repository description:
+The repository description and homepage were updated successfully on GitHub.
+This record covers those two settings only; it does not establish a successful
+Pages deployment, topic changes, or a social-preview upload.
+
+Current repository description:
 
 ```text
-Educational Flutter prototype for Parkinson's disease diet-medication awareness, local-first demos, and evidence-oriented food-drug interaction explanations.
+A local-first Flutter research notebook for meals, medication context, and evidence-oriented explanations. Educational prototype with synthetic demos.
 ```
 
-This description is accurate for GitHub search while avoiding claims about
-diagnosis, treatment, clinical validation, medical-device status, or real-world
-patient-care suitability.
+Current homepage:
+
+[ParkinSUM Paper showcase](https://albertzhzhou-droid.github.io/ParkinSUM/site/)
+
+The description preserves the educational scope without claiming diagnosis,
+treatment, clinical validation, medical-device status, or patient-care
+suitability.
 
 ## Recommended GitHub Topics
 
-Use only precise, defensible topics:
+The following remain recommendations, not a record of verified remote topic
+changes. Use only precise, defensible topics:
 
 ```text
 flutter
@@ -57,25 +66,35 @@ Notes:
 
 ## Social Preview Image Text
 
-Recommended text for GitHub social preview:
+The warm Paper preview is available at
+`docs/assets/social-preview/parkinsum-social-preview-warm.png` (1280 × 640 PNG).
+Its text is:
 
 ```text
 ParkinSUM Companion
-Educational Parkinson's diet-medication awareness prototype
-Local-first Flutter app | Synthetic demo data only
+ParkinSUM
+A local-first research notebook.
+Meals, medication & evidence context
+Educational prototype · Synthetic demos
+github.com/albertzhzhou-droid/ParkinSUM
 ```
 
 Small safety line:
 
 ```text
-Not medical advice. Not a medical device.
+Not medical advice.
 ```
 
 Keep the preview clean and readable at small sizes. Do not include screenshots
 that show real health information, real medication schedules, credentials,
 Firebase project details, raw operator logs, UIDs, or local machine paths.
 
-See `docs/media/social-preview.md` for a reusable design brief.
+See `docs/media/social-preview.md` for all three brand assets, typography
+provenance, and the generation prompts. Local README and Pages references use
+the warm assets; the GitHub repository social-preview setting still requires
+uploading this PNG in repository Settings. **Upload is pending; success has not
+been verified.** Creating or committing an image does not update that GitHub
+setting.
 
 ## Suggested Pinned Repository Description
 
@@ -87,11 +106,11 @@ ParkinSUM Companion is a local-first Flutter educational prototype exploring mea
 
 ## Academic Citation Wording
 
-Suggested prose citation:
-
-```text
-Zhou, Zhenghang. ParkinSUM Companion: a local-first Flutter prototype for Parkinson's disease diet-medication education. GitHub repository, v0.1.0-alpha, 2026. Available at: https://github.com/albertzhzhou-droid/ParkinSUM
-```
+[`CITATION.cff`](../CITATION.cff) is the authoritative source for the software
+citation, including title, author, release date, and version. Use the fields
+for the artifact being cited rather than copying a version into this metadata
+guide. When discussing untagged development, identify the exact commit or ref
+and access date separately; do not invent a new release version.
 
 Suggested context sentence:
 
@@ -99,48 +118,25 @@ Suggested context sentence:
 ParkinSUM Companion is cited here as an educational software prototype and architecture artifact; it is not cited as a clinical intervention, medical device, treatment system, or patient-outcome study.
 ```
 
-The repository also includes `CITATION.cff` so citation tools can discover the
-software citation automatically.
+## Remaining GitHub Setup
 
-## Manual GitHub Setup Steps
+The description and homepage are already set as recorded above.
 
-`gh auth status` currently reports an invalid token in this local environment,
-so these settings should be updated manually in GitHub unless an authenticated
-token with repository metadata permissions is available.
+- Review the recommended topics before changing them.
+- Upload the actual warm PNG under repository **Settings → Social preview**,
+  then verify the saved repository setting. The upload is currently pending.
+- Verify the deployed Pages route separately from the homepage field.
 
-1. Open `https://github.com/albertzhzhou-droid/ParkinSUM`.
-2. Select the gear icon next to the repository About panel.
-3. Paste the short repository description from this document.
-4. Add the recommended topics exactly as listed above.
-5. Add the project website URL after GitHub Pages is enabled:
-
-   ```text
-   https://albertzhzhou-droid.github.io/ParkinSUM/site/
-   ```
-
-6. Open `Settings` -> `Social preview`.
-7. Upload a preview image generated from the brief in
-   `docs/media/social-preview.md`.
-
-If GitHub CLI is re-authenticated later, equivalent commands are:
+For a future update, the equivalent description/homepage command is:
 
 ```sh
 gh repo edit albertzhzhou-droid/ParkinSUM \
-  --description "Educational Flutter prototype for Parkinson's disease diet-medication awareness, local-first demos, and evidence-oriented food-drug interaction explanations." \
+  --description "A local-first Flutter research notebook for meals, medication context, and evidence-oriented explanations. Educational prototype with synthetic demos." \
   --homepage "https://albertzhzhou-droid.github.io/ParkinSUM/site/"
-
-gh repo edit albertzhzhou-droid/ParkinSUM \
-  --add-topic flutter \
-  --add-topic parkinsons-disease \
-  --add-topic levodopa \
-  --add-topic food-drug-interactions \
-  --add-topic clinical-decision-support \
-  --add-topic local-first \
-  --add-topic digital-health \
-  --add-topic patient-education \
-  --add-topic mhealth \
-  --add-topic offline-first
 ```
+
+Topic changes are a separate action. Do not assume suggested topics were
+applied merely because the description/homepage command succeeded.
 
 Do not add topics or descriptions that imply diagnosis, treatment, clinical
 validation, medical-device approval, or public patient-care readiness.

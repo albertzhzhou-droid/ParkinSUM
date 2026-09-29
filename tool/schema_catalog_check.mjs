@@ -33,40 +33,161 @@ const supportedEvidenceKinds = new Set([
   'dart-named-int-argument',
   'versioned-string',
   'dart-named-string-argument',
+  'dart-string-constant',
 ]);
 
 // This registry is deliberately independent of the JSON catalog and contains
 // no version numbers. It is the minimum production/public surface set that the
 // central catalog must continue to acknowledge. Versions are extracted from
-// Dart source below, so this registry cannot silently become a second version
+// their declared source evidence below, so this registry cannot silently become a second version
 // authority.
 export const requiredSchemaSurfaces = Object.freeze([
+  ['parkinsum.administration-dose-expression', 'lib/domain/usecases/dosage_note_parser.dart'],
+  ['parkinsum.protein-trend-aggregation', 'lib/domain/usecases/get_protein_trend_usecase.dart'],
+  ['parkinsum.food-rank-sensitivity-assessment', 'lib/domain/entities/food_rank_sensitivity_assessment.dart'],
+  ['parkinsum.fhir-r4-medication-intake-statement', 'lib/domain/usecases/fhir_r4_medication_intake_statement_mapper.dart'],
+  ['parkinsum.synthetic-rule-test-suite-checkpoint', 'lib/domain/entities/rule_test_suite.dart'],
+  ['parkinsum.fhir-r4-bp-mapper', 'lib/domain/usecases/fhir_r4_blood_pressure_mapper.dart'],
+  ['parkinsum.fhir-r4-observation-import-preview', 'lib/domain/entities/fhir_r4_observation_import_preview.dart'],
+  ['parkinsum.fhir-r4-bp-collection-mapper', 'lib/domain/usecases/fhir_r4_blood_pressure_collection_mapper.dart'],
+  ['parkinsum.fhir-r4-medication-statement-collection', 'lib/domain/usecases/fhir_r4_medication_statement_collection_mapper.dart'],
+  ['parkinsum.fhir-r4-medication-statement-import-preview', 'lib/domain/entities/fhir_r4_medication_statement_import_preview.dart'],
+  ['parkinsum.fhir-r4-medication-request-import-preview', 'lib/domain/entities/fhir_r4_medication_request_import_preview.dart'],
+  ['parkinsum.fhir-r4-allergy-intolerance-import-preview', 'lib/domain/entities/fhir_r4_allergy_intolerance_import_preview.dart'],
+  ['parkinsum.fhir-r4-condition-import-preview', 'lib/domain/entities/fhir_r4_condition_import_preview.dart'],
+  ['parkinsum.fhir-r4-encounter-import-preview', 'lib/domain/entities/fhir_r4_encounter_import_preview.dart'],
+  ['parkinsum.fhir-r4-medication-administration-import-preview', 'lib/domain/entities/fhir_r4_medication_administration_import_preview.dart'],
+  ['parkinsum.fhir-r4-medication-dispense-import-preview', 'lib/domain/entities/fhir_r4_medication_dispense_import_preview.dart'],
+  ['parkinsum.fhir-r4-personal-collection', 'lib/domain/usecases/fhir_r4_personal_observation_collection_mapper.dart'],
+  ['parkinsum.fhir-r4-symptom-motor-collection', 'lib/domain/usecases/fhir_r4_symptom_motor_observation_mapper.dart'],
+  ['parkinsum.fhir-r4-symptom-motor-mapper', 'lib/domain/usecases/fhir_r4_symptom_motor_observation_mapper.dart'],
+  ['parkinsum.fhir-r5-dose-quantity-preview', 'lib/domain/entities/fhir_r5_dose_quantity_preview.dart'],
+  ['parkinsum.fhir-r5-dose-quantity-preview-profile', 'lib/domain/entities/fhir_r5_dose_quantity_preview.dart'],
+  ['parkinsum.fhir-r5-medication-product-preview', 'lib/domain/entities/fhir_r5_medication_product_preview.dart'],
+  ['parkinsum.fhir-r5-medication-product-preview-profile', 'lib/domain/entities/fhir_r5_medication_product_preview.dart'],
+  ['parkinsum.fhir-r5-nutrition-intake-preview', 'lib/domain/usecases/fhir_r5_nutrition_intake_mapper.dart'],
+  ['parkinsum.openfda-strength-expression-parse-result', 'lib/domain/entities/openfda_strength_expression.dart'],
+  ['parkinsum.openfda-strength-expression-source-manifest', 'lib/domain/entities/openfda_strength_expression_source_manifest.dart'],
+  ['parkinsum.food-composition-candidate-set-snapshot', 'lib/domain/entities/food_composition_candidate_set_snapshot.dart'],
+  ['parkinsum.food-portion-composition-projection', 'lib/domain/entities/food_portion_composition_projection.dart'],
+  ['parkinsum.cdss-food-projection-query-audit', 'lib/domain/usecases/cdss_catalog_projection_service.dart'],
+  ['parkinsum.knowledge-approval', 'lib/domain/entities/knowledge_approval_envelope.dart'],
+  ['parkinsum.knowledge-governance-state', 'lib/domain/entities/knowledge_governance_state.dart'],
+  ['parkinsum.knowledge-pack', 'lib/domain/entities/knowledge_pack.dart'],
   ['parkinsum.algorithm-evaluation', 'lib/algorithm_sdk/parkinsum_algorithm_sdk.dart'],
   ['parkinsum.algorithm-configuration', 'lib/algorithm_sdk/algorithm_configuration_identity.dart'],
+  ['parkinsum.levodopa-absorption-opportunity-parameters', 'lib/domain/entities/levodopa_absorption_opportunity_parameters.dart'],
+  ['parkinsum.levodopa-absorption-generator-structure', 'lib/domain/usecases/levodopa_absorption_opportunity_model.dart'],
+  ['parkinsum.absorption-opportunity-output-contract', 'lib/domain/entities/absorption_opportunity.dart'],
+  ['parkinsum.algorithm-trace-surface-manifest', 'lib/domain/entities/algorithm_descriptor.dart'],
+  ['parkinsum.algorithm-result-root-manifest', 'lib/domain/entities/algorithm_result_root_manifest.dart'],
+  ['parkinsum.algorithm-dependency-compatibility-report', 'lib/domain/entities/algorithm_dependency_compatibility.dart'],
+  ['parkinsum.algorithm-observatory-snapshot', 'lib/domain/usecases/algorithm_observatory_service.dart'],
+  ['parkinsum.signed-capability-manifest', 'lib/domain/entities/signed_capability_manifest.dart'],
+  ['parkinsum.capability-activation-state', 'lib/core/services/capability_rollout_service.dart'],
+  ['parkinsum.mechanistic-applicability-manifest', 'lib/domain/entities/mechanistic_medication_applicability.dart'],
+  ['parkinsum.context-of-use-requalification-ledger', 'lib/domain/entities/context_of_use_requalification.dart'],
+  ['parkinsum.prospective-model-credibility-plan', 'lib/domain/entities/prospective_model_credibility_plan.dart'],
+  ['parkinsum.credibility-evidence-execution-attestation', 'lib/domain/entities/credibility_evidence_execution_attestation.dart'],
+  ['parkinsum.credibility-protocol-transparency-ledger', 'lib/domain/entities/credibility_protocol_transparency_ledger.dart'],
+  ['parkinsum.credibility-blinded-replication-package', 'lib/domain/entities/credibility_blinded_replication.dart'],
+  ['parkinsum.synthetic-replication-output', 'lib/domain/entities/credibility_blinded_replication.dart'],
+  ['parkinsum.credibility-statistical-analysis-package', 'lib/domain/entities/credibility_statistical_analysis.dart'],
+  ['parkinsum.credibility-randomization-interim-firewall-package', 'lib/domain/entities/credibility_randomization_interim_firewall.dart'],
+  ['parkinsum.credibility-adaptive-design-simulation-package', 'lib/domain/entities/credibility_adaptive_design_simulation.dart'],
+  ['parkinsum.credibility-bayesian-borrowing-calibration-package', 'lib/domain/entities/credibility_bayesian_borrowing_calibration.dart'],
+  ['parkinsum.credibility-bayesian-multisource-model-criticism-package', 'lib/domain/entities/credibility_bayesian_multisource_model_criticism.dart'],
+  ['parkinsum.credibility-target-population-transportability-package', 'lib/domain/entities/credibility_target_population_transportability.dart'],
+  ['parkinsum.credibility-transportability-sensitivity-package', 'lib/domain/entities/credibility_transportability_sensitivity.dart'],
+  ['parkinsum.xorshift32-box-muller', 'lib/domain/usecases/adaptive_design_operating_characteristics_simulator.dart'],
+  ['parkinsum.evidence-currency-registry', 'lib/domain/entities/evidence_currency.dart'],
+  ['parkinsum.evidence-currency-runtime-binding', 'lib/domain/entities/evidence_currency.dart'],
+  ['parkinsum.claim-evidence-synthesis-registry', 'lib/domain/entities/evidence_synthesis.dart'],
   ['parkinsum.mechanistic-numerical-oracle', 'lib/domain/usecases/algorithm_numerical_verification_oracle.dart'],
+  ['parkinsum.mechanistic-model-verification-report', 'lib/domain/usecases/mechanistic_model_verification_gate.dart'],
+  ['parkinsum.algorithm-executable-contract-report', 'lib/domain/usecases/algorithm_executable_contract_gate.dart'],
+  ['parkinsum.algorithm-contract-relation-registry', 'lib/domain/entities/algorithm_contract_independent_oracle_attestation.dart'],
+  ['parkinsum.algorithm-contract-independent-oracle-report', 'lib/domain/entities/algorithm_contract_independent_oracle_attestation.dart'],
+  ['parkinsum.algorithm-relation-domain-sampling-plan', 'lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart'],
+  ['parkinsum.algorithm-relation-domain-sampling-report', 'lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart'],
+  ['parkinsum.defective-relation-calibration-policy', 'lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart'],
+  ['parkinsum.algorithm-relation-production-sampling-report', 'lib/domain/entities/algorithm_relation_domain_sampling_attestation.dart'],
   ['parkinsum.mechanistic-event-ledger', 'lib/domain/entities/mechanistic_event_ledger.dart'],
+  ['parkinsum.personal-observation-event-ledger', 'lib/domain/entities/personal_observation_event_ledger.dart'],
+  ['parkinsum.local-time-resolution', 'lib/domain/entities/local_time_resolution.dart'],
+  ['parkinsum.mechanistic-ledger-authorization', 'lib/domain/usecases/mechanistic_event_ledger_authorization.dart'],
+  ['parkinsum.mechanistic-ledger-input-binding', 'lib/domain/entities/mechanistic_event_ledger.dart'],
+  ['parkinsum.mechanistic-replay-capsule', 'lib/domain/entities/mechanistic_replay_capsule.dart'],
+  ['parkinsum.jcs-safe-lossless-scalars', 'lib/domain/entities/mechanistic_replay_capsule.dart'],
+  ['parkinsum.mechanistic-replay-cross-runtime-vectors', 'lib/domain/entities/mechanistic_replay_capsule.dart'],
+  ['parkinsum.mechanistic-replay-cross-runtime-conformance', 'lib/domain/entities/mechanistic_replay_capsule.dart'],
+  ['parkinsum.gastric-structural-uncertainty-report', 'lib/domain/entities/gastric_structural_uncertainty.dart'],
+  ['parkinsum.gastric-high-precision-reference-check', 'lib/domain/entities/gastric_high_precision_reference_contract.dart'],
   ['parkinsum.algorithm-fitted-parameter-identity', 'lib/algorithm_sdk/algorithm_parameter_provenance.dart'],
   ['parkinsum.algorithm-parameter-provenance', 'lib/algorithm_sdk/algorithm_parameter_provenance.dart'],
   ['parkinsum.algorithm-parameter-manifest', 'lib/algorithm_sdk/algorithm_parameter_provenance.dart'],
+  ['parkinsum.algorithm-configuration-coverage', 'lib/algorithm_sdk/algorithm_parameter_provenance.dart'],
+  ['parkinsum.algorithm-configuration-completeness-witness', 'lib/algorithm_sdk/algorithm_parameter_provenance.dart'],
+  ['parkinsum.algorithm-configuration-change-impact', 'lib/domain/entities/algorithm_configuration_change_impact.dart'],
+  ['parkinsum.configuration-baseline-promotion-receipt', 'lib/domain/entities/configuration_baseline_registry.dart'],
+  ['parkinsum.configuration-baseline-registry', 'lib/domain/entities/configuration_baseline_registry.dart'],
   ['parkinsum.cdss-rule-logic', 'lib/algorithm_sdk/algorithm_parameter_provenance.dart'],
+  ['parkinsum.gastric-emptying-configuration', 'lib/domain/usecases/gastric_emptying_model.dart'],
+  ['parkinsum.gastric-emptying-generator-structure', 'lib/domain/usecases/gastric_emptying_model.dart'],
+  ['parkinsum.gastric-emptying-output-contract', 'lib/domain/entities/gastric_emptying_profile.dart'],
   ['parkinsum.gastric-parameter-set', 'lib/domain/entities/gastric_emptying_parameters.dart'],
   ['parkinsum.algorithm-trace-node', 'lib/domain/entities/algorithm_trace_node.dart'],
+  ['parkinsum.synthetic-rule-test-case', 'lib/domain/entities/rule_test_case.dart'],
+  ['parkinsum.synthetic-rule-test-pack', 'lib/domain/entities/rule_test_case.dart'],
+  ['parkinsum.synthetic-rule-test-report', 'lib/domain/usecases/synthetic_rule_test_runner.dart'],
+  ['parkinsum.synthetic-rule-test-suite', 'lib/domain/entities/rule_test_suite.dart'],
+  ['parkinsum.synthetic-rule-test-suite-report', 'lib/domain/usecases/synthetic_rule_test_suite_runner.dart'],
+  ['parkinsum.rule-set-structural-diff', 'lib/domain/entities/rule_set_diff.dart'],
+  ['parkinsum.care-workspace', 'lib/core/services/care_workspace_service.dart'],
+  ['parkinsum.decision-support-followup-ledger', 'lib/domain/entities/decision_support_followup.dart'],
+  ['parkinsum.personal-observation', 'lib/domain/entities/personal_observation.dart'],
   ['parkinsum.personal-log-handoff', 'lib/domain/usecases/personal_log_handoff_summary_service.dart'],
+  ['parkinsum.personal-log-handoff-semantic-document', 'lib/domain/usecases/personal_log_handoff_summary_service.dart'],
   ['parkinsum.privacy-safe-support-bundle', 'lib/domain/usecases/privacy_safe_support_bundle_service.dart'],
+  ['parkinsum.operational-observability-envelope', 'lib/domain/entities/operational_observability.dart'],
   ['parkinsum.purpose-bound-consent-receipt', 'lib/core/models/purpose_bound_consent.dart'],
   ['parkinsum.recoverable-user-event-history', 'lib/core/models/recoverable_user_event.dart'],
   ['parkinsum.recoverable-event-restore-impact', 'lib/domain/usecases/recoverable_event_restore_impact_service.dart'],
   ['parkinsum.restore-relationship-graph', 'lib/domain/usecases/recoverable_event_restore_impact_service.dart'],
   ['parkinsum.restore-impact-account', 'lib/domain/usecases/recoverable_event_restore_impact_service.dart'],
   ['parkinsum.user-portable-data-package', 'lib/domain/usecases/user_portable_data_package_service.dart'],
+  ['parkinsum.portable-schema-migration-registry', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-migration-receipt', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-migration-cross-runtime-vectors', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-migration-cross-runtime-conformance', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-differential-fuzz-plan', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-fuzz-regression-corpus', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-differential-fuzz-report', 'lib/domain/entities/portable_schema_migration.dart'],
+  ['parkinsum.portable-schema-differential-fuzz-conformance', 'lib/domain/entities/portable_schema_migration.dart'],
   ['parkinsum.portable-owner-token', 'lib/core/services/portable_data_owner_scope_service.dart'],
   ['parkinsum.portable-owner-secret-envelope', 'lib/core/services/portable_data_owner_scope_service.dart'],
   ['parkinsum.protected-secret-store', 'lib/core/security/protected_secret_store.dart'],
   ['parkinsum.atomic-onboarding-commit', 'lib/core/models/atomic_onboarding_commit.dart'],
   ['parkinsum.intake-record', 'lib/core/models/intake.dart'],
+  ['parkinsum.administration-dose-confirmation', 'lib/core/models/administration_dose_confirmation.dart'],
+  ['parkinsum.medication-package-dose-derivation', 'lib/core/models/medication_product_pack.dart'],
+  ['parkinsum.administration-dose-record-binding', 'lib/core/models/administration_dose_confirmation.dart'],
+  ['parkinsum.dose-expression-parse-result', 'lib/domain/entities/dose_expression.dart'],
+  ['parkinsum.versioned-dose-unit-mapping', 'lib/domain/entities/versioned_dose_unit_mapping.dart'],
+  ['parkinsum.medication-assertion', 'lib/domain/entities/medication_assertion_reconciliation.dart'],
+  ['parkinsum.medication-reconciliation-decision', 'lib/domain/entities/medication_assertion_reconciliation.dart'],
+  ['parkinsum.medication-assertion-conflict-graph', 'lib/domain/usecases/medication_assertion_reconciliation_service.dart'],
+  ['parkinsum.medication-assertion-bitemporal-projection', 'lib/domain/usecases/medication_assertion_reconciliation_service.dart'],
+  ['parkinsum.medication-reconciliation-envelope', 'lib/core/models/intake.dart'],
   ['parkinsum.reminder-activation-inbox', 'lib/core/services/reminder_activation_inbox.dart'],
   ['parkinsum.reminder-plan', 'lib/domain/entities/user_logging_reminder.dart'],
-  ['parkinsum.reminder-notification-payload', 'lib/core/services/user_logging_reminder_service.dart'],
+  ['parkinsum.reminder-notification-payload', 'lib/core/services/reminder_notification_payload.dart'],
+  ['parkinsum.reminder-notification-presentation', 'lib/core/services/reminder_notification_privacy_policy.dart'],
+  ['parkinsum.reminder-notification-capability-matrix', 'lib/core/services/reminder_notification_capability_matrix.dart'],
+  ['parkinsum.reminder-delivery-readiness', 'lib/core/services/reminder_notification_capability_matrix.dart'],
+  ['parkinsum.android-reminder-run-attestation', 'lib/core/services/reminder_notification_run_attestation.dart'],
+  ['parkinsum.android-reminder-execution-isolation', 'lib/core/services/reminder_notification_run_attestation.dart'],
+  ['parkinsum.android-reminder-integration-observation', 'lib/core/services/reminder_notification_run_attestation.dart'],
   ['parkinsum.reminder-schedule-manifest', 'lib/core/services/reminder_schedule_manifest.dart'],
   ['parkinsum.app-database-native', 'lib/core/db/app_database_native.dart'],
   ['parkinsum.app-database-web-user-state', 'lib/core/db/app_database_web.dart'],
@@ -75,9 +196,18 @@ export const requiredSchemaSurfaces = Object.freeze([
   ['parkinsum.cdss-database-native', 'lib/core/db/cdss_database_native.dart'],
   ['parkinsum.cdss-database-web', 'lib/core/db/cdss_database_web.dart'],
   ['parkinsum.cdss-database-firestore', 'lib/core/db/cdss_database_firestore.dart'],
+  ['parkinsum.android-gradle-runtime-dependency-graph', 'lib/domain/entities/product_upgrade_queue.dart'],
   ['parkinsum.engine-snapshot-record', 'lib/domain/entities/cdss_records.dart'],
   ['parkinsum.complete-app-upgrade-queue', 'lib/domain/entities/product_upgrade_queue.dart'],
+  ['parkinsum.open-source-drift-review-ledger', 'tool/open_source_drift_decision_ledger.mjs'],
+  ['parkinsum.open-source-drift-review-decision', 'tool/open_source_drift_decision_ledger.mjs'],
   ['parkinsum.open-source-influence-inventory', 'lib/domain/entities/product_upgrade_queue.dart'],
+  ['parkinsum.open-source-release-evidence', 'lib/domain/entities/product_upgrade_queue.dart'],
+  ['parkinsum.rxnorm-release-identity', 'tool/rxnorm_release_identity.mjs'],
+  ['parkinsum.infoods-tagname-source-identity', 'tool/infoods_tagname_source_identity.mjs'],
+  ['parkinsum.catalog-version-change-diff', 'lib/domain/entities/catalog_version_change_diff.dart'],
+  ['parkinsum.synthetic-cds-hooks-challenge', 'lib/domain/usecases/synthetic_cds_hooks_challenge_service.dart'],
+  ['parkinsum.cql-concept-template-draft', 'tool/cql_concept_template_preview.mjs'],
 ].map(([id, source]) => Object.freeze({ id, source })));
 
 function escapeRegex(value) {
@@ -93,6 +223,18 @@ function isSafeRelativeDartPath(value) {
     !normalized.startsWith('../') &&
     normalized.startsWith('lib/') &&
     normalized.endsWith('.dart')
+  );
+}
+
+function isSafeRelativeGovernanceToolPath(value) {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  if (path.isAbsolute(value) || value.includes('\\')) return false;
+  const normalized = path.posix.normalize(value);
+  return (
+    normalized === value &&
+    !normalized.startsWith('../') &&
+    normalized.startsWith('tool/') &&
+    normalized.endsWith('.mjs')
   );
 }
 
@@ -115,14 +257,23 @@ function listDartFiles(root) {
   return found;
 }
 
-function sourceText(repoRoot, source, failures, label) {
-  if (!isSafeRelativeDartPath(source)) {
-    failures.push(`${label} source must be a normalized relative lib/*.dart path: ${source}`);
+function sourceText(repoRoot, source, failures, label, surfaceKind) {
+  const allowedDartSource = isSafeRelativeDartPath(source);
+  const allowedGovernanceTool =
+    surfaceKind === 'governance-artifact' &&
+    isSafeRelativeGovernanceToolPath(source);
+  if (!allowedDartSource && !allowedGovernanceTool) {
+    failures.push(
+      label +
+        ' source must be a normalized relative lib/*.dart path ' +
+        '(tool/*.mjs is allowed only for governance-artifact): ' +
+        source,
+    );
     return null;
   }
   const absolute = path.join(repoRoot, source);
   if (!fs.existsSync(absolute) || !fs.statSync(absolute).isFile()) {
-    failures.push(`${label} source does not exist: ${source}`);
+    failures.push(label + ' source does not exist: ' + source);
     return null;
   }
   return fs.readFileSync(absolute, 'utf8');
@@ -280,6 +431,22 @@ function extractEvidenceVersion({ schema, evidence, text, failures, label }) {
     );
   }
 
+  if (evidence.kind === 'dart-string-constant') {
+    if (!safeDartIdentifierPattern.test(evidence.symbol ?? '')) {
+      failures.push(`${label} symbol is not a safe Dart identifier`);
+      return null;
+    }
+    const expression = new RegExp(
+      `(?:static\\s+)?const\\s+(?:String\\s+)?${escapeRegex(evidence.symbol)}\\s*=\\s*['\"]([^'\"\\r\\n]+)['\"]`,
+      'g',
+    );
+    return uniqueMatch(
+      [...bounded.matchAll(expression)].map((match) => match[1]),
+      label,
+      failures,
+    );
+  }
+
   return null;
 }
 
@@ -355,10 +522,36 @@ export function validateSchemaCatalog(catalog, { repoRoot = defaultRepoRoot } = 
     if (!String(schema.compatibility ?? '').trim()) {
       failures.push(`${schema.id} compatibility policy is missing`);
     }
-    const primaryText = sourceText(repoRoot, schema.source, failures, schema.id);
+    const primaryText = sourceText(
+      repoRoot,
+      schema.source,
+      failures,
+      schema.id,
+      schema.surfaceKind,
+    );
     if (schema.versionStatus === 'versioned') {
       if (!Number.isInteger(schema.currentVersion) || schema.currentVersion < 1) {
         failures.push(`${schema.id} currentVersion must be a positive integer`);
+      }
+      const legacyVersions = schema.acceptedLegacyVersions ?? [];
+      if (!Array.isArray(legacyVersions)) {
+        failures.push(`${schema.id} acceptedLegacyVersions must be an array`);
+      } else {
+        const uniqueLegacyVersions = new Set();
+        for (const version of legacyVersions) {
+          if (
+            !Number.isInteger(version) ||
+            version < 1 ||
+            version >= schema.currentVersion ||
+            uniqueLegacyVersions.has(version)
+          ) {
+            failures.push(
+              `${schema.id} acceptedLegacyVersions must be unique positive integers below currentVersion`,
+            );
+            break;
+          }
+          uniqueLegacyVersions.add(version);
+        }
       }
     } else if (schema.versionStatus === 'semantic-versioned') {
       if (
@@ -366,6 +559,12 @@ export function validateSchemaCatalog(catalog, { repoRoot = defaultRepoRoot } = 
         !/^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/.test(schema.currentVersion)
       ) {
         failures.push(`${schema.id} currentVersion must be a safe semantic identifier`);
+      }
+      if (
+        schema.schemaUriVersion !== undefined &&
+        (!Number.isInteger(schema.schemaUriVersion) || schema.schemaUriVersion < 1)
+      ) {
+        failures.push(`${schema.id} schemaUriVersion must be a positive integer`);
       }
     } else if (schema.versionStatus === 'unversioned' && schema.currentVersion !== null) {
       failures.push(`${schema.id} unversioned surfaces must use currentVersion null`);
@@ -393,7 +592,13 @@ export function validateSchemaCatalog(catalog, { repoRoot = defaultRepoRoot } = 
       const text =
         evidenceSource === schema.source
           ? primaryText
-          : sourceText(repoRoot, evidenceSource, failures, evidenceLabel);
+          : sourceText(
+              repoRoot,
+              evidenceSource,
+              failures,
+              evidenceLabel,
+              schema.surfaceKind,
+            );
       if (text === null) continue;
       const extracted = extractEvidenceVersion({
         schema,
@@ -402,10 +607,29 @@ export function validateSchemaCatalog(catalog, { repoRoot = defaultRepoRoot } = 
         failures,
         label: evidenceLabel,
       });
-      if (extracted !== null && extracted !== schema.currentVersion) {
+      const catalogVersionField = evidence.catalogVersionField ?? 'currentVersion';
+      if (!['currentVersion', 'schemaUriVersion'].includes(catalogVersionField)) {
+        failures.push(`${evidenceLabel} catalogVersionField is unsupported`);
+        continue;
+      }
+      if (
+        catalogVersionField === 'schemaUriVersion' &&
+        schema.versionStatus !== 'semantic-versioned'
+      ) {
+        failures.push(
+          `${evidenceLabel} schemaUriVersion evidence requires semantic-versioned status`,
+        );
+        continue;
+      }
+      const expectedVersion = schema[catalogVersionField];
+      if (expectedVersion === undefined) {
+        failures.push(`${evidenceLabel} catalog field ${catalogVersionField} is missing`);
+        continue;
+      }
+      if (extracted !== null && extracted !== expectedVersion) {
         failures.push(
           `${evidenceLabel} source version ${JSON.stringify(extracted)} ` +
-            `does not match catalog ${JSON.stringify(schema.currentVersion)}`,
+            `does not match catalog ${JSON.stringify(expectedVersion)}`,
         );
       }
       if (evidence.kind === 'dart-int-constant') {
@@ -438,7 +662,17 @@ export function validateSchemaCatalog(catalog, { repoRoot = defaultRepoRoot } = 
       );
       continue;
     }
-    if (entry.versionStatus !== 'versioned' || entry.currentVersion !== discovered.version) {
+    const acceptedVersions =
+      entry.versionStatus === 'semantic-versioned'
+        ? new Set([entry.schemaUriVersion])
+        : new Set([
+            entry.currentVersion,
+            ...(entry.acceptedLegacyVersions ?? []),
+          ]);
+    if (
+      !['versioned', 'semantic-versioned'].includes(entry.versionStatus) ||
+      !acceptedVersions.has(discovered.version)
+    ) {
       failures.push(
         `discovered schema URI ${discovered.id}/${discovered.version} disagrees with catalog`,
       );

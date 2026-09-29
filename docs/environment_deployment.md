@@ -19,10 +19,14 @@ Operational environments:
 - `stage`: production-like release acceptance.
 - `prod`: real release.
 
-The current checked-in Firebase options include web configs for all three
-Firebase projects. `dev` and `stage` are intentionally web-only in the runtime;
-non-web platforms fail fast so a mobile or desktop build cannot silently connect
-to the wrong project.
+The checked-in Firebase options retain non-secret project/app metadata for all
+three Firebase projects, but contain no concrete client API key. Supply the
+restricted key for the selected environment and platform at build time with
+`PARKINSUM_FIREBASE_API_KEY` and the matching Dart define. The key remains
+extractable from every built client; Security Rules and App Check, not key
+obscurity, enforce backend access. `dev` and `stage` are intentionally web-only
+in the runtime; non-web platforms fail fast so a mobile or desktop build cannot
+silently connect to the wrong project.
 
 ### Local Mode
 
@@ -42,7 +46,9 @@ Firebase mode is enabled with a Dart define:
 
 ```sh
 cd ParkinSUM
-flutter run -d chrome --dart-define=PARKINSUM_BACKEND=firebase
+flutter run -d chrome \
+  --dart-define=PARKINSUM_BACKEND=firebase \
+  --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-client-key>
 ```
 
 Use Firebase mode for account binding, Firestore rules checks, backend-backed
@@ -55,7 +61,11 @@ catalog/CDSS reads, and production_candidate smoke tests.
 - Dev project id: `parkinsum-companion-dev`
 - Firestore rules file: `firestore.rules`
 - Firestore indexes file: `firestore.indexes.json`
-- Firebase options file: `lib/firebase_options.dart`
+- Keyless Firebase options file: `lib/firebase_options.dart`
+- Concrete client key: supplied only with
+  `--dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-client-key>`
+- Android/iOS/macOS generated config files are intentionally untracked; explicit
+  `FirebaseOptions` initialization is authoritative.
 - Prod web app config exists in `lib/firebase_options.dart`
 - Stage web app config exists in `lib/firebase_options.dart`
 - Dev web app config exists in `lib/firebase_options.dart`
@@ -106,20 +116,20 @@ Use the guarded deployment helper for release validation:
 
 ```sh
 cd ParkinSUM
-PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage tool/release_deploy.sh
+PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage PARKINSUM_FIREBASE_API_KEY=<restricted-stage-web-key> tool/release_deploy.sh
 ```
 
 Default behavior runs validation/build only. Deployment requires explicit flags:
 
 ```sh
-PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage tool/release_deploy.sh --deploy-firestore
+PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage PARKINSUM_FIREBASE_API_KEY=<restricted-stage-web-key> tool/release_deploy.sh --deploy-firestore
 ```
 
 Hosting deployment is intentionally blocked unless the explicit
 `--deploy-hosting` flag is provided:
 
 ```sh
-PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage tool/release_deploy.sh --deploy-hosting
+PARKINSUM_ENV=stage FIREBASE_PROJECT_ID=parkinsum-companion-stage PARKINSUM_FIREBASE_API_KEY=<restricted-stage-web-key> tool/release_deploy.sh --deploy-hosting
 ```
 
 ## Firestore Deployment
@@ -157,14 +167,14 @@ Build the Firebase-backed web artifact:
 
 ```sh
 cd ParkinSUM
-flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-prod-web-key>
 ```
 
 For production App Check enforcement, add the provider dart defines after the
 reCAPTCHA provider is configured in Firebase Console:
 
 ```sh
-flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion --dart-define=PARKINSUM_FIREBASE_APP_CHECK=true --dart-define=PARKINSUM_RECAPTCHA_SITE_KEY=<recaptcha-v3-site-key>
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=prod --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-prod-web-key> --dart-define=PARKINSUM_FIREBASE_APP_CHECK=true --dart-define=PARKINSUM_RECAPTCHA_SITE_KEY=<recaptcha-v3-site-key>
 ```
 
 Use `PARKINSUM_RECAPTCHA_ENTERPRISE_SITE_KEY` instead for reCAPTCHA Enterprise.
@@ -173,20 +183,38 @@ Build the stage Firebase-backed web artifact:
 
 ```sh
 cd ParkinSUM
-flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-stage-web-key>
 ```
 
 Build the dev Firebase-backed web artifact:
 
 ```sh
 cd ParkinSUM
-flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=dev --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-dev
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=dev --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-dev --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-dev-web-key>
 ```
 
 The output is `build/web`. Stage and prod now use Firebase Hosting with the
 default `web.app` TLS domain. A custom public domain is not configured yet.
 Do not treat the prod deployment as public/legal release until privacy/support
 contact, monitoring, backup, and reviewer sign-off blockers are closed.
+
+### Experimental Wasm hosting verification
+
+Build a self-contained Wasm candidate with local renderer resources:
+
+```sh
+flutter build web --wasm --no-web-resources-cdn --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_ENV=stage --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion-stage --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-stage-web-key>
+npm run wasm:hosting-attestation
+```
+
+Flutter's multithreaded Skwasm path requires COOP `same-origin` plus COEP
+`credentialless` or `require-corp`. The current public and local
+`firebase.json` has COOP but no COEP, so the current production configuration
+must not be described as cross-origin isolated. Do not add COEP or promote a
+Wasm build until a staged HTTPS run proves Firebase Auth, Firestore, App Check,
+reCAPTCHA, every frame/worker/resource origin, service-worker update/offline,
+critical journeys, rollback, and observed CDN/proxy response headers. The local
+attestation is a controlled comparison, not a production deployment approval.
 
 ## Seed Export and Upload
 

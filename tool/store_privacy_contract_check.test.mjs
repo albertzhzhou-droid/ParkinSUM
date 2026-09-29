@@ -1,4 +1,8 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 
 import {
@@ -7,8 +11,31 @@ import {
   parseApplePrivacyManifest,
   parsePubspecDirectDependencies,
   parsePubspecLock,
+  extractLiteralHostsFromDart,
   validateContractSnapshot,
 } from './store_privacy_contract_check.mjs';
+
+test('literal host inventory excludes anchored raw regex while malformed URL literals remain visible', () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), 'parkinsum-host-literals-'));
+  try {
+    writeFileSync(path.join(directory, 'source.dart'), String.raw`
+      const pattern = r'^(?:Patient/[A-Za-z0-9.-]{1,64}|https://[^\s?#]+/Patient/[A-Za-z0-9.-]{1,64})$';
+      const doubleQuotedPattern = r"^https://[^\s]+$";
+      const url = 'https://api.example.test/data';
+      const rawUrl = r'https://raw.example.test/data';
+      const malformed = 'https://[broken';
+      const malformedRaw = r'https://[also-broken';
+    `);
+    assert.deepEqual(extractLiteralHostsFromDart(directory), [
+      'api.example.test',
+      'INVALID_URL_LITERAL:https://[also-broken',
+      'INVALID_URL_LITERAL:https://[broken',
+      'raw.example.test',
+    ]);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
 
 function fixture() {
   const contract = {
@@ -116,6 +143,186 @@ function fixture() {
 test('matching reviewed snapshot passes without pretending store approval', () => {
   const { contract, observed } = fixture();
   assert.deepEqual(validateContractSnapshot(contract, observed), []);
+});
+
+test('versioned runtime egress manifest is pinned, reviewed and time limited', () => {
+  const { contract, observed } = fixture();
+  const platformConfigurationSnapshot = {
+    schemaVersion: 1,
+    evidenceScope: 'repository_source_configuration_only',
+    web: { cspHeaders: [{ source: '**', sources: ["'self'"] }] },
+  };
+  contract.networkDestinations.runtimeEgressPolicyManifest = {
+    path: 'config/runtime_network_egress_policy.json',
+    policyVersion: '2026.09.24-v2',
+    status: 'application_layer_gate_partial',
+    sha256: 'f'.repeat(64),
+  };
+  observed.runtimeEgressPolicyManifest = {
+    schemaVersion: 1,
+    policyVersion: '2026.09.24-v2',
+    status: 'application_layer_gate_partial',
+    expiresAt: '2026-12-23T00:00:00Z',
+    rules: [{ id: 'public-source' }, { id: 'local-loopback' }],
+    platformConfigurationSnapshot,
+  };
+  observed.runtimeEgressPolicyManifestSha256 = 'f'.repeat(64);
+  observed.platformNetworkConfiguration = structuredClone(platformConfigurationSnapshot);
+
+  assert.deepEqual(
+    validateContractSnapshot(contract, observed, {
+      now: Date.parse('2026-09-24T00:00:00Z'),
+    }),
+    [],
+  );
+
+  observed.platformNetworkConfiguration.web.cspHeaders[0].sources.push('https://unknown.example');
+  const platformDriftCodes = validateContractSnapshot(contract, observed, {
+    now: Date.parse('2026-09-24T00:00:00Z'),
+  }).map((finding) => finding.code);
+  assert.deepEqual(platformDriftCodes, ['runtime_platform_configuration_drift']);
+  observed.platformNetworkConfiguration = structuredClone(platformConfigurationSnapshot);
+
+  observed.runtimeEgressPolicyManifest.expiresAt = '2026-09-23T00:00:00Z';
+  const expiredCodes = validateContractSnapshot(contract, observed, {
+    now: Date.parse('2026-09-24T00:00:00Z'),
+  }).map((finding) => finding.code);
+  assert.deepEqual(expiredCodes, ['runtime_egress_policy_manifest_expired']);
+
+  observed.runtimeEgressPolicyManifest.expiresAt = '2026-12-23T00:00:00Z';
+  observed.runtimeEgressPolicyManifest.rules.push({ id: 'public-source' });
+  const driftCodes = validateContractSnapshot(contract, observed, {
+    now: Date.parse('2026-09-24T00:00:00Z'),
+  }).map((finding) => finding.code);
+  assert.deepEqual(driftCodes, ['runtime_egress_policy_manifest_drift']);
+
+  observed.runtimeEgressPolicyManifest.rules.pop();
+  observed.runtimeEgressPolicyManifestSha256 = 'a'.repeat(64);
+  const digestCodes = validateContractSnapshot(contract, observed, {
+    now: Date.parse('2026-09-24T00:00:00Z'),
+  }).map((finding) => finding.code);
+  assert.deepEqual(digestCodes, ['runtime_egress_policy_manifest_drift']);
+});
+
+test('selected RxNorm concept properties have a separate consented data flow', () => {
+  const contract = JSON.parse(
+    readFileSync(new URL('../config/store_privacy_contract.json', import.meta.url), 'utf8'),
+  );
+  const manifestBytes = readFileSync(
+    new URL('../config/runtime_network_egress_policy.json', import.meta.url),
+  );
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  const flow = contract.dataFlows.find(
+    (candidate) => candidate.id === 'rxnorm_selected_concept_properties_lookup',
+  );
+  const dynamicClass =
+    contract.networkDestinations.dynamicClasses
+      .user_consented_rxnorm_concept_properties_lookup;
+
+  assert.equal(manifest.policyVersion, '2026.09.25-v6');
+  assert.equal(
+    contract.networkDestinations.runtimeEgressPolicyManifest.policyVersion,
+    manifest.policyVersion,
+  );
+  assert.equal(
+    contract.networkDestinations.runtimeEgressPolicyManifest.sha256,
+    createHash('sha256').update(manifestBytes).digest('hex'),
+  );
+  assert.deepEqual(flow.fields, [
+    'user_selected_rxnorm_concept_identifier',
+    'ordinary_network_metadata_outside_application_payload',
+  ]);
+  assert.equal(flow.thirdParty, true);
+  assert.deepEqual(dynamicClass.hostPatterns, ['rxnav.nlm.nih.gov']);
+  assert.deepEqual(dynamicClass.data, flow.fields);
+  assert.match(dynamicClass.purpose, /separate_user_opt_in/);
+});
+
+test('selected RxNorm display names have a separate FDA data flow and rule', () => {
+  const contract = JSON.parse(
+    readFileSync(new URL('../config/store_privacy_contract.json', import.meta.url), 'utf8'),
+  );
+  const manifestBytes = readFileSync(
+    new URL('../config/runtime_network_egress_policy.json', import.meta.url),
+  );
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  const flow = contract.dataFlows.find(
+    (candidate) => candidate.id === 'rxnorm_candidate_openfda_label_lookup',
+  );
+  const dynamicClass =
+    contract.networkDestinations.dynamicClasses
+      .user_consented_rxnorm_candidate_openfda_label_lookup;
+  const rule = manifest.rules.find(
+    (candidate) =>
+      candidate.id === 'openfda-rxnorm-candidate-label-user-lookup',
+  );
+
+  assert.deepEqual(flow.fields, [
+    'two_user_selected_rxnorm_candidate_display_names',
+    'ordinary_network_metadata_outside_application_payload',
+  ]);
+  assert.equal(flow.thirdParty, true);
+  assert.deepEqual(dynamicClass.hostPatterns, ['api.fda.gov']);
+  assert.deepEqual(dynamicClass.data, flow.fields);
+  assert.match(dynamicClass.purpose, /separate_user_opt_in/);
+  assert.equal(rule.purpose, 'user_initiated_openfda_rxnorm_candidate_label_lookup');
+  assert.deepEqual(rule.permittedDataClasses, [
+    'userSelectedRxNormCandidateDisplayName',
+  ]);
+  assert.deepEqual(rule.allowedQueryParameters, ['search', 'limit']);
+  assert.equal(rule.redirects, 'deny');
+  assert.equal(rule.maxRequestBodyBytes, 0);
+  assert.equal(manifest.policyVersion, '2026.09.25-v6');
+  assert.equal(
+    contract.networkDestinations.runtimeEgressPolicyManifest.sha256,
+    createHash('sha256').update(manifestBytes).digest('hex'),
+  );
+});
+
+test('selected RxNorm history status has a separate exact-path consented data flow', () => {
+  const contract = JSON.parse(
+    readFileSync(new URL('../config/store_privacy_contract.json', import.meta.url), 'utf8'),
+  );
+  const manifestBytes = readFileSync(
+    new URL('../config/runtime_network_egress_policy.json', import.meta.url),
+  );
+  const manifest = JSON.parse(manifestBytes.toString('utf8'));
+  const flow = contract.dataFlows.find(
+    (candidate) => candidate.id === 'rxnorm_selected_concept_history_lookup',
+  );
+  const dynamicClass =
+    contract.networkDestinations.dynamicClasses
+      .user_consented_rxnorm_concept_history_lookup;
+  const rule = manifest.rules.find(
+    (candidate) => candidate.id === 'rxnav-concept-history-user-lookup',
+  );
+
+  assert.equal(manifest.policyVersion, '2026.09.25-v6');
+  assert.equal(
+    contract.networkDestinations.runtimeEgressPolicyManifest.policyVersion,
+    manifest.policyVersion,
+  );
+  assert.equal(
+    contract.networkDestinations.runtimeEgressPolicyManifest.sha256,
+    createHash('sha256').update(manifestBytes).digest('hex'),
+  );
+  assert.deepEqual(flow.fields, [
+    'user_selected_rxnorm_concept_identifier',
+    'ordinary_network_metadata_outside_application_payload',
+  ]);
+  assert.equal(flow.thirdParty, true);
+  assert.deepEqual(dynamicClass.hostPatterns, ['rxnav.nlm.nih.gov']);
+  assert.deepEqual(dynamicClass.data, flow.fields);
+  assert.match(dynamicClass.purpose, /separate_user_opt_in/);
+  assert.deepEqual(rule.pathPattern, [
+    '/REST/rxcui/{numericRxCui}/historystatus.json',
+  ]);
+  assert.equal(rule.query, 'deny');
+  assert.equal(rule.purpose, 'user_initiated_rxnorm_concept_history_lookup');
+  assert.deepEqual(rule.permittedDataClasses, ['userSelectedRxCui']);
+  assert.equal(rule.redirects, 'deny');
+  assert.equal(rule.maxRequestBodyBytes, 0);
+  assert.equal(rule.maxResponseBodyBytes, 64 * 1024);
 });
 
 test('release mode fails closed until store owner and snapshots are approved', () => {

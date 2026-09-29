@@ -3,8 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:crypto/crypto.dart';
 import 'package:parkinsum_companion/core/services/data_service.dart';
 import 'package:parkinsum_companion/core/services/reminder_activation_store_io.dart';
@@ -34,39 +37,39 @@ void main() {
         ReminderNotificationPrivacyMode.minimal,
       );
       expect(restored.notificationLocaleCode, 'en');
+      expect(restored.notificationLocaleDecisionCode, 'en');
+      expect(restored.toJson()['schemaVersion'], 4);
     });
 
-    test(
-      'v2 rows migrate to minimal privacy and v3 persists an explicit mode',
-      () {
-        final v2 =
-            <String, dynamic>{..._reminder().toJson(), 'schemaVersion': 2}
-              ..remove('notificationPrivacyMode')
-              ..remove('notificationLocaleCode');
-        expect(
-          UserLoggingReminder.fromJson(v2).notificationPrivacyMode,
-          ReminderNotificationPrivacyMode.minimal,
-        );
-        expect(UserLoggingReminder.fromJson(v2).notificationLocaleCode, 'en');
+    test('v2 and v3 rows migrate into the explicit v4 locale decision', () {
+      final v2 = <String, dynamic>{..._reminder().toJson(), 'schemaVersion': 2}
+        ..remove('notificationPrivacyMode')
+        ..remove('notificationLocaleCode')
+        ..remove('notificationLocaleDecisionCode');
+      final migratedV2 = UserLoggingReminder.fromJson(v2);
+      expect(
+        migratedV2.notificationPrivacyMode,
+        ReminderNotificationPrivacyMode.minimal,
+      );
+      expect(migratedV2.notificationLocaleCode, 'en');
+      expect(migratedV2.notificationLocaleDecisionCode, 'en');
 
-        final generic = _reminder().copyWith(
-          notificationPrivacyMode: ReminderNotificationPrivacyMode.generic,
-          notificationLocaleCode: 'fr-CA',
-        );
-        final v3 = generic.toJson();
-        expect(generic.toJson()['schemaVersion'], 3);
-        expect(
-          UserLoggingReminder.fromJson(
-            generic.toJson(),
-          ).notificationPrivacyMode,
-          ReminderNotificationPrivacyMode.generic,
-        );
-        expect(
-          UserLoggingReminder.fromJson(v3).notificationLocaleCode,
-          'fr-CA',
-        );
-      },
-    );
+      final generic = _reminder().copyWith(
+        notificationPrivacyMode: ReminderNotificationPrivacyMode.generic,
+        notificationLocaleCode: 'fr-CA',
+        notificationLocaleDecisionCode: 'en',
+      );
+      final v3 = <String, dynamic>{...generic.toJson(), 'schemaVersion': 3}
+        ..remove('notificationLocaleDecisionCode');
+      expect(generic.toJson()['schemaVersion'], 4);
+      expect(
+        UserLoggingReminder.fromJson(v3).notificationPrivacyMode,
+        ReminderNotificationPrivacyMode.generic,
+      );
+      final migratedV3 = UserLoggingReminder.fromJson(v3);
+      expect(migratedV3.notificationLocaleCode, 'fr-CA');
+      expect(migratedV3.notificationLocaleDecisionCode, 'fr');
+    });
 
     test('rejects invalid time, days, label, and kind', () {
       final valid = _reminder().toJson();
@@ -110,7 +113,20 @@ void main() {
         throwsFormatException,
       );
       expect(
-        () => UserLoggingReminder.fromJson({...valid, 'schemaVersion': 4}),
+        () => UserLoggingReminder.fromJson(
+          {...valid}..remove('notificationLocaleDecisionCode'),
+        ),
+        throwsFormatException,
+      );
+      expect(
+        () => UserLoggingReminder.fromJson({
+          ...valid,
+          'notificationLocaleDecisionCode': '../private',
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => UserLoggingReminder.fromJson({...valid, 'schemaVersion': 5}),
         throwsFormatException,
       );
     });
@@ -142,18 +158,19 @@ void main() {
     });
 
     test(
-      'migrates the account-scoped v2 store to v3 with minimal privacy',
+      'migrates the account-scoped v2 store to v4 with locale decision',
       () async {
         final storage = _MemoryDataService();
         final repository = UserLoggingReminderRepository(storage: storage);
         const scope = 'migration-user';
         final digest = sha256.convert(utf8.encode(scope)).toString();
         final legacyKey = 'parkinsum.user_logging_reminders.v2.$digest';
-        final currentKey = 'parkinsum.user_logging_reminders.v3.$digest';
+        final currentKey = 'parkinsum.user_logging_reminders.v4.$digest';
         final legacyRow =
             <String, dynamic>{..._reminder().toJson(), 'schemaVersion': 2}
               ..remove('notificationPrivacyMode')
-              ..remove('notificationLocaleCode');
+              ..remove('notificationLocaleCode')
+              ..remove('notificationLocaleDecisionCode');
         storage.values[legacyKey] = jsonEncode([legacyRow]);
 
         final restored = await repository.load(scope);
@@ -171,6 +188,120 @@ void main() {
           containsPair('notificationPrivacyMode', 'minimal'),
         );
         expect(migrated.single, containsPair('notificationLocaleCode', 'en'));
+        expect(
+          migrated.single,
+          containsPair('notificationLocaleDecisionCode', 'en'),
+        );
+      },
+    );
+
+    test('prefers and migrates the newest account-scoped v3 store', () async {
+      final storage = _MemoryDataService();
+      final repository = UserLoggingReminderRepository(storage: storage);
+      const scope = 'migration-v3-user';
+      final digest = sha256.convert(utf8.encode(scope)).toString();
+      final v3Key = 'parkinsum.user_logging_reminders.v3.$digest';
+      final v2Key = 'parkinsum.user_logging_reminders.v2.$digest';
+      final currentKey = 'parkinsum.user_logging_reminders.v4.$digest';
+      final v3Row = <String, dynamic>{
+        ..._reminder(
+          label: 'Newest',
+        ).copyWith(notificationLocaleCode: 'fr-CA').toJson(),
+        'schemaVersion': 3,
+      }..remove('notificationLocaleDecisionCode');
+      final v2Row =
+          <String, dynamic>{
+              ..._reminder(label: 'Older').toJson(),
+              'schemaVersion': 2,
+            }
+            ..remove('notificationPrivacyMode')
+            ..remove('notificationLocaleCode')
+            ..remove('notificationLocaleDecisionCode');
+      storage.values[v3Key] = jsonEncode([v3Row]);
+      storage.values[v2Key] = jsonEncode([v2Row]);
+
+      final restored = await repository.load(scope);
+
+      expect(restored.single.label, 'Newest');
+      expect(restored.single.notificationLocaleCode, 'fr-CA');
+      expect(restored.single.notificationLocaleDecisionCode, 'fr');
+      expect(storage.values, isNot(contains(v3Key)));
+      expect(storage.values, contains(v2Key));
+      expect(storage.values[currentKey], isNotNull);
+    });
+
+    test(
+      'locale reconciliation can retain copy or update copy with token rotation',
+      () async {
+        final repository = UserLoggingReminderRepository(
+          storage: _MemoryDataService(),
+        );
+        final controller = UserLoggingReminderController(
+          userScope: 'locale-user',
+          repository: repository,
+          gateway: _FakeGateway(supportsScheduledDelivery: false),
+        );
+        expect(await controller.save(_reminder()), isTrue);
+        final originalToken = controller.reminders.single.activationToken;
+
+        expect(controller.notificationLocaleDecisionRequired('fr-CA'), isTrue);
+        expect(
+          await controller.reconcileNotificationLocale(
+            appLocaleName: 'fr-CA',
+            updateCopy: false,
+          ),
+          isTrue,
+        );
+        final retained = controller.reminders.single;
+        expect(retained.notificationLocaleCode, 'en');
+        expect(retained.notificationLocaleDecisionCode, 'fr');
+        expect(retained.activationToken, originalToken);
+        expect(controller.notificationLocaleDecisionRequired('fr-FR'), isFalse);
+
+        expect(controller.notificationLocaleDecisionRequired('ja-JP'), isTrue);
+        expect(
+          await controller.reconcileNotificationLocale(
+            appLocaleName: 'ja-JP',
+            updateCopy: true,
+          ),
+          isTrue,
+        );
+        final updated = controller.reminders.single;
+        expect(updated.notificationLocaleCode, 'ja');
+        expect(updated.notificationLocaleDecisionCode, 'ja');
+        expect(updated.activationToken, isNot(originalToken));
+        expect(controller.notificationLocaleDecisionRequired('ja-JP'), isFalse);
+        expect(
+          (await repository.load('locale-user')).single.toJson(),
+          updated.toJson(),
+        );
+      },
+    );
+
+    test(
+      'failed locale reconciliation preserves the prior durable plan',
+      () async {
+        final storage = _FailingMemoryDataService();
+        final repository = UserLoggingReminderRepository(storage: storage);
+        final controller = UserLoggingReminderController(
+          userScope: 'locale-failure-user',
+          repository: repository,
+          gateway: _FakeGateway(supportsScheduledDelivery: false),
+        );
+        expect(await controller.save(_reminder()), isTrue);
+        final previous = controller.reminders.single;
+        storage.failWrites = true;
+
+        expect(
+          await controller.reconcileNotificationLocale(
+            appLocaleName: 'fr-CA',
+            updateCopy: true,
+          ),
+          isFalse,
+        );
+
+        expect(controller.error, 'save_failed');
+        expect(controller.reminders.single.toJson(), previous.toJson());
       },
     );
 
@@ -271,6 +402,10 @@ void main() {
       expect(controller.reminders, isEmpty);
       expect(gateway.synchronizationCount, 2);
       expect(gateway.synchronized, isEmpty);
+      expect(
+        controller.deliveryReadiness.scheduleRequest,
+        ReminderScheduleRequestReadiness.rolledBack,
+      );
     });
 
     test(
@@ -362,6 +497,10 @@ void main() {
       expect(
         controller.scheduleSystemState,
         ReminderScheduleSystemState.recoveryRequired,
+      );
+      expect(
+        controller.deliveryReadiness.scheduleRequest,
+        ReminderScheduleRequestReadiness.recoveryRequired,
       );
     });
 
@@ -644,6 +783,101 @@ void main() {
         );
       }
     });
+  });
+
+  group('LocalReminderNotificationGateway reconciliation', () {
+    test(
+      'skips identical verified plans and reinstalls after zone or registry drift',
+      () async {
+        addTearDown(() => debugDefaultTargetPlatformOverride = null);
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        AndroidFlutterLocalNotificationsPlugin.registerWith();
+
+        const notificationsChannel = MethodChannel(
+          'dexterous.com/flutter/local_notifications',
+        );
+        const timezoneChannel = MethodChannel('flutter_timezone');
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        final pending = <int, Map<String, Object?>>{};
+        var timezoneIdentifier = 'America/Toronto';
+        var scheduleCalls = 0;
+        var cancellationCalls = 0;
+
+        messenger.setMockMethodCallHandler(notificationsChannel, (call) async {
+          switch (call.method) {
+            case 'initialize':
+              return true;
+            case 'pendingNotificationRequests':
+              return pending.values.toList(growable: false);
+            case 'cancel':
+              cancellationCalls += 1;
+              final arguments = call.arguments;
+              final id = arguments is Map
+                  ? arguments['id']! as int
+                  : arguments as int;
+              pending.remove(id);
+              return null;
+            case 'zonedSchedule':
+              scheduleCalls += 1;
+              final request = Map<String, Object?>.from(call.arguments as Map);
+              pending[request['id']! as int] = <String, Object?>{
+                'id': request['id'],
+                'title': request['title'],
+                'body': request['body'],
+                'payload': request['payload'],
+              };
+              return null;
+            default:
+              return null;
+          }
+        });
+        messenger.setMockMethodCallHandler(timezoneChannel, (call) async {
+          if (call.method == 'getLocalTimezone') return timezoneIdentifier;
+          return null;
+        });
+        addTearDown(() {
+          messenger.setMockMethodCallHandler(notificationsChannel, null);
+          messenger.setMockMethodCallHandler(timezoneChannel, null);
+        });
+
+        final gateway = LocalReminderNotificationGateway();
+        final reminder = _reminder(id: 'idempotent');
+
+        Future<void> synchronize() async {
+          final lease = gateway.beginMutationLease(userScope: 'user-a');
+          final result = await gateway.synchronizeWithLease(
+            [reminder],
+            userScope: 'user-a',
+            lease: lease,
+          );
+          expect(result.status, ReminderNotificationMutationStatus.applied);
+        }
+
+        await synchronize();
+        expect(scheduleCalls, 3);
+        expect(cancellationCalls, 0);
+
+        await synchronize();
+        expect(scheduleCalls, 3);
+        expect(cancellationCalls, 0);
+
+        timezoneIdentifier = 'America/Vancouver';
+        await synchronize();
+        expect(scheduleCalls, 6);
+        expect(cancellationCalls, 3);
+
+        pending.clear();
+        await synchronize();
+        expect(scheduleCalls, 9);
+        expect(cancellationCalls, 3);
+
+        timezoneIdentifier = 'Not/A_Real_Zone';
+        await expectLater(synchronize(), throwsA(anything));
+        expect(scheduleCalls, 9);
+        expect(cancellationCalls, 3);
+      },
+    );
   });
 
   group('ReminderNotificationActivationInbox', () {
@@ -930,8 +1164,15 @@ void main() {
       );
       final payload =
           ReminderNotificationResponseCoordinator.payloadForReminder(reminder);
-      expect(payload, startsWith('parkinsum-reminder:v2:'));
-      expect(payload, endsWith(':reminder_123'));
+      expect(payload, startsWith('parkinsum-reminder:v3:'));
+      expect(
+        payload,
+        matches(
+          RegExp(
+            r'^parkinsum-reminder:v3:[a-f0-9]{32}:reminder_123:[a-f0-9]{64}$',
+          ),
+        ),
+      );
       expect(payload, isNot(contains('user@example.com')));
       expect(payload, isNot(contains('Private reminder label')));
       expect(
@@ -978,6 +1219,64 @@ void main() {
         ReminderResponseResolutionStatus.unavailable,
       );
     });
+
+    test(
+      'v3 binds exact presentation while captured v2 remains compatible',
+      () async {
+        final storage = _MemoryDataService();
+        final repository = UserLoggingReminderRepository(storage: storage);
+        final reminder = _reminder(id: 'presentation-bound');
+        await repository.save('user', [reminder]);
+        final coordinator = ReminderNotificationResponseCoordinator(
+          source: _FakeResponseSource(),
+          repository: repository,
+          activationInbox: _memoryActivationInbox(),
+        );
+
+        final currentPayload =
+            ReminderNotificationResponseCoordinator.payloadForReminder(
+              reminder,
+            );
+        expect(
+          (await coordinator.resolve(
+            event: ReminderNotificationResponseEvent(
+              payload: currentPayload,
+              origin: ReminderNotificationResponseOrigin.foreground,
+            ),
+            userScope: 'user',
+          )).status,
+          ReminderResponseResolutionStatus.openIntakeDraft,
+        );
+
+        final staleDigestPayload = currentPayload.replaceFirst(
+          RegExp(r'[a-f0-9]{64}$'),
+          List.filled(64, '0').join(),
+        );
+        expect(
+          (await coordinator.resolve(
+            event: ReminderNotificationResponseEvent(
+              payload: staleDigestPayload,
+              origin: ReminderNotificationResponseOrigin.foreground,
+            ),
+            userScope: 'user',
+          )).status,
+          ReminderResponseResolutionStatus.unavailable,
+        );
+
+        final legacyPayload =
+            'parkinsum-reminder:v2:${reminder.activationToken}:${reminder.id}';
+        expect(
+          (await coordinator.resolve(
+            event: ReminderNotificationResponseEvent(
+              payload: legacyPayload,
+              origin: ReminderNotificationResponseOrigin.foreground,
+            ),
+            userScope: 'user',
+          )).status,
+          ReminderResponseResolutionStatus.openIntakeDraft,
+        );
+      },
+    );
 
     test(
       'malformed, deleted, disabled, and rapid replay fail closed',
@@ -1091,7 +1390,8 @@ void main() {
       controller.reminders.single.notificationPrivacyMode,
       ReminderNotificationPrivacyMode.minimal,
     );
-    expect(controller.reminders.single.notificationLocaleCode, 'en-US');
+    expect(controller.reminders.single.notificationLocaleCode, 'en');
+    expect(controller.reminders.single.notificationLocaleDecisionCode, 'en');
 
     final originalId = controller.reminders.single.id;
     expect(originalId, matches(RegExp(r'^reminder_[a-f0-9]{32}$')));
@@ -1174,6 +1474,51 @@ void main() {
 
     expect(gateway.synchronizationCount, 2);
     expect(controller.error, isNull);
+    expectNoWidgetErrors();
+  });
+
+  testWidgets('reminder center exposes and applies the locale-copy decision', (
+    tester,
+  ) async {
+    final repository = UserLoggingReminderRepository(
+      storage: _MemoryDataService(),
+    );
+    await repository.save('locale-ui-user', [_reminder()]);
+    final controller = UserLoggingReminderController(
+      userScope: 'locale-ui-user',
+      repository: repository,
+      gateway: _FakeGateway(supportsScheduledDelivery: false),
+    );
+    await pumpFeaturePage(
+      tester,
+      MaterialApp(
+        locale: const Locale('fr', 'CA'),
+        supportedLocales: const [Locale('fr', 'CA')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        home: ReminderCenterPage(controller: controller),
+      ),
+      settle: true,
+    );
+
+    expect(
+      find.byKey(const ValueKey('reminder-locale-reconciliation')),
+      findsOneWidget,
+    );
+    final previousToken = controller.reminders.single.activationToken;
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('reminder-locale-update')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('reminder-locale-update')));
+    await tester.pumpAndSettle();
+
+    expect(controller.reminders.single.notificationLocaleCode, 'fr');
+    expect(controller.reminders.single.notificationLocaleDecisionCode, 'fr');
+    expect(controller.reminders.single.activationToken, isNot(previousToken));
+    expect(
+      find.byKey(const ValueKey('reminder-locale-reconciliation')),
+      findsNothing,
+    );
     expectNoWidgetErrors();
   });
 

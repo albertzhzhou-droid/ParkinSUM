@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
+import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
@@ -9,6 +10,7 @@ import 'package:parkinsum_companion/domain/entities/next_meal_recommendation_mod
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/usecases/cdss_catalog_projection_service.dart';
+import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 import 'package:parkinsum_companion/domain/usecases/get_food_recommendations_usecase.dart';
 import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orchestrator.dart';
 
@@ -60,11 +62,33 @@ void main() {
 
   NextMealRecommendationRequest requestWithWindow() {
     final now = DateTime.utc(2026, 1, 1, 8);
+    final profile = UserProfile.defaults().copyWith(
+      registrationRegion: 'US',
+      contentJurisdictionOverride: const ['US'],
+    );
+    final intakeDraft = Intake(
+      id: 'intake_1',
+      drugId: 'drug_levodopa',
+      takenAt: now.subtract(const Duration(minutes: 30)),
+      dosageNote: '100 mg',
+    );
+    final confirmedIntake = AdministrationDoseConfirmationCoordinator()
+        .prepare(
+          draft: intakeDraft,
+          current: null,
+          expectedRecordRevisionDigest:
+              administrationDoseConfirmationAbsentRevisionDigest,
+          ownerScope: profile.patientId,
+          operationId: 'event_op_${intakeDraft.id}',
+          confirmationRequested: true,
+          assertionSource: AdministrationDoseAssertionSource.typed,
+          confirmationAction: 'test.explicit_confirmation',
+          uiContractVersion: 'test-dose-confirmation:1',
+          confirmedAt: DateTime.utc(2026, 1, 1, 7, 59),
+        )
+        .intake!;
     return NextMealRecommendationRequest(
-      userProfile: UserProfile.defaults().copyWith(
-        registrationRegion: 'US',
-        contentJurisdictionOverride: const ['US'],
-      ),
+      userProfile: profile,
       history: [
         Meal(
           id: 'dose_time_history',
@@ -91,14 +115,7 @@ void main() {
           jurisdiction: 'US',
         ),
       ],
-      intakes: [
-        Intake(
-          id: 'intake_1',
-          drugId: 'drug_levodopa',
-          takenAt: now.add(const Duration(minutes: 30)),
-          dosageNote: '100 mg',
-        ),
-      ],
+      intakes: [confirmedIntake],
       now: now,
       userConsentedToAi: false,
       userDefinedWindow: UserDefinedMealWindow(
@@ -173,6 +190,16 @@ class _FakeProjectionService extends CdssCatalogProjectionService {
 
   @override
   Future<List<FoodItem>> projectFoods() async => _foods;
+
+  @override
+  Future<CdssFoodProjectionResult> projectFoodsWithAudit() async =>
+      CdssFoodProjectionResult(
+        foods: _foods,
+        queryAudit: const <String, Object?>{
+          'schema_id': 'test.synthetic-projection-query-audit/1',
+          'capture_status': 'synthetic_fixture',
+        },
+      );
 
   @override
   Future<ProjectedDrugDetail?> projectDrugDetail(DrugDefinition drug) async =>

@@ -204,6 +204,7 @@ void main() {
     final ids = registry.records.keys;
     expect(ids, contains('src.usda.fdc.api'));
     expect(ids, contains('src.dailymed.spl.webservices.v2'));
+    expect(ids, contains('src.openfda.drug.label'));
     expect(ids, contains('src.healthcanada.dpd'));
     expect(ids, contains('src.ema.epi.fhir'));
     expect(ids, contains('src.pmda.package_insert'));
@@ -211,8 +212,48 @@ void main() {
     expect(ids, contains('src.nhs.dmd.trud'));
     expect(ids, contains('src.ciqual'));
     expect(ids, contains('src.chinacdc.food'));
+    expect(ids, contains('src.nlm.errata-retraction-policy'));
+    expect(ids, contains('src.crossref.crossmark'));
     expect(ids, contains('src.internal.prototype.heuristic'));
   });
+
+  test(
+    'OpenFDA label lookup stays opt-in, read-only, and non-authoritative',
+    () {
+      final record = _loadRegistry().records['src.openfda.drug.label']!;
+      expect(record.accessMethod, 'open_rest_api_user_initiated');
+      expect(
+        record.implementationStatus,
+        'implemented_user_initiated_live_lookup',
+      );
+      expect(record.allowedForProduction, isFalse);
+      expect(record.allowedForPublicDemo, isFalse);
+      expect(record.canSupportMechanismEvidenceAlone, isFalse);
+      expect(record.canSupportIdentityOrCoding, isFalse);
+      expect(record.canSupportSourceQualityScoring, isFalse);
+      expect(
+        record.knownLimitations.join(' '),
+        contains('explicit in-app confirmation'),
+      );
+    },
+  );
+
+  test(
+    'evidence-status services remain documentation-only governance inputs',
+    () {
+      final registry = _loadRegistry();
+      for (final id in const [
+        'src.nlm.errata-retraction-policy',
+        'src.crossref.crossmark',
+      ]) {
+        final source = registry.records[id]!;
+        expect(source.implementationStatus, 'documentation_only', reason: id);
+        expect(source.allowedForProduction, isFalse, reason: id);
+        expect(source.canSupportMechanismEvidenceAlone, isFalse, reason: id);
+        expect(source.canSupportSourceQualityScoring, isFalse, reason: id);
+      }
+    },
+  );
 
   test('structural and PK research sources stay documentation-only', () {
     final registry = _loadRegistry();
@@ -242,6 +283,7 @@ void main() {
     for (final id in [
       'src.ema.pbpk.reporting.guideline',
       'src.fda.cms.credibility.guidance',
+      'src.fda.pbpk.guidance',
     ]) {
       final source = registry.records[id];
       expect(source, isNotNull, reason: id);

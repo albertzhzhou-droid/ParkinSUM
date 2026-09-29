@@ -43,7 +43,7 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
         // Carry energy only when the source provides it (never fabricated).
         // Portion grams are not captured by the local catalog → left null so
         // the normalizer records them as missing rather than inventing values.
-        calories: item.energyKcal,
+        calories: item.isNutrientMissing('energyKcal') ? null : item.energyKcal,
         portionGrams: null,
         sourceDocId: item.sourceSystem,
         proteinSource: proteinSource,
@@ -73,16 +73,37 @@ FoodComponent mealItemToFoodComponent(
       ? MealPhysicalForm.unknown
       : textureClassToPhysicalForm(catalogMatch.textureClass);
 
-  // Energy only when the catalog provides per-100g energy; scale to serving.
-  final calories = (catalogMatch?.energyKcal != null)
-      ? catalogMatch!.energyKcal! * (portionGrams / 100.0)
-      : null;
+  // Energy only when the catalog explicitly provides a finite, non-negative
+  // per-100g value and the logged mass is valid. A stale numeric field cannot
+  // override the source's missing marker, and overflow remains missing.
+  double? scaleEnergy() {
+    final match = catalogMatch;
+    final source = match?.energyKcal;
+    if (match == null ||
+        match.isNutrientMissing('energyKcal') ||
+        source == null ||
+        !source.isFinite ||
+        source < 0 ||
+        !portionGrams.isFinite ||
+        portionGrams < 0) {
+      return null;
+    }
+    final scaled = source * (portionGrams / 100.0);
+    return scaled.isFinite ? scaled : null;
+  }
 
-  // Actual amino-acid profile (per_100g) scaled to the logged serving so
-  // absolute competing LNAA grams reflect what was eaten. Null → proxy.
-  final aminoAcidProfile = catalogMatch?.aminoAcidProfile?.scaledToGrams(
-    portionGrams,
-  );
+  final calories = scaleEnergy();
+
+  // Actual amino-acid profile may be projected only from an explicit per-100g
+  // basis because MealItem quantityFactor is itself defined against 100 g.
+  // A source `per_serving` profile has no proven relationship to the user's
+  // logged quantity here and must not be relabelled as this serving. Invalid
+  // portions and invalid profile values also fail closed. A true zero-gram
+  // serving scales present fields to true zero rather than retaining 100 g.
+  final sourceAminoAcidProfile = catalogMatch?.aminoAcidProfile;
+  final aminoAcidProfile = sourceAminoAcidProfile?.basis == 'per_100g'
+      ? sourceAminoAcidProfile?.scaledToGrams(portionGrams)
+      : null;
 
   final proteinSource = inferProteinSourceFromNameAndCategory(
     name: item.foodName,

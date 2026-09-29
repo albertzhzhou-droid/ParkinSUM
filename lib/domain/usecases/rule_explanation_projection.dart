@@ -35,6 +35,17 @@ const Map<String, String> kRuleTraceDecisionLabels = <String, String>{
   'not_matched': 'no modeled interaction',
   'suppressed': 'superseded by a more specific rule',
   'not_applicable_jurisdiction': 'rule not in scope for this jurisdiction',
+  'unknown': 'rule outcome unknown; no conclusion drawn',
+  'missing_input': 'required input missing; no conclusion drawn',
+  'unsupported_input': 'input not supported; no conclusion drawn',
+  'invalid_context': 'invalid context; no rule outcome asserted',
+};
+
+const Set<String> _nonConclusiveTraceStates = <String>{
+  'unknown',
+  'missing_input',
+  'unsupported_input',
+  'invalid_context',
 };
 
 /// Projects the engine's audit output into the documented [RuleExplanation]
@@ -72,6 +83,21 @@ RuleExplanation _projectRow(
   final sourceRefs = _stringList(row['source_refs']);
   final evidenceLevel = _string(row['evidence_level']);
   final jurisdictionMatched = row['jurisdiction_matched'] == true;
+  if (!kRuleTraceDecisionLabels.containsKey(traceDecision)) {
+    throw ArgumentError.value(
+      traceDecision,
+      'traceDecision',
+      'is not in the rule-trace vocabulary',
+    );
+  }
+  if (traceDecision == 'missing_input' && missingFields.isEmpty) {
+    throw ArgumentError.value(
+      traceDecision,
+      'traceDecision',
+      'missing_input requires at least one missing field',
+    );
+  }
+  final resultState = _resultState(traceDecision, missingFields);
 
   return RuleExplanation(
     ruleId: _string(row['rule_id']),
@@ -91,6 +117,7 @@ RuleExplanation _projectRow(
     ),
     limitationText: _limitationText(
       traceDecision: traceDecision,
+      resultState: resultState,
       missingFields: missingFields,
     ),
     missingOrUncertainInputs: missingFields,
@@ -100,13 +127,13 @@ RuleExplanation _projectRow(
         ? MedicationExplanationOutputType.educationalCaution
         : MedicationExplanationOutputType.educationalInfo,
     triggered: triggered,
-    userFacingDecision:
-        kRuleTraceDecisionLabels[traceDecision] ?? 'no modeled interaction',
+    userFacingDecision: kRuleTraceDecisionLabels[resultState]!,
     confidenceNote: _confidenceNote(
       evidenceLevel: evidenceLevel,
       missingFields: missingFields,
       jurisdictionMatched: jurisdictionMatched,
       needsHumanReview: entry?.needsHumanReview ?? false,
+      resultState: resultState,
     ),
     // Ties the displayed wording back to its origin. The rule engine is the
     // authority; a Local-AI polish pass would record itself here instead.
@@ -114,6 +141,16 @@ RuleExplanation _projectRow(
         ? 'rule_engine:${entry.decision.wireValue}'
         : 'rule_engine:not_shown',
   );
+}
+
+/// A trace that did not match while required values were unavailable is
+/// incomplete, not a defensible negative result. Keep the raw trace decision
+/// in the source trace and use this conservative interpretation for display.
+String _resultState(String traceDecision, List<String> missingFields) {
+  if (traceDecision == 'not_matched' && missingFields.isNotEmpty) {
+    return 'unknown';
+  }
+  return traceDecision;
 }
 
 /// Maps the rule registry's `evidence_level` vocabulary onto the documented
@@ -158,14 +195,17 @@ String _provenanceSummary({
 
 String _limitationText({
   required String traceDecision,
+  required String resultState,
   required List<String> missingFields,
 }) {
   final buffer = StringBuffer();
-  switch (traceDecision) {
+  switch (resultState) {
     case 'matched':
       buffer.write(
         'This is an educational prototype output from a deterministic rule. ',
       );
+    case 'not_matched':
+      buffer.write('This rule did not match the synthetic demo inputs. ');
     case 'suppressed':
       buffer.write(
         'A more specific rule covered the same target, so this rule did not '
@@ -176,8 +216,30 @@ String _limitationText({
         'This rule is scoped to jurisdictions outside the current chain and '
         'was not evaluated for an outcome. ',
       );
+    case 'unknown':
+      buffer.write(
+        'The available trace does not establish whether this rule matched. '
+        'Do not interpret this as a negative result. ',
+      );
+    case 'missing_input':
+      buffer.write(
+        'A required input was missing, so this rule has no conclusive result. ',
+      );
+    case 'unsupported_input':
+      buffer.write(
+        'An input is outside this rule engine\'s supported scope, so no '
+        'conclusion is asserted. ',
+      );
+    case 'invalid_context':
+      buffer.write(
+        'The input context was invalid, so no rule outcome was evaluated. ',
+      );
     default:
-      buffer.write('This rule did not match the synthetic demo inputs. ');
+      throw ArgumentError.value(
+        traceDecision,
+        'traceDecision',
+        'is not in the rule-trace vocabulary',
+      );
   }
   if (missingFields.isNotEmpty) {
     buffer.write(
@@ -194,14 +256,20 @@ String _confidenceNote({
   required List<String> missingFields,
   required bool jurisdictionMatched,
   required bool needsHumanReview,
+  required String resultState,
 }) {
   final qualifiers = <String>[
     if (evidenceLevel.isNotEmpty) 'evidence=$evidenceLevel',
     if (!jurisdictionMatched) 'jurisdiction=out_of_scope',
     if (missingFields.isNotEmpty) 'missing_inputs=${missingFields.length}',
+    if (_nonConclusiveTraceStates.contains(resultState))
+      'result_state=$resultState',
     if (needsHumanReview) 'flagged_for_human_review',
   ];
-  final band = missingFields.isNotEmpty || !jurisdictionMatched
+  final band =
+      missingFields.isNotEmpty ||
+          !jurisdictionMatched ||
+          _nonConclusiveTraceStates.contains(resultState)
       ? 'low'
       : (evidenceLevel == 'official_label' ? 'moderate' : 'low');
   final detail = qualifiers.isEmpty ? 'no qualifiers' : qualifiers.join('; ');

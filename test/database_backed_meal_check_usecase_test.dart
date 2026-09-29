@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
 import 'package:parkinsum_companion/core/analysis/food_repository.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
+import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
@@ -11,18 +12,20 @@ import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/entities/cdss_records.dart';
 import 'package:parkinsum_companion/domain/entities/amino_acid_profile.dart';
 import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
-import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_medication_applicability.dart';
 import 'package:parkinsum_companion/domain/entities/rule_registry_models.dart';
 import 'package:parkinsum_companion/domain/entities/runtime_context.dart';
+import 'package:parkinsum_companion/domain/usecases/catalog_food_to_candidate.dart';
 import 'package:parkinsum_companion/domain/usecases/clinical_decision_support_service.dart';
 import 'package:parkinsum_companion/domain/usecases/database_backed_meal_check_usecase.dart';
 import 'package:parkinsum_companion/domain/usecases/fact_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/imported_label_rule_provider.dart';
-import 'package:parkinsum_companion/domain/usecases/mechanistic_conflict_engine.dart';
+import 'package:parkinsum_companion/domain/usecases/meal_composition_normalizer.dart';
 import 'package:parkinsum_companion/domain/usecases/rule_registry_compiler.dart';
 import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/variant_resolver.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
+import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 
 class QueryBackedCdssDatabase implements CdssDatabase {
   QueryBackedCdssDatabase(this.tables);
@@ -126,24 +129,21 @@ class QueryBackedCdssDatabase implements CdssDatabase {
       tables[table] ?? const <Map<String, Object?>>[];
 }
 
-class RecordingMechanisticConflictEngine extends MechanisticConflictEngine {
-  MealComposition? composition;
-  TimeAxisConflictContext? context;
+class RecordingRuntimeRuleEngine extends RuntimeRuleEngine {
+  final List<UnifiedRuntimeContext> contexts = <UnifiedRuntimeContext>[];
 
   @override
-  MechanisticConflictResult evaluate({
-    required TimeAxisConflictContext context,
-    required Map<String, MealComposition> mealCompositionsById,
-    String resultId = 'mechanistic_result',
-    String? preferredMealId,
+  List<RuleEvaluationCandidate> evaluateCandidates({
+    required UnifiedRuntimeContext context,
+    required List<RuleRegistryEntry> rules,
+    List<Map<String, Object?>> regionJurisdictionRows =
+        const <Map<String, Object?>>[],
   }) {
-    this.context = context;
-    composition = mealCompositionsById.values.single;
-    return super.evaluate(
+    contexts.add(context);
+    return super.evaluateCandidates(
       context: context,
-      mealCompositionsById: mealCompositionsById,
-      resultId: resultId,
-      preferredMealId: preferredMealId,
+      rules: rules,
+      regionJurisdictionRows: regionJurisdictionRows,
     );
   }
 }
@@ -1244,48 +1244,71 @@ void main() {
             ),
           ),
         ]);
-      final engine = RecordingMechanisticConflictEngine();
       final useCase = DatabaseBackedMealCheckUseCase(
         variantResolver: VariantResolver(database: db),
         clinicalDecisionSupportService: service,
         compiledRules: const [],
         foodRepository: foodRepository,
-        mechanisticEngine: engine,
       );
       final mealTime = DateTime.utc(2026, 1, 1, 8, 30);
+      final profile = UserProfile.defaults();
+      final confirmedIntake = AdministrationDoseConfirmationCoordinator()
+          .prepare(
+            draft: Intake(
+              id: 'intake_componentized',
+              drugId: 'drug_levodopa_carbidopa',
+              takenAt: DateTime.utc(2026, 1, 1, 8),
+              dosageNote: '100 mg',
+              route: 'oral',
+              dosageForm: 'tablet',
+              releaseType: 'immediate',
+            ),
+            current: null,
+            expectedRecordRevisionDigest:
+                administrationDoseConfirmationAbsentRevisionDigest,
+            ownerScope: profile.patientId,
+            operationId: 'componentized_trace_confirmation',
+            confirmationRequested: true,
+            assertionSource: AdministrationDoseAssertionSource.typed,
+            confirmationAction: 'test.explicit_confirmation',
+            uiContractVersion: 'test-dose-confirmation:1',
+            confirmedAt: DateTime.utc(2026, 1, 1, 8, 1),
+          )
+          .intake!;
 
+      final meal = Meal(
+        id: 'meal_componentized',
+        eatenAt: mealTime,
+        title: 'Mixed history meal',
+        items: [
+          MealItem(
+            foodId: 'food_enriched',
+            foodName: 'Enriched tofu',
+            foodCategory: FoodCategory.protein,
+            quantityFactor: 1.5,
+            foodTags: const [],
+            proteinPer100g: 10,
+            carbsPer100g: 3,
+            fatPer100g: 4,
+            fiberPer100g: 2,
+            sodiumPer100g: 15,
+          ),
+          MealItem(
+            foodId: 'food_uncatalogued',
+            foodName: 'Uncatalogued side',
+            foodCategory: FoodCategory.other,
+            quantityFactor: 0.5,
+            foodTags: const [],
+            proteinPer100g: 2,
+            carbsPer100g: 8,
+            fatPer100g: 1,
+            fiberPer100g: 1,
+            sodiumPer100g: 10,
+          ),
+        ],
+      );
       final result = await useCase(
-        meal: Meal(
-          id: 'meal_componentized',
-          eatenAt: mealTime,
-          title: 'Mixed history meal',
-          items: [
-            MealItem(
-              foodId: 'food_enriched',
-              foodName: 'Enriched tofu',
-              foodCategory: FoodCategory.protein,
-              quantityFactor: 1.5,
-              foodTags: const [],
-              proteinPer100g: 10,
-              carbsPer100g: 3,
-              fatPer100g: 4,
-              fiberPer100g: 2,
-              sodiumPer100g: 15,
-            ),
-            MealItem(
-              foodId: 'food_uncatalogued',
-              foodName: 'Uncatalogued side',
-              foodCategory: FoodCategory.other,
-              quantityFactor: 0.5,
-              foodTags: const [],
-              proteinPer100g: 2,
-              carbsPer100g: 8,
-              fatPer100g: 1,
-              fiberPer100g: 1,
-              sodiumPer100g: 10,
-            ),
-          ],
-        ),
+        meal: meal,
         activeDrugs: [
           DrugDefinition(
             id: 'drug_levodopa_carbidopa',
@@ -1295,21 +1318,25 @@ void main() {
             notes: '',
           ),
         ],
-        intakes: [
-          Intake(
-            id: 'intake_componentized',
-            drugId: 'drug_levodopa_carbidopa',
-            takenAt: DateTime.utc(2026, 1, 1, 8),
-            dosageNote: '100 mg',
-          ),
-        ],
-        userProfile: UserProfile.defaults(),
+        intakes: [confirmedIntake],
+        userProfile: profile,
       );
 
-      final components = engine.composition!.foodComponents;
+      final components = <FoodComponent>[
+        for (var index = 0; index < meal.items.length; index += 1)
+          mealItemToFoodComponent(
+            meal.items[index],
+            componentId: 'meal_${meal.id}_${index}_${meal.items[index].foodId}',
+            catalogMatch: foodRepository.getById(meal.items[index].foodId),
+          ),
+      ];
+      final composition = MealCompositionNormalizer().normalize(
+        mealId: 'comp_${meal.id}',
+        components: components,
+      );
       expect(result.mechanisticTraceJson, isNotNull);
       expect(
-        engine.context!.medicationEvents.single.context.activeIngredients,
+        CanonicalMedicationIngredientTokenizer.tokenize(['carbidopa/levodopa']),
         const ['carbidopa', 'levodopa'],
         reason:
             'The database mechanistic bridge must split exact generic-name '
@@ -1325,19 +1352,153 @@ void main() {
       expect(components.last.physicalForm, MealPhysicalForm.unknown);
       expect(components.last.aminoAcidProfile, isNull);
       expect(
-        engine.composition!.missingFields,
+        composition.missingFields,
         contains('meal_physical_form'),
         reason:
             'The catalog proves tofu is solid, but provides no physical form '
             'for the uncatalogued component.',
       );
       expect(
-        engine.context!.mealEvents.single.physicalForm,
+        composition.mealPhysicalForm,
         MealPhysicalForm.unknown,
         reason:
             'A mixed history meal cannot be declared solid while any '
             'component form remains unknown.',
       );
+    },
+  );
+
+  test(
+    'database meal check gates result dose and never relabels one administration as daily dose',
+    () async {
+      final db = QueryBackedCdssDatabase(const {});
+      final runtimeEngine = RecordingRuntimeRuleEngine();
+      final service = ClinicalDecisionSupportService(
+        database: db,
+        factConflictEngine: FactConflictEngine(),
+        runtimeRuleEngine: runtimeEngine,
+      );
+      final foodRepository = FoodRepository.createDefault()
+        ..replaceAll([
+          FoodItem(
+            id: 'food_result_gate',
+            name: 'Manufactured toast',
+            category: FoodCategory.carbs,
+            textureClass: 'solid',
+            proteinG: 4,
+            carbsG: 25,
+            fatG: 2,
+            fiberG: 3,
+            sodiumMg: 120,
+            energyKcal: 140,
+          ),
+        ]);
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: service,
+        compiledRules: const <RuleRegistryEntry>[],
+        foodRepository: foodRepository,
+      );
+      final profile = UserProfile.defaults();
+      final administrationAt = DateTime.utc(2026, 8, 30, 8);
+      final mealAt = DateTime.utc(2026, 8, 30, 7, 30);
+      final evaluationAt = DateTime.utc(2026, 8, 30, 8, 30);
+      final draft = Intake(
+        id: 'intake_result_gate',
+        drugId: 'drug_levodopa_result_gate',
+        takenAt: administrationAt,
+        dosageNote: '100 mg',
+        route: 'oral',
+        dosageForm: 'tablet',
+        releaseType: 'immediate',
+      );
+      final drug = DrugDefinition(
+        id: draft.drugId,
+        genericName: 'carbidopa/levodopa',
+        brandNames: const ['Synthetic'],
+        tags: const [DrugTag.levodopaLike],
+        notes: 'Manufactured test fixture.',
+        route: 'oral',
+        dosageForm: 'tablet',
+        releaseType: 'immediate',
+        jurisdiction: 'US',
+      );
+      final meal = Meal(
+        id: 'meal_result_gate',
+        eatenAt: mealAt,
+        recordedAt: mealAt,
+        occurredAt: mealAt,
+        title: 'Manufactured meal',
+        items: <MealItem>[
+          MealItem(
+            foodId: 'food_result_gate',
+            foodName: 'Manufactured toast',
+            foodCategory: FoodCategory.carbs,
+            quantityFactor: 1,
+            foodTags: <String>[],
+            proteinPer100g: 4,
+            carbsPer100g: 25,
+            fatPer100g: 2,
+            fiberPer100g: 3,
+            sodiumPer100g: 120,
+          ),
+        ],
+      );
+
+      final unconfirmedResult = await useCase(
+        meal: meal,
+        activeDrugs: <DrugDefinition>[drug],
+        intakes: <Intake>[draft],
+        userProfile: profile,
+        now: evaluationAt,
+      );
+      final unconfirmedContext = runtimeEngine.contexts.last;
+      expect(unconfirmedContext.drug.administrationDoseValue, isNull);
+      expect(unconfirmedContext.drug.administrationDoseUnit, isNull);
+      expect(unconfirmedContext.drug.dailyDoseMg, isNull);
+      expect(unconfirmedResult.mechanisticTraceJson, isNotNull);
+      expect(unconfirmedResult.mechanisticTraceJson!['per_event_count'], 0);
+
+      final confirmed = AdministrationDoseConfirmationCoordinator()
+          .prepare(
+            draft: draft,
+            current: null,
+            expectedRecordRevisionDigest:
+                administrationDoseConfirmationAbsentRevisionDigest,
+            ownerScope: profile.patientId,
+            operationId: 'result_gate_confirmation',
+            confirmationRequested: true,
+            assertionSource: AdministrationDoseAssertionSource.typed,
+            confirmationAction: 'test.explicit_confirmation',
+            uiContractVersion: 'test-dose-confirmation:1',
+            confirmedAt: administrationAt.add(const Duration(minutes: 1)),
+          )
+          .intake!;
+      final confirmedResult = await useCase(
+        meal: meal,
+        activeDrugs: <DrugDefinition>[drug],
+        intakes: <Intake>[confirmed],
+        userProfile: profile,
+        now: evaluationAt,
+      );
+      final confirmedContext = runtimeEngine.contexts.last;
+      expect(confirmedContext.drug.administrationDoseValue, 100);
+      expect(confirmedContext.drug.administrationDoseUnit, 'mg');
+      expect(
+        confirmedContext.drug.dailyDoseMg,
+        isNull,
+        reason:
+            'A single administration event must never be relabelled as a daily regimen.',
+      );
+      expect(
+        confirmedResult.mechanisticTraceJson!['per_event_count'],
+        1,
+        reason: '${confirmedResult.mechanisticTraceJson}',
+      );
+      final eventTraces =
+          confirmedResult.mechanisticTraceJson!['per_event_traces'] as List;
+      expect(eventTraces.single, containsPair('is_levodopa', true));
+      expect(eventTraces.single, containsPair('release_type', 'immediate'));
     },
   );
 }

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "fhirVersion": "5.0.0",
+  "operation": "PlanDefinition/$apply",
+  "request": {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "planDefinition",
+        "resource": {
+          "resourceType": "PlanDefinition",
+          "id": "synthetic-r5-plan",
+          "url": "https://example.org/fhir/PlanDefinition/ParkinSUMSyntheticR5Plan",
+          "version": "1.0.0",
+          "status": "draft"
+        }
+      },
+      {
+        "name": "subject",
+        "valueReference": {
+          "reference": "Patient/synthetic-r5-subject"
+        }
+      }
+    ]
+  },
+  "response": {
+    "resourceType": "Parameters",
+    "parameter": [
+      {
+        "name": "return",
+        "resource": {
+          "resourceType": "Bundle",
+          "type": "collection",
+          "entry": [
+            {
+              "fullUrl": "urn:uuid:6e6c7b46-2be3-4cc3-8356-6c6ce44e7a1c",
+              "resource": {
+                "resourceType": "RequestOrchestration",
+                "id": "synthetic-r5-result",
+                "instantiatesCanonical": [
+                  "https://example.org/fhir/PlanDefinition/ParkinSUMSyntheticR5Plan|1.0.0"
+                ],
+                "status": "draft",
+                "intent": "proposal",
+                "subject": {
+                  "reference": "Patient/synthetic-r5-subject"
+                }
+              }
+            }
+          ]
+          }
+      }
+    ]
+  }
+}

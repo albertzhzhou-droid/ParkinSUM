@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 3,
+  "fixtureId": "synthetic_smart_r4_standalone_launch",
+  "fhirVersion": "4.0.1",
+  "fhirBaseUrl": "https://ehr.example.org/fhir/r4",
+  "discoveryUrl": "https://ehr.example.org/fhir/r4/.well-known/smart-configuration",
+  "discoveryResponse": {
+    "statusCode": 200,
+    "contentType": "application/json; charset=utf-8"
+  },
+  "clientType": "public",
+  "clientId": "parkinsum-synthetic-public-client",
+  "redirectUri": "https://app.example.org/smart/callback",
+  "registeredRedirectUris": [
+    "https://app.example.org/smart/callback"
+  ],
+  "launchMode": "standalone",
+  "metadata": {
+    "authorization_endpoint": "https://auth.example.org/authorize",
+    "token_endpoint": "https://auth.example.org/token",
+    "grant_types_supported": [
+      "authorization_code"
+    ],
+    "response_types_supported": [
+      "code"
+    ],
+    "scopes_supported": [
+      "launch/patient",
+      "patient/Observation.rs",
+      "offline_access",
+      "patient/*.rs",
+      "patient/Observation.cu",
+      "user/*.rs",
+      "system/*.rs"
+    ],
+    "code_challenge_methods_supported": [
+      "S256"
+    ],
+    "capabilities": [
+      "launch-standalone",
+      "client-public",
+      "context-standalone-patient",
+      "permission-patient",
+      "permission-v2"
+    ]
+  }
+}

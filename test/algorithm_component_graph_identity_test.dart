@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/algorithm_sdk/parkinsum_algorithm_sdk.dart';
 import 'package:parkinsum_companion/domain/entities/gastric_emptying_parameters.dart';
 import 'package:parkinsum_companion/domain/usecases/algorithm_observatory_service.dart';
+import 'package:parkinsum_companion/domain/usecases/get_food_recommendations_usecase.dart';
 import 'package:parkinsum_companion/domain/usecases/levodopa_absorption_opportunity_model.dart';
 import 'package:parkinsum_companion/domain/usecases/meal_composition_normalizer.dart';
 import 'package:parkinsum_companion/domain/usecases/mechanistic_conflict_engine.dart';
@@ -24,6 +25,39 @@ void main() {
       candidateScorer: MechanisticNextMealScorer(),
       identity: defaultIdentity,
       graphLabel: 'test.defaultGraph',
+    );
+  });
+
+  test('legacy recommender is bound to its exact parameter identity', () {
+    final parameters = LegacyFoodRecommendationParameterSet.prototypeDefault()
+        .withValue(LegacyFoodRecommendationParameterIds.safetyWeight, 0.30);
+    final recommender = GetFoodRecommendationsUseCase(parameters: parameters);
+    final matchingIdentity = AlgorithmConfigurationIdentity.defaults(
+      legacyFoodRecommendationParameters: parameters,
+    );
+
+    AlgorithmComponentGraphIdentityValidator.validateLegacyFoodRecommender(
+      recommender: recommender,
+      identity: matchingIdentity,
+      graphLabel: 'test.legacyRecommender',
+    );
+    expect(
+      () =>
+          AlgorithmComponentGraphIdentityValidator.validateLegacyFoodRecommender(
+            recommender: recommender,
+            identity: defaultIdentity,
+            graphLabel: 'test.legacyRecommender',
+          ),
+      throwsArgumentError,
+    );
+    expect(
+      () =>
+          AlgorithmComponentGraphIdentityValidator.validateLegacyFoodRecommender(
+            recommender: _UnattestedLegacyRecommender(),
+            identity: defaultIdentity,
+            graphLabel: 'test.legacyRecommender',
+          ),
+      throwsArgumentError,
     );
   });
 
@@ -235,6 +269,8 @@ class _UnattestedProteinDistributionModel extends ProteinDistributionModel {}
 class _UnattestedAbsorptionModel extends LevodopaAbsorptionOpportunityModel {}
 
 class _UnattestedTimeAxisBuilder extends TimeAxisBuilder {}
+
+class _UnattestedLegacyRecommender extends GetFoodRecommendationsUseCase {}
 
 GastricEmptyingParameterSet _gastricWithChangedSolidHalf() {
   final defaults = GastricEmptyingParameterSet.literatureInformedDefault();

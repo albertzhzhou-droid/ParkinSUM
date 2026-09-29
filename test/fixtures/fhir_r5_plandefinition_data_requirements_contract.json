@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "fhirVersion": "5.0.0",
+  "operation": "PlanDefinition/$data-requirements",
+  "sourcePlanDefinition": {
+    "canonical": "https://example.org/fhir/PlanDefinition/ParkinSUMSyntheticR5DataRequirementsPlan",
+    "version": "1.0.0"
+  },
+  "sourceLibrary": {
+    "canonical": "https://example.org/fhir/Library/ParkinSUMSyntheticR5DataRequirementsLogic",
+    "version": "1.0.0"
+  },
+  "response": {
+    "resourceType": "Library",
+    "status": "draft",
+    "type": {
+      "coding": [
+        {
+          "system": "http://terminology.hl7.org/CodeSystem/library-type",
+          "code": "module-definition",
+          "display": "Module Definition"
+        }
+      ]
+    },
+    "relatedArtifact": [
+      {
+        "type": "depends-on",
+        "resource": "https://example.org/fhir/Library/ParkinSUMSyntheticR5DataRequirementsLogic|1.0.0"
+      }
+    ],
+    "parameter": [
+      {
+        "name": "hasSyntheticObservation",
+        "use": "out",
+        "min": 0,
+        "max": "1",
+        "type": {
+          "code": "boolean"
+        }
+      }
+    ],
+    "dataRequirement": [
+      {
+        "type": "Observation"
+      }
+    ]
+  }
+}

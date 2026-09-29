@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "outcomes": [
+    { "hook": "patient-view", "serviceId": "parkinsum-synthetic-patient-review-a", "prefetchKey": "patient", "state": "resource" },
+    { "hook": "patient-view", "serviceId": "parkinsum-synthetic-patient-review-a", "prefetchKey": "conditions", "state": "empty_searchset" },
+    { "hook": "patient-view", "serviceId": "parkinsum-synthetic-patient-review-b", "prefetchKey": "subject", "state": "explicit_null" },
+    { "hook": "patient-view", "serviceId": "parkinsum-synthetic-patient-review-b", "prefetchKey": "problem-list", "state": "not_satisfied" },
+    { "hook": "order-select", "serviceId": "parkinsum-synthetic-order-selection-a", "prefetchKey": "patient", "state": "resource" },
+    { "hook": "order-select", "serviceId": "parkinsum-synthetic-order-selection-a", "prefetchKey": "conditions", "state": "empty_searchset" },
+    { "hook": "order-select", "serviceId": "parkinsum-synthetic-order-selection-b", "prefetchKey": "subject", "state": "explicit_null" },
+    { "hook": "order-select", "serviceId": "parkinsum-synthetic-order-selection-b", "prefetchKey": "problem-list", "state": "not_satisfied" }
+  ]
+}

@@ -25,6 +25,8 @@ class TimelineLookupIndex {
     final seenIntakeIds = <String>{};
     for (final event in events) {
       switch (event.type) {
+        case TimelineEventType.observation:
+          break;
         case TimelineEventType.meal:
           final meal = _mealById[event.recordId];
           if (meal != null && seenMealIds.add(meal.id)) {

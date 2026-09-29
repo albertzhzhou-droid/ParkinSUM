@@ -78,6 +78,26 @@ void main() {
         usePersistentOwnerResolver: true,
       );
 
+      expect(
+        find.byKey(const ValueKey('portable-schema-fuzz-campaign')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Portable-schema differential test boundary'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('14 lexical/semantic partitions'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          '31 synthetic regression cases under corpus-level privacy review',
+        ),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Node never runs in the app'), findsOneWidget);
+
       await _generate(tester);
       expect(find.byKey(const ValueKey('portable-file-name')), findsOneWidget);
       expect(find.text('Integrity self-check passed'), findsOneWidget);
@@ -94,6 +114,28 @@ void main() {
         find.byKey(const ValueKey('portable-preview-status')),
         findsOneWidget,
       );
+      expect(
+        find.byKey(const ValueKey('portable-reminder-presentation-preview')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const ValueKey('portable-schema-migration-receipt')),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Frozen schema validation and migration receipt'),
+        findsOneWidget,
+      );
+      expect(find.text('Reminder presentation intent preview'), findsOneWidget);
+      expect(
+        find.textContaining('1 require explicit target-device consent'),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining('requests no notification permission'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Schedule imported'), findsNothing);
 
       await _tapKey(tester, 'portable-save');
       await tester.pumpAndSettle();
@@ -778,6 +820,7 @@ class _DelayedInspectPackageService extends UserPortableDataPackageService {
   Future<UserPortableDataImportPreview> inspectAsync({
     required String packageJson,
     required String currentUserScope,
+    required String currentDoseOwnerScope,
     required String currentScopeKind,
     Map<String, Set<String>> existingRecordIds = const <String, Set<String>>{},
   }) async {
@@ -790,6 +833,7 @@ class _DelayedInspectPackageService extends UserPortableDataPackageService {
     final preview = await super.inspectAsync(
       packageJson: packageJson,
       currentUserScope: currentUserScope,
+      currentDoseOwnerScope: currentDoseOwnerScope,
       currentScopeKind: currentScopeKind,
       existingRecordIds: existingRecordIds,
     );

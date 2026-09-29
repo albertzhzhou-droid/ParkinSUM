@@ -9,7 +9,7 @@ import '../../core/i18n/app_i18n.dart';
 import '../../core/services/portable_data_export_sink.dart';
 import '../../core/services/privacy_safe_support_snapshot_service.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/usecases/privacy_safe_support_bundle_service.dart';
 
 abstract interface class PrivacySafeSupportClipboard {
@@ -115,7 +115,7 @@ class _PrivacySafeSupportBundlePageState
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('support.title'))),
+      appBar: PaperAppBar(title: Text(i18n.tr('support.title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 28, 16, 36),
@@ -157,7 +157,7 @@ class _PrivacySafeSupportBundlePageState
     );
   }
 
-  Widget _boundaryCard(BuildContext context, AppI18n i18n) => GlassCard(
+  Widget _boundaryCard(BuildContext context, AppI18n i18n) => PaperCard(
     padding: const EdgeInsets.all(16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +188,7 @@ class _PrivacySafeSupportBundlePageState
   );
 
   Widget _sectionCard(BuildContext context, AppState state, AppI18n i18n) =>
-      GlassCard(
+      PaperCard(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -248,7 +248,7 @@ class _PrivacySafeSupportBundlePageState
     BuildContext context,
     PrivacySafeSupportBundleArtifact artifact,
     AppI18n i18n,
-  ) => GlassCard(
+  ) => PaperCard(
     padding: const EdgeInsets.all(16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -246,7 +246,10 @@ class InputQualityGate {
       'BARE_NUMERIC_DOSE',
       'UNSTRUCTURED_FREE_TEXT',
       'UNKNOWN_UNIT',
+      'NON_FINITE_STRENGTH',
       'NON_POSITIVE_STRENGTH',
+      'INVALID_EXTRACTION_CONFIDENCE',
+      'INVALID_METADATA_EXTRACTION_CONFIDENCE',
     });
     if (invalidating.isNotEmpty) {
       findings.add(

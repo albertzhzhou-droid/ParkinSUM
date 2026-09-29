@@ -1,3 +1,5 @@
+import '../../domain/entities/decision_support_followup.dart';
+
 /// 交互检查总体状态
 enum InteractionStatus { ok, warning }
 
@@ -144,6 +146,9 @@ class InteractionScoreFactor {
 /// 交互结果：可序列化落盘
 class InteractionResult {
   final String mealId;
+
+  /// Immutable prompts captured by the deterministic runtime, before AI copy.
+  final List<DecisionSupportPrompt> followupPrompts;
   final InteractionStatus status;
   final String summary;
 
@@ -168,6 +173,7 @@ class InteractionResult {
 
   InteractionResult({
     required this.mealId,
+    this.followupPrompts = const [],
     required this.status,
     required this.summary,
     this.analysisText = '',
@@ -183,6 +189,7 @@ class InteractionResult {
 
   InteractionResult copyWith({
     String? mealId,
+    List<DecisionSupportPrompt>? followupPrompts,
     InteractionStatus? status,
     String? summary,
     String? analysisText,
@@ -197,6 +204,7 @@ class InteractionResult {
   }) {
     return InteractionResult(
       mealId: mealId ?? this.mealId,
+      followupPrompts: followupPrompts ?? this.followupPrompts,
       status: status ?? this.status,
       summary: summary ?? this.summary,
       analysisText: analysisText ?? this.analysisText,

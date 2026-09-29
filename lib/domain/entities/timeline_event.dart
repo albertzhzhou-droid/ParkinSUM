@@ -1,7 +1,8 @@
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
+import 'personal_observation.dart';
 
-enum TimelineEventType { meal, medication }
+enum TimelineEventType { meal, medication, observation }
 
 class TimelineEvent {
   final DateTime time;
@@ -19,6 +20,16 @@ class TimelineEvent {
     required this.title,
     required this.description,
   });
+
+  factory TimelineEvent.fromObservation(PersonalObservation observation) =>
+      TimelineEvent(
+        time: observation.occurredAt,
+        type: TimelineEventType.observation,
+        recordId: observation.id,
+        entityId: observation.id,
+        title: observation.symptomLabel ?? observation.kind.name,
+        description: observation.status.name,
+      );
 
   factory TimelineEvent.fromMeal(Meal meal) {
     return TimelineEvent(

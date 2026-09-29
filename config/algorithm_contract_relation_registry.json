@@ -1,0 +1,147 @@
+{
+  "$schema": "parkinsum.algorithm-contract-relation-registry/1",
+  "schemaVersion": 1,
+  "registryId": "parkinsum.first-wave-non-numerical-relations",
+  "reviewedAtUtc": "2026-08-31T00:00:00.000Z",
+  "expiresAtUtc": "2027-08-31T00:00:00.000Z",
+  "reviewerRole": "independent-software-verification-reviewer",
+  "boundary": "Relations verify deterministic software behavior over fixed synthetic observations. They do not establish scientific truth, model quality, clinical calibration, patient-level accuracy, benefit, safety, regulatory qualification, or medical advice.",
+  "schedulerCases": [
+    {"id": "complete_only", "events": ["complete"], "expectedStatus": "passed"},
+    {"id": "withdraw_before_complete", "events": ["withdraw", "complete"], "expectedStatus": "blocked"},
+    {"id": "complete_before_withdraw", "events": ["complete", "withdraw"], "expectedStatus": "blocked"},
+    {"id": "timeout_then_complete", "events": ["timeout", "complete"], "expectedStatus": "blocked"},
+    {"id": "cancel_then_complete", "events": ["cancel", "complete"], "expectedStatus": "blocked"},
+    {"id": "capability_revoke_then_complete", "events": ["capability_revoke", "complete"], "expectedStatus": "blocked"}
+  ],
+  "relations": [
+    {
+      "id": "runtime_rule_support.path_permutation",
+      "algorithmId": "runtime_rule_support",
+      "evaluator": "equal_sorted_paths_and_missing_fields",
+      "inputDomainPreconditions": ["one valid all-of baseline rule", "same conjunct multiset in reverse order", "fixed context with missing medication time and daily dose"],
+      "transformation": "Reverse the all-of condition list without changing any condition.",
+      "expectedRelation": "Referenced paths and missing-field sets are equal after sorting.",
+      "observationRequiredKeys": ["forward_paths", "reversed_paths", "permutation_preserved", "forward_missing_fields", "reversed_missing_fields"],
+      "rationale": "Conjunction order must not alter dependency discovery or missing-context truth.",
+      "sourceIds": ["nist:metamorphic-testing-cybersecurity", "synthetic:runtime-rule-support-contract-v1"],
+      "knownFalseRelationRisks": ["Not valid if a future rule language gives conjunctions observable short-circuit side effects."],
+      "mutationOperators": [
+        {"id": "path_branch_substitution", "target": "/reversed_paths/0", "replacement": "drug.mutated_path", "class": "branch"},
+        {"id": "missing_field_order_leak", "target": "/reversed_missing_fields/0", "replacement": "mutated_missing", "class": "order"}
+      ]
+    },
+    {
+      "id": "catalog_resolution.input_permutation",
+      "algorithmId": "catalog_resolution",
+      "evaluator": "catalog_permutation_and_abstention",
+      "inputDomainPreconditions": ["two uniquely identified synthetic foods", "query exactly matches one food name", "same candidate multiset in both executions"],
+      "transformation": "Reverse candidate input order and separately replace the query with whitespace.",
+      "expectedRelation": "Resolved identity and status remain equal after permutation; whitespace query is invalid.",
+      "observationRequiredKeys": ["forward_top_candidate_id", "reversed_top_candidate_id", "forward_status", "reversed_status", "permutation_preserved", "empty_query_status"],
+      "rationale": "Repository iteration order must not become catalog identity and empty input must abstain.",
+      "sourceIds": ["doi:10.1109/TSE.2013.46", "synthetic:catalog-resolution-contract-v1"],
+      "knownFalseRelationRisks": ["Not valid for candidates with intentionally equal identity scores and an explicitly documented stable-input-order tiebreak."],
+      "mutationOperators": [
+        {"id": "candidate_order_leak", "target": "/reversed_top_candidate_id", "replacement": "food:synthetic.food.beta", "class": "order"},
+        {"id": "empty_query_acceptance", "target": "/empty_query_status", "replacement": "resolved", "class": "abstention"}
+      ]
+    },
+    {
+      "id": "source_authority.jurisdiction_order",
+      "algorithmId": "source_authority",
+      "evaluator": "strict_authority_order_and_conflict",
+      "inputDomainPreconditions": ["fixed US user jurisdiction chain", "one exact official source", "one foreign official source", "one synthetic source"],
+      "transformation": "Compare declared authority tiers and a disagreeing cross-jurisdiction pair.",
+      "expectedRelation": "Exact official score is greater than foreign official score, which is greater than synthetic; seed override is false and conflict is visible.",
+      "observationRequiredKeys": ["official_exact_score", "official_foreign_score", "synthetic_score", "strict_order", "seed_override", "cross_jurisdiction_conflict"],
+      "rationale": "A policy authority score is meaningful only through declared ordering and abstention behavior, not probability semantics.",
+      "sourceIds": ["fda:computational-model-credibility-guidance-2023", "synthetic:source-authority-contract-v1"],
+      "knownFalseRelationRisks": ["The order is policy-specific and must be re-reviewed if jurisdiction or source-class definitions change."],
+      "mutationOperators": [
+        {"id": "authority_threshold_inversion", "target": "/official_foreign_score", "replacement": 1.1, "class": "threshold"},
+        {"id": "seed_override_enablement", "target": "/seed_override", "replacement": true, "class": "provenance"}
+      ]
+    },
+    {
+      "id": "runtime_rule_engine.jurisdiction_and_units",
+      "algorithmId": "runtime_rule_engine",
+      "evaluator": "jurisdiction_prefix_and_equivalent_fire_count",
+      "inputDomainPreconditions": ["fixed US database-region row", "250 mg daily-dose context", "equivalent 200 mg and 0.2 g predicates"],
+      "transformation": "Change only the predicate unit from mg to g with its dimensionally equivalent value.",
+      "expectedRelation": "Database jurisdiction prefix remains US_DB and both predicates produce one firing result.",
+      "observationRequiredKeys": ["jurisdiction_chain", "jurisdiction_source", "mg_rule_ids", "gram_rule_ids", "equivalent_fire_count"],
+      "rationale": "Equivalent mass predicates must not diverge because of unit spelling and database jurisdiction must remain explicit.",
+      "sourceIds": ["nist:metamorphic-testing-cybersecurity", "synthetic:runtime-rule-engine-contract-v1"],
+      "knownFalseRelationRisks": ["Not valid across different dimensions, non-equivalent values, or a future rule with unit-dependent rounding explicitly in its contract."],
+      "mutationOperators": [
+        {"id": "jurisdiction_precedence_inversion", "target": "/jurisdiction_chain/0", "replacement": "GLOBAL", "class": "order"},
+        {"id": "unit_equivalence_branch_drop", "target": "/gram_rule_ids", "replacement": [], "class": "threshold"}
+      ]
+    },
+    {
+      "id": "rule_registry_compiler.schema_rejection",
+      "algorithmId": "rule_registry_compiler",
+      "evaluator": "valid_compile_and_missing_identity_rejection",
+      "inputDomainPreconditions": ["one reviewed baseline registry row", "follow-up row removes only rule_id"],
+      "transformation": "Delete the required rule identity field.",
+      "expectedRelation": "The complete row compiles exactly once and the missing-identity row is rejected.",
+      "observationRequiredKeys": ["valid_count", "valid_rule_id", "missing_identity_rejected"],
+      "rationale": "Malformed rules must not enter the executable registry with fabricated identity.",
+      "sourceIds": ["nist:metamorphic-testing-cybersecurity", "synthetic:rule-registry-compiler-contract-v1"],
+      "knownFalseRelationRisks": ["Must be revised if schema migration explicitly supplies a separately governed identity rather than rejecting."],
+      "mutationOperators": [
+        {"id": "required_identity_acceptance", "target": "/missing_identity_rejected", "replacement": false, "class": "schema"}
+      ]
+    },
+    {
+      "id": "fact_conflict.order_and_scope",
+      "algorithmId": "fact_conflict",
+      "evaluator": "fact_order_and_scope_preservation",
+      "inputDomainPreconditions": ["one same-attribute same-scope conflicting fact", "one unrelated-attribute fact", "one follow-up observation in a different scope"],
+      "transformation": "Swap relevant and unrelated fact order, then change only the observation scope.",
+      "expectedRelation": "Both orders remain contradiction and the different scope remains coexistVariant.",
+      "observationRequiredKeys": ["forward", "reversed", "permutation_preserved", "different_scope"],
+      "rationale": "Unrelated fact order cannot hide a contradiction, while scope differences must remain visible rather than silently overwritten.",
+      "sourceIds": ["doi:10.1049/iet-sen.2009.0084", "synthetic:fact-conflict-contract-v1"],
+      "knownFalseRelationRisks": ["Requires re-review if scope hierarchy gains explicit parent-child override semantics."],
+      "mutationOperators": [
+        {"id": "unrelated_first_early_return", "target": "/reversed", "replacement": "coexistVariant", "class": "order"},
+        {"id": "scope_collapse", "target": "/different_scope", "replacement": "contradiction", "class": "scope"}
+      ]
+    },
+    {
+      "id": "recommendation_orchestrator.deterministic_fallback",
+      "algorithmId": "recommendation_orchestrator",
+      "evaluator": "recommendation_set_and_fallback_preservation",
+      "inputDomainPreconditions": ["five fixed synthetic benchmark cases", "same deterministic and observed candidate identity multiset", "declared conservative fallback cases"],
+      "transformation": "Permit reorder-only local AI for eligible cases while withdrawing eligibility in safety and provenance cases.",
+      "expectedRelation": "Every observed ranking preserves its deterministic candidate set and required fallback cases never use hybrid_local_ai.",
+      "observationRequiredKeys": ["case_count", "decision_paths", "ranking_pairs", "candidate_sets_preserved"],
+      "rationale": "Optional AI cannot add or remove candidates and a blocked case cannot escape through the hybrid path.",
+      "sourceIds": ["nist:metamorphic-testing-cybersecurity", "synthetic:recommendation-replay-contract-v1"],
+      "knownFalseRelationRisks": ["Candidate-set equality is intentionally stronger than future explicitly governed candidate generation and would need a new relation version."],
+      "mutationOperators": [
+        {"id": "candidate_whitelist_escape", "target": "/ranking_pairs/1/observed_ranking/0", "replacement": "food_outside_whitelist", "class": "whitelist"},
+        {"id": "safety_fallback_bypass", "target": "/ranking_pairs/3/decision_path", "replacement": "hybrid_local_ai", "class": "fallback"}
+      ]
+    },
+    {
+      "id": "local_ai_adapter.consent_endpoint_whitelist",
+      "algorithmId": "local_ai_adapter",
+      "evaluator": "local_ai_whitelist_consent_and_endpoint_confinement",
+      "inputDomainPreconditions": ["two fixed eligible hybrid cases", "withdrawn local-AI consent case", "consented non-loopback endpoint case", "injected fake transport"],
+      "transformation": "Reorder the allowed IDs, withdraw consent, and replace the local endpoint with a disallowed remote endpoint.",
+      "expectedRelation": "Hybrid results remain reorder-only and withdrawn consent or remote endpoint produces zero transport calls and unavailable state.",
+      "observationRequiredKeys": ["candidate_sets_preserved", "hybrid_case_count", "hybrid_ranking_pairs", "consent_withdrawn_available", "consent_withdrawn_skipped", "consent_withdrawn_transport_calls", "remote_endpoint_available", "remote_endpoint_transport_calls"],
+      "rationale": "Model output remains subordinate to the deterministic whitelist, explicit consent, capability, and local endpoint boundary.",
+      "sourceIds": ["nist:metamorphic-testing-cybersecurity", "synthetic:local-ai-loopback-contract-v1"],
+      "knownFalseRelationRisks": ["Endpoint relation must change before any separately governed remote-provider capability can be introduced."],
+      "mutationOperators": [
+        {"id": "ai_whitelist_escape", "target": "/hybrid_ranking_pairs/0/observed_ranking/0", "replacement": "food_outside_whitelist", "class": "whitelist"},
+        {"id": "consent_withdrawal_transport_leak", "target": "/consent_withdrawn_transport_calls", "replacement": 1, "class": "consent"},
+        {"id": "remote_endpoint_transport_leak", "target": "/remote_endpoint_transport_calls", "replacement": 1, "class": "endpoint"}
+      ]
+    }
+  ]
+}

@@ -121,6 +121,59 @@ test('malformed structured products, unsafe amounts, and extra fields fail close
   );
 });
 
+test('medication reconciliation accepts bounded v3 evidence and rejects malformed envelopes', async () => {
+  const reconciliation = {
+    schema: 'parkinsum.medication-reconciliation-envelope/1',
+    schemaVersion: 1,
+    assertions: [{ assertion_id: 'assertion_a' }],
+    decisions: [],
+    meaningBoundary: 'Source-conflict history only; not proof of administration.',
+  };
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const basePath = 'users/alice/intakes';
+
+  await assertSucceeds(
+    setDoc(
+      doc(alice, `${basePath}/reconciliation_valid`),
+      intake({
+        id: 'reconciliation_valid',
+        schemaVersion: 3,
+        medicationReconciliation: reconciliation,
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(alice, `${basePath}/reconciliation_wrong_intake_version`),
+      intake({
+        id: 'reconciliation_wrong_intake_version',
+        schemaVersion: 2,
+        medicationReconciliation: reconciliation,
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(alice, `${basePath}/reconciliation_extra_field`),
+      intake({
+        id: 'reconciliation_extra_field',
+        schemaVersion: 3,
+        medicationReconciliation: { ...reconciliation, unexpected: true },
+      }),
+    ),
+  );
+  await assertFails(
+    setDoc(
+      doc(alice, `${basePath}/reconciliation_empty_assertions`),
+      intake({
+        id: 'reconciliation_empty_assertions',
+        schemaVersion: 3,
+        medicationReconciliation: { ...reconciliation, assertions: [] },
+      }),
+    ),
+  );
+});
+
 test('clinical audit is owner-bound and append-only', async () => {
   const alice = testEnv.authenticatedContext('alice').firestore();
   const bob = testEnv.authenticatedContext('bob').firestore();
@@ -225,6 +278,40 @@ test('record history is owner-bound, strict, and append-only', async () => {
     setDoc(doc(alice, 'users/alice/record_history/event_op_extra_field'), {
       ...recoverableRow,
       revision: { ...revision, unexpected: true },
+    }),
+  );
+});
+
+test('mechanistic replay capsules are owner-bound and append-only', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const bob = testEnv.authenticatedContext('bob').firestore();
+  const digest = 'a'.repeat(64);
+  const path = `users/alice/mechanistic_replay_capsules/${digest}`;
+  const row = {
+    schema_version: 1,
+    capsule_sha256: digest,
+    generated_at_utc: '2026-08-31T12:00:00.000Z',
+    canonical_json: '{"schema":"parkinsum.mechanistic-replay-capsule/1"}',
+    owner_uid: 'alice',
+  };
+
+  await assertSucceeds(setDoc(doc(alice, path), row));
+  await assertSucceeds(getDoc(doc(alice, path)));
+  await assertFails(getDoc(doc(bob, path)));
+  await assertFails(updateDoc(doc(alice, path), { canonical_json: '{}' }));
+  await assertFails(deleteDoc(doc(alice, path)));
+  await assertFails(
+    setDoc(doc(alice, `users/alice/mechanistic_replay_capsules/${'b'.repeat(64)}`), {
+      ...row,
+      owner_uid: 'bob',
+      capsule_sha256: 'b'.repeat(64),
+    }),
+  );
+  await assertFails(
+    setDoc(doc(alice, `users/alice/mechanistic_replay_capsules/${'c'.repeat(64)}`), {
+      ...row,
+      capsule_sha256: 'c'.repeat(64),
+      canonical_json: 'x'.repeat(716801),
     }),
   );
 });

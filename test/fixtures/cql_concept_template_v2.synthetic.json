@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "templateId": "synthetic-observation-count",
+  "templateVersion": "1.0.0",
+  "valueSet": {
+    "url": "https://example.org/fhir/ValueSet/SyntheticObservationCodes",
+    "version": "2026-09"
+  },
+  "modifier": {
+    "kind": "count-comparison",
+    "operator": "greater-than-or-equal",
+    "threshold": 2
+  }
+}

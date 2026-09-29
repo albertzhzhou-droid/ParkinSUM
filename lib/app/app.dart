@@ -8,7 +8,9 @@ import '../core/i18n/app_i18n_context.dart';
 import '../core/services/services.dart';
 import '../core/services/user_logging_reminder_service.dart';
 import '../core/state/app_state.dart';
-import '../core/theme/liquid_glass_theme.dart';
+import '../core/theme/paper_theme.dart';
+import '../core/utils/focus_visibility_guard.dart';
+import '../domain/entities/operational_observability.dart';
 
 // ⚠️ 修复：目录是 features 不是 feature
 import '../features/auth/auth_page.dart';
@@ -94,13 +96,38 @@ class _ParkinSUMMaterialAppState extends State<_ParkinSUMMaterialApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _bootstrapController = BootstrapAttemptController(
-      bootstrap: () => context.read<AppState>().bootstrap(),
+      bootstrap: _runBootstrapWithObservability,
     );
     _routerDelegate = _ParkinSUMRouterDelegate(
       _bootstrapController,
       _accountOwnedRoutes,
     );
     _backButtonDispatcher = RootBackButtonDispatcher();
+  }
+
+  Future<void> _runBootstrapWithObservability() async {
+    final stopwatch = Stopwatch()..start();
+    try {
+      await context.read<AppState>().bootstrap();
+      OperationalObservabilityLedger.instance.record(
+        OperationalObservation(
+          category: OperationalSignalCategory.startup,
+          outcome: OperationalOutcome.success,
+          duration: operationalDurationBucket(stopwatch.elapsed),
+          capability: OperationalCapabilityState.supported,
+        ),
+      );
+    } catch (_) {
+      OperationalObservabilityLedger.instance.record(
+        OperationalObservation(
+          category: OperationalSignalCategory.startup,
+          outcome: OperationalOutcome.unavailable,
+          duration: operationalDurationBucket(stopwatch.elapsed),
+          capability: OperationalCapabilityState.unavailable,
+        ),
+      );
+      rethrow;
+    }
   }
 
   @override
@@ -149,6 +176,13 @@ class _ParkinSUMMaterialAppState extends State<_ParkinSUMMaterialApp>
       _reminderResponseCoordinator.source.startResponseHandling().catchError((
         Object error,
       ) {
+        OperationalObservabilityLedger.instance.record(
+          const OperationalObservation(
+            category: OperationalSignalCategory.notification,
+            outcome: OperationalOutcome.unavailable,
+            capability: OperationalCapabilityState.unavailable,
+          ),
+        );
         debugPrint('[ReminderResponse] initialization unavailable');
       }),
     );
@@ -454,9 +488,11 @@ class _ParkinSUMMaterialAppState extends State<_ParkinSUMMaterialApp>
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        theme: LiquidGlass.themeData(),
+        theme: Paper.themeData(),
         builder: (context, child) {
-          return LiquidGlassBackground(child: child ?? const SizedBox.shrink());
+          return FocusVisibilityGuard(
+            child: PaperBackground(child: child ?? const SizedBox.shrink()),
+          );
         },
       ),
     );

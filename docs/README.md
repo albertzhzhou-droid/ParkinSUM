@@ -1,63 +1,74 @@
-# ParkinSUM Companion — Documentation Index
+# ParkinSUM Companion — Documentation
 
-Educational/research prototype. Synthetic/demo data only. Not medical advice,
-not clinically calibrated, and carries no clinical-validation claim.
-
-This index groups the documentation by purpose so reviewers can find the right
-file quickly. For a guided end-to-end walkthrough start with the demo guide; for
-exact commands use the public verification guide.
+ParkinSUM is an educational production-architecture prototype. Public demos and
+model checks use synthetic data; owner-entered local records can contain
+sensitive information. The model is not clinically calibrated, and the project
+makes no clinical-validation or patient-care claim.
 
 ## Start here
 
-- [Evidence & Traceability Demo Guide](EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md) — end-to-end reviewer walkthrough of the evidence artifacts.
-- [Capability Matrix](CAPABILITY_MATRIX.md) — what is implemented, fixture-tested, report-only, or future work.
-- [Public Verification Guide](PUBLIC_VERIFICATION.md) — exact commands, expected output, and what each check does (and does not) establish.
-- [Public Demo Boundary](PUBLIC_DEMO_BOUNDARY.md) — what the public prototype may and may not be used for.
+| Read this | To understand |
+| --- | --- |
+| [Project README](../README.md) | The Paper workspace, current update, local setup, and boundaries. |
+| [Project showcase](site/index.html) / [Visual wiki](wiki/index.html) | The interface and a short reviewer route. |
+| [Capability matrix](CAPABILITY_MATRIX.md) | What is implemented, fixture-tested, report-only, or future work. |
+| [Public verification](PUBLIC_VERIFICATION.md) | Exact checks, prerequisites, failure meaning, and evidence scope. |
+| [App evolution timeline](APP_EVOLUTION_TIMELINE.md) | Dated changes, actual verification results, limitations, and rollback scopes. |
+| [Public demo boundary](PUBLIC_DEMO_BOUNDARY.md) | What may be shown or claimed in a public demonstration. |
 
-## Architecture
+## App and records
 
-- [Architecture Overview](ARCHITECTURE.md) — app layering (UI, state, data, rules, evidence).
-- [Rule Engine](RULE_ENGINE.md) — medication-context gate + structured rule-explanation template.
+- [Architecture](ARCHITECTURE.md) — UI, state, data, rules, and explanation layers.
+- [Manual validation](MANUAL_VALIDATION.md) — synthetic workflow walkthroughs.
+- [Portable data packages](USER_OWNED_PORTABLE_DATA_PACKAGE_RESEARCH_2026-08-17.md) — current-snapshot export, integrity, sensitive-data scope, and limitations.
+- [Owner-reported medication statements](FHIR_R4_OWNER_REPORTED_MEDICATION_STATEMENTS.md) — the distinction between a reported record and other medication assertions.
+- [Timeline medication intake](FHIR_R4_TIMELINE_MEDICATION_INTAKE.md) — explicit intake representation and export boundaries.
+- [Personal observations](FHIR_R4_PERSONAL_OBSERVATION_COLLECTION.md) — observation export scope and missingness.
+- [Symptom and motor observations](FHIR_R4_SYMPTOM_MOTOR_OBSERVATIONS.md) — self-reported observations, without diagnostic interpretation.
+- [Structured medication discussion](STRUCTURED_MEDICATION_DISCUSSION.md) — record-based discussion preparation and its limits.
 
-## Evidence and traceability
+## Algorithms and explanations
 
-- [Evidence Trace Bundle](EVIDENCE_TRACE_BUNDLE.md) — the local (non-FHIR) artifact pairing the two inspired views.
-- [Source-Quality Perturbation Report](SOURCE_QUALITY_PERTURBATION_REPORT.md) — deterministic report of how source quality moves scoring.
-- [Replay Runner](REPLAY_RUNNER.md) — the deterministic synthetic replay suite + CLI.
+- [Rule engine](RULE_ENGINE.md) — medication-context gates and source-linked explanations.
+- [Mechanistic model](CONFLICT_ENGINE_MODEL.md) — literature-informed educational assumptions and the `trace_only` decision boundary.
+- [Observatory design](design/ADR_ALGORITHM_OBSERVATORY.md) — production-derived traces, static contracts, and visible limitations.
+- [Synthetic rule test workbench](RULE_TEST_WORKBENCH.md) — disposable rule cases, expected/actual assertions, and pack comparison.
+- [Replay runner](REPLAY_RUNNER.md) — fixed synthetic cases and reproducible reports.
+- [Structural uncertainty](GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md) — shadow-model comparisons and their scope.
 
-## Algorithm / mechanistic model
+## Evidence, provenance, and sources
 
-- [Conflict Engine Model](CONFLICT_ENGINE_MODEL.md) — the layered, literature-informed educational simulation (not clinically calibrated).
+- [Evidence demo guide](EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md) — an end-to-end evidence walkthrough.
+- [Evidence Trace Bundle](EVIDENCE_TRACE_BUNDLE.md) — the local artifact, explicitly distinct from a FHIR Bundle.
+- [Importer metadata flow](IMPORTER_METADATA_FLOW.md) — source authority, jurisdiction, completeness, and missingness.
+- [Source-quality perturbation report](SOURCE_QUALITY_PERTURBATION_REPORT.md) — effects of changing source metadata in synthetic cases.
+- [Bibliography](../Bibliographies.md) — sources behind educational model assumptions.
+- [Source access and licenses](SOURCE_ACCESS_AND_LICENSES.md) — access methods and unresolved reuse review.
+- [Open-source influence firewall](OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md) — concept references, transferred artifacts, and separate asset holds.
+- [Open-source release evidence](OPEN_SOURCE_RELEASE_EVIDENCE.md) — bounded dependency/artifact evidence.
 
-## Source / importer metadata
+## Standards experiments and research
 
-- [Importer & Metadata Flow](IMPORTER_METADATA_FLOW.md) — canonical metadata, source-authority policy, completeness gate, FDC provenance tier, FHIR-inspired views.
+- [CQL differentials](CQL_RULE_DIFFERENTIAL.md) — fixed-corpus development experiments and cross-runtime disagreements.
+- [Biomedical standards scorecard](BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md) — scoped implementation evidence and conformance gaps.
+- [Biomedical traceability matrix](BIOMEDICAL_TRACEABILITY_MATRIX.md) — source-to-implementation-and-test links.
+- [Opportunity map](BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md) / [Backlog](BIOMEDICAL_ENGINEERING_BACKLOG.md) — planned research and implementation work.
+- [Peripheral algorithm plan](PERIPHERAL_ALGORITHM_UPGRADE_PLAN.md) — review-oriented quality, provenance, privacy, and release tooling.
 
-## Safety and release guardrails
+Research documents can contain proposed work as well as implemented slices.
+Read their boundaries and the capability matrix before describing a feature as
+available. A passing synthetic test does not establish broad standards
+conformance, real-world interoperability, or clinical correctness.
 
-- [Public Showcase Readiness](../PUBLIC_SHOWCASE_READINESS.md) — public-repository readiness controls.
-- [Known Risks](known_risks.md) — recorded risk register.
-- [Release Evidence Index](RELEASE_EVIDENCE_INDEX.md) — release-evidence pointers.
+## Public media and releases
 
-## Roadmap (peripheral support algorithms)
+- [Screenshot provenance](assets/screenshots/README.md) — current and historical captures, review status, and retired media.
+- [Media capture checklist](media-capture-checklist.md) — synthetic-state and full-image privacy review.
+- [Changelog](../CHANGELOG.md) — development updates and versioned release history.
+- [Public showcase readiness](../PUBLIC_SHOWCASE_READINESS.md) — public-repository gates.
+- [Release evidence index](RELEASE_EVIDENCE_INDEX.md) / [Release checklist](release/release-checklist.md) — artifact and release review entry points.
+- [Known risks](known_risks.md) — recorded unresolved concerns.
 
-- [Peripheral Algorithm Upgrade Plan](PERIPHERAL_ALGORITHM_UPGRADE_PLAN.md) — prioritized roadmap (P1–P12) for input-quality, source-governance, evidence, testing, privacy, localization, contribution-safety, and release-automation algorithms. Branch base: `peripheral-algorithm-integration`.
-
-## Biomedical standards / roadmap
-
-- [Biomedical Standards Conformance Scorecard](BIOMEDICAL_STANDARDS_CONFORMANCE_SCORECARD.md) — code-grounded posture vs FHIR/LOINC/FDC/FAIR (inspired, never conformant).
-- [Biomedical Traceability Matrix](BIOMEDICAL_TRACEABILITY_MATRIX.md) — opportunity → source → implementation → test traceability.
-- [Biomedical Engineering Opportunity Map](BIOMEDICAL_ENGINEERING_OPPORTUNITY_MAP.md) / [Backlog](BIOMEDICAL_ENGINEERING_BACKLOG.md) — roadmap.
-
-## Manual validation
-
-- [Manual Validation](MANUAL_VALIDATION.md) — hands-on synthetic-data walkthrough.
-
-## Source access and licenses
-
-- [Source Access & Licenses](SOURCE_ACCESS_AND_LICENSES.md) — per-source access method + license-review status (review remains future work).
-- [Bibliographies](../Bibliographies.md) — MLA citations behind the educational model.
-
-> Operator/release runbooks (Firebase operations, production acceptance, IAM
-> governance, rollback) live alongside these files in `docs/` but are internal
-> validation material, not part of the public showcase surface.
+Operator runbooks for Firebase, IAM, production acceptance, and rollback remain
+internal validation material. Their presence does not establish a public
+production deployment or readiness for clinical use.

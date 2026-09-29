@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import '../../core/constants/baseline_cdss_rules.dart';
 import '../../core/constants/clinical_evidence_source_seed.dart';
 import '../../core/db/cdss_database_memory.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/cdss_records.dart';
 import '../../domain/entities/rule_explanation.dart';
 import '../../domain/entities/runtime_context.dart';
 import '../../domain/usecases/clinical_decision_support_service.dart';
 import '../../domain/usecases/fact_conflict_engine.dart';
 import '../../domain/usecases/rule_registry_compiler.dart';
+import '../../domain/usecases/source_reference_projection.dart';
 import '../../domain/usecases/runtime_rule_engine.dart';
 
 /// One evaluation's audit trail: the projected rows plus how many audit
@@ -17,10 +18,12 @@ import '../../domain/usecases/runtime_rule_engine.dart';
 class RuleAuditTrailData {
   final List<Map<String, dynamic>> rows;
   final int persistedAuditRecordCount;
+  final List<SourceDocumentRecord> sourceDocuments;
 
   const RuleAuditTrailData({
     required this.rows,
     required this.persistedAuditRecordCount,
+    this.sourceDocuments = const <SourceDocumentRecord>[],
   });
 }
 
@@ -86,6 +89,9 @@ Future<RuleAuditTrailData> runSyntheticRuleAuditTrail() async {
     rows: output.ruleExplanationsJson,
     // Proves the write actually landed: these inserts used to be discarded.
     persistedAuditRecordCount: database.conflictAuditLog.length,
+    sourceDocuments: List<SourceDocumentRecord>.unmodifiable(
+      clinicalEvidenceSourceDocuments,
+    ),
   );
 }
 
@@ -131,6 +137,7 @@ UnifiedRuntimeContext syntheticAuditTrailContext() => UnifiedRuntimeContext(
 
 class _RuleAuditTrailPageState extends State<RuleAuditTrailPage> {
   List<Map<String, dynamic>>? _rows;
+  List<SourceDocumentRecord> _sourceDocuments = const <SourceDocumentRecord>[];
   int _auditRecordCount = 0;
   String? _error;
 
@@ -146,6 +153,7 @@ class _RuleAuditTrailPageState extends State<RuleAuditTrailPage> {
       if (!mounted) return;
       setState(() {
         _rows = data.rows;
+        _sourceDocuments = data.sourceDocuments;
         _auditRecordCount = data.persistedAuditRecordCount;
       });
     } catch (e) {
@@ -161,7 +169,7 @@ class _RuleAuditTrailPageState extends State<RuleAuditTrailPage> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: GlassAppBar(title: const Text('Rule audit trail')),
+      appBar: PaperAppBar(title: const Text('Rule audit trail')),
       body: _error != null
           ? Padding(
               padding: const EdgeInsets.all(24),
@@ -179,7 +187,7 @@ class _RuleAuditTrailPageState extends State<RuleAuditTrailPage> {
                 ),
                 const SizedBox(height: 12),
                 for (final row in rows) ...[
-                  _RuleAuditCard(row: row),
+                  _RuleAuditCard(row: row, sourceDocuments: _sourceDocuments),
                   const SizedBox(height: 10),
                 ],
               ],
@@ -201,7 +209,7 @@ class _AuditBoundaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,10 +222,7 @@ class _AuditBoundaryCard extends StatelessWidget {
           Text(
             '$ruleCount rules evaluated · $firedCount fired · '
             '$auditRecordCount audit records persisted.',
-            style: const TextStyle(
-              fontSize: 12,
-              color: LiquidGlass.onSurfaceMuted,
-            ),
+            style: const TextStyle(fontSize: 12, color: Paper.inkMuted),
           ),
           const SizedBox(height: 8),
           const Text(
@@ -225,12 +230,12 @@ class _AuditBoundaryCard extends StatelessWidget {
             'This is a record of deterministic rule bookkeeping on synthetic '
             'demo inputs — it is engineering evidence, not health guidance, '
             'and it describes no real person.',
-            style: TextStyle(fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+            style: TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
           const SizedBox(height: 8),
           const Text(
             RuleExplanation.defaultNotAdvice,
-            style: TextStyle(fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+            style: TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
         ],
       ),
@@ -240,7 +245,9 @@ class _AuditBoundaryCard extends StatelessWidget {
 
 class _RuleAuditCard extends StatelessWidget {
   final Map<String, dynamic> row;
-  const _RuleAuditCard({required this.row});
+  final List<SourceDocumentRecord> sourceDocuments;
+
+  const _RuleAuditCard({required this.row, required this.sourceDocuments});
 
   List<String> _strings(Object? value) => value is List
       ? value.map((e) => e.toString()).toList(growable: false)
@@ -251,8 +258,15 @@ class _RuleAuditCard extends StatelessWidget {
     final triggered = row['triggered'] == true;
     final missing = _strings(row['missing_or_uncertain_inputs']);
     final sourceRefs = _strings(row['source_refs']);
+    final sourceReferences = SourceReferenceProjection.resolve(
+      sourceRefs: sourceRefs,
+      sourceDocuments: sourceDocuments,
+    );
+    final resolvedSourceCount = sourceReferences
+        .where((reference) => reference.isResolved)
+        .length;
 
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,9 +297,39 @@ class _RuleAuditCard extends StatelessWidget {
           _line('Confidence', '${row['confidence_note']}'),
           _line('Provenance', '${row['provenance_summary']}'),
           if (sourceRefs.isNotEmpty)
-            _line('Sources', sourceRefs.join(', '))
+            _line(
+              'Sources',
+              '$resolvedSourceCount/${sourceRefs.length} resolved in local registry',
+            )
           else
             _line('Sources', 'none attached'),
+          if (sourceRefs.isNotEmpty)
+            ExpansionTile(
+              key: ValueKey('rule-audit-sources-${row['rule_id']}'),
+              tilePadding: EdgeInsets.zero,
+              title: Text(
+                'Review local source details ($resolvedSourceCount/${sourceRefs.length})',
+              ),
+              subtitle: const Text(
+                'Registry metadata only; no source is fetched.',
+                style: TextStyle(fontSize: 11, color: Paper.inkMuted),
+              ),
+              children: [
+                for (final reference in sourceReferences)
+                  if (reference.document != null)
+                    _SourceDocumentDetails(document: reference.document!)
+                  else
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Unresolved source reference: ${reference.sourceRef}',
+                        ),
+                      ),
+                    ),
+              ],
+            ),
           if (missing.isNotEmpty) _line('Missing inputs', missing.join(', ')),
           const SizedBox(height: 6),
           Text(
@@ -293,7 +337,7 @@ class _RuleAuditCard extends StatelessWidget {
             style: const TextStyle(
               fontSize: 11,
               fontStyle: FontStyle.italic,
-              color: LiquidGlass.onSurfaceMuted,
+              color: Paper.inkMuted,
             ),
           ),
         ],
@@ -305,7 +349,54 @@ class _RuleAuditCard extends StatelessWidget {
     padding: const EdgeInsets.only(top: 3),
     child: Text(
       '$label: $value',
-      style: const TextStyle(fontSize: 11, color: LiquidGlass.onSurfaceMuted),
+      style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
     ),
   );
+}
+
+class _SourceDocumentDetails extends StatelessWidget {
+  final SourceDocumentRecord document;
+
+  const _SourceDocumentDetails({required this.document});
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          document.title,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        _detail('Organization', document.organization),
+        _detail('Source family', document.sourceFamily),
+        _detail('Document type', document.docType),
+        _detail('Jurisdiction', document.jurisdiction),
+        _detail('Source record status', document.sourceStatus),
+        _detail('Published', _dateLabel(document.publishedAt)),
+        _detail('Effective', _dateLabel(document.effectiveAt)),
+        _detail('Source URL', document.originUrl, selectable: true),
+        _detail('License note', document.licenseNote),
+      ],
+    ),
+  );
+
+  Widget _detail(String label, String value, {bool selectable = false}) {
+    final text = '$label: $value';
+    final style = const TextStyle(fontSize: 11, color: Paper.inkMuted);
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: selectable
+          ? SelectableText(text, style: style)
+          : Text(text, style: style),
+    );
+  }
+
+  String _dateLabel(DateTime? value) {
+    if (value == null) return 'not recorded';
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '${value.year}-$month-$day';
+  }
 }

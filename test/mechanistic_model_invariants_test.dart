@@ -301,6 +301,51 @@ void main() {
     },
   );
 
+  test(
+    'missing mass without a positive reference uses the declared neutral sensitivity branch',
+    () {
+      final profile = profileFor([
+        component(
+          id: 'missing',
+          form: MealPhysicalForm.solid,
+          portionGrams: null,
+        ),
+        component(id: 'zero', form: MealPhysicalForm.liquid, portionGrams: 0),
+        component(
+          id: 'negative',
+          form: MealPhysicalForm.mixed,
+          portionGrams: -10,
+        ),
+        component(
+          id: 'not-a-number',
+          form: MealPhysicalForm.unknown,
+          portionGrams: double.nan,
+        ),
+      ]);
+
+      expect(
+        profile.componentProfiles
+            .map((component) => component.fractionOfMeal)
+            .toList(growable: false),
+        [1.0, 0.0, 0.0, 0.0],
+      );
+      expect(profile.availability, MechanisticProviderAvailability.available);
+      expect(profile.structuralIntegrityReasons, isEmpty);
+      expect(profile.missingInputs, contains('portion_grams'));
+      expect(
+        profile.assumptions,
+        anyElement(startsWith('ge.component_portion.unknown_unit_imputation')),
+      );
+      final weighting =
+          GastricEmptyingModel.generatorStructure['component_weighting']
+              as Map<String, Object>;
+      expect(
+        weighting['missing_without_positive_reference'],
+        'neutral_unit_for_missing_zero_for_observed_unusable',
+      );
+    },
+  );
+
   test('unusable component masses retain a finite normalized fallback', () {
     final profile = profileFor([
       component(id: 'zero', form: MealPhysicalForm.solid, portionGrams: 0),

@@ -1,0 +1,612 @@
+{
+  "$schema": "https://parkinsum.app/schemas/runtime-network-egress-policy/v1",
+  "schemaVersion": 1,
+  "policyVersion": "2026.09.25-v6",
+  "environment": "flutter_application",
+  "scope": "application_owned_package_http_clients",
+  "status": "application_layer_gate_partial",
+  "owner": "ParkinSUM repository maintainers; specific release approver unassigned",
+  "effectiveAt": "2026-09-25T00:00:00Z",
+  "expiresAt": "2026-12-24T00:00:00Z",
+  "defaults": {
+    "redirects": "deny",
+    "authentication": "deny_authorization_cookie_and_proxy_authorization_headers; source_api_key_only_in_x_api_key_header",
+    "credentialQueryParameters": [
+      "api_key",
+      "apikey",
+      "key",
+      "access_token",
+      "auth",
+      "authorization",
+      "password",
+      "secret",
+      "token"
+    ],
+    "dnsResolution": "not_resolved_or_pinned_by_the_application_policy_gate",
+    "ipv4": "uri_host_allowlist_only_socket_destination_unattested",
+    "ipv6": "uri_host_allowlist_only_socket_destination_unattested",
+    "proxy": "proxy_selection_and_proxy_destination_unattested",
+    "releaseArtifacts": "web_android_apple_and_desktop_runtime_captures_not_yet_bound"
+  },
+  "rules": [
+    {
+      "id": "ciqual-public-datafile",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "entrepot.recherche.data.gouv.fr",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/api/access/datafile/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_source_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "usda-food-data-central",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "api.nal.usda.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/fdc/v1/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_catalog_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "operatorSuppliedSourceCredential",
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": "X-Api-Key",
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "openfda-ndc",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "api.fda.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/drug/ndc.json"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_catalog_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "openfda-drug-label-user-lookup",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "api.fda.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/drug/label.json"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "one_user_entered_generic_name_plus_limit_only; credential_names_denied",
+      "allowedQueryParameters": [
+        "search",
+        "limit"
+      ],
+      "requiredQueryParameters": [
+        "search",
+        "limit"
+      ],
+      "purpose": "user_initiated_openfda_label_lookup",
+      "permittedDataClasses": [
+        "userEnteredDrugName"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0,
+      "maxResponseBodyBytes": 2097152
+    },
+    {
+      "id": "openfda-rxnorm-candidate-label-user-lookup",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "api.fda.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/drug/label.json"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "two_individually_selected_rxnorm_candidate_display_names_plus_limit_only; credential_names_denied",
+      "allowedQueryParameters": [
+        "search",
+        "limit"
+      ],
+      "requiredQueryParameters": [
+        "search",
+        "limit"
+      ],
+      "purpose": "user_initiated_openfda_rxnorm_candidate_label_lookup",
+      "permittedDataClasses": [
+        "userSelectedRxNormCandidateDisplayName"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0,
+      "maxResponseBodyBytes": 2097152
+    },
+    {
+      "id": "rxnav-approximate-term-user-lookup",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "rxnav.nlm.nih.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/REST/approximateTerm.json"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "one_user_entered_generic_name_with_active_concept_and_bounded_candidate_parameters_only; credential_names_denied",
+      "allowedQueryParameters": [
+        "term",
+        "maxEntries",
+        "option"
+      ],
+      "requiredQueryParameters": [
+        "term",
+        "maxEntries",
+        "option"
+      ],
+      "purpose": "user_initiated_rxnorm_name_candidate_lookup",
+      "permittedDataClasses": [
+        "userEnteredDrugName"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0,
+      "maxResponseBodyBytes": 262144
+    },
+    {
+      "id": "rxnav-concept-properties-user-lookup",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "rxnav.nlm.nih.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/REST/rxcui/{numericRxCui}/properties.json"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "deny",
+      "purpose": "user_initiated_rxnorm_concept_properties_lookup",
+      "permittedDataClasses": [
+        "userSelectedRxCui"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0,
+      "maxResponseBodyBytes": 16384
+    },
+    {
+      "id": "rxnav-concept-history-user-lookup",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "rxnav.nlm.nih.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/REST/rxcui/{numericRxCui}/historystatus.json"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "deny",
+      "purpose": "user_initiated_rxnorm_concept_history_lookup",
+      "permittedDataClasses": [
+        "userSelectedRxCui"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0,
+      "maxResponseBodyBytes": 65536
+    },
+    {
+      "id": "dailymed-spl-service",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "dailymed.nlm.nih.gov",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/dailymed/services/v2/spls.json",
+        "/dailymed/services/v2/spls/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_catalog_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "health-canada-dpd-api",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "health-products.canada.ca",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/api/drug/",
+        "/dpd-bdpp/info"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_catalog_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "ema-medicine-downloads",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "www.ema.europa.eu",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/en/documents/report/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_source_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "pmda-english-insert-index",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "www.pmda.go.jp",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/english/safety/info-services/drugs/package-inserts/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_source_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "pmda-japanese-search-landing",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "www.pmda.go.jp",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/PmdaSearch/iyakuSearch/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_source_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "fao-diet-guideline-pages",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "www.fao.org",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/nutrition/education/food-dietary-guidelines/regions/countries/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_source_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "china-nutrition-reference-pages",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "nlc.chinanutri.cn",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/fq/foodinfo/"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "public_source_identifiers_only; credential_names_denied",
+      "purpose": "public_catalog_import",
+      "permittedDataClasses": [
+        "publicCatalogIdentifier"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny"
+    },
+    {
+      "id": "user-configured-loopback-model",
+      "scheme": [
+        "http",
+        "https"
+      ],
+      "hostPattern": [
+        "127.0.0.1",
+        "localhost",
+        "::1"
+      ],
+      "port": "nonzero_user_configured_loopback_port",
+      "pathPattern": [
+        "user_configured_path_under_root"
+      ],
+      "method": [
+        "GET",
+        "POST"
+      ],
+      "query": "deny",
+      "purpose": "separately_consented_local_ai_recommendation_or_copy_polish",
+      "permittedDataClasses": [
+        "localModelAvailabilityProbe",
+        "userSelectedHealthContext"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "allow_named_or_literal_loopback_endpoint; localhost_os_resolution_unattested",
+      "maxRequestBodyBytes": 2097152
+    },
+    {
+      "id": "release-configured-capability-manifest-endpoint",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "single_exact_build_time_allowlisted_public_dns_name",
+      "port": [
+        443
+      ],
+      "pathPattern": "single_exact_release_configured_endpoint_path",
+      "method": [
+        "GET"
+      ],
+      "query": "deny",
+      "purpose": "optional_signed_capability_manifest_distribution",
+      "permittedDataClasses": [
+        "publicCapabilityValidator"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0
+    },
+    {
+      "id": "smart-health-it-r4-discovery",
+      "scheme": [
+        "https"
+      ],
+      "hostPattern": "launch.smarthealthit.org",
+      "port": [
+        443
+      ],
+      "pathPattern": [
+        "/v/r4/fhir/.well-known/smart-configuration"
+      ],
+      "method": [
+        "GET"
+      ],
+      "query": "deny",
+      "purpose": "user_initiated_development_only_smart_sandbox_metadata_discovery",
+      "permittedDataClasses": [
+        "publicSandboxMetadata"
+      ],
+      "optionalCredentialHeader": null,
+      "redirects": "deny",
+      "loopback": "deny",
+      "maxRequestBodyBytes": 0,
+      "maxResponseBodyBytes": 65536
+    }
+  ],
+  "notCovered": {
+    "sdkManagedTraffic": "firebase_auth_firestore_app_check_and_other_platform_sdk_requests_are_not_routed_through_this_evaluator; web_firebase_hosting_csp_is_source_inventoried_but_native_sdk_destinations_and_actual_web_responses_remain_unattested",
+    "platformRestrictions": "repository_source_configuration_is_snapshotted_below; merged_android_manifest_apple_bundles_actual_hosted_headers_and_runtime_enforcement_remain_unattested",
+    "localAiLoopbackTransportCompatibility": "the_application_rule_allows_user_configured_http_loopback_but_native_transport_success_is_not_established; android_cleartext_behavior_depends_on_unresolved_target_sdk_and_platform_version; apple_ats_local_ip_behavior_varies_by_os_and_no_local_networking_exception_is_declared",
+    "socketAndArtifactEvidence": "dns_ipv4_ipv6_proxy_service_worker_and_release_artifact_connection_attestation_are_unverified"
+  },
+  "platformConfigurationSnapshot": {
+    "schemaVersion": 1,
+    "evidenceScope": "repository_source_configuration_only",
+    "android": {
+      "gradlePath": "android/app/build.gradle.kts",
+      "gradlePresent": true,
+      "targetSdkExpression": "flutter.targetSdkVersion",
+      "resolvedTargetSdk": null,
+      "gradleNetworkOverrides": [],
+      "sourceManifests": [
+        {
+          "path": "android/app/src/debug/AndroidManifest.xml",
+          "internetPermission": true,
+          "usesCleartextTraffic": null,
+          "networkSecurityConfig": null
+        },
+        {
+          "path": "android/app/src/main/AndroidManifest.xml",
+          "internetPermission": false,
+          "usesCleartextTraffic": null,
+          "networkSecurityConfig": null
+        },
+        {
+          "path": "android/app/src/profile/AndroidManifest.xml",
+          "internetPermission": true,
+          "usesCleartextTraffic": null,
+          "networkSecurityConfig": null
+        }
+      ],
+      "networkSecurityConfigFiles": [],
+      "mergedManifestCapture": "not_observed"
+    },
+    "apple": {
+      "ios": {
+        "infoPlistPath": "ios/Runner/Info.plist",
+        "infoPlistPresent": true,
+        "atsDictionaryPresent": false,
+        "atsDictionarySha256": null,
+        "allowsArbitraryLoadsPresent": false,
+        "allowsLocalNetworkingPresent": false,
+        "exceptionDomainsPresent": false,
+        "localNetworkUsageDescriptionPresent": false,
+        "projectNetworkOverrides": [],
+        "deploymentTargets": [
+          "15.0"
+        ]
+      },
+      "macos": {
+        "infoPlistPath": "macos/Runner/Info.plist",
+        "infoPlistPresent": true,
+        "atsDictionaryPresent": false,
+        "atsDictionarySha256": null,
+        "allowsArbitraryLoadsPresent": false,
+        "allowsLocalNetworkingPresent": false,
+        "exceptionDomainsPresent": false,
+        "localNetworkUsageDescriptionPresent": false,
+        "projectNetworkOverrides": [],
+        "deploymentTargets": [
+          "12.0"
+        ]
+      },
+      "bundleNetworkCapture": "not_observed"
+    },
+    "web": {
+      "hostConfigurationPath": "firebase.json",
+      "hostConfigurationPresent": true,
+      "cspHeaders": [
+        {
+          "source": "**",
+          "directiveCount": 1,
+          "usesDefaultSrcFallback": false,
+          "sources": [
+            "'self'",
+            "http://127.0.0.1:*",
+            "http://[::1]:*",
+            "http://localhost:*",
+            "https://*.firebaseapp.com",
+            "https://*.firebaseio.com",
+            "https://*.googleapis.com",
+            "https://api.fda.gov",
+            "https://firebaseappcheck.googleapis.com",
+            "https://firestore.googleapis.com",
+            "https://identitytoolkit.googleapis.com",
+            "https://rxnav.nlm.nih.gov",
+            "https://securetoken.googleapis.com",
+            "https://www.google.com",
+            "https://www.googleapis.com",
+            "https://www.recaptcha.net"
+          ]
+        }
+      ],
+      "htmlMetaCspPresent": false,
+      "hostedResponseHeaderCapture": "not_observed"
+    }
+  }
+}

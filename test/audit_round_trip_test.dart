@@ -17,6 +17,7 @@ import 'package:parkinsum_companion/domain/usecases/fact_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/rule_explanation_projection.dart';
 import 'package:parkinsum_companion/domain/usecases/rule_registry_compiler.dart';
 import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
+import '../tool/cds_hooks_rule_explanation_projection.dart';
 
 import 'helpers/no_phi_json_assertions.dart';
 
@@ -191,6 +192,146 @@ void main() {
       expect(row['confidence_note'] as String, startsWith('low'));
     }
   });
+
+  test(
+    'synthetic information card carries rule and input provenance only',
+    () async {
+      final run = await runEngine();
+      final traceRows = (run.output.alertsJson['rule_hit_trace'] as List)
+          .cast<Map<String, dynamic>>();
+      final explanations = projectRuleExplanations(
+        auditEntries: run.output.auditEntries,
+        ruleHitTrace: traceRows,
+      );
+      final explanation = explanations.firstWhere((row) => row.triggered);
+      final ruleTrace = traceRows.firstWhere(
+        (row) => row['rule_id'] == explanation.ruleId,
+      );
+      final inputDigests = run.output.auditEntries
+          .map((entry) => entry.inputHash)
+          .toSet();
+      expect(inputDigests, hasLength(1));
+      final snapshot =
+          run.output.alertsJson['snapshot'] as Map<String, dynamic>;
+      final response = projectSyntheticRuleExplanationCard(
+        explanation: explanation,
+        ruleTrace: ruleTrace,
+        rulePackVersion: snapshot['rules_version'] as String,
+        inputDigest: inputDigests.single,
+      );
+
+      expect(response.keys, {'cards'});
+      expect(response['cards'], hasLength(1));
+      final card = (response['cards'] as List).single as Map<String, dynamic>;
+      expect(card['indicator'], 'info');
+      expect(card['source'], {'label': 'ParkinSUM synthetic rule explanation'});
+      expect(card.keys, {
+        'summary',
+        'detail',
+        'indicator',
+        'source',
+        'extension',
+      });
+      final extension =
+          (card['extension']
+                  as Map<String, dynamic>)[cdsHooksRuleTraceExtensionName]
+              as Map<String, dynamic>;
+      expect(extension['ruleId'], explanation.ruleId);
+      expect(extension['ruleVersion'], ruleTrace['rule_version']);
+      expect(extension['rulePackVersion'], 'rules_v1');
+      expect(extension['inputDigest'], inputDigests.single);
+      expect(extension['traceDecision'], 'matched');
+      expect(extension['resultState'], 'matched');
+      expect(extension['sourceRefs'], explanation.sourceRefs);
+      expect(findBannedSubstrings(jsonEncode(card)), isEmpty);
+      expect(jsonEncode(card), isNot(contains('synthetic_patient')));
+      expect(jsonEncode(card), isNot(contains('carbidopa')));
+      scanNoPhiKeys(card);
+    },
+  );
+
+  test(
+    'missing and unsupported trace states never become a negative result',
+    () async {
+      final run = await runEngine();
+      final traceRows = (run.output.alertsJson['rule_hit_trace'] as List)
+          .cast<Map<String, dynamic>>();
+      final sourceTrace = traceRows.first;
+      final inputDigest = run.output.auditEntries.first.inputHash;
+      final snapshot =
+          run.output.alertsJson['snapshot'] as Map<String, dynamic>;
+
+      final incompleteTrace = Map<String, dynamic>.of(sourceTrace)
+        ..['trace_decision'] = 'not_matched'
+        ..['matched'] = false
+        ..['missing_fields'] = ['meal.total_protein_g'];
+      final incompleteExplanation = projectRuleExplanations(
+        auditEntries: const [],
+        ruleHitTrace: [incompleteTrace],
+      ).single;
+      expect(
+        incompleteExplanation.userFacingDecision,
+        'rule outcome unknown; no conclusion drawn',
+      );
+      expect(
+        incompleteExplanation.limitationText,
+        contains('Do not interpret this as a negative result.'),
+      );
+      final incompleteCard = projectSyntheticRuleExplanationCard(
+        explanation: incompleteExplanation,
+        ruleTrace: incompleteTrace,
+        rulePackVersion: snapshot['rules_version'] as String,
+        inputDigest: inputDigest,
+      );
+      final incompleteExtension =
+          ((incompleteCard['cards'] as List).single
+                  as Map<String, dynamic>)['extension']
+              as Map<String, dynamic>;
+      final incompleteTraceExtension =
+          incompleteExtension[cdsHooksRuleTraceExtensionName]
+              as Map<String, dynamic>;
+      expect(incompleteTraceExtension['traceDecision'], 'not_matched');
+      expect(incompleteTraceExtension['resultState'], 'unknown');
+      expect(incompleteTraceExtension['inputCompleteness'], 'incomplete');
+
+      for (final state in ['unknown', 'missing_input', 'unsupported_input']) {
+        final stateTrace = Map<String, dynamic>.of(sourceTrace)
+          ..['trace_decision'] = state
+          ..['matched'] = false
+          ..['missing_fields'] = state == 'missing_input'
+              ? ['meal.total_protein_g']
+              : <String>[];
+        final stateExplanation = projectRuleExplanations(
+          auditEntries: const [],
+          ruleHitTrace: [stateTrace],
+        ).single;
+        final stateCard = projectSyntheticRuleExplanationCard(
+          explanation: stateExplanation,
+          ruleTrace: stateTrace,
+          rulePackVersion: snapshot['rules_version'] as String,
+          inputDigest: inputDigest,
+        );
+        final stateExtension =
+            (((stateCard['cards'] as List).single
+                        as Map<String, dynamic>)['extension']
+                    as Map<String, dynamic>)[cdsHooksRuleTraceExtensionName]
+                as Map<String, dynamic>;
+        expect(stateExtension['traceDecision'], state);
+        expect(stateExtension['resultState'], state);
+        expect(stateExplanation.userFacingDecision, contains('no conclusion'));
+      }
+
+      final unrecognized = Map<String, dynamic>.of(sourceTrace)
+        ..['trace_decision'] = 'unrecognized_future_state';
+      expect(
+        () => projectRuleExplanations(
+          auditEntries: const [],
+          ruleHitTrace: [unrecognized],
+        ),
+        throwsArgumentError,
+      );
+    },
+  );
 
   test('audit records survive a write on the in-memory backend', () async {
     // Regression guard: these inserts used to be empty `async {}` bodies, so

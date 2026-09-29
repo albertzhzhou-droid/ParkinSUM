@@ -5,11 +5,18 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 import '../core/analysis/nutrition_rules.dart';
+import '../domain/entities/absorption_opportunity.dart';
 import '../domain/entities/algorithm_descriptor.dart';
 import '../domain/entities/gastric_emptying_parameters.dart';
+import '../domain/entities/gastric_emptying_profile.dart';
+import '../domain/entities/levodopa_absorption_opportunity_parameters.dart';
 import '../domain/entities/protein_source.dart';
 import '../domain/usecases/amino_acid_competition_model.dart';
+import '../domain/usecases/dosage_note_parser.dart';
+import '../domain/usecases/get_protein_trend_usecase.dart';
+import '../domain/usecases/gastric_emptying_model.dart';
 import '../domain/usecases/levodopa_absorption_opportunity_model.dart';
+import '../domain/usecases/legacy_food_recommendation_parameters.dart';
 import '../domain/usecases/mechanistic_next_meal_scorer.dart';
 import '../domain/usecases/model_assumption_registry.dart';
 import '../domain/usecases/next_meal_scoring_parameters.dart';
@@ -307,9 +314,10 @@ final class AlgorithmFittedParameterIdentity {
 }
 
 final class AlgorithmParameterProvenanceRecord {
-  static const String schema = 'parkinsum.algorithm-parameter-provenance/1';
+  static const String schema = 'parkinsum.algorithm-parameter-provenance/2';
 
   final String parameterId;
+  final List<String> algorithmIds;
   final String displayName;
   final String semanticId;
   final String formulaId;
@@ -328,6 +336,7 @@ final class AlgorithmParameterProvenanceRecord {
 
   factory AlgorithmParameterProvenanceRecord({
     required String parameterId,
+    required List<String> algorithmIds,
     required String displayName,
     required String semanticId,
     required String formulaId,
@@ -353,6 +362,20 @@ final class AlgorithmParameterProvenanceRecord {
       'transformId': transformId,
     }.entries) {
       _requireIdentifier(entry.value, field: entry.key);
+    }
+    if (algorithmIds.isEmpty) {
+      throw ArgumentError('Every parameter record requires algorithm IDs.');
+    }
+    final algorithmIdSet = <String>{};
+    for (final algorithmId in algorithmIds) {
+      _requireIdentifier(algorithmId, field: 'algorithmId');
+      if (!algorithmIdSet.add(algorithmId)) {
+        throw ArgumentError.value(
+          algorithmId,
+          'algorithmIds',
+          'duplicate algorithm ID',
+        );
+      }
     }
     if (displayName.trim().isEmpty || limitation.trim().isEmpty) {
       throw ArgumentError('Display name and limitation are required.');
@@ -406,6 +429,7 @@ final class AlgorithmParameterProvenanceRecord {
     }
     return AlgorithmParameterProvenanceRecord._(
       parameterId: parameterId,
+      algorithmIds: List<String>.unmodifiable(algorithmIds),
       displayName: displayName.trim(),
       semanticId: semanticId,
       formulaId: formulaId,
@@ -426,6 +450,7 @@ final class AlgorithmParameterProvenanceRecord {
 
   const AlgorithmParameterProvenanceRecord._({
     required this.parameterId,
+    required this.algorithmIds,
     required this.displayName,
     required this.semanticId,
     required this.formulaId,
@@ -446,6 +471,7 @@ final class AlgorithmParameterProvenanceRecord {
   Map<String, dynamic> toJson() => {
     r'$schema': schema,
     'parameter_id': parameterId,
+    'algorithm_ids': algorithmIds,
     'display_name': displayName,
     'semantic_id': semanticId,
     'formula_id': formulaId,
@@ -465,8 +491,502 @@ final class AlgorithmParameterProvenanceRecord {
   };
 }
 
+enum AlgorithmConfigurationCoverageMode {
+  fieldAndSourceBound,
+  sourceBundleOnly,
+}
+
+/// Reviewed, digest-bound evidence that one registered algorithm's declared
+/// result-affecting configuration fields form an exact closed set.
+///
+/// This is an engineering configuration-closure witness. It does not prove
+/// numerical correctness, scientific validity, clinical calibration, safety,
+/// efficacy, or patient benefit.
+final class AlgorithmConfigurationCompletenessWitness {
+  static const String schema =
+      'parkinsum.algorithm-configuration-completeness-witness/1';
+
+  final String witnessId;
+  final String algorithmId;
+  final String reviewedAt;
+  final List<String> fieldRecordIds;
+  final Map<String, List<String>> affectedResultSinksByFieldId;
+  final List<String> requiredResultSinks;
+  final Map<String, String> ownedSourceSha256;
+  final String configurationSectionSha256;
+  final String registeredSourceBundleSha256;
+  final Map<String, String> dependencyContractSha256;
+  final List<String> reviewEvidenceIds;
+  final String completionBoundary;
+  final String limitation;
+
+  factory AlgorithmConfigurationCompletenessWitness({
+    required String witnessId,
+    required String algorithmId,
+    required String reviewedAt,
+    required Iterable<String> fieldRecordIds,
+    required Map<String, Iterable<String>> affectedResultSinksByFieldId,
+    required Iterable<String> requiredResultSinks,
+    required Map<String, String> ownedSourceSha256,
+    required String configurationSectionSha256,
+    required String registeredSourceBundleSha256,
+    required Map<String, String> dependencyContractSha256,
+    required Iterable<String> reviewEvidenceIds,
+    required String completionBoundary,
+    required String limitation,
+  }) {
+    _requireIdentifier(witnessId, field: 'witnessId');
+    _requireIdentifier(algorithmId, field: 'algorithmId');
+    _requireIsoDate(reviewedAt, field: 'reviewedAt');
+    for (final digest in [
+      configurationSectionSha256,
+      registeredSourceBundleSha256,
+      ...ownedSourceSha256.values,
+      ...dependencyContractSha256.values,
+    ]) {
+      if (!_sha256Pattern.hasMatch(digest)) {
+        throw ArgumentError.value(digest, 'digest', 'must be SHA-256');
+      }
+    }
+
+    final fields = fieldRecordIds.toSet();
+    if (fields.isEmpty || fields.length != fieldRecordIds.length) {
+      throw ArgumentError(
+        'Completeness witness field IDs must be non-empty and unique.',
+      );
+    }
+    for (final fieldId in fields) {
+      _requireIdentifier(fieldId, field: 'fieldRecordId');
+    }
+    if (affectedResultSinksByFieldId.keys
+            .toSet()
+            .difference(fields)
+            .isNotEmpty ||
+        fields
+            .difference(affectedResultSinksByFieldId.keys.toSet())
+            .isNotEmpty) {
+      throw ArgumentError(
+        'Affected-result sink ownership must exactly match field record IDs.',
+      );
+    }
+    final sinksByField = <String, List<String>>{};
+    for (final fieldId in fields.toList()..sort()) {
+      final sinks = affectedResultSinksByFieldId[fieldId]!.toSet();
+      if (sinks.isEmpty) {
+        throw ArgumentError.value(fieldId, 'affectedResultSinksByFieldId');
+      }
+      for (final sink in sinks) {
+        _requireIdentifier(sink, field: 'affectedResultSink');
+      }
+      sinksByField[fieldId] = List<String>.unmodifiable(sinks.toList()..sort());
+    }
+    final requiredSinks = requiredResultSinks.toSet();
+    if (requiredSinks.isEmpty ||
+        requiredSinks.length != requiredResultSinks.length) {
+      throw ArgumentError(
+        'Required result sinks must be non-empty and unique.',
+      );
+    }
+    for (final sink in requiredSinks) {
+      _requireIdentifier(sink, field: 'requiredResultSink');
+    }
+    final observedSinks = sinksByField.values
+        .expand((values) => values)
+        .toSet();
+    if (!observedSinks.containsAll(requiredSinks)) {
+      throw ArgumentError(
+        'Completeness witness does not cover every required result sink.',
+      );
+    }
+
+    if (ownedSourceSha256.isEmpty) {
+      throw ArgumentError('Completeness witness requires owned source files.');
+    }
+    final sortedSources = <String, String>{};
+    for (final path in ownedSourceSha256.keys.toList()..sort()) {
+      if (!RegExp(r'^lib/[A-Za-z0-9_./-]+\.dart$').hasMatch(path)) {
+        throw ArgumentError.value(path, 'ownedSourceSha256');
+      }
+      sortedSources[path] = ownedSourceSha256[path]!;
+    }
+    final sortedDependencies = <String, String>{};
+    for (final dependencyId in dependencyContractSha256.keys.toList()..sort()) {
+      _requireIdentifier(dependencyId, field: 'dependencyId');
+      if (dependencyId == algorithmId) {
+        throw ArgumentError('An algorithm cannot be its own dependency.');
+      }
+      sortedDependencies[dependencyId] =
+          dependencyContractSha256[dependencyId]!;
+    }
+    if (sortedDependencies.isEmpty) {
+      throw ArgumentError('Completeness witness requires dependency bindings.');
+    }
+    final evidence = reviewEvidenceIds.toSet();
+    if (evidence.isEmpty || evidence.length != reviewEvidenceIds.length) {
+      throw ArgumentError('Review evidence IDs must be non-empty and unique.');
+    }
+    for (final evidenceId in evidence) {
+      _requireIdentifier(evidenceId, field: 'reviewEvidenceId');
+    }
+    if (completionBoundary.trim().isEmpty || limitation.trim().isEmpty) {
+      throw ArgumentError('Completion boundary and limitation are required.');
+    }
+
+    return AlgorithmConfigurationCompletenessWitness._(
+      witnessId: witnessId,
+      algorithmId: algorithmId,
+      reviewedAt: reviewedAt,
+      fieldRecordIds: List<String>.unmodifiable(fields.toList()..sort()),
+      affectedResultSinksByFieldId: Map.unmodifiable(sinksByField),
+      requiredResultSinks: List<String>.unmodifiable(
+        requiredSinks.toList()..sort(),
+      ),
+      ownedSourceSha256: Map.unmodifiable(sortedSources),
+      configurationSectionSha256: configurationSectionSha256,
+      registeredSourceBundleSha256: registeredSourceBundleSha256,
+      dependencyContractSha256: Map.unmodifiable(sortedDependencies),
+      reviewEvidenceIds: List<String>.unmodifiable(evidence.toList()..sort()),
+      completionBoundary: completionBoundary.trim(),
+      limitation: limitation.trim(),
+    );
+  }
+
+  const AlgorithmConfigurationCompletenessWitness._({
+    required this.witnessId,
+    required this.algorithmId,
+    required this.reviewedAt,
+    required this.fieldRecordIds,
+    required this.affectedResultSinksByFieldId,
+    required this.requiredResultSinks,
+    required this.ownedSourceSha256,
+    required this.configurationSectionSha256,
+    required this.registeredSourceBundleSha256,
+    required this.dependencyContractSha256,
+    required this.reviewEvidenceIds,
+    required this.completionBoundary,
+    required this.limitation,
+  });
+
+  Map<String, dynamic> get canonicalPayload => {
+    r'$schema': schema,
+    'witness_id': witnessId,
+    'algorithm_id': algorithmId,
+    'reviewed_at': reviewedAt,
+    'field_record_ids': fieldRecordIds,
+    'affected_result_sinks_by_field_id': affectedResultSinksByFieldId,
+    'required_result_sinks': requiredResultSinks,
+    'owned_source_sha256': ownedSourceSha256,
+    'configuration_section_sha256': configurationSectionSha256,
+    'registered_source_bundle_sha256': registeredSourceBundleSha256,
+    'dependency_contract_sha256': dependencyContractSha256,
+    'review_evidence_ids': reviewEvidenceIds,
+    'completion_boundary': completionBoundary,
+    'limitation': limitation,
+  };
+
+  String get sha256Digest => _canonicalDigest(canonicalPayload);
+
+  Map<String, dynamic> toJson() => {
+    ...canonicalPayload,
+    'sha256': sha256Digest,
+  };
+}
+
+/// Truthful per-algorithm view of configuration identity coverage.
+///
+/// A field-bound entry proves only that at least one explicit parameter or
+/// structural-provider record names the algorithm. It does not silently claim
+/// that every branch and constant has been promoted out of the source-bundle
+/// fallback. That stronger audit remains a separate completion criterion.
+final class AlgorithmConfigurationCoverageEntry {
+  const AlgorithmConfigurationCoverageEntry._({
+    required this.algorithmId,
+    required this.algorithmName,
+    required this.mode,
+    required this.fieldRecordIds,
+    required this.sourcePaths,
+    required this.structuralIdentitySha256,
+    required this.registeredSourceBundleSha256,
+    required this.completenessWitness,
+  });
+
+  final String algorithmId;
+  final String algorithmName;
+  final AlgorithmConfigurationCoverageMode mode;
+  final List<String> fieldRecordIds;
+  final List<String> sourcePaths;
+  final String structuralIdentitySha256;
+  final String registeredSourceBundleSha256;
+  final AlgorithmConfigurationCompletenessWitness? completenessWitness;
+
+  bool get hasExplicitFieldRecords => fieldRecordIds.isNotEmpty;
+  bool get completePerFieldCoverageProven => completenessWitness != null;
+
+  String get limitation => completePerFieldCoverageProven
+      ? 'Reviewed complete per-field configuration closure within the exact '
+            'witness boundary. Source, dependency, field, sink, and section '
+            'digests match; this does not prove numerical, biological, '
+            'clinical, safety, efficacy, or patient-benefit validity.'
+      : hasExplicitFieldRecords
+      ? 'At least one explicit field or provider binding is owned by this '
+            'algorithm; unlisted branches may still rely on the registered '
+            'source-bundle digest. This is not proof of complete per-field '
+            'coverage or scientific validity.'
+      : 'No explicit parameter or provider record currently names this '
+            'algorithm. Source-bundle change detection is available, but field '
+            'semantics, units, provenance, and impact remain unassessed.';
+
+  Map<String, dynamic> toJson() => {
+    'algorithm_id': algorithmId,
+    'algorithm_name': algorithmName,
+    'mode': mode.name,
+    'field_record_count': fieldRecordIds.length,
+    'field_record_ids': fieldRecordIds,
+    'source_paths': sourcePaths,
+    'structural_identity_sha256': structuralIdentitySha256,
+    'registered_source_bundle_sha256': registeredSourceBundleSha256,
+    'complete_per_field_coverage_proven': completePerFieldCoverageProven,
+    if (completenessWitness != null)
+      'completeness_witness': completenessWitness!.toJson(),
+    'limitation': limitation,
+  };
+}
+
+/// Exhaustive registry-to-configuration-identity partition.
+///
+/// Every registered result-affecting algorithm appears exactly once. Every
+/// parameter/structure record must name a registered consumer. This makes the
+/// remaining source-only fallback visible and machine-testable instead of
+/// hiding it behind a single repository-wide digest.
+final class AlgorithmConfigurationCoverageManifest {
+  static const String schema = 'parkinsum.algorithm-configuration-coverage/2';
+  static const String boundary =
+      'Configuration identity and change-detection coverage only. A field '
+      'record does not establish complete branch coverage. A validated '
+      'completion witness closes only its declared configuration boundary; '
+      'neither status establishes calculation correctness, biological '
+      'validity, clinical accuracy, safety, efficacy, or patient benefit.';
+
+  const AlgorithmConfigurationCoverageManifest._(this.entries);
+
+  final List<AlgorithmConfigurationCoverageEntry> entries;
+
+  factory AlgorithmConfigurationCoverageManifest.fromRegistry({
+    required List<AlgorithmDescriptor> algorithmDescriptors,
+    required AlgorithmParameterProvenanceManifest parameterManifest,
+    required String registeredSourceBundleSha256,
+    required Map<String, Map<String, String>>
+    dependencyContractSha256ByAlgorithm,
+    List<AlgorithmConfigurationCompletenessWitness> completionWitnesses =
+        const [],
+    Map<String, String> configurationSectionSha256ByAlgorithm = const {},
+    Map<String, String> implementationSourceSha256 = const {},
+  }) {
+    if (!_sha256Pattern.hasMatch(registeredSourceBundleSha256)) {
+      throw ArgumentError.value(
+        registeredSourceBundleSha256,
+        'registeredSourceBundleSha256',
+        'must be lowercase SHA-256',
+      );
+    }
+    if (algorithmDescriptors.isEmpty) {
+      throw ArgumentError('Algorithm registry cannot be empty.');
+    }
+    final descriptorsById = <String, AlgorithmDescriptor>{};
+    for (final descriptor in algorithmDescriptors) {
+      if (descriptorsById.containsKey(descriptor.id)) {
+        throw ArgumentError.value(
+          descriptor.id,
+          'algorithmDescriptors',
+          'duplicate algorithm ID',
+        );
+      }
+      descriptorsById[descriptor.id] = descriptor;
+    }
+
+    final recordsByAlgorithm =
+        <String, List<AlgorithmParameterProvenanceRecord>>{
+          for (final algorithmId in descriptorsById.keys)
+            algorithmId: <AlgorithmParameterProvenanceRecord>[],
+        };
+    for (final record in parameterManifest.records) {
+      for (final algorithmId in record.algorithmIds) {
+        final records = recordsByAlgorithm[algorithmId];
+        if (records == null) {
+          throw ArgumentError.value(
+            algorithmId,
+            record.parameterId,
+            'parameter record names an unregistered algorithm',
+          );
+        }
+        records.add(record);
+      }
+    }
+
+    final witnessesByAlgorithm =
+        <String, AlgorithmConfigurationCompletenessWitness>{};
+    for (final witness in completionWitnesses) {
+      final descriptor = descriptorsById[witness.algorithmId];
+      if (descriptor == null) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'names an unregistered algorithm',
+        );
+      }
+      if (witnessesByAlgorithm.containsKey(witness.algorithmId)) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'duplicate completion witness',
+        );
+      }
+      final actualFieldIds = recordsByAlgorithm[witness.algorithmId]!
+          .map((record) => record.parameterId)
+          .toSet();
+      if (actualFieldIds.length != witness.fieldRecordIds.length ||
+          !actualFieldIds.containsAll(witness.fieldRecordIds)) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'field record set is not exact',
+        );
+      }
+      final descriptorPaths = descriptor.sourcePaths.toSet();
+      if (descriptorPaths.length != witness.ownedSourceSha256.length ||
+          !descriptorPaths.containsAll(witness.ownedSourceSha256.keys)) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'owned source set is not exact',
+        );
+      }
+      for (final entry in witness.ownedSourceSha256.entries) {
+        if (implementationSourceSha256[entry.key] != entry.value) {
+          throw ArgumentError.value(
+            entry.key,
+            'completionWitnesses',
+            'owned source digest does not match implementation identity',
+          );
+        }
+      }
+      if (witness.registeredSourceBundleSha256 !=
+          registeredSourceBundleSha256) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'registered source-bundle digest mismatch',
+        );
+      }
+      if (configurationSectionSha256ByAlgorithm[witness.algorithmId] !=
+          witness.configurationSectionSha256) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'configuration-section digest mismatch',
+        );
+      }
+      final currentDependencyContracts =
+          dependencyContractSha256ByAlgorithm[witness.algorithmId];
+      if (currentDependencyContracts == null ||
+          currentDependencyContracts.length !=
+              witness.dependencyContractSha256.length ||
+          !currentDependencyContracts.keys.toSet().containsAll(
+            witness.dependencyContractSha256.keys,
+          )) {
+        throw ArgumentError.value(
+          witness.algorithmId,
+          'completionWitnesses',
+          'dependency contract set does not match current identity',
+        );
+      }
+      for (final dependencyId in witness.dependencyContractSha256.keys) {
+        if (!descriptorsById.containsKey(dependencyId)) {
+          throw ArgumentError.value(
+            dependencyId,
+            'completionWitnesses',
+            'dependency is not a registered algorithm',
+          );
+        }
+        if (currentDependencyContracts[dependencyId] !=
+            witness.dependencyContractSha256[dependencyId]) {
+          throw ArgumentError.value(
+            dependencyId,
+            'completionWitnesses',
+            'dependency contract digest does not match current identity',
+          );
+        }
+      }
+      witnessesByAlgorithm[witness.algorithmId] = witness;
+    }
+    if (dependencyContractSha256ByAlgorithm.length !=
+            witnessesByAlgorithm.length ||
+        !dependencyContractSha256ByAlgorithm.keys.toSet().containsAll(
+          witnessesByAlgorithm.keys,
+        )) {
+      throw ArgumentError(
+        'Dependency contract owners must exactly match completion witnesses.',
+      );
+    }
+
+    final sortedDescriptors = algorithmDescriptors.toList()
+      ..sort((left, right) => left.id.compareTo(right.id));
+    final entries = <AlgorithmConfigurationCoverageEntry>[
+      for (final descriptor in sortedDescriptors)
+        AlgorithmConfigurationCoverageEntry._(
+          algorithmId: descriptor.id,
+          algorithmName: descriptor.name,
+          mode: recordsByAlgorithm[descriptor.id]!.isEmpty
+              ? AlgorithmConfigurationCoverageMode.sourceBundleOnly
+              : AlgorithmConfigurationCoverageMode.fieldAndSourceBound,
+          fieldRecordIds: List<String>.unmodifiable(
+            (recordsByAlgorithm[descriptor.id]!
+                .map((record) => record.parameterId)
+                .toList()
+              ..sort()),
+          ),
+          sourcePaths: List<String>.unmodifiable(descriptor.sourcePaths),
+          structuralIdentitySha256: _canonicalDigest(
+            descriptor.toManifestJson(),
+          ),
+          registeredSourceBundleSha256: registeredSourceBundleSha256,
+          completenessWitness: witnessesByAlgorithm[descriptor.id],
+        ),
+    ];
+    return AlgorithmConfigurationCoverageManifest._(
+      List<AlgorithmConfigurationCoverageEntry>.unmodifiable(entries),
+    );
+  }
+
+  int get fieldAndSourceBoundCount => entries
+      .where(
+        (entry) =>
+            entry.mode ==
+            AlgorithmConfigurationCoverageMode.fieldAndSourceBound,
+      )
+      .length;
+
+  int get sourceBundleOnlyCount => entries.length - fieldAndSourceBoundCount;
+
+  int get completePerFieldCoverageCount =>
+      entries.where((entry) => entry.completePerFieldCoverageProven).length;
+
+  AlgorithmConfigurationCoverageEntry entryFor(String algorithmId) =>
+      entries.singleWhere((entry) => entry.algorithmId == algorithmId);
+
+  Map<String, dynamic> toJson() => {
+    r'$schema': schema,
+    'algorithm_count': entries.length,
+    'field_and_source_bound_count': fieldAndSourceBoundCount,
+    'source_bundle_only_count': sourceBundleOnlyCount,
+    'complete_per_field_coverage_count': completePerFieldCoverageCount,
+    'boundary': boundary,
+    'entries': entries.map((entry) => entry.toJson()).toList(growable: false),
+  };
+}
+
 final class AlgorithmParameterProvenanceManifest {
-  static const String schema = 'parkinsum.algorithm-parameter-manifest/1';
+  static const String schema = 'parkinsum.algorithm-parameter-manifest/2';
 
   final List<AlgorithmParameterProvenanceRecord> records;
 
@@ -511,7 +1031,10 @@ final class AlgorithmParameterProvenanceManifest {
 
   static AlgorithmParameterProvenanceManifest defaults({
     required GastricEmptyingParameterSet gastricParameters,
+    required LevodopaAbsorptionOpportunityParameterSet absorptionParameters,
     required NextMealScoringParameterSet scoringParameters,
+    required LegacyFoodRecommendationParameterSet
+    legacyFoodRecommendationParameters,
     required List<LnaaLoadFactor> lnaaFactors,
     required List<Map<String, dynamic>> runtimeRuleLogic,
     required List<AlgorithmDescriptor> algorithmDescriptors,
@@ -520,11 +1043,62 @@ final class AlgorithmParameterProvenanceManifest {
     const internalSource = 'src.internal.prototype.heuristic';
     final records = <AlgorithmParameterProvenanceRecord>[];
 
+    records.add(
+      AlgorithmParameterProvenanceRecord(
+        parameterId: 'medication_dose.grammar_identity',
+        algorithmIds: const ['dosage_note_parser'],
+        displayName: 'Administration dose-expression grammar',
+        semanticId: 'medication_dose.expression.grammar_identity',
+        formulaId: 'dose-expression-parser.grammar/4',
+        originalUnit: 'schema_contract',
+        canonicalUnit: 'schema_contract',
+        originalValue: DosageNoteParser.configurationIdentity,
+        canonicalValue: DosageNoteParser.configurationIdentity,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          'parkinsum.administration-dose-expression/4',
+        ),
+        transformId: 'identity-json/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: const [internalSource],
+        reviewDate: reviewDate,
+        limitation:
+            'Binds the local grammar and unit-map identity only; it does not '
+            'establish prescription correctness, dose appropriateness, '
+            'UCUM/FHIR semantics, or clinical validity.',
+      ),
+    );
+
+    records.add(
+      AlgorithmParameterProvenanceRecord(
+        parameterId: 'protein_trend.aggregation_contract',
+        algorithmIds: const ['protein_trend'],
+        displayName: 'Protein-trend time, value, ordering and mean contract',
+        semanticId: 'analytics.protein_trend.aggregation_contract',
+        formulaId: 'protein-trend.effective-time-series-and-mean/1',
+        originalUnit: 'canonical_json',
+        canonicalUnit: 'canonical_json',
+        originalValue: GetProteinTrendUseCase.configurationIdentity,
+        canonicalValue: GetProteinTrendUseCase.configurationIdentity,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          'parkinsum.protein-trend-aggregation/1',
+        ),
+        transformId: 'identity-json/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: const [internalSource],
+        reviewDate: reviewDate,
+        limitation:
+            'Binds a descriptive per-meal aggregation only; it does not assess '
+            'nutrient-source completeness, dietary adequacy, clinical meaning, '
+            'benefit, or safety.',
+      ),
+    );
+
     for (final parameter in gastricParameters.all) {
       final spec = _gastricSpec(parameter.id);
       records.add(
         _valueRecord(
           id: parameter.id,
+          algorithmIds: const ['gastric_emptying'],
           displayName: parameter.label,
           formulaId: spec.formulaId,
           unit: spec.unit,
@@ -541,12 +1115,53 @@ final class AlgorithmParameterProvenanceManifest {
       );
     }
 
-    final absorptionSources = <String>[
-      'src.dailymed.sinemet.label',
-      'src.nutt.onoff.1984',
-      'src.doi.ge.levodopa.2012',
-      internalSource,
-    ];
+    records.addAll([
+      AlgorithmParameterProvenanceRecord(
+        parameterId: GastricEmptyingParameterIds.generatorStructure,
+        algorithmIds: const ['gastric_emptying'],
+        displayName: 'Gastric generator branch and weighting policy',
+        semanticId: GastricEmptyingParameterIds.generatorStructure,
+        formulaId: 'gastric-emptying.generator-structure/1',
+        originalUnit: 'canonical_json',
+        canonicalUnit: 'canonical_json',
+        originalValue: GastricEmptyingModel.generatorStructure,
+        canonicalValue: GastricEmptyingModel.generatorStructure,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          GastricEmptyingModel.generatorStructureSchema,
+        ),
+        transformId: 'identity-json/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: const [internalSource],
+        reviewDate: gastricParameters.lastReviewed,
+        limitation:
+            'Reviewed deterministic branch declaration for an educational '
+            'population-sensitivity model; it is not individual calibration or '
+            'evidence of physiological accuracy.',
+      ),
+      AlgorithmParameterProvenanceRecord(
+        parameterId: GastricEmptyingParameterIds.outputIntegrityContract,
+        algorithmIds: const ['gastric_emptying'],
+        displayName: 'Gastric output integrity and wire policy',
+        semanticId: GastricEmptyingParameterIds.outputIntegrityContract,
+        formulaId: 'gastric-emptying.output-integrity/1',
+        originalUnit: 'canonical_json',
+        canonicalUnit: 'canonical_json',
+        originalValue: GastricEmptyingOutputContract.integrityConfiguration,
+        canonicalValue: GastricEmptyingOutputContract.integrityConfiguration,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          GastricEmptyingOutputContract.schema,
+        ),
+        transformId: 'identity-json/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: const [internalSource],
+        reviewDate: gastricParameters.lastReviewed,
+        limitation:
+            'Engineering integrity and abstention encoding only; passing does '
+            'not establish biological, clinical, safety, or efficacy truth.',
+      ),
+    ]);
+
+    final absorptionSources = LevodopaAbsorptionOpportunityModel.baseSourceRefs;
     for (final spec
         in <
           ({
@@ -562,7 +1177,7 @@ final class AlgorithmParameterProvenanceManifest {
           (
             id: 'absorption.ir.reference_lag_minutes',
             name: 'IR reference opportunity lag',
-            value: LevodopaAbsorptionOpportunityModel.referenceIrLagMinutes,
+            value: absorptionParameters.referenceIrLagMinutes,
             unit: 'min',
             minimum: 0,
             maximum: 1440,
@@ -571,8 +1186,7 @@ final class AlgorithmParameterProvenanceManifest {
           (
             id: 'absorption.ir.reference_duration_minutes',
             name: 'IR reference opportunity duration',
-            value:
-                LevodopaAbsorptionOpportunityModel.referenceIrDurationMinutes,
+            value: absorptionParameters.referenceIrDurationMinutes,
             unit: 'min',
             minimum: 1,
             maximum: 2880,
@@ -581,18 +1195,65 @@ final class AlgorithmParameterProvenanceManifest {
           (
             id: 'absorption.meal.illustrative_delay_minutes',
             name: 'Illustrative meal-associated opportunity shift',
-            value:
-                LevodopaAbsorptionOpportunityModel.illustrativeMealDelayMinutes,
+            value: absorptionParameters.illustrativeMealDelayMinutes,
             unit: 'min',
             minimum: 0,
             maximum: 1440,
             formula: 'levodopa.absorption.residual-load-shift/2',
           ),
           (
+            id: LevodopaAbsorptionOpportunityParameterIds.highResidualThreshold,
+            name: 'Strict high-residual meal-load threshold',
+            value: absorptionParameters.highResidualThreshold,
+            unit: 'ratio_0_1',
+            minimum: 0,
+            maximum: 1,
+            formula: 'levodopa.absorption.residual-load-shift/2',
+          ),
+          (
+            id: LevodopaAbsorptionOpportunityParameterIds
+                .moderateResidualThreshold,
+            name: 'Strict moderate-residual meal-load threshold',
+            value: absorptionParameters.moderateResidualThreshold,
+            unit: 'ratio_0_1',
+            minimum: 0,
+            maximum: 1,
+            formula: 'levodopa.absorption.residual-load-shift/2',
+          ),
+          (
+            id: LevodopaAbsorptionOpportunityParameterIds
+                .highResidualEndDelayMultiplier,
+            name: 'High-residual window-end delay multiplier',
+            value: absorptionParameters.highResidualEndDelayMultiplier,
+            unit: 'multiplier',
+            minimum: 1,
+            maximum: 100,
+            formula: 'levodopa.absorption.residual-load-shift/2',
+          ),
+          (
+            id: LevodopaAbsorptionOpportunityParameterIds
+                .moderateResidualShiftDivisor,
+            name: 'Moderate-residual integer shift divisor',
+            value: absorptionParameters.moderateResidualShiftDivisor,
+            unit: 'integer_divisor',
+            minimum: 1,
+            maximum: 100,
+            formula: 'levodopa.absorption.residual-load-shift/2',
+          ),
+          (
+            id: LevodopaAbsorptionOpportunityParameterIds
+                .peakOffsetDurationDivisor,
+            name: 'IR baseline peak-offset integer divisor',
+            value: absorptionParameters.peakOffsetDurationDivisor,
+            unit: 'integer_divisor',
+            minimum: 1,
+            maximum: 100,
+            formula: 'levodopa.absorption.ir-window/1',
+          ),
+          (
             id: 'absorption.openness.sample_stride_minutes',
             name: 'Absorption-openness sampling stride',
-            value:
-                LevodopaAbsorptionOpportunityModel.opennessSampleStrideMinutes,
+            value: absorptionParameters.opennessSampleStrideMinutes,
             unit: 'min',
             minimum: 1,
             maximum: 1440,
@@ -601,7 +1262,7 @@ final class AlgorithmParameterProvenanceManifest {
           (
             id: 'absorption.openness.ir_peak',
             name: 'IR peak openness weight',
-            value: LevodopaAbsorptionOpportunityModel.irPeakOpenness,
+            value: absorptionParameters.irPeakOpenness,
             unit: 'ratio_0_1',
             minimum: 0,
             maximum: 1,
@@ -610,7 +1271,7 @@ final class AlgorithmParameterProvenanceManifest {
           (
             id: 'absorption.openness.ir_tail',
             name: 'IR terminal openness weight',
-            value: LevodopaAbsorptionOpportunityModel.irTailOpenness,
+            value: absorptionParameters.irTailOpenness,
             unit: 'ratio_0_1',
             minimum: 0,
             maximum: 1,
@@ -620,6 +1281,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         _valueRecord(
           id: spec.id,
+          algorithmIds: const ['levodopa_absorption_opportunity'],
           displayName: spec.name,
           formulaId: spec.formula,
           unit: spec.unit,
@@ -636,8 +1298,58 @@ final class AlgorithmParameterProvenanceManifest {
     }
 
     records.addAll([
+      AlgorithmParameterProvenanceRecord(
+        parameterId:
+            LevodopaAbsorptionOpportunityParameterIds.generatorStructure,
+        algorithmIds: const ['levodopa_absorption_opportunity'],
+        displayName: 'Absorption generator branch and output-code policy',
+        semanticId:
+            LevodopaAbsorptionOpportunityParameterIds.generatorStructure,
+        formulaId: 'levodopa.absorption.generator-structure/1',
+        originalUnit: 'canonical_json',
+        canonicalUnit: 'canonical_json',
+        originalValue: LevodopaAbsorptionOpportunityModel.generatorStructure,
+        canonicalValue: LevodopaAbsorptionOpportunityModel.generatorStructure,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          'parkinsum.levodopa-absorption-generator-structure/1',
+        ),
+        transformId: 'identity-json/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: absorptionSources,
+        reviewDate: absorptionParameters.lastReviewed,
+        limitation:
+            'Reviewed deterministic branch declaration for an educational '
+            'opportunity trace; it is not a PK/PD model or clinical policy.',
+      ),
+      AlgorithmParameterProvenanceRecord(
+        parameterId:
+            LevodopaAbsorptionOpportunityParameterIds.outputIntegrityContract,
+        algorithmIds: const ['levodopa_absorption_opportunity'],
+        displayName: 'Absorption output integrity and wire policy',
+        semanticId:
+            LevodopaAbsorptionOpportunityParameterIds.outputIntegrityContract,
+        formulaId: 'levodopa.absorption.output-integrity/1',
+        originalUnit: 'canonical_json',
+        canonicalUnit: 'canonical_json',
+        originalValue: AbsorptionOpportunityWindow.integrityConfiguration,
+        canonicalValue: AbsorptionOpportunityWindow.integrityConfiguration,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          'parkinsum.absorption-opportunity-output-contract/1',
+        ),
+        transformId: 'identity-json/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: const [internalSource],
+        reviewDate: absorptionParameters.lastReviewed,
+        limitation:
+            'Engineering integrity and abstention encoding only; passing does '
+            'not establish physiological, clinical, safety, or efficacy truth.',
+      ),
+    ]);
+
+    records.addAll([
       _valueRecord(
         id: 'competition.reference_protein_g',
+        algorithmIds: const ['amino_acid_competition'],
         displayName: 'Competition reference protein load',
         formulaId: 'lnaa.competition.peak-normalized-load/2',
         unit: 'g',
@@ -655,6 +1367,7 @@ final class AlgorithmParameterProvenanceManifest {
       ),
       _valueRecord(
         id: 'competition.sample_stride_minutes',
+        algorithmIds: const ['amino_acid_competition'],
         displayName: 'Competition timeline sampling stride',
         formulaId: 'lnaa.competition.peak-normalized-load/2',
         unit: 'min',
@@ -670,6 +1383,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         _valueRecord(
           id: 'competition.lnaa_factor.${factor.sourceType.name}',
+          algorithmIds: const ['amino_acid_competition'],
           displayName: '${factor.sourceType.name} protein LNAA load factor',
           formulaId: 'lnaa.competition.source-factor/1',
           unit: 'multiplier',
@@ -730,6 +1444,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         _valueRecord(
           id: spec.id,
+          algorithmIds: const ['protein_distribution'],
           displayName: spec.name,
           formulaId: 'protein.redistribution.overlap-objective/1',
           unit: spec.unit,
@@ -752,6 +1467,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         _valueRecord(
           id: weight.id,
+          algorithmIds: const ['mechanistic_candidate_scorer'],
           displayName: weight.label,
           formulaId: 'candidate-score.bounded-linear-composition/1',
           unit: 'weight_0_1',
@@ -785,6 +1501,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         _valueRecord(
           id: spec.id,
+          algorithmIds: const ['mechanistic_candidate_scorer'],
           displayName: spec.name,
           formulaId: 'candidate-score.window-sampling/1',
           unit: spec.id.endsWith('minutes') ? 'min' : 'count',
@@ -841,6 +1558,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         _valueRecord(
           id: spec.id,
+          algorithmIds: const ['legacy_nutrition_classifier'],
           displayName: spec.name,
           formulaId: 'legacy-nutrition.threshold-classifier/1',
           unit: spec.unit,
@@ -855,6 +1573,66 @@ final class AlgorithmParameterProvenanceManifest {
         ),
       );
     }
+
+    for (final parameter in legacyFoodRecommendationParameters.parameters) {
+      records.add(
+        _valueRecord(
+          id: parameter.id,
+          algorithmIds: const ['legacy_food_recommendations'],
+          displayName: parameter.label,
+          formulaId: parameter.formulaId,
+          unit: parameter.unit,
+          value: parameter.value,
+          minimum: parameter.minimum,
+          maximum: parameter.maximum,
+          sources: parameter.sourceRefs,
+          reviewDate: legacyFoodRecommendationParameters.lastReviewed,
+          limitation: parameter.limitation,
+        ),
+      );
+    }
+    records.add(
+      AlgorithmParameterProvenanceRecord(
+        parameterId: LegacyFoodRecommendationParameterIds.tieBreakPolicy,
+        algorithmIds: const ['legacy_food_recommendations'],
+        displayName: LegacyFoodRecommendationParameterSet.tieBreakLabel,
+        semanticId: LegacyFoodRecommendationParameterIds.tieBreakPolicy,
+        formulaId: LegacyFoodRecommendationParameterSet.tieBreakFormulaId,
+        originalUnit: LegacyFoodRecommendationParameterSet.tieBreakUnit,
+        canonicalUnit: LegacyFoodRecommendationParameterSet.tieBreakUnit,
+        originalValue: legacyFoodRecommendationParameters.tieBreakPolicy,
+        canonicalValue: legacyFoodRecommendationParameters.tieBreakPolicy,
+        supportedDomain: AlgorithmParameterSupport.allowedValues(
+          LegacyFoodRecommendationParameterSet.supportedTieBreakPolicies,
+        ),
+        transformId: 'identity/1',
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: LegacyFoodRecommendationParameterSet.tieBreakSourceRefs,
+        reviewDate: legacyFoodRecommendationParameters.lastReviewed,
+        limitation: LegacyFoodRecommendationParameterSet.tieBreakLimitation,
+      ),
+    );
+    records.add(
+      AlgorithmParameterProvenanceRecord(
+        parameterId: LegacyFoodRecommendationProvenancePolicy.parameterId,
+        algorithmIds: const ['legacy_food_recommendations'],
+        displayName: 'Legacy source-system provenance score policy',
+        semanticId: LegacyFoodRecommendationProvenancePolicy.parameterId,
+        formulaId: LegacyFoodRecommendationProvenancePolicy.formulaId,
+        originalUnit: LegacyFoodRecommendationProvenancePolicy.unit,
+        canonicalUnit: LegacyFoodRecommendationProvenancePolicy.unit,
+        originalValue: LegacyFoodRecommendationProvenancePolicy.canonicalValue,
+        canonicalValue: LegacyFoodRecommendationProvenancePolicy.canonicalValue,
+        supportedDomain: AlgorithmParameterSupport.schema(
+          'legacy-food-source-provenance-policy/1',
+        ),
+        transformId: LegacyFoodRecommendationProvenancePolicy.transformId,
+        provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,
+        sourceIds: LegacyFoodRecommendationProvenancePolicy.sourceRefs,
+        reviewDate: legacyFoodRecommendationParameters.lastReviewed,
+        limitation: LegacyFoodRecommendationProvenancePolicy.limitation,
+      ),
+    );
 
     for (final rule in runtimeRuleLogic) {
       final ruleId = rule['rule_id'];
@@ -873,6 +1651,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         AlgorithmParameterProvenanceRecord(
           parameterId: 'runtime_rule.$ruleId.logic',
+          algorithmIds: const ['runtime_rule_engine'],
           displayName: 'Runtime rule $ruleId',
           semanticId: 'runtime_rule.$ruleId.logic',
           formulaId: 'runtime-rule.canonical-logic/1',
@@ -903,6 +1682,7 @@ final class AlgorithmParameterProvenanceManifest {
       records.add(
         AlgorithmParameterProvenanceRecord(
           parameterId: 'trace_provider.${descriptor.id}',
+          algorithmIds: [descriptor.id],
           displayName: '${descriptor.name} trace-provider binding',
           semanticId: 'trace_provider.${descriptor.id}',
           formulaId: 'algorithm.trace-provider-binding/1',
@@ -930,6 +1710,7 @@ final class AlgorithmParameterProvenanceManifest {
 
 AlgorithmParameterProvenanceRecord _valueRecord({
   required String id,
+  required List<String> algorithmIds,
   required String displayName,
   required String formulaId,
   required String unit,
@@ -943,6 +1724,7 @@ AlgorithmParameterProvenanceRecord _valueRecord({
       AlgorithmParameterProvenanceStatus.prototypeHeuristic,
 }) => AlgorithmParameterProvenanceRecord(
   parameterId: id,
+  algorithmIds: algorithmIds,
   displayName: displayName,
   semanticId: id,
   formulaId: formulaId,

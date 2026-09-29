@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../../core/services/personal_log_handoff_document_service.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/usecases/personal_log_handoff_summary_service.dart';
 
 abstract interface class PersonalLogHandoffClipboard {
@@ -38,6 +38,7 @@ class PersonalLogHandoffPage extends StatefulWidget {
     super.key,
     this.summaryService = const PersonalLogHandoffSummaryService(),
     this.renderer = const SystemPersonalLogHandoffPdfRenderer(),
+    this.htmlSerializer = const PersonalLogHandoffHtmlSerializer(),
     this.delivery = const SystemPersonalLogHandoffDelivery(),
     this.clipboard = const SystemPersonalLogHandoffClipboard(),
     this.now,
@@ -45,6 +46,7 @@ class PersonalLogHandoffPage extends StatefulWidget {
 
   final PersonalLogHandoffSummaryService summaryService;
   final PersonalLogHandoffRenderer renderer;
+  final PersonalLogHandoffHtmlSerializer htmlSerializer;
   final PersonalLogHandoffDelivery delivery;
   final PersonalLogHandoffClipboard clipboard;
   final DateTime Function()? now;
@@ -58,6 +60,9 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
   late DateTime _endDate;
   final Set<PersonalLogHandoffSection> _sections = PersonalLogHandoffSection
       .values
+      .where(
+        (section) => section != PersonalLogHandoffSection.personalObservations,
+      )
       .toSet();
   PersonalLogHandoffRedaction _redaction = PersonalLogHandoffRedaction.standard;
   PersonalLogHandoffArtifact? _artifact;
@@ -104,7 +109,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('handoff.title'))),
+      appBar: PaperAppBar(title: Text(i18n.tr('handoff.title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 28, 16, 40),
@@ -136,7 +141,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     );
   }
 
-  Widget _boundaryCard(BuildContext context, AppI18n i18n) => GlassCard(
+  Widget _boundaryCard(BuildContext context, AppI18n i18n) => PaperCard(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -160,6 +165,11 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
           i18n.tr('handoff.raster_limit'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
+        const SizedBox(height: 8),
+        Text(
+          i18n.tr('handoff.html_boundary'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     ),
   );
@@ -168,7 +178,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     BuildContext context,
     AppState state,
     AppI18n i18n,
-  ) => GlassCard(
+  ) => PaperCard(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -273,7 +283,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
   ) {
     final page =
         artifact.pages[_previewPage.clamp(0, artifact.pages.length - 1)];
-    return GlassCard(
+    return PaperCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -289,6 +299,24 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
             }),
             key: const ValueKey('handoff-preview-meta'),
             style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 8),
+          ExpansionTile(
+            key: const ValueKey('handoff-reading-preview'),
+            tilePadding: EdgeInsets.zero,
+            title: Text(i18n.tr('handoff.reading_preview')),
+            subtitle: Text(i18n.tr('handoff.reading_preview_note')),
+            children: [
+              SelectionArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final block in artifact.documentBlocks)
+                      _semanticBlock(context, block, i18n),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Semantics(
@@ -350,6 +378,25 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
                 icon: const Icon(Icons.copy_all_outlined),
                 label: Text(i18n.tr('handoff.copy')),
               ),
+              Builder(
+                builder: (shareContext) {
+                  final renderObject = shareContext.findRenderObject();
+                  final sharePositionOrigin =
+                      renderObject is RenderBox && renderObject.hasSize
+                      ? renderObject.localToGlobal(Offset.zero) &
+                            renderObject.size
+                      : null;
+                  return OutlinedButton.icon(
+                    key: const ValueKey('handoff-share-html'),
+                    onPressed: _busy
+                        ? null
+                        : () =>
+                              _shareHtml(state, artifact, sharePositionOrigin),
+                    icon: const Icon(Icons.article_outlined),
+                    label: Text(i18n.tr('handoff.share_html')),
+                  );
+                },
+              ),
               OutlinedButton.icon(
                 key: const ValueKey('handoff-print'),
                 onPressed: _busy ? null : () => _print(state, artifact),
@@ -369,7 +416,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     );
   }
 
-  Widget _errorCard(AppI18n i18n) => GlassCard(
+  Widget _errorCard(AppI18n i18n) => PaperCard(
     child: Row(
       children: [
         const Icon(Icons.error_outline, color: Colors.redAccent),
@@ -383,6 +430,67 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
       ],
     ),
   );
+
+  Widget _semanticBlock(
+    BuildContext context,
+    PersonalLogHandoffDocumentBlock block,
+    AppI18n i18n,
+  ) => switch (block) {
+    PersonalLogHandoffHeadingBlock(:final level, :final text) => Padding(
+      padding: EdgeInsets.only(top: level == 1 ? 4 : 18, bottom: 6),
+      child: Semantics(
+        header: true,
+        child: Text(
+          text,
+          style: level == 1
+              ? Theme.of(context).textTheme.headlineSmall
+              : Theme.of(context).textTheme.titleMedium,
+        ),
+      ),
+    ),
+    PersonalLogHandoffParagraphBlock(:final text, :final warning) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Semantics(
+        label: warning
+            ? '${i18n.tr('handoff.important_boundary')} $text'
+            : text,
+        child: ExcludeSemantics(
+          excluding: warning,
+          child: Text(
+            text,
+            style: warning
+                ? TextStyle(color: Theme.of(context).colorScheme.error)
+                : null,
+          ),
+        ),
+      ),
+    ),
+    PersonalLogHandoffListBlock(:final items) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Semantics(
+        container: true,
+        label: i18n.tr('handoff.list'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final item in items)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(start: 16, bottom: 6),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('• '),
+                    Expanded(
+                      child: Text([item.text, ...item.details].join('\n')),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  };
 
   Future<void> _pickDate({required bool start}) async {
     final initial = start ? _startDate : _endDate;
@@ -501,6 +609,25 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     );
   }
 
+  Future<void> _shareHtml(
+    AppState state,
+    PersonalLogHandoffArtifact artifact,
+    Rect? sharePositionOrigin,
+  ) async {
+    final lease = _validatedLease(state, artifact);
+    if (lease == null) return;
+    await _runDelivery(
+      artifact,
+      () => widget.delivery.shareHtml(
+        bytes: widget.htmlSerializer.render(artifact),
+        fileName: artifact.htmlFileName,
+        sharePositionOrigin: sharePositionOrigin,
+        authorize: () => _artifactIsCurrent(lease, artifact),
+      ),
+      'html_share_requested',
+    );
+  }
+
   Future<void> _runDelivery(
     PersonalLogHandoffArtifact artifact,
     Future<Object?> Function() action,
@@ -520,6 +647,13 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
         _debug('delivery_cancelled', artifact);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(i18n.tr('handoff.delivery.cancelled'))),
+        );
+        return;
+      }
+      if (result == PersonalLogHandoffDeliveryStatus.unavailable) {
+        _debug('delivery_unavailable', artifact);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(i18n.tr('handoff.delivery.unavailable'))),
         );
         return;
       }
@@ -618,6 +752,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
         activeDrugIds: state.activeDrugIds,
         intakes: state.intakes,
         meals: state.meals,
+        observations: state.observations,
         medicationCatalog: state.medRepo.allDrugs,
         foodCatalog: state.foodRepo.allFoods,
       );

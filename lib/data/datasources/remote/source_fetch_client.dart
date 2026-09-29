@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
+import '../../../core/services/runtime_network_egress_policy.dart';
+
 /// 统一的抓取接口：
 /// - 测试时可以替换成内存 fake；
 /// - 生产时默认走 HTTP。
@@ -28,26 +30,38 @@ class HttpSourceFetchClient implements SourceFetchClient {
   static const int maxResponseBytes = 16 * 1024 * 1024;
 
   final http.Client _client;
+  final RuntimeNetworkEgressPolicy egressPolicy;
+  final RuntimeNetworkEgressPurpose egressPurpose;
+  final Set<RuntimeNetworkDataClass> egressDataClasses;
   final int responseByteLimit;
+  final bool captureResponseMetadata;
   final Map<String, Map<String, String>> _lastMetadata =
       <String, Map<String, String>>{};
 
   HttpSourceFetchClient({
     http.Client? client,
+    RuntimeNetworkEgressPolicy? egressPolicy,
+    this.egressPurpose = RuntimeNetworkEgressPurpose.publicCatalogImport,
+    this.egressDataClasses = const {
+      RuntimeNetworkDataClass.publicCatalogIdentifier,
+    },
     this.responseByteLimit = maxResponseBytes,
-  }) : _client = client ?? http.Client();
+    this.captureResponseMetadata = true,
+  }) : egressPolicy =
+           egressPolicy ?? RuntimeNetworkEgressPolicy.publicCatalogImport,
+       _client = client ?? http.Client();
 
   @override
   Future<String> getText(String url, {Map<String, String>? headers}) async {
     final response = await _getBounded(url, headers: headers);
-    _captureMetadata(url, response);
+    if (captureResponseMetadata) _captureMetadata(url, response);
     return response.body;
   }
 
   @override
   Future<List<int>> getBytes(String url, {Map<String, String>? headers}) async {
     final response = await _getBounded(url, headers: headers);
-    _captureMetadata(url, response);
+    if (captureResponseMetadata) _captureMetadata(url, response);
     return response.bodyBytes;
   }
 
@@ -55,20 +69,40 @@ class HttpSourceFetchClient implements SourceFetchClient {
     String url, {
     Map<String, String>? headers,
   }) async {
-    final uri = Uri.parse(url);
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      throw StateError('network_egress_denied:uri_invalid');
+    }
     // Query strings may carry credentials; never echo them into errors.
     final safeUrl = '${uri.scheme}://${uri.host}${uri.path}';
-    if (uri.scheme != 'https' || uri.host.isEmpty || uri.userInfo.isNotEmpty) {
-      throw StateError('Refusing non-HTTPS or malformed source URL: $safeUrl');
-    }
     final request = http.Request('GET', uri)
       ..followRedirects = false
       ..maxRedirects = 0;
     if (headers != null) request.headers.addAll(headers);
+    final dataClasses = <RuntimeNetworkDataClass>{
+      ...egressDataClasses,
+      if (request.headers.keys.any((name) => name.toLowerCase() == 'x-api-key'))
+        RuntimeNetworkDataClass.operatorSuppliedSourceCredential,
+    };
+    final decision = egressPolicy.evaluate(
+      uri: uri,
+      method: request.method,
+      purpose: egressPurpose,
+      dataClasses: dataClasses,
+      headers: request.headers,
+      requestBodyBytes: request.bodyBytes.length,
+      followsRedirects: request.followRedirects,
+    );
+    if (!decision.allowed) {
+      throw StateError('network_egress_denied:${decision.reasonCode}');
+    }
     final streamed = await _client.send(request);
     if (streamed.statusCode < 200 || streamed.statusCode >= 300) {
       await streamed.stream.drain<void>();
-      throw StateError('Failed to fetch $safeUrl: HTTP ${streamed.statusCode}');
+      throw SourceFetchHttpException(
+        statusCode: streamed.statusCode,
+        message: 'Failed to fetch $safeUrl: HTTP ${streamed.statusCode}',
+      );
     }
     final declaredLength = streamed.contentLength;
     if (declaredLength != null && declaredLength > responseByteLimit) {
@@ -129,6 +163,16 @@ class HttpSourceFetchClient implements SourceFetchClient {
     final text = await getText(url, headers: headers);
     return jsonDecode(text) as List<dynamic>;
   }
+}
+
+/// HTTP status metadata for callers that need to distinguish an empty public
+/// search from a transport failure. The message contains only the origin and
+/// path, never the query string.
+class SourceFetchHttpException extends StateError {
+  SourceFetchHttpException({required this.statusCode, required String message})
+    : super(message);
+
+  final int statusCode;
 }
 
 /// 测试用 fake client。

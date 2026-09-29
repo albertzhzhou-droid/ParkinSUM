@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
+import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/interaction_result.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/purpose_bound_consent.dart';
@@ -473,4 +474,80 @@ void main() {
     expect(polished.summary, original.summary);
     expect(polished.nextActions, original.nextActions);
   });
+
+  test(
+    'meal conflict copy prompt withholds every raw and structured dose field',
+    () async {
+      var capturedBody = '';
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/tags') {
+          return http.Response(
+            jsonEncode({
+              'models': [
+                {'name': 'llama3.2:latest', 'model': 'llama3.2:latest'},
+              ],
+            }),
+            200,
+          );
+        }
+        capturedBody = request.body;
+        return http.Response(
+          jsonEncode({
+            'message': {
+              'content': jsonEncode({
+                'summary': 'same bounded summary',
+                'analysis_text': 'same bounded analysis',
+                'key_findings': <String>[],
+                'next_actions': <String>[],
+                'data_notes': <String>[],
+                'issue_details': <String>[],
+                'safety_alignment': 'aligned',
+              }),
+            },
+          }),
+          200,
+        );
+      });
+      final adapter = LocalAiRecommendationAdapter(client: client);
+      final original = InteractionResult(
+        mealId: 'meal_prompt_minimization',
+        status: InteractionStatus.ok,
+        summary: 'deterministic summary',
+        analysisText: 'deterministic analysis',
+        issues: const <InteractionIssue>[],
+        generatedAt: DateTime.utc(2026, 8, 30),
+        score: 0,
+      );
+      final heldIntake = Intake(
+        id: 'intake_prompt_minimization',
+        drugId: 'drug_prompt_minimization',
+        takenAt: DateTime.utc(2026, 8, 30, 8),
+        dosageNote: 'UNCONFIRMED_DOSE_SENTINEL 777 mg',
+        doseAmount: 777,
+        doseUnit: 'mg',
+      );
+
+      await adapter.polishInteractionResult(
+        userProfile: buildProfile(provider: LocalAiProviders.ollama),
+        meal: Meal(
+          id: original.mealId,
+          title: 'Manufactured meal',
+          eatenAt: DateTime.utc(2026, 8, 30, 9),
+          items: const <MealItem>[],
+        ),
+        result: original,
+        activeDrugs: const [],
+        intakes: <Intake>[heldIntake],
+      );
+
+      expect(capturedBody, contains('intake_prompt_minimization'));
+      expect(capturedBody, contains('dose intentionally withheld'));
+      expect(capturedBody, isNot(contains('UNCONFIRMED_DOSE_SENTINEL')));
+      expect(capturedBody, isNot(contains('777')));
+      expect(capturedBody, isNot(contains('dosageNote')));
+      expect(capturedBody, isNot(contains('doseAmount')));
+      expect(capturedBody, isNot(contains('doseUnit')));
+      expect(capturedBody, isNot(contains('doseConfirmation')));
+    },
+  );
 }

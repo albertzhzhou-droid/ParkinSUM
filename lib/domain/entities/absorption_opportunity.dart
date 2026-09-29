@@ -24,6 +24,60 @@ class AbsorptionOpennessSample {
 /// small-intestinal absorption. This is an educational simulation — it does
 /// not predict blood concentration or patient-specific response.
 class AbsorptionOpportunityWindow {
+  static const double peakConsistencyTolerance = 1e-12;
+
+  /// Canonical declaration of the result-affecting output-integrity and wire
+  /// policies owned by this type. The declaration is shown in Algorithm
+  /// Observatory and bound to the exact source digest; it is not evidence of
+  /// pharmacokinetic or clinical validity.
+  static Map<String, dynamic> get integrityConfiguration => const {
+    r'$schema': 'parkinsum.absorption-opportunity-output-contract/1',
+    'available_integrity_rules': {
+      'medication_event_id': 'trimmed_non_empty',
+      'window_duration': 'strictly_positive',
+      'peak_position': 'inside_closed_window',
+      'delay_likelihood': 'must_not_be_unknown',
+      'samples': 'non_empty',
+      'sample_openness': 'finite_and_inside_closed_0_1',
+      'sample_minutes': 'inside_window_strictly_increasing_unique',
+      'endpoint_coverage': 'first_equals_start_and_last_equals_end',
+      'peak_sample': 'equals_finite_global_maximum_within_tolerance',
+      'maximum_openness': 'strictly_positive',
+      'peak_consistency_tolerance': peakConsistencyTolerance,
+    },
+    'availability_resolution':
+        'declared_available_with_integrity_reason_becomes_blockedIntegrity',
+    'effective_reason_policy': 'stable_set_union_declared_then_integrity',
+    'interpolation': {
+      'method': 'piecewise_linear_between_bracketing_samples',
+      'exact_endpoints': 'return_endpoint_sample',
+      'outside_window': 0.0,
+      'unavailable_or_empty': 0.0,
+    },
+    'peak_openness': 'finite_maximum_or_zero_when_unavailable_or_empty',
+    'wire_abstention': {
+      'window': null,
+      'peak_minute': null,
+      'peak_openness': null,
+      'openness_profile': <Map<String, dynamic>>[],
+    },
+    'integrity_reason_codes': [
+      'absorption.profile_medication_event_id_empty',
+      'absorption.profile_window_invalid',
+      'absorption.profile_peak_outside_window',
+      'absorption.profile_delay_likelihood_unknown',
+      'absorption.profile_samples_empty',
+      'absorption.profile_openness_nonfinite',
+      'absorption.profile_openness_out_of_range',
+      'absorption.profile_sample_outside_window',
+      'absorption.profile_sample_minute_duplicate',
+      'absorption.profile_sample_minutes_nonmonotonic',
+      'absorption.profile_window_coverage_incomplete',
+      'absorption.profile_peak_inconsistent',
+      'absorption.profile_openness_mass_empty',
+    ],
+  };
+
   final String medicationEventId;
   final TimelineWindow window;
   final int peakMinute;
@@ -129,7 +183,8 @@ class AbsorptionOpportunityWindow {
           (sample) =>
               sample.minute == peakMinute &&
               sample.openness.isFinite &&
-              (sample.openness - maximumOpenness).abs() <= 1e-12,
+              (sample.openness - maximumOpenness).abs() <=
+                  peakConsistencyTolerance,
         )) {
       reasons.add('absorption.profile_peak_inconsistent');
     }

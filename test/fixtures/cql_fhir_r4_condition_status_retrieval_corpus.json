@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-condition-status-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([Condition]) + clinicalStatus and verificationStatus coding predicates",
+  "cases": [
+    {
+      "id": "clinical_active_unconfirmed",
+      "patientContextId": "synthetic-patient-clinical-active-unconfirmed",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": true,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": true,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-clinical-active-unconfirmed"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-clinical-active-unconfirmed",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "unconfirmed"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-clinical-active-unconfirmed"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "active"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "clinical_recurrence_provisional",
+      "patientContextId": "synthetic-patient-clinical-recurrence-provisional",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": true,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": true,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-clinical-recurrence-provisional"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-clinical-recurrence-provisional",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "provisional"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-clinical-recurrence-provisional"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "recurrence"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "clinical_relapse_differential",
+      "patientContextId": "synthetic-patient-clinical-relapse-differential",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": true,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": true,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-clinical-relapse-differential"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-clinical-relapse-differential",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "differential"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-clinical-relapse-differential"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "relapse"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "clinical_inactive_confirmed",
+      "patientContextId": "synthetic-patient-clinical-inactive-confirmed",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": true,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": true,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-clinical-inactive-confirmed"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-clinical-inactive-confirmed",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "confirmed"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-clinical-inactive-confirmed"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "inactive"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "clinical_remission_refuted",
+      "patientContextId": "synthetic-patient-clinical-remission-refuted",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": true,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": true,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-clinical-remission-refuted"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-clinical-remission-refuted",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "refuted"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-clinical-remission-refuted"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "remission"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "clinical_resolved_confirmed",
+      "patientContextId": "synthetic-patient-clinical-resolved-confirmed",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": true,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": true,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-clinical-resolved-confirmed"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-clinical-resolved-confirmed",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "confirmed"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-clinical-resolved-confirmed"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "resolved"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "verification_entered_in_error",
+      "patientContextId": "synthetic-patient-verification-entered-in-error",
+      "expectedOutcomes": {
+        "hasAnyCondition": true,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-verification-entered-in-error"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-verification-entered-in-error",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "entered-in-error"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-verification-entered-in-error"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_condition",
+      "patientContextId": "synthetic-patient-no-condition",
+      "expectedOutcomes": {
+        "hasAnyCondition": false,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-no-condition"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_condition",
+      "patientContextId": "synthetic-patient-foreign-subject-condition",
+      "expectedOutcomes": {
+        "hasAnyCondition": false,
+        "hasClinicalStatusActive": false,
+        "hasClinicalStatusRecurrence": false,
+        "hasClinicalStatusRelapse": false,
+        "hasClinicalStatusInactive": false,
+        "hasClinicalStatusRemission": false,
+        "hasClinicalStatusResolved": false,
+        "hasVerificationStatusUnconfirmed": false,
+        "hasVerificationStatusProvisional": false,
+        "hasVerificationStatusDifferential": false,
+        "hasVerificationStatusConfirmed": false,
+        "hasVerificationStatusRefuted": false,
+        "hasVerificationStatusEnteredInError": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-foreign-subject-condition"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-foreign-subject-condition",
+              "verificationStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-ver-status",
+                    "code": "confirmed"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              },
+              "clinicalStatus": {
+                "coding": [
+                  {
+                    "system": "http://terminology.hl7.org/CodeSystem/condition-clinical",
+                    "code": "active"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

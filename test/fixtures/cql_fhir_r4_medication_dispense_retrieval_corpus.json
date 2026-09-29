@@ -1,0 +1,447 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-medication-dispense-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([MedicationDispense]) and exact status.value retrieval predicates",
+  "cases": [
+    {
+      "id": "status_preparation_dispense",
+      "patientContextId": "synthetic-patient-status-preparation-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": true,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-preparation-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-preparation-dispense",
+              "status": "preparation",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-preparation-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_in_progress_dispense",
+      "patientContextId": "synthetic-patient-status-in-progress-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": true,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-in-progress-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-in-progress-dispense",
+              "status": "in-progress",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-in-progress-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_cancelled_dispense",
+      "patientContextId": "synthetic-patient-status-cancelled-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": true,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-cancelled-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-cancelled-dispense",
+              "status": "cancelled",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-cancelled-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_on_hold_dispense",
+      "patientContextId": "synthetic-patient-status-on-hold-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": true,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-on-hold-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-on-hold-dispense",
+              "status": "on-hold",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-on-hold-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_completed_dispense",
+      "patientContextId": "synthetic-patient-status-completed-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": true,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-completed-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-completed-dispense",
+              "status": "completed",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-completed-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_entered_in_error_dispense",
+      "patientContextId": "synthetic-patient-status-entered-in-error-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": true,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-entered-in-error-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-entered-in-error-dispense",
+              "status": "entered-in-error",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-entered-in-error-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_stopped_dispense",
+      "patientContextId": "synthetic-patient-status-stopped-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": true,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-stopped-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-stopped-dispense",
+              "status": "stopped",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-stopped-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_declined_dispense",
+      "patientContextId": "synthetic-patient-status-declined-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": true,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-declined-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-declined-dispense",
+              "status": "declined",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-declined-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_unknown_dispense",
+      "patientContextId": "synthetic-patient-status-unknown-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": true,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-unknown-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-status-unknown-dispense",
+              "status": "unknown",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-unknown-dispense"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_dispense",
+      "patientContextId": "synthetic-patient-no-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": false,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-no-dispense"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_dispense",
+      "patientContextId": "synthetic-patient-foreign-subject-dispense",
+      "expectedOutcomes": {
+        "hasAnyDispense": false,
+        "hasStatusPreparation": false,
+        "hasStatusInProgress": false,
+        "hasStatusCancelled": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDeclined": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-foreign-subject-dispense"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationDispense",
+              "id": "synthetic-medication-dispense-foreign-subject-dispense",
+              "status": "preparation",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

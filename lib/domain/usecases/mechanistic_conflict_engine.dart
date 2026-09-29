@@ -1,6 +1,7 @@
 import '../entities/absorption_opportunity.dart';
 import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/amino_acid_competition.dart';
+import '../entities/evidence_currency.dart';
 import '../entities/gastric_emptying_profile.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/mechanistic_medication_applicability.dart';
@@ -21,33 +22,92 @@ import 'medication_entry_validator.dart';
 /// insufficient it returns an `insufficient*` result with a structured
 /// explanation rather than a number.
 class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
+  static const Set<String> coreEvidenceProviderIds = {
+    'meal_composition_normalizer',
+    'gastric_emptying',
+    'levodopa_absorption_opportunity',
+    'amino_acid_competition',
+    'mechanistic_conflict',
+  };
   static const MechanisticMedicationApplicabilityPolicy _applicabilityPolicy =
       MechanisticMedicationApplicabilityPolicy();
   static final MedicationEntryValidator _medicationEntryValidator =
       MedicationEntryValidator();
+  static final String _applicabilityManifestRef =
+      MechanisticApplicabilityManifest.current.sourceRef;
+
+  static List<String> _modelSourceRefs(Iterable<String> refs) {
+    // These are scientific and engineering assumption references. The
+    // applicability contract has its own typed identity field so it cannot be
+    // mistaken for a scientific source in traceability checks or the UI.
+    final bound = <String>{...refs}.toList(growable: false)..sort();
+    return List.unmodifiable(bound);
+  }
 
   final GastricEmptyingModel gastricEmptyingModel;
   final LevodopaAbsorptionOpportunityModel absorptionModel;
   final AminoAcidCompetitionModel competitionModel;
+  final EvidenceCurrencyRegistry evidenceCurrencyRegistry;
 
   MechanisticConflictEngine({
     GastricEmptyingModel? gastricEmptyingModel,
     LevodopaAbsorptionOpportunityModel? absorptionModel,
     AminoAcidCompetitionModel? competitionModel,
     GastricEmptyingParameterSet? gastricEmptyingParameters,
+    EvidenceCurrencyRegistry? evidenceCurrencyRegistry,
   }) : gastricEmptyingModel =
            gastricEmptyingModel ??
            GastricEmptyingModel(parameters: gastricEmptyingParameters),
        absorptionModel =
            absorptionModel ?? LevodopaAbsorptionOpportunityModel(),
-       competitionModel = competitionModel ?? AminoAcidCompetitionModel();
+       competitionModel = competitionModel ?? AminoAcidCompetitionModel(),
+       evidenceCurrencyRegistry =
+           evidenceCurrencyRegistry ?? EvidenceCurrencyRegistry.current;
 
   MechanisticConflictResult evaluate({
     required TimeAxisConflictContext context,
     required Map<String, MealComposition> mealCompositionsById,
     String resultId = 'mechanistic_result',
     String? preferredMealId,
+    DateTime? evidenceAsOfUtc,
+    Iterable<String> additionalEvidenceProviderIds = const [],
+    EvidenceCurrencyRegistry? evidenceCurrencyRegistry,
   }) {
+    final effectiveEvidenceAsOfUtc =
+        evidenceAsOfUtc?.toUtc() ?? DateTime.now().toUtc();
+    final effectiveEvidenceCurrencyRegistry =
+        evidenceCurrencyRegistry ?? this.evidenceCurrencyRegistry;
+    final evidenceAssessment = effectiveEvidenceCurrencyRegistry.assess(
+      asOfUtc: effectiveEvidenceAsOfUtc,
+    );
+    final runtimeEvidenceProviders = <String>{
+      ...coreEvidenceProviderIds,
+      ...additionalEvidenceProviderIds,
+    };
+    final evidenceCurrencyBinding =
+        EvidenceCurrencyRuntimeBinding.fromAssessment(
+          registryVersion: EvidenceCurrencyRegistry.registryVersion,
+          assessment: evidenceAssessment,
+          providerIds: runtimeEvidenceProviders,
+        );
+    final evidenceCurrencyBlockReasons = evidenceAssessment
+        .runtimeBlockReasonsFor(runtimeEvidenceProviders);
+    if (evidenceCurrencyBlockReasons.isNotEmpty) {
+      return MechanisticConflictResult.blockedIntegrity(
+        id: resultId,
+        reason: MechanisticInteractionType.insufficientMealContext,
+        integrityReasons: [
+          ...evidenceCurrencyBlockReasons,
+          'evidence_currency.snapshot_sha256:${evidenceAssessment.snapshotSha256}',
+        ],
+        evidenceCurrencyBinding: evidenceCurrencyBinding,
+        sourceRefs: _modelSourceRefs(const [
+          'src.fda.cds.guidance.2022',
+          'src.internal.prototype.heuristic',
+        ]),
+      );
+    }
+
     final directTimelineIntegrity = _timelineIdentityIntegrityReasons(context);
     final timelineIdentityFailures = <String>{
       ...context.missingFields.where(
@@ -63,10 +123,10 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMedicationContext,
         integrityReasons: timelineIdentityFailures,
-        sourceRefs: const [
+        sourceRefs: _modelSourceRefs(const [
           'src.fda.cds.guidance.2022',
           'src.internal.prototype.heuristic',
-        ],
+        ]),
       );
     }
 
@@ -98,13 +158,13 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             ? MechanisticInteractionType.insufficientMedicationContext
             : MechanisticInteractionType.insufficientMealContext,
         missingInputs: blockingTimelineFields,
-        sourceRefs: [
+        sourceRefs: _modelSourceRefs([
           if (hasMedicationBlocker) ...[
             'src.dailymed.sinemet.label',
             'src.fda.cds.guidance.2022',
           ],
           if (hasMealBlocker) 'src.hens.foodphysical.2024',
-        ],
+        ]),
       );
     }
 
@@ -114,10 +174,10 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMedicationContext,
         missingInputs: const ['medication_timeline_event'],
-        sourceRefs: const [
+        sourceRefs: _modelSourceRefs(const [
           'src.dailymed.sinemet.label',
           'src.fda.cds.guidance.2022',
-        ],
+        ]),
       );
     }
 
@@ -135,10 +195,10 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMedicationContext,
         integrityReasons: reasons,
-        sourceRefs: const [
+        sourceRefs: _modelSourceRefs(const [
           'src.dailymed.sinemet.label',
           'src.fda.cds.guidance.2022',
-        ],
+        ]),
       );
     }
 
@@ -149,10 +209,10 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       context.medicationEvents.map((event) => event.context),
     );
     if (!medicationApplicability.applicable) {
-      const sourceRefs = [
+      final sourceRefs = _modelSourceRefs(const [
         'src.dailymed.sinemet.label',
         'src.fda.cds.guidance.2022',
-      ];
+      ]);
       if (medicationApplicability.status ==
           MechanisticMedicationApplicabilityStatus.notApplicable) {
         return MechanisticConflictResult.notApplicable(
@@ -183,7 +243,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
         missingInputs: ['meal_event($preferredMealId)'],
-        sourceRefs: const ['src.hens.foodphysical.2024'],
+        sourceRefs: _modelSourceRefs(const ['src.hens.foodphysical.2024']),
       );
     }
 
@@ -194,7 +254,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
         missingInputs: const ['meal_events'],
-        sourceRefs: const ['src.hens.foodphysical.2024'],
+        sourceRefs: _modelSourceRefs(const ['src.hens.foodphysical.2024']),
       );
     }
 
@@ -281,10 +341,10 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
         integrityReasons: integrityReasons,
-        sourceRefs: const [
+        sourceRefs: _modelSourceRefs(const [
           'src.fda.cds.guidance.2022',
           'src.internal.prototype.heuristic',
-        ],
+        ]),
       );
     }
     if (unusableMealInputs.isNotEmpty) {
@@ -293,7 +353,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
         missingInputs: missingInputs,
-        sourceRefs: const ['src.hens.foodphysical.2024'],
+        sourceRefs: _modelSourceRefs(const ['src.hens.foodphysical.2024']),
       );
     }
 
@@ -333,7 +393,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
         missingInputs: missingInputs,
-        sourceRefs: const ['src.hens.foodphysical.2024'],
+        sourceRefs: _modelSourceRefs(const ['src.hens.foodphysical.2024']),
       );
     }
 
@@ -367,7 +427,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             else
               'meal_composition(${mealForEvent.compositionId})',
           ],
-          sourceRefs: const ['src.hens.foodphysical.2024'],
+          sourceRefs: _modelSourceRefs(const ['src.hens.foodphysical.2024']),
         );
       }
       final providerAvailability = _mergeProviderAvailability([
@@ -392,7 +452,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             id: resultId,
             reason: MechanisticInteractionType.insufficientMealContext,
             integrityReasons: reasons,
-            sourceRefs: sourceRefs,
+            sourceRefs: _modelSourceRefs(sourceRefs),
           );
         }
         if (providerAvailability ==
@@ -401,14 +461,14 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             id: resultId,
             reason: MechanisticInteractionType.insufficientMealContext,
             reasonCodes: reasons,
-            sourceRefs: sourceRefs,
+            sourceRefs: _modelSourceRefs(sourceRefs),
           );
         }
         return MechanisticConflictResult.insufficientContext(
           id: resultId,
           reason: MechanisticInteractionType.insufficientMealContext,
           missingInputs: reasons,
-          sourceRefs: sourceRefs,
+          sourceRefs: _modelSourceRefs(sourceRefs),
         );
       }
       if (eval.competition.competitionBand == CompetitionBand.unknown) {
@@ -421,7 +481,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
               (field) => 'meal_composition(${eval.composition.id}).$field',
             ),
           }.toList(growable: false)..sort(),
-          sourceRefs: eval.competition.sourceRefs,
+          sourceRefs: _modelSourceRefs(eval.competition.sourceRefs),
         );
       }
       evaluations.add(eval);
@@ -432,7 +492,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
         missingInputs: const ['meal_evaluation'],
-        sourceRefs: const ['src.hens.foodphysical.2024'],
+        sourceRefs: _modelSourceRefs(const ['src.hens.foodphysical.2024']),
       );
     }
 
@@ -464,11 +524,12 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             delayedArrivalLikelihood:
                 e.absorption.delayedArrivalLikelihood.name,
             isPrimary: identical(e, primary),
-            sourceRefs: <String>{
+            sourceRefs: _modelSourceRefs(<String>{
               ...e.emptyingProfile.sourceRefs,
               ...e.absorption.sourceRefs,
               ...e.competition.sourceRefs,
-            }.toList(growable: false),
+            }),
+            applicabilityManifestRef: _applicabilityManifestRef,
             uncertaintyReasons: <String>[
               if (e.emptyingProfile.uncertaintyBand != UncertaintyBand.narrow)
                 'gastric_emptying_${e.emptyingProfile.uncertaintyBand.name}',
@@ -532,11 +593,11 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             (field) => 'meal_composition(${composition.id}).$field',
           ),
         }.toList(growable: false)..sort(),
-        sourceRefs: <String>{
+        sourceRefs: _modelSourceRefs(<String>{
           ...emptyingProfile.sourceRefs,
           ...absorption.sourceRefs,
           ...competition.sourceRefs,
-        }.toList(growable: false),
+        }),
       );
     }
 
@@ -577,11 +638,11 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
         ...absorption.missingInputs.map((m) => 'absorption_missing:$m'),
     ];
 
-    final sourceRefs = <String>{
+    final sourceRefs = _modelSourceRefs(<String>{
       ...emptyingProfile.sourceRefs,
       ...absorption.sourceRefs,
       ...competition.sourceRefs,
-    }.toList(growable: false);
+    });
 
     final explanation = _buildExplanation(
       resultId: resultId,
@@ -663,6 +724,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       ]),
       uncertaintyReasons: List.unmodifiable(uncertaintyReasons),
       sourceRefs: sourceRefs,
+      applicabilityManifestRef: _applicabilityManifestRef,
       limitationText: MechanisticExplanation.defaultLimitation,
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,
@@ -671,6 +733,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       absorptionOpportunityWindow: absorption,
       competitionTimeline: competition,
       perEventTraces: perEventTraces,
+      evidenceCurrencyBinding: evidenceCurrencyBinding,
     );
   }
 
@@ -1205,6 +1268,7 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       inputFieldsUsed: List.unmodifiable(inputFieldsUsed),
       missingOrUncertainInputs: List.unmodifiable(missingInputs.toSet()),
       sourceRefs: List.unmodifiable(sourceRefs),
+      applicabilityManifestRef: _applicabilityManifestRef,
       limitationText: MechanisticExplanation.defaultLimitation,
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,

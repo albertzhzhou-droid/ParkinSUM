@@ -17,6 +17,7 @@ import 'rule_explanation_projection.dart';
 import 'rule_registry_compiler.dart';
 import 'runtime_rule_engine.dart';
 import 'runtime_rule_support.dart';
+import 'knowledge_governance_service.dart';
 
 /// Main application service that stitches together storage, fact ingestion,
 /// runtime evaluation, and audit persistence.
@@ -33,6 +34,7 @@ class ClinicalDecisionSupportService {
   final CdssArtifactStore artifactStore;
   final RuleRegistryCompiler ruleRegistryCompiler;
   final CdssIdentifierFactory identifierFactory;
+  final KnowledgeGovernanceService? knowledgeGovernanceService;
 
   ClinicalDecisionSupportService({
     required this.database,
@@ -42,6 +44,7 @@ class ClinicalDecisionSupportService {
     CdssArtifactStore? artifactStore,
     RuleRegistryCompiler? ruleRegistryCompiler,
     CdssIdentifierFactory? identifierFactory,
+    this.knowledgeGovernanceService,
   }) : runtimeRuleSupport = runtimeRuleSupport ?? const RuntimeRuleSupport(),
        artifactStore = artifactStore ?? createCdssArtifactStore(),
        ruleRegistryCompiler = ruleRegistryCompiler ?? RuleRegistryCompiler(),
@@ -678,9 +681,9 @@ class ClinicalDecisionSupportService {
                 (row) => '${row['rule_version'] ?? ''}' == resolvedRulesVersion,
               )
               .toList(growable: false);
-    final candidateRows = versionRows.isNotEmpty || resolvedRulesVersion == null
-        ? versionRows
-        : allActiveRows;
+    // A requested version is an exact pin. Falling back to every active row
+    // can silently combine unrelated releases or resurrect a superseded rule.
+    final candidateRows = versionRows;
     if (candidateRows.isEmpty) return const <RuleRegistryEntry>[];
     final compiled = <RuleRegistryEntry>[];
     for (final row in candidateRows) {
@@ -735,6 +738,13 @@ class ClinicalDecisionSupportService {
         activeVersions.contains(requested)) {
       return requested;
     }
+    if (requested != null &&
+        requested.isNotEmpty &&
+        requested != 'latest_promoted') {
+      // Preserve the requested identity so the caller can report a missing
+      // pinned version; do not substitute a different promoted release.
+      return requested;
+    }
     final snapshots = await database.queryTable('engine_snapshot');
     final promoted =
         snapshots
@@ -747,11 +757,6 @@ class ClinicalDecisionSupportService {
     for (final snapshot in promoted) {
       final version = '${snapshot['rules_version'] ?? ''}';
       if (activeVersions.contains(version)) return version;
-    }
-    if (requested != null &&
-        requested.isNotEmpty &&
-        requested != 'latest_promoted') {
-      return requested;
     }
     return null;
   }
@@ -902,6 +907,21 @@ class ClinicalDecisionSupportService {
   }) async {
     await database.initialize();
 
+    // Production services resolve one complete, signed knowledge package.
+    // Test/workbench instances without a governance service retain their
+    // isolated registry/caller-supplied behavior.
+    final governance = knowledgeGovernanceService;
+    final governanceResolution = governance == null
+        ? null
+        : await governance.resolveAuthorizedRules();
+    var governanceHoldReason =
+        governanceResolution != null && !governanceResolution.allowed
+        ? governanceResolution.reason
+        : null;
+    final resolvedRulesVersion = governanceResolution?.allowed == true
+        ? governanceResolution!.rulesVersion ?? rulesVersion
+        : rulesVersion;
+
     final regionRows = await database.queryTable('region_jurisdiction_map');
     final jurisdictionChain = runtimeRuleEngine.resolveJurisdictionChain(
       context,
@@ -922,7 +942,7 @@ class ClinicalDecisionSupportService {
     final snapshot = EngineSnapshotRecord(
       snapshotId: snapshotId,
       factsVersion: factsVersion,
-      rulesVersion: rulesVersion,
+      rulesVersion: resolvedRulesVersion,
       createdAt: DateTime.now(),
       promotedAt: null,
       rollbackParent: null,
@@ -930,20 +950,27 @@ class ClinicalDecisionSupportService {
     );
     await database.insertEngineSnapshot(snapshot);
 
-    final registryRules = await loadCompiledRulesFromRegistry(
-      rulesVersion: rulesVersion,
-    );
-    final registryRuleIds = registryRules.map((rule) => rule.ruleId).toSet();
-    final effectiveRules = [
-      ...registryRules,
-      ...rules.where((rule) => !registryRuleIds.contains(rule.ruleId)),
-    ];
+    final registryRules = governanceResolution == null
+        ? await loadCompiledRulesFromRegistry(rulesVersion: rulesVersion)
+        : const <RuleRegistryEntry>[];
+    var effectiveRules = governanceResolution == null
+        ? <RuleRegistryEntry>[
+            ...registryRules,
+            ...rules.where(
+              (rule) => !registryRules.any(
+                (registered) => registered.ruleId == rule.ruleId,
+              ),
+            ),
+          ]
+        : governanceResolution.allowed
+        ? List<RuleRegistryEntry>.of(governanceResolution.rules)
+        : <RuleRegistryEntry>[];
     final candidates = runtimeRuleEngine.evaluateCandidates(
       context: context,
       rules: effectiveRules,
       regionJurisdictionRows: regionRows,
     );
-    final sortedCandidates = runtimeRuleEngine.resolveByPriority(
+    var sortedCandidates = runtimeRuleEngine.resolveByPriority(
       candidates,
       jurisdictionChain: jurisdictionChain,
     );
@@ -967,6 +994,49 @@ class ClinicalDecisionSupportService {
 
     final alerts = <RuntimeAlert>[];
     final auditEntries = <RuntimeAuditEntry>[];
+
+    void addGovernanceHold(String reason) {
+      final explanation =
+          context.userProfile.displayLocale.toLowerCase().startsWith('zh')
+          ? '知识规则包当前未获授权或已发生变化，自动判断已暂停，请人工复核。'
+          : 'The authorized knowledge rule set is unavailable or changed during evaluation. Automated decision is held for manual review.';
+      const target = 'knowledge-governance';
+      final actions = <Map<String, dynamic>>[
+        {
+          'type': 'require_manual_review',
+          'params': {'reason': reason},
+        },
+      ];
+      alerts.add(
+        RuntimeAlert(
+          target: target,
+          decision: RuntimeDecisionType.requireReview,
+          severity: 'critical',
+          explanation: explanation,
+          actions: actions,
+          evidenceSources: const <String>[],
+          evidenceDetails: const <String>[],
+          evidenceRecords: const <EvidenceReferenceDetail>[],
+          ruleIds: const <String>[],
+        ),
+      );
+      auditEntries.add(
+        RuntimeAuditEntry(
+          target: target,
+          decision: RuntimeDecisionType.requireReview,
+          winningRuleIds: const <String>[],
+          suppressedRuleIds: const <String>[],
+          sourceDocRefs: const <String>[],
+          evidenceDetails: const <String>[],
+          evidenceRecords: const <EvidenceReferenceDetail>[],
+          inputHash: inputHash,
+          decisionReason: reason,
+          machineActions: actions,
+          humanMessage: explanation,
+          needsHumanReview: true,
+        ),
+      );
+    }
 
     for (final entry in grouped.entries) {
       final bucket = entry.value;
@@ -1062,7 +1132,9 @@ class ClinicalDecisionSupportService {
       );
     }
 
-    if (alerts.isEmpty) {
+    if (alerts.isEmpty && governanceHoldReason != null) {
+      addGovernanceHold(governanceHoldReason);
+    } else if (alerts.isEmpty) {
       final fallbackMissingFields = runtimeRuleSupport
           .collectRelevantMissingFields(
             context: context,
@@ -1121,6 +1193,22 @@ class ClinicalDecisionSupportService {
       );
     }
 
+    // Rule tests, signature verification, and storage replay are asynchronous.
+    // Re-read the anchored governance state immediately before persisting any
+    // patient-level runtime result; a concurrent withdrawal turns this run
+    // into an explicit hold instead of emitting a stale authorized decision.
+    if (governance != null &&
+        governanceResolution != null &&
+        !await governance.isResolutionCurrent(governanceResolution)) {
+      governanceHoldReason = 'knowledge_governance_changed_during_run';
+      alerts.clear();
+      auditEntries.clear();
+      grouped.clear();
+      effectiveRules = <RuleRegistryEntry>[];
+      sortedCandidates = <RuleEvaluationCandidate>[];
+      addGovernanceHold('knowledge_governance_changed_during_run');
+    }
+
     final ruleHitTrace = _ruleHitTrace(
       rules: effectiveRules,
       candidates: sortedCandidates,
@@ -1144,11 +1232,26 @@ class ClinicalDecisionSupportService {
       'jurisdiction_chain': jurisdictionChain,
       'snapshot': {
         'facts_version': factsVersion,
-        'rules_version': rulesVersion,
+        'rules_version': resolvedRulesVersion,
       },
-      'compiled_rule_source': registryRules.isEmpty
+      'compiled_rule_source': governanceResolution != null
+          ? governanceHoldReason != null || !governanceResolution.allowed
+                ? 'governance_held'
+                : governanceResolution.isPrototypeBaseline
+                ? 'exact_governed_prototype_baseline'
+                : 'authorized_knowledge_package'
+          : registryRules.isEmpty
           ? 'caller_supplied_rules'
           : 'database_rule_registry_snapshot',
+      if (governanceResolution != null)
+        'knowledge_governance': {
+          'allowed':
+              governanceResolution.allowed && governanceHoldReason == null,
+          'reason': governanceHoldReason,
+          'package_digest': governanceResolution.packageDigest,
+          'prototype_baseline': governanceResolution.isPrototypeBaseline,
+          'state_head_digest': governanceResolution.stateHeadDigest,
+        },
       'trace_metadata': {
         'region_jurisdiction_source': regionJurisdictionMapSource,
         'warnings': [
@@ -1448,6 +1551,7 @@ class ClinicalDecisionSupportService {
           }
           return {
             'rule_id': rule.ruleId,
+            'rule_version': rule.version,
             'target': target,
             'decision': rule.thenClause.decision.wireValue,
             'trace_decision': decision,

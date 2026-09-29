@@ -179,6 +179,9 @@ class RuntimeRuleSupport {
     switch (path) {
       case 'drug.daily_dose_mg':
         return 'dose';
+      case 'drug.administration_dose_value':
+      case 'drug.administration_dose_unit':
+        return 'administration_dose';
       case 'drug.formulation':
       case 'drug.dosage_form':
       case 'drug.release_type':
@@ -205,6 +208,10 @@ class RuntimeRuleSupport {
     switch (field) {
       case 'dose':
         return context.drug.dailyDoseMg == null;
+      case 'administration_dose':
+        return context.drug.administrationDoseValue == null ||
+            context.drug.administrationDoseUnit == null ||
+            context.drug.administrationDoseUnit!.trim().isEmpty;
       case 'formulation':
         return context.drug.formulation.isEmpty ||
             context.drug.dosageForm.isEmpty ||

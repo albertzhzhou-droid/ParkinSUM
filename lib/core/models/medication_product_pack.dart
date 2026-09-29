@@ -156,6 +156,160 @@ class MedicationProductPack {
   }
 }
 
+const String medicationPackageDoseDerivationSchema =
+    'parkinsum.medication-package-dose-derivation/1';
+const String medicationPackageDoseDerivationFormula =
+    'ingredient-strength-per-discrete-unit-times-confirmed-unit-quantity';
+
+/// A local, source-linked calculation trace. This records the inputs and
+/// arithmetic; it does not establish that the source is current or clinically
+/// correct, or that the recorded quantity was administered.
+final class MedicationPackageDoseDerivation {
+  const MedicationPackageDoseDerivation({
+    required this.ingredientName,
+    required this.sourceRawStrength,
+    required this.numeratorValue,
+    required this.numeratorUnit,
+    required this.denominatorValue,
+    required this.denominatorUnit,
+    required this.denominatorDisposition,
+    required this.packageUnitQuantity,
+    required this.packageUnitLabel,
+    required this.resultValue,
+    required this.resultUnit,
+  });
+
+  final String ingredientName;
+  final String sourceRawStrength;
+  final double numeratorValue;
+  final String numeratorUnit;
+  final double? denominatorValue;
+  final String? denominatorUnit;
+  final String denominatorDisposition;
+  final double packageUnitQuantity;
+  final String packageUnitLabel;
+  final double resultValue;
+  final String resultUnit;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'schema': medicationPackageDoseDerivationSchema,
+    'formula': medicationPackageDoseDerivationFormula,
+    'formula_version': 1,
+    'ingredient_name': ingredientName,
+    'source_raw_strength': sourceRawStrength,
+    'numerator_value': numeratorValue,
+    'numerator_unit': numeratorUnit,
+    'denominator_value': denominatorValue,
+    'denominator_unit': denominatorUnit,
+    'denominator_disposition': denominatorDisposition,
+    'confirmed_package_unit_quantity': packageUnitQuantity,
+    'package_unit_label': packageUnitLabel,
+    'result_value': resultValue,
+    'result_unit': resultUnit,
+  };
+
+  static MedicationPackageDoseDerivation? fromJson(Object? raw) {
+    if (raw is! Map) return null;
+    final json = Map<String, Object?>.from(raw);
+    const expectedKeys = <String>{
+      'schema',
+      'formula',
+      'formula_version',
+      'ingredient_name',
+      'source_raw_strength',
+      'numerator_value',
+      'numerator_unit',
+      'denominator_value',
+      'denominator_unit',
+      'denominator_disposition',
+      'confirmed_package_unit_quantity',
+      'package_unit_label',
+      'result_value',
+      'result_unit',
+    };
+    if (json.keys.toSet().length != expectedKeys.length ||
+        !json.keys.toSet().containsAll(expectedKeys) ||
+        json['schema'] != medicationPackageDoseDerivationSchema ||
+        json['formula'] != medicationPackageDoseDerivationFormula ||
+        json['formula_version'] != 1) {
+      return null;
+    }
+    final numeratorValue = json['numerator_value'];
+    final denominatorValue = json['denominator_value'];
+    final packageUnitQuantity = json['confirmed_package_unit_quantity'];
+    final resultValue = json['result_value'];
+    final ingredientName = _nonEmptyString(json['ingredient_name']);
+    final sourceRawStrength = _nonEmptyString(json['source_raw_strength']);
+    final numeratorUnit = _nonEmptyString(json['numerator_unit']);
+    final denominatorUnit = _nonEmptyString(json['denominator_unit']);
+    final denominatorDisposition = _nonEmptyString(
+      json['denominator_disposition'],
+    );
+    final packageUnitLabel = _nonEmptyString(json['package_unit_label']);
+    final resultUnit = _nonEmptyString(json['result_unit']);
+    if (numeratorValue is! num ||
+        (denominatorValue != null && denominatorValue is! num) ||
+        packageUnitQuantity is! num ||
+        resultValue is! num ||
+        ingredientName == null ||
+        sourceRawStrength == null ||
+        numeratorUnit == null ||
+        denominatorDisposition == null ||
+        packageUnitLabel == null ||
+        resultUnit == null) {
+      return null;
+    }
+    final numerator = numeratorValue.toDouble();
+    final denominator = (denominatorValue as num?)?.toDouble();
+    final quantity = packageUnitQuantity.toDouble();
+    final result = resultValue.toDouble();
+    const dispositions = <String>{
+      'source_numeric_one',
+      'source_one_matching_dosage_unit',
+      'assumed_one_discrete_dosage_unit',
+    };
+    final implicitDenominator =
+        denominatorDisposition == 'assumed_one_discrete_dosage_unit';
+    final denominatorShapeValid = switch (denominatorDisposition) {
+      'source_numeric_one' => denominator == 1 && denominatorUnit == null,
+      'source_one_matching_dosage_unit' =>
+        denominator == 1 && denominatorUnit != null,
+      'assumed_one_discrete_dosage_unit' =>
+        denominator == null && denominatorUnit == null,
+      _ => false,
+    };
+    if (!numerator.isFinite ||
+        numerator <= 0 ||
+        !quantity.isFinite ||
+        quantity <= 0 ||
+        quantity > 10 ||
+        !result.isFinite ||
+        result <= 0 ||
+        result != numerator * quantity ||
+        resultUnit != numeratorUnit ||
+        !dispositions.contains(denominatorDisposition) ||
+        !denominatorShapeValid ||
+        (implicitDenominator &&
+            (denominator != null || denominatorUnit != null)) ||
+        (!implicitDenominator && denominator != 1)) {
+      return null;
+    }
+    return MedicationPackageDoseDerivation(
+      ingredientName: ingredientName,
+      sourceRawStrength: sourceRawStrength,
+      numeratorValue: numerator,
+      numeratorUnit: numeratorUnit,
+      denominatorValue: denominator,
+      denominatorUnit: denominatorUnit,
+      denominatorDisposition: denominatorDisposition,
+      packageUnitQuantity: quantity,
+      packageUnitLabel: packageUnitLabel,
+      resultValue: result,
+      resultUnit: resultUnit,
+    );
+  }
+}
+
 /// Immutable product metadata captured alongside an intake. This snapshot is
 /// intentionally separate from the actual amount taken: package strength
 /// alone is never evidence that a person consumed one package unit.
@@ -170,6 +324,10 @@ class MedicationProductSelection {
   final String? doseBasisIngredient;
   final double? unitQuantity;
   final String? unitLabel;
+  final String? sourceSystem;
+  final String? sourceUrl;
+  final String? sourceRetrievedAtUtc;
+  final MedicationPackageDoseDerivation? doseDerivation;
 
   const MedicationProductSelection({
     required this.packId,
@@ -182,6 +340,10 @@ class MedicationProductSelection {
     this.doseBasisIngredient,
     this.unitQuantity,
     this.unitLabel,
+    this.sourceSystem,
+    this.sourceUrl,
+    this.sourceRetrievedAtUtc,
+    this.doseDerivation,
   });
 
   factory MedicationProductSelection.fromPack(MedicationProductPack pack) {
@@ -200,6 +362,9 @@ class MedicationProductSelection {
       labelerName: pack.labelerName,
       strengthDisplay: pack.strengthDisplay,
       packageDescription: pack.packageDescription,
+      sourceSystem: pack.sourceSystem,
+      sourceUrl: pack.sourceUrl,
+      sourceRetrievedAtUtc: pack.retrievedAt?.toUtc().toIso8601String(),
     );
   }
 
@@ -207,6 +372,7 @@ class MedicationProductSelection {
     required String doseBasisIngredient,
     required double unitQuantity,
     required String unitLabel,
+    required MedicationPackageDoseDerivation doseDerivation,
   }) {
     return MedicationProductSelection(
       packId: packId,
@@ -219,6 +385,25 @@ class MedicationProductSelection {
       doseBasisIngredient: doseBasisIngredient,
       unitQuantity: unitQuantity,
       unitLabel: unitLabel,
+      sourceSystem: sourceSystem,
+      sourceUrl: sourceUrl,
+      sourceRetrievedAtUtc: sourceRetrievedAtUtc,
+      doseDerivation: doseDerivation,
+    );
+  }
+
+  MedicationProductSelection withoutDoseDerivation() {
+    return MedicationProductSelection(
+      packId: packId,
+      identifierSystem: identifierSystem,
+      identifierValue: identifierValue,
+      displayName: displayName,
+      labelerName: labelerName,
+      strengthDisplay: strengthDisplay,
+      packageDescription: packageDescription,
+      sourceSystem: sourceSystem,
+      sourceUrl: sourceUrl,
+      sourceRetrievedAtUtc: sourceRetrievedAtUtc,
     );
   }
 
@@ -233,6 +418,11 @@ class MedicationProductSelection {
     if (doseBasisIngredient != null) 'doseBasisIngredient': doseBasisIngredient,
     if (unitQuantity != null) 'unitQuantity': unitQuantity,
     if (unitLabel != null) 'unitLabel': unitLabel,
+    if (sourceSystem != null) 'sourceSystem': sourceSystem,
+    if (sourceUrl != null) 'sourceUrl': sourceUrl,
+    if (sourceRetrievedAtUtc != null)
+      'sourceRetrievedAtUtc': sourceRetrievedAtUtc,
+    if (doseDerivation != null) 'doseDerivation': doseDerivation!.toJson(),
   };
 
   static MedicationProductSelection? fromJson(Object? raw) {
@@ -262,6 +452,12 @@ class MedicationProductSelection {
           ? quantity.toDouble()
           : null,
       unitLabel: _nonEmptyString(json['unitLabel']),
+      sourceSystem: _nonEmptyString(json['sourceSystem']),
+      sourceUrl: _nonEmptyString(json['sourceUrl']),
+      sourceRetrievedAtUtc: _nonEmptyString(json['sourceRetrievedAtUtc']),
+      doseDerivation: MedicationPackageDoseDerivation.fromJson(
+        json['doseDerivation'],
+      ),
     );
   }
 }

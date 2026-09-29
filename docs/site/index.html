@@ -3,252 +3,122 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="ParkinSUM Companion demo site: understand the educational local-first Flutter prototype, demo flows, screenshots, and release options in 30 seconds."
-    />
-    <title>ParkinSUM Companion | 30-Second Demo</title>
-    <link rel="icon" href="../assets/brand/parkinsum-icon.png" />
+    <meta name="description" content="Explore ParkinSUM's Paper workspace, deterministic rule explanations, and synthetic Algorithm Observatory. An educational local-first Flutter prototype." />
+    <meta name="theme-color" content="#f6f1e6" />
+    <title>ParkinSUM Companion · A notebook for inspectable evidence</title>
+    <link rel="icon" href="../assets/brand/parkinsum-icon-warm.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     <header class="topbar">
-      <a class="brand" href="#overview" aria-label="ParkinSUM demo home">
-        <img src="../assets/brand/parkinsum-icon.png" alt="" />
-        <span>ParkinSUM Demo</span>
+      <a class="brand" href="#overview" aria-label="ParkinSUM home">
+        <img src="../assets/brand/parkinsum-icon-warm.png" alt="" width="34" height="34" />
+        <span>ParkinSUM <small>Companion</small></span>
       </a>
-      <nav aria-label="Demo sections">
-        <a href="#overview">Overview</a>
-        <a href="#screens">Screens</a>
-        <a href="#try">Try it</a>
-        <a href="#safety">Safety</a>
+      <nav aria-label="Showcase sections">
+        <a href="#workspace">Workspace</a>
+        <a href="#evidence">Evidence</a>
+        <a href="#try">Explore</a>
+        <a href="https://github.com/albertzhzhou-droid/ParkinSUM">GitHub ↗</a>
       </nav>
     </header>
 
-    <main>
+    <main id="main">
       <section class="hero" id="overview">
         <div class="hero-copy">
-          <img
-            class="wordmark"
-            src="../assets/brand/parkinsum-wordmark.png"
-            alt="ParkinSUM"
-          />
-          <p class="eyebrow">30-second project demo</p>
-          <h1>
-            A local-first Flutter prototype for educational food-medication
-            interaction awareness.
-          </h1>
-          <p class="lead">
-            ParkinSUM combines synthetic meal logging, medication context,
-            deterministic rule checks, and evidence-oriented explanations so a
-            reviewer can see how the app reaches a conservative educational
-            result.
-          </p>
-          <div class="action-row" aria-label="Primary actions">
-            <a class="button primary" href="#screens">See app screens</a>
-            <a class="button" href="#try">Try / release options</a>
-            <a
-              class="button"
-              href="https://github.com/albertzhzhou-droid/ParkinSUM"
-            >
-              GitHub repo
-            </a>
+          <p class="eyebrow">The Paper edition · September 2026</p>
+          <h1>A research notebook.<br /><em>An inspectable story.</em></h1>
+          <p class="lead">Meal and medication context, deterministic explanations,
+            and the evidence behind an educational model — brought together in
+            one local-first workspace.</p>
+          <div class="action-row">
+            <a class="button primary" href="#workspace">Explore the workspace <span aria-hidden="true">↓</span></a>
+            <a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM#run-locally">Run locally ↗</a>
           </div>
-          <p class="boundary">
-            Synthetic/demo data only. Not medical advice, not a medical device,
-            and no clinical validation is claimed.
-          </p>
+          <p class="boundary">Educational prototype. Synthetic public demos only.
+            Not medical advice; no clinical validation is claimed.</p>
         </div>
-
-        <div class="hero-stage" aria-label="ParkinSUM app preview">
-          <div class="glass-device">
-            <img
-              src="../assets/screenshots/catalog-showcase.png"
-              alt="Catalog page with ParkinSUM branded showcase module"
-            />
-          </div>
-          <div class="quick-read">
-            <article>
-              <span>01</span>
-              <strong>Log synthetic context</strong>
-              <p>Meals, medication selections, and timeline entries.</p>
-            </article>
-            <article>
-              <span>02</span>
-              <strong>Run deterministic checks</strong>
-              <p>Rules stay inspectable and repeatable.</p>
-            </article>
-            <article>
-              <span>03</span>
-              <strong>Explain the result</strong>
-              <p>Scores, findings, limitations, and next-action text.</p>
-            </article>
-          </div>
-        </div>
+        <aside class="notebook" aria-label="Project principles">
+          <div class="notebook-heading"><span>ParkinSUM field notes</span><span aria-hidden="true">01</span></div>
+          <p class="notebook-title">Make the assumptions<br />part of the explanation.</p>
+          <ol class="principles">
+            <li><span>01</span><div><strong>Record the context</strong><p>Keep meals, medication entries, and observations together.</p></div></li>
+            <li><span>02</span><div><strong>Follow the evidence</strong><p>Inspect sources, missing inputs, and deterministic rule traces.</p></div></li>
+            <li><span>03</span><div><strong>Keep the boundary visible</strong><p>A model's output is only as useful as its stated limitations.</p></div></li>
+          </ol>
+          <p class="notebook-foot">Local-first Flutter · Provenance-aware · Reviewable</p>
+        </aside>
       </section>
 
-      <section class="strip" aria-label="Core promise">
-        <article>
-          <strong>Local-first</strong>
-          <span>public demos avoid server dependence</span>
-        </article>
-        <article>
-          <strong>Explainable</strong>
-          <span>outputs show rule weights and evidence context</span>
-        </article>
-        <article>
-          <strong>Guardrailed</strong>
-          <span>the repo keeps education separate from clinical use</span>
-        </article>
+      <section class="strip" aria-label="Project scope">
+        <article><strong>One calm workspace</strong><p>Five chapters, one entry composer, a shared command palette.</p></article>
+        <article><strong>Deterministic at the core</strong><p>Rules retain authority over classifications, scores, and safety gates.</p></article>
+        <article><strong>Explicit about uncertainty</strong><p>Missing context and unsupported interpretations stay visible.</p></article>
       </section>
 
-      <section class="section" id="screens">
+      <section class="section" id="workspace">
         <div class="section-heading">
-          <p class="eyebrow">Real app flow</p>
-          <h2>Four screens explain the app without reading the code.</h2>
+          <p class="eyebrow">I. The everyday workspace</p>
+          <h2>Five chapters.<br />A clear place for each task.</h2>
+          <p>Paper pairs warm opaque surfaces with readable typography and a
+            responsive sidebar. The app's finite transitions respect reduced
+            motion settings.</p>
         </div>
-        <div class="screen-grid">
-          <figure class="screen-card large">
-            <img
-              src="../assets/screenshots/next-meal-setup.png"
-              alt="Next-meal setup screen with time-window controls"
-            />
-            <figcaption>
-              <strong>1. Plan a next-meal window</strong>
-              <span>
-                The user gives the timing window; the app keeps the recommendation
-                path conservative when information is incomplete.
-              </span>
-            </figcaption>
-          </figure>
-          <figure class="screen-card">
-            <img
-              src="../assets/screenshots/next-meal-results.png"
-              alt="Next-meal results with ranked synthetic food candidates"
-            />
-            <figcaption>
-              <strong>2. Rank synthetic food candidates</strong>
-              <span>
-                The prototype surfaces candidate foods, allow labels, and short
-                rationale bullets.
-              </span>
-            </figcaption>
-          </figure>
-          <figure class="screen-card">
-            <img
-              src="../assets/screenshots/conflict-explanation.png"
-              alt="Conflict explanation dialog with rule weights and model trace"
-            />
-            <figcaption>
-              <strong>3. Show the explanation layer</strong>
-              <span>
-                Rule weights, key findings, model trace, and safety boundaries
-                are visible in the result.
-              </span>
-            </figcaption>
-          </figure>
-          <figure class="screen-card">
-            <img
-              src="../assets/screenshots/analytics-local-ai.png"
-              alt="Analytics and local AI configuration screen"
-            />
-            <figcaption>
-              <strong>4. Configure local AI polish</strong>
-              <span>
-                Optional local models can polish wording after deterministic
-                checks have already gated the result.
-              </span>
-            </figcaption>
-          </figure>
+        <div class="chapter-grid">
+          <article class="chapter"><span class="chapter-number">01 / Today</span><h3>Start with an entry.</h3><p>One composer for a meal, medication intake, or observation, alongside recent activity and previews.</p></article>
+          <article class="chapter"><span class="chapter-number">02 / Timeline</span><h3>Keep the sequence.</h3><p>Browse records, inspect details, edit entries, and choose explicit export actions.</p></article>
+          <article class="chapter"><span class="chapter-number">03 / Next meal</span><h3>Compare with context.</h3><p>Set a time window and inspect candidate explanations, missing information, and model limitations.</p></article>
+          <article class="chapter"><span class="chapter-number">04 / Insights</span><h3>Read your records.</h3><p>Explore descriptive logging and protein-distribution views, without inferring clinical outcomes.</p></article>
+          <article class="chapter"><span class="chapter-number">05 / Library</span><h3>Check the source.</h3><p>Review selected medications and the food/medication catalog with source and jurisdiction context.</p></article>
         </div>
+        <p class="section-note">Evidence, data, and operational tools are reachable
+          from the sidebar or <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd>. Local AI configuration
+          lives in Settings → Advanced.</p>
+        <div class="capture-grid" aria-label="Actual Paper app captures">
+          <figure class="capture wide"><a href="../assets/screenshots/paper-today.png"><img src="../assets/screenshots/paper-today.png" alt="Paper Today chapter with one synthetic meal, the entry composer, and zero active medications" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Today · One place to begin</strong><span>A saved synthetic meal, recent activity, descriptive figures, and the conservative candidate preview.</span></figcaption></figure>
+          <figure class="capture"><a href="../assets/screenshots/paper-timeline.png"><img src="../assets/screenshots/paper-timeline.png" alt="Paper Timeline with the saved synthetic demo meal" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Timeline · Follow the record</strong><span>The synthetic meal appears in its chronological context.</span></figcaption></figure>
+          <figure class="capture"><a href="../assets/screenshots/paper-next-meal.png"><img src="../assets/screenshots/paper-next-meal.png" alt="Paper Next meal settings before result generation" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Next meal · Set the context</strong><span>The comparison settings before any result is generated.</span></figcaption></figure>
+          <figure class="capture wide"><a href="../assets/screenshots/paper-library.png"><img src="../assets/screenshots/paper-library.png" alt="Paper Library with built-in medication catalog entries and zero selected medications" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Library · Inspect source context</strong><span>Built-in catalog entries, with no medications selected. Catalog wording is not individualized guidance.</span></figcaption></figure>
+        </div>
+        <p class="section-note">Actual local-mode browser captures, 29 September 2026,
+          1440 × 1000. Fresh synthetic profile; one banana meal, zero selected
+          medications, no AI consent. Captured from the development worktree,
+          not a final-commit binary attestation.
+          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/assets/screenshots/README.md">Capture provenance &amp; evidence limits ↗</a></p>
       </section>
 
-      <section class="section workflow" id="workflow">
+      <section class="section evidence" id="evidence">
         <div class="section-heading">
-          <p class="eyebrow">System shape</p>
-          <h2>The demo follows one inspectable data path.</h2>
+          <p class="eyebrow">II. The evidence workspace</p>
+          <h2>Look beyond the result.</h2>
+          <p>The Algorithm Observatory uses fixed, non-personal scenarios to make
+            the model's behavior inspectable. Production-derived traces and
+            static contracts are labeled separately.</p>
         </div>
-        <ol class="flow">
-          <li>
-            <span>Meal + medication context</span>
-            <p>Synthetic entries from the app timeline and catalog screens.</p>
-          </li>
-          <li>
-            <span>Local-first state</span>
-            <p>Public demos stay local and avoid real accounts or health records.</p>
-          </li>
-          <li>
-            <span>Rule engine</span>
-            <p>Deterministic checks produce conservative, reproducible outputs.</p>
-          </li>
-          <li>
-            <span>Evidence explanation</span>
-            <p>The UI shows what mattered, what is missing, and what is limited.</p>
-          </li>
-        </ol>
+        <div class="evidence-grid">
+          <article class="evidence-card"><span class="eyebrow">Observe</span><h3>Traces with their limits.</h3><p>Inspect explanation trees, configuration identities, missingness, and bounded sensitivity. Registry coverage is distinct from executable trace coverage.</p><a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/design/ADR_ALGORITHM_OBSERVATORY.md">Read the design decision ↗</a></article>
+          <article class="evidence-card"><span class="eyebrow">Reproduce</span><h3>A case you can replay.</h3><p>Review synthetic rule cases, authored expectations, and content-bound replay capsules. A passing case establishes agreement only with its scoped assertions.</p><a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/RULE_TEST_WORKBENCH.md">Open the workbench guide ↗</a></article>
+          <article class="evidence-card"><span class="eyebrow">Qualify</span><h3>Know what is implemented.</h3><p>Separate runtime features, fixture tests, reports, and proposals. Development-only standards experiments do not establish general interoperability.</p><a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CAPABILITY_MATRIX.md">Inspect capabilities &amp; limits ↗</a></article>
+        </div>
+        <div class="model-note"><strong>The mechanistic model remains trace-only.</strong><p>Its educational curves do not choose a meal time or reorder recommendations. Optional consent-gated loopback AI may only rerank rule-screened, non-BLOCK candidates or polish existing wording; it cannot override rule-owned decisions, scores, evidence, or safety gates.</p></div>
       </section>
 
-      <section class="section launch" id="try">
-        <div class="section-heading">
-          <p class="eyebrow">Demo delivery</p>
-          <h2>Use the right demo format for the audience.</h2>
-        </div>
+      <section class="section" id="try">
+        <div class="section-heading"><p class="eyebrow">III. Follow the work</p><h2>Choose your way in.</h2></div>
         <div class="launch-grid">
-          <a class="launch-card" href="../site/">
-            <span class="badge">Available now</span>
-            <h3>30-second website</h3>
-            <p>
-              Use this static Pages site for reviewers who need the project
-              purpose, flow, and safety boundary immediately.
-            </p>
-          </a>
-          <a
-            class="launch-card"
-            href="https://github.com/albertzhzhou-droid/ParkinSUM/releases"
-          >
-            <span class="badge">Release channel</span>
-            <h3>Demo APK</h3>
-            <p>
-              Publish Android artifacts only as clearly labeled demo/debug APKs
-              from the GitHub Releases page.
-            </p>
-          </a>
-          <a class="launch-card" href="../PUBLIC_VERIFICATION.md">
-            <span class="badge">Source run</span>
-            <h3>Flutter web demo</h3>
-            <p>
-              Build or run the app from source when the reviewer needs an
-              interactive browser demo instead of screenshots.
-            </p>
-          </a>
-          <a class="launch-card" href="../media-capture-checklist.md">
-            <span class="badge">Media policy</span>
-            <h3>Short video / GIF</h3>
-            <p>
-              A short recording is useful only after it renders correctly on
-              GitHub and passes synthetic-data media checks.
-            </p>
-          </a>
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM#run-locally"><span class="eyebrow">Interactive app</span><h3>Run the local demo <span aria-hidden="true">↗</span></h3><p>Open the Flutter workspace with a fresh synthetic profile and the local backend.</p></a>
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md"><span class="eyebrow">Engineering review</span><h3>Reproduce the checks <span aria-hidden="true">↗</span></h3><p>Find commands, prerequisites, expected results, and the meaning of each check.</p></a>
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/CHANGELOG.md"><span class="eyebrow">Development record</span><h3>Read the update <span aria-hidden="true">↗</span></h3><p>Follow the September source update separately from versioned release artifacts.</p></a>
+          <a class="launch-card" href="../wiki/"><span class="eyebrow">Guided tour</span><h3>Open the project guide <span aria-hidden="true">→</span></h3><p>Review the architecture, demo route, and boundaries in a compact visual wiki.</p></a>
         </div>
       </section>
 
-      <section class="section safety" id="safety">
-        <div class="safety-copy">
-          <p class="eyebrow">Safety boundary</p>
-          <h2>This is an educational software prototype.</h2>
-          <p>
-            ParkinSUM is for software architecture review, educational
-            walkthroughs, and synthetic-data demonstrations. It must not be used
-            for diagnosis, treatment, medication timing, dietary guidance,
-            clinical decision-making, patient care, or emergency support.
-          </p>
-        </div>
-        <div class="safety-actions">
-          <a class="button primary" href="../../DISCLAIMER.md">Read disclaimer</a>
-          <a class="button" href="../PUBLIC_DEMO_BOUNDARY.md">Demo boundary</a>
-          <a class="button" href="../wiki/">Animated wiki</a>
-        </div>
+      <section class="safety" id="safety">
+        <div><p class="eyebrow">A boundary, not a footnote</p><h2>For educational review.</h2><p>ParkinSUM is not a medical device or clinical decision tool. Its model is not clinically calibrated. Do not use it for diagnosis, treatment, medication timing, dietary guidance, patient care, or emergencies.</p><p>Public demonstrations use synthetic or sample data. Owner-entered records and exports may contain sensitive information and must stay out of public media.</p></div>
+        <div class="safety-actions"><a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/DISCLAIMER.md">Read the disclaimer ↗</a><a class="text-link" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/assets/screenshots/README.md">Screenshot provenance &amp; limits ↗</a></div>
       </section>
     </main>
+    <footer><span>ParkinSUM Companion · Educational software prototype</span><a href="https://github.com/albertzhzhou-droid/ParkinSUM">Source &amp; documentation ↗</a></footer>
   </body>
 </html>

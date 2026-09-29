@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/domain/entities/evidence_currency.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
@@ -580,6 +581,9 @@ class _AbstainingEngine extends MechanisticConflictEngine {
     required Map<String, MealComposition> mealCompositionsById,
     String resultId = 'mechanistic_result',
     String? preferredMealId,
+    DateTime? evidenceAsOfUtc,
+    Iterable<String> additionalEvidenceProviderIds = const [],
+    EvidenceCurrencyRegistry? evidenceCurrencyRegistry,
   }) {
     callCount += 1;
     const reasons = ['synthetic_upstream_abstention'];

@@ -34,8 +34,9 @@ class LocalPrivacyPreflightConfig {
   final bool strictMode;
   final String deterministicTimestamp;
 
-  /// Public Firebase **client** config paths (Web API key here stays WARN).
-  final List<String> knownPublicFirebaseConfigPaths;
+  /// Firebase client config paths. A concrete Google API key in any tracked
+  /// path is a blocker; this list only provides a more precise finding type.
+  final List<String> firebaseClientConfigPaths;
 
   /// Safe policy values that must never be flagged (e.g.
   /// `no_patient_no_subject_no_encounter`).
@@ -50,7 +51,7 @@ class LocalPrivacyPreflightConfig {
     this.excludeGlobs = const [],
     this.strictMode = false,
     this.deterministicTimestamp = 'synthetic-demo',
-    this.knownPublicFirebaseConfigPaths = const [
+    this.firebaseClientConfigPaths = const [
       'lib/firebase_options.dart',
       'android/app/google-services.json',
       'ios/Runner/GoogleService-Info.plist',

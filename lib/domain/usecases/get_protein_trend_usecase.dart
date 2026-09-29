@@ -2,6 +2,16 @@ import '../../core/models/meal.dart';
 import '../entities/protein_trend_point.dart';
 
 class GetProteinTrendUseCase {
+  static const Map<String, Object?> configurationIdentity = {
+    'contract_schema': 'parkinsum.protein-trend-aggregation/1',
+    'time_basis': 'Meal.effectiveOccurredAt',
+    'time_order': 'ascending',
+    'protein_value': 'Meal.computeTotals().totalProteinG',
+    'protein_unit': 'g_per_meal',
+    'mean_formula': 'sum(meal_total_protein_g) / meal_count',
+    'empty_mean_g': 0,
+  };
+
   List<ProteinTrendPoint> call(List<Meal> meals) {
     final points = meals
         .map(

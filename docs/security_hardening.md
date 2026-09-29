@@ -31,6 +31,7 @@ flutter build web \
   --dart-define=PARKINSUM_BACKEND=firebase \
   --dart-define=PARKINSUM_ENV=prod \
   --dart-define=PARKINSUM_FIREBASE_PROJECT_ID=parkinsum-companion \
+  --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-prod-web-key> \
   --dart-define=PARKINSUM_FIREBASE_APP_CHECK=true \
   --dart-define=PARKINSUM_RECAPTCHA_SITE_KEY=<recaptcha-v3-site-key>
 ```
@@ -41,6 +42,12 @@ instead of the v3 key. After provider registration is verified in Firebase
 Console, enable enforcement for Firestore. App Check reduces scripted abuse of
 Firebase services; it does not replace account authorization rules or upstream
 rate limiting.
+
+Firebase client API keys identify a project; they do not authorize access to
+Firestore. Their concrete values are injected only at build time to keep them
+out of the public source tree and secret-scanning alerts, but they remain
+extractable from the built app. Keep each key restricted to the required
+Firebase APIs and its intended browser/app surface.
 
 ## DDoS And Injection Posture
 

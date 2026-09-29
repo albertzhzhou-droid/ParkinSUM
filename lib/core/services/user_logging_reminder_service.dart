@@ -13,11 +13,16 @@ import '../../domain/entities/user_logging_reminder.dart';
 import 'data_service.dart';
 import 'reminder_activation_inbox.dart';
 import 'reminder_activation_store_factory.dart';
+import 'reminder_notification_capability_matrix.dart';
+import 'reminder_notification_payload.dart';
 import 'reminder_pending_identity_attestation.dart';
 import 'reminder_notification_privacy_policy.dart';
 import 'reminder_schedule_manifest.dart';
 
 export 'reminder_activation_inbox.dart';
+export 'reminder_notification_capability_matrix.dart';
+export 'reminder_notification_payload.dart'
+    show reminderNotificationPayloadSchemaVersion;
 export 'reminder_pending_identity_attestation.dart';
 export 'reminder_schedule_manifest.dart';
 
@@ -81,14 +86,21 @@ class UserLoggingReminderRepository {
   Future<List<UserLoggingReminder>> load(String userScope) async {
     final key = _key(userScope);
     var raw = await _storage.getString(key);
-    final legacyKey = _legacyKey(userScope);
-    final migratedFromV2 = raw == null;
-    raw ??= await _storage.getString(legacyKey);
+    String? migratedLegacyKey;
+    if (raw == null) {
+      for (final legacyKey in _legacyKeys(userScope)) {
+        final legacyRaw = await _storage.getString(legacyKey);
+        if (legacyRaw == null) continue;
+        raw = legacyRaw;
+        migratedLegacyKey = legacyKey;
+        break;
+      }
+    }
     if (raw == null || raw.trim().isEmpty) return const [];
     final reminders = _decode(raw);
-    if (migratedFromV2) {
+    if (migratedLegacyKey != null) {
       await save(userScope, reminders);
-      await _storage.remove(legacyKey);
+      await _storage.remove(migratedLegacyKey);
     }
     return reminders;
   }
@@ -122,15 +134,18 @@ class UserLoggingReminderRepository {
 
   String _key(String scope) {
     final digest = sha256.convert(utf8.encode(scope)).toString();
-    return 'parkinsum.user_logging_reminders.v3.$digest';
+    return 'parkinsum.user_logging_reminders.v4.$digest';
   }
 
-  String _legacyKey(String scope) {
+  List<String> _legacyKeys(String scope) {
     final digest = sha256.convert(utf8.encode(scope)).toString();
-    // Keep the historical migration key distinct from the single current
-    // version marker discovered by the schema catalog checker.
-    return 'parkinsum.user_logging_reminders.'
-        'v2.$digest';
+    // Keep historical migration keys distinct from the single current
+    // version marker discovered by the schema catalog checker. Newest first
+    // prevents an older orphan from overriding the most recent durable row.
+    return <String>[
+      'parkinsum.user_logging_reminders.v3.$digest',
+      'parkinsum.user_logging_reminders.v2.$digest',
+    ];
   }
 }
 
@@ -242,6 +257,30 @@ abstract class ReminderNotificationGateway {
     List<UserLoggingReminder> reminders, {
     required String userScope,
   });
+}
+
+enum ReminderPermissionRequestOutcome {
+  returnedAllowed,
+  returnedNotAllowed,
+  adapterUnavailable,
+  failed,
+}
+
+enum ReminderPermissionInspectionOutcome {
+  enabled,
+  disabled,
+  adapterUnavailable,
+  failed,
+}
+
+/// Result-bearing permission API used by the production gateway.
+///
+/// A request result is deliberately distinct from an inspection of current
+/// permission state. A false or null plugin result must not be described as a
+/// user denial without stronger platform evidence.
+abstract interface class ReminderNotificationPermissionGateway {
+  Future<ReminderPermissionRequestOutcome> requestPermissionWithOutcome();
+  Future<ReminderPermissionInspectionOutcome> inspectPermission();
 }
 
 enum ReminderNotificationMutationStatus { applied, superseded, unsupported }
@@ -482,18 +521,15 @@ class ReminderNotificationResponseCoordinator {
     }
   }
 
-  static final RegExp _payloadPattern = RegExp(
+  static final RegExp _payloadV2Pattern = RegExp(
     r'^parkinsum-reminder:v2:([a-f0-9]{32}):([A-Za-z0-9_-]{1,80})$',
+  );
+  static final RegExp _payloadV3Pattern = RegExp(
+    r'^parkinsum-reminder:v3:([a-f0-9]{32}):([A-Za-z0-9_-]{1,80}):([a-f0-9]{64})$',
   );
 
   static String payloadForReminder(UserLoggingReminder reminder) {
-    if (!RegExp(r'^[A-Za-z0-9_-]{1,80}$').hasMatch(reminder.id)) {
-      throw const FormatException('Reminder id is not notification-safe.');
-    }
-    if (!isReminderActivationTokenValid(reminder.activationToken)) {
-      throw const FormatException('Reminder activation token is invalid.');
-    }
-    return 'parkinsum-reminder:v2:${reminder.activationToken}:${reminder.id}';
+    return reminderNotificationPayloadFor(reminder);
   }
 
   Future<ReminderResponseResolution> resolve({
@@ -559,7 +595,11 @@ class ReminderNotificationResponseCoordinator {
         ReminderResponseResolutionStatus.malformed,
       );
     }
-    final match = _payloadPattern.firstMatch(payload);
+    final v3Match = _payloadV3Pattern.firstMatch(payload);
+    final v2Match = v3Match == null
+        ? _payloadV2Pattern.firstMatch(payload)
+        : null;
+    final match = v3Match ?? v2Match;
     if (match == null) {
       return const ReminderResponseResolution(
         ReminderResponseResolutionStatus.malformed,
@@ -577,6 +617,18 @@ class ReminderNotificationResponseCoordinator {
         return const ReminderResponseResolution(
           ReminderResponseResolutionStatus.unavailable,
         );
+      }
+      final submittedPresentationDigest = v3Match?.group(3);
+      if (submittedPresentationDigest != null) {
+        final currentPresentation = ReminderNotificationPrivacyPolicy.resolve(
+          mode: reminder.notificationPrivacyMode,
+          localeName: reminder.notificationLocaleCode,
+        );
+        if (currentPresentation.identitySha256 != submittedPresentationDigest) {
+          return const ReminderResponseResolution(
+            ReminderResponseResolutionStatus.unavailable,
+          );
+        }
       }
       return ReminderResponseResolution(
         reminder.kind == UserLoggingReminderKind.mealLog
@@ -600,7 +652,9 @@ class LocalReminderNotificationGateway
         ReminderNotificationIdentityInspector,
         ReminderNotificationAccountLifecycle,
         ReminderNotificationResultAccountLifecycle,
-        ReminderNotificationResponseSource {
+        ReminderNotificationResponseSource,
+        ReminderNotificationCapabilityProvider,
+        ReminderNotificationPermissionGateway {
   LocalReminderNotificationGateway({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -617,19 +671,38 @@ class LocalReminderNotificationGateway
   Future<void>? _responseStartFuture;
   final ReminderNativeMutationQueue _mutationQueue =
       ReminderNativeMutationQueue();
+  ReminderScheduleInstallFingerprint? _lastSuccessfulInstallFingerprint;
 
   @override
   Stream<ReminderNotificationResponseEvent> get responses =>
       _responseController.stream;
 
   @override
-  bool get supportsScheduledDelivery {
-    if (kIsWeb) return false;
-    return const {
-      TargetPlatform.android,
-      TargetPlatform.iOS,
-      TargetPlatform.macOS,
-    }.contains(defaultTargetPlatform);
+  ReminderNotificationCapabilityMatrix get notificationCapabilityMatrix =>
+      ReminderNotificationCapabilityMatrix.current;
+
+  @override
+  ReminderNotificationCapabilityProfile get notificationCapabilityProfile =>
+      notificationCapabilityMatrix.profileFor(_currentNotificationPlatform);
+
+  @override
+  String get notificationCapabilityManifestSha256 =>
+      notificationCapabilityMatrix.manifestSha256;
+
+  @override
+  bool get supportsScheduledDelivery =>
+      notificationCapabilityProfile.supportsScheduledDelivery;
+
+  ReminderNotificationPlatform get _currentNotificationPlatform {
+    if (kIsWeb) return ReminderNotificationPlatform.web;
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => ReminderNotificationPlatform.android,
+      TargetPlatform.iOS => ReminderNotificationPlatform.iOS,
+      TargetPlatform.macOS => ReminderNotificationPlatform.macOS,
+      TargetPlatform.windows => ReminderNotificationPlatform.windows,
+      TargetPlatform.linux => ReminderNotificationPlatform.linux,
+      TargetPlatform.fuchsia => ReminderNotificationPlatform.unknown,
+    };
   }
 
   Future<void> _initialize() {
@@ -685,6 +758,10 @@ class LocalReminderNotificationGateway
 
   @override
   Future<void> startResponseHandling() {
+    if (!notificationCapabilityProfile.supportsResponseHandling) {
+      _responseHandlingStarted = true;
+      return Future<void>.value();
+    }
     if (_responseHandlingStarted) return Future<void>.value();
     var active = _responseStartFuture;
     if (active == null) {
@@ -720,41 +797,89 @@ class LocalReminderNotificationGateway
   }
 
   @override
-  Future<bool> requestPermission() async {
-    await _initialize();
-    if (kIsWeb) {
-      return await _plugin
-              .resolvePlatformSpecificImplementation<
-                WebFlutterLocalNotificationsPlugin
-              >()
-              ?.requestNotificationsPermission() ??
-          false;
+  Future<bool> requestPermission() async =>
+      await requestPermissionWithOutcome() ==
+      ReminderPermissionRequestOutcome.returnedAllowed;
+
+  @override
+  Future<ReminderPermissionRequestOutcome>
+  requestPermissionWithOutcome() async {
+    if (!notificationCapabilityProfile.supportsPermissionRequest) {
+      return ReminderPermissionRequestOutcome.adapterUnavailable;
     }
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return await _plugin
-              .resolvePlatformSpecificImplementation<
-                AndroidFlutterLocalNotificationsPlugin
-              >()
-              ?.requestNotificationsPermission() ??
-          true;
+    try {
+      await _initialize();
+      bool? returnedAllowed;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        returnedAllowed = await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.requestNotificationsPermission();
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        returnedAllowed = await _plugin
+            .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+            >()
+            ?.requestPermissions(alert: true, sound: true, badge: false);
+      } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+        returnedAllowed = await _plugin
+            .resolvePlatformSpecificImplementation<
+              MacOSFlutterLocalNotificationsPlugin
+            >()
+            ?.requestPermissions(alert: true, sound: true, badge: false);
+      }
+      if (returnedAllowed == null) {
+        return ReminderPermissionRequestOutcome.adapterUnavailable;
+      }
+      return returnedAllowed
+          ? ReminderPermissionRequestOutcome.returnedAllowed
+          : ReminderPermissionRequestOutcome.returnedNotAllowed;
+    } catch (_) {
+      return ReminderPermissionRequestOutcome.failed;
     }
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return await _plugin
-              .resolvePlatformSpecificImplementation<
-                IOSFlutterLocalNotificationsPlugin
-              >()
-              ?.requestPermissions(alert: true, sound: true, badge: false) ??
-          false;
+  }
+
+  @override
+  Future<ReminderPermissionInspectionOutcome> inspectPermission() async {
+    if (!notificationCapabilityProfile.supportsPermissionInspection) {
+      return ReminderPermissionInspectionOutcome.adapterUnavailable;
     }
-    if (defaultTargetPlatform == TargetPlatform.macOS) {
-      return await _plugin
-              .resolvePlatformSpecificImplementation<
-                MacOSFlutterLocalNotificationsPlugin
-              >()
-              ?.requestPermissions(alert: true, sound: true, badge: false) ??
-          false;
+    try {
+      await _initialize();
+      bool? enabled;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        enabled = await _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >()
+            ?.areNotificationsEnabled();
+      } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+        enabled =
+            (await _plugin
+                    .resolvePlatformSpecificImplementation<
+                      IOSFlutterLocalNotificationsPlugin
+                    >()
+                    ?.checkPermissions())
+                ?.isEnabled;
+      } else if (defaultTargetPlatform == TargetPlatform.macOS) {
+        enabled =
+            (await _plugin
+                    .resolvePlatformSpecificImplementation<
+                      MacOSFlutterLocalNotificationsPlugin
+                    >()
+                    ?.checkPermissions())
+                ?.isEnabled;
+      }
+      if (enabled == null) {
+        return ReminderPermissionInspectionOutcome.adapterUnavailable;
+      }
+      return enabled
+          ? ReminderPermissionInspectionOutcome.enabled
+          : ReminderPermissionInspectionOutcome.disabled;
+    } catch (_) {
+      return ReminderPermissionInspectionOutcome.failed;
     }
-    return true;
   }
 
   @override
@@ -801,14 +926,18 @@ class LocalReminderNotificationGateway
         .synchronizeWithLease(
           userScope: userScope,
           lease: lease,
-          operation: (isCurrent) =>
-              _performSynchronization(reminders, isCurrent: isCurrent),
+          operation: (isCurrent) => _performSynchronization(
+            reminders,
+            userScope: userScope,
+            isCurrent: isCurrent,
+          ),
         )
         .timeout(reminderNativeOperationTimeout);
   }
 
   Future<void> _performSynchronization(
     List<UserLoggingReminder> reminders, {
+    required String userScope,
     required bool Function() isCurrent,
   }) async {
     if (!supportsScheduledDelivery || !isCurrent()) return;
@@ -827,7 +956,32 @@ class LocalReminderNotificationGateway
     // weekday/time pattern rather than a fixed UTC instant.
     final zone = await FlutterTimezone.getLocalTimezone();
     if (!isCurrent()) return;
-    tz.setLocalLocation(tz.getLocation(zone.identifier));
+    final location = tz.getLocation(zone.identifier);
+    tz.setLocalLocation(location);
+    final installFingerprint = ReminderScheduleInstallFingerprint(
+      manifest: manifest,
+      userScope: userScope,
+      timezoneIdentifier: zone.identifier,
+    );
+    var pendingIdentityMatched = false;
+    try {
+      pendingIdentityMatched = (await _attestPendingSchedule(
+        reminders,
+      )).matched;
+    } catch (_) {
+      // An unavailable plugin registry cannot authorize a no-op. Continue
+      // through the normal reconciliation path instead.
+    }
+    if (!isCurrent()) return;
+    if (installFingerprint.canSkipNativeReconciliation(
+      previouslyInstalled: _lastSuccessfulInstallFingerprint,
+      pendingIdentityMatched: pendingIdentityMatched,
+    )) {
+      return;
+    }
+    // A partial destructive install must never leave a stale witness that
+    // could authorize a later no-op.
+    _lastSuccessfulInstallFingerprint = null;
     await _cancelPendingLoggingReminders();
     if (!isCurrent()) return;
     for (final entry in manifest.entries) {
@@ -868,6 +1022,8 @@ class LocalReminderNotificationGateway
       );
       if (!isCurrent()) return;
     }
+    if (!isCurrent()) return;
+    _lastSuccessfulInstallFingerprint = installFingerprint;
   }
 
   @override
@@ -909,6 +1065,7 @@ class LocalReminderNotificationGateway
   Future<void> _performScheduledReminderCancellation() async {
     if (!supportsScheduledDelivery) return;
     await _initialize();
+    _lastSuccessfulInstallFingerprint = null;
     await _cancelPendingLoggingReminders();
   }
 
@@ -1040,6 +1197,51 @@ class UserLoggingReminderController extends ChangeNotifier {
        _gateway = gateway ?? LocalReminderNotificationGateway.shared,
        _persistenceCoordinator =
            _ReminderPersistenceMutationCoordinator.shared {
+    if (_gateway is ReminderNotificationCapabilityProvider) {
+      final capabilityProvider =
+          _gateway as ReminderNotificationCapabilityProvider;
+      _notificationCapabilityBinding =
+          ReminderNotificationCapabilityBinding.fromProvider(
+            matrix: capabilityProvider.notificationCapabilityMatrix,
+            profile: capabilityProvider.notificationCapabilityProfile,
+            manifestSha256:
+                capabilityProvider.notificationCapabilityManifestSha256,
+          );
+    } else {
+      _notificationCapabilityBinding =
+          ReminderNotificationCapabilityBinding.legacyGateway(
+            supportsScheduledDelivery: _gateway.supportsScheduledDelivery,
+            supportsPermissionInspection:
+                _gateway is ReminderNotificationPermissionGateway,
+            supportsPendingInspection:
+                _gateway is ReminderNotificationIdentityInspector,
+            supportsResponseHandling:
+                _gateway is ReminderNotificationResponseSource,
+          );
+    }
+    _notificationCapabilityProfile = _notificationCapabilityBinding.profile;
+    _notificationCapabilityManifestSha256 =
+        _notificationCapabilityBinding.contractSha256;
+    if (_notificationCapabilityProfile.supportsScheduledDelivery !=
+        _gateway.supportsScheduledDelivery) {
+      throw StateError(
+        'Notification capability profile and gateway behavior disagree.',
+      );
+    }
+    _permissionRequestReadiness =
+        _notificationCapabilityProfile.supportsPermissionRequest
+        ? ReminderPermissionRequestReadiness.notRequested
+        : ReminderPermissionRequestReadiness.adapterUnavailable;
+    _permissionInspectionReadiness =
+        _notificationCapabilityProfile.supportsPermissionInspection
+        ? ReminderPermissionInspectionReadiness.notInspected
+        : ReminderPermissionInspectionReadiness.unavailable;
+    debugPrint(
+      '[ReminderCapability] platform='
+      '${_notificationCapabilityProfile.platform.name} mode='
+      '${_notificationCapabilityProfile.deliveryMode.name} manifest='
+      '${_notificationCapabilityManifestSha256.substring(0, 12)}',
+    );
     if (!_gateway.supportsScheduledDelivery) {
       _scheduleSystemState = ReminderScheduleSystemState.unsupported;
     }
@@ -1049,6 +1251,11 @@ class UserLoggingReminderController extends ChangeNotifier {
   final UserLoggingReminderRepository _repository;
   final ReminderNotificationGateway _gateway;
   final _ReminderPersistenceMutationCoordinator _persistenceCoordinator;
+  late final ReminderNotificationCapabilityBinding
+  _notificationCapabilityBinding;
+  late final ReminderNotificationCapabilityProfile
+  _notificationCapabilityProfile;
+  late final String _notificationCapabilityManifestSha256;
   List<UserLoggingReminder> _reminders = const [];
   bool _busy = false;
   String? _error;
@@ -1059,6 +1266,8 @@ class UserLoggingReminderController extends ChangeNotifier {
   ReminderPersistenceMutationResult? _lastPersistenceMutationResult;
   ReminderPersistenceMutationResult? _lastPersistenceRollbackResult;
   ReminderPendingIdentityAttestation? _pendingIdentityAttestation;
+  late ReminderPermissionRequestReadiness _permissionRequestReadiness;
+  late ReminderPermissionInspectionReadiness _permissionInspectionReadiness;
   ReminderScheduleSystemState _scheduleSystemState =
       ReminderScheduleSystemState.unverified;
 
@@ -1084,6 +1293,122 @@ class UserLoggingReminderController extends ChangeNotifier {
       _scheduleSystemState == ReminderScheduleSystemState.unverified ||
       recoveryRequired;
   bool get supportsScheduledDelivery => _gateway.supportsScheduledDelivery;
+  ReminderNotificationCapabilityProfile get notificationCapabilityProfile =>
+      _notificationCapabilityProfile;
+  String get notificationCapabilityManifestSha256 =>
+      _notificationCapabilityManifestSha256;
+
+  bool notificationLocaleDecisionRequired(String appLocaleName) {
+    final targetLanguage =
+        ReminderNotificationPrivacyPolicy.supportedLanguageCode(appLocaleName);
+    return _reminders.any(
+      (reminder) => reminder.notificationLocaleDecisionCode != targetLanguage,
+    );
+  }
+
+  /// Durably records whether all current reminder plans retain their existing
+  /// system-visible copy or move to the current App language family.
+  ///
+  /// The existing commit path supplies account, native-mutation, persistence,
+  /// rollback and pending-identity leases. Updating copy also rotates each
+  /// activation capability so a stale pre-update notification cannot resolve
+  /// through the legacy payload contract.
+  Future<bool> reconcileNotificationLocale({
+    required String appLocaleName,
+    required bool updateCopy,
+  }) {
+    final targetLanguage =
+        ReminderNotificationPrivacyPolicy.supportedLanguageCode(appLocaleName);
+    if (!notificationLocaleDecisionRequired(appLocaleName)) {
+      return Future<bool>.value(true);
+    }
+    final next = _reminders
+        .map(
+          (reminder) => reminder.copyWith(
+            notificationLocaleCode: updateCopy
+                ? targetLanguage
+                : reminder.notificationLocaleCode,
+            notificationLocaleDecisionCode: targetLanguage,
+            activationToken: updateCopy
+                ? newReminderActivationToken()
+                : reminder.activationToken,
+          ),
+        )
+        .toList(growable: false);
+    return _commit(next);
+  }
+
+  ReminderDeliveryReadiness get deliveryReadiness => ReminderDeliveryReadiness(
+    capabilityBinding: _notificationCapabilityBinding,
+    localPlan: _reminders.isEmpty
+        ? ReminderLocalPlanReadiness.noneConfigured
+        : ReminderLocalPlanReadiness.savedLocally,
+    scheduleRequest: _scheduleRequestReadiness,
+    permissionRequest: _permissionRequestReadiness,
+    permissionInspection: _permissionInspectionReadiness,
+    registry: _registryReadiness,
+    // A compiled capability declaration is not an artifact-bound observation.
+    // Promotion requires a separate verified delivery receipt, which this
+    // controller does not yet accept.
+    visibleDelivery: ReminderVisibleDeliveryReadiness.unverified,
+  );
+
+  ReminderScheduleRequestReadiness get _scheduleRequestReadiness {
+    if (recoveryRequired) {
+      return ReminderScheduleRequestReadiness.recoveryRequired;
+    }
+    final rollback = _lastRollbackResult;
+    if (rollback != null) {
+      return switch (rollback.status) {
+        ReminderNotificationMutationStatus.applied =>
+          ReminderScheduleRequestReadiness.rolledBack,
+        ReminderNotificationMutationStatus.superseded =>
+          ReminderScheduleRequestReadiness.superseded,
+        ReminderNotificationMutationStatus.unsupported =>
+          ReminderScheduleRequestReadiness.unsupported,
+      };
+    }
+    final result = _lastMutationResult;
+    if (result != null) {
+      return switch (result.status) {
+        ReminderNotificationMutationStatus.applied =>
+          ReminderScheduleRequestReadiness.applied,
+        ReminderNotificationMutationStatus.superseded =>
+          ReminderScheduleRequestReadiness.superseded,
+        ReminderNotificationMutationStatus.unsupported =>
+          ReminderScheduleRequestReadiness.unsupported,
+      };
+    }
+    if (_error == 'schedule_failed' ||
+        _error == 'schedule_identity_unverified') {
+      return ReminderScheduleRequestReadiness.failed;
+    }
+    return _gateway.supportsScheduledDelivery
+        ? ReminderScheduleRequestReadiness.notRequested
+        : ReminderScheduleRequestReadiness.unsupported;
+  }
+
+  ReminderRegistryReadiness get _registryReadiness {
+    final attestation = _pendingIdentityAttestation;
+    if (attestation == null) {
+      return _notificationCapabilityProfile.evidenceFor(
+                ReminderNotificationCapability.pendingInspection,
+              ) ==
+              ReminderNotificationCapabilityEvidence.unavailable
+          ? ReminderRegistryReadiness.unsupported
+          : ReminderRegistryReadiness.notInspected;
+    }
+    return switch (attestation.status) {
+      ReminderPendingIdentityAttestationStatus.matched =>
+        ReminderRegistryReadiness.matched,
+      ReminderPendingIdentityAttestationStatus.drift =>
+        ReminderRegistryReadiness.drift,
+      ReminderPendingIdentityAttestationStatus.uninspectable =>
+        ReminderRegistryReadiness.uninspectable,
+      ReminderPendingIdentityAttestationStatus.unsupported =>
+        ReminderRegistryReadiness.unsupported,
+    };
+  }
 
   Future<void> load() async {
     _busy = true;
@@ -1120,6 +1445,9 @@ class UserLoggingReminderController extends ChangeNotifier {
       }
       _error = null;
       if (_gateway.supportsScheduledDelivery) {
+        if (_notificationCapabilityProfile.supportsPermissionInspection) {
+          await _refreshPermissionInspection();
+        }
         try {
           final result = await _synchronize(_reminders, lease: lease);
           _recordPrimaryResult(result);
@@ -1197,6 +1525,9 @@ class UserLoggingReminderController extends ChangeNotifier {
         _error = 'schedule_invalid';
         return false;
       }
+      if (_notificationCapabilityProfile.supportsPermissionInspection) {
+        await _refreshPermissionInspection();
+      }
       final result = await _synchronize(_reminders, lease: lease);
       _recordPrimaryResult(result);
       if (!result.wasApplied || !_isLeaseCurrent(lease)) {
@@ -1244,11 +1575,43 @@ class UserLoggingReminderController extends ChangeNotifier {
         _error = 'schedule_invalid';
         return false;
       }
-      if (requestPermission && _gateway.supportsScheduledDelivery) {
-        final granted = await _gateway.requestPermission();
-        if (!granted) {
+      if (requestPermission &&
+          _gateway.supportsScheduledDelivery &&
+          _notificationCapabilityProfile.supportsPermissionRequest) {
+        final outcome = await _requestPermission();
+        _permissionRequestReadiness = switch (outcome) {
+          ReminderPermissionRequestOutcome.returnedAllowed =>
+            ReminderPermissionRequestReadiness.returnedAllowed,
+          ReminderPermissionRequestOutcome.returnedNotAllowed =>
+            ReminderPermissionRequestReadiness.returnedNotAllowed,
+          ReminderPermissionRequestOutcome.adapterUnavailable =>
+            ReminderPermissionRequestReadiness.adapterUnavailable,
+          ReminderPermissionRequestOutcome.failed =>
+            ReminderPermissionRequestReadiness.failed,
+        };
+        if (outcome != ReminderPermissionRequestOutcome.returnedAllowed) {
           _refreshScheduleManifest(_reminders);
-          _error = 'permission_denied';
+          _error =
+              outcome == ReminderPermissionRequestOutcome.returnedNotAllowed
+              ? 'permission_denied'
+              : 'schedule_failed';
+          return false;
+        }
+      }
+      if (_gateway.supportsScheduledDelivery) {
+        if (_notificationCapabilityProfile.supportsPermissionInspection) {
+          await _refreshPermissionInspection();
+        }
+        if (requestPermission &&
+            _notificationCapabilityProfile.supportsPermissionInspection &&
+            _permissionInspectionReadiness !=
+                ReminderPermissionInspectionReadiness.enabled) {
+          _refreshScheduleManifest(_reminders);
+          _error =
+              _permissionInspectionReadiness ==
+                  ReminderPermissionInspectionReadiness.disabled
+              ? 'permission_denied'
+              : 'schedule_failed';
           return false;
         }
       }
@@ -1396,6 +1759,56 @@ class UserLoggingReminderController extends ChangeNotifier {
     );
     _scheduleManifest = result;
     return result.accepted;
+  }
+
+  Future<ReminderPermissionRequestOutcome> _requestPermission() async {
+    final gateway = _gateway;
+    try {
+      if (gateway is ReminderNotificationPermissionGateway) {
+        return await (gateway as ReminderNotificationPermissionGateway)
+            .requestPermissionWithOutcome()
+            .timeout(reminderNativeOperationTimeout);
+      }
+      return await gateway.requestPermission().timeout(
+            reminderNativeOperationTimeout,
+          )
+          ? ReminderPermissionRequestOutcome.returnedAllowed
+          : ReminderPermissionRequestOutcome.returnedNotAllowed;
+    } catch (_) {
+      return ReminderPermissionRequestOutcome.failed;
+    }
+  }
+
+  Future<void> _refreshPermissionInspection() async {
+    if (!_notificationCapabilityProfile.supportsPermissionInspection) {
+      _permissionInspectionReadiness =
+          ReminderPermissionInspectionReadiness.unavailable;
+      return;
+    }
+    final gateway = _gateway;
+    if (gateway is! ReminderNotificationPermissionGateway) {
+      _permissionInspectionReadiness =
+          ReminderPermissionInspectionReadiness.unavailable;
+      return;
+    }
+    ReminderPermissionInspectionOutcome outcome;
+    try {
+      outcome = await (gateway as ReminderNotificationPermissionGateway)
+          .inspectPermission()
+          .timeout(reminderNativeOperationTimeout);
+    } catch (_) {
+      outcome = ReminderPermissionInspectionOutcome.failed;
+    }
+    _permissionInspectionReadiness = switch (outcome) {
+      ReminderPermissionInspectionOutcome.enabled =>
+        ReminderPermissionInspectionReadiness.enabled,
+      ReminderPermissionInspectionOutcome.disabled =>
+        ReminderPermissionInspectionReadiness.disabled,
+      ReminderPermissionInspectionOutcome.adapterUnavailable =>
+        ReminderPermissionInspectionReadiness.unavailable,
+      ReminderPermissionInspectionOutcome.failed =>
+        ReminderPermissionInspectionReadiness.failed,
+    };
   }
 
   bool _isLocallyValidPlan(List<UserLoggingReminder> reminders) {

@@ -1,6 +1,8 @@
 import 'absorption_opportunity.dart';
 import 'amino_acid_competition.dart';
+import 'evidence_currency.dart';
 import 'gastric_emptying_profile.dart';
+import 'mechanistic_medication_applicability.dart';
 import 'rule_explanation.dart';
 import 'time_axis_events.dart';
 
@@ -61,6 +63,7 @@ class MechanisticExplanation {
   final List<String> inputFieldsUsed;
   final List<String> missingOrUncertainInputs;
   final List<String> sourceRefs;
+  final String? applicabilityManifestRef;
   final String limitationText;
   final String safetyBoundary;
   final String notAdviceText;
@@ -71,6 +74,7 @@ class MechanisticExplanation {
     required this.inputFieldsUsed,
     required this.missingOrUncertainInputs,
     required this.sourceRefs,
+    this.applicabilityManifestRef,
     required this.limitationText,
     required this.safetyBoundary,
     required this.notAdviceText,
@@ -87,6 +91,7 @@ class MechanisticExplanation {
     'input_fields_used': inputFieldsUsed,
     'missing_or_uncertain_inputs': missingOrUncertainInputs,
     'source_refs': sourceRefs,
+    'applicability_manifest_ref': applicabilityManifestRef,
     'limitation_text': limitationText,
     'safety_boundary': safetyBoundary,
     'not_advice_text': notAdviceText,
@@ -115,6 +120,7 @@ class MechanisticPerEventTrace {
   /// True for the event selected as primary (max overlap).
   final bool isPrimary;
   final List<String> sourceRefs;
+  final String? applicabilityManifestRef;
   final List<String> uncertaintyReasons;
 
   // Per-event medication provenance bridged from CDSS metadata (additive;
@@ -139,6 +145,7 @@ class MechanisticPerEventTrace {
     required this.delayedArrivalLikelihood,
     required this.isPrimary,
     required this.sourceRefs,
+    this.applicabilityManifestRef,
     required this.uncertaintyReasons,
     this.releaseTypeSource,
     this.doseForm,
@@ -161,6 +168,7 @@ class MechanisticPerEventTrace {
     'delayed_arrival_likelihood': delayedArrivalLikelihood,
     'is_primary': isPrimary,
     'source_refs': sourceRefs,
+    'applicability_manifest_ref': applicabilityManifestRef,
     'uncertainty_reasons': uncertaintyReasons,
     'release_type_source': releaseTypeSource,
     'dose_form': doseForm,
@@ -196,6 +204,7 @@ class MechanisticConflictResult {
   final List<TimelineWindow> modeledTimelineWindows;
   final List<String> uncertaintyReasons;
   final List<String> sourceRefs;
+  final String? applicabilityManifestRef;
   final String limitationText;
   final String safetyBoundary;
   final String notAdviceText;
@@ -203,6 +212,7 @@ class MechanisticConflictResult {
   final GastricEmptyingProfile? primaryEmptyingProfile;
   final AbsorptionOpportunityWindow? absorptionOpportunityWindow;
   final CompetitionPressureTimeline? competitionTimeline;
+  final EvidenceCurrencyRuntimeBinding? evidenceCurrencyBinding;
 
   /// Per-dose traces for the multi-dose time axis. Empty for insufficient
   /// results. Additive — existing consumers are unaffected.
@@ -218,6 +228,7 @@ class MechanisticConflictResult {
     required this.modeledTimelineWindows,
     required this.uncertaintyReasons,
     required this.sourceRefs,
+    this.applicabilityManifestRef,
     required this.limitationText,
     required this.safetyBoundary,
     required this.notAdviceText,
@@ -226,6 +237,7 @@ class MechanisticConflictResult {
     this.absorptionOpportunityWindow,
     this.competitionTimeline,
     this.perEventTraces = const [],
+    this.evidenceCurrencyBinding,
   }) : _declaredAvailability = MechanisticResultAvailability.available;
 
   /// The only construction path for abstentions. Output-bearing fields are
@@ -237,10 +249,12 @@ class MechanisticConflictResult {
     required MechanisticResultAvailability availability,
     required this.uncertaintyReasons,
     required this.sourceRefs,
+    required this.applicabilityManifestRef,
     required this.limitationText,
     required this.safetyBoundary,
     required this.notAdviceText,
     required this.explanation,
+    this.evidenceCurrencyBinding,
   }) : assert(availability != MechanisticResultAvailability.available),
        _declaredAvailability = availability,
        interactionScore = 0.0,
@@ -498,6 +512,7 @@ class MechanisticConflictResult {
     required MechanisticInteractionType reason,
     required List<String> integrityReasons,
     required List<String> sourceRefs,
+    EvidenceCurrencyRuntimeBinding? evidenceCurrencyBinding,
   }) {
     return _abstention(
       id: id,
@@ -505,6 +520,7 @@ class MechanisticConflictResult {
       reasons: integrityReasons,
       sourceRefs: sourceRefs,
       availability: MechanisticResultAvailability.blockedIntegrity,
+      evidenceCurrencyBinding: evidenceCurrencyBinding,
     );
   }
 
@@ -514,14 +530,18 @@ class MechanisticConflictResult {
     required List<String> reasons,
     required List<String> sourceRefs,
     required MechanisticResultAvailability availability,
+    EvidenceCurrencyRuntimeBinding? evidenceCurrencyBinding,
   }) {
     assert(availability != MechanisticResultAvailability.available);
+    final applicabilityManifestRef =
+        MechanisticApplicabilityManifest.current.sourceRef;
     final explanation = MechanisticExplanation(
       resultId: id,
       layerTraces: const [],
       inputFieldsUsed: const [],
       missingOrUncertainInputs: reasons,
       sourceRefs: sourceRefs,
+      applicabilityManifestRef: applicabilityManifestRef,
       limitationText: MechanisticExplanation.defaultLimitation,
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,
@@ -532,10 +552,12 @@ class MechanisticConflictResult {
       availability: availability,
       uncertaintyReasons: reasons,
       sourceRefs: sourceRefs,
+      applicabilityManifestRef: applicabilityManifestRef,
       limitationText: MechanisticExplanation.defaultLimitation,
       safetyBoundary: RuleExplanation.defaultSafetyBoundary,
       notAdviceText: RuleExplanation.defaultNotAdvice,
       explanation: explanation,
+      evidenceCurrencyBinding: evidenceCurrencyBinding,
     );
   }
 
@@ -555,6 +577,9 @@ class MechanisticConflictResult {
     'uncertainty_reasons': uncertaintyReasons,
     'abstention_reasons': isAbstention ? uncertaintyReasons : const <String>[],
     'source_refs': sourceRefs,
+    if (evidenceCurrencyBinding != null)
+      'evidence_currency_binding': evidenceCurrencyBinding!.toJson(),
+    'applicability_manifest_ref': applicabilityManifestRef,
     'limitation_text': limitationText,
     'safety_boundary': safetyBoundary,
     'not_advice_text': notAdviceText,

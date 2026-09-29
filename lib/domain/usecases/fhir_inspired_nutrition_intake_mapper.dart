@@ -104,22 +104,26 @@ class FhirInspiredNutritionIntakeMapper {
   }
 
   FhirInspiredAminoAcidSummary _aminoAcidSummary(MealComposition comp) {
-    final profiles = comp.foodComponents
-        .map((c) => c.aminoAcidProfile)
-        .whereType<AminoAcidProfile>()
-        .where((p) => p.competingLnaaGrams != null)
-        .toList(growable: false);
+    final proteinComponents = <FoodComponent>[];
+    for (final component in comp.foodComponents) {
+      final protein = component.proteinGrams;
+      if (protein == null || !protein.isFinite || protein < 0) {
+        // Unknown or invalid protein means the mapper cannot prove that every
+        // positive-protein component has a usable amino-acid profile.
+        return _emptyAminoAcidSummary;
+      }
+      if (protein > 0) proteinComponents.add(component);
+    }
+    final profiles = <AminoAcidProfile>[];
+    for (final component in proteinComponents) {
+      final profile = _completeServingProfile(component);
+      if (profile == null) return _emptyAminoAcidSummary;
+      profiles.add(profile);
+    }
 
     if (profiles.isEmpty) {
       // No actual amino-acid fields → no static data mode (missing, not zero).
-      return const FhirInspiredAminoAcidSummary(
-        aminoAcidDataMode: 'none',
-        aminoAcidNutrientIds: [],
-        aminoAcidConfidenceTier: null,
-        competingLnaaGrams: null,
-        lnaaValues: {},
-        fdcDataType: null,
-      );
+      return _emptyAminoAcidSummary;
     }
 
     final ids = <String>{};
@@ -165,4 +169,54 @@ class FhirInspiredNutritionIntakeMapper {
       fdcDataType: fdcDataType,
     );
   }
+
+  /// Mirrors the competition model's conservative admission boundary: actual
+  /// amino-acid summaries require an unambiguous gram unit, a supported basis,
+  /// all six competing LNAAs, finite non-negative values, and a total that does
+  /// not exceed the component's declared protein. A partial/held profile is
+  /// still preserved on the component, but must never be relabelled "actual".
+  AminoAcidProfile? _completeServingProfile(FoodComponent component) {
+    final raw = component.aminoAcidProfile;
+    if (raw == null || raw.partial || raw.unit.trim().toLowerCase() != 'g') {
+      return null;
+    }
+
+    final AminoAcidProfile profile;
+    if (raw.basis == 'per_serving') {
+      profile = raw;
+    } else if (raw.basis == 'per_100g') {
+      final portion = component.portionGrams;
+      if (portion == null || !portion.isFinite || portion <= 0) return null;
+      final scaled = raw.scaledToGrams(portion);
+      if (scaled == null) return null;
+      profile = scaled;
+    } else {
+      return null;
+    }
+
+    final values = [
+      profile.leucine,
+      profile.isoleucine,
+      profile.valine,
+      profile.phenylalanine,
+      profile.tyrosine,
+      profile.tryptophan,
+    ];
+    if (values.any((value) => value == null || !value.isFinite || value < 0)) {
+      return null;
+    }
+    final total = profile.competingLnaaGrams!;
+    final protein = component.proteinGrams!;
+    if (!total.isFinite || total < 0 || total > protein) return null;
+    return profile;
+  }
+
+  static const _emptyAminoAcidSummary = FhirInspiredAminoAcidSummary(
+    aminoAcidDataMode: 'none',
+    aminoAcidNutrientIds: [],
+    aminoAcidConfidenceTier: null,
+    competingLnaaGrams: null,
+    lnaaValues: {},
+    fdcDataType: null,
+  );
 }

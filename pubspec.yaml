@@ -34,6 +34,7 @@ dependencies:
   archive: ^4.0.9
   csv: ^8.0.0
   crypto: ^3.0.6
+  cryptography: ^2.9.0
   firebase_core: ^4.7.0
   firebase_auth: ^6.4.0
   cloud_firestore: ^6.8.0
@@ -43,8 +44,13 @@ dependencies:
   flutter_timezone: ^5.1.0
   pdf: ^3.13.0
   printing: ^5.15.0
+  share_plus: ^13.3.0
+  web: ^1.1.1
 
 dev_dependencies:
+  # Exact lock: the dependency-closure generator is an evidence tool whose
+  # resolved-element API must not drift under a caret upgrade.
+  analyzer: 14.1.0
   flutter_test:
     sdk: flutter
   integration_test:
@@ -57,4 +63,47 @@ flutter:
   assets:
     - assets/brand/
     - assets/data/
+    - config/algorithm_result_root_manifest.json
     - config/complete_app_upgrade_queue.json
+    - config/runtime_network_egress_policy.json
+
+  # "Paper" design system typefaces. Versions: Geist 1.800; Geist Mono 1.701;
+  # Source Serif 4 4.004. Google Fonts source pin: https://github.com/google/fonts/commit/87a44ad3d4535f7b3a5a715a08e8944f144afd06.
+  # Each family retains its own OFL 1.1 notice. Source Serif derivatives use
+  # the embedded name Parkin Serif Display; SourceSerif4Display below is only
+  # the application asset alias. Copyright and the original license remain.
+  # Bundled instead of fetched at runtime; weights are static fontTools cuts.
+  licenses:
+    - assets/fonts/OFL-Geist.txt
+    - assets/fonts/OFL-GeistMono.txt
+    - assets/fonts/OFL-SourceSerif4.txt
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Geist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Geist-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Geist-Bold.ttf
+          weight: 700
+    - family: SourceSerif4Display
+      fonts:
+        - asset: assets/fonts/SourceSerif4Display-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/SourceSerif4Display-Italic.ttf
+          weight: 400
+          style: italic
+        - asset: assets/fonts/SourceSerif4Display-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/SourceSerif4Display-SemiBold.ttf
+          weight: 600
+    - family: GeistMono
+      fonts:
+        - asset: assets/fonts/GeistMono-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/GeistMono-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/GeistMono-SemiBold.ttf
+          weight: 600

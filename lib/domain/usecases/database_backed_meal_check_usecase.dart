@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import '../../core/analysis/nutrition_rules.dart';
 import '../../core/analysis/food_repository.dart';
 import '../../core/models/drug_definition.dart';
@@ -6,12 +8,19 @@ import '../../core/models/interaction_result.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/user_profile.dart';
 import '../../core/i18n/app_i18n.dart';
+import '../../algorithm_sdk/algorithm_component_graph_identity.dart';
+import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../entities/cdss_runtime.dart';
+import '../entities/decision_support_followup.dart';
+import 'decision_support_prompt_capture.dart';
 import '../entities/meal_composition.dart';
+import '../entities/mechanistic_conflict_result.dart';
+import '../entities/mechanistic_replay_capsule.dart';
 import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/resolved_variant.dart';
 import '../entities/rule_registry_models.dart';
 import '../entities/runtime_context.dart';
+import 'administration_dose_confirmation_coordinator.dart';
 import 'clinical_decision_support_service.dart';
 import 'catalog_food_to_candidate.dart';
 import 'dosage_note_parser.dart';
@@ -19,6 +28,9 @@ import 'imported_label_rule_provider.dart';
 import 'intake_dose_context_builder.dart';
 import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
+import 'mechanistic_event_ledger_authorization.dart';
+import 'mechanistic_event_ledger_builder.dart';
+import 'mechanistic_replay_capsule_service.dart';
 import 'medication_entry_validator.dart';
 import 'time_axis_builder.dart';
 import 'variant_resolver.dart';
@@ -45,7 +57,10 @@ class DatabaseBackedMealCheckUseCase {
   final MealCompositionNormalizer mealCompositionNormalizer;
   final MedicationEntryValidator medicationEntryValidator;
   final TimeAxisBuilder timeAxisBuilder;
-  final DosageNoteParser _dosageNoteParser;
+  final AdministrationDoseConfirmationCoordinator _doseConfirmationCoordinator;
+  final MechanisticLedgerAuthorizer _ledgerAuthorizer;
+  final MechanisticReplayCapsuleRoundTripper _replayRoundTripper;
+  late final AlgorithmConfigurationIdentity _algorithmConfigurationIdentity;
 
   DatabaseBackedMealCheckUseCase({
     required this.variantResolver,
@@ -58,6 +73,10 @@ class DatabaseBackedMealCheckUseCase {
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
     DosageNoteParser? dosageNoteParser,
+    AdministrationDoseConfirmationCoordinator? doseConfirmationCoordinator,
+    MechanisticLedgerAuthorizer? ledgerAuthorizer,
+    MechanisticReplayCapsuleRoundTripper? replayRoundTripper,
+    AlgorithmConfigurationIdentity? algorithmConfigurationIdentity,
   }) : foodRepository = foodRepository ?? FoodRepository.createDefault(),
        mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
        mealCompositionNormalizer =
@@ -65,7 +84,28 @@ class DatabaseBackedMealCheckUseCase {
        medicationEntryValidator =
            medicationEntryValidator ?? MedicationEntryValidator(),
        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
-       _dosageNoteParser = dosageNoteParser ?? DosageNoteParser();
+       _doseConfirmationCoordinator =
+           doseConfirmationCoordinator ??
+           AdministrationDoseConfirmationCoordinator(parser: dosageNoteParser),
+       _ledgerAuthorizer =
+           ledgerAuthorizer ??
+           const MechanisticEventLedgerAuthorizationService(),
+       _replayRoundTripper =
+           replayRoundTripper ?? const MechanisticReplayCapsuleService() {
+    _algorithmConfigurationIdentity =
+        algorithmConfigurationIdentity ??
+        AlgorithmConfigurationIdentity.defaults(
+          gastricParameters:
+              this.mechanisticEngine.gastricEmptyingModel.parameters,
+          absorptionParameters:
+              this.mechanisticEngine.absorptionModel.parameters,
+        );
+    AlgorithmComponentGraphIdentityValidator.validateConflictEngine(
+      engine: this.mechanisticEngine,
+      identity: _algorithmConfigurationIdentity,
+      graphLabel: 'databaseBackedMealCheck.mechanisticEngine',
+    );
+  }
 
   Future<InteractionResult> call({
     required Meal meal,
@@ -86,6 +126,7 @@ class DatabaseBackedMealCheckUseCase {
       activeDrugs: activeDrugs,
       intakes: intakes,
       referenceTime: now ?? meal.recordedAt,
+      ownerScope: userProfile.patientId,
     );
     if (traceJson == null) return base;
     return base.copyWith(mechanisticTraceJson: traceJson);
@@ -165,6 +206,7 @@ class DatabaseBackedMealCheckUseCase {
     }
 
     final issues = <InteractionIssue>[];
+    final followupPrompts = <DecisionSupportPrompt>[];
     final keyFindings = <String>{};
     final nextActions = <String>{};
     final dataNotes = <String>{};
@@ -188,47 +230,69 @@ class DatabaseBackedMealCheckUseCase {
       );
       final coeventContext = _buildCoeventContext(meal);
       final enteralFeedContext = _buildEnteralFeedContext(meal);
+      final resultDose = intake == null
+          ? null
+          : _doseConfirmationCoordinator.evaluateForResultUse(
+              intake,
+              ownerScope: userProfile.patientId,
+              observedAt: referenceTime,
+            );
 
       // 这里把旧应用层模型压平成统一的运行时上下文，交给真正的规则引擎执行。
-      final output = await clinicalDecisionSupportService.run(
-        context: UnifiedRuntimeContext(
-          userProfile: profileContext,
-          drug: DrugRuntimeContext(
-            id: resolvedDrug.selectedVariantId,
-            genericName: drug.genericName.toLowerCase(),
-            brandName: drug.brandNames.isEmpty ? null : drug.brandNames.first,
-            activeIngredients: _activeIngredientsForDrug(drug),
-            substanceTags: _substanceTagsForDrug(drug),
-            formulation: resolvedDrug.dosageForm,
-            dosageForm: resolvedDrug.dosageForm,
-            route: resolvedDrug.route,
-            releaseType: resolvedDrug.releaseType,
-            dailyDoseMg: _parseDoseMg(intake),
-            jurisdiction: resolvedDrug.jurisdiction,
-          ),
-          meal: MealRuntimeContext(
-            id: meal.id,
-            totalProteinG: mealMetrics.totalProteinG,
-            tyramineMgEstimate: _estimateTyramine(meal),
-            highFatHighCalorie: mealMetrics.highFatHighCalorie,
-            itemIds: resolvedFoods
-                .map((variant) => variant.selectedVariantId)
-                .toList(growable: false),
-          ),
-          coevent: coeventContext,
-          enteralFeed: enteralFeedContext,
-          timestamps: TimestampRuntimeContext(
-            drugTime: intake?.takenAt,
-            // 当前运行时规则至少先读 corrected meal time，避免把补录时刻误当成真正进食时刻。
-            mealTime: meal.effectiveOccurredAt,
-            coeventTime: coeventContext == null
-                ? null
-                : (meal.coeventTime ?? meal.effectiveOccurredAt),
-          ),
+      final runtimeContext = UnifiedRuntimeContext(
+        userProfile: profileContext,
+        drug: DrugRuntimeContext(
+          id: resolvedDrug.selectedVariantId,
+          genericName: drug.genericName.toLowerCase(),
+          brandName: drug.brandNames.isEmpty ? null : drug.brandNames.first,
+          activeIngredients: _activeIngredientsForDrug(drug),
+          substanceTags: _substanceTagsForDrug(drug),
+          formulation: resolvedDrug.dosageForm,
+          dosageForm: resolvedDrug.dosageForm,
+          route: resolvedDrug.route,
+          releaseType: resolvedDrug.releaseType,
+          administrationDoseValue: resultDose?.value,
+          administrationDoseUnit: resultDose?.unit,
+          // One Intake is one administration event, not a daily regimen.
+          // Daily dose stays unknown until frequency/period evidence is
+          // explicitly represented and reconciled.
+          dailyDoseMg: null,
+          jurisdiction: resolvedDrug.jurisdiction,
         ),
+        meal: MealRuntimeContext(
+          id: meal.id,
+          totalProteinG: mealMetrics.totalProteinG,
+          tyramineMgEstimate: _estimateTyramine(meal),
+          highFatHighCalorie: mealMetrics.highFatHighCalorie,
+          itemIds: resolvedFoods
+              .map((variant) => variant.selectedVariantId)
+              .toList(growable: false),
+        ),
+        coevent: coeventContext,
+        enteralFeed: enteralFeedContext,
+        timestamps: TimestampRuntimeContext(
+          drugTime: intake?.takenAt,
+          // 当前运行时规则至少先读 corrected meal time，避免把补录时刻误当成真正进食时刻。
+          mealTime: meal.effectiveOccurredAt,
+          coeventTime: coeventContext == null
+              ? null
+              : (meal.coeventTime ?? meal.effectiveOccurredAt),
+        ),
+      );
+      final output = await clinicalDecisionSupportService.run(
+        context: runtimeContext,
         rules: effectiveRules,
         factsVersion: 'regional_master_data_v1',
         rulesVersion: 'baseline_cdss_rules_v1',
+      );
+      followupPrompts.addAll(
+        captureDecisionSupportPrompts(
+          output: output,
+          context: runtimeContext,
+          sourceRecordId: meal.id,
+          candidateId: drug.id,
+          createdAt: referenceTime,
+        ),
       );
       scoreInputs.add(
         _DrugMealScoreInput(
@@ -309,13 +373,14 @@ class DatabaseBackedMealCheckUseCase {
       return InteractionResult.ok(
         mealId: meal.id,
         message: i18n.tr('mealcheck.no_conflict'),
-      );
+      ).copyWith(followupPrompts: followupPrompts);
     }
     final scoreResult = scoring.score(scoreInputs);
 
     return InteractionResult(
       mealId: meal.id,
       status: InteractionStatus.warning,
+      followupPrompts: List.unmodifiable(followupPrompts),
       summary: i18n.tr('mealcheck.summary', {'count': '${issues.length}'}),
       analysisText: _buildAnalysisText(
         i18n: i18n,
@@ -712,14 +777,6 @@ class DatabaseBackedMealCheckUseCase {
     );
   }
 
-  /// Daily dose in mg derived ONLY from an explicit user-entered dosage note
-  /// (value + recognized mass unit) via `DosageNoteParser`. Never infers a
-  /// number from free text: "levodopa 100", bare "100", or a slashed combo
-  /// yield null so the rule engine treats the dose as unknown instead of
-  /// fabricating 100 mg.
-  double? _parseDoseMg(Intake? intake) =>
-      intake == null ? null : _dosageNoteParser.milligramsForIntake(intake);
-
   InteractionSeverity _mapSeverity(String decision) {
     switch (decision) {
       case 'BLOCK':
@@ -753,6 +810,7 @@ class DatabaseBackedMealCheckUseCase {
     required List<DrugDefinition> activeDrugs,
     required List<Intake> intakes,
     required DateTime referenceTime,
+    required String ownerScope,
   }) {
     if (activeDrugs.isEmpty || intakes.isEmpty) return null;
 
@@ -767,9 +825,14 @@ class DatabaseBackedMealCheckUseCase {
       final ingredients = CanonicalMedicationIngredientTokenizer.tokenize([
         drug.genericName,
       ]);
-      // Structured values are user-note-derived and preferred when present;
-      // legacy records fall back to parsing dosageNote. No default is added.
-      final dose = _dosageNoteParser.parseIntake(intake);
+      // Numeric dose use requires the same intact account-scoped confirmation
+      // and conflict-free assertion graph as every other production entry
+      // point. Legacy text remains visible but cannot silently affect results.
+      final dose = _doseConfirmationCoordinator.evaluateForResultUse(
+        intake,
+        ownerScope: ownerScope,
+        observedAt: referenceTime,
+      );
       final formulation = resolveIntakeMechanisticFormulation(
         intake: intake,
         drug: drug,
@@ -777,8 +840,8 @@ class DatabaseBackedMealCheckUseCase {
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
-        strength: dose.explicit ? dose.value : null,
-        unit: dose.explicit ? dose.unit : null,
+        strength: dose.eligible ? dose.value : null,
+        unit: dose.eligible ? dose.unit : null,
         form: formulation.dosageForm,
         route: formulation.route,
         releaseType: formulation.releaseType,
@@ -826,11 +889,76 @@ class DatabaseBackedMealCheckUseCase {
       ],
     );
 
-    final trace = mechanisticEngine.evaluate(
-      context: context,
-      mealCompositionsById: {composition.id: composition},
-      resultId: 'mealcheck_${meal.id}',
-    );
+    final compositions = <String, MealComposition>{composition.id: composition};
+    MechanisticConflictResult trace;
+    try {
+      final ledger = const MechanisticEventLedgerBuilder().build(
+        ledgerId: 'mealcheck_${meal.id}_ledger',
+        context: context,
+        mealCompositionsById: compositions,
+        configurationDigest: _algorithmConfigurationIdentity.sha256Digest,
+        createdAtUtc: referenceTime.toUtc(),
+        sourceId: 'production:meal_check',
+        revisionId: AlgorithmConfigurationIdentity.defaultVersion,
+        synthetic: false,
+      );
+      final replay = _replayRoundTripper.captureAndRestore(
+        capsuleId: 'mealcheck_${meal.id}_replay',
+        generatedAtUtc: referenceTime.toUtc(),
+        ledger: ledger,
+        context: context,
+        mealCompositionsById: compositions,
+        expectedConfigurationSha256:
+            _algorithmConfigurationIdentity.sha256Digest,
+      );
+      final authorization = _ledgerAuthorizer.authorize(
+        ledger: replay.restored.ledger,
+        context: replay.restored.context,
+        mealCompositionsById: replay.restored.mealCompositionsById,
+        expectedConfigurationSha256:
+            _algorithmConfigurationIdentity.sha256Digest,
+      );
+      final view = authorization.view;
+      developer.log(
+        '[MechanisticLedgerAuthorization] route=meal_check '
+        'authorized=${view != null} '
+        'replay=${replay.capsule.capsuleSha256} '
+        'findings=${authorization.assessment.findings.join(',')}',
+        name: 'ParkinSUM',
+      );
+      trace = view == null
+          ? MechanisticConflictResult.blockedIntegrity(
+              id: 'mealcheck_${meal.id}',
+              reason: MechanisticInteractionType.insufficientMealContext,
+              integrityReasons: authorization.assessment.findings,
+              sourceRefs: const [
+                mechanisticReplayCapsuleSchema,
+                mechanisticLedgerAuthorizationSchema,
+              ],
+            )
+          : mechanisticEngine.evaluate(
+              context: view.context,
+              mealCompositionsById: view.mealCompositionsById,
+              resultId: 'mealcheck_${meal.id}',
+            );
+    } on Object catch (error) {
+      final reason =
+          'authorization.replay_pipeline_failed:${error.runtimeType}';
+      developer.log(
+        '[MechanisticLedgerAuthorization] route=meal_check authorized=false '
+        'findings=$reason',
+        name: 'ParkinSUM',
+      );
+      trace = MechanisticConflictResult.blockedIntegrity(
+        id: 'mealcheck_${meal.id}',
+        reason: MechanisticInteractionType.insufficientMealContext,
+        integrityReasons: <String>[reason],
+        sourceRefs: const [
+          mechanisticReplayCapsuleSchema,
+          mechanisticLedgerAuthorizationSchema,
+        ],
+      );
+    }
     return trace.toJson();
   }
 }

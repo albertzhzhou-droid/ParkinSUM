@@ -1,0 +1,230 @@
+{
+  "$schema": "parkinsum.portable-schema-fuzz-regression-corpus/1",
+  "schemaVersion": 1,
+  "generatorVersion": 1,
+  "privacy": {
+    "syntheticOnly": true,
+    "privacyReviewed": true,
+    "userDerived": false
+  },
+  "cases": [
+    {
+      "id": "duplicate_literal_root_member",
+      "partition": "duplicate_member_literal_and_escaped",
+      "rawJson": "{\"schemaVersion\":2,\"schemaVersion\":2}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "duplicate_member"
+    },
+    {
+      "id": "duplicate_escape_equivalent_root_member",
+      "partition": "duplicate_member_literal_and_escaped",
+      "rawJson": "{\"schemaVersion\":2,\"schema\\u0056ersion\":2}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "duplicate_member"
+    },
+    {
+      "id": "unpaired_high_surrogate_escape",
+      "partition": "unicode_scalar_and_noncharacter",
+      "rawJson": "{\"value\":\"\\ud800\"}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "non_interoperable_unicode"
+    },
+    {
+      "id": "unpaired_low_surrogate_escape",
+      "partition": "unicode_scalar_and_noncharacter",
+      "rawJson": "{\"value\":\"\\udc00\"}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "non_interoperable_unicode"
+    },
+    {
+      "id": "unicode_noncharacter_fdd0_escape",
+      "partition": "unicode_scalar_and_noncharacter",
+      "rawJson": "{\"value\":\"\\ufdd0\"}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "non_interoperable_unicode"
+    },
+    {
+      "id": "unicode_plane_noncharacter_escape_pair",
+      "partition": "unicode_scalar_and_noncharacter",
+      "rawJson": "{\"value\":\"\\ud83f\\udffe\"}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "non_interoperable_unicode"
+    },
+    {
+      "id": "valid_v3_reminder_label_escaped_non_bmp",
+      "partition": "unicode_scalar_and_noncharacter",
+      "generatorRecipe": "valid_v3_reminder_label_escaped_non_bmp",
+      "expectedDisposition": "ready",
+      "expectedReasonCode": "ready_migrated_preview"
+    },
+    {
+      "id": "invalid_escape",
+      "partition": "number_token_and_malformed_json",
+      "rawJson": "{\"value\":\"\\x\"}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "malformed_or_structural_budget"
+    },
+    {
+      "id": "leading_zero_number",
+      "partition": "number_token_and_malformed_json",
+      "rawJson": "{\"value\":01}",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "malformed_or_structural_budget"
+    },
+    {
+      "id": "truncated_object",
+      "partition": "number_token_and_malformed_json",
+      "rawJson": "{\"schemaVersion\":2",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "malformed_or_structural_budget"
+    },
+    {
+      "id": "root_depth_over_budget",
+      "partition": "maximum_depth",
+      "rawJson": "[[[[[[[[[[[[[[[[[[[[[[[[[null]]]]]]]]]]]]]]]]]]]]]]]]]",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "depth_budget"
+    },
+    {
+      "id": "root_width_over_budget",
+      "partition": "maximum_object_width",
+      "generatorRecipe": "object_with_129_integer_fields",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "object_width_budget"
+    },
+    {
+      "id": "number_token_over_budget",
+      "partition": "number_token_and_malformed_json",
+      "generatorRecipe": "number_token_129_characters",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "number_token_budget"
+    },
+    {
+      "id": "escaped_string_token_over_budget",
+      "partition": "maximum_string_bytes",
+      "generatorRecipe": "escaped_ascii_string_token_10923_characters",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "string_budget"
+    },
+    {
+      "id": "decoded_key_over_budget",
+      "partition": "maximum_object_width",
+      "generatorRecipe": "decoded_key_257_ascii_bytes",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "key_utf8_budget"
+    },
+    {
+      "id": "duplicate_manifest_path",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_duplicate_manifest_path",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "unsupported_integrity_algorithm",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_md5_integrity_algorithm",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "invalid_escape_after_string_budget_boundary",
+      "partition": "number_token_and_malformed_json",
+      "generatorRecipe": "invalid_escape_after_65535_ascii_bytes",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "malformed_or_structural_budget"
+    },
+    {
+      "id": "unpaired_surrogate_before_over_budget_tail",
+      "partition": "unicode_scalar_and_noncharacter",
+      "generatorRecipe": "unpaired_surrogate_before_65537_ascii_bytes",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "non_interoperable_unicode"
+    },
+    {
+      "id": "long_129th_object_key",
+      "partition": "maximum_object_width",
+      "generatorRecipe": "object_with_long_129th_key",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "object_width_budget"
+    },
+    {
+      "id": "non_json_whitespace_before_over_depth",
+      "partition": "number_token_and_malformed_json",
+      "generatorRecipe": "nbsp_before_depth_25_array",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "malformed_or_structural_budget"
+    },
+    {
+      "id": "reminder_activation_token_not_excluded",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_included_activation_token",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "reminder_target_consent_bypassed",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_bypassed_target_consent",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "reminder_presentation_digest_invalid",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_invalid_presentation_digest",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "node_budget_eof_precedence",
+      "partition": "number_token_and_malformed_json",
+      "generatorRecipe": "trailing_comma_after_499999_array_items",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "malformed_or_structural_budget"
+    },
+    {
+      "id": "reminder_empty_label",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_empty_reminder_label",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "reminder_minute_double_lexical_type",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_double_reminder_minute",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "reminder_weekday_double_lexical_type",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_double_reminder_weekday",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "duplicate_reminder_identifier",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_duplicate_reminder_identifier",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    },
+    {
+      "id": "schema_version_double_lexical_type",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_double_schema_version",
+      "expectedDisposition": "unsupportedSchema",
+      "expectedReasonCode": "unsupported_schema_version"
+    },
+    {
+      "id": "manifest_record_count_double_lexical_type",
+      "partition": "integrity_and_contract_semantics",
+      "generatorRecipe": "valid_v3_with_double_manifest_record_count",
+      "expectedDisposition": "corrupt",
+      "expectedReasonCode": "contract_or_integrity_invalid"
+    }
+  ],
+  "boundary": "Every retained input is synthetic and privacy-reviewed. The corpus is finite, does not contain user data, and is not evidence of exhaustive parser or clinical correctness."
+}

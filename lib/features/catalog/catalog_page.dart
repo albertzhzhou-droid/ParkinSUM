@@ -5,8 +5,9 @@ import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/state/app_state.dart';
 import '../../core/state/app_state_slices.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import 'catalog_detail_pages.dart';
+import 'library_section_tabs.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -49,123 +50,161 @@ class _CatalogPageState extends State<CatalogPage> {
     final drugs = engine.searchDrugs(keyword);
 
     return Scaffold(
-      appBar: AppBar(title: Text(i18n.tr('catalog.title'))),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-            child: _CatalogShowcaseCard(
-              foodCount: foods.length,
-              drugCount: drugs.length,
-              totalFoodCount: engine.foodRepo.allFoods.length,
-              totalDrugCount: engine.medRepo.allDrugs.length,
-              showingFoods: _showFoods,
+      appBar: PaperAppBar(
+        chapterTabs: PaperShellScope.showsChapters(context),
+        title: Text(i18n.tr('nav.library')),
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final insets = paperPageInsets(
+            constraints.maxWidth,
+            maxWidth: 1040,
+            top: 0,
+          );
+          final inlineControls =
+              constraints.maxWidth - insets.horizontal >= 640;
+          final search = TextField(
+            controller: _controller,
+            decoration: InputDecoration(
+              labelText: i18n.tr('catalog.search'),
+              prefixIcon: const Icon(Icons.search_rounded),
+              isDense: true,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                labelText: i18n.tr('catalog.search'),
-                border: const OutlineInputBorder(),
+            onChanged: (_) => setState(() {}),
+          );
+          final kind = SegmentedButton<bool>(
+            segments: [
+              ButtonSegment(value: true, label: Text(i18n.tr('catalog.foods'))),
+              ButtonSegment(
+                value: false,
+                label: Text(i18n.tr('catalog.drugs')),
               ),
-              onChanged: (_) => setState(() {}),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: SegmentedButton<bool>(
-              segments: [
-                ButtonSegment(
-                  value: true,
-                  label: Text(i18n.tr('catalog.foods')),
+            ],
+            selected: {_showFoods},
+            onSelectionChanged: (s) => setState(() => _showFoods = s.first),
+          );
+          return Column(
+            children: [
+              LibrarySectionTabs(current: 1, horizontalPadding: insets.left),
+              Padding(
+                padding: EdgeInsets.fromLTRB(insets.left, 4, insets.right, 0),
+                child: _CatalogShowcaseCard(
+                  foodCount: foods.length,
+                  drugCount: drugs.length,
+                  totalFoodCount: engine.foodRepo.allFoods.length,
+                  totalDrugCount: engine.medRepo.allDrugs.length,
+                  showingFoods: _showFoods,
                 ),
-                ButtonSegment(
-                  value: false,
-                  label: Text(i18n.tr('catalog.drugs')),
-                ),
-              ],
-              selected: {_showFoods},
-              onSelectionChanged: (s) => setState(() => _showFoods = s.first),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: _showFoods
-                ? ListView.separated(
-                    itemCount: foods.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final food = foods[i];
-                      final textureLine = _foodTextureLine(i18n, food);
-                      return ListTile(
-                        title: Text(i18n.foodName(food.id, food.name)),
-                        subtitle: Text(
-                          '${i18n.tr('catalog.food_subtitle', {'category': food.category.name, 'protein': '${food.proteinG}', 'carbs': '${food.carbsG}', 'fat': '${food.fatG}'})}\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}${textureLine == null ? '' : '\n$textureLine'}\n${food.description}',
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(insets.left, 12, insets.right, 8),
+                // Search and the foods/drugs switch share one row when there is
+                // room, so the list starts higher on the page.
+                child: inlineControls
+                    ? Row(
+                        children: [
+                          Expanded(child: search),
+                          const SizedBox(width: 12),
+                          kind,
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [search, const SizedBox(height: 10), kind],
+                      ),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: _showFoods
+                    ? ListView.separated(
+                        padding: EdgeInsets.fromLTRB(
+                          insets.left,
+                          0,
+                          insets.right,
+                          32,
                         ),
-                        isThreeLine: true,
-                        trailing: Icon(
-                          Icons.chevron_right,
-                          semanticLabel: i18n.tr('catalog.view_detail'),
-                        ),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => FoodDetailPage(
-                              food: food,
-                              future: state
-                                  .services
-                                  .cdssCatalogProjectionService
-                                  .projectFoodDetail(food),
+                        itemCount: foods.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final food = foods[i];
+                          final textureLine = _foodTextureLine(i18n, food);
+                          return ListTile(
+                            title: Text(i18n.foodName(food.id, food.name)),
+                            subtitle: Text(
+                              '${i18n.tr('catalog.food_subtitle', {'category': food.category.name, 'protein': '${food.proteinG}', 'carbs': '${food.carbsG}', 'fat': '${food.fatG}'})}\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}${textureLine == null ? '' : '\n$textureLine'}\n${food.description}',
                             ),
-                          ),
-                        ),
-                      );
-                    },
-                  )
-                : ListView.separated(
-                    itemCount: drugs.length,
-                    separatorBuilder: (_, _) => const Divider(height: 1),
-                    itemBuilder: (_, i) {
-                      final drug = drugs[i];
-                      final active = catalogState.activeDrugIds.contains(
-                        drug.id,
-                      );
-                      return ListTile(
-                        title: Text(
-                          i18n.medicationName(drug.id, drug.displayName),
-                        ),
-                        subtitle: Text(
-                          '${i18n.tr('catalog.drug_subtitle', {'tags': drug.tags.map((e) => e.name).join(', ')})}\n${i18n.sourceSystemLabel(drug.sourceSystem)} · ${i18n.regionLabel(drug.jurisdiction)} · ${i18n.routeLabel(drug.route)} · ${i18n.dosageFormLabel(drug.dosageForm)}\n${i18n.medicationNote(drug.id, drug.notes)}',
-                        ),
-                        trailing: active
-                            ? Icon(
-                                Icons.check_circle,
-                                semanticLabel: i18n.tr(
-                                  'catalog.selected_active',
+                            isThreeLine: true,
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              semanticLabel: i18n.tr('catalog.view_detail'),
+                            ),
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => FoodDetailPage(
+                                  food: food,
+                                  future: state
+                                      .services
+                                      .cdssCatalogProjectionService
+                                      .projectFoodDetail(food),
                                 ),
-                              )
-                            : Icon(
-                                Icons.chevron_right,
-                                semanticLabel: i18n.tr('catalog.view_detail'),
                               ),
-                        isThreeLine: true,
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DrugDetailPage(
-                              drug: drug,
-                              future: state
-                                  .services
-                                  .cdssCatalogProjectionService
-                                  .projectDrugDetail(drug),
                             ),
-                          ),
+                          );
+                        },
+                      )
+                    : ListView.separated(
+                        padding: EdgeInsets.fromLTRB(
+                          insets.left,
+                          0,
+                          insets.right,
+                          32,
                         ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                        itemCount: drugs.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, i) {
+                          final drug = drugs[i];
+                          final active = catalogState.activeDrugIds.contains(
+                            drug.id,
+                          );
+                          return ListTile(
+                            title: Text(
+                              i18n.medicationName(drug.id, drug.displayName),
+                            ),
+                            subtitle: Text(
+                              '${i18n.tr('catalog.drug_subtitle', {'tags': drug.tags.map((e) => e.name).join(', ')})}\n${i18n.sourceSystemLabel(drug.sourceSystem)} · ${i18n.regionLabel(drug.jurisdiction)} · ${i18n.routeLabel(drug.route)} · ${i18n.dosageFormLabel(drug.dosageForm)}\n${i18n.medicationNote(drug.id, drug.notes)}',
+                            ),
+                            trailing: active
+                                ? Icon(
+                                    Icons.check_circle,
+                                    semanticLabel: i18n.tr(
+                                      'catalog.selected_active',
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.chevron_right,
+                                    semanticLabel: i18n.tr(
+                                      'catalog.view_detail',
+                                    ),
+                                  ),
+                            isThreeLine: true,
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => DrugDetailPage(
+                                  drug: drug,
+                                  future: state
+                                      .services
+                                      .cdssCatalogProjectionService
+                                      .projectDrugDetail(drug),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -204,11 +243,10 @@ class _CatalogShowcaseCard extends StatelessWidget {
         ? '$visibleCount shipped'
         : '$visibleCount of $totalCount shipped';
 
-    return GlassSurface(
+    return PaperSurface(
       borderRadius: 8,
-      blurSigma: LiquidGlass.blurSm,
       padding: EdgeInsets.zero,
-      border: Border.all(color: LiquidGlass.stroke),
+      border: Border.all(color: Paper.border),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -226,7 +264,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
           ),
           Container(
             decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: LiquidGlass.stroke)),
+              border: Border(top: BorderSide(color: Paper.border)),
             ),
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Column(
@@ -257,7 +295,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: LiquidGlass.onSurface,
+                              color: Paper.ink,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -267,7 +305,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: LiquidGlass.onSurfaceMuted,
+                              color: Paper.inkMuted,
                             ),
                           ),
                         ],
@@ -319,7 +357,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                 Text(
                   'Local-first educational prototype for deterministic food-medication interaction review.',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: LiquidGlass.onSurfaceMuted,
+                    color: Paper.inkMuted,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -355,7 +393,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                     const Icon(
                       Icons.update_rounded,
                       size: 18,
-                      color: LiquidGlass.onSurfaceMuted,
+                      color: Paper.inkMuted,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -364,7 +402,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: LiquidGlass.onSurfaceMuted,
+                          color: Paper.inkMuted,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -382,7 +420,7 @@ class _CatalogShowcaseCard extends StatelessWidget {
                     Text(
                       'Dart',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: LiquidGlass.onSurfaceMuted,
+                        color: Paper.inkMuted,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

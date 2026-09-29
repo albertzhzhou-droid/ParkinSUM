@@ -1,0 +1,218 @@
+{
+  "schemaVersion": 2,
+  "scope": "synthetic-fhir-r4-observation-retrieval-and-local-terminology",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([Observation]) + code in Synthetic Observation Codes",
+  "cases": [
+    {
+      "id": "observation_present",
+      "patientContextId": "synthetic-patient-present",
+      "expectedResult": true,
+      "expectedRuntimeValueSetMembership": true,
+      "expectedVersionAwareMembership": true,
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-present"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Observation",
+              "id": "synthetic-observation-present",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-test",
+                    "version": "v1",
+                    "code": "observation-in-set"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-present"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "observation_absent",
+      "patientContextId": "synthetic-patient-empty",
+      "expectedResult": false,
+      "expectedRuntimeValueSetMembership": false,
+      "expectedVersionAwareMembership": false,
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-empty"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "observation_foreign_subject",
+      "patientContextId": "synthetic-patient-empty",
+      "expectedResult": false,
+      "expectedRuntimeValueSetMembership": false,
+      "expectedVersionAwareMembership": false,
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-empty"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Observation",
+              "id": "synthetic-observation-foreign",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-test",
+                    "version": "v1",
+                    "code": "observation-in-set"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "observation_non_member_code",
+      "patientContextId": "synthetic-patient-non-member",
+      "expectedResult": true,
+      "expectedRuntimeValueSetMembership": false,
+      "expectedVersionAwareMembership": false,
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-non-member"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Observation",
+              "id": "synthetic-observation-non-member",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-test",
+                    "version": "v1",
+                    "code": "observation-outside-set"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-non-member"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "observation_foreign_code_system",
+      "patientContextId": "synthetic-patient-other-system",
+      "expectedResult": true,
+      "expectedRuntimeValueSetMembership": false,
+      "expectedVersionAwareMembership": false,
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-other-system"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Observation",
+              "id": "synthetic-observation-other-system",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-other",
+                    "version": "v1",
+                    "code": "observation-in-set"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other-system"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "observation_system_version_mismatch",
+      "patientContextId": "synthetic-patient-version-mismatch",
+      "expectedResult": true,
+      "expectedRuntimeValueSetMembership": true,
+      "expectedVersionAwareMembership": false,
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-version-mismatch"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Observation",
+              "id": "synthetic-observation-version-mismatch",
+              "status": "final",
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-test",
+                    "version": "v2",
+                    "code": "observation-in-set"
+                  }
+                ]
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-version-mismatch"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

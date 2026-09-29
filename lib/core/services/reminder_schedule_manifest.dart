@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 
 import '../../domain/entities/user_logging_reminder.dart';
+import 'reminder_notification_payload.dart';
+import 'reminder_notification_privacy_policy.dart';
 
 typedef ReminderScheduleNotificationIdHasher =
     int Function(String reminderId, int weekday);
@@ -39,6 +41,10 @@ class ReminderScheduleManifestEntry {
     required this.minuteOfDay,
     required this.weekday,
     required this.notificationId,
+    required this.payloadDigest,
+    required this.notificationPrivacyMode,
+    required this.notificationLanguageCode,
+    required this.presentationDigest,
   });
 
   final String reminderId;
@@ -46,20 +52,81 @@ class ReminderScheduleManifestEntry {
   final int minuteOfDay;
   final int weekday;
   final int notificationId;
+  final String payloadDigest;
+  final ReminderNotificationPrivacyMode notificationPrivacyMode;
+  final String notificationLanguageCode;
+  final String presentationDigest;
 
   String get slotKey => '$reminderId:$weekday';
 }
 
 class ReminderScheduleManifest {
   ReminderScheduleManifest._(List<ReminderScheduleManifestEntry> entries)
-    : entries = List<ReminderScheduleManifestEntry>.unmodifiable(entries);
+    : entries = List<ReminderScheduleManifestEntry>.unmodifiable(entries),
+      identitySha256 = sha256
+          .convert(
+            utf8.encode(
+              jsonEncode(<Object?>[
+                identitySchema,
+                for (final entry in entries)
+                  <Object?>[
+                    entry.reminderId,
+                    entry.notificationId,
+                    entry.minuteOfDay,
+                    entry.weekday,
+                    entry.capabilityDigest,
+                    entry.payloadDigest,
+                    entry.notificationPrivacyMode.name,
+                    entry.notificationLanguageCode,
+                    entry.presentationDigest,
+                  ],
+              ]),
+            ),
+          )
+          .toString();
+
+  static const String identitySchema = 'parkinsum.reminder-schedule-manifest/1';
 
   /// Entries are ordered by opaque reminder id and then weekday.
   ///
   /// Input list and [Set] iteration order therefore cannot change the manifest.
   final List<ReminderScheduleManifestEntry> entries;
 
+  /// Digest of ordered local schedule and privacy-safe request identities.
+  /// Raw response payloads, labels, and activation capabilities are excluded.
+  final String identitySha256;
+
   int get projected => entries.length;
+}
+
+/// In-memory proof that a completed install belongs to this scope, schedule,
+/// and local timezone. A matching plugin registry is also required before
+/// callers may skip native reconciliation.
+class ReminderScheduleInstallFingerprint {
+  ReminderScheduleInstallFingerprint({
+    required ReminderScheduleManifest manifest,
+    required String userScope,
+    required this.timezoneIdentifier,
+  }) : manifestIdentitySha256 = manifest.identitySha256,
+       userScopeSha256 = sha256
+           .convert(
+             utf8.encode('parkinsum.reminder-schedule-scope/1:$userScope'),
+           )
+           .toString();
+
+  final String manifestIdentitySha256;
+  final String userScopeSha256;
+  final String timezoneIdentifier;
+
+  bool canSkipNativeReconciliation({
+    required ReminderScheduleInstallFingerprint? previouslyInstalled,
+    required bool pendingIdentityMatched,
+  }) =>
+      pendingIdentityMatched &&
+      previouslyInstalled != null &&
+      manifestIdentitySha256 == previouslyInstalled.manifestIdentitySha256 &&
+      userScopeSha256 == previouslyInstalled.userScopeSha256 &&
+      timezoneIdentifier == previouslyInstalled.timezoneIdentifier;
 }
 
 enum ReminderScheduleManifestFailureKind {
@@ -69,6 +136,7 @@ enum ReminderScheduleManifestFailureKind {
   invalidActivationToken,
   invalidMinuteOfDay,
   invalidWeekdays,
+  invalidNotificationLocale,
   capacityExceeded,
   notificationIdHasherFailed,
   invalidNotificationId,
@@ -203,6 +271,19 @@ class ReminderScheduleManifestPreflight {
           ),
         );
       }
+      if (!isReminderNotificationLocaleCodeValid(
+            reminder.notificationLocaleCode,
+          ) ||
+          !isReminderNotificationLocaleCodeValid(
+            reminder.notificationLocaleDecisionCode,
+          )) {
+        return failure(
+          ReminderScheduleManifestFailure(
+            kind: ReminderScheduleManifestFailureKind.invalidNotificationLocale,
+            reminderId: reminder.id,
+          ),
+        );
+      }
     }
 
     if (limit != null && projected > limit) {
@@ -216,6 +297,10 @@ class ReminderScheduleManifestPreflight {
     final entries = <ReminderScheduleManifestEntry>[];
     final entriesByNotificationId = <int, ReminderScheduleManifestEntry>{};
     for (final reminder in ordered.where((reminder) => reminder.enabled)) {
+      final presentation = ReminderNotificationPrivacyPolicy.resolve(
+        mode: reminder.notificationPrivacyMode,
+        localeName: reminder.notificationLocaleCode,
+      );
       final weekdays = reminder.weekdays.toList(growable: false)..sort();
       for (final weekday in weekdays) {
         late final int notificationId;
@@ -250,6 +335,12 @@ class ReminderScheduleManifestPreflight {
           minuteOfDay: reminder.minuteOfDay,
           weekday: weekday,
           notificationId: notificationId,
+          payloadDigest: sha256
+              .convert(utf8.encode(reminderNotificationPayloadFor(reminder)))
+              .toString(),
+          notificationPrivacyMode: reminder.notificationPrivacyMode,
+          notificationLanguageCode: presentation.languageCode,
+          presentationDigest: presentation.identitySha256,
         );
         final existing = entriesByNotificationId[notificationId];
         if (existing != null) {

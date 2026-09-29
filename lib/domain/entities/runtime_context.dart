@@ -35,6 +35,12 @@ class DrugRuntimeContext {
   final String dosageForm;
   final String route;
   final String releaseType;
+
+  /// One explicitly confirmed administration quantity. This is intentionally
+  /// separate from [dailyDoseMg]: a single Intake never proves a daily regimen
+  /// or frequency.
+  final double? administrationDoseValue;
+  final String? administrationDoseUnit;
   final double? dailyDoseMg;
   final String? jurisdiction;
 
@@ -48,6 +54,8 @@ class DrugRuntimeContext {
     required this.dosageForm,
     required this.route,
     required this.releaseType,
+    this.administrationDoseValue,
+    this.administrationDoseUnit,
     required this.dailyDoseMg,
     required this.jurisdiction,
   });
@@ -134,6 +142,10 @@ class UnifiedRuntimeContext {
       'dosage_form': drug.dosageForm,
       'route': drug.route,
       'release_type': drug.releaseType,
+      if (drug.administrationDoseValue != null)
+        'administration_dose_value': drug.administrationDoseValue,
+      if (drug.administrationDoseUnit != null)
+        'administration_dose_unit': drug.administrationDoseUnit,
       'daily_dose_mg': drug.dailyDoseMg,
       'jurisdiction': drug.jurisdiction,
     },

@@ -1,6 +1,6 @@
-// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+import 'dart:js_interop';
 
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 
 class PortableDataExportResult {
   const PortableDataExportResult({
@@ -29,15 +29,17 @@ class PortableDataExportSink {
     required bool Function() authorize,
   }) async {
     _validateFileName(fileName);
-    final blob = html.Blob(<Object>[
-      contents,
-    ], 'application/json;charset=utf-8');
-    final url = html.Url.createObjectUrlFromBlob(blob);
+    final blob = web.Blob(
+      <JSAny>[contents.toJS].toJS,
+      web.BlobPropertyBag(type: 'application/json;charset=utf-8'),
+    );
+    final url = web.URL.createObjectURL(blob);
     try {
-      final anchor = html.AnchorElement(href: url)
+      final anchor = web.HTMLAnchorElement()
+        ..href = url
         ..download = fileName
         ..style.display = 'none';
-      html.document.body?.children.add(anchor);
+      web.document.body?.append(anchor);
       if (!authorize()) {
         anchor.remove();
         throw const PortableDataExportException(residualFilePossible: false);
@@ -45,7 +47,7 @@ class PortableDataExportSink {
       anchor.click();
       anchor.remove();
     } finally {
-      html.Url.revokeObjectUrl(url);
+      web.URL.revokeObjectURL(url);
     }
     return const PortableDataExportResult(
       delivery: 'browser_download',

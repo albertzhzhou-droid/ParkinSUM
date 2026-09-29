@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/domain/entities/absorption_opportunity.dart';
+import 'package:parkinsum_companion/domain/entities/evidence_currency.dart';
 import 'package:parkinsum_companion/domain/entities/gastric_emptying_profile.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_medication_applicability.dart';
@@ -95,8 +96,11 @@ void main() {
   );
 
   MechanisticConflictResult evaluateDirectMedication(
-    NormalizedMedicationContext medication,
-  ) {
+    NormalizedMedicationContext medication, {
+    MechanisticConflictEngine? evaluator,
+    DateTime? evidenceAsOfUtc,
+    Iterable<String> additionalEvidenceProviderIds = const [],
+  }) {
     final composition = normalizer.normalize(
       mealId: 'c1',
       components: const [highProtein],
@@ -115,9 +119,11 @@ void main() {
         ),
       ],
     );
-    return engine.evaluate(
+    return (evaluator ?? engine).evaluate(
       context: context,
       mealCompositionsById: {'c1': composition},
+      evidenceAsOfUtc: evidenceAsOfUtc,
+      additionalEvidenceProviderIds: additionalEvidenceProviderIds,
     );
   }
 
@@ -145,6 +151,178 @@ void main() {
     expect(r.confidenceBand, ConfidenceBand.insufficient);
     expect(r.toJson()['interaction_score'], isNull);
   });
+
+  test(
+    'evidence currency holds corrected and blocks stale claims before trace output',
+    () {
+      final asOf = DateTime.parse('2026-08-19T00:00:00Z');
+      final currentRecord = EvidenceCurrencyRegistry.current.records.first;
+      final currentResult = evaluateDirectMedication(
+        directMedicationContext(),
+        evidenceAsOfUtc: asOf,
+      );
+      expect(currentResult.hasModeledOutput, isTrue);
+      final bindingWire = Map<String, Object?>.from(
+        currentResult.toJson()['evidence_currency_binding'] as Map,
+      );
+      final binding = EvidenceCurrencyRuntimeBinding.fromJson(bindingWire);
+      expect(binding.asOfUtc, asOf);
+      expect(binding.registryVersion, EvidenceCurrencyRegistry.registryVersion);
+      expect(binding.registrySha256, matches(RegExp(r'^[0-9a-f]{64}$')));
+      expect(binding.snapshotSha256, matches(RegExp(r'^[0-9a-f]{64}$')));
+      expect(
+        binding.disposition,
+        EvidenceCurrencyRuntimeDisposition.allowResearchTraceOnly,
+      );
+      expect(binding.providerIds, contains('mechanistic_conflict'));
+      expect(binding.claimIds, isNotEmpty);
+      expect(binding.toJson(), equals(bindingWire));
+      expect(
+        () => EvidenceCurrencyRuntimeBinding.fromJson({
+          ...bindingWire,
+          'snapshot_sha256': List.filled(64, '0').join(),
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => EvidenceCurrencyRuntimeBinding.fromJson({
+          ...bindingWire,
+          'provider_ids': (bindingWire['provider_ids'] as List).reversed
+              .toList(),
+        }),
+        throwsFormatException,
+      );
+
+      final scenarios = <({EvidenceCurrencyRecord record, String reason})>[
+        (
+          record: currentRecord.copyWith(
+            status: EvidenceCurrencyStatus.corrected,
+            updateNoticeId: 'crossmark:correction:fixture',
+          ),
+          reason: 'evidence_currency.hold_for_review',
+        ),
+        (
+          record: currentRecord.copyWith(
+            status: EvidenceCurrencyStatus.retracted,
+            updateNoticeId: 'pubmed:retraction:fixture',
+          ),
+          reason: 'evidence_currency.blocked',
+        ),
+        (
+          record: currentRecord.copyWith(reviewByUtc: '2026-08-18T23:59:00Z'),
+          reason: 'status=expired',
+        ),
+        (
+          record: currentRecord.copyWith(observedAtUtc: '2026-08-19T00:00:01Z'),
+          reason: 'status=unknown',
+        ),
+      ];
+
+      for (final scenario in scenarios) {
+        final registry = EvidenceCurrencyRegistry(
+          records: [
+            scenario.record,
+            ...EvidenceCurrencyRegistry.current.records.skip(1),
+          ],
+        );
+        final result = evaluateDirectMedication(
+          directMedicationContext(),
+          evidenceAsOfUtc: asOf,
+          evaluator: MechanisticConflictEngine(
+            evidenceCurrencyRegistry: registry,
+          ),
+        );
+
+        expect(
+          result.availability,
+          MechanisticResultAvailability.blockedIntegrity,
+          reason: scenario.reason,
+        );
+        expect(result.toJson()['interaction_score'], isNull);
+        final blockedBinding = EvidenceCurrencyRuntimeBinding.fromJson(
+          Map<String, Object?>.from(
+            result.toJson()['evidence_currency_binding'] as Map,
+          ),
+        );
+        expect(
+          blockedBinding.disposition,
+          scenario.reason.contains('hold_for_review')
+              ? EvidenceCurrencyRuntimeDisposition.holdForReview
+              : EvidenceCurrencyRuntimeDisposition.blockAffectedProviders,
+        );
+        expect(
+          result.uncertaintyReasons.any(
+            (reason) => reason.contains(scenario.reason),
+          ),
+          isTrue,
+          reason: scenario.reason,
+        );
+        expect(
+          result.uncertaintyReasons,
+          contains(startsWith('evidence_currency.snapshot_sha256:')),
+        );
+      }
+
+      final candidateOnlyRetraction = EvidenceCurrencyRegistry(
+        records: [
+          currentRecord.copyWith(
+            status: EvidenceCurrencyStatus.retracted,
+            updateNoticeId: 'pubmed:retraction:candidate-only-fixture',
+            providerIds: const ['mechanistic_candidate_scorer'],
+          ),
+          ...EvidenceCurrencyRegistry.current.records.skip(1),
+        ],
+      );
+      expect(candidateOnlyRetraction.integrityReasons(), isEmpty);
+      final candidateOnlyEngine = MechanisticConflictEngine(
+        evidenceCurrencyRegistry: candidateOnlyRetraction,
+      );
+      expect(
+        evaluateDirectMedication(
+          directMedicationContext(),
+          evidenceAsOfUtc: asOf,
+          evaluator: candidateOnlyEngine,
+        ).hasModeledOutput,
+        isTrue,
+      );
+      final candidateTrace = evaluateDirectMedication(
+        directMedicationContext(),
+        evidenceAsOfUtc: asOf,
+        evaluator: candidateOnlyEngine,
+        additionalEvidenceProviderIds: const {'mechanistic_candidate_scorer'},
+      );
+      expect(
+        candidateTrace.availability,
+        MechanisticResultAvailability.blockedIntegrity,
+      );
+      expect(
+        candidateTrace.uncertaintyReasons,
+        contains(
+          startsWith('evidence_currency.blocked:claim.meal_delay_direction'),
+        ),
+      );
+
+      final incompleteRegistryEngine = MechanisticConflictEngine(
+        evidenceCurrencyRegistry: EvidenceCurrencyRegistry(records: const []),
+      );
+      final incompleteRegistryTrace = evaluateDirectMedication(
+        directMedicationContext(),
+        evidenceAsOfUtc: asOf,
+        evaluator: incompleteRegistryEngine,
+      );
+      expect(
+        incompleteRegistryTrace.availability,
+        MechanisticResultAvailability.blockedIntegrity,
+      );
+      expect(
+        incompleteRegistryTrace.uncertaintyReasons.any(
+          (reason) =>
+              reason.startsWith('evidence_currency.registry_integrity:'),
+        ),
+        isTrue,
+      );
+    },
+  );
 
   for (final fixture
       in <
@@ -823,6 +1001,7 @@ void main() {
           context: context,
           mealCompositionsById: {'c1': composition},
           resultId: 'same-minute-equal-dose',
+          evidenceAsOfUtc: DateTime.utc(2026, 8, 19),
         );
       }
 
