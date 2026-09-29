@@ -1,93 +1,67 @@
-# ParkinSUM Demo Website
+# ParkinSUM Paper Showcase
 
-This folder contains a lightweight static demo website for ParkinSUM Companion.
-It is designed to help a reviewer understand the project in about 30 seconds:
-what the app does, what the core flow looks like, how the rule/explanation path
-works, and which demo/release formats are appropriate.
+`index.html` and `styles.css` form the public landing page for the September
+2026 development update. The page introduces the Paper chapters, Algorithm
+Observatory, synthetic workbench, source run, and evidence boundaries. It uses
+plain HTML/CSS, system font stacks, no JavaScript, no analytics, and no remote
+font requests. The Flutter app itself bundles its licensed Paper typefaces.
 
-It uses plain HTML and CSS only; no build system is required. The site reuses
-the app logo, wordmark, and bounded runtime browser captures from
-`docs/assets/`.
+The visual wiki at `../wiki/` shares the landing page's design tokens and
+provides a longer guided architecture/demo route. Markdown pages under
+`../github-wiki/` are source material for the separate GitHub Wiki service;
+editing them does not itself publish the repository Wiki.
 
-## Runtime Capture Provenance
+## Preview locally
 
-The displayed runtime screenshots were captured from the local-mode browser
-build at `main@23619f1` using fixed, non-personal scenarios. They do not show a
-real account, personal profile, or health record.
-
-The capture set is:
-
-- `algorithm-observatory-overview-desktop.png` (1440 × 1000)
-- `algorithm-observatory-explanation-desktop.png` (1440 × 1000)
-- `algorithm-observatory-coverage-desktop.png` (1440 × 1000)
-- `capability-center-desktop.png` (1440 × 1000)
-- `algorithm-observatory-responsive.png` (390 × 844 browser viewport)
-
-The “58 algorithms” label is bound only to that captured commit. It is not a
-permanent inventory count. The responsive image demonstrates browser layout at
-one viewport size; it is not physical-device, native-runtime, accessibility-
-conformance, security, clinical-validation, or patient-outcome evidence.
-
-Deterministic rules remain authoritative for classifications, scores, gates,
-evidence, and traces. Optional AI is post-rule only: it may rerank candidates
-already admitted by the rule whitelist or polish copy, but it may not change
-rule-owned outputs.
-
-## Local Preview
-
-Open `docs/site/index.html` in a browser, or run a simple local server from the
-repository root:
+From the repository root:
 
 ```sh
 python3 -m http.server 8000
 ```
 
-Then visit:
+Open `http://localhost:8000/docs/site/` and `http://localhost:8000/docs/wiki/`.
+Review desktop and narrow widths, image loading, keyboard focus, skip links,
+and the reduced-motion preference before publishing a layout change.
 
-```text
-http://localhost:8000/docs/site/
-```
+The static site explains the app; it is not a hosted Flutter runtime. The
+README gives the local Flutter launch command.
 
-## Enable GitHub Pages
+## Publish
 
-1. Open the repository on GitHub.
-2. Go to `Settings` -> `Pages`.
-3. Under `Build and deployment`, choose `Deploy from a branch`.
-4. Set the branch to `main`.
-5. Set the folder to `/docs`.
-6. Save the settings.
+If GitHub Pages uses the `main` branch's `/docs` directory, the routes are:
 
-GitHub Pages will publish the `/docs` folder. With this layout, the landing page
-will be available at:
+- `https://albertzhzhou-droid.github.io/ParkinSUM/site/`
+- `https://albertzhzhou-droid.github.io/ParkinSUM/wiki/`
 
-```text
-https://albertzhzhou-droid.github.io/ParkinSUM/site/
-```
+Verify repository Pages settings and the deployed build before describing a
+source update as live. All repository-document links in the HTML point to
+GitHub explicitly, so a `/docs` deployment does not need files outside its
+published root. Assets and the shared stylesheet use relative paths inside
+`docs/`.
 
-The animated Liquid Glass-style showcase wiki will be available at:
+## Screenshot and claim boundaries
 
-```text
-https://albertzhzhou-droid.github.io/ParkinSUM/wiki/
-```
+The current landing page embeds `paper-today.png`, `paper-timeline.png`,
+`paper-next-meal.png`, and `paper-library.png`, captured on 2026-09-29 at
+1440 × 1000. These are development-worktree Chrome captures, not a final-commit
+binary attestation. A fresh synthetic profile contains one banana meal,
+zero medications, and no AI consent. The media index records exact provenance,
+SHA-256 values, visible state, and review scope.
 
-GitHub's repository Wiki interface does not execute custom CSS animations. Use
-the Markdown pages in `docs/github-wiki/` for the GitHub Wiki itself, and link
-from that Wiki to the animated Pages version for the richer visual experience.
+Use only actual reviewed captures from `docs/assets/screenshots/`. Record their
+source revision or worktree state, capture date, viewport, synthetic fixture
+state, and review scope in the [media index](../assets/screenshots/README.md).
+Historical August captures remain historical; retired unsafe captures must
+never be restored or relinked. Do not use generated mockups as runtime proof.
 
-If you later want the landing page at the Pages root instead of `/site/`, move
-`docs/site/index.html` and `docs/site/styles.css` to the top level of `docs/`
-after checking that existing documentation links still work.
+A browser capture demonstrates visible UI at its recorded state. It does not
+establish physical-device or native-platform behavior, complete workflow
+functionality, accessibility conformance, security, or clinical validation.
+Public preflight scans text and known artifact patterns, not screenshot pixels.
+Follow the [media checklist](../media-capture-checklist.md) for image review.
 
-## Content Rules
-
-- Use synthetic or sample data only.
-- Public screenshots, examples, and walkthroughs must exclude real account
-  identifiers and health data.
-- Do not add real medication schedules, private user exports, raw operator logs,
-  Firebase tokens, service-account files, or signing keys.
-- Keep all claims conservative: educational prototype, not medical advice, not a
-  medical device, and no clinical validation is claimed.
-- Screenshot media should come from `docs/assets/screenshots/`.
-- Short GIF or video links should be added only after following
-  `docs/media-capture-checklist.md` and verifying that the media renders
-  correctly on GitHub.
+Deterministic rules own classifications, scores, evidence, and safety gates.
+Mechanistic traces are `trace_only`. Optional consent-gated loopback AI may
+rerank only rule-screened, non-BLOCK candidates or polish existing copy; it
+cannot override rule-owned results. Public content must preserve these
+boundaries and the educational-only intended use.

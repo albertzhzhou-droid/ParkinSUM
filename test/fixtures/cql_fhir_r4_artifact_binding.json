@@ -1,0 +1,300 @@
+{
+  "resourceType": "Bundle",
+  "type": "collection",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:synthetic-cql-questionnaire",
+      "resource": {
+        "resourceType": "Questionnaire",
+        "id": "synthetic-cql-questionnaire",
+        "url": "https://example.org/fhir/Questionnaire/ParkinSUMSyntheticQuestionnaire",
+        "version": "1.0.0",
+        "status": "draft",
+        "experimental": true,
+        "subjectType": [
+          "Patient"
+        ],
+        "extension": [
+          {
+            "url": "http://hl7.org/fhir/StructureDefinition/cqf-library",
+            "valueCanonical": "https://example.org/fhir/Library/ParkinSUMSyntheticQuestionnaireLogic|1.0.0"
+          },
+          {
+            "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-launchContext",
+            "extension": [
+              {
+                "url": "name",
+                "valueCoding": {
+                  "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/launchContext",
+                  "code": "patient",
+                  "display": "Patient"
+                }
+              },
+              {
+                "url": "type",
+                "valueCode": "Patient"
+              },
+              {
+                "url": "description",
+                "valueString": "Synthetic Patient context only"
+              }
+            ]
+          }
+        ],
+        "item": [
+          {
+            "linkId": "synthetic-baseline",
+            "text": "Synthetic baseline",
+            "type": "boolean",
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+                "valueExpression": {
+                  "language": "text/cql",
+                  "expression": "Synthetic Baseline"
+                }
+              }
+            ]
+          },
+          {
+            "linkId": "synthetic-alternative",
+            "text": "Synthetic alternative",
+            "type": "boolean",
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression",
+                "valueExpression": {
+                  "language": "text/cql",
+                  "expression": "Synthetic Alternative"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:synthetic-cql-library",
+      "resource": {
+        "resourceType": "Library",
+        "id": "synthetic-cql-library",
+        "url": "https://example.org/fhir/Library/ParkinSUMSyntheticQuestionnaireLogic",
+        "version": "1.0.0",
+        "name": "SyntheticQuestionnaireLogic",
+        "status": "draft",
+        "experimental": true,
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/library-type",
+              "code": "logic-library",
+              "display": "Logic Library"
+            }
+          ]
+        },
+        "content": [
+          {
+            "contentType": "text/cql",
+            "data": "bGlicmFyeSBTeW50aGV0aWNRdWVzdGlvbm5haXJlTG9naWMgdmVyc2lvbiAnMS4wLjAnCnVzaW5nIEZISVIgdmVyc2lvbiAnNC4wLjEnCmluY2x1ZGUgU3ludGhldGljUXVlc3Rpb25uYWlyZVNoYXJlZExvZ2ljIHZlcnNpb24gJzEuMC4wJyBjYWxsZWQgU2hhcmVkCmNvbnRleHQgUGF0aWVudApkZWZpbmUgIlN5bnRoZXRpYyBCYXNlbGluZSI6IFNoYXJlZC4iQmFzZWxpbmUiCmRlZmluZSAiU3ludGhldGljIEFsdGVybmF0aXZlIjogU2hhcmVkLiJBbHRlcm5hdGl2ZSIKZGVmaW5lICJTeW50aGV0aWMgQ29uZGl0aW9uIFByZXNlbnQiOiBleGlzdHMoW0NvbmRpdGlvbl0pCmRlZmluZSAiU3ludGhldGljIE9ic2VydmF0aW9uIFByZXNlbnQiOiBleGlzdHMoW09ic2VydmF0aW9uXSkK"
+          }
+        ],
+        "parameter": [
+          {
+            "name": "Synthetic Baseline",
+            "use": "out",
+            "min": 0,
+            "max": "1",
+            "type": "boolean"
+          },
+          {
+            "name": "Synthetic Alternative",
+            "use": "out",
+            "min": 0,
+            "max": "1",
+            "type": "boolean"
+          },
+          {
+            "name": "Synthetic Condition Present",
+            "use": "out",
+            "min": 0,
+            "max": "1",
+            "type": "boolean"
+          },
+          {
+            "name": "Synthetic Observation Present",
+            "use": "out",
+            "min": 0,
+            "max": "1",
+            "type": "boolean"
+          }
+        ],
+        "relatedArtifact": [
+          {
+            "type": "depends-on",
+            "resource": "https://example.org/fhir/Library/ParkinSUMSyntheticQuestionnaireSharedLogic|1.0.0"
+          },
+          {
+            "type": "depends-on",
+            "resource": "http://hl7.org/fhir/Library/FHIR-ModelInfo|4.0.1"
+          }
+        ],
+        "dataRequirement": [
+          {
+            "type": "Patient",
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ],
+            "subjectCodeableConcept": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/resource-types",
+                  "code": "Patient",
+                  "display": "Patient"
+                }
+              ]
+            }
+          },
+          {
+            "type": "Condition",
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/Condition"
+            ],
+            "subjectCodeableConcept": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/resource-types",
+                  "code": "Patient",
+                  "display": "Patient"
+                }
+              ]
+            }
+          },
+          {
+            "type": "Observation",
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/Observation"
+            ],
+            "subjectCodeableConcept": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/resource-types",
+                  "code": "Patient",
+                  "display": "Patient"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:synthetic-cql-shared-library",
+      "resource": {
+        "resourceType": "Library",
+        "id": "synthetic-cql-shared-library",
+        "url": "https://example.org/fhir/Library/ParkinSUMSyntheticQuestionnaireSharedLogic",
+        "version": "1.0.0",
+        "name": "SyntheticQuestionnaireSharedLogic",
+        "status": "draft",
+        "experimental": true,
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/library-type",
+              "code": "logic-library",
+              "display": "Logic Library"
+            }
+          ]
+        },
+        "content": [
+          {
+            "contentType": "text/cql",
+            "data": "bGlicmFyeSBTeW50aGV0aWNRdWVzdGlvbm5haXJlU2hhcmVkTG9naWMgdmVyc2lvbiAnMS4wLjAnCnVzaW5nIEZISVIgdmVyc2lvbiAnNC4wLjEnCmNvbnRleHQgUGF0aWVudApkZWZpbmUgIkJhc2VsaW5lIjogdHJ1ZQpkZWZpbmUgIkFsdGVybmF0aXZlIjogZmFsc2UK"
+          }
+        ],
+        "parameter": [
+          {
+            "name": "Baseline",
+            "use": "out",
+            "min": 0,
+            "max": "1",
+            "type": "boolean"
+          },
+          {
+            "name": "Alternative",
+            "use": "out",
+            "min": 0,
+            "max": "1",
+            "type": "boolean"
+          }
+        ],
+        "relatedArtifact": [
+          {
+            "type": "depends-on",
+            "resource": "http://hl7.org/fhir/Library/FHIR-ModelInfo|4.0.1"
+          }
+        ],
+        "dataRequirement": [
+          {
+            "type": "Patient",
+            "profile": [
+              "http://hl7.org/fhir/StructureDefinition/Patient"
+            ],
+            "subjectCodeableConcept": {
+              "coding": [
+                {
+                  "system": "http://hl7.org/fhir/resource-types",
+                  "code": "Patient",
+                  "display": "Patient"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:synthetic-cql-plan-definition",
+      "resource": {
+        "resourceType": "PlanDefinition",
+        "id": "synthetic-cql-plan-definition",
+        "url": "https://example.org/fhir/PlanDefinition/ParkinSUMSyntheticCqlPlanDefinition",
+        "version": "1.0.0",
+        "status": "draft",
+        "experimental": true,
+        "type": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
+              "code": "eca-rule"
+            }
+          ]
+        },
+        "library": [
+          "https://example.org/fhir/Library/ParkinSUMSyntheticQuestionnaireLogic|1.0.0"
+        ],
+        "action": [
+          {
+            "title": "Synthetic applicability",
+            "condition": [
+              {
+                "kind": "applicability",
+                "expression": {
+                  "language": "text/cql",
+                  "expression": "Synthetic Condition Present"
+                }
+              },
+              {
+                "kind": "applicability",
+                "expression": {
+                  "language": "text/cql",
+                  "expression": "Synthetic Observation Present"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

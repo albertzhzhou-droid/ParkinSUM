@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
+import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 import 'package:parkinsum_companion/domain/usecases/data_integrity_report.dart';
 
 void main() {
@@ -53,21 +55,39 @@ void main() {
         notes: '',
       ),
     ];
+    const owner = 'data_integrity_owner';
+    final observedAt = DateTime.utc(2026, 8, 16, 14);
+    final coordinator = AdministrationDoseConfirmationCoordinator();
+    final confirmed = coordinator
+        .prepare(
+          draft: Intake(
+            id: 'computable',
+            drugId: 'official_drug',
+            takenAt: DateTime(2026, 8, 16, 8),
+            dosageNote: '100 mg',
+            dosageForm: 'tablet',
+            route: 'oral',
+            releaseType: 'immediate',
+          ),
+          current: null,
+          expectedRecordRevisionDigest:
+              administrationDoseConfirmationAbsentRevisionDigest,
+          ownerScope: owner,
+          operationId: 'data_integrity_confirmation',
+          confirmationRequested: true,
+          assertionSource: AdministrationDoseAssertionSource.typed,
+          confirmationAction: 'test.explicit_confirmation',
+          uiContractVersion: 'test-dose-confirmation:1',
+          confirmedAt: DateTime.utc(2026, 8, 16, 8, 1),
+        )
+        .intake!;
     final intakes = <Intake>[
-      Intake(
-        id: 'computable',
-        drugId: 'official_drug',
-        takenAt: DateTime(2026, 8, 16, 8),
-        dosageNote: '100 mg',
-        dosageForm: 'tablet',
-        route: 'oral',
-        releaseType: 'immediate',
-      ),
+      confirmed,
       Intake(
         id: 'orphan',
         drugId: 'missing_drug',
         takenAt: DateTime(2026, 8, 16, 9),
-        dosageNote: 'unknown',
+        dosageNote: '50 mg',
       ),
     ];
     final meals = <Meal>[
@@ -95,9 +115,19 @@ void main() {
       meals: meals,
       foods: foods,
       medications: medications,
+      doseResultEligibility: (intake) => coordinator
+          .evaluateForResultUse(
+            intake,
+            ownerScope: owner,
+            observedAt: observedAt,
+          )
+          .eligible,
     );
 
     expect(report.doseCoverage, 0.5);
+    expect(report.parseableDoseCoverage, 1);
+    expect(report.intakesWithResultEligibleDose, 1);
+    expect(report.intakesWithParseableDose, 2);
     expect(report.formulationSnapshotCoverage, 0.5);
     expect(report.orphanedIntakeCount, 1);
     expect(report.mealTimeCoverage, 0.5);
@@ -116,9 +146,11 @@ void main() {
       meals: const <Meal>[],
       foods: const <FoodItem>[],
       medications: const <DrugDefinition>[],
+      doseResultEligibility: (_) => false,
     );
 
     expect(report.doseCoverage, isNull);
+    expect(report.parseableDoseCoverage, isNull);
     expect(report.mealTimeCoverage, isNull);
     expect(report.mealItemResolutionCoverage, isNull);
     expect(report.foodTraceabilityCoverage, isNull);

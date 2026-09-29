@@ -1,0 +1,96 @@
+{
+  "schema_id": "parkinsum.fdc-portion-composition-vectors/1",
+  "sourceDocument": {"sourceFamily": "FDC", "organization": "USDA", "jurisdiction": "US", "resolutionStatus": "resolved", "storedPayloadPresent": true, "payloadSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+  "cases": [
+    {
+      "id": "foundation_exact_and_observed_range",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 91, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": "ANALYTICAL", "selected": true},
+      "range": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "low": 10, "high": 14, "qualifierKind": "range", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g:sample_range", "methodCode": "ANALYTICAL", "selected": false},
+      "expected": {"status": "calculated_preview", "perPortionValue": 10.92, "sourceSampleMinimumPerPortion": 9.1, "sourceSampleMaximumPerPortion": 12.74}
+    },
+    {
+      "id": "foundation_exact_zero_without_range",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "456",
+      "portion": {"sourceDocId": "fdc-doc-2", "sourceFoodId": "456", "recordLocator": "456:foodPortions:0", "gramWeight": 50, "amount": 1, "measureUnitId": 1, "measureUnitName": "serving"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-456", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 0, "low": 0, "high": 0, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-2", "sourceDocId": "fdc-doc-2", "recordLocator": "456:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "calculated_preview", "perPortionValue": 0}
+    },
+    {
+      "id": "branded_data_type_is_held",
+      "sourceSystem": "Branded",
+      "sourceFoodCode": "789",
+      "portion": {"sourceDocId": "fdc-doc-3", "sourceFoodId": "789", "recordLocator": "789:foodPortions:0", "gramWeight": 30, "amount": 1, "measureUnitId": 1, "measureUnitName": "serving"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-789", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 8, "low": 8, "high": 8, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-3", "sourceDocId": "fdc-doc-3", "recordLocator": "789:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "held", "holdReason": "source_data_type_not_foundation"}
+    },
+    {
+      "id": "portion_source_food_mismatch",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "999", "recordLocator": "999:foodPortions:0", "gramWeight": 91, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "held", "holdReason": "portion_source_food_mismatch"}
+    },
+    {
+      "id": "exact_nutrient_source_document_mismatch",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 91, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-other", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "held", "holdReason": "exact_nutrient_evidence_not_bound"}
+    },
+    {
+      "id": "non_positive_portion_weight",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 0, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "held", "holdReason": "portion_gram_weight_not_positive_finite"}
+    },
+    {
+      "id": "volume_basis_is_held",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 91, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100ml", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "held", "holdReason": "exact_nutrient_evidence_not_bound"}
+    },
+    {
+      "id": "sample_range_with_mismatched_scope_is_held",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 91, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "low": 10, "high": 14, "qualifierKind": "range", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-other", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g:sample_range", "methodCode": null, "selected": false},
+      "expected": {"status": "held", "holdReason": "sample_range_evidence_not_uniquely_bound"}
+    },
+    {
+      "id": "range_excluding_exact_point_is_held",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 91, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 12, "low": 12, "high": 12, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "low": 13, "high": 14, "qualifierKind": "range", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g:sample_range", "methodCode": null, "selected": false},
+      "expected": {"status": "held", "holdReason": "sample_range_bounds_invalid_or_exclude_point"}
+    },
+    {
+      "id": "overflow_result_is_held",
+      "sourceSystem": "Foundation",
+      "sourceFoodCode": "123",
+      "portion": {"sourceDocId": "fdc-doc-1", "sourceFoodId": "123", "recordLocator": "123:foodPortions:0", "gramWeight": 1e308, "amount": 1, "measureUnitId": 99, "measureUnitName": "cup"},
+      "exact": {"domain": "food", "entityType": "food_variant", "entityKey": "variant-123", "attributeCode": "protein_g", "valueType": "numeric_interval", "valueNum": 1e308, "low": 1e308, "high": 1e308, "qualifierKind": "exact", "unit": "g", "basisType": "per_100g_edible_part", "basisAmount": 100, "scopeHash": "scope-1", "sourceDocId": "fdc-doc-1", "recordLocator": "123:protein_g", "methodCode": null, "selected": true},
+      "range": null,
+      "expected": {"status": "held", "holdReason": "portion_composition_result_not_finite"}
+    }
+  ]
+}

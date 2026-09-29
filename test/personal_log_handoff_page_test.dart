@@ -7,6 +7,7 @@ import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/services/personal_log_handoff_document_service.dart';
 import 'package:parkinsum_companion/core/services/services.dart';
 import 'package:parkinsum_companion/core/state/app_state.dart';
+import 'package:parkinsum_companion/domain/entities/personal_observation.dart';
 import 'package:parkinsum_companion/domain/usecases/personal_log_handoff_summary_service.dart';
 import 'package:parkinsum_companion/features/settings/personal_log_handoff_page.dart';
 import 'package:provider/provider.dart';
@@ -33,6 +34,9 @@ void main() {
         contentSha256: 'content',
         fileName: 'parkinsum-personal-log-test.pdf',
         plainText: 'USER-ENTERED PERSONAL LOG',
+        documentBlocks: <PersonalLogHandoffDocumentBlock>[
+          PersonalLogHandoffHeadingBlock(level: 1, text: 'Handoff'),
+        ],
         pages: <PersonalLogHandoffDocumentPage>[
           PersonalLogHandoffDocumentPage(
             number: 1,
@@ -82,14 +86,30 @@ void main() {
       find.byKey(const ValueKey('handoff-preview-page-1')),
       findsOneWidget,
     );
+    await _tap(tester, 'handoff-reading-preview');
+    expect(find.byType(SelectionArea), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(SelectionArea),
+        matching: find.text('Medication intake log'),
+      ),
+      findsOneWidget,
+    );
 
     await _tap(tester, 'handoff-copy');
     expect(clipboard.values, <String>[artifact.plainText]);
+    await _tap(tester, 'handoff-share-html');
     await _tap(tester, 'handoff-print');
     await _tap(tester, 'handoff-save-share');
 
     expect(delivery.printed, <String>[artifact.fileName]);
     expect(delivery.shared, <String>[artifact.fileName]);
+    expect(delivery.htmlShared, <String>[artifact.htmlFileName]);
+    expect(delivery.htmlBytes, hasLength(1));
+    expect(
+      String.fromCharCodes(delivery.htmlBytes.single),
+      contains('parkinsum-document-schema'),
+    );
     expect(delivery.bytes.first, renderer.bytes);
     expect(delivery.bytes.last, renderer.bytes);
     expect(fixture.state.currentUserId, isNotNull);
@@ -140,11 +160,7 @@ void main() {
     );
     await _tap(tester, 'handoff-generate');
 
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('handoff-save-share')),
-    );
-    await tester.tap(find.byKey(const ValueKey('handoff-save-share')));
-    await tester.pump();
+    await _tapAndPump(tester, 'handoff-save-share');
     expect(delivery.saveStarted.isCompleted, isTrue);
 
     await fixture.state.signOut();
@@ -157,6 +173,36 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(delivery.shared, isEmpty);
+    expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('account switch expires delayed HTML share authorization', (
+    tester,
+  ) async {
+    final gate = Completer<void>();
+    final delivery = _FakeDelivery(htmlGate: gate);
+    final fixture = await _pumpPage(
+      tester,
+      renderer: _FakeRenderer(),
+      delivery: delivery,
+      clipboard: _FakeClipboard(),
+    );
+    await _tap(tester, 'handoff-generate');
+
+    await _tapAndPump(tester, 'handoff-share-html');
+    expect(delivery.htmlStarted.isCompleted, isTrue);
+
+    await fixture.state.signOut();
+    await fixture.state.signInWithEmail(
+      email: 'account-b@example.test',
+      password: 'not-used-in-local-test',
+    );
+    await tester.pump();
+    gate.complete();
+    await tester.pumpAndSettle();
+
+    expect(delivery.htmlShared, isEmpty);
     expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -174,6 +220,74 @@ void main() {
     expect(find.byKey(const ValueKey('handoff-preview-meta')), findsOneWidget);
 
     await _tap(tester, 'handoff-section-mealLog');
+    expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('personal observations are opt-in and edits expire the preview', (
+    tester,
+  ) async {
+    final renderer = _FakeRenderer();
+    final fixture = await _pumpPage(
+      tester,
+      renderer: renderer,
+      delivery: _FakeDelivery(),
+      clipboard: _FakeClipboard(),
+    );
+    const sectionKey = ValueKey('handoff-section-personalObservations');
+    expect(
+      tester.widget<CheckboxListTile>(find.byKey(sectionKey)).value,
+      isFalse,
+    );
+
+    final owner = fixture.state.currentUserId!;
+    final observation = PersonalObservation.create(
+      id: 'handoff-observation-private-id',
+      kind: PersonalObservationKind.symptom,
+      occurredAt: DateTime.utc(2026, 8, 10, 9),
+      recordedAt: DateTime.utc(2026, 8, 10, 9, 5),
+      originalTimezone: 'America/Toronto',
+      source: PersonalObservationSource.selfReported,
+      recorderId: owner,
+      status: PersonalObservationStatus.recorded,
+      symptomLabel: 'Tremor',
+      severity: 5,
+    );
+    expect(await fixture.state.saveObservation(observation), isTrue);
+    await tester.pump();
+
+    await _tap(tester, 'handoff-generate');
+    final omitted = renderer.artifacts.single;
+    expect(omitted.recordCounts['personalObservations'], 0);
+    expect(omitted.plainText, isNot(contains('Tremor')));
+
+    await _tap(tester, 'handoff-section-personalObservations');
+    await _tap(tester, 'handoff-generate');
+    final included = renderer.artifacts.last;
+    expect(included.recordCounts['personalObservations'], 1);
+    expect(included.plainText, contains('Tremor'));
+    expect(included.plainText, contains('severity=5/10'));
+    expect(
+      included.plainText,
+      isNot(contains('handoff-observation-private-id')),
+    );
+    expect(included.plainText, isNot(contains(owner)));
+
+    final edited = PersonalObservation.create(
+      id: observation.id,
+      kind: observation.kind,
+      occurredAt: observation.occurredAt,
+      recordedAt: observation.recordedAt,
+      originalTimezone: observation.originalTimezone,
+      source: observation.source,
+      recorderId: owner,
+      status: observation.status,
+      symptomLabel: observation.symptomLabel,
+      severity: 6,
+    );
+    expect(await fixture.state.saveObservation(edited), isTrue);
+    await tester.pump();
+    await tester.pump();
     expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -257,8 +371,17 @@ Future<_Fixture> _pumpPage(
 Future<void> _tap(WidgetTester tester, String key) async {
   final finder = find.byKey(ValueKey<String>(key));
   await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pumpAndSettle();
+}
+
+Future<void> _tapAndPump(WidgetTester tester, String key) async {
+  final finder = find.byKey(ValueKey<String>(key));
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pump();
 }
 
 final class _FakeRenderer implements PersonalLogHandoffRenderer {
@@ -279,15 +402,20 @@ final class _FakeRenderer implements PersonalLogHandoffRenderer {
 final class _FakeDelivery implements PersonalLogHandoffDelivery {
   _FakeDelivery({
     this.saveGate,
+    this.htmlGate,
     this.saveStatus = PersonalLogHandoffDeliveryStatus.completed,
   });
 
   final Completer<void>? saveGate;
+  final Completer<void>? htmlGate;
   final PersonalLogHandoffDeliveryStatus saveStatus;
   final Completer<void> saveStarted = Completer<void>();
+  final Completer<void> htmlStarted = Completer<void>();
   final List<String> printed = <String>[];
   final List<String> shared = <String>[];
+  final List<String> htmlShared = <String>[];
   final List<Uint8List> bytes = <Uint8List>[];
+  final List<Uint8List> htmlBytes = <Uint8List>[];
 
   @override
   Future<PersonalLogHandoffDeliveryStatus> printPdf({
@@ -313,6 +441,23 @@ final class _FakeDelivery implements PersonalLogHandoffDelivery {
     if (saveStatus == PersonalLogHandoffDeliveryStatus.completed) {
       shared.add(fileName);
       this.bytes.add(bytes);
+    }
+    return saveStatus;
+  }
+
+  @override
+  Future<PersonalLogHandoffDeliveryStatus> shareHtml({
+    required Uint8List bytes,
+    required String fileName,
+    required Rect? sharePositionOrigin,
+    required bool Function() authorize,
+  }) async {
+    if (!htmlStarted.isCompleted) htmlStarted.complete();
+    if (htmlGate != null) await htmlGate!.future;
+    if (!authorize()) throw StateError('authorization_expired');
+    if (saveStatus == PersonalLogHandoffDeliveryStatus.completed) {
+      htmlShared.add(fileName);
+      htmlBytes.add(bytes);
     }
     return saveStatus;
   }

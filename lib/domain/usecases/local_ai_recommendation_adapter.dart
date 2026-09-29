@@ -9,6 +9,7 @@ import '../../core/models/intake.dart';
 import '../../core/models/interaction_result.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/purpose_bound_consent.dart';
+import '../../core/services/runtime_network_egress_policy.dart';
 import '../../core/models/user_profile.dart';
 import '../entities/food_recommendation.dart';
 
@@ -117,11 +118,37 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
   ];
 
   final http.Client _client;
+  final RuntimeNetworkEgressPolicy egressPolicy;
+  final bool Function()? _managedCapabilityAllowsRequest;
 
-  LocalAiRecommendationAdapter({http.Client? client})
-    : _client = client ?? http.Client();
+  LocalAiRecommendationAdapter({
+    http.Client? client,
+    RuntimeNetworkEgressPolicy? egressPolicy,
+    bool Function()? managedCapabilityAllowsRequest,
+  }) : egressPolicy =
+           egressPolicy ?? RuntimeNetworkEgressPolicy.localAiLoopback,
+       _client = client ?? http.Client(),
+       _managedCapabilityAllowsRequest = managedCapabilityAllowsRequest;
 
   Future<LocalAiAvailability> probe({required UserProfile userProfile}) async {
+    final managedCapabilityAllowsRequest = _managedCapabilityAllowsRequest;
+    if (managedCapabilityAllowsRequest != null &&
+        !managedCapabilityAllowsRequest()) {
+      final preferred = _normalizedProvider(
+        userProfile.localAiProviderPreference,
+      );
+      return LocalAiAvailability(
+        available: false,
+        skipped: true,
+        provider: preferred,
+        endpoint: preferred == LocalAiProviders.openAiCompat
+            ? userProfile.localAiOpenAiCompatEndpoint
+            : userProfile.localAiOllamaEndpoint,
+        model: _textModel(userProfile),
+        medicalModel: _medicalModel(userProfile),
+        message: 'Local AI probe skipped by signed capability policy.',
+      );
+    }
     if (!userProfile.hasCurrentLocalAiConsent) {
       final preferred = _normalizedProvider(
         userProfile.localAiProviderPreference,
@@ -303,7 +330,10 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       'Risk gradient: score ${result.score}, severity ${result.overallSeverity.name}.',
       'Meal JSON: ${jsonEncode(meal.toJson())}',
       'Active drugs: ${jsonEncode(activeDrugs.map((drug) => {'id': drug.id, 'generic_name': drug.genericName}).toList(growable: false))}',
-      'Intakes: ${jsonEncode(intakes.map((item) => item.toJson()).toList(growable: false))}',
+      // Copy polishing does not need a dose source. Supplying the full Intake
+      // would let an unconfirmed, stale, or conflict-held raw/structured dose
+      // alter visible wording even though deterministic scoring rejected it.
+      'Intake events (dose intentionally withheld): ${jsonEncode(intakes.map((item) => <String, Object?>{'id': item.id, 'drug_id': item.drugId, 'taken_at': item.takenAt.toUtc().toIso8601String()}).toList(growable: false))}',
       'Current result JSON: ${jsonEncode(result.toJson())}',
       'Return JSON only. issue_details must have exactly ${result.issues.length} items in the same order.',
     ].join('\n');
@@ -994,6 +1024,23 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     http.BaseRequest request,
     Duration timeout,
   ) async {
+    final bodyBytes = request is http.Request
+        ? request.bodyBytes.length
+        : request.contentLength;
+    final decision = egressPolicy.evaluate(
+      uri: request.url,
+      method: request.method,
+      purpose: RuntimeNetworkEgressPurpose.localAiRecommendation,
+      dataClasses: request.method.toUpperCase() == 'GET'
+          ? const {RuntimeNetworkDataClass.localModelAvailabilityProbe}
+          : const {RuntimeNetworkDataClass.userSelectedHealthContext},
+      headers: request.headers,
+      requestBodyBytes: bodyBytes,
+      followsRedirects: request.followRedirects,
+    );
+    if (!decision.allowed) {
+      throw StateError('network_egress_denied:${decision.reasonCode}');
+    }
     final streamed = await _client.send(request).timeout(timeout);
     return http.Response.fromStream(streamed);
   }

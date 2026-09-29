@@ -19,12 +19,13 @@ void main() {
 
   test('report binds replay to configuration without claiming validity', () {
     final report = runner.run();
+    final markdown = report.toMarkdown();
     final configuration =
         report.toJson()['algorithm_configuration'] as Map<String, dynamic>;
 
     expect(
       configuration['manifest_schema'],
-      'parkinsum.algorithm-configuration/2',
+      'parkinsum.algorithm-configuration/6',
     );
     expect(configuration['sha256'], matches(RegExp(r'^[a-f0-9]{64}$')));
     expect(
@@ -35,7 +36,27 @@ void main() {
       configuration['biological_validity_status'],
       'not_clinically_calibrated',
     );
-    expect(report.toMarkdown(), contains('does **not** establish biological'));
+    expect(markdown, contains('does **not** establish biological'));
+    expect(markdown, endsWith('\n'));
+    expect(markdown, isNot(endsWith('\n\n')));
+  });
+
+  test('replay carries a deterministic evidence-currency receipt', () {
+    final first = runner.run();
+    final second = runner.run();
+    final json = first.toJson();
+    final caseJson = json['cases'] as List<dynamic>;
+    final modeled = caseJson.cast<Map<String, dynamic>>().firstWhere(
+      (value) => value['has_modeled_output'] == true,
+    );
+    final binding =
+        modeled['evidence_currency_binding'] as Map<String, dynamic>;
+
+    expect(json['evidence_currency_as_of_utc'], '2026-08-19T00:00:00.000Z');
+    expect(binding['schema'], 'parkinsum.evidence-currency-runtime-binding/1');
+    expect(binding['as_of_utc'], json['evidence_currency_as_of_utc']);
+    expect(binding['binding_sha256'], matches(RegExp(r'^[0-9a-f]{64}$')));
+    expect(first.toJson(), equals(second.toJson()));
   });
 
   test('every case has zero banned-phrase hits', () {

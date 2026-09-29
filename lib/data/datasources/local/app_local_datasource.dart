@@ -8,6 +8,7 @@ import '../../../core/models/user_profile.dart';
 import '../../../core/models/recoverable_user_event.dart';
 import '../../../core/db/recoverable_user_event_store.dart';
 import '../../models/interaction_rule_record.dart';
+import '../../../domain/entities/mechanistic_replay_capsule.dart';
 
 class AppLocalDataSource {
   final AppDatabase database;
@@ -44,6 +45,12 @@ class AppLocalDataSource {
   Future<List<Intake>> loadIntakes() => database.loadIntakes();
   Future<void> saveIntakes(List<Intake> intakes) =>
       database.saveIntakes(intakes);
+
+  Future<void> saveMechanisticReplayCapsule(MechanisticReplayCapsule capsule) =>
+      database.saveMechanisticReplayCapsule(capsule);
+
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules() =>
+      database.loadMechanisticReplayCapsules();
 
   Future<List<FoodItem>> loadFoods() => database.loadFoods();
   Future<List<DrugDefinition>> loadMedications() => database.loadMedications();

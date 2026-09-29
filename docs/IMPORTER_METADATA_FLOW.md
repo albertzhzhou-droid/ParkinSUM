@@ -84,20 +84,49 @@ layer widens its uncertainty band. A real measured `0` (field present, value
 zero) is preserved as a true zero. The projection service
 (`CdssCatalogProjectionService.projectFoods`) records which observation
 attributes were actually present and populates `missingNutrientFields` for the
-rest.
+rest. This follows USDA's explicit distinction between an absent Foundation
+Foods value (which may mean the nutrient was not analyzed) and a measured zero;
+see the official [Foundation Foods documentation](https://fdc.nal.usda.gov/Foundation_Foods_Documentation/).
 
 ### 6b. Actual amino-acid fields
 
 When USDA FDC amino-acid fields are available, `AminoAcidExtractor` builds an
 `AminoAcidProfile` (verified nutrient-number mapping: 501 Trp, 502 Thr, 503
 Ile, 504 Leu, 506 Met, 508 Phe, 509 Tyr, 510 Val, 512 His; number takes
-priority over name; mg→g normalized; missing-unit values marked `partial`).
-This profile is carried on `FoodItem.aminoAcidProfile` → `FoodComponent` →
-the LNAA layer. Pure `actualAminoAcidFields` mode requires complete six-LNAA
-coverage for every positive-protein component; mixed coverage is labeled
+priority over name). Recognized `g` and `mg` inputs are normalized to grams
+(`mg`→`g`) under the narrow mass-unit boundary documented by the
+[BIPM SI Brochure](https://www.bipm.org/en/publications/si-brochure/). A present,
+finite, non-negative measured zero remains a true zero. A missing or unknown
+unit, invalid/non-numeric/non-finite/negative value, or duplicate semantic field
+is held as null and makes the profile partial; even a held-only competing-LNAA
+observation remains an auditable partial profile instead of becoming
+indistinguishable from source absence. It is never guessed as grams or coerced
+to zero.
+
+USDA documents Foundation food values on a 100 g basis and branded values
+standardized to 100 g or 100 mL in its official
+[Foundation Foods](https://fdc.nal.usda.gov/Foundation_Foods_Documentation/) and
+[Global Branded Foods](https://fdc.nal.usda.gov/GBFPD_Documentation/)
+documentation; the local transport boundary is the
+[FoodData Central API](https://fdc.nal.usda.gov/api-spec/fdc_api.html). The
+production `FdcP0Importer` carries the extracted profile into the import bundle;
+catalog projection then places it on `FoodItem.aminoAcidProfile` →
+`FoodComponent` → the LNAA layer. The source-adapter registry separately
+declares the FDC source contract and fail-closed limitation. Pure
+`actualAminoAcidFields` mode requires complete six-LNAA coverage for every
+positive-protein component; mixed coverage is labeled
 `hybridActualAndProteinSourceProxy`, widens uncertainty, and keeps whole-meal
 LNAA totals null. Payloads without any usable LNAA field fall back to the
 disclosed protein-source proxy.
+
+AAE-001 and its downstream catalog boundary are exercised by the 23-spec
+invariant gate (15 fixed checks, five dose probes, one legacy-scorer probe, one
+production FDC extraction probe, and one production catalog-candidate
+projection probe). The current report is 23/23 and directly covers 22 of the 63
+registered algorithms; the other 41 remain explicitly uncovered. This is
+engineering calculation
+evidence, not a complete typed quantity algebra, independent external
+reproduction, or biological or clinical validation.
 
 ## 7. Medication metadata requirements
 
@@ -117,6 +146,19 @@ fallback). Provenance metadata is carried alongside as
 `CandidateMetadata` for the scorer.
 Missing projected medication route remains `unspecified`; projection and
 variant resolution never fill it with `oral`.
+
+Food projection preserves the source's missing-state semantics: an explicit
+missing marker wins over any stale numeric placeholder, while an unmarked,
+finite, non-negative true zero remains zero. For amino-acid values declared in
+grams per 100 g, a logged serving mass `W` grams converts source value `V` by
+`N=(V×W)/100`. Only an exact `per_100g` basis is eligible for this
+gram-based scaling. USDA permits branded values standardized per 100 mL as well
+as per 100 g, but `per_100mL` is not interchangeable with `per_100g`; without a
+declared density or other mass-volume relation, it is held as null. Missing or
+unknown unit/basis, invalid or non-finite/negative source values, invalid
+serving mass, and overflow also fail closed. This narrow conversion follows the
+[BIPM SI quantity-and-unit boundary](https://www.bipm.org/en/publications/si-brochure/)
+without claiming a repository-wide typed quantity system.
 
 ## 9. Metadata completeness gate
 
@@ -152,9 +194,14 @@ joined by `foodId` to the merged catalog `FoodItem` to recover physical form
 (`textureClass → MealPhysicalForm`), energy (`energyKcal`, scaled to the logged
 serving), protein source, and the amino-acid profile (scaled to the serving via
 `AminoAcidProfile.scaledToGrams`). Logged macros come from the item itself;
-catalog data only enriches. When the catalog lacks a field it stays null and is
-recorded as missing — never coerced to 0. This preserves component structure,
-liquid fraction, and amino-acid provenance for the gastric/LNAA layers.
+catalog data only enriches. Energy is scaled only from an explicitly present,
+finite, non-negative per-100 g catalog value and a valid logged mass; a catalog
+missing marker overrides a stored number. Amino-acid scaling is likewise
+limited to the exact `per_100g` basis. When the catalog lacks a field, has an
+incompatible basis, or supplies an invalid value, the projection remains null
+and records missingness—never zero. A genuinely present zero remains zero.
+This preserves component structure, liquid fraction, and amino-acid provenance
+for the gastric/LNAA layers.
 
 ## 10. How metadata feeds the mechanistic engine
 
@@ -266,6 +313,13 @@ treatment) and never constructs a Patient/Reference/Encounter
 true` and the shared non-prescriptive safety copy. It implies **no clinical
 interoperability** and supports no diagnosis, treatment, or patient monitoring.
 
+The amino-acid summary is complete/actual only when every participating
+positive-protein component has a recognized unit and basis, all six competing
+LNAA values are present, finite, and non-negative, and the protein-bound check
+is valid. Unknown or invalid protein, a held amino-acid field, or incomplete
+coverage produces a partial or absent summary rather than a fabricated complete
+value; a valid true zero remains zero.
+
 ## 14d. CDSS → mechanistic medication-context bridge (section provenance)
 
 The live importers already extract label sections, release type, dose form,
@@ -358,7 +412,8 @@ and not clinically calibrated. See `docs/EVIDENCE_TRACE_BUNDLE.md`.
   registers** (specs exist today; concrete fixture parsers / live fetch are
   future work). NMPA now has a fixture-tested parser; live NMPA fetch + real
   schema remain future work.
-- Per-food amino-acid array extraction from FDC/Ciqual into the LNAA layer.
+- Per-food amino-acid array extraction for Ciqual and richer per-field hold
+  reason serialization; the FDC production path is now wired and fail-closed.
 - Patient-population calibration of gastric-emptying / PK parameters.
 - Source-specific legal/license review before any production ingestion.
 

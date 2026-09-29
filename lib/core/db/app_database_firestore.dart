@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../data/models/interaction_rule_record.dart';
@@ -8,6 +10,7 @@ import '../models/intake.dart';
 import '../models/meal.dart';
 import '../models/recoverable_user_event.dart';
 import '../models/user_profile.dart';
+import '../../domain/entities/mechanistic_replay_capsule.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
 import '../services/firebase_user_data_paths.dart';
@@ -25,6 +28,7 @@ import 'recoverable_user_event_store.dart';
 /// users/{uid}/app_meta/{key}
 /// users/{uid}/meals/{mealId}
 /// users/{uid}/intakes/{intakeId}
+/// users/{uid}/mechanistic_replay_capsules/{capsuleSha256}
 /// users/{uid}/active_drugs/{drugId}
 class FirestoreAppDatabase implements AppDatabase, RecoverableUserEventStore {
   final AuthService authService;
@@ -258,6 +262,72 @@ class FirestoreAppDatabase implements AppDatabase, RecoverableUserEventStore {
           'takenAtIso': intake.takenAt.toIso8601String(),
         },
     });
+  }
+
+  @override
+  Future<void> saveMechanisticReplayCapsule(
+    MechanisticReplayCapsule capsule,
+  ) async {
+    final snapshot = canonicalMechanisticReplayCapsuleSnapshot(capsule);
+    final canonicalJson = snapshot.canonicalJson;
+    if (utf8.encode(canonicalJson).length > 700 * 1024) {
+      throw ArgumentError.value(
+        utf8.encode(canonicalJson).length,
+        'capsule',
+        'Replay capsule exceeds the Firestore document safety limit.',
+      );
+    }
+    final uid = await _requireUid();
+    final collection = await _userRows('mechanistic_replay_capsules');
+    final reference = collection.doc(snapshot.capsuleSha256);
+    await firestore.runTransaction((transaction) async {
+      final existing = await transaction.get(reference);
+      if (existing.exists) {
+        final data = existing.data();
+        if (data?['schema_version'] != 1 ||
+            data?['capsule_sha256'] != snapshot.capsuleSha256 ||
+            data?['generated_at_utc'] != snapshot.generatedAtUtc ||
+            data?['canonical_json'] != canonicalJson ||
+            data?['owner_uid'] != uid) {
+          throw StateError('Stored replay capsule identity conflict.');
+        }
+        return;
+      }
+      transaction.set(reference, <String, Object?>{
+        'schema_version': 1,
+        'capsule_sha256': snapshot.capsuleSha256,
+        'generated_at_utc': snapshot.generatedAtUtc,
+        'canonical_json': canonicalJson,
+        'owner_uid': uid,
+      });
+    });
+  }
+
+  @override
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules() async {
+    final uid = await _requireUid();
+    final snapshot = await (await _userRows(
+      'mechanistic_replay_capsules',
+    )).orderBy('generated_at_utc', descending: true).get();
+    final capsules = snapshot.docs.map((document) {
+      final data = document.data();
+      if (data['owner_uid'] != uid ||
+          data['capsule_sha256'] != document.id ||
+          data['canonical_json'] is! String) {
+        throw const FormatException('Stored replay capsule identity drifted.');
+      }
+      final capsule = MechanisticReplayCapsule.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(data['canonical_json'] as String) as Map,
+        ),
+      );
+      if (capsule.capsuleSha256 != document.id ||
+          capsule.generatedAtUtc != data['generated_at_utc']) {
+        throw const FormatException('Stored replay capsule identity drifted.');
+      }
+      return capsule;
+    }).toList()..sort(compareMechanisticReplayCapsulesByGeneratedAt);
+    return List<MechanisticReplayCapsule>.unmodifiable(capsules);
   }
 
   @override

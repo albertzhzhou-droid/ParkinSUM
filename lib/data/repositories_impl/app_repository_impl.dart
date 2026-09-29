@@ -8,6 +8,7 @@ import '../../core/models/recoverable_user_event.dart';
 import '../../domain/repositories/app_repository.dart';
 import '../datasources/local/app_local_datasource.dart';
 import '../models/interaction_rule_record.dart';
+import '../../domain/entities/mechanistic_replay_capsule.dart';
 
 class AppRepositoryImpl
     implements AppRepository, RecoverableUserEventRepository {
@@ -67,6 +68,14 @@ class AppRepositoryImpl
 
   @override
   Future<void> saveIntakes(List<Intake> intakes) => local.saveIntakes(intakes);
+
+  @override
+  Future<void> saveMechanisticReplayCapsule(MechanisticReplayCapsule capsule) =>
+      local.saveMechanisticReplayCapsule(capsule);
+
+  @override
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules() =>
+      local.loadMechanisticReplayCapsules();
 
   @override
   Future<void> saveMeals(List<Meal> meals) => local.saveMeals(meals);

@@ -15,6 +15,7 @@ void main() {
       expect(presentation.body, 'Open ParkinSUM to review a private reminder.');
       expect(presentation.hideFromSecureAndroidLockScreen, isTrue);
       expect(presentation.darwinPreviewRemainsSystemControlled, isTrue);
+      expect(presentation.identitySha256, hasLength(64));
     });
 
     test('generic mode remains generic and requests private visibility', () {
@@ -44,6 +45,15 @@ void main() {
           'en-US',
           'fr-CA',
           'ja-JP',
+          'ko-KR',
+          'hi-IN',
+          'es-MX',
+          'vi-VN',
+          'th-TH',
+          'id-ID',
+          'ru-RU',
+          'pl-PL',
+          'ar-SA',
         ]) {
           for (final mode in ReminderNotificationPrivacyMode.values) {
             final presentation = ReminderNotificationPrivacyPolicy.resolve(
@@ -67,6 +77,49 @@ void main() {
         );
         expect(fallback.languageCode, 'en');
         expect(fallback.title, 'ParkinSUM');
+      },
+    );
+
+    test(
+      'presentation identity is stable and changes with visible semantics',
+      () {
+        final enCa = ReminderNotificationPrivacyPolicy.resolve(
+          mode: ReminderNotificationPrivacyMode.minimal,
+          localeName: 'en-CA',
+        );
+        final enUs = ReminderNotificationPrivacyPolicy.resolve(
+          mode: ReminderNotificationPrivacyMode.minimal,
+          localeName: 'en-US',
+        );
+        final generic = ReminderNotificationPrivacyPolicy.resolve(
+          mode: ReminderNotificationPrivacyMode.generic,
+          localeName: 'en-US',
+        );
+        final french = ReminderNotificationPrivacyPolicy.resolve(
+          mode: ReminderNotificationPrivacyMode.minimal,
+          localeName: 'fr-CA',
+        );
+        final fallback = ReminderNotificationPrivacyPolicy.resolve(
+          mode: ReminderNotificationPrivacyMode.minimal,
+          localeName: 'de-DE',
+        );
+
+        expect(enCa.identitySha256, enUs.identitySha256);
+        expect(generic.identitySha256, isNot(enUs.identitySha256));
+        expect(french.identitySha256, isNot(enUs.identitySha256));
+        expect(fallback.identitySha256, enUs.identitySha256);
+        expect(
+          ReminderNotificationPrivacyPolicy.supportedLanguageCode('es-419'),
+          'es',
+        );
+        expect(
+          ReminderNotificationPrivacyPolicy.supportedLanguageCode('zh-Hant-TW'),
+          'zh',
+        );
+        expect(
+          ReminderNotificationPrivacyPolicy.supportedLanguageCode('de-DE'),
+          'en',
+        );
       },
     );
 

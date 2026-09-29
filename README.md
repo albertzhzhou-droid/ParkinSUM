@@ -1,522 +1,257 @@
 # ParkinSUM Companion
 
 <p align="center">
-  <img src="assets/brand/parkinsum-wordmark.png" alt="ParkinSUM food medication interaction logo" width="720">
+  <img src="docs/assets/social-preview/parkinsum-social-preview-warm.png" alt="ParkinSUM Companion — a local-first research notebook for meals, medication and evidence context. Educational prototype; synthetic demos; not medical advice." width="100%">
 </p>
 
+[Brand assets: icon, logo & GitHub card](docs/media/social-preview.md)
+
 [![CI](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml)
+![Flutter](https://img.shields.io/badge/Flutter-Local_first-A84B2A)
+![Educational Prototype](https://img.shields.io/badge/Scope-Educational_prototype-6E655A)
+![Synthetic Demo](https://img.shields.io/badge/Public_demos-Synthetic_data-3F7A55)
 
-A provenance-first Parkinson medication-food interaction prototype for
-deterministic rule tracing, read-only algorithm observability, Firebase
-governance, and synthetic-data demos.
+**A local-first research notebook for meal, medication, and evidence context.**
 
-**Educational architecture prototype only. Not medical advice or a clinical decision tool.**
+ParkinSUM combines a Flutter record-keeping interface with deterministic rule
+explanations, an Algorithm Observatory, and reproducible synthetic research
+tools. It makes assumptions, missing information, provenance, and model
+limitations visible so reviewers can inspect how an educational result arose.
 
-![Flutter](https://img.shields.io/badge/Flutter-Prototype-blue)
-![Firebase](https://img.shields.io/badge/Firebase-Governance-orange)
-![Educational Prototype](https://img.shields.io/badge/Scope-Educational%20Prototype-lightgrey)
-![Synthetic Data Only](https://img.shields.io/badge/Data-Synthetic%20Only-green)
-![Public Showcase](https://img.shields.io/badge/Mode-Public%20Showcase-purple)
+**Educational production-architecture prototype only. Not medical advice, not a
+medical device, and not a clinical decision tool. The model is not clinically
+calibrated. Public demonstrations use synthetic or sample data only.**
 
-ParkinSUM Companion is a local-first Flutter prototype that demonstrates how a
-health-adjacent app can combine synthetic meal logging, medication context,
-deterministic rule checks, a read-only Algorithm Observatory, evidence-oriented
-explanations, and release safety guardrails without making clinical claims.
+[Project showcase](https://albertzhzhou-droid.github.io/ParkinSUM/site/) ·
+[Documentation](docs/README.md) ·
+[Capabilities & limitations](docs/CAPABILITY_MATRIX.md) ·
+[Verification guide](docs/PUBLIC_VERIFICATION.md) ·
+[Changelog](CHANGELOG.md)
 
-It is a production-architecture prototype designed for educational demonstrations, software architecture review, and academic discussion of local-first digital health prototypes. It is not a medical device and must not be used for diagnosis, treatment, medication timing, dietary guidance, clinical decision-making, patient care, or emergency support.
+## September 2026 update
 
-Public demos should use synthetic or sample data only.
+The latest development update brings the app, research tools, and public
+showcase together around the **Paper** interface: warm paper tones, serif
+headings, legible opaque surfaces, and restrained motion that respects reduced
+motion settings. The app bundles Source Serif 4, Geist, and Geist Mono under
+SIL OFL licenses; it does not download these fonts at runtime.
 
-## What It Demonstrates
+| Area | What changed | Evidence boundary |
+| --- | --- | --- |
+| **Paper workspace** | Five chapters, one entry composer, responsive navigation, and a shared command palette. | UI behavior is distinct from model or clinical validity. |
+| **Algorithm Observatory** | Fixed synthetic scenarios, production-derived traces, configuration identities, explanation trees, and saved replay capsules. | Static contracts and executable trace coverage remain separately labeled. |
+| **Medication and food context** | Explicit dose-unit handling, source and version provenance, missingness, and bounded food-rank sensitivity. | Unsupported context withholds interpretation; unknown data is not inferred. |
+| **Owner-controlled records** | Observation entries, portable packages, recoverable history, and selected records for visit-preparation summaries. | Local records can contain sensitive information. Public demos must remain synthetic. |
+| **Research workbench** | Synthetic rule testing, development-only FHIR/CQL/CDS Hooks experiments, and source/license review records. | Fixture agreement is scoped engineering evidence, not general standards conformance or clinical validation. |
 
-- Meal logging and medication-context capture for a Parkinson's disease education scenario.
-- Deterministic food-drug interaction checks instead of black-box medical advice.
-- Evidence-oriented explanations that show why a prototype rule fired.
-- A read-only Algorithm Observatory that exposes registry coverage, production-path
-  traces, fixed non-personal scenarios, and explicit model limitations.
-- Local-first app behavior for public demos and development.
-- Optional Firebase-backed paths for internal operator validation and governance.
-- Public-release guardrails around disclaimers, security, contribution rules, and synthetic data.
+The [iteration timeline](docs/APP_EVOLUTION_TIMELINE.md) records individual
+changes, checks, unresolved boundaries, and rollback scopes. The
+[capability matrix](docs/CAPABILITY_MATRIX.md) distinguishes implemented,
+fixture-tested, report-only, and future work. This development update does not
+create a new versioned release; package metadata remains `0.2.0+2`.
 
-## Algorithm and Safety Boundary
+## The Paper workspace
 
-ParkinSUM's conflict engine is **deterministic and evidence-linked**: no LLM
-sits inside it, and every educational rule that fires carries a structured
-explanation with source references, provenance, the input fields actually
-used, any missing or uncertain inputs, an explicit limitation, and a hard
-not-advice boundary.
+| Chapter | What to explore |
+| --- | --- |
+| **Today** | A single composer for a meal, medication intake, or observation; recent activity and chapter previews. |
+| **Timeline** | Logged entries, record details, editing, and explicit export actions. |
+| **Next meal** | A user-defined time window, candidate comparison, and adjacent explanations and limitations. |
+| **Insights** | Descriptive views of recorded entries, including logging rhythm and protein distribution. |
+| **Library** | Selected medications and the food/medication catalog, with source context. |
 
-Conflict classifications, scores, safety gates, and evidence remain
-deterministic. With explicit user consent, an optional loopback model may only
-rerank the rule-screened, non-`BLOCK` candidate whitelist or polish wording that
-the deterministic path has already produced. It cannot change medication data,
-conflict decisions, scores, rules, evidence, or safety gates.
+Use **⌘K / Ctrl+K** or the sidebar groups to open the Algorithm Observatory,
+rule audit trail, synthetic rule test workbench, data tools, and diagnostics.
+Local AI settings live under **Settings → Advanced**. Research and operational
+tools have their own destinations rather than competing with everyday records.
 
-Medication context must be **catalog-backed and unit-explicit** before any
-food-medication rule is evaluated. A bare numeric dose such as `100`, an
-unstructured string such as `"100 tablets"`, or a name without a unit such as
-`levodopa 100` is rejected outright — ParkinSUM does not infer mg, tablet
-count, schedule, formulation, or release type from such input. Entries
-without an active ingredient, drug product variant, formulation, or
-provenance are treated as insufficient context and do not produce a conflict
-result.
+The [showcase](docs/site/index.html) presents the current interface. Screenshot
+source, synthetic-state, and review boundaries are recorded in the
+[media index](docs/assets/screenshots/README.md). A browser capture establishes
+visible rendering at its recorded revision, not physical-device behavior,
+workflow completion, accessibility conformance, or clinical accuracy.
 
-High-value contributor work in this area includes:
+## Current app screens
 
-- Medication context validation (`lib/domain/usecases/medication_entry_validator.dart`).
-- Evidence-linked rule explanations (`lib/domain/entities/rule_explanation.dart`).
-- Importer provenance fields (basis, scope, jurisdiction, confidence, source).
-- Negative safety tests that prevent educational copy from drifting into
-  medication timing, dose, dietary, or clinical-validation claims
-  (`test/medication_entry_validator_test.dart`,
-  `test/rule_explanation_safety_test.dart`).
-
-See [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for the medication context
-gate, the structured rule-explanation template, a worked levodopa+protein
-example, and the negative-test expectations.
-
-## Mechanistic Conflict and Recommendation Engine
-
-ParkinSUM now includes a deterministic, time-axis, literature-informed
-**educational conflict engine** that models meal composition, gastric
-emptying assumptions, small-intestinal arrival, a levodopa absorption
-opportunity window, an amino-acid competition proxy, overlapping-meal
-effects, and uncertainty bands. Every modeled assumption is backed by a
-local source registry (`lib/domain/usecases/model_assumption_registry.dart`)
-that cites entries in [Bibliographies.md](Bibliographies.md) (MLA format).
-
-The next-meal flow accepts a **user-defined time window** and a regional food
-library. Inside a narrowly supported medication domain it computes
-deterministic per-candidate overlap traces for inspection and sensitivity
-comparison. Those traces **do not reorder recommendations**: the production
-decision-influence boundary is `trace_only`. `rankerUsed` reports
-`heuristic_legacy_fallback` or, only after separate consent and whitelist
-validation, `local_ai_safe_candidate_rerank`; it never names the mechanistic
-trace as the ranker. The model does not decide when the user eats,
-does not produce medication timing or dietary advice, and abstains when the
-window, medication context, or applicability predicates are insufficient.
-Missing route is never promoted to oral, an unrecorded meal is never promoted
-to fasting, and a future candidate meal cannot alter an earlier dose's
-absorption window. A stale meal outside its explicit gastric-residence horizon
-also cannot unlock a current trace, and contradictory nested product/source
-metadata invalidates the medication context instead of authorizing a curve.
-The built-in generic carbidopa/levodopa entry deliberately carries an
-`unspecified` release type: until the product picker persists a governed
-product-level ingredient/route/form/release snapshot, selecting any concrete
-package forces the model context to remain unspecified even if its parent
-catalog row claims IR.
-
-Trace sampling uses **deterministic multi-point sampling** (5–12 samples,
-capped) across the user-provided window; worst/best/average/per-sample values
-are surfaced as educational trace data, not as a validated optimization
-target. Gastric-emptying numerics live in a single
-`GastricEmptyingParameterSet` with per-parameter `sourceRefs`, and the
-amino-acid competition layer now applies a coarse, direction-only
-**LNAA load factor** per protein source (animal vs plant). Mixed actual-profile
-coverage is labeled hybrid, widens uncertainty, and does not publish a
-pseudo-measured whole-meal LNAA total. The runtime
-food repository is augmented at app boot with foods projected from CDSS
-observations so traces can use catalog-backed candidates, not only synthetic
-replay items. See `docs/RUNTIME_MODEL_APPLICABILITY_RESEARCH_2026-08-17.md`
-for the evidence and abstention boundary.
-
-The data chain preserves fidelity end-to-end: missing nutrient data is
-carried as **unknown, never coerced to a fake `0 g`** (`missingNutrientFields`
-→ null components → lowered composition completeness → widened uncertainty);
-actual USDA FDC **amino-acid fields** (verified nutrient-number mapping) feed
-the LNAA layer in preference to the protein-source proxy; per-candidate
-`CandidateMetadata` (authority, jurisdiction match, completeness, provenance)
-is built from imported source data so official-in-jurisdiction outranks
-synthetic/seed. The medication **dose is taken only from the user's entered
-dosage note** (value + unit must both be explicit) — there is no private
-default; a missing/ambiguous dose yields insufficient context and blocks
-dose-dependent interpretation. The conflict engine evaluates **each levodopa
-dose** on a multi-dose time axis and aggregates with deterministic
-max-overlap, keeping per-dose traces.
-
-Compact mechanistic-trace UI cards render alongside the existing
-recommendation and conflict-result views via an `ExpansionTile` so the
-new surface stays out of the way until a reviewer expands it. Raw trace
-JSON is never shown by default.
-
-Synthetic replay scenarios are available via the CLI:
-
-```sh
-dart run tool/run_mechanistic_replay.dart
-# or
-npm run mechanistic:replay
-```
-
-The runner writes `build/mechanistic_replay/latest.{json,md}` and exits
-non-zero on any expectation mismatch or banned-phrase hit.
-
-See [docs/CONFLICT_ENGINE_MODEL.md](docs/CONFLICT_ENGINE_MODEL.md) for the
-layered model description and [docs/REPLAY_RUNNER.md](docs/REPLAY_RUNNER.md)
-for the scenario format and CLI details. ParkinSUM does not overclaim
-clinical accuracy; the engine is an educational simulation, not a
-patient-care tool.
-
-## Educational Model Guardrails
-
-The mechanistic conflict engine is **not clinically calibrated**. Its
-gastric-emptying values are literature-informed prototype parameters; the
-amino-acid (LNAA) competition layer is an educational proxy. It makes **no
-patient-specific pharmacokinetic/pharmacodynamic prediction**, gives no
-medication-timing, dietary, or dose guidance, and carries no clinical-validation
-claim. All importer adapters are fixture-validated (not live production
-ingestion); the optional live-source smoke harness is opt-in, excluded from
-normal tests, fetches official metadata only, and is not used for clinical
-advice. A fail-closed open-source influence inventory now separates conceptual
-research from authorized transferred artifacts; legal advice, artifact-level
-SBOM attestation, and complete cross-platform NOTICE verification remain open.
-See [docs/OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md](docs/OPEN_SOURCE_INFLUENCE_FIREWALL_RESEARCH_2026-08-18.md)
-and [docs/SOURCE_ACCESS_AND_LICENSES.md](docs/SOURCE_ACCESS_AND_LICENSES.md).
-
-## Algorithm Observatory
-
-The read-only Algorithm Observatory makes the deterministic runtime easier to
-audit without changing its decisions. At capture commit `23619f1`, the registry
-contains **58 algorithm descriptors**. Reviewers can compare three fixed,
-non-personal scenarios, inspect the production-path trace and explanation tree,
-and review the result-affecting registry inventory. Live production-path output
-and static registry contracts are labeled separately so a declared contract is
-not mistaken for a runtime observation.
-
-The interface keeps severity, confidence, and missingness separate. Its gastric
-and absorption curves are unitless educational sensitivity views—not gastric-
-emptying tests, absorbed-dose estimates, plasma concentrations, symptom
-predictions, or advice. The responsive screenshot below demonstrates browser
-layout reflow only; it is not physical-device, native-platform, accessibility,
-or clinical validation.
-
-## Multi-Jurisdiction Metadata & Protein Redistribution
-
-ParkinSUM's importer layer is multi-jurisdiction: source-adapter specs cover
-DailyMed (US), Health Canada DPD (CA), EMA + EU national registers (EU/EEA),
-NHS dm+d (GB), PMDA (JP), NMPA (CN), and food-composition sources (USDA FDC,
-Ciqual, China CDC), with a deterministic source-authority scorer
-(official-in-jurisdiction outranks others; reference translations are
-downgraded; seed/synthetic never overrides official; cross-jurisdiction
-conflicts are preserved, not merged). Canonical source/provenance metadata —
-jurisdiction, language, unit, basis, authority tier, completeness, limitation
-— is preserved from importer to runtime so the mechanistic engine and scorer
-can reason about it.
-
-The next-meal scorer exposes **protein-redistribution timing as an educational
-trace, not a diet optimizer**. Inside the narrowly declared immediate-release
-applicability domain it shows a unitless overlap assumption and a non-clinical
-nutrition-adequacy proxy; outside that domain it abstains. The production
-recommendation order remains the conservative heuristic order—the
-mechanistic trace never selects a meal time or reorders food candidates.
-
-See [docs/IMPORTER_METADATA_FLOW.md](docs/IMPORTER_METADATA_FLOW.md) for the
-canonical metadata model, source-authority policy, cross-jurisdiction conflict
-policy, completeness gate, and the protein-redistribution objective, and
-[docs/MANUAL_VALIDATION.md](docs/MANUAL_VALIDATION.md) for a hands-on
-walkthrough.
-
-Fixture-tested medication source parsers now cover DailyMed, Health Canada
-DPD, EMA, PMDA, **NHS dm+d** (identity/coding — not a complete food-effect
-source), **EU national registers** (member-state identity vs full SmPC), and
-**NMPA** (fixture-validated / prototype, honestly downgraded). A
-`SourceFetchClient` abstraction (with an offline `FixtureSourceFetchClient`
-returning structured `SourceFetchResult`s) keeps all tests deterministic;
-live fetch is optional and never used for clinical advice. Per-food
-amino-acid fields, when present, drive the LNAA competition layer in
-preference to the protein-source proxy. The conservative heuristic remains the
-only production recommendation ranker; the trace-only reason is surfaced in
-UI and replay.
-
-## Evidence & Traceability Architecture
-
-ParkinSUM's most reviewable surface is its **evidence and provenance layer**.
-Conflict classifications, scores, safety gates, evidence links, and production
-traces are deterministic, source-linked, and serializable for review—without
-patient data. Any consent-gated loopback AI remains outside that decision path
-and is limited to the screened-whitelist and wording roles described above.
-
-- **Deterministic mechanistic replay** — 41 synthetic scenarios, banned-phrase
-  scanned (`docs/REPLAY_RUNNER.md`).
-- **CDSS-style source/provenance metadata** with **source-authority** and
-  **metadata-completeness** gates (`docs/IMPORTER_METADATA_FLOW.md`).
-- **FDC nutrient provenance tiers** (analytical / calculated / imputed / unknown)
-  as **source-quality signals** that affect modeled confidence, not advice.
-- **Multi-dose medication traces** with per-dose modeled overlap.
-- **Local EvidenceTraceBundle** — a ParkinSUM-local artifact (explicitly **not** a
-  FHIR Bundle) pairing the two inspired views (`docs/EVIDENCE_TRACE_BUNDLE.md`).
-- **FHIR-inspired, non-conformant** NutritionIntake / MedicationKnowledge views
-  (PHI-free; `inspired_not_conformant`) with a conservative **LOINC section-code**
-  trace.
-- **Source-quality perturbation report** — shows how scoring moves when only
-  source/provenance quality changes (`docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`).
-- **Public preflight + Firestore rules contract** release guardrails.
-
-```text
-source/importer metadata → normalized facts (missing ≠ zero)
-  → metadata completeness + source authority
-  → mechanistic engine (per-dose) → replay / source-quality report
-  → FHIR-inspired views + local EvidenceTraceBundle
-```
-
-Reviewer entry points: **[docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md](docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md)**
-(guided walkthrough), **[docs/CAPABILITY_MATRIX.md](docs/CAPABILITY_MATRIX.md)**
-(implemented vs future work), **[docs/PUBLIC_VERIFICATION.md](docs/PUBLIC_VERIFICATION.md)**
-(exact commands), and the **[docs index](docs/README.md)**. These artifacts are
-deterministic synthetic-data demonstrations — they are **not** clinical
-validation, and the source-quality report is **not** a clinical dashboard.
-
-## Demo Media
-
-These are commit-identified runtime web captures from a local-mode build using
-fresh synthetic onboarding data and fixed, non-personal Observatory fixtures.
-They document the interface at `main@23619f1`; they do not establish clinical
-accuracy, physical-device compatibility, native-platform behavior,
-accessibility conformance, or a deployed-backend result.
+These 1440 × 1000 browser captures use a fresh local profile, one synthetic
+banana meal, zero selected medications, and no AI consent. They were captured
+on 2026-09-29 from the development worktree; they are not a final-commit binary
+attestation. See the [capture record](docs/assets/screenshots/README.md).
 
 <p align="center">
-  <img src="docs/assets/screenshots/algorithm-observatory-overview-desktop.png" alt="Algorithm Observatory overview showing 58 registered algorithms, fixed scenario comparison, and a unitless gastric curve" width="100%">
-  <br>
-  <sub>Algorithm Observatory overview: fixed scenarios, production-path trace, and registry snapshot at the capture commit.</sub>
+  <img src="docs/assets/screenshots/paper-today.png" alt="Paper Today chapter with one synthetic demo meal, entry composer, and zero active medications" width="100%">
+  <br><sub>Today: one entry composer, recent activity, descriptive figures, and the conservative candidate preview.</sub>
 </p>
 
 <table>
   <tr>
-    <td width="50%">
-      <img src="docs/assets/screenshots/algorithm-observatory-explanation-desktop.png" alt="Algorithm conflict composition and expandable explanation tree">
-      <br><sub>Conflict composition and explanation tree expose inputs, outputs, evidence, and limitations.</sub>
-    </td>
-    <td width="50%">
-      <img src="docs/assets/screenshots/algorithm-observatory-coverage-desktop.png" alt="Result-affecting algorithm coverage inventory showing 58 of 58 descriptors">
-      <br><sub>Registry-backed coverage distinguishes live traces from static contracts.</sub>
-    </td>
+    <td width="50%"><img src="docs/assets/screenshots/paper-timeline.png" alt="Paper Timeline showing the saved synthetic demo meal"><br><sub>Timeline: the saved synthetic meal and its record controls.</sub></td>
+    <td width="50%"><img src="docs/assets/screenshots/paper-next-meal.png" alt="Paper Next meal settings before generating any result"><br><sub>Next meal: user-provided comparison settings before generating a result.</sub></td>
   </tr>
   <tr>
-    <td width="50%">
-      <img src="docs/assets/screenshots/capability-center-desktop.png" alt="Settings and capability center in the local-mode runtime">
-      <br><sub>Capability Center surfaces local-mode configuration and implementation boundaries.</sub>
-    </td>
-    <td width="50%">
-      <img src="docs/assets/screenshots/algorithm-observatory-responsive.png" alt="Algorithm Observatory scenario comparison at a 390 by 844 responsive browser viewport">
-      <br><sub>Responsive browser viewport (390×844); layout evidence only, not a physical-device claim.</sub>
-    </td>
+    <td colspan="2"><img src="docs/assets/screenshots/paper-library.png" alt="Paper Library showing built-in medication catalog entries with zero selected medications"><br><sub>Library: catalog source context with no medications selected; catalog text is not individualized guidance.</sub></td>
   </tr>
 </table>
 
-<details>
-  <summary>Open the fresh local-mode dashboard capture</summary>
-  <p align="center">
-    <img src="docs/assets/screenshots/runtime-dashboard-desktop.png" alt="Fresh local-mode ParkinSUM dashboard with synthetic onboarding data" width="100%">
-  </p>
-</details>
+## Inspect the evidence
 
-Capture provenance, privacy review, and evidence limits are recorded in
-[docs/assets/screenshots/README.md](docs/assets/screenshots/README.md) and
-[docs/media-capture-checklist.md](docs/media-capture-checklist.md).
+The conflict engine is **deterministic and evidence-linked**. Structured
+explanations expose source references, the fields used, missing or uncertain
+inputs, and limitations. No LLM sits inside the conflict engine.
 
-## Quick Start
+- **Explicit context.** Medication interpretation requires supported,
+  catalog-backed context and explicit units. Missing formulation, route,
+  release type, dose evidence, or applicability cannot silently authorize a
+  mechanistic curve. Missing nutrients remain unknown rather than becoming
+  a fabricated `0 g`.
+- **Trace-only mechanistic model.** Literature-informed gastric-residence,
+  absorption-opportunity, amino-acid competition, and per-dose traces are
+  educational sensitivity views. They do not select meal times or reorder
+  candidate recommendations. The production decision-influence boundary is
+  `trace_only`; outputs carry applicability and uncertainty limits.
+- **Inspectible coverage.** The Observatory separates production-derived
+  observations from static registry contracts. A declared algorithm descriptor
+  does not establish executable trace coverage or complete verification.
+- **Bounded optional AI.** With explicit consent, a loopback model may rerank
+  only rule-screened, non-`BLOCK` candidates or polish existing copy. It cannot
+  change medication data, conflict classifications, scores, rules, evidence,
+  or safety gates.
+- **Replayable research.** Synthetic cases, content-bound replay artifacts,
+  source-quality reports, and independent contract checks support review.
+  Passing a fixture proves only the checked assertion within its scope.
 
-Install Flutter, Node.js, and npm first. Then run these commands from the repository root:
+See the [rule-engine contract](docs/RULE_ENGINE.md),
+[mechanistic model](docs/CONFLICT_ENGINE_MODEL.md),
+[Observatory design](docs/design/ADR_ALGORITHM_OBSERVATORY.md), and
+[synthetic rule workbench](docs/RULE_TEST_WORKBENCH.md).
+
+```mermaid
+flowchart LR
+  Context["Explicit meal / medication context"] --> Gate["Provenance + applicability gates"]
+  Gate --> Rules["Deterministic rules"]
+  Rules --> Explain["Evidence + limitations"]
+  Gate --> Model["Educational mechanistic traces"]
+  Model --> Review["Observatory + replay review"]
+  Explain --> Review
+```
+
+## Run locally
+
+Use the Flutter version pinned in [CI](.github/workflows/ci.yml), a compatible
+Dart SDK (`>=3.11.0 <4.0.0`), and Node.js/npm for repository checks.
 
 ```sh
 git clone https://github.com/albertzhzhou-droid/ParkinSUM.git
 cd ParkinSUM
 flutter pub get
-flutter run -d chrome
+flutter run -d chrome --dart-define=PARKINSUM_BACKEND=local
 ```
 
-Evaluate the prototype locally:
+Complete onboarding using a fresh synthetic profile. Open **Today** for the
+workspace or **Algorithm Observatory** for fixed, non-personal scenarios.
+Firebase-backed paths are retained for internal operator validation and require
+separate project access; they are not needed for the local demo.
+
+For the static showcase, serve the repository root and open `/docs/site/`:
 
 ```sh
-dart format --output=none --set-exit-if-changed .
+python3 -m http.server 8000
+```
+
+## Verify a change
+
+```sh
+npm ci
+dart format --output=none --set-exit-if-changed lib test tool
 flutter analyze
 flutter test
-npm ci
 npm run public:preflight
 npm run rules:contract
 ```
 
-Run the deterministic evidence artifacts (synthetic data; not clinical
-validation):
+Inspect and run the broader synthetic governance checks as needed:
 
 ```sh
-dart run tool/run_mechanistic_replay.dart            # or: npm run mechanistic:replay
-dart run tool/run_source_quality_perturbation_report.dart  # or: npm run source:quality
+npm run verify:all -- --list
+npm run verify:all
+npm run mechanistic:replay
+npm run source:quality
 ```
 
-See [docs/PUBLIC_VERIFICATION.md](docs/PUBLIC_VERIFICATION.md) for what each
-command checks, its expected output, and what failure means.
+The [public verification guide](docs/PUBLIC_VERIFICATION.md) documents command
+scope, prerequisites, expected outputs, and failure meaning. Generated reports
+belong under ignored `build/` paths. A command listed here is a reproducible
+entry point, not a claim that every check passed for every commit; use CI and
+the dated timeline for actual results and open limitations.
 
-The default public-demo path is local mode. Firebase-backed commands are retained for internal operator validation and require project access.
+## Safety, privacy, and research limits
 
-## Release
+ParkinSUM must not be used for diagnosis, treatment, medication timing, dose
+selection, dietary guidance, clinical decision-making, patient care, or
+emergency support. The educational model provides no patient-specific
+pharmacokinetic/pharmacodynamic prediction or patient-outcome evidence.
 
-The current public showcase target is `v0.2.0-beta`. Release materials are tracked in [CHANGELOG.md](CHANGELOG.md), [docs/release/v0.2.0-beta-notes.md](docs/release/v0.2.0-beta-notes.md), [docs/release/synthetic-demo-data.md](docs/release/synthetic-demo-data.md), and [docs/release/release-checklist.md](docs/release/release-checklist.md). The earlier alpha materials remain at [docs/release/v0.1.0-alpha-notes.md](docs/release/v0.1.0-alpha-notes.md).
+Public screenshots, tests, examples, and walkthroughs must exclude real account
+identifiers and health information. Owner-entered records and portable exports
+can contain sensitive data; local storage and file digests do not establish
+anonymity, encryption, or external authenticity. Do not publish personal exports,
+credentials, raw operator logs, or real health records.
 
-A scoped release-metadata package is published to GitHub Packages (npm registry) as `@albertzhzhou-droid/parkinsum-companion` on each tagged release; see [packages/npm/README.md](packages/npm/README.md).
+FHIR-inspired views, import previews, and development-only standards experiments
+have separate, explicit scopes. Neither a local EvidenceTraceBundle nor a
+passing synthetic differential establishes general FHIR/CQL/CDS Hooks
+conformance. Source-adapter fixtures do not establish live production ingestion.
+Open-source references remain subject to repository and asset-level license
+review; a research reference is not permission to transfer its content.
 
-Any Android APK generated for this beta must be labeled as a beta/demo/debug artifact unless production signing is handled in a separate release process.
+Read the [disclaimer](DISCLAIMER.md), [public demo boundary](docs/PUBLIC_DEMO_BOUNDARY.md),
+[source access policy](docs/SOURCE_ACCESS_AND_LICENSES.md), and
+[security policy](SECURITY.md) before presenting or reusing the project.
 
-## Project Website
+## Documentation and contributions
 
-A lightweight GitHub Pages landing page is available in [docs/site/index.html](docs/site/index.html). Setup instructions are in [docs/site/README.md](docs/site/README.md).
+| Entry point | Purpose |
+| --- | --- |
+| [Documentation index](docs/README.md) | Find app, research, evidence, and release documents. |
+| [Evidence demo guide](docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md) | Review the synthetic evidence chain. |
+| [Architecture](docs/ARCHITECTURE.md) | UI, state, local data, rules, and provenance layers. |
+| [Bibliography](Bibliographies.md) | Sources behind educational assumptions. |
+| [Contribution guide](CONTRIBUTING.md) | Scope a change and preserve public boundaries. |
+| [Roadmap](ROADMAP.md) | Planned work and unresolved capabilities. |
+| [Project wiki](https://albertzhzhou-droid.github.io/ParkinSUM/wiki/) | A short visual guide and reviewer route. |
 
-An animated Liquid Glass-style showcase wiki is available in [docs/wiki/index.html](docs/wiki/index.html). GitHub Wiki-compatible Markdown pages are staged in [docs/github-wiki/](docs/github-wiki/) so they can be published to the repository Wiki interface.
+Useful contributions improve source provenance, explicit missingness,
+explanation clarity, synthetic regression cases, accessibility, localization,
+and reproducibility. Start with a scoped item from the
+[contribution backlog](docs/contribution-backlog.md); do not add medical claims
+or treat unfinished research as a shipped capability.
 
-## Contribute
-
-Start with the [contribution guide](CONTRIBUTING.md), then choose a scoped item from the [public contribution backlog](docs/contribution-backlog.md). Use the structured GitHub issue templates for bugs, features, documentation improvements, and research-rule evidence requests. A small real contributor PR request is drafted in [docs/mentor-pr-request.md](docs/mentor-pr-request.md) for classmates or mentors who want to test the project without making medical claims. Public examples must use synthetic or sample data only.
-
-Secondary creators who need to fork the project, configure local GitHub authentication, and submit updates by pull request should follow the [secondary creator token flow](docs/secondary-creator-token-flow.md). The repository documents fork-scoped token permissions and setup steps, but never stores real token values.
-
-## Architecture Overview
-
-```mermaid
-flowchart LR
-  UI["Flutter UI"]
-  State["App State"]
-  Data["Local-first Data Layer"]
-  Rules["Deterministic Rule Engine"]
-  Evidence["Evidence Explanation Layer"]
-  Observatory["Read-only Algorithm Observatory"]
-  AI["Consent-gated Loopback AI"]
-  Output["Educational Awareness Output"]
-
-  UI --> State
-  State --> Data
-  Data --> Rules
-  Rules --> Evidence
-  Evidence --> Output
-  Rules --> Observatory
-  Evidence --> Observatory
-  Rules -->|"screened non-BLOCK whitelist"| AI
-  AI -->|"rerank or wording only"| Output
-```
-
-The app separates user-facing screens, app state, local data handling,
-deterministic rule evaluation, read-only observability, and evidence-oriented
-explanation copy. The optional AI branch cannot write back to medication data,
-rules, classifications, scores, evidence, or safety gates. Firebase services
-are available for internal validation, but the public prototype should be
-evaluated with synthetic data and conservative claims.
-
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/RULE_ENGINE.md](docs/RULE_ENGINE.md) for more detail.
-
-## Safety Boundary
-
-ParkinSUM Companion is an educational awareness prototype only.
-
-- It does not diagnose, treat, monitor, prevent, or manage disease.
-- It does not provide individualized dietary, medication, clinical, or emergency advice.
-- It has no patient-outcome validation or clinical-use approval.
-- It should not be connected to real health records for public demos.
-- Screenshots, tests, walkthroughs, and examples should use synthetic or sample data only.
-
-Read [DISCLAIMER.md](DISCLAIMER.md) and [docs/PUBLIC_DEMO_BOUNDARY.md](docs/PUBLIC_DEMO_BOUNDARY.md) before presenting or reusing the project.
-
-## Repository Map
+## Repository map
 
 | Path | Purpose |
 | --- | --- |
-| `lib/app/` | Flutter app bootstrap and top-level app wiring. |
-| `lib/features/` | User-facing flows such as dashboard, meals, medications, onboarding, import, and recommendations. |
-| `lib/core/` | Shared models, state, services, database adapters, constants, i18n, and copy helpers. |
-| `lib/domain/` | Entities, repositories, deterministic rule use cases, recommendation orchestration, and evidence-oriented runtime logic. |
-| `lib/data/` | Local and remote data-source implementations, importers, and repository implementations. |
-| `test/` | Focused Flutter and Dart tests for rule execution, importers, onboarding, Firebase boundaries, and recommendation copy. |
-| `tool/` | Public preflight, Firebase governance, release, monitoring, and operator-validation scripts. |
-| `docs/` | Architecture, rule-engine, release, public-boundary, risk, security-adjacent, and operations documentation. |
+| `lib/features/` | Paper chapters, evidence tools, record flows, and diagnostics. |
+| `lib/core/` | Shared state, local storage, configuration, localization, and theme. |
+| `lib/domain/` | Entities, deterministic rules, models, and evidence contracts. |
+| `lib/data/` | Repository adapters, source importers, and persistence. |
+| `config/` | Versioned governance, schema, source, and release inventories. |
+| `test/` / `tool/` | Synthetic tests, replay runners, verification, and operator tools. |
+| `docs/` | Public documentation, research boundaries, and iteration history. |
 
-## Current Status
+## Releases and contact
 
-- Public release type: prototype showcase.
-- Current public release target: `v0.2.0-beta`.
-- Package name: `parkinsum_companion`.
-- Current app version: `0.2.0+2`.
-- Default public-demo backend: local mode.
-- Firebase backend mode: internal operator validation only.
-- Public contact: `parkinsumservice@gmail.com`.
-- Public readiness gate: `npm run public:preflight` should report zero `BLOCKER` findings before publication.
+The versioned beta notes remain at
+[v0.2.0-beta](docs/release/v0.2.0-beta-notes.md); subsequent development is
+summarized in [CHANGELOG.md](CHANGELOG.md). See
+[GitHub Releases](https://github.com/albertzhzhou-droid/ParkinSUM/releases) for
+published artifacts rather than assuming the latest source update includes a
+new binary. Android demo/debug artifacts do not establish production signing
+or app-store readiness. The scoped
+[npm package](packages/npm/README.md) contains release metadata.
 
-Public GitHub visibility does not claim external clinical, legal, privacy, regulatory, or patient-outcome approval.
+Public contact: **parkinsumservice@gmail.com**.
 
-## Roadmap
-
-Near-term work is tracked in [ROADMAP.md](ROADMAP.md). Current priorities include:
-
-- Maintain commit-identified local-mode desktop/responsive captures and keep
-  unsafe legacy media retired.
-- Keep the rule engine evidence-linked and auditable.
-- Improve accessibility, localization, and caregiver-oriented educational flows.
-- Expand sample-data walkthroughs without adding real patient data.
-- Maintain release, security, and public-readiness checks as the prototype changes.
-
-## Citation / Academic Use
-
-ParkinSUM Companion may be cited as a software prototype or educational research artifact. Do not cite it as a clinical intervention, medical device, treatment system, or patient-outcome study.
-
-Suggested citation format:
-
-```text
-Zhou, Z. ParkinSUM Companion: a local-first Flutter prototype for Parkinson's disease diet-medication education. GitHub repository, 2026. Available at: https://github.com/albertzhzhou-droid/ParkinSUM
-```
-
-If you discuss the project academically, include the safety boundary: educational awareness only, synthetic/demo data only, and no diagnosis, treatment, medication timing, dietary guidance, clinical decision-making, or patient-care use.
-
-## Documentation
-
-### Start here
-- [Documentation index](docs/README.md)
-- [Public verification guide](docs/PUBLIC_VERIFICATION.md)
-- [Contribution guide](CONTRIBUTING.md)
-- [Rule engine overview](docs/RULE_ENGINE.md)
-- [Project website](docs/site/index.html)
-- [Animated showcase wiki](docs/wiki/index.html)
-- [GitHub Wiki source pages](docs/github-wiki/Home.md)
-
-### Architecture
-- [Architecture overview](docs/ARCHITECTURE.md)
-- [Conflict engine model](docs/CONFLICT_ENGINE_MODEL.md)
-- [Importer & metadata flow](docs/IMPORTER_METADATA_FLOW.md)
-- [Evidence trace bundle](docs/EVIDENCE_TRACE_BUNDLE.md)
-
-### Safety and release
-- [Disclaimer](DISCLAIMER.md)
-- [Security policy](SECURITY.md)
-- [Roadmap](ROADMAP.md)
-- [Contribution guide](CONTRIBUTING.md)
-- [Contribution backlog](docs/contribution-backlog.md)
-- [Secondary creator token flow](docs/secondary-creator-token-flow.md)
-- [Mentor/classmate PR request](docs/mentor-pr-request.md)
-- [Changelog](CHANGELOG.md)
-- [Citation metadata](CITATION.cff)
-- [Repository metadata recommendations](docs/repository-metadata.md)
-- [Social preview brief](docs/media/social-preview.md)
-- [Rule engine testing](docs/rule-engine-testing.md)
-- [Impact one-page summary](docs/impact/one-page-summary.md)
-- [Impact technical case study](docs/impact/technical-case-study.md)
-- [Impact project pitch](docs/impact/project-pitch.md)
-- [Impact FAQ](docs/impact/faq.md)
-- [Impact safety and ethics](docs/impact/safety-and-ethics.md)
-- [v0.2.0-beta release notes](docs/release/v0.2.0-beta-notes.md)
-- [v0.1.0-alpha release notes](docs/release/v0.1.0-alpha-notes.md)
-- [Synthetic demo data](docs/release/synthetic-demo-data.md)
-- [Synthetic demo scenarios](docs/demo-scenarios.md)
-- [Release checklist](docs/release/release-checklist.md)
-- [Project website](docs/site/index.html)
-- [Animated showcase wiki](docs/wiki/index.html)
-- [GitHub Wiki source pages](docs/github-wiki/Home.md)
-- [GitHub Pages setup](docs/site/README.md)
-- [Public showcase readiness](PUBLIC_SHOWCASE_READINESS.md)
-- [Public demo boundary](docs/PUBLIC_DEMO_BOUNDARY.md)
-- [Release checklist](docs/release/release-checklist.md)
-- [Known risks](docs/known_risks.md)
-
-### Demo and impact
-- [Synthetic demo scenarios](docs/demo-scenarios.md)
-- [Media capture checklist](docs/media-capture-checklist.md)
-- [Impact one-page summary](docs/impact/one-page-summary.md)
-## Contributing
-
-Contributions are welcome when they keep the public prototype boundary intact. Good first areas include documentation, UI strings, accessibility notes, synthetic sample interactions, and focused tests. Start with [CONTRIBUTING.md](CONTRIBUTING.md).
-
-Do not submit personal health information, real medication schedules, credentials, service account keys, private Firebase exports, or raw operator logs.
+For academic use, cite ParkinSUM as a software prototype or educational research
+artifact, not as a clinical intervention, medical device, or patient-outcome
+study. Public GitHub visibility is not clinical, legal, privacy, or regulatory
+approval.

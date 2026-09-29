@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FLUTTER_BIN="${FLUTTER_BIN:-flutter}"
 ENVIRONMENT="${PARKINSUM_ENV:-prod}"
 FIREBASE_PROJECT_ID="${PARKINSUM_FIREBASE_PROJECT_ID:-${FIREBASE_PROJECT_ID:-}}"
+FIREBASE_API_KEY="${PARKINSUM_FIREBASE_API_KEY:-}"
 RUN_FULL_TESTS="${RUN_FULL_TESTS:-1}"
 RELEASE_ID="${RELEASE_ID:-p0_${ENVIRONMENT}_$(date -u +%Y%m%dT%H%M%SZ)}"
 DEPLOY_FIRESTORE=0
@@ -14,7 +15,10 @@ CREATE_SOURCE_BUNDLE=1
 usage() {
   cat <<'USAGE'
 Usage:
-  PARKINSUM_ENV=dev|stage|prod PARKINSUM_FIREBASE_PROJECT_ID=<project> tool/release_deploy.sh [options]
+  PARKINSUM_ENV=dev|stage|prod \
+  PARKINSUM_FIREBASE_PROJECT_ID=<project> \
+  PARKINSUM_FIREBASE_API_KEY=<restricted-client-key> \
+  tool/release_deploy.sh [options]
 
 Options:
   --deploy-firestore  Deploy Firestore rules and indexes after validation.
@@ -100,6 +104,11 @@ if [[ "$FIREBASE_PROJECT_ID" != "$EXPECTED_PROJECT_ID" ]]; then
   exit 2
 fi
 
+if [[ ! "$FIREBASE_API_KEY" =~ ^AIza[0-9A-Za-z_-]{35}$ ]]; then
+  echo "PARKINSUM_FIREBASE_API_KEY must contain the restricted Firebase client key for this environment and target." >&2
+  exit 2
+fi
+
 if ! SOURCE_CONTRACT_OUTPUT="$(
   node tool/release_source_contract.mjs \
     --env "$ENVIRONMENT"
@@ -179,10 +188,14 @@ fi
   --dart-define=PARKINSUM_BACKEND=firebase \
   --dart-define=PARKINSUM_ENV="$ENVIRONMENT" \
   --dart-define=PARKINSUM_FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
+  --dart-define=PARKINSUM_FIREBASE_API_KEY="$FIREBASE_API_KEY" \
   "${APP_CHECK_BUILD_ARGS[@]}"
 
 ARTIFACT_DIR="build/release_artifacts/$RELEASE_ID"
 mkdir -p "$ARTIFACT_DIR"
+node tool/open_source_release_evidence.mjs \
+  --web-only \
+  --output "$ARTIFACT_DIR/open_source_release_evidence.json"
 WEB_BUILD_SHA="$(find build/web -type f -print0 | sort -z | xargs -0 shasum -a 256 | shasum -a 256 | awk '{print $1}')"
 SOURCE_BUNDLE=""
 SOURCE_BUNDLE_SHA=""

@@ -7,15 +7,21 @@ import '../models/atomic_onboarding_commit.dart';
 import '../models/drug_definition.dart';
 import '../models/food_item.dart';
 import '../models/intake.dart';
-import '../models/medication_product_pack.dart';
 import '../models/meal.dart';
 import '../models/recoverable_user_event.dart';
 import '../models/user_profile.dart';
 import '../../data/models/interaction_rule_record.dart';
 import 'app_database.dart';
 import 'recoverable_user_event_store.dart';
+import '../../domain/entities/mechanistic_replay_capsule.dart';
 
-const int nativeAppDatabaseSchemaVersion = 8;
+const int nativeAppDatabaseSchemaVersion = 11;
+
+const String nativeMechanisticReplayCapsulesCreateTableSql =
+    'CREATE TABLE mechanistic_replay_capsules ('
+    'capsule_sha256 TEXT PRIMARY KEY, '
+    'canonical_json TEXT NOT NULL, '
+    'generated_at_utc TEXT NOT NULL)';
 const String _nativeOnboardingOperationKey = 'onboarding_operation_id_v1';
 const String _nativeOnboardingStageKey = 'onboarding_stage_v1';
 
@@ -30,7 +36,9 @@ CREATE TABLE intakes (
   dosage_form TEXT,
   route TEXT,
   release_type TEXT,
-  product_selection_json TEXT
+  product_selection_json TEXT,
+  dose_confirmation_json TEXT,
+  medication_reconciliation_json TEXT
 )
 ''';
 
@@ -44,6 +52,14 @@ const List<String> nativeIntakeSchemaV6MigrationStatements = <String>[
 
 const List<String> nativeIntakeSchemaV7MigrationStatements = <String>[
   'ALTER TABLE intakes ADD COLUMN product_selection_json TEXT',
+];
+
+const List<String> nativeIntakeSchemaV9MigrationStatements = <String>[
+  'ALTER TABLE intakes ADD COLUMN dose_confirmation_json TEXT',
+];
+
+const List<String> nativeIntakeSchemaV10MigrationStatements = <String>[
+  'ALTER TABLE intakes ADD COLUMN medication_reconciliation_json TEXT',
 ];
 
 const String nativeRecoverableEventHistoryCreateTableSql = '''
@@ -71,26 +87,41 @@ Map<String, Object?> nativeIntakeToSqliteRow(Intake intake) {
     'product_selection_json': intake.productSelection == null
         ? null
         : jsonEncode(intake.productSelection!.toJson()),
+    'dose_confirmation_json': intake.doseConfirmation != null
+        ? jsonEncode(intake.doseConfirmation!.toJson())
+        : intake.invalidDoseConfirmationEvidence != null
+        ? jsonEncode(intake.invalidDoseConfirmationEvidence)
+        : null,
+    'medication_reconciliation_json':
+        intake.toJson()['medicationReconciliation'] == null
+        ? null
+        : jsonEncode(intake.toJson()['medicationReconciliation']),
   };
 }
 
 Intake nativeIntakeFromSqliteRow(Map<String, Object?> row) {
-  return Intake(
-    id: row['id'] as String,
-    drugId: row['drug_id'] as String,
-    takenAt: DateTime.fromMillisecondsSinceEpoch(row['taken_at'] as int),
-    dosageNote: (row['dosage_note'] as String?) ?? '',
-    doseAmount: (row['dose_amount'] as num?)?.toDouble(),
-    doseUnit: row['dose_unit'] as String?,
-    dosageForm: row['dosage_form'] as String?,
-    route: row['route'] as String?,
-    releaseType: row['release_type'] as String?,
-    productSelection: row['product_selection_json'] == null
+  return Intake.fromJson(<String, dynamic>{
+    'id': row['id'] as String,
+    'drugId': row['drug_id'] as String,
+    'takenAt': DateTime.fromMillisecondsSinceEpoch(
+      row['taken_at'] as int,
+    ).toIso8601String(),
+    'dosageNote': (row['dosage_note'] as String?) ?? '',
+    'doseAmount': (row['dose_amount'] as num?)?.toDouble(),
+    'doseUnit': row['dose_unit'] as String?,
+    'dosageForm': row['dosage_form'] as String?,
+    'route': row['route'] as String?,
+    'releaseType': row['release_type'] as String?,
+    'productSelection': row['product_selection_json'] == null
         ? null
-        : MedicationProductSelection.fromJson(
-            jsonDecode(row['product_selection_json'] as String),
-          ),
-  );
+        : jsonDecode(row['product_selection_json'] as String),
+    'doseConfirmation': row['dose_confirmation_json'] == null
+        ? null
+        : jsonDecode(row['dose_confirmation_json'] as String),
+    'medicationReconciliation': row['medication_reconciliation_json'] == null
+        ? null
+        : jsonDecode(row['medication_reconciliation_json'] as String),
+  });
 }
 
 /// The production schema for the Native `foods` table.
@@ -469,6 +500,7 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
         );
         await db.execute('CREATE TABLE active_drugs (id TEXT PRIMARY KEY)');
         await db.execute(nativeRecoverableEventHistoryCreateTableSql);
+        await db.execute(nativeMechanisticReplayCapsulesCreateTableSql);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -575,6 +607,19 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
         }
         if (oldVersion < 8) {
           await db.execute(nativeRecoverableEventHistoryCreateTableSql);
+        }
+        if (oldVersion < 9) {
+          for (final statement in nativeIntakeSchemaV9MigrationStatements) {
+            await db.execute(statement);
+          }
+        }
+        if (oldVersion < 10) {
+          for (final statement in nativeIntakeSchemaV10MigrationStatements) {
+            await db.execute(statement);
+          }
+        }
+        if (oldVersion < 11) {
+          await db.execute(nativeMechanisticReplayCapsulesCreateTableSql);
         }
       },
     );
@@ -837,6 +882,59 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
       batch.insert('intakes', nativeIntakeToSqliteRow(intake));
     }
     await batch.commit(noResult: true);
+  }
+
+  @override
+  Future<void> saveMechanisticReplayCapsule(
+    MechanisticReplayCapsule capsule,
+  ) async {
+    final snapshot = canonicalMechanisticReplayCapsuleSnapshot(capsule);
+    final db = await _open();
+    await db.transaction((transaction) async {
+      final existing = await transaction.query(
+        'mechanistic_replay_capsules',
+        columns: const <String>['canonical_json'],
+        where: 'capsule_sha256 = ?',
+        whereArgs: <Object?>[snapshot.capsuleSha256],
+        limit: 1,
+      );
+      if (existing.isNotEmpty) {
+        if (existing.single['canonical_json'] != snapshot.canonicalJson) {
+          throw StateError('Replay capsule digest collision.');
+        }
+        return;
+      }
+      await transaction.insert('mechanistic_replay_capsules', <String, Object?>{
+        'capsule_sha256': snapshot.capsuleSha256,
+        'canonical_json': snapshot.canonicalJson,
+        'generated_at_utc': snapshot.generatedAtUtc,
+      });
+    });
+  }
+
+  @override
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules() async {
+    final db = await _open();
+    final rows = await db.query(
+      'mechanistic_replay_capsules',
+      orderBy: 'generated_at_utc DESC, capsule_sha256 ASC',
+    );
+    return rows
+        .map((row) {
+          final capsule = MechanisticReplayCapsule.fromJson(
+            Map<String, Object?>.from(
+              jsonDecode(row['canonical_json'] as String) as Map,
+            ),
+          );
+          if (capsule.capsuleSha256 != row['capsule_sha256'] ||
+              capsule.generatedAtUtc != row['generated_at_utc']) {
+            throw const FormatException(
+              'Stored replay capsule identity drifted.',
+            );
+          }
+          return capsule;
+        })
+        .toList(growable: false);
   }
 
   @override

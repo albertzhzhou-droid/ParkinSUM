@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "responses": [
+    {
+      "hook": "patient-view",
+      "serviceId": "parkinsum-synthetic-patient-review-a",
+      "expectedState": "information_only",
+      "response": {
+        "cards": [
+          {
+            "summary": "Synthetic information-only response preview.",
+            "indicator": "info",
+            "source": {
+              "label": "Synthetic service fixture"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "hook": "patient-view",
+      "serviceId": "parkinsum-synthetic-patient-review-b",
+      "expectedState": "no_guidance",
+      "response": {
+        "cards": []
+      }
+    },
+    {
+      "hook": "order-select",
+      "serviceId": "parkinsum-synthetic-order-selection-a",
+      "expectedState": "no_guidance",
+      "response": {
+        "cards": []
+      }
+    },
+    {
+      "hook": "order-select",
+      "serviceId": "parkinsum-synthetic-order-selection-b",
+      "expectedState": "information_only",
+      "response": {
+        "cards": [
+          {
+            "summary": "Synthetic information-only response preview.",
+            "indicator": "info",
+            "source": {
+              "label": "Synthetic service fixture"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

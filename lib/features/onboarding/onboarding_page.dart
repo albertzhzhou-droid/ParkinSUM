@@ -4,9 +4,12 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../../core/constants/profile_options.dart';
 import '../../core/models/drug_definition.dart';
+import '../../core/models/administration_dose_confirmation.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/usecases/explanation_copy_service.dart';
+import '../shared/dose_expression_status_card.dart';
+import '../shared/administration_dose_confirmation_panel.dart';
 import 'onboarding_flow.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -32,6 +35,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   late String _swallowingTextureMode;
   bool _localAiConsentEnabled = false;
   bool _recordInitialIntake = false;
+  bool _confirmInitialIntakeDose = false;
   String? _initialIntakeDrugId;
   DateTime? _initialIntakeAt;
 
@@ -72,62 +76,87 @@ class _OnboardingPageState extends State<OnboardingPage> {
     final steps = _buildSteps(state, i18n);
 
     return Scaffold(
-      appBar: AppBar(title: Text(i18n.tr('onboarding.appbar'))),
+      appBar: PaperAppBar(
+        title: Row(
+          children: [
+            const PaperMonogram(size: 28),
+            const SizedBox(width: 12),
+            Flexible(child: Text(i18n.tr('onboarding.appbar'))),
+          ],
+        ),
+      ),
       body: SafeArea(
-        child: Stepper(
+        // Keep the stepper in a readable column on wide screens instead of
+        // stretching step copy across the whole window. The scroll view spans
+        // the full width so the wheel and scrollbar work from the margins too;
+        // the stepper itself does not scroll.
+        child: SingleChildScrollView(
           controller: _scrollController,
-          type: StepperType.vertical,
-          currentStep: _currentStep,
-          onStepTapped: _goToStep,
-          controlsBuilder: (context, details) {
-            // Stepper builds controls for every step, including collapsed and
-            // outgoing animated content. Keep only the active controls in the
-            // focus tree so keyboard users and device tests never encounter
-            // duplicate Continue/Back actions.
-            if (details.stepIndex != _currentStep) {
-              return const SizedBox.shrink();
-            }
-            final isLast = _currentStep == steps.length - 1;
-            return Padding(
-              padding: const EdgeInsets.only(top: 18),
-              child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    key: ValueKey(
-                      isLast ? 'onboarding-finish' : 'onboarding-next',
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 760),
+              child: Stepper(
+                physics: const NeverScrollableScrollPhysics(),
+                type: StepperType.vertical,
+                currentStep: _currentStep,
+                onStepTapped: _goToStep,
+                controlsBuilder: (context, details) {
+                  // Stepper builds controls for every step, including collapsed and
+                  // outgoing animated content. Keep only the active controls in the
+                  // focus tree so keyboard users and device tests never encounter
+                  // duplicate Continue/Back actions.
+                  if (details.stepIndex != _currentStep) {
+                    return const SizedBox.shrink();
+                  }
+                  final isLast = _currentStep == steps.length - 1;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 18),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        FilledButton.icon(
+                          key: ValueKey(
+                            isLast ? 'onboarding-finish' : 'onboarding-next',
+                          ),
+                          onPressed: _isSubmitting
+                              ? null
+                              : isLast
+                              ? _finish
+                              : _next,
+                          icon: _isSubmitting && isLast
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  isLast ? Icons.check : Icons.arrow_forward,
+                                ),
+                          label: Text(
+                            isLast
+                                ? i18n.tr('onboarding.finish')
+                                : i18n.tr('onboarding.next'),
+                          ),
+                        ),
+                        if (_currentStep > 0) ...[
+                          TextButton.icon(
+                            key: const ValueKey('onboarding-back'),
+                            onPressed: _isSubmitting ? null : _back,
+                            icon: const Icon(Icons.arrow_back),
+                            label: Text(i18n.tr('onboarding.back')),
+                          ),
+                        ],
+                      ],
                     ),
-                    onPressed: _isSubmitting
-                        ? null
-                        : isLast
-                        ? _finish
-                        : _next,
-                    icon: _isSubmitting && isLast
-                        ? const SizedBox.square(
-                            dimension: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Icon(isLast ? Icons.check : Icons.arrow_forward),
-                    label: Text(
-                      isLast
-                          ? i18n.tr('onboarding.finish')
-                          : i18n.tr('onboarding.next'),
-                    ),
-                  ),
-                  if (_currentStep > 0) ...[
-                    TextButton.icon(
-                      key: const ValueKey('onboarding-back'),
-                      onPressed: _isSubmitting ? null : _back,
-                      icon: const Icon(Icons.arrow_back),
-                      label: Text(i18n.tr('onboarding.back')),
-                    ),
-                  ],
-                ],
+                  );
+                },
+                steps: steps,
               ),
-            );
-          },
-          steps: steps,
+            ),
+          ),
         ),
       ),
     );
@@ -179,13 +208,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         state: _stepState(1),
         content: _Panel(
           children: [
-            GlassSelectField<String>(
+            PaperSelectField<String>(
               label: i18n.tr('onboarding.registration_region'),
               helper: i18n.tr('onboarding.registration_region_help'),
               value: _registrationRegion,
               options: kSupportedRegistrationRegions
                   .map(
-                    (value) => GlassSelectOption<String>(
+                    (value) => PaperSelectOption<String>(
                       value: value,
                       label: i18n.regionLabel(value),
                     ),
@@ -203,13 +232,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
               },
             ),
             const SizedBox(height: 12),
-            GlassSelectField<String>(
+            PaperSelectField<String>(
               label: i18n.tr('onboarding.display_language'),
               helper: i18n.tr('onboarding.display_language_help'),
               value: _displayLocale,
               options: kSupportedDisplayLocales
                   .map(
-                    (value) => GlassSelectOption<String>(
+                    (value) => PaperSelectOption<String>(
                       value: value,
                       label: i18n.localeLabel(value),
                     ),
@@ -264,13 +293,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
                 onChanged: (value) => setState(() {
                   _recordInitialIntake = value;
+                  if (!value) _confirmInitialIntakeDose = false;
                   _initialIntakeDrugId ??= _activeDrugIds.first;
                   _initialIntakeAt ??= DateTime.now();
                 }),
               ),
               if (_recordInitialIntake) ...[
                 const SizedBox(height: 8),
-                GlassSelectField<String>(
+                PaperSelectField<String>(
                   label: i18n.tr('onboarding.initial_intake_drug'),
                   helper: i18n.tr('onboarding.initial_intake_drug_help'),
                   value: _initialIntakeDrugId ?? _activeDrugIds.first,
@@ -278,14 +308,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       .map((id) => state.medRepo.getById(id))
                       .whereType<DrugDefinition>()
                       .map(
-                        (drug) => GlassSelectOption<String>(
+                        (drug) => PaperSelectOption<String>(
                           value: drug.id,
                           label: i18n.medicationName(drug.id, drug.displayName),
                         ),
                       )
                       .toList(),
-                  onChanged: (value) =>
-                      setState(() => _initialIntakeDrugId = value),
+                  onChanged: (value) => setState(() {
+                    _initialIntakeDrugId = value;
+                    _confirmInitialIntakeDose = false;
+                  }),
                 ),
                 const SizedBox(height: 12),
                 ListTile(
@@ -300,11 +332,25 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
                 TextField(
                   controller: _doseController,
+                  onChanged: (_) => setState(() {
+                    _confirmInitialIntakeDose = false;
+                  }),
                   decoration: InputDecoration(
                     labelText: i18n.tr('onboarding.initial_intake_note'),
                     helperText: i18n.tr('onboarding.initial_intake_note_help'),
                     prefixIcon: const Icon(Icons.notes_outlined),
                   ),
+                ),
+                if (_doseController.text.trim().isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  DoseExpressionStatusCard(rawText: _doseController.text),
+                ],
+                const SizedBox(height: 8),
+                AdministrationDoseConfirmationPanel(
+                  rawText: _doseController.text,
+                  confirmationRequested: _confirmInitialIntakeDose,
+                  onChanged: (value) =>
+                      setState(() => _confirmInitialIntakeDose = value),
                 ),
               ],
             ],
@@ -318,13 +364,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
         state: _stepState(3),
         content: _Panel(
           children: [
-            GlassSelectField<String>(
+            PaperSelectField<String>(
               label: i18n.tr('onboarding.diet_profile_region'),
               helper: i18n.tr('onboarding.diet_profile_region_help'),
               value: _dietProfileRegion ?? _registrationRegion,
               options: kSupportedRegistrationRegions
                   .map(
-                    (value) => GlassSelectOption<String>(
+                    (value) => PaperSelectOption<String>(
                       value: value,
                       label: i18n.regionLabel(value),
                     ),
@@ -333,13 +379,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
               onChanged: (value) => setState(() => _dietProfileRegion = value),
             ),
             const SizedBox(height: 12),
-            GlassSelectField<String>(
+            PaperSelectField<String>(
               label: i18n.tr('onboarding.swallowing_texture_mode'),
               helper: i18n.tr('onboarding.swallowing_texture_mode_help'),
               value: _swallowingTextureMode,
               options: kSupportedTextureModes
                   .map(
-                    (value) => GlassSelectOption<String>(
+                    (value) => PaperSelectOption<String>(
                       value: value,
                       label: i18n.textureModeLabel(value),
                     ),
@@ -529,6 +575,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
         ),
         activeDrugIds: draft.activeDrugIds,
         initialIntake: intake,
+        confirmInitialIntakeDose: _confirmInitialIntakeDose,
+        initialDoseAssertionSource: AdministrationDoseAssertionSource.typed,
       );
     } catch (error) {
       if (!mounted) return;
@@ -563,6 +611,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     );
     if (pickedTime == null) return;
     setState(() {
+      _confirmInitialIntakeDose = false;
       _initialIntakeAt = DateTime(
         pickedDate.year,
         pickedDate.month,
@@ -588,7 +637,7 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -614,15 +663,28 @@ class _IconLine extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: LiquidGlass.seed, size: 24),
-        const SizedBox(width: 12),
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: Paper.accentSoft,
+            borderRadius: BorderRadius.circular(Paper.radiusSm + 2),
+          ),
+          child: Icon(icon, color: Paper.accentInk, size: 20),
+        ),
+        const SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
-              Text(body),
+              Text(
+                body,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Paper.inkSecondary),
+              ),
             ],
           ),
         ),

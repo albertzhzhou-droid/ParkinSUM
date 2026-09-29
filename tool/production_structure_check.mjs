@@ -94,6 +94,12 @@ function checkFirebaseOptions() {
     ['devWeb config', /static const FirebaseOptions devWeb[\s\S]*projectId:\s*'parkinsum-companion-dev'/.test(source)],
     ['stageWeb config', /static const FirebaseOptions stageWeb[\s\S]*projectId:\s*'parkinsum-companion-stage'/.test(source)],
     ['prod web config', /static const FirebaseOptions web[\s\S]*projectId:\s*'parkinsum-companion'/.test(source)],
+    [
+      'client API key comes from dart define',
+      source.includes("firebaseApiKeyDefine = 'PARKINSUM_FIREBASE_API_KEY'") &&
+        source.includes('apiKey: _apiKey'),
+    ],
+    ['no committed Google API key', !/AIza[0-9A-Za-z_-]{20,}/.test(source)],
     ['dev non-web fail-fast', source.includes('PARKINSUM_ENV=dev are currently generated') && source.includes('for web only')],
     ['stage non-web fail-fast', source.includes('PARKINSUM_ENV=stage are currently generated') && source.includes('for web only')],
   ]);

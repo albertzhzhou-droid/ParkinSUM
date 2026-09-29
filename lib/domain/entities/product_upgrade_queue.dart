@@ -1,8 +1,14 @@
 import 'dart:convert';
 
-const int openSourceInfluenceInventorySchemaVersion = 1;
+const int openSourceInfluenceInventorySchemaVersion = 7;
 const String openSourceInfluenceInventorySchema =
-    'parkinsum.open-source-influence-inventory/1';
+    'parkinsum.open-source-influence-inventory/7';
+const int openSourceReleaseEvidenceSchemaVersion = 3;
+const String openSourceReleaseEvidenceSchema =
+    'parkinsum.open-source-release-evidence/3';
+const int androidGradleRuntimeDependencyGraphSchemaVersion = 2;
+const String androidGradleRuntimeDependencyGraphSchema =
+    'parkinsum.android-gradle-runtime-dependency-graph/2';
 
 enum ProductUpgradeStatus {
   shipped,

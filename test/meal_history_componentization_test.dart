@@ -42,6 +42,7 @@ void main() {
     double? energyKcal,
     AminoAcidProfile? aa,
     String sourceSystem = 'USDA_FDC',
+    Set<String> missingNutrients = const <String>{},
   }) => FoodItem(
     id: id,
     name: name,
@@ -49,6 +50,7 @@ void main() {
     sourceSystem: sourceSystem,
     textureClass: texture,
     energyKcal: energyKcal,
+    missingNutrientFields: missingNutrients,
     aminoAcidProfile: aa,
     proteinG: 0,
     carbsG: 0,
@@ -85,6 +87,129 @@ void main() {
     expect(c.aminoAcidProfile!.basis, 'per_serving');
     expect(c.aminoAcidProfile!.leucine, closeTo(3.0, 1e-9)); // 2.0 * 1.5
     expect(c.sourceDocId, 'USDA_FDC');
+  });
+
+  test('zero-gram serving preserves observed amino-acid zero semantics', () {
+    final c = mealItemToFoodComponent(
+      item('f_zero', 'zero serving', FoodCategory.protein, 0, protein: 31),
+      componentId: 'mi_zero',
+      catalogMatch: catalogFood(
+        'f_zero',
+        'zero serving',
+        aa: const AminoAcidProfile(
+          leucine: 2,
+          isoleucine: 1,
+          valine: 1.5,
+          phenylalanine: 0.8,
+          tyrosine: 0.6,
+          tryptophan: 0.2,
+          basis: 'per_100g',
+        ),
+      ),
+    );
+
+    expect(c.portionGrams, 0);
+    expect(c.proteinGrams, 0);
+    expect(c.aminoAcidProfile, isNotNull);
+    expect(c.aminoAcidProfile!.basis, 'per_serving');
+    expect(c.aminoAcidProfile!.leucine, 0);
+    expect(c.aminoAcidProfile!.competingLnaaGrams, 0);
+  });
+
+  test('unrelated serving basis is not relabelled as the logged serving', () {
+    final c = mealItemToFoodComponent(
+      item(
+        'f_serving',
+        'source serving',
+        FoodCategory.protein,
+        0.5,
+        protein: 20,
+      ),
+      componentId: 'mi_serving',
+      catalogMatch: catalogFood(
+        'f_serving',
+        'source serving',
+        aa: const AminoAcidProfile(leucine: 2, valine: 1, basis: 'per_serving'),
+      ),
+    );
+
+    expect(c.portionGrams, 50);
+    expect(c.aminoAcidProfile, isNull);
+  });
+
+  test('unknown amino-acid units and stale energy remain held', () {
+    final c = mealItemToFoodComponent(
+      item('f_unknown_unit', 'unknown unit', FoodCategory.protein, 0.5),
+      componentId: 'mi_unknown_unit',
+      catalogMatch: catalogFood(
+        'f_unknown_unit',
+        'unknown unit',
+        energyKcal: 180,
+        missingNutrients: const <String>{'energyKcal'},
+        aa: const AminoAcidProfile(
+          leucine: 2,
+          valine: 1,
+          unit: 'unknown',
+          basis: 'per_100g',
+        ),
+      ),
+    );
+
+    expect(c.calories, isNull);
+    expect(c.aminoAcidProfile, isNull);
+  });
+
+  test(
+    'invalid or overflowing catalog energy cannot enter a meal component',
+    () {
+      for (final energy in <double>[
+        -1,
+        double.nan,
+        double.infinity,
+        double.maxFinite,
+      ]) {
+        final c = mealItemToFoodComponent(
+          item('f_bad_energy', 'bad energy', FoodCategory.protein, 2),
+          componentId: 'mi_bad_energy',
+          catalogMatch: catalogFood(
+            'f_bad_energy',
+            'bad energy',
+            energyKcal: energy,
+          ),
+        );
+
+        expect(c.calories, isNull, reason: 'energy=$energy');
+      }
+    },
+  );
+
+  test('invalid serving mass cannot carry an unscaled amino-acid profile', () {
+    const source = AminoAcidProfile(leucine: 2, valine: 1, basis: 'per_100g');
+    for (final quantity in <double>[-0.5, double.nan, double.infinity]) {
+      final c = mealItemToFoodComponent(
+        item('f_invalid', 'invalid serving', FoodCategory.protein, quantity),
+        componentId: 'mi_invalid',
+        catalogMatch: catalogFood('f_invalid', 'invalid serving', aa: source),
+      );
+      expect(c.aminoAcidProfile, isNull, reason: 'quantity=$quantity');
+      expect(c.calories, isNull, reason: 'quantity=$quantity');
+    }
+  });
+
+  test('invalid source amino-acid values fail serving projection closed', () {
+    for (final value in <double>[-2, double.nan, double.infinity]) {
+      final c = mealItemToFoodComponent(
+        item('f_bad_aa', 'invalid profile', FoodCategory.protein, 1),
+        componentId: 'mi_bad_aa',
+        catalogMatch: catalogFood(
+          'f_bad_aa',
+          'invalid profile',
+          aa: AminoAcidProfile(leucine: value, valine: 1, basis: 'per_100g'),
+        ),
+      );
+
+      expect(c.aminoAcidProfile, isNull, reason: 'leucine=$value');
+    }
   });
 
   test('no catalog match keeps form unknown + calories null (not 0)', () {

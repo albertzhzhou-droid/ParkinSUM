@@ -50,87 +50,93 @@ void main() {
     }
   });
 
-  test(
-    'every lib source is registered or exactly allowlisted with a reason',
-    () {
-      final registered = AlgorithmRegistry.all
-          .expand((entry) => entry.sourcePaths)
-          .toSet();
-      final excluded = AlgorithmRegistry.excludedSourcePaths;
-      final allowlistJson =
-          jsonDecode(
-                File(
-                  'config/algorithm_surface_allowlist.json',
-                ).readAsStringSync(),
-              )
-              as Map<String, dynamic>;
-      expect(
-        allowlistJson[r'$schema'],
-        'parkinsum.algorithm-surface-allowlist/1',
-      );
-      final categories = allowlistJson['categories'] as List<dynamic>;
-      final allowlisted = <String>{};
-      for (final raw in categories) {
-        final category = raw as Map<String, dynamic>;
-        final reason = category['reason'] as String;
-        expect(reason.trim().length, greaterThan(40), reason: category['id']);
-        for (final path
-            in (category['paths'] as List<dynamic>).cast<String>()) {
-          expect(
-            allowlisted.add(path),
-            isTrue,
-            reason: '$path appears in more than one allowlist category',
-          );
-        }
-      }
-      final sourceFiles = Directory('lib')
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((file) => file.path.endsWith('.dart'))
-          .map((file) => file.path)
-          .toSet();
-
-      for (final path in sourceFiles) {
+  test('every lib source is registered or exactly allowlisted with a reason', () {
+    final registered = AlgorithmRegistry.all
+        .expand((entry) => entry.sourcePaths)
+        .toSet();
+    final excluded = AlgorithmRegistry.excludedSourcePaths;
+    final allowlistJson =
+        jsonDecode(
+              File(
+                'config/algorithm_surface_allowlist.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    expect(
+      allowlistJson[r'$schema'],
+      'parkinsum.algorithm-surface-allowlist/1',
+    );
+    final categories = allowlistJson['categories'] as List<dynamic>;
+    final allowlisted = <String>{};
+    for (final raw in categories) {
+      final category = raw as Map<String, dynamic>;
+      final reason = category['reason'] as String;
+      expect(reason.trim().length, greaterThan(40), reason: category['id']);
+      for (final path in (category['paths'] as List<dynamic>).cast<String>()) {
         expect(
-          registered.contains(path) ||
-              excluded.containsKey(path) ||
-              allowlisted.contains(path),
+          allowlisted.add(path),
           isTrue,
-          reason:
-              '$path is new or unreviewed: declare its algorithm id and UI '
-              'contract, or add an exact reviewed non-algorithm disposition.',
+          reason: '$path appears in more than one allowlist category',
         );
       }
-      expect(
-        registered.intersection(excluded.keys.toSet()),
-        isEmpty,
-        reason: 'A source cannot be both algorithm-owned and excluded.',
-      );
-      expect(
-        registered.intersection(allowlisted),
-        isEmpty,
-        reason: 'A source cannot be both algorithm-owned and allowlisted.',
-      );
-      expect(
-        excluded.keys.toSet().intersection(allowlisted),
-        isEmpty,
-        reason: 'Use only one exclusion mechanism per source.',
-      );
-      for (final entry in excluded.entries) {
-        expect(File(entry.key).existsSync(), isTrue, reason: entry.key);
-        expect(entry.value.trim().length, greaterThan(20), reason: entry.key);
-        expect(registered.contains(entry.key), isFalse, reason: entry.key);
-      }
-      for (final path in allowlisted) {
-        expect(File(path).existsSync(), isTrue, reason: path);
-      }
-      expect(
-        {...registered, ...excluded.keys, ...allowlisted},
-        sourceFiles,
-        reason: 'The manifest must not retain deleted or renamed lib sources.',
-      );
-    },
-  );
+    }
+    final sourceFiles = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((file) => file.path.endsWith('.dart'))
+        .map((file) => file.path)
+        .toSet();
+
+    final unreviewedSources =
+        sourceFiles
+            .where(
+              (path) =>
+                  !registered.contains(path) &&
+                  !excluded.containsKey(path) &&
+                  !allowlisted.contains(path),
+            )
+            .toList()
+          ..sort();
+    expect(
+      unreviewedSources,
+      isEmpty,
+      reason: unreviewedSources
+          .map(
+            (path) =>
+                '$path is new or unreviewed: declare its algorithm id and '
+                'UI contract, or add an exact reviewed non-algorithm disposition.',
+          )
+          .join('\n'),
+    );
+    expect(
+      registered.intersection(excluded.keys.toSet()),
+      isEmpty,
+      reason: 'A source cannot be both algorithm-owned and excluded.',
+    );
+    expect(
+      registered.intersection(allowlisted),
+      isEmpty,
+      reason: 'A source cannot be both algorithm-owned and allowlisted.',
+    );
+    expect(
+      excluded.keys.toSet().intersection(allowlisted),
+      isEmpty,
+      reason: 'Use only one exclusion mechanism per source.',
+    );
+    for (final entry in excluded.entries) {
+      expect(File(entry.key).existsSync(), isTrue, reason: entry.key);
+      expect(entry.value.trim().length, greaterThan(20), reason: entry.key);
+      expect(registered.contains(entry.key), isFalse, reason: entry.key);
+    }
+    for (final path in allowlisted) {
+      expect(File(path).existsSync(), isTrue, reason: path);
+    }
+    expect(
+      {...registered, ...excluded.keys, ...allowlisted},
+      sourceFiles,
+      reason: 'The manifest must not retain deleted or renamed lib sources.',
+    );
+  });
 
   test('live flags exactly match production-engine fixed-scenario trace ids', () {
     final registeredIds = AlgorithmRegistry.all
@@ -205,9 +211,9 @@ void main() {
 
     expect(
       AlgorithmRegistry.byId('protein_distribution')?.hasLiveTrace,
-      isFalse,
+      isTrue,
       reason:
-          'A static score contract is not live until the snapshot provider emits its trace id.',
+          'The snapshot provider emits a dedicated trace for production scorer outputs.',
     );
   });
 }

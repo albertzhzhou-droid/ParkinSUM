@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../core/theme/liquid_glass_theme.dart';
+import '../core/theme/paper_theme.dart';
 import 'bootstrap_attempt_controller.dart';
 
 class BootstrapGate extends StatefulWidget {
@@ -75,23 +75,35 @@ class _BootstrapGateState extends State<BootstrapGate> {
       key: BootstrapGate.loadingKey,
       backgroundColor: Colors.transparent,
       body: Center(
-        child: GlassCard(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(strokeWidth: 2.6),
-              const SizedBox(height: 14),
-              Text(
-                widget.loadingLabel,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: LiquidGlass.onSurface,
-                ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const PaperMonogram(size: 44),
+            const SizedBox(height: 16),
+            const Text(
+              'ParkinSUM',
+              style: TextStyle(
+                fontFamily: Paper.serif,
+                fontSize: 26,
+                fontWeight: FontWeight.w500,
+                letterSpacing: -0.4,
+                color: Paper.ink,
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 140,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: const LinearProgressIndicator(minHeight: 3),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              widget.loadingLabel,
+              style: const TextStyle(fontSize: 13, color: Paper.inkMuted),
+            ),
+          ],
         ),
       ),
     );
@@ -104,7 +116,7 @@ class _BootstrapGateState extends State<BootstrapGate> {
       body: Center(
         child: Semantics(
           liveRegion: true,
-          child: GlassCard(
+          child: PaperCard(
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -119,7 +131,7 @@ class _BootstrapGateState extends State<BootstrapGate> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: LiquidGlass.onSurface,
+                    color: Paper.ink,
                   ),
                 ),
                 const SizedBox(height: 16),

@@ -88,4 +88,66 @@ void main() {
 
     expect(result.type, FactConflictType.coexistVariant);
   });
+
+  test('unrelated fact permutation cannot hide a same-scope contradiction', () {
+    final observation = ObservationRecord(
+      observationId: 'obs_order',
+      domain: 'food',
+      entityType: 'food_variant',
+      entityKey: 'APPLE_RAW_WITH_SKIN#US#FDC#1',
+      attributeCode: 'protein_g',
+      valueType: 'numeric_interval',
+      value: parseQualifiedValue('10'),
+      unit: 'g',
+      basisType: 'per_100g_edible_part',
+      basisAmount: 100,
+      scopeHash: 'scope_us_raw',
+      sourceDocId: 'doc_order',
+      recordLocator: 'row_order',
+      methodCode: null,
+      extractionConfidence: 1,
+    );
+    final contradiction = ResolvedFactRecord(
+      factId: 'fact_contradiction',
+      entityKey: observation.entityKey,
+      attributeCode: observation.attributeCode,
+      scopeHash: observation.scopeHash,
+      resolutionStatus: 'resolved',
+      chosenObservationId: 'obs_old',
+      resolvedValue: parseQualifiedValue('1'),
+      resolvedUnit: 'g',
+      resolutionPolicyId: 'policy_1',
+      snapshotId: 'snapshot_1',
+      factVersion: 'facts_v1',
+      manualOverride: false,
+    );
+    final unrelated = ResolvedFactRecord(
+      factId: 'fact_unrelated',
+      entityKey: 'PEAR#US#FDC#2',
+      attributeCode: 'fiber_g',
+      scopeHash: 'scope_other',
+      resolutionStatus: 'resolved',
+      chosenObservationId: 'obs_other',
+      resolvedValue: parseQualifiedValue('3'),
+      resolvedUnit: 'g',
+      resolutionPolicyId: 'policy_1',
+      snapshotId: 'snapshot_1',
+      factVersion: 'facts_v1',
+      manualOverride: false,
+    );
+
+    final forward = engine.classify(
+      observation: observation,
+      existingFacts: [unrelated, contradiction],
+    );
+    final reversed = engine.classify(
+      observation: observation,
+      existingFacts: [contradiction, unrelated],
+    );
+
+    expect(forward.type, FactConflictType.contradiction);
+    expect(reversed.type, FactConflictType.contradiction);
+    expect(forward.needsManualReview, isTrue);
+    expect(reversed.needsManualReview, isTrue);
+  });
 }

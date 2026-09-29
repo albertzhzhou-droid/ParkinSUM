@@ -3,16 +3,21 @@ import 'dart:convert';
 import '../../data/datasources/local/app_local_datasource.dart';
 import '../../data/models/interaction_rule_record.dart';
 import '../../data/repositories_impl/app_repository_impl.dart';
+import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../../domain/entities/cdss_records.dart';
+import '../../domain/entities/signed_capability_manifest.dart';
 import '../../domain/entities/rule_registry_models.dart';
 import '../../domain/repositories/app_repository.dart';
 import '../../domain/usecases/clinical_decision_support_service.dart';
+import '../../domain/usecases/algorithm_observatory_service.dart';
 import '../../domain/usecases/database_backed_meal_check_usecase.dart';
 import '../../domain/usecases/cdss_catalog_projection_service.dart';
 import '../../domain/usecases/fact_conflict_engine.dart';
 import '../../domain/usecases/get_food_recommendations_usecase.dart';
 import '../../domain/usecases/get_protein_trend_usecase.dart';
 import '../../domain/usecases/knowledge_base_release_service.dart';
+import '../../domain/usecases/knowledge_governance_service.dart';
+import '../../domain/usecases/knowledge_approval_verifier.dart';
 import '../../domain/usecases/get_timeline_usecase.dart';
 import '../../domain/usecases/imported_label_rule_provider.dart';
 import '../../domain/usecases/local_ai_recommendation_adapter.dart';
@@ -41,17 +46,22 @@ import '../../data/datasources/remote/source_fetch_client.dart';
 import '../models/drug_definition.dart';
 import '../models/food_item.dart';
 import 'auth_service.dart';
+import 'care_workspace_service.dart';
+import 'care_workspace_store.dart';
+import 'capability_rollout_service.dart';
 import 'firebase_backend.dart';
 import 'user_clinical_audit_service.dart';
 import 'user_data_service.dart';
 
 class Services {
   final AuthService authService;
+  final CareWorkspaceService careWorkspaceService;
   final AppDatabase appDatabase;
   final CdssDatabase cdssDatabase;
   final AppRepository appRepository;
   final UserDataService userDataService;
   final UserClinicalAuditService userClinicalAuditService;
+  final CapabilityRolloutService capabilityRolloutService;
 
   final FoodRepository foodRepository;
   final MedicationRepository medicationRepository;
@@ -68,19 +78,23 @@ class Services {
   final DatabaseBackedMealCheckUseCase databaseBackedMealCheckUseCase;
   final CdssCatalogProjectionService cdssCatalogProjectionService;
   final NextMealRecommendationOrchestrator nextMealRecommendationOrchestrator;
+  final AlgorithmObservatoryService algorithmObservatoryService;
   final RecommendationReplayRunner recommendationReplayRunner;
   final P0IngestionOrchestrator p0IngestionOrchestrator;
   final KnowledgeBaseReleaseService knowledgeBaseReleaseService;
+  final KnowledgeGovernanceService knowledgeGovernanceService;
   final List<RuleRegistryEntry> compiledCdssRules;
   final Future<void> ready;
 
   Services._({
     required this.authService,
+    required this.careWorkspaceService,
     required this.appDatabase,
     required this.cdssDatabase,
     required this.appRepository,
     required this.userDataService,
     required this.userClinicalAuditService,
+    required this.capabilityRolloutService,
     required this.foodRepository,
     required this.medicationRepository,
     required this.nutritionClassifier,
@@ -94,9 +108,11 @@ class Services {
     required this.databaseBackedMealCheckUseCase,
     required this.cdssCatalogProjectionService,
     required this.nextMealRecommendationOrchestrator,
+    required this.algorithmObservatoryService,
     required this.recommendationReplayRunner,
     required this.p0IngestionOrchestrator,
     required this.knowledgeBaseReleaseService,
+    required this.knowledgeGovernanceService,
     required this.compiledCdssRules,
     required this.ready,
   });
@@ -206,23 +222,53 @@ class Services {
         .toList(growable: false);
   }
 
-  factory Services.createDefault() => Services._configured();
+  factory Services.createDefault({
+    KnowledgeApprovalTrustPolicy? knowledgeApprovalTrustPolicy,
+    KnowledgeGovernanceStore? knowledgeGovernanceStore,
+  }) => Services._configured(
+    knowledgeApprovalTrustPolicy: knowledgeApprovalTrustPolicy,
+    knowledgeGovernanceStoreOverride: knowledgeGovernanceStore,
+  );
 
   /// Builds a complete, network-free service graph backed only by process
   /// memory. This is intentionally opt-in: production startup keeps using
   /// [createDefault], while device integration tests can run without reading
   /// or overwriting the installed user's local or cloud records.
-  factory Services.createEphemeral({AppDatabase? appDatabase}) =>
-      Services._configured(
-        authOverride: LocalAuthService(),
-        appDatabaseOverride: appDatabase ?? InMemoryAppDatabase(),
-        cdssDatabaseOverride: InMemoryCdssDatabase(),
-      );
+  factory Services.createEphemeral({
+    AppDatabase? appDatabase,
+    CdssDatabase? cdssDatabase,
+    CareWorkspaceStore? careWorkspaceStore,
+    KnowledgeGovernanceStore? knowledgeGovernanceStore,
+    KnowledgeApprovalTrustPolicy? knowledgeApprovalTrustPolicy,
+  }) => Services._configured(
+    authOverride: LocalAuthService(),
+    careWorkspaceStoreOverride:
+        careWorkspaceStore ?? MemoryCareWorkspaceStore(),
+    appDatabaseOverride: appDatabase ?? InMemoryAppDatabase(),
+    cdssDatabaseOverride: cdssDatabase ?? InMemoryCdssDatabase(),
+    knowledgeGovernanceStoreOverride:
+        knowledgeGovernanceStore ?? MemoryKnowledgeGovernanceStore(),
+    knowledgeApprovalTrustPolicy: knowledgeApprovalTrustPolicy,
+    capabilityRolloutOverride: CapabilityRolloutService(
+      store: MemoryCapabilityActivationStore(),
+      verifier: SignedCapabilityManifestVerifier(
+        trustPolicy: CapabilityTrustPolicy(
+          environment: 'test',
+          issuer: 'parkinsum-test',
+          trustedEd25519PublicKeys: const <String, List<int>>{},
+        ),
+      ),
+    ),
+  );
 
   factory Services._configured({
     AuthService? authOverride,
+    CareWorkspaceStore? careWorkspaceStoreOverride,
     AppDatabase? appDatabaseOverride,
     CdssDatabase? cdssDatabaseOverride,
+    CapabilityRolloutService? capabilityRolloutOverride,
+    KnowledgeGovernanceStore? knowledgeGovernanceStoreOverride,
+    KnowledgeApprovalTrustPolicy? knowledgeApprovalTrustPolicy,
   }) {
     final AuthService auth =
         authOverride ??
@@ -237,6 +283,9 @@ class Services {
         (FirebaseBackend.enabled
             ? FirestoreCdssDatabase(authService: auth)
             : createCdssDatabaseImpl());
+    final capabilityRollout =
+        capabilityRolloutOverride ??
+        CapabilityRolloutProductionConfig.createService();
 
     final foodRepo = FoodRepository.createDefault();
     final medRepo = MedicationRepository.createDefault();
@@ -247,6 +296,21 @@ class Services {
     );
     final userData = UserDataService(repository: appRepository);
     final userClinicalAudit = UserClinicalAuditService(authService: auth);
+    final knowledgeGovernanceService = KnowledgeGovernanceService(
+      store:
+          knowledgeGovernanceStoreOverride ?? LocalKnowledgeGovernanceStore(),
+      verifier: KnowledgeApprovalVerifier(
+        trustPolicy:
+            knowledgeApprovalTrustPolicy ??
+            KnowledgeApprovalTrustPolicy(
+              issuer: 'parkinsum',
+              environment: FirebaseBackend.enabled ? 'production' : 'local',
+              // Trust roots belong to separately controlled authority
+              // configuration. No placeholder keys ship with the application.
+              trustedKeys: const <String, KnowledgeApprovalTrustedKey>{},
+            ),
+      ),
+    );
 
     final classifier = NutritionClassifier();
     final interaction = InteractionEngine();
@@ -266,6 +330,7 @@ class Services {
       database: cdssDatabase,
       factConflictEngine: FactConflictEngine(),
       runtimeRuleEngine: RuntimeRuleEngine(),
+      knowledgeGovernanceService: knowledgeGovernanceService,
     );
     final variantResolver = VariantResolver(database: cdssDatabase);
     final importedLabelRuleProvider = ImportedLabelRuleProvider(
@@ -282,12 +347,46 @@ class Services {
     final cdssCatalogProjectionService = CdssCatalogProjectionService(
       database: cdssDatabase,
     );
+    final rolloutTrustConfigured =
+        capabilityRollout.verifier.trustPolicy.isConfigured;
     final nextMealRecommendationOrchestrator =
         NextMealRecommendationOrchestrator(
           conservativeRecommender: GetFoodRecommendationsUseCase(),
           projectionService: cdssCatalogProjectionService,
-          localAiAdapter: LocalAiRecommendationAdapter(),
+          localAiAdapter: LocalAiRecommendationAdapter(
+            managedCapabilityAllowsRequest: rolloutTrustConfigured
+                ? () => capabilityRollout.snapshot
+                      .evaluate(SignedCapabilityId.localAiReranking)
+                      .enabled
+                : null,
+          ),
         );
+    final observatoryConfigurationIdentity =
+        AlgorithmConfigurationIdentity.defaults(
+          gastricParameters: nextMealRecommendationOrchestrator
+              .mechanisticEngine
+              .gastricEmptyingModel
+              .parameters,
+          absorptionParameters: nextMealRecommendationOrchestrator
+              .mechanisticEngine
+              .absorptionModel
+              .parameters,
+          scoringParameters: nextMealRecommendationOrchestrator
+              .mechanisticScorer
+              .scoringParameters,
+          legacyFoodRecommendationParameters: nextMealRecommendationOrchestrator
+              .conservativeRecommender
+              .parameters,
+        );
+    final algorithmObservatoryService = AlgorithmObservatoryService(
+      normalizer: nextMealRecommendationOrchestrator.mealCompositionNormalizer,
+      medicationValidator:
+          nextMealRecommendationOrchestrator.medicationEntryValidator,
+      timeAxisBuilder: nextMealRecommendationOrchestrator.timeAxisBuilder,
+      conflictEngine: nextMealRecommendationOrchestrator.mechanisticEngine,
+      candidateScorer: nextMealRecommendationOrchestrator.mechanisticScorer,
+      configurationIdentity: observatoryConfigurationIdentity,
+    );
     final recommendationReplayRunner = RecommendationReplayRunner(
       hybridOrchestrator: nextMealRecommendationOrchestrator,
       deterministicOrchestrator: NextMealRecommendationOrchestrator(
@@ -310,6 +409,7 @@ class Services {
     final p0KnowledgeBase = buildP0FoodKnowledgeBaseSeed();
 
     final ready = FirebaseBackend.ensureInitialized().then((_) async {
+      await capabilityRollout.load();
       if (FirebaseBackend.enabled) return;
       await Future.wait([
         appRepository.initialize(
@@ -354,11 +454,15 @@ class Services {
 
     return Services._(
       authService: auth,
+      careWorkspaceService: CareWorkspaceService(
+        store: careWorkspaceStoreOverride ?? LocalCareWorkspaceStore(),
+      ),
       appDatabase: appDatabase,
       cdssDatabase: cdssDatabase,
       appRepository: appRepository,
       userDataService: userData,
       userClinicalAuditService: userClinicalAudit,
+      capabilityRolloutService: capabilityRollout,
       foodRepository: foodRepo,
       medicationRepository: medRepo,
       nutritionClassifier: classifier,
@@ -372,9 +476,11 @@ class Services {
       databaseBackedMealCheckUseCase: mealCheckUseCase,
       cdssCatalogProjectionService: cdssCatalogProjectionService,
       nextMealRecommendationOrchestrator: nextMealRecommendationOrchestrator,
+      algorithmObservatoryService: algorithmObservatoryService,
       recommendationReplayRunner: recommendationReplayRunner,
       p0IngestionOrchestrator: p0IngestionOrchestrator,
       knowledgeBaseReleaseService: knowledgeBaseReleaseService,
+      knowledgeGovernanceService: knowledgeGovernanceService,
       compiledCdssRules: compiledCdssRules,
       ready: ready,
     );

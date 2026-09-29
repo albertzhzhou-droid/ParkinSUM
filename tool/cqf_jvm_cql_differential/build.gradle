@@ -1,0 +1,114 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.cqframework:engine:5.3.0'
+    implementation 'org.cqframework:engine-fhir:5.3.0'
+    implementation 'org.cqframework:quick:5.3.0'
+    runtimeOnly 'org.slf4j:slf4j-nop:2.0.13'
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+layout.buildDirectory = file("${rootDir}/../../build/cqf_jvm_cql_differential")
+
+application {
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmDifferential'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+    options.release = 17
+}
+
+tasks.named('run', JavaExec).configure {
+    standardInput = System.in
+}
+
+tasks.register('fhirRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the fixed synthetic FHIR R4 retrieval comparison.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirObservationTerminologyRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the six fixed synthetic FHIR R4 Observation terminology cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirObservationTerminologyDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirMedicationStatementRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the six fixed synthetic FHIR R4 MedicationStatement retrieval cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirMedicationStatementDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirMedicationRequestRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the 18 fixed synthetic FHIR R4 MedicationRequest status and intent cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirMedicationRequestDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirMedicationDispenseRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the 11 fixed synthetic FHIR R4 MedicationDispense status cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirMedicationDispenseDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirMedicationAdministrationRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the nine fixed synthetic FHIR R4 MedicationAdministration status cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirMedicationAdministrationDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirAllergyIntoleranceRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the six fixed synthetic FHIR R4 AllergyIntolerance status cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirAllergyIntoleranceDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirConditionStatusRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the nine fixed synthetic FHIR R4 Condition status cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirConditionStatusDifferential'
+    standardInput = System.in
+}
+
+tasks.register('fhirEncounterStatusRun', JavaExec) {
+    group = 'application'
+    description = 'Runs the eleven fixed synthetic FHIR R4 Encounter status cases.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmFhirEncounterStatusDifferential'
+    standardInput = System.in
+}
+
+tasks.register('cqlTemplateRun', JavaExec) {
+    group = 'application'
+    description = 'Runs five fixed synthetic CQL concept-template comparators on the CQF JVM.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'org.parkinsum.cqfjvm.CqfJvmCqlTemplateDifferential'
+    standardInput = System.in
+}

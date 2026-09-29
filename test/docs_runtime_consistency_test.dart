@@ -115,7 +115,7 @@ void main() {
     // drift apart.
     final source = File('tool/run_verify_all.mjs').readAsStringSync();
     final gateEntries = RegExp(
-      r"\{ id: '[a-z_]+', script:",
+      r"\{ id: '[a-z0-9_]+', script:",
     ).allMatches(source).length;
     // +1 for the golden gate, which is declared separately from the list.
     expect(

@@ -1,6 +1,6 @@
 # Reminder Notification Privacy Controls
 
-Date: 2026-08-18
+Reviewed: 2026-08-31
 
 ## Decision
 
@@ -21,14 +21,29 @@ behavior, never verified effective lock-screen behavior.
 
 ## Implemented contract
 
-- Reminder-plan schema v3 stores privacy mode and the locale snapshot used for
-  system copy. Account-scoped v2 rows migrate once to `minimal` and English;
-  future or malformed rows fail closed.
-- New and edited reminders snapshot the current App locale. The scheduler uses
-  that stored value, so the in-app preview and the installed request do not
-  independently consult different locale sources.
-- Reviewed system copy exists in Chinese, English, French, and Japanese.
-  Unsupported locale snapshots explicitly fall back to English.
+- Reminder-plan schema v4 stores privacy mode, the locale snapshot actually
+  used for system copy, and the last App-locale decision separately.
+  Account-scoped v2 rows migrate once to `minimal` and English; v3 rows keep
+  their scheduled locale and derive a language-family decision. Future or
+  malformed rows fail closed.
+- New and edited reminders snapshot the supported App language family. If the
+  App locale later changes, the Reminder Center requires an explicit,
+  rollback-safe choice to retain the installed language or update every
+  reminder. Updating rotates activation capabilities; retaining preserves the
+  exact scheduled copy while durably acknowledging the new App locale.
+- Reviewed system copy exists for all 13 shipped language families: Chinese,
+  English, French, Japanese, Korean, Hindi, Spanish, Vietnamese, Thai,
+  Indonesian, Russian, Polish, and Arabic. Unsupported locale snapshots
+  explicitly fall back to English; numeric BCP-47 regions such as `es-419`
+  and script-plus-region tags such as `zh-Hant-TW` normalize by language
+  family.
+- Each policy result has a SHA-256 presentation identity over its schema,
+  privacy mode, resolved language, exact title/body, requested Android
+  visibility, and Darwin system-control boundary. The schedule manifest and
+  new v3 activation payload bind that identity, so pending-registry attestation
+  detects old-language or replaced copy without recording notification text.
+  Captured v2 activations remain readable for compatibility while their opaque
+  capability is still current.
 - The presentation policy API has no parameter for a user-authored label or
   reminder kind. Tests also scan every copy variant for sensitive terms.
 - The reminder editor displays the exact title/body selected by the policy and
@@ -58,20 +73,27 @@ locked or unlocked physical device. Outstanding evidence includes:
 - Wear OS, Android Auto, CarPlay, desktop relay, and other mirrored surfaces;
 - TalkBack, VoiceOver, large text, bidirectional text, and every shipped App
   locale on release-equivalent artifacts;
-- reconciliation when the user changes the App locale after a recurring
-  request has already been installed;
-- inclusion of the privacy mode and locale snapshot in the portable-data
-  package, historical migrations, and target-device round trips.
+- target-device import, newly issued activation capabilities, partial-install
+  rollback, and physical cross-platform round trips. Portable-package schema
+  v3 now includes privacy mode, scheduled language, locale-decision state and
+  source presentation digest; a reviewed v2 preview migration defaults missing
+  presentation intent without requesting permission or scheduling.
 
 Pending-request counts and plugin registry records are not evidence of visible
 delivery or effective lock-screen concealment.
 
 ## Future upgrade direction
 
-`notification_locale_snapshot_reconciliation` tracks the separate state
-machine needed to update recurring pending copy after an App-locale change.
-The existing platform-truth and privacy queue items retain physical-device,
-mirrored-surface, accessibility, and requested-versus-effective evidence.
+`notification_locale_snapshot_reconciliation` records the implemented software
+state machine and retains the physical-device, background/terminated,
+bidirectional-text, reboot, timezone, account-switch, accessibility, and
+mirrored-surface evidence still needed.
+`notification_presentation_portable_round_trip` now has its first software
+phase implemented: schema v3 export and v2-compatible no-write preview include current
+copy-policy drift and explicit target-consent UI. Target-device import,
+capability re-issuance, rollback, and release-device evidence remain open.
+Existing platform-truth and privacy items retain requested-versus-effective
+system evidence.
 
 ## Sources
 
@@ -79,6 +101,7 @@ mirrored-surface, accessibility, and requested-versus-effective evidence.
 - https://developer.apple.com/documentation/usernotifications/unnotificationsettings/showpreviewssetting
 - https://developer.apple.com/documentation/usernotifications/asking-permission-to-use-notifications
 - https://pub.dev/packages/flutter_local_notifications
+- https://pub.dev/documentation/flutter_local_notifications/latest/flutter_local_notifications/AndroidFlutterLocalNotificationsPlugin-class.html
 - https://support.signal.org/hc/en-us/articles/360043273491-In-App-Notification-Options
 - https://github.com/signalapp/Signal-Android
 - https://github.com/mollyim/mollyim-android

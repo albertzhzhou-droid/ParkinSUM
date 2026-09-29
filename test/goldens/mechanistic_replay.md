@@ -1,8 +1,9 @@
 # Mechanistic Replay Report
 
 Deterministic reference instant: 2026-01-01T08:00:00.000Z (fixed anchor, not the time this report was produced)
+Evidence-currency assessment: 2026-08-19T00:00:00.000Z (offline snapshot; the JSON report carries unsigned receipts)
 
-Algorithm configuration: `parkinsum-default-algorithm-stack` @ `2026.08.17-v2` · `153465feda7f80697bf15527364fe2edabfe6b3a138a3ce4c1ddae22e0a880a9`
+Algorithm configuration: `parkinsum-default-algorithm-stack` @ `2026.09.29-v52` · `e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05`
 Scope: the digest proves engineering replay identity only; it does **not** establish biological or clinical validity.
 
 **41 / 41 scenarios passed.**
@@ -507,4 +508,3 @@ Scope: the digest proves engineering replay identity only; it does **not** estab
 - banned_phrase_hits: 0
 
 - abstention_reasons: mechanistic_applicability.dosage_form_not_supported, mechanistic_applicability.release_type_not_supported
-

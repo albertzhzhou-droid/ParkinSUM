@@ -14,6 +14,142 @@ import '../entities/time_axis_events.dart';
 /// uncertainty, mixed meals cumulate) is grounded in the cited literature;
 /// exact magnitudes are illustrative and are not patient-calibrated.
 class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
+  static const String configurationSchema =
+      'parkinsum.gastric-emptying-configuration/1';
+  static const String generatorStructureSchema =
+      'parkinsum.gastric-emptying-generator-structure/1';
+  static const double fatCaloriesPerGram = 9.0;
+  static const double sizeScaleIntercept = 0.6;
+  static const double sizeScaleSlope = 0.4;
+  static const double sizeScaleMinimum = 0.6;
+  static const double sizeScaleMaximum = 2.0;
+  static const double unknownSizeMultiplier = 1.0;
+  static const double neutralMultiplier = 1.0;
+  static const double neutralUnitMass = 1.0;
+  static const double unknownFormLagMultiplier = 0.7;
+  static const double unknownFormHalfTimeMultiplier = 0.9;
+  static const double completeCompositionThreshold = 0.99;
+  static const double mostlyCompleteCompositionThreshold = 0.75;
+  static const double partialCompositionThreshold = 0.5;
+  static const double firstOverlapThreshold = 0.1;
+  static const double secondOverlapThreshold = 0.3;
+  static const double overlapDisclosureThreshold = 0.0;
+  static const int assumptionNumericDecimalPlaces = 2;
+
+  /// Canonical declaration of every result-affecting branch that is not an
+  /// injectable numeric gastric parameter. This is an engineering review
+  /// surface, not evidence that the model is physiologically calibrated.
+  static const Map<String, Object> generatorStructure = <String, Object>{
+    r'$schema': generatorStructureSchema,
+    'meal_evidence_gate': <String, Object>{
+      'meal_level_fields': <String>[
+        'total_calories',
+        'protein_grams',
+        'fat_grams',
+        'fiber_grams',
+        'carbohydrate_grams',
+        'liquid_fraction',
+        'meal_physical_form_not_unknown',
+      ],
+      'requires_any_meal_level_or_component_evidence': true,
+      'empty_result_availability': 'insufficient',
+      'empty_result_reason': 'gastric_emptying.meal_composition_absent',
+    },
+    'fat_fraction': <String, Object>{
+      'formula': 'fat_grams * calories_per_gram / total_calories',
+      'calories_per_gram': fatCaloriesPerGram,
+      'requires_total_calories_strictly_positive': true,
+    },
+    'size_multiplier': <String, Object>{
+      'formula': 'intercept + slope * total_calories / reference_meal_calories',
+      'intercept': sizeScaleIntercept,
+      'slope': sizeScaleSlope,
+      'clamp': <double>[sizeScaleMinimum, sizeScaleMaximum],
+      'missing_default': unknownSizeMultiplier,
+    },
+    'modifier_comparators': <String, Object>{
+      'high_fat': 'fat_fraction >= fat_fraction_threshold',
+      'high_calorie':
+          'total_calories >= reference_meal_calories * high_calorie_fraction_threshold',
+      'high_fiber': 'fiber_amount_band == high',
+    },
+    'component_time_scale': <String, Object>{
+      'lag_formula': 'base_lag * size_multiplier',
+      'half_time_formula':
+          'base_half_time * size_multiplier * fat_multiplier * fiber_multiplier',
+      'neutral_modifier_multiplier': neutralMultiplier,
+      'high_fat_multiplier_source': 'ge.fat.slowdown_multiplier',
+      'high_fiber_multiplier_source': 'ge.fiber.slowdown_multiplier',
+    },
+    'component_form_branch': <String, Object>{
+      'liquid': 'liquid_parameter_pair',
+      'solid': 'solid_parameter_pair',
+      'mixed': 'solid_parameter_pair',
+      'unknown_lag_multiplier': unknownFormLagMultiplier,
+      'unknown_half_time_multiplier': unknownFormHalfTimeMultiplier,
+    },
+    'component_fallback': <String, Object>{
+      'when': 'no_food_components_and_any_meal_level_evidence',
+      'component_id_suffix': '__synthesized',
+      'physical_form_source': 'meal_physical_form',
+      'fraction_of_meal': neutralUnitMass,
+    },
+    'component_weighting': <String, Object>{
+      'known_positive_portions': 'mass_proportional_after_max_scaling',
+      'partially_missing_portions': 'mean_known_positive_mass_imputation',
+      'mean_accumulation': 'sorted_ascending_incremental_mean',
+      'missing_without_positive_reference':
+          'neutral_unit_for_missing_zero_for_observed_unusable',
+      'all_unknown_or_no_usable_portions': 'equal_neutral_unit_mass',
+      'neutral_unit_mass': neutralUnitMass,
+      'nonfinite_or_nonpositive_portions': 'zero_then_equal_weight_if_all_zero',
+      'output_component_order': 'input_order',
+      'synthesized_component_fraction': neutralUnitMass,
+    },
+    'missing_input_policy': <String, Object>{
+      'preserve_upstream_missing_fields': true,
+      'fat_fraction_missing_unless':
+          'fat_grams_present_and_total_calories_strictly_positive',
+      'total_calories_missing_unless_present': true,
+      'fiber_grams_missing_when_band_unknown': true,
+      'meal_physical_form_missing_for_unknown_synthesized_component': true,
+      'portion_grams_missing_for_null_nonfinite_or_negative_portions': true,
+    },
+    'assumption_and_modifier_policy': <String, Object>{
+      'numeric_decimal_places': assumptionNumericDecimalPlaces,
+      'overlap_disclosed_when_strictly_greater_than':
+          overlapDisclosureThreshold,
+      'high_fat_emits_parameter_and_uncertainty_ids': true,
+      'high_calorie_emits_uncertainty_id': true,
+      'high_fiber_emits_slowdown_id_and_modifier': true,
+      'fallbacks_remain_explicit': true,
+    },
+    'uncertainty_ordinal_score': <String, Object>{
+      'composition_completeness_strict_lt': <double>[
+        completeCompositionThreshold,
+        mostlyCompleteCompositionThreshold,
+        partialCompositionThreshold,
+      ],
+      'overlap_residual_load_strict_gt': <double>[
+        firstOverlapThreshold,
+        secondOverlapThreshold,
+      ],
+      'each_composition_threshold_increment': 1,
+      'each_overlap_threshold_increment_source': 'ge.overlap.uncertainty_boost',
+      'high_fiber_increment_source': 'ge.mixed_meal.uncertainty_boost',
+      'high_fat_increment_source': 'ge.fat.uncertainty_boost',
+      'high_calorie_increment_source': 'ge.highcal.uncertainty_boost',
+      'band_mapping': <String, String>{
+        '0': 'narrow',
+        '1': 'moderate',
+        '2': 'wide',
+        '3_or_more': 'veryWide',
+      },
+    },
+    'aggregate_policy': 'component_fraction_weighted_lag_and_half_time',
+    'window_and_curve_contract_schema': GastricEmptyingOutputContract.schema,
+  };
+
   final GastricEmptyingParameterSet parameters;
 
   GastricEmptyingModel({GastricEmptyingParameterSet? parameters})
@@ -30,6 +166,14 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       );
     }
   }
+
+  Map<String, dynamic> get configuration => <String, dynamic>{
+    r'$schema': configurationSchema,
+    'parameters': parameters.toJson(),
+    'generator_structure': generatorStructure,
+    'output_integrity_contract':
+        GastricEmptyingOutputContract.integrityConfiguration,
+  };
 
   GastricEmptyingProfile build({
     required String mealId,
@@ -86,7 +230,8 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     final fatFractionAvailable =
         composition.fatGrams != null && (composition.totalCalories ?? 0) > 0;
     final fatFraction = fatFractionAvailable
-        ? (composition.fatGrams! * 9.0) / composition.totalCalories!
+        ? (composition.fatGrams! * fatCaloriesPerGram) /
+              composition.totalCalories!
         : null;
     if (!fatFractionAvailable) missingInputs.add('fat_fraction_of_calories');
 
@@ -96,18 +241,18 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     double sizeMultiplier;
     if (sizeAvailable) {
       sizeMultiplier =
-          0.6 +
-          0.4 *
+          sizeScaleIntercept +
+          sizeScaleSlope *
               (composition.totalCalories! /
                   parameters.referenceMealCalories.value);
-      sizeMultiplier = sizeMultiplier.clamp(0.6, 2.0);
+      sizeMultiplier = sizeMultiplier.clamp(sizeScaleMinimum, sizeScaleMaximum);
       assumptions.add(
-        'ge.size.linear_scale (size multiplier ${sizeMultiplier.toStringAsFixed(2)})',
+        'ge.size.linear_scale (size multiplier ${sizeMultiplier.toStringAsFixed(assumptionNumericDecimalPlaces)})',
       );
     } else {
-      sizeMultiplier = 1.0;
+      sizeMultiplier = unknownSizeMultiplier;
       assumptions.add(
-        'ge.size.unknown_default (size multiplier 1.00, uncertainty widened)',
+        'ge.size.unknown_default (size multiplier ${unknownSizeMultiplier.toStringAsFixed(assumptionNumericDecimalPlaces)}, uncertainty widened)',
       );
     }
 
@@ -117,13 +262,15 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
         fatFraction >= parameters.fatFractionThreshold.value;
     if (highFat) {
       fatMultiplier = parameters.fatSlowdownMultiplier.value;
-      modifiers.add('fat_slowdown_${fatMultiplier.toStringAsFixed(2)}x');
+      modifiers.add(
+        'fat_slowdown_${fatMultiplier.toStringAsFixed(assumptionNumericDecimalPlaces)}x',
+      );
       assumptions.add(parameters.fatSlowdownMultiplier.id);
       assumptions.add(
         '${parameters.fatUncertaintyBoost.id} (high fat, uncertainty widened)',
       );
     } else {
-      fatMultiplier = 1.0;
+      fatMultiplier = neutralMultiplier;
     }
 
     // High-calorie load: meals well above the reference size empty more slowly
@@ -142,7 +289,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
 
     // Fiber contribution: small slowdown if high, but mainly widens uncertainty.
     final highFiber = composition.fiberAmountBand == AmountBand.high;
-    double fiberMultiplier = 1.0;
+    double fiberMultiplier = neutralMultiplier;
     if (highFiber) {
       fiberMultiplier = parameters.fiberSlowdownMultiplier.value;
       assumptions.add(
@@ -167,7 +314,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
           sizeMultiplier: sizeMultiplier,
           fatMultiplier: fatMultiplier,
           fiberMultiplier: fiberMultiplier,
-          fractionOfMeal: 1.0,
+          fractionOfMeal: neutralUnitMass,
           modifiers: List<String>.unmodifiable(modifiers),
         ),
       );
@@ -204,7 +351,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       // missing input remains explicit and composition incompleteness widens
       // the model uncertainty. If every portion is unknown, a neutral unit
       // mass gives equal weights without inventing an absolute meal size.
-      var meanKnownPositiveMass = 1.0;
+      var meanKnownPositiveMass = neutralUnitMass;
       if (knownPositiveMasses.isNotEmpty) {
         meanKnownPositiveMass = 0.0;
         for (var index = 0; index < knownPositiveMasses.length; index++) {
@@ -263,7 +410,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
           ? effectiveMasses
                 .map((mass) => mass / maximumEffectiveMass)
                 .toList(growable: false)
-          : List<double>.filled(effectiveMasses.length, 1.0);
+          : List<double>.filled(effectiveMasses.length, neutralUnitMass);
       if (maximumEffectiveMass <= 0) {
         assumptions.add(
           'ge.component_portion.no_usable_mass_equal_weight '
@@ -291,9 +438,9 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       }
     }
 
-    if (overlappingResidualLoad > 0) {
+    if (overlappingResidualLoad > overlapDisclosureThreshold) {
       assumptions.add(
-        'ge.overlap.cumulate (residual load ${overlappingResidualLoad.toStringAsFixed(2)}, uncertainty widened)',
+        'ge.overlap.cumulate (residual load ${overlappingResidualLoad.toStringAsFixed(assumptionNumericDecimalPlaces)}, uncertainty widened)',
       );
     }
 
@@ -305,21 +452,22 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       highCalorie: highCalorie,
     );
 
-    // Aggregate lag = mass-weighted lag across components.
-    final aggregateLag = componentProfiles.fold<double>(
-      0,
-      (acc, c) => acc + c.fractionOfMeal * c.lagMinutes,
+    final derivedShape = deriveGastricProfileShape(
+      componentProfiles.map(
+        (component) => (
+          fractionOfMeal: component.fractionOfMeal,
+          lagMinutes: component.lagMinutes,
+          halfEmptyingMinutes: component.halfEmptyingMinutes,
+        ),
+      ),
     );
-
-    // Peak emptying window: from lag end to lag + half * 1.5 (heuristic).
-    final aggregateHalf = componentProfiles.fold<double>(
-      0,
-      (acc, c) => acc + c.fractionOfMeal * c.halfEmptyingMinutes,
-    );
+    final aggregateLag = derivedShape.aggregateLagMinutes;
     final peakStart = mealStartMinute + aggregateLag.round();
-    final peakEnd = peakStart + (aggregateHalf * 1.5).round();
+    final peakEnd = peakStart + derivedShape.peakWindowDurationMinutes!;
     final mostlyEmptiedEnd =
-        mealStartMinute + aggregateLag.round() + (aggregateHalf * 4).round();
+        mealStartMinute +
+        aggregateLag.round() +
+        derivedShape.mostlyEmptiedWindowDurationMinutes!;
 
     return GastricEmptyingProfile(
       mealId: mealId,
@@ -355,12 +503,13 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     final baseLag = isLiquid
         ? parameters.liquidLagMinutes.value
         : (form == MealPhysicalForm.unknown
-              ? parameters.solidLagMinutes.value * 0.7
+              ? parameters.solidLagMinutes.value * unknownFormLagMultiplier
               : parameters.solidLagMinutes.value);
     final baseHalf = isLiquid
         ? parameters.liquidHalfMinutes.value
         : (form == MealPhysicalForm.unknown
-              ? parameters.solidHalfMinutes.value * 0.9
+              ? parameters.solidHalfMinutes.value *
+                    unknownFormHalfTimeMultiplier
               : parameters.solidHalfMinutes.value);
 
     return EmptyingComponentProfile(
@@ -382,13 +531,15 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     required bool highCalorie,
   }) {
     var score = 0;
-    if (compositionCompleteness < 0.99) score += 1;
-    if (compositionCompleteness < 0.75) score += 1;
-    if (compositionCompleteness < 0.5) score += 1;
-    if (overlappingResidualLoad > 0.1) {
+    if (compositionCompleteness < completeCompositionThreshold) score += 1;
+    if (compositionCompleteness < mostlyCompleteCompositionThreshold) {
+      score += 1;
+    }
+    if (compositionCompleteness < partialCompositionThreshold) score += 1;
+    if (overlappingResidualLoad > firstOverlapThreshold) {
       score += parameters.overlapUncertaintyBoost.value;
     }
-    if (overlappingResidualLoad > 0.3) {
+    if (overlappingResidualLoad > secondOverlapThreshold) {
       score += parameters.overlapUncertaintyBoost.value;
     }
     if (highFiber) score += parameters.mixedMealUncertaintyBoost.value;

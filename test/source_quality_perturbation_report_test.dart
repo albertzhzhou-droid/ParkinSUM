@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/domain/entities/evidence_currency.dart';
 import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
@@ -191,6 +192,9 @@ class _AlwaysAbstainingEngine extends MechanisticConflictEngine {
     required Map<String, MealComposition> mealCompositionsById,
     String resultId = 'mechanistic_result',
     String? preferredMealId,
+    DateTime? evidenceAsOfUtc,
+    Iterable<String> additionalEvidenceProviderIds = const [],
+    EvidenceCurrencyRegistry? evidenceCurrencyRegistry,
   }) => MechanisticConflictResult.insufficientContext(
     id: resultId,
     reason: MechanisticInteractionType.insufficientMealContext,

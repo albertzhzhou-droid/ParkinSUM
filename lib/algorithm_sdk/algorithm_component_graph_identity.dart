@@ -5,6 +5,7 @@ import '../domain/entities/algorithm_component_identity_witness.dart';
 import '../domain/entities/protein_source.dart';
 import '../domain/usecases/amino_acid_competition_model.dart';
 import '../domain/usecases/gastric_emptying_model.dart';
+import '../domain/usecases/get_food_recommendations_usecase.dart';
 import '../domain/usecases/levodopa_absorption_opportunity_model.dart';
 import '../domain/usecases/meal_composition_normalizer.dart';
 import '../domain/usecases/mechanistic_conflict_engine.dart';
@@ -21,6 +22,24 @@ import '../domain/usecases/time_axis_builder.dart';
 /// current identity schema has no independently governed component identities,
 /// so it cannot honestly attest custom implementations yet.
 abstract final class AlgorithmComponentGraphIdentityValidator {
+  static void validateLegacyFoodRecommender({
+    required GetFoodRecommendationsUseCase recommender,
+    required AlgorithmConfigurationIdentity identity,
+    String graphLabel = 'legacy food recommendation scorer',
+  }) {
+    _requireExactType(
+      component: recommender,
+      expectedType: GetFoodRecommendationsUseCase,
+      componentPath: graphLabel,
+    );
+    _requireConfigurationMatch(
+      identity: identity,
+      section: 'legacy_food_recommendations',
+      actual: recommender.parameters.toJson(),
+      componentPath: '$graphLabel.parameters',
+    );
+  }
+
   static void validateConflictEngine({
     required MechanisticConflictEngine engine,
     required AlgorithmConfigurationIdentity identity,
@@ -50,13 +69,13 @@ abstract final class AlgorithmComponentGraphIdentityValidator {
     _requireConfigurationMatch(
       identity: identity,
       section: 'gastric_emptying',
-      actual: engine.gastricEmptyingModel.parameters.toJson(),
-      componentPath: '$graphLabel.gastricEmptyingModel.parameters',
+      actual: engine.gastricEmptyingModel.configuration,
+      componentPath: '$graphLabel.gastricEmptyingModel.configuration',
     );
     _requireConfigurationMatch(
       identity: identity,
       section: 'levodopa_absorption_opportunity',
-      actual: _absorptionConfiguration,
+      actual: engine.absorptionModel.configuration,
       componentPath: '$graphLabel.absorptionModel.configuration',
     );
     _requireConfigurationMatch(
@@ -186,19 +205,6 @@ abstract final class AlgorithmComponentGraphIdentityValidator {
       );
     }
   }
-
-  static Map<String, dynamic> get _absorptionConfiguration => {
-    'reference_ir_lag_minutes':
-        LevodopaAbsorptionOpportunityModel.referenceIrLagMinutes,
-    'reference_ir_duration_minutes':
-        LevodopaAbsorptionOpportunityModel.referenceIrDurationMinutes,
-    'illustrative_meal_delay_minutes':
-        LevodopaAbsorptionOpportunityModel.illustrativeMealDelayMinutes,
-    'openness_sample_stride_minutes':
-        LevodopaAbsorptionOpportunityModel.opennessSampleStrideMinutes,
-    'ir_peak_openness': LevodopaAbsorptionOpportunityModel.irPeakOpenness,
-    'ir_tail_openness': LevodopaAbsorptionOpportunityModel.irTailOpenness,
-  };
 
   static Map<String, dynamic> get _competitionConfiguration {
     final factors = ProteinSourceLnaaRegistry.all()

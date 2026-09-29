@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import '../../core/i18n/app_i18n.dart';
 import '../../core/constants/regional_master_data.dart';
 import '../../core/constants/p0_food_source_seed.dart';
@@ -6,11 +8,17 @@ import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/user_profile.dart';
+import '../../algorithm_sdk/algorithm_component_graph_identity.dart';
+import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../entities/food_recommendation.dart';
+import '../entities/food_composition_candidate_set_snapshot.dart';
+import '../entities/food_rank_sensitivity_assessment.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
+import '../entities/mechanistic_replay_capsule.dart';
 import '../entities/mechanistic_medication_applicability.dart';
 import '../entities/ranker_eligibility.dart';
+import 'administration_dose_confirmation_coordinator.dart';
 import 'dosage_note_parser.dart';
 import '../entities/meal_composition.dart';
 import '../entities/next_meal_recommendation_models.dart';
@@ -22,10 +30,14 @@ import '../entities/time_axis_events.dart';
 import 'catalog_food_to_candidate.dart';
 import 'cdss_catalog_projection_service.dart';
 import 'get_food_recommendations_usecase.dart';
+import 'food_rank_sensitivity_service.dart';
 import 'intake_dose_context_builder.dart';
 import 'local_ai_recommendation_adapter.dart';
 import 'meal_composition_normalizer.dart';
 import 'mechanistic_conflict_engine.dart';
+import 'mechanistic_event_ledger_authorization.dart';
+import 'mechanistic_event_ledger_builder.dart';
+import 'mechanistic_replay_capsule_service.dart';
 import 'mechanistic_next_meal_scorer.dart';
 import 'medication_entry_validator.dart';
 import 'metadata_completeness_gate.dart';
@@ -59,9 +71,12 @@ class NextMealRecommendationOrchestrator {
   final MealCompositionNormalizer mealCompositionNormalizer;
   final MedicationEntryValidator medicationEntryValidator;
   final TimeAxisBuilder timeAxisBuilder;
-  final DosageNoteParser _dosageNoteParser;
+  final AdministrationDoseConfirmationCoordinator _doseConfirmationCoordinator;
+  final MechanisticLedgerAuthorizer _ledgerAuthorizer;
+  final MechanisticReplayCapsuleRoundTripper _replayRoundTripper;
   final SourceAuthorityScorer _authorityScorer;
   final MetadataCompletenessGate _completenessGate;
+  late final AlgorithmConfigurationIdentity _algorithmConfigurationIdentity;
 
   NextMealRecommendationOrchestrator({
     required this.conservativeRecommender,
@@ -73,6 +88,9 @@ class NextMealRecommendationOrchestrator {
     MedicationEntryValidator? medicationEntryValidator,
     TimeAxisBuilder? timeAxisBuilder,
     DosageNoteParser? dosageNoteParser,
+    MechanisticLedgerAuthorizer? ledgerAuthorizer,
+    MechanisticReplayCapsuleRoundTripper? replayRoundTripper,
+    AlgorithmConfigurationIdentity? algorithmConfigurationIdentity,
   }) : mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
        mechanisticScorer = mechanisticScorer ?? MechanisticNextMealScorer(),
        mealCompositionNormalizer =
@@ -80,9 +98,43 @@ class NextMealRecommendationOrchestrator {
        medicationEntryValidator =
            medicationEntryValidator ?? MedicationEntryValidator(),
        timeAxisBuilder = timeAxisBuilder ?? TimeAxisBuilder(),
-       _dosageNoteParser = dosageNoteParser ?? DosageNoteParser(),
+       _doseConfirmationCoordinator = AdministrationDoseConfirmationCoordinator(
+         parser: dosageNoteParser,
+       ),
+       _ledgerAuthorizer =
+           ledgerAuthorizer ??
+           const MechanisticEventLedgerAuthorizationService(),
+       _replayRoundTripper =
+           replayRoundTripper ?? const MechanisticReplayCapsuleService(),
        _authorityScorer = SourceAuthorityScorer(),
-       _completenessGate = MetadataCompletenessGate();
+       _completenessGate = MetadataCompletenessGate() {
+    _algorithmConfigurationIdentity =
+        algorithmConfigurationIdentity ??
+        AlgorithmConfigurationIdentity.defaults(
+          gastricParameters:
+              this.mechanisticEngine.gastricEmptyingModel.parameters,
+          absorptionParameters:
+              this.mechanisticEngine.absorptionModel.parameters,
+          scoringParameters: this.mechanisticScorer.scoringParameters,
+          legacyFoodRecommendationParameters:
+              conservativeRecommender.parameters,
+        );
+    AlgorithmComponentGraphIdentityValidator.validateLegacyFoodRecommender(
+      recommender: conservativeRecommender,
+      identity: _algorithmConfigurationIdentity,
+      graphLabel: 'nextMealRecommendationOrchestrator.conservativeRecommender',
+    );
+    AlgorithmComponentGraphIdentityValidator.validateConflictEngine(
+      engine: this.mechanisticEngine,
+      identity: _algorithmConfigurationIdentity,
+      graphLabel: 'nextMealRecommendationOrchestrator.mechanisticEngine',
+    );
+    AlgorithmComponentGraphIdentityValidator.validateCandidateScorer(
+      scorer: this.mechanisticScorer,
+      identity: _algorithmConfigurationIdentity,
+      graphLabel: 'nextMealRecommendationOrchestrator.mechanisticScorer',
+    );
+  }
 
   /// Public entry point. Enriches the conservative result with a deterministic
   /// mechanistic conflict trace and (when the request includes a
@@ -97,25 +149,45 @@ class NextMealRecommendationOrchestrator {
     // enrichment path score the SAME candidate list. Projected (official/CDSS)
     // foods win id collisions, preserving their provenance + missingness
     // metadata for both ranking surfaces.
-    final projectedFoods = await projectionService.projectFoods();
-    final mergedCandidates = _mergeCandidates(
-      projectedFoods,
-      candidateFoods.isEmpty ? buildP0FoodCatalog() : candidateFoods,
+    final projection = await projectionService.projectFoodsWithAudit();
+    final projectedFoods = projection.foods;
+    final builtInP0FallbackUsed = candidateFoods.isEmpty;
+    final inputCandidates = builtInP0FallbackUsed
+        ? buildP0FoodCatalog()
+        : candidateFoods;
+    final mergedCandidates = _mergeCandidates(projectedFoods, inputCandidates);
+    final candidateSetSnapshot = FoodCompositionCandidateSetSnapshot.capture(
+      callerCandidateFoods: candidateFoods,
+      fallbackCandidateFoods: builtInP0FallbackUsed
+          ? inputCandidates
+          : const <FoodItem>[],
+      projectedFoods: projectedFoods,
+      mergedCandidates: mergedCandidates,
+      projectionQueryAudit: projection.queryAudit,
+      builtInP0FallbackUsed: builtInP0FallbackUsed,
+      contentJurisdictionOverride:
+          request.userProfile.contentJurisdictionOverride,
+      registrationRegion: request.userProfile.registrationRegion,
+      dietProfileRegion: request.userProfile.dietProfileRegion,
+      tieBreakPolicy: conservativeRecommender.parameters.tieBreakPolicy,
     );
     final base = await _recommendCore(
       request: request,
       mergedCandidates: mergedCandidates,
+      candidateSetSnapshot: candidateSetSnapshot,
     );
     return _enrichWithMechanistic(
       base: base,
       request: request,
       candidateFoods: mergedCandidates,
+      candidateSetSnapshot: candidateSetSnapshot,
     );
   }
 
   Future<NextMealRecommendationResult> _recommendCore({
     required NextMealRecommendationRequest request,
     required List<FoodItem> mergedCandidates,
+    required FoodCompositionCandidateSetSnapshot candidateSetSnapshot,
   }) async {
     final i18n = AppI18n.fromLocaleTag(request.userProfile.displayLocale);
     final projectedDrugDetails = await _projectActiveDrugDetails(
@@ -154,6 +226,43 @@ class NextMealRecommendationOrchestrator {
       userProfile: request.userProfile,
       i18n: i18n,
     );
+    List<FoodRecommendation> evaluateRankScenario(List<FoodItem> foods) {
+      final ranked = conservativeRecommender.call(
+        history: request.history,
+        drugs: request.activeDrugs,
+        allFoods: foods,
+        userProfile: request.userProfile,
+      );
+      return _applyNextMealWindow(
+        baseline: ranked,
+        history: request.history,
+        activeDrugs: request.activeDrugs,
+        intakes: request.intakes,
+        userProfile: request.userProfile,
+        i18n: i18n,
+      );
+    }
+
+    final rankSensitivityService = const FoodRankSensitivityService();
+    FoodRankSensitivityAssessment assessRankSensitivity({
+      bool aiRerankUsed = false,
+    }) => rankSensitivityService.assess(
+      candidateSetSnapshot: candidateSetSnapshot,
+      candidates: mergedCandidates,
+      baselineRecommendations: windowAware,
+      proteinBreakpoints: <double>[
+        ...conservativeRecommender.sensitivityProteinBreakpoints,
+        15.0, // next-meal and levodopa-window composition branch
+      ],
+      fiberBreakpoints: <double>[
+        ...conservativeRecommender.sensitivityFiberBreakpoints,
+        2.0, // long-gap fiber composition branch
+      ],
+      evaluate: evaluateRankScenario,
+      aiRerankUsed: aiRerankUsed,
+    );
+
+    final rankSensitivityAssessment = assessRankSensitivity();
     final gateReasons = _gateAiReasons(
       history: request.history,
       activeDrugs: request.activeDrugs,
@@ -170,6 +279,8 @@ class NextMealRecommendationOrchestrator {
     if (!aiEligible) {
       return NextMealRecommendationResult(
         recommendations: windowAware,
+        candidateSetSnapshot: candidateSetSnapshot,
+        rankSensitivityAssessment: rankSensitivityAssessment,
         aiUsed: false,
         decisionPath: 'conservative_cdss',
         explanations: [
@@ -195,6 +306,8 @@ class NextMealRecommendationOrchestrator {
     if (!availability.available) {
       return NextMealRecommendationResult(
         recommendations: windowAware,
+        candidateSetSnapshot: candidateSetSnapshot,
+        rankSensitivityAssessment: rankSensitivityAssessment,
         aiUsed: false,
         decisionPath: 'conservative_gate_block',
         explanations: [
@@ -238,6 +351,8 @@ class NextMealRecommendationOrchestrator {
     if (gateReasons.isNotEmpty) {
       return NextMealRecommendationResult(
         recommendations: polishedWindowAware,
+        candidateSetSnapshot: candidateSetSnapshot,
+        rankSensitivityAssessment: rankSensitivityAssessment,
         aiUsed: copyPolish?.hasNotes ?? false,
         decisionPath: 'conservative_safety_gate',
         explanations: [
@@ -274,6 +389,8 @@ class NextMealRecommendationOrchestrator {
     if (rerankResult == null || rerankResult.candidateIds.isEmpty) {
       return NextMealRecommendationResult(
         recommendations: polishedWindowAware,
+        candidateSetSnapshot: candidateSetSnapshot,
+        rankSensitivityAssessment: rankSensitivityAssessment,
         aiUsed: copyPolish?.hasNotes ?? false,
         decisionPath: 'fallback_invalid_ai',
         explanations: [
@@ -303,6 +420,8 @@ class NextMealRecommendationOrchestrator {
     );
     return NextMealRecommendationResult(
       recommendations: reranked,
+      candidateSetSnapshot: candidateSetSnapshot,
+      rankSensitivityAssessment: assessRankSensitivity(aiRerankUsed: true),
       aiUsed: true,
       decisionPath: 'hybrid_local_ai',
       aiRerankUsed: true,
@@ -1031,7 +1150,12 @@ class NextMealRecommendationOrchestrator {
     required NextMealRecommendationResult base,
     required NextMealRecommendationRequest request,
     required List<FoodItem> candidateFoods,
+    required FoodCompositionCandidateSetSnapshot candidateSetSnapshot,
   }) async {
+    // Bind the primary trace and each candidate sample to one wall-clock
+    // evidence-currency review point. Request time belongs to the medication
+    // and meal timeline and may be historical in replay or imported records.
+    final evidenceAsOfUtc = DateTime.now().toUtc();
     // Componentize meal history against the merged catalog so per-item
     // physical form, calories, and amino-acid provenance survive into the
     // gastric/LNAA layers (instead of one `unknown` aggregate component).
@@ -1048,19 +1172,84 @@ class NextMealRecommendationOrchestrator {
       mealInputs: mealInputs,
       userDefinedWindow: request.userDefinedWindow,
     );
+    MechanisticLedgerAuthorizationDecision? ledgerAuthorization;
+    var ledgerAuthorizationFindings = const <String>[];
+    String? replayCapsuleSha256;
+    try {
+      final ledger = const MechanisticEventLedgerBuilder().build(
+        ledgerId:
+            'recommendation_${request.now.toUtc().millisecondsSinceEpoch}',
+        context: context,
+        mealCompositionsById: compositionsById,
+        configurationDigest: _algorithmConfigurationIdentity.sha256Digest,
+        createdAtUtc: request.now.toUtc(),
+        sourceId: 'production:next_meal_recommendation',
+        revisionId: AlgorithmConfigurationIdentity.defaultVersion,
+        synthetic: false,
+      );
+      final replay = _replayRoundTripper.captureAndRestore(
+        capsuleId:
+            'recommendation_${request.now.toUtc().millisecondsSinceEpoch}_replay',
+        generatedAtUtc: request.now.toUtc(),
+        ledger: ledger,
+        context: context,
+        mealCompositionsById: compositionsById,
+        expectedConfigurationSha256:
+            _algorithmConfigurationIdentity.sha256Digest,
+      );
+      replayCapsuleSha256 = replay.capsule.capsuleSha256;
+      ledgerAuthorization = _ledgerAuthorizer.authorize(
+        ledger: replay.restored.ledger,
+        context: replay.restored.context,
+        mealCompositionsById: replay.restored.mealCompositionsById,
+        expectedConfigurationSha256:
+            _algorithmConfigurationIdentity.sha256Digest,
+      );
+      ledgerAuthorizationFindings = ledgerAuthorization.assessment.findings;
+    } on Object catch (error) {
+      ledgerAuthorizationFindings = <String>[
+        'authorization.replay_pipeline_failed:${error.runtimeType}',
+      ];
+    }
+    final authorizedView = ledgerAuthorization?.view;
+    developer.log(
+      '[MechanisticLedgerAuthorization] route=next_meal '
+      'authorized=${authorizedView != null} '
+      'replay=${replayCapsuleSha256 ?? 'unavailable'} '
+      'findings=${ledgerAuthorizationFindings.join(',')}',
+      name: 'ParkinSUM',
+    );
+    final authorizedContext = authorizedView?.context;
     final medicationApplicability = _mechanisticMedicationApplicabilityPolicy
         .evaluateContexts(
-          context.medicationEvents.map((event) => event.context),
+          (authorizedContext?.medicationEvents ??
+                  const <MedicationTimelineEvent>[])
+              .map((event) => event.context),
         );
 
-    final MechanisticConflictResult trace = mechanisticEngine.evaluate(
-      context: context,
-      mealCompositionsById: compositionsById,
-      resultId: 'orchestrator_${request.now.millisecondsSinceEpoch}',
-    );
+    final MechanisticConflictResult trace = authorizedView == null
+        ? MechanisticConflictResult.blockedIntegrity(
+            id: 'orchestrator_${request.now.millisecondsSinceEpoch}',
+            reason: MechanisticInteractionType.insufficientMealContext,
+            integrityReasons: ledgerAuthorizationFindings.isEmpty
+                ? const ['authorization.view_unavailable']
+                : ledgerAuthorizationFindings,
+            sourceRefs: const [
+              mechanisticReplayCapsuleSchema,
+              mechanisticLedgerAuthorizationSchema,
+            ],
+          )
+        : mechanisticEngine.evaluate(
+            context: authorizedContext!,
+            mealCompositionsById: authorizedView.mealCompositionsById,
+            resultId: 'orchestrator_${request.now.millisecondsSinceEpoch}',
+            evidenceAsOfUtc: evidenceAsOfUtc,
+          );
 
     List<MechanisticCandidateScore>? candidateScores;
-    if (request.userDefinedWindow != null && candidateFoods.isNotEmpty) {
+    if (authorizedView != null &&
+        request.userDefinedWindow != null &&
+        candidateFoods.isNotEmpty) {
       final candidates = candidateFoods
           .map(foodItemToCandidateFood)
           .toList(growable: false);
@@ -1073,10 +1262,12 @@ class NextMealRecommendationOrchestrator {
         request.userProfile,
       );
       candidateScores = mechanisticScorer.score(
-        baseContext: context,
-        baseMealCompositionsById: compositionsById,
+        baseContext: authorizedView.context,
+        baseMealCompositionsById: authorizedView.mealCompositionsById,
         candidates: candidates,
         candidateMetadata: candidateMetadata,
+        evidenceAsOfUtc: evidenceAsOfUtc,
+        evidenceCurrencyRegistry: mechanisticEngine.evidenceCurrencyRegistry,
       );
     }
 
@@ -1089,6 +1280,15 @@ class NextMealRecommendationOrchestrator {
     // that case `fallbackReasons` is always populated and surfaced.
     final fallbackReasons = <String>[];
     final eligibilityReasons = <String>[];
+    if (authorizedView == null) {
+      fallbackReasons.addAll(
+        ledgerAuthorizationFindings.isEmpty
+            ? const ['mechanistic_ledger_authorization_unavailable']
+            : ledgerAuthorizationFindings,
+      );
+    } else {
+      eligibilityReasons.add('mechanistic_ledger_authorized');
+    }
     if (medicationApplicability.applicable) {
       eligibilityReasons.add('mechanistic_medication_applicable');
     } else {
@@ -1131,6 +1331,8 @@ class NextMealRecommendationOrchestrator {
 
     return NextMealRecommendationResult(
       recommendations: recommendations,
+      candidateSetSnapshot: candidateSetSnapshot,
+      rankSensitivityAssessment: base.rankSensitivityAssessment,
       aiUsed: base.aiUsed,
       decisionPath: base.decisionPath,
       explanations: base.explanations,
@@ -1159,10 +1361,15 @@ class NextMealRecommendationOrchestrator {
       final drug = drugsById[intake.drugId];
       if (drug == null) continue;
       final ingredients = _drugActiveIngredients(drug);
-      // Structured values are user-note-derived and preferred when present;
-      // legacy records fall back to parsing dosageNote. Neither path injects
-      // a private default dose.
-      final dose = _dosageNoteParser.parseIntake(intake);
+      // A numeric administration dose reaches the mechanistic trace only when
+      // an intact receipt binds this exact Intake, parser identity, account
+      // scope, product snapshot, structured pair, and time. Unconfirmed legacy
+      // notes remain visible but cannot silently become result-affecting data.
+      final dose = _doseConfirmationCoordinator.evaluateForResultUse(
+        intake,
+        ownerScope: request.userProfile.patientId,
+        observedAt: request.now,
+      );
       final formulation = resolveIntakeMechanisticFormulation(
         intake: intake,
         drug: drug,
@@ -1170,8 +1377,8 @@ class NextMealRecommendationOrchestrator {
       final raw = RawMedicationEntry(
         activeIngredients: ingredients,
         drugProductVariant: 'synthetic:${drug.id}',
-        strength: dose.explicit ? dose.value : null,
-        unit: dose.explicit ? dose.unit : null,
+        strength: dose.eligible ? dose.value : null,
+        unit: dose.eligible ? dose.unit : null,
         form: formulation.dosageForm,
         route: formulation.route,
         releaseType: formulation.releaseType,

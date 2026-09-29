@@ -26,7 +26,10 @@ class MetadataCompletenessGate {
     if (meta.activeIngredients.isEmpty) {
       return MetadataCompletenessScore.invalid; // no ingredient → no context
     }
-    if (meta.strengthValue == null || (meta.strengthUnit ?? '').isEmpty) {
+    if (meta.strengthValue == null ||
+        !meta.strengthValue!.isFinite ||
+        meta.strengthValue! <= 0 ||
+        (meta.strengthUnit ?? '').trim().isEmpty) {
       return MetadataCompletenessScore.insufficient; // no unit → no dose
     }
     final missing = <bool>[

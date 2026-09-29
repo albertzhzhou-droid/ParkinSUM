@@ -36,7 +36,12 @@ The v1 runtime boundary requires all of the following:
 - a structured meal or an explicitly labelled simulation fixture;
 - finite, dimensionally valid quantities when a provider consumes dose or nutrient values.
 
-Product identity, label revision, population, fed-state, terminology version, and provider-manifest digest are not yet fully governed. Until those predicates are implemented, the gate is an important fail-closed improvement but not a complete applicability manifest.
+The worktree now carries a schema-v1, SHA-256-bound engineering manifest for
+the question of interest, context of use, observable, population, product,
+fed-state, terminology, evidence, provider membership, predicates, review
+state, and dispositions. This makes the declared boundary reproducible; it
+does not prove the truth of external product identity, label revision,
+terminology equivalence, population applicability, or model qualification.
 
 ## Four result states
 
@@ -60,6 +65,26 @@ Until a governed ingredient terminology and product manifest can prove a non-tar
 - EMA PBPK guidance similarly requires documentation supporting platform qualification for an intended use. [EMA PBPK guideline](https://www.ema.europa.eu/en/reporting-physiologically-based-pharmacokinetic-pbpk-modelling-simulation-scientific-guideline)
 
 These sources support the governance pattern. They are not evidence that the present equations are biologically or clinically valid.
+
+### Change impact and requalification
+
+FDA's final guidance is explicitly risk-informed and context-of-use-specific;
+the FDA-recognized ASME V&V 40 standard addresses the relevance and adequacy
+of completed verification and validation activities for a particular model
+use. EMA likewise ties PBPK platform qualification and model performance to an
+intended use. Therefore, changing a manifest or configuration digest is useful
+identity evidence but is not requalification by itself.
+
+The future control recorded in the complete-app queue requires an immutable
+old/new manifest diff, affected providers and predicates, model-risk and
+decision-influence assessment, required verification/validation/qualification
+evidence, reviewer and release disposition, and rollback/revocation history.
+It must not silently carry evidence across a different product, formulation,
+route, population, fed state, observable, terminology version, or claim.
+
+- [FDA CM&S credibility guidance](https://www.fda.gov/regulatory-information/search-fda-guidance-documents/assessing-credibility-computational-modeling-and-simulation-medical-device-submissions)
+- [EMA PBPK reporting guideline](https://www.ema.europa.eu/en/reporting-physiologically-based-pharmacokinetic-pbpk-modelling-simulation-scientific-guideline)
+- [FDA-recognized ASME V&V 40-2018 entry](https://www.accessdata.fda.gov/scripts/cdrh/cfdocs/cfstandards/detail.cfm?standard__identification_no=38534)
 
 ### Product identity and formulation
 
@@ -94,10 +119,19 @@ PK-Sim is GPL-2.0 and rxode2 is GPL-3.0. Only architectural patterns were review
 
 The public GitHub snapshot and the local worktree must be described separately:
 
-- public GitHub commit `c5f4c894c2c7c05f59f8deed0f99e0c4cb0318f5` still contains the former first-non-levodopa fallback and unknown-release-to-IR behavior;
-- the local uncommitted worktree adds exact ingredient tokenization, a narrow IR-tablet policy, fail-closed provider behavior, trace-only ranking influence, and invariant/mutation coverage;
-- these local changes are not public until intentionally committed and pushed;
-- ignored build outputs and local evidence are not public release evidence.
+- GitHub `main` merge commit `23619f1d95ef8396e38de982daa3007d191178e1`
+  contains PR #115's exact ingredient tokenization, narrow IR-tablet policy,
+  fail-closed provider behavior, typed abstention, trace-only ranking boundary,
+  invariant/mutation coverage, and Observatory algorithm surfaces;
+- local committed HEAD `94e7ef30b64059ea6893a1ed431d15daac3ff859` is
+  the PR branch head, before GitHub's merge commit;
+- the current uncommitted continuation adds the digest-bound applicability
+  manifest, configuration/source-ref binding, live medication predicate
+  outcomes, central schema registration, and Observatory manifest panel;
+- these continuation changes are not public until intentionally committed and
+  pushed;
+- ignored build outputs, dependency caches, Pods, Gradle state, and local
+  reports are not public release evidence.
 
 ## Implemented locally in this slice
 
@@ -150,11 +184,33 @@ The public GitHub snapshot and the local worktree must be described separately:
   flat fallback;
 - mechanistic candidate scores remain inspectable trace data but cannot reorder recommendations;
 - registry/UI coverage includes the applicability gate as a result-affecting algorithm;
+- schema-v1 applicability manifest with ten fail-closed predicates and all six
+  live provider declarations;
+- deterministic manifest SHA-256 embedded in the canonical algorithm
+  configuration and propagated into conflict, explanation, and per-event
+  source references;
+- live medication component/route/form/release predicate outcomes for
+  applicable, known-outside, and unknown inputs, with conservative mixed-input
+  aggregation;
+- Algorithm Observatory panel for question of interest, context of use,
+  observable, population, product/fed-state/terminology boundaries, provider
+  evidence, manifest identity, and the fail-closed predicate matrix;
+- schema-v1 evidence-currency registry for five reviewed claims covering all
+  six live providers, with exact source/status-authority identity, correction
+  status, review deadline, sunset disposition and deterministic snapshot;
+- evidence correction, retraction, withdrawal, expression-of-concern,
+  supersession, expiry, unavailability and unknown states feed the same
+  requalification hold without converting missing status into validation;
+- Algorithm Observatory separately shows evidence-status currency and its
+  review boundary; a current status remains distinct from certainty,
+  applicability, scientific or clinical validation, qualification, regulatory
+  review and approval;
+- central schema-catalog registration and contract tests for the public runtime
+  manifest;
 - invariant, unit, metamorphic, and mutation tests exercise the production model boundary.
 
 ## Still open
 
-- a versioned, digest-bound provider manifest with product code, label revision, jurisdiction, population, fed-state, time, dose, unit, terminology, and review predicates;
 - governed product/component identity instead of synthetic or unspecified source metadata;
 - end-to-end persistence of verified product ingredients, route, dosage form,
   release type, label revision, and terminology identity from product picker to
@@ -162,7 +218,23 @@ The public GitHub snapshot and the local worktree must be described separately:
 - an explicit, governed fasting-state input if fasting traces are ever needed;
 - formulation-specific models backed by appropriate data, if any are added;
 - independent mathematical oracles and prospective external validation;
-- a live Observatory predicate matrix for every provider and composite;
+- complete live outcomes for every declared meal, timeline, dose, identity,
+  and upstream predicate on every provider result; the current manifest panel
+  declares all predicates but runtime outcomes are complete only for the
+  medication component/route/form/release policy;
+- signed or independently trusted runtime manifest promotion and mismatch
+  verification;
+- durable multi-release continuation of the schema-v1 context-of-use
+  requalification ledger now present in the worktree, including signed reviewer
+  authority, evidence expiry/equivalence, exact release attestation,
+  rollback/revocation, concurrent review, acknowledgement-loss, clock-skew,
+  partial-deployment and offline-recovery evidence;
+- exhaustive claim-to-source coverage, archived PubMed/Crossmark/regulatory
+  refresh artifacts, partial-correction mapping, signed append-only evidence
+  history, reviewer authority, durable provider disablement and independent
+  review for the initial evidence-currency registry;
+- body-of-evidence contradiction, cohort-dependency, risk-of-bias,
+  inconsistency, indirectness, imprecision and publication-bias adjudication;
 - complete localization and accessibility review of all abstention states;
 - release blocking when a registered provider lacks inside/outside/unknown/integrity fixtures.
 

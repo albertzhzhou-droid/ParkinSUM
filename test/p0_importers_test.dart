@@ -9,6 +9,7 @@ import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
+import 'package:parkinsum_companion/core/utils/qualified_value_parser.dart';
 import 'package:parkinsum_companion/data/datasources/remote/ciqual_p0_importer.dart';
 import 'package:parkinsum_companion/data/datasources/remote/archive_import_support.dart';
 import 'package:parkinsum_companion/data/datasources/remote/dailymed_p0_importer.dart';
@@ -55,7 +56,12 @@ void main() {
         }),
       );
 
-      expect(await client.getText('https://example.org/source'), 'ok');
+      expect(
+        await client.getText(
+          'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json',
+        ),
+        'ok',
+      );
       expect(seen.followRedirects, isFalse);
       expect(seen.maxRedirects, 0);
     });
@@ -78,7 +84,9 @@ void main() {
       );
 
       await expectLater(
-        client.getBytes('https://example.org/oversized'),
+        client.getBytes(
+          'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/oversized',
+        ),
         throwsStateError,
       );
     });
@@ -199,14 +207,237 @@ void main() {
               'unitName': 'g',
             },
           },
+          {
+            'amount': 2100,
+            'nutrient': {'number': '504', 'name': 'Leucine', 'unitName': 'mg'},
+          },
+          {
+            'amount': 1.3,
+            'nutrient': {'number': '510', 'name': 'Valine', 'unitName': 'g'},
+          },
         ],
       },
     ], sourceLabel: 'test_source');
 
     expect(bundle.projectedFoods.single.sourceFoodCode, '123');
     expect(bundle.projectedFoods.single.proteinG, 1.1);
+    expect(bundle.projectedFoods.single.aminoAcidProfile, isNotNull);
+    expect(bundle.projectedFoods.single.aminoAcidProfile!.leucine, 2.1);
+    expect(bundle.projectedFoods.single.aminoAcidProfile!.valine, 1.3);
     expect(bundle.projectedFoods.single.textureClass, isNull);
     expect(bundle.observations.length, 2);
+  });
+
+  test('FDC Foundation sample ranges stay separate from the legacy point', () {
+    const importer = FdcP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importFoods([
+      {
+        'fdcId': 1234,
+        'description': 'Foundation range fixture',
+        'dataType': 'Foundation',
+        'foodCategory': 'fruit',
+        'foodNutrients': [
+          {
+            'amount': 12.0,
+            'dataPoints': 6,
+            'min': 9.5,
+            'max': 14.2,
+            'median': 11.8,
+            'standardError': 0.7,
+            'foodNutrientDerivation': {
+              'code': 'CAL',
+              'description': 'Calculated from nitrogen',
+            },
+            'foodNutrientSource': {'code': '1', 'description': 'USDA'},
+            'nutrient': {'number': '203', 'name': 'Protein', 'unitName': 'g'},
+          },
+          {
+            'amount': 3.0,
+            'dataPoints': 0,
+            'min': 2.0,
+            'max': 4.0,
+            'nutrient': {'number': '291', 'name': 'Fiber', 'unitName': 'g'},
+          },
+        ],
+      },
+    ], sourceLabel: 'foundation_range_fixture');
+
+    // The source mean remains the selected point; the separate range row is
+    // retained only as interval evidence.
+    final point = bundle.observations.singleWhere(
+      (record) =>
+          record.attributeCode == 'protein_g' &&
+          record.value.qualifierKind == QualifierKind.exact,
+    );
+    final range = bundle.observations.singleWhere(
+      (record) =>
+          record.attributeCode == 'protein_g' &&
+          record.value.qualifierKind == QualifierKind.range,
+    );
+    expect(bundle.projectedFoods.single.proteinG, 12.0);
+    expect(point.value.qualifierKind, QualifierKind.exact);
+    expect(point.value.valueNum, 12.0);
+    expect(point.methodCode, 'CAL');
+    expect(range.value.qualifierKind, QualifierKind.range);
+    expect(range.value.valueNum, isNull);
+    expect(range.value.low, 9.5);
+    expect(range.value.high, 14.2);
+    expect(range.methodCode, point.methodCode);
+    expect(range.sourceDocId, point.sourceDocId);
+    expect(range.scopeHash, point.scopeHash);
+    expect(range.value.rawValueText, contains('data_points=6'));
+    expect(range.value.rawValueText, contains('standard_error=0.7'));
+    expect(
+      bundle.observations.where(
+        (record) =>
+            record.attributeCode == 'fiber_g' &&
+            record.value.qualifierKind == QualifierKind.range,
+      ),
+      isEmpty,
+    );
+    expect(
+      bundle.resolvedFacts
+          .singleWhere((record) => record.attributeCode == 'protein_g')
+          .chosenObservationId,
+      point.observationId,
+    );
+    final sourcePayload =
+        jsonDecode(bundle.sourceDocuments.single.rawPayload)
+            as Map<String, dynamic>;
+    final statistics =
+        sourcePayload['nutrient_statistics_audit'] as List<dynamic>;
+    final proteinStatistics = statistics
+        .cast<Map<String, dynamic>>()
+        .singleWhere((entry) => entry['attribute_code'] == 'protein_g');
+    expect(proteinStatistics['data_points'], 6);
+    expect(proteinStatistics['median'], 11.8);
+    expect(proteinStatistics['derivation_code'], 'CAL');
+  });
+
+  test('FDC CSV sample statistics produce an unselected range observation', () {
+    const importer = FdcP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importCsvArchive({
+      'food.csv':
+          'fdc_id,description,data_type,food_category_id\n'
+          '8123,"Range fixture",Foundation,9',
+      'food_category.csv': 'id,description\n9,fruit',
+      'nutrient.csv': 'id,number,name,unit_name\n1,203,Protein,g',
+      'food_nutrient.csv':
+          'fdc_id,nutrient_id,amount,data_points,min,max,median,standard_error,derivation_id,food_nutrient_source_id\n'
+          '8123,1,10.0,4,8.0,12.0,9.5,0.5,7,3',
+      'food_nutrient_derivation.csv': 'id,code,description\n7,A,Analytical',
+      'food_nutrient_source.csv': 'id,code,description\n3,1,USDA',
+    }, sourceLabel: 'fdc_csv_range_fixture');
+
+    expect(bundle.projectedFoods.single.proteinG, 10.0);
+    expect(bundle.observations, hasLength(2));
+    final range = bundle.observations.singleWhere(
+      (record) => record.value.qualifierKind == QualifierKind.range,
+    );
+    expect(range.value.low, 8.0);
+    expect(range.value.high, 12.0);
+    expect(range.methodCode, 'A');
+    expect(range.value.rawValueText, contains('data_points=4'));
+    final sourcePayload =
+        jsonDecode(bundle.sourceDocuments.single.rawPayload)
+            as Map<String, dynamic>;
+    expect(
+      (sourcePayload['nutrient_statistics_audit'] as List<dynamic>)
+          .single['nutrient_source_code'],
+      '1',
+    );
+  });
+
+  test('FDC CSV numeric strings carry amino-acid profiles into projection', () {
+    const importer = FdcP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importCsvArchive({
+      'food.csv':
+          'fdc_id,description,data_type,food_category_id\n'
+          '456,"Beans, cooked",Foundation,9',
+      'food_category.csv': 'id,description\n9,legume',
+      'nutrient.csv':
+          'id,number,name,unit_name\n'
+          '1,203,Protein,g\n'
+          '2,504,Leucine,mg\n'
+          '3,510,Valine,g',
+      'food_nutrient.csv':
+          'fdc_id,nutrient_id,amount\n'
+          '456,1,8.5\n'
+          '456,2,2100\n'
+          '456,3,0',
+    }, sourceLabel: 'fdc_csv_amino_acids');
+
+    final projected = bundle.projectedFoods.single;
+    expect(projected.proteinG, 8.5);
+    expect(projected.aminoAcidProfile, isNotNull);
+    expect(projected.aminoAcidProfile!.leucine, closeTo(2.1, 1e-12));
+    expect(projected.aminoAcidProfile!.valine, 0);
+    expect(projected.aminoAcidProfile!.nutrientIds, ['504', '510']);
+    expect(projected.aminoAcidProfile!.partial, isFalse);
+  });
+
+  test('FDC projection preserves held amino-acid fields as partial', () {
+    const importer = FdcP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importFoods([
+      {
+        'fdcId': 457,
+        'description': 'Mixed-quality amino acid record',
+        'dataType': 'Foundation',
+        'foodCategory': 'other',
+        'foodNutrients': [
+          {
+            'amount': 2.1,
+            'nutrient': {'number': '504', 'unitName': 'g'},
+          },
+          {
+            'amount': 1.3,
+            'nutrient': {'number': '510'},
+          },
+        ],
+      },
+    ], sourceLabel: 'fdc_partial_amino_acids');
+
+    final profile = bundle.projectedFoods.single.aminoAcidProfile;
+    expect(profile, isNotNull);
+    expect(profile!.leucine, 2.1);
+    expect(profile.valine, isNull);
+    expect(profile.partial, isTrue);
+    expect(profile.nutrientIds, ['504']);
+  });
+
+  test('FDC projection retains a held-only competing field for audit', () {
+    const importer = FdcP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importFoods([
+      {
+        'fdcId': 458,
+        'description': 'Held-only amino acid record',
+        'dataType': 'Foundation',
+        'foodCategory': 'other',
+        'foodNutrients': [
+          {
+            'amount': 2.1,
+            'nutrient': {'number': '504'},
+          },
+        ],
+      },
+    ], sourceLabel: 'fdc_held_only_amino_acid');
+
+    final profile = bundle.projectedFoods.single.aminoAcidProfile;
+    expect(profile, isNotNull);
+    expect(profile!.leucine, isNull);
+    expect(profile.competingLnaaGrams, isNull);
+    expect(profile.partial, isTrue);
+    expect(profile.nutrientIds, isEmpty);
   });
 
   test('FDC importer can read foundation JSON from zip', () {
@@ -1664,7 +1895,12 @@ void main() {
         final entry = audit.first as Map;
         expect(entry['fdc_id'], '999');
         expect(entry['field'], 'foodPortions');
-        expect(entry['reason'], contains('raw_payload only'));
+        expect(entry['reason'], contains('retained as evidence only'));
+        expect(entry['reason'], contains('no serving is selected'));
+        expect(
+          entry['reason'],
+          contains('no nutrient conversion or rescaling is performed'),
+        );
         // Main fact tables remain limited to nutrient observations.
         expect(bundle.observations, hasLength(1));
       },
@@ -2578,7 +2814,7 @@ void main() {
         expect(pmdaProductPayload['route'], 'unspecified');
         expect(pmdaProductPayload['dosage_form'], 'unspecified');
 
-        // --- FDC: foodPortions kept in raw_payload audit only.
+        // --- FDC: source portion fields are structured evidence, not conversion.
         const fdc = FdcP0Importer(
           fetchClient: FakeSourceFetchClient(textByUrl: {}),
         );
@@ -2590,15 +2826,52 @@ void main() {
             'foodCategory': 'snack',
             'foodNutrients': [],
             'foodPortions': [
-              {'amount': 1, 'modifier': 'piece', 'gramWeight': 10.0},
+              {
+                'sequenceNumber': 1,
+                'amount': 1,
+                'measureUnit': {
+                  'id': 77,
+                  'name': 'piece',
+                  'abbreviation': 'pc',
+                },
+                'modifier': 'piece',
+                'gramWeight': 10.0,
+                'dataPoints': 4,
+                'footnote': 'fixture note',
+                'minYearAcquired': 2019,
+              },
             ],
           },
         ], sourceLabel: 'smoke_fdc');
         assertCrosswalkAuditConsistency(fdcBundle, label: 'FDC');
+        final fdcPortion =
+            fdcBundle.projectedFoods.single.foodPortionEvidence.single;
+        expect(
+          fdcPortion.sourceDocId,
+          fdcBundle.sourceDocuments.single.sourceDocId,
+        );
+        expect(fdcPortion.sourceFoodId, '11111');
+        expect(fdcPortion.recordLocator, '11111:foodPortions:0');
+        expect(fdcPortion.amount, 1.0);
+        expect(fdcPortion.measureUnitId, 77);
+        expect(fdcPortion.measureUnitName, 'piece');
+        expect(fdcPortion.measureUnitAbbreviation, 'pc');
+        expect(fdcPortion.gramWeight, 10.0);
+        expect(fdcPortion.dataPoints, 4);
+        expect(fdcPortion.minYearAcquired, 2019);
+        expect(fdcBundle.projectedFoods.single.proteinG, 0);
         final fdcPayload =
             jsonDecode(fdcBundle.sourceDocuments.single.rawPayload) as Map;
         expect(fdcPayload['food_portions_audit'], isA<List>());
-        expect((fdcPayload['food_portions_audit'] as List), isNotEmpty);
+        final portionAudit =
+            ((fdcPayload['food_portions_audit'] as List).single as Map);
+        expect((portionAudit['parsed_portions'] as List).single, isA<Map>());
+        expect(
+          (((portionAudit['parsed_portions'] as List).single
+                  as Map)['source_fields']
+              as Map)['gramWeight'],
+          10.0,
+        );
 
         // --- Ciqual: provenance summary, no methodology subtables.
         const ciqual = CiqualP0Importer(

@@ -7,9 +7,14 @@ import '../../core/models/food_item.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/user_profile.dart';
+import '../entities/dose_expression.dart';
+import '../entities/personal_observation.dart';
+import 'administration_dose_confirmation_coordinator.dart';
+import 'dosage_note_parser.dart';
 
 const personalLogHandoffFormat = 'parkinsum_personal_log_handoff';
-const personalLogHandoffSchemaVersion = 1;
+const personalLogHandoffSchemaVersion = 3;
+const personalLogHandoffDocumentSchemaVersion = 1;
 const personalLogHandoffMaxRecords = 5000;
 const personalLogHandoffMaxRangeDays = 366;
 const personalLogHandoffMaxPages = 96;
@@ -20,6 +25,7 @@ enum PersonalLogHandoffSection {
   historicalMedications,
   intakeLog,
   mealLog,
+  personalObservations,
   dataQualityAndProvenance,
 }
 
@@ -46,6 +52,7 @@ final class PersonalLogHandoffSnapshot {
     required this.activeDrugIds,
     required this.intakes,
     required this.meals,
+    this.observations = const <PersonalObservation>[],
     required this.medicationCatalog,
     required this.foodCatalog,
   });
@@ -55,6 +62,7 @@ final class PersonalLogHandoffSnapshot {
   final Iterable<String> activeDrugIds;
   final Iterable<Intake> intakes;
   final Iterable<Meal> meals;
+  final Iterable<PersonalObservation> observations;
   final Iterable<DrugDefinition> medicationCatalog;
   final Iterable<FoodItem> foodCatalog;
 }
@@ -69,6 +77,77 @@ final class PersonalLogHandoffDocumentPage {
   final List<String> lines;
 }
 
+sealed class PersonalLogHandoffDocumentBlock {
+  const PersonalLogHandoffDocumentBlock();
+
+  Map<String, Object?> toJson();
+}
+
+final class PersonalLogHandoffHeadingBlock
+    extends PersonalLogHandoffDocumentBlock {
+  const PersonalLogHandoffHeadingBlock({
+    required this.level,
+    required this.text,
+  });
+
+  final int level;
+  final String text;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'type': 'heading',
+    'level': level,
+    'text': text,
+  };
+}
+
+final class PersonalLogHandoffParagraphBlock
+    extends PersonalLogHandoffDocumentBlock {
+  const PersonalLogHandoffParagraphBlock({
+    required this.text,
+    this.warning = false,
+  });
+
+  final String text;
+  final bool warning;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'type': warning ? 'warning' : 'paragraph',
+    'text': text,
+  };
+}
+
+final class PersonalLogHandoffListItem {
+  PersonalLogHandoffListItem({
+    required this.text,
+    required Iterable<String> details,
+  }) : details = List<String>.unmodifiable(details);
+
+  final String text;
+  final List<String> details;
+
+  Map<String, Object?> toJson() => <String, Object?>{
+    'text': text,
+    'details': details,
+  };
+}
+
+final class PersonalLogHandoffListBlock
+    extends PersonalLogHandoffDocumentBlock {
+  PersonalLogHandoffListBlock({
+    required Iterable<PersonalLogHandoffListItem> items,
+  }) : items = List<PersonalLogHandoffListItem>.unmodifiable(items);
+
+  final List<PersonalLogHandoffListItem> items;
+
+  @override
+  Map<String, Object?> toJson() => <String, Object?>{
+    'type': 'list',
+    'items': items.map((item) => item.toJson()).toList(growable: false),
+  };
+}
+
 final class PersonalLogHandoffArtifact {
   const PersonalLogHandoffArtifact({
     required this.artifactId,
@@ -77,6 +156,7 @@ final class PersonalLogHandoffArtifact {
     required this.contentSha256,
     required this.fileName,
     required this.plainText,
+    required this.documentBlocks,
     required this.pages,
     required this.recordCounts,
     required this.unsupportedFields,
@@ -89,10 +169,13 @@ final class PersonalLogHandoffArtifact {
   final String contentSha256;
   final String fileName;
   final String plainText;
+  final List<PersonalLogHandoffDocumentBlock> documentBlocks;
   final List<PersonalLogHandoffDocumentPage> pages;
   final Map<String, int> recordCounts;
   final List<String> unsupportedFields;
   final Map<String, Object?> semanticDocument;
+
+  String get htmlFileName => fileName.replaceFirst(RegExp(r'\.pdf$'), '.html');
 }
 
 /// Builds a bounded, human-readable snapshot without clinical inference.
@@ -101,7 +184,14 @@ final class PersonalLogHandoffArtifact {
 /// treats a missing dose as zero. It also never serializes the raw owner scope;
 /// the scope is used only for a domain-separated artifact binding.
 final class PersonalLogHandoffSummaryService {
-  const PersonalLogHandoffSummaryService();
+  const PersonalLogHandoffSummaryService({
+    AdministrationDoseConfirmationCoordinator? doseConfirmationCoordinator,
+    DosageNoteParser? dosageNoteParser,
+  }) : _doseConfirmationCoordinator = doseConfirmationCoordinator,
+       _dosageNoteParser = dosageNoteParser;
+
+  final AdministrationDoseConfirmationCoordinator? _doseConfirmationCoordinator;
+  final DosageNoteParser? _dosageNoteParser;
 
   String sourceRevisionDigest({
     required PersonalLogHandoffSnapshot snapshot,
@@ -121,6 +211,11 @@ final class PersonalLogHandoffSummaryService {
   }) {
     final normalized = _normalize(snapshot: snapshot, options: options);
     final generatedUtc = generatedAt.toUtc();
+    final doseAssessments = _assessDoses(
+      intakes: normalized.intakes,
+      ownerScope: snapshot.ownerScope,
+      observedAt: generatedUtc,
+    );
     final sourceRevisionSha256 = _sha256(
       'parkinsum-handoff-source-revision-v1|'
       '${_canonicalJson(normalized.sourcePayload)}',
@@ -148,6 +243,7 @@ final class PersonalLogHandoffSummaryService {
       'historicalMedications': normalized.historicalDrugIds.length,
       'intakes': normalized.intakes.length,
       'meals': normalized.meals.length,
+      'personalObservations': normalized.observations.length,
       'mealItems': normalized.meals.fold<int>(
         0,
         (sum, meal) => sum + meal.items.length,
@@ -166,7 +262,41 @@ final class PersonalLogHandoffSummaryService {
       'redaction': options.redaction.name,
       'sections': options.sections.map((value) => value.name).toList()..sort(),
       'recordCounts': recordCounts,
+      'doseTruthBoundary': <String, Object?>{
+        'observedAtUtc': generatedUtc.toIso8601String(),
+        'parseableExpressionCount': doseAssessments.values
+            .where((assessment) => assessment.parseable)
+            .length,
+        'resultEligibleQuantityCount': doseAssessments.values
+            .where((assessment) => assessment.resultUse.eligible)
+            .length,
+        'canonicalMassQuantityCount': doseAssessments.values
+            .where(
+              (assessment) =>
+                  assessment.resultUse.eligible &&
+                  assessment.resultUse.milligrams != null,
+            )
+            .length,
+        'heldReasonCounts': _doseHeldReasonCounts(doseAssessments),
+        'parseableDoesNotImplyResultEligibility': true,
+        'resultEligibilityRequires': const <String>[
+          'valid_confirmation_receipt',
+          'conflict_free_assertion_graph',
+          'evidence_not_after_observation',
+        ],
+        'meaningBoundary':
+            'A parseable user expression is retained as input evidence only. '
+            'Canonical quantity output requires a valid record-bound '
+            'confirmation, a conflict-free assertion graph, and no evidence '
+            'from after this artifact observation time.',
+      },
       'unsupportedFields': unsupported,
+      'document': <String, Object?>{
+        'format': 'parkinsum_personal_log_semantic_document',
+        'schemaVersion': personalLogHandoffDocumentSchemaVersion,
+        'language': 'en',
+        'direction': 'auto',
+      },
       'sourceRevisionSha256': sourceRevisionSha256,
       'ownerBindingSha256': ownerBinding,
       'boundary': <String, Object?>{
@@ -187,8 +317,13 @@ final class PersonalLogHandoffSummaryService {
       recordCounts: recordCounts,
       unsupported: unsupported,
       sourceRevisionSha256: sourceRevisionSha256,
+      doseAssessments: doseAssessments,
     );
-    final pages = _paginate(contentLines);
+    final documentBlocks = _documentBlocks(contentLines);
+    (semantic['document']! as Map<String, Object?>)['blocks'] = documentBlocks
+        .map((block) => block.toJson())
+        .toList(growable: false);
+    final pages = _paginate(contentLines.expand(_wrapLine).toList());
     final plainText = pages.expand((page) => page.lines).join('\n').trimRight();
     if (utf8.encode(plainText).length > personalLogHandoffMaxPlainTextBytes) {
       throw const FormatException('handoff_plain_text_budget_exceeded');
@@ -213,6 +348,9 @@ final class PersonalLogHandoffSummaryService {
       fileName:
           'parkinsum-personal-log-$stamp-${artifactId.substring(0, 12)}.pdf',
       plainText: plainText,
+      documentBlocks: List<PersonalLogHandoffDocumentBlock>.unmodifiable(
+        documentBlocks,
+      ),
       pages: List<PersonalLogHandoffDocumentPage>.unmodifiable(pages),
       recordCounts: Map<String, int>.unmodifiable(recordCounts),
       unsupportedFields: List<String>.unmodifiable(unsupported),
@@ -304,11 +442,42 @@ final class PersonalLogHandoffSummaryService {
           );
           return time != 0 ? time : left.id.compareTo(right.id);
         });
+    final observations = <PersonalObservation>[];
+    if (options.sections.contains(
+      PersonalLogHandoffSection.personalObservations,
+    )) {
+      final observationIds = <String>{};
+      for (final observation in snapshot.observations) {
+        final id = _safeIdentifier(observation.id, 'observation.id');
+        _safeIdentifier(observation.recorderId, 'observation.recorderId');
+        _safeText(observation.originalTimezone, 'observation.originalTimezone');
+        if (observation.symptomLabel != null) {
+          _safeText(observation.symptomLabel!, 'observation.symptomLabel');
+        }
+        if (observation.notes != null) {
+          _safeText(observation.notes!, 'observation.notes');
+        }
+        if (!observationIds.add(id)) {
+          throw const FormatException('handoff_duplicate_observation_id');
+        }
+        if (!observation.occurredAt.isBefore(start) &&
+            observation.occurredAt.isBefore(endExclusive)) {
+          observations.add(observation);
+        }
+      }
+      observations.sort((left, right) {
+        final occurred = left.occurredAt.compareTo(right.occurredAt);
+        if (occurred != 0) return occurred;
+        final recorded = left.recordedAt.compareTo(right.recordedAt);
+        return recorded != 0 ? recorded : left.id.compareTo(right.id);
+      });
+    }
     final totalRecords =
         activeDrugIds.length +
         intakes.length +
         meals.length +
-        meals.fold<int>(0, (sum, meal) => sum + meal.items.length);
+        meals.fold<int>(0, (sum, meal) => sum + meal.items.length) +
+        observations.length;
     if (totalRecords > personalLogHandoffMaxRecords) {
       throw const FormatException('handoff_record_budget_exceeded');
     }
@@ -338,6 +507,12 @@ final class PersonalLogHandoffSummaryService {
       'activeDrugIds': activeDrugIds,
       'intakes': intakes.map((item) => item.toJson()).toList(),
       'meals': meals.map((item) => item.toJson()).toList(),
+      if (options.sections.contains(
+        PersonalLogHandoffSection.personalObservations,
+      ))
+        'observations': observations
+            .map((item) => item.toJson())
+            .toList(growable: false),
       'medications': <Object?>[
         for (final id in <String>{
           ...activeDrugIds,
@@ -359,6 +534,7 @@ final class PersonalLogHandoffSummaryService {
       historicalDrugIds: historicalDrugIds,
       intakes: intakes,
       meals: meals,
+      observations: observations,
       medications: medications,
       foods: foods,
       referencedMedicationIds: referencedMedicationIds,
@@ -375,6 +551,7 @@ final class PersonalLogHandoffSummaryService {
     required Map<String, int> recordCounts,
     required List<String> unsupported,
     required String sourceRevisionSha256,
+    required Map<String, _DoseHandoffAssessment> doseAssessments,
   }) {
     final lines = <String>[
       '# ParkinSUM personal log handoff',
@@ -421,6 +598,7 @@ final class PersonalLogHandoffSummaryService {
           normalized.intakes,
           normalized.medications,
           options.redaction,
+          doseAssessments,
         ),
       );
     }
@@ -430,12 +608,27 @@ final class PersonalLogHandoffSummaryService {
       );
     }
     if (options.sections.contains(
+      PersonalLogHandoffSection.personalObservations,
+    )) {
+      lines.addAll(
+        _observationLines(normalized.observations, options.redaction),
+      );
+    }
+    if (options.sections.contains(
       PersonalLogHandoffSection.dataQualityAndProvenance,
     )) {
       lines.addAll(<String>[
         '## Data quality and provenance',
         for (final entry in recordCounts.entries)
           '- ${entry.key}: ${entry.value}',
+        '- Parseable dose expressions: '
+            '${doseAssessments.values.where((assessment) => assessment.parseable).length}',
+        '- Result-eligible confirmed dose quantities: '
+            '${doseAssessments.values.where((assessment) => assessment.resultUse.eligible).length}',
+        '- Parseable dose text remains input evidence and does not become '
+            'result-eligible without a valid confirmation receipt, a '
+            'conflict-free assertion graph, and evidence available by the '
+            'artifact observation time.',
         if (unsupported.isEmpty) '- Unsupported fields: none detected',
         for (final field in unsupported) '- Unsupported/unknown: $field',
         '- Original timestamp lexemes and time-zone identifiers are not '
@@ -450,7 +643,60 @@ final class PersonalLogHandoffSummaryService {
       'Artifact contains no algorithm rank, recommendation, diagnosis, or '
           'treatment instruction.',
     ]);
-    return lines.expand(_wrapLine).toList(growable: false);
+    return lines;
+  }
+
+  List<PersonalLogHandoffDocumentBlock> _documentBlocks(List<String> lines) {
+    final blocks = <PersonalLogHandoffDocumentBlock>[];
+    final listParts = <List<String>>[];
+
+    void closeList() {
+      if (listParts.isEmpty) return;
+      blocks.add(
+        PersonalLogHandoffListBlock(
+          items: listParts.map(
+            (parts) => PersonalLogHandoffListItem(
+              text: parts.first,
+              details: parts.skip(1),
+            ),
+          ),
+        ),
+      );
+      listParts.clear();
+    }
+
+    for (final line in lines) {
+      if (line.isEmpty) {
+        closeList();
+      } else if (line.startsWith('# ')) {
+        closeList();
+        blocks.add(
+          PersonalLogHandoffHeadingBlock(level: 1, text: line.substring(2)),
+        );
+      } else if (line.startsWith('## ')) {
+        closeList();
+        blocks.add(
+          PersonalLogHandoffHeadingBlock(level: 2, text: line.substring(3)),
+        );
+      } else if (line.startsWith('! ')) {
+        closeList();
+        blocks.add(
+          PersonalLogHandoffParagraphBlock(
+            text: line.substring(2),
+            warning: true,
+          ),
+        );
+      } else if (line.startsWith('- ')) {
+        listParts.add(<String>[line.substring(2)]);
+      } else if (line.startsWith('  ') && listParts.isNotEmpty) {
+        listParts.last.add(line.trimLeft());
+      } else {
+        closeList();
+        blocks.add(PersonalLogHandoffParagraphBlock(text: line));
+      }
+    }
+    closeList();
+    return List<PersonalLogHandoffDocumentBlock>.unmodifiable(blocks);
   }
 
   List<String> _medicationLines({
@@ -490,10 +736,89 @@ final class PersonalLogHandoffSummaryService {
     return <String>[...lines, ''];
   }
 
+  List<String> _observationLines(
+    List<PersonalObservation> observations,
+    PersonalLogHandoffRedaction redaction,
+  ) {
+    final lines = <String>['## Personal observations'];
+    if (observations.isEmpty) {
+      return <String>[...lines, '- None recorded in this range', ''];
+    }
+    if (redaction == PersonalLogHandoffRedaction.countsOnly) {
+      final statusCounts = <PersonalObservationStatus, int>{
+        for (final status in PersonalObservationStatus.values) status: 0,
+      };
+      for (final observation in observations) {
+        statusCounts[observation.status] =
+            statusCounts[observation.status]! + 1;
+      }
+      return <String>[
+        ...lines,
+        '- Count: ${observations.length}; '
+            '${statusCounts.entries.map((entry) => '${entry.key.name}=${entry.value}').join('; ')}',
+        '',
+      ];
+    }
+    lines.add(
+      '- Recorded observations only. No trend, diagnosis, treatment-response, '
+      'threshold interpretation, or causal relationship is calculated.',
+    );
+    for (final observation in observations) {
+      final kindLabel = switch (observation.kind) {
+        PersonalObservationKind.symptom => 'symptom',
+        PersonalObservationKind.selfReportedMotorState => 'motor state',
+        PersonalObservationKind.bloodPressure => 'blood pressure',
+      };
+      final valueLabel = switch (observation.kind) {
+        PersonalObservationKind.symptom => _safeText(
+          observation.symptomLabel!,
+          'observation.symptomLabel',
+        ),
+        PersonalObservationKind.selfReportedMotorState =>
+          observation.motorState?.name ?? 'unknown',
+        PersonalObservationKind.bloodPressure =>
+          observation.systolic == null || observation.diastolic == null
+              ? 'unknown'
+              : '${observation.systolic} / ${observation.diastolic} ${observation.unit}',
+      };
+      lines.add('- $kindLabel: $valueLabel; status=${observation.status.name}');
+      lines.add(
+        '  occurred UTC=${observation.occurredAt.toIso8601String()}; '
+        'recorded UTC=${observation.recordedAt.toIso8601String()}; '
+        'original timezone=${_safeText(observation.originalTimezone, 'observation.originalTimezone')}',
+      );
+      lines.add('  source=${observation.source.name}');
+      switch (observation.kind) {
+        case PersonalObservationKind.symptom:
+          lines.add(
+            '  severity=${observation.severity == null ? 'unknown' : '${observation.severity}/10 (recorded field; not a validated scale)'}',
+          );
+        case PersonalObservationKind.selfReportedMotorState:
+          lines.add(
+            '  recorded motor state=${observation.motorState?.name ?? 'unknown'}',
+          );
+        case PersonalObservationKind.bloodPressure:
+          lines.add(
+            '  measurement=${observation.systolic == null || observation.diastolic == null ? 'not present' : '${observation.systolic} / ${observation.diastolic} ${observation.unit}'}; '
+            'posture=${observation.posture?.name ?? 'unknown'}',
+          );
+      }
+      if (redaction == PersonalLogHandoffRedaction.detailed &&
+          observation.notes != null &&
+          observation.notes!.trim().isNotEmpty) {
+        lines.add(
+          '  note=${_safeText(observation.notes!, 'observation.notes')}',
+        );
+      }
+    }
+    return <String>[...lines, ''];
+  }
+
   List<String> _intakeLines(
     List<Intake> intakes,
     Map<String, DrugDefinition> medications,
     PersonalLogHandoffRedaction redaction,
+    Map<String, _DoseHandoffAssessment> doseAssessments,
   ) {
     final lines = <String>['## Medication intake log'];
     if (intakes.isEmpty) return <String>[...lines, '- None recorded', ''];
@@ -507,7 +832,10 @@ final class PersonalLogHandoffSummaryService {
           : _safeText(medication.genericName, 'genericName');
       lines.add('- ${_storedTimestamp(intake.takenAt)} — $name');
       lines.add('  original dose=${_originalDose(intake)}');
-      lines.add('  canonical dose=${_canonicalDose(intake)}');
+      final doseAssessment = doseAssessments[intake.id]!;
+      lines.add('  dose expression=${_doseExpression(doseAssessment)}');
+      lines.add('  result-use status=${_doseResultStatus(doseAssessment)}');
+      lines.add('  canonical dose=${_canonicalDose(doseAssessment)}');
       lines.add(
         '  form=${_known(intake.dosageForm)}; route=${_known(intake.route)}; '
         'release=${_known(intake.releaseType)}',
@@ -632,6 +960,57 @@ final class PersonalLogHandoffSummaryService {
     if (remaining.isNotEmpty) yield first ? remaining : '$prefix$remaining';
   }
 
+  Map<String, _DoseHandoffAssessment> _assessDoses({
+    required List<Intake> intakes,
+    required String ownerScope,
+    required DateTime observedAt,
+  }) {
+    final parser = _dosageNoteParser ?? DosageNoteParser();
+    final coordinator =
+        _doseConfirmationCoordinator ??
+        AdministrationDoseConfirmationCoordinator(parser: parser);
+    final assessments = <String, _DoseHandoffAssessment>{};
+    for (final intake in intakes) {
+      assessments[intake.id] = _DoseHandoffAssessment(
+        parseResult: parser.inspect(intake.dosageNote),
+        resultUse: coordinator.evaluateForResultUse(
+          intake,
+          ownerScope: ownerScope,
+          observedAt: observedAt,
+        ),
+      );
+    }
+    final parseableCount = assessments.values
+        .where((assessment) => assessment.parseable)
+        .length;
+    final eligibleCount = assessments.values
+        .where((assessment) => assessment.resultUse.eligible)
+        .length;
+    // ignore: avoid_print - critical privacy-minimal handoff truth-boundary log.
+    print(
+      '[PersonalLogHandoffDoseTruth] observedAtUtc='
+      '${observedAt.toUtc().toIso8601String()} total=${assessments.length} '
+      'parseable=$parseableCount resultEligible=$eligibleCount',
+    );
+    return Map<String, _DoseHandoffAssessment>.unmodifiable(assessments);
+  }
+
+  Map<String, int> _doseHeldReasonCounts(
+    Map<String, _DoseHandoffAssessment> assessments,
+  ) {
+    final counts = <String, int>{};
+    for (final assessment in assessments.values) {
+      if (assessment.resultUse.eligible) continue;
+      for (final reason in assessment.resultUse.reasonCodes) {
+        counts.update(reason, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+    return <String, int>{
+      for (final reason in counts.keys.toList()..sort())
+        reason: counts[reason]!,
+    };
+  }
+
   String _originalDose(Intake intake) {
     final note = intake.dosageNote.trim();
     if (note.isNotEmpty) return _safeText(note, 'dosageNote');
@@ -639,20 +1018,42 @@ final class PersonalLogHandoffSummaryService {
     return '${_number(intake.doseAmount!)} ${_safeText(intake.doseUnit!, 'doseUnit')}';
   }
 
-  String _canonicalDose(Intake intake) {
-    final amount = intake.doseAmount;
-    final rawUnit = intake.doseUnit?.trim().toLowerCase();
-    if (amount == null || rawUnit == null || rawUnit.isEmpty) return 'unknown';
-    final milligrams = switch (rawUnit) {
-      'mg' || 'milligram' || 'milligrams' => amount,
-      'g' || 'gram' || 'grams' => amount * 1000,
-      'mcg' || 'µg' || 'ug' || 'microgram' || 'micrograms' => amount / 1000,
-      _ => null,
-    };
-    if (milligrams == null || !milligrams.isFinite) {
-      return 'unsupported unit: ${_safeText(intake.doseUnit!, 'doseUnit')}';
+  String _doseExpression(_DoseHandoffAssessment assessment) {
+    final expression = assessment.parseResult.expression;
+    if (!assessment.parseable || expression == null) {
+      final reasons = assessment.parseResult.reasonCodes.isEmpty
+          ? 'dose.expression_unavailable'
+          : assessment.parseResult.reasonCodes.join(',');
+      return 'held; parsed quantity=unavailable; reasons=$reasons';
     }
-    return '${_number(milligrams)} mg';
+    return 'parseable; parsed quantity=${_number(expression.value)} '
+        '${expression.unit.code}; grammar='
+        '${assessment.parseResult.grammarId}/'
+        '${assessment.parseResult.grammarVersion}; result eligibility='
+        'not established by parsing';
+  }
+
+  String _doseResultStatus(_DoseHandoffAssessment assessment) {
+    if (assessment.resultUse.eligible) {
+      return 'result-eligible (confirmed; conflict-free; as-of artifact)';
+    }
+    final reasons = assessment.resultUse.reasonCodes.isEmpty
+        ? 'dose.result_gate_held'
+        : assessment.resultUse.reasonCodes.join(',');
+    return 'held; reasons=$reasons';
+  }
+
+  String _canonicalDose(_DoseHandoffAssessment assessment) {
+    final resultUse = assessment.resultUse;
+    if (!resultUse.eligible) return 'unavailable';
+    final milligrams = resultUse.milligrams;
+    if (milligrams != null) return '${_number(milligrams)} mg';
+    final value = resultUse.value;
+    final unit = resultUse.unit;
+    if (value == null || unit == null || unit.trim().isEmpty) {
+      return 'unavailable';
+    }
+    return '${_number(value)} ${_safeText(unit, 'doseUnit')}';
   }
 
   String _nutrient(double value, FoodItem? food, String field, String unit) {
@@ -785,6 +1186,7 @@ final class _NormalizedHandoff {
     required this.historicalDrugIds,
     required this.intakes,
     required this.meals,
+    required this.observations,
     required this.medications,
     required this.foods,
     required this.referencedMedicationIds,
@@ -798,9 +1200,22 @@ final class _NormalizedHandoff {
   final List<String> historicalDrugIds;
   final List<Intake> intakes;
   final List<Meal> meals;
+  final List<PersonalObservation> observations;
   final Map<String, DrugDefinition> medications;
   final Map<String, FoodItem> foods;
   final Set<String> referencedMedicationIds;
   final Set<String> referencedFoodIds;
   final Map<String, Object?> sourcePayload;
+}
+
+final class _DoseHandoffAssessment {
+  const _DoseHandoffAssessment({
+    required this.parseResult,
+    required this.resultUse,
+  });
+
+  final DoseExpressionParseResult parseResult;
+  final AdministrationDoseResultUseEvaluation resultUse;
+
+  bool get parseable => parseResult.accepted;
 }

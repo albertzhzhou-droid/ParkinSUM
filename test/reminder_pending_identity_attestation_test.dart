@@ -38,6 +38,29 @@ void main() {
       expect(result.extraCount, 0);
     });
 
+    test('old-language system copy is a replaced pending identity', () {
+      final english = _reminder();
+      final french = english.copyWith(
+        notificationLocaleCode: 'fr',
+        notificationLocaleDecisionCode: 'fr',
+      );
+      final plannedPayload =
+          ReminderNotificationResponseCoordinator.payloadForReminder(french);
+      final installedPayload =
+          ReminderNotificationResponseCoordinator.payloadForReminder(english);
+
+      final result = const ReminderPendingIdentityAttestor().evaluate(
+        planned: [_identity(7, plannedPayload)],
+        installed: [_identity(7, installedPayload)],
+      );
+
+      expect(plannedPayload, isNot(installedPayload));
+      expect(result.status, ReminderPendingIdentityAttestationStatus.drift);
+      expect(result.replacedCount, 1);
+      expect(result.missingCount, 0);
+      expect(result.extraCount, 0);
+    });
+
     test('reports missing and extra identities separately', () {
       final result = const ReminderPendingIdentityAttestor().evaluate(
         planned: [_identity(1, 'one'), _identity(2, 'two')],
@@ -186,7 +209,39 @@ void main() {
         );
         expect(controller.lastSynchronizedAt, isNull);
         expect(controller.pendingIdentityAttestation?.replacedCount, 1);
+        expect(
+          controller.deliveryReadiness.registry,
+          ReminderRegistryReadiness.drift,
+        );
         expect(await controller.resynchronize(), isFalse);
+      },
+    );
+
+    test(
+      'uninspectable registry remains separate from visible delivery',
+      () async {
+        final controller = UserLoggingReminderController(
+          userScope: 'user-a',
+          repository: UserLoggingReminderRepository(
+            storage: _MemoryDataService(),
+          ),
+          gateway: _AttestingGateway(
+            const ReminderPendingIdentityAttestation.uninspectable(
+              plannedCount: 1,
+              installedCount: 0,
+            ),
+          ),
+        );
+
+        expect(await controller.save(_reminder()), isTrue);
+        expect(
+          controller.deliveryReadiness.registry,
+          ReminderRegistryReadiness.uninspectable,
+        );
+        expect(
+          controller.deliveryReadiness.visibleDelivery,
+          ReminderVisibleDeliveryReadiness.unverified,
+        );
       },
     );
   });

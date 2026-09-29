@@ -3,6 +3,8 @@ import '../../core/models/meal.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
 import 'food_recommendation.dart';
+import 'food_composition_candidate_set_snapshot.dart';
+import 'food_rank_sensitivity_assessment.dart';
 import 'mechanistic_candidate_score.dart';
 import 'mechanistic_conflict_result.dart';
 import 'ranker_eligibility.dart';
@@ -39,6 +41,8 @@ class NextMealRecommendationRequest {
 
 class NextMealRecommendationResult {
   final List<FoodRecommendation> recommendations;
+  final FoodCompositionCandidateSetSnapshot candidateSetSnapshot;
+  final FoodRankSensitivityAssessment? rankSensitivityAssessment;
   final bool aiUsed;
   final String decisionPath;
   final List<String> explanations;
@@ -73,6 +77,8 @@ class NextMealRecommendationResult {
 
   const NextMealRecommendationResult({
     required this.recommendations,
+    required this.candidateSetSnapshot,
+    this.rankSensitivityAssessment,
     required this.aiUsed,
     required this.decisionPath,
     required this.explanations,

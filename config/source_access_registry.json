@@ -1,11 +1,11 @@
 {
   "registry_type": "source_access_registry",
-  "version": "1.0.3",
+  "version": "1.0.24",
   "not_clinically_calibrated": true,
   "not_legal_advice": true,
   "not_license_clearance": true,
   "no_production_ingestion_today": true,
-  "last_policy_reviewed": "2026-08-17",
+  "last_policy_reviewed": "2026-09-25",
   "safety_boundary": "Educational/research prototype. This registry is source governance / release hygiene metadata only. It is not legal advice, not license clearance, not clinical validation, performs no live ingestion, and does not make any fixture-tested source production-ready.",
   "companion_doc": "docs/SOURCE_ACCESS_AND_LICENSES.md",
   "sources": [
@@ -100,6 +100,41 @@
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-05-30",
       "notes": "Public web service; no key. Opt-in smoke only."
+    },
+    {
+      "source_id": "src.openfda.drug.label",
+      "display_name": "openFDA Drug Label API — interaction-section text",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "drug_label",
+      "data_domain": "drug",
+      "access_method": "open_rest_api_user_initiated",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_user_initiated_live_lookup",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Every lookup requires explicit in-app confirmation. The manual path sends two typed generic names; a separate path sends two user-selected, query-safe RxNorm display names and the user's network address to api.fda.gov.",
+        "At most five harmonized label records per name are shown; not every label is necessarily harmonized or returned.",
+        "Literal text matches and missing matches are not drug-interaction findings or evidence of safety.",
+        "The selected-candidate path sends no RxCUI or original typed term to FDA; no saved medication, account, symptom, or note data is read, and results are not persisted or passed to rules.",
+        "FDA's openFDA API states that results are unvalidated and should not be used to make medical-care decisions."
+      ],
+      "documentation_refs": [
+        "docs/SOURCE_ACCESS_AND_LICENSES.md",
+        "docs/CDSS_OPEN_SOURCE_LANDSCAPE_2026-09-22.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-09-25",
+      "notes": "Read-only user-triggered research view. Manually entered and selected-RxNorm-name lookups have distinct consent controls and egress data classes. Queries and responses are not persisted or logged; displayed results exist in page memory only. A valid Set ID/version produces a copy-only DailyMed exact-version URL; the app makes no DailyMed request, and opening the copied URL outside the app sends the label identifier and network metadata to DailyMed. Source terms/license review and native user evaluation remain open."
     },
     {
       "source_id": "src.healthcanada.dpd",
@@ -361,9 +396,9 @@
       "access_method": "open_rest_api",
       "requires_api_key": false,
       "requires_account": false,
-      "license_review_needed": true,
+      "license_review_needed": false,
       "legal_review_needed": false,
-      "implementation_status": "spec_only",
+      "implementation_status": "implemented_user_initiated_live_lookup",
       "allowed_for_fixture": true,
       "allowed_for_live_smoke": false,
       "allowed_for_production": false,
@@ -372,15 +407,20 @@
       "can_support_identity_or_coding": true,
       "can_support_source_quality_scoring": false,
       "known_limitations": [
-        "Concept normalization only; not mechanism evidence.",
-        "No concrete parser today (spec only)."
+        "Approximate-term results are lexical candidates; rank and API score are not identity confidence or clinical evidence.",
+        "Only named candidate rows whose source vocabulary is RXNORM are shown; restricted-source names are omitted.",
+        "A separately consented user action may send two selected, query-safe candidate display names to openFDA as search text; it sends no RxCUI and does not confirm medication identity or create a mapping.",
+        "Two manually entered terms are sent only after separate user consent. A further consent and candidate-specific action sends only one RxCUI to the active concept properties endpoint; no saved medication state, query cache, or durable result persistence is used.",
+        "The properties endpoint describes the current active RxNorm dataset. A missing properties element does not establish that the concept is retired or absent from all RxNorm history.",
+        "A third separate consent and candidate-specific action can request historical status for one RxCUI from the most recent candidate search. Remapped RxCUIs remain unselected candidates, are not followed automatically, and do not establish medication identity, substitution, absence, or clinical appropriateness.",
+        "No terminology rows or mappings are bundled, and absence from this response is not evidence that a medicine or concept is absent."
       ],
       "documentation_refs": [
         "docs/SOURCE_ACCESS_AND_LICENSES.md"
       ],
       "bibliography_refs": [],
-      "last_policy_reviewed": "2026-05-30",
-      "notes": "Identity normalization only."
+      "last_policy_reviewed": "2026-09-25",
+      "notes": "Opt-in active RXNORM lexical candidate discovery, separately consented current concept-property and historical status inspection for one recent candidate, and user-selected display-name handoff to a separately governed openFDA query; NLM attribution is displayed, remapped candidates are never auto-followed, and no candidate is confirmed or used by a clinical rule."
     },
     {
       "source_id": "src.usda.fdc.api",
@@ -619,14 +659,15 @@
       "can_support_identity_or_coding": true,
       "can_support_source_quality_scoring": true,
       "known_limitations": [
-        "Component identifiers + conversion guidelines; no parser today."
+        "Component identifiers + conversion guidelines; no parser today.",
+        "The official tagnames page reports a 2022-10-20 update and still marks the consolidated Excel list as coming soon; no complete current release is established."
       ],
       "documentation_refs": [
         "docs/SOURCE_ACCESS_AND_LICENSES.md"
       ],
       "bibliography_refs": [],
-      "last_policy_reviewed": "2026-05-30",
-      "notes": "Standardizes nutrient basis + missingness; citation candidate."
+      "last_policy_reviewed": "2026-09-24",
+      "notes": "Standardizes nutrient basis + missingness; a page-level currency manifest is metadata only and does not authorize tag mappings."
     },
     {
       "source_id": "src.fda.spl.standard",
@@ -1271,7 +1312,9 @@
         "Primary methods paper supporting comparison of empirical gastric-emptying curves; it does not establish a transportable individual parameter set or validate ParkinSUM."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/MECHANISTIC_INVARIANT_AND_UNIT_GATE_RESEARCH_2026-08-26.md",
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
       ],
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-08-17",
@@ -1301,7 +1344,8 @@
         "Dual-labelled meal study in 24 healthy volunteers; meal-specific biphasic behavior and a fitted curve do not establish disease-wide or individual validity."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
       ],
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-08-17",
@@ -1331,7 +1375,8 @@
         "Retrospective records with four hourly scintigraphic measurements and informative priors; relative fit does not prove universal structural choice or individual identifiability."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
       ],
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-08-17",
@@ -1361,7 +1406,8 @@
         "Fasting pellet profiles are dosage-form and state specific; the flexible five-parameter double-Weibull form creates substantial practical-identifiability and overfit risk with sparse observations."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
       ],
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-08-17",
@@ -1391,11 +1437,106 @@
         "Linear-exponential fitting applies to MRI-measured absolute gastric volume with possible early secretion-related increase; it is not interchangeable with normalized tracer retention."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
       ],
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-08-17",
       "notes": "Open-access primary study used to enforce observable-and-formula coupling."
+    },
+    {
+      "source_id": "src.tougas.gastric.scintigraphy.2000",
+      "display_name": "Tougas et al. — multicenter standardized gastric-emptying scintigraphy (2000)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Sixty-nine healthy volunteers from seven Canadian institutions and a standardized labelled meal; protocol agreement does not establish patient-specific, meal-independent, disease-wide, or ParkinSUM calibration.",
+        "The simplified four-time-point result cannot be generalized to structures or observables with different early-phase information requirements."
+      ],
+      "documentation_refs": [
+        "docs/GASTRIC_OBSERVABLE_INVARIANT_AND_PRECISION_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "PMID 10638563; direct normalized scintigraphic-retention and acquisition-schedule boundary."
+    },
+    {
+      "source_id": "src.ogungbenro.gastric.identifiability.2011",
+      "display_name": "Ogungbenro and Aarons — structural identifiability of a gastric breath-test model (2011)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "The studied 13C-octanoic-acid breath signal is an indirect observable that includes absorption, metabolism, and excretion; its compartment structure and constraints are not transferable to direct scintigraphic or MRI observations.",
+        "A globally identifiable research design does not establish practical identifiability, transportability, biological validity, or clinical calibration in ParkinSUM."
+      ],
+      "documentation_refs": [
+        "docs/GASTRIC_OBSERVABLE_INVARIANT_AND_PRECISION_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "PMID 21347679; supports experiment- and measurement-model-specific identifiability review before fitting."
+    },
+    {
+      "source_id": "src.raue.profilelikelihood.2009",
+      "display_name": "Raue et al. — profile-likelihood identifiability analysis (2009)",
+      "owner": "Peer-reviewed open-access literature",
+      "jurisdiction": "Global",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "General dynamical-systems identifiability method; it does not choose a gastric structure, validate a ParkinSUM parameter, or replace an observable-matched prospective study.",
+        "Profile-likelihood results depend on the declared model, data, likelihood, bounds, and implementation and require independent review."
+      ],
+      "documentation_refs": [
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md",
+        "docs/GASTRIC_OBSERVABLE_INVARIANT_AND_PRECISION_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "PMID 19505944; practical-identifiability and profile-likelihood governance precedent."
     },
     {
       "source_id": "src.guebila.levodopa.pbpk.2016",
@@ -1482,10 +1623,11 @@
         "Regulatory reporting guidance, not approval, qualification, clinical validation, or evidence that ParkinSUM satisfies an intended context of use."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/CONTEXT_OF_USE_REQUALIFICATION_RESEARCH_2026-08-26.md"
       ],
       "bibliography_refs": [],
-      "last_policy_reviewed": "2026-08-17",
+      "last_policy_reviewed": "2026-08-26",
       "notes": "Used for intended-purpose, platform, input, assumption, uncertainty, and predictive-performance reporting boundaries."
     },
     {
@@ -1512,11 +1654,832 @@
         "Risk-informed credibility guidance for a defined context of use; it is not regulatory clearance, clinical validation, or a claim that ParkinSUM meets the guidance."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/MECHANISTIC_INVARIANT_AND_UNIT_GATE_RESEARCH_2026-08-26.md",
+        "docs/CONTEXT_OF_USE_REQUALIFICATION_RESEARCH_2026-08-26.md",
+        "docs/PROSPECTIVE_MODEL_CREDIBILITY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_EVIDENCE_EXECUTION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_PROTOCOL_TRANSPARENCY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_BLINDED_REPLICATION_RESEARCH_2026-08-26.md"
       ],
       "bibliography_refs": [],
-      "last_policy_reviewed": "2026-08-17",
+      "last_policy_reviewed": "2026-08-26",
       "notes": "Used to separate engineering verification from context-of-use model credibility."
+    },
+    {
+      "source_id": "src.fda.gmlp.2021",
+      "display_name": "FDA / Health Canada / MHRA — Good Machine Learning Practice guiding principles",
+      "owner": "U.S. Food and Drug Administration / Health Canada / MHRA",
+      "jurisdiction": "US / Canada / UK",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Guiding principles for ML-enabled medical devices; ParkinSUM's current mechanism trace is not an ML medical device and no conformance or regulatory claim is made.",
+        "Used only as conservative design input for dataset representativeness, training-test independence, human-team testing, transparency, and lifecycle monitoring."
+      ],
+      "documentation_refs": [
+        "docs/PROSPECTIVE_MODEL_CREDIBILITY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_EVIDENCE_EXECUTION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_PROTOCOL_TRANSPARENCY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_BLINDED_REPLICATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary regulator-authored source for patient, acquisition, and site independence boundaries in the queued execution-attestation gate."
+    },
+    {
+      "source_id": "src.nist.ai-rmf.1.0.core",
+      "display_name": "NIST — AI Risk Management Framework 1.0 Core",
+      "owner": "U.S. National Institute of Standards and Technology",
+      "jurisdiction": "US",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Voluntary risk-management framework, not certification, clinical validation, regulatory review, or evidence that ParkinSUM is trustworthy.",
+        "The framework is broader than ParkinSUM's deterministic mechanistic trace and is used only for documented context, TEVV, uncertainty, independent review, limitations, and lifecycle tracking architecture."
+      ],
+      "documentation_refs": [
+        "docs/PROSPECTIVE_MODEL_CREDIBILITY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_EVIDENCE_EXECUTION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_PROTOCOL_TRANSPARENCY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_BLINDED_REPLICATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary public framework source for transparent context, scientific-integrity, documented test sets and independent TEVV boundaries."
+    },
+    {
+      "source_id": "src.fda.ich-e6-r3.gcp.2025",
+      "display_name": "FDA — ICH E6(R3) Good Clinical Practice final guidance",
+      "owner": "U.S. Food and Drug Administration / International Council for Harmonisation",
+      "jurisdiction": "US / Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Clinical-trial good-practice guidance; ParkinSUM does not conduct or claim a regulated clinical trial and does not claim GCP implementation or compliance.",
+        "Used only as conservative research-governance input for audit trails, roles, UTC ordering, attributed corrections, dataset finalization, record traceability, randomization procedure, emergency-unblinding and transparent result-reporting architecture."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_EVIDENCE_EXECUTION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_PROTOCOL_TRANSPARENCY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_RANDOMIZATION_INTERIM_FIREWALL_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary governance source for the synthetic protocol ledger and randomization/interim-access firewall; it does not establish GCP implementation or conformance."
+    },
+    {
+      "source_id": "src.ich.e9.statistical-principles",
+      "display_name": "ICH E9 — Statistical Principles for Clinical Trials",
+      "owner": "International Council for Harmonisation",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Clinical-trial statistical guidance; ParkinSUM does not conduct a clinical trial or claim ICH implementation, statistical adequacy, regulatory acceptance or clinical validation.",
+        "Used only as conservative governance input for prospective analysis sets, missing-data methods, sample-size assumptions, uncertainty, multiplicity, interim plans, subgroup boundaries and complete result retention."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_STATISTICAL_ANALYSIS_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_RANDOMIZATION_INTERIM_FIREWALL_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary-source research basis for the synthetic statistical-analysis contract and implemented randomization/interim firewall."
+    },
+    {
+      "source_id": "src.fda.dmc.final.2006",
+      "display_name": "FDA — Establishment and Operation of Clinical Trial Data Monitoring Committees",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Clinical-trial committee guidance; synthetic roles in one local process cannot establish an independent DMC, sponsor firewall, regulatory conformance or real committee governance.",
+        "Used only for conservative access separation, confidentiality, committee-conflict, closed-session, recommendation-retention and sponsor-exposure controls."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_RANDOMIZATION_INTERIM_FIREWALL_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_ADAPTIVE_DESIGN_SIMULATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary regulator-authored source for the synthetic interim-review firewall and committee recommendation chain."
+    },
+    {
+      "source_id": "src.fda.adaptive-design.final.2019",
+      "display_name": "FDA — Adaptive Designs for Clinical Trials of Drugs and Biologics final guidance",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Regulatory guidance for clinical-trial adaptive designs; ParkinSUM does not conduct an adaptive clinical trial or claim implementation, operating-characteristic adequacy or regulatory acceptance.",
+        "Queued only as research input for prespecified simulation scenarios, decision-rule calibration, type-I error, power, bias, coverage and Monte Carlo uncertainty governance."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_RANDOMIZATION_INTERIM_FIREWALL_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_ADAPTIVE_DESIGN_SIMULATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Final-guidance research input for the queued adaptive-design operating-characteristics simulation gate; no implementation claim."
+    },
+    {
+      "source_id": "src.ich.e20.adaptive-designs.draft.2025",
+      "display_name": "ICH E20 — Adaptive Designs for Clinical Trials draft guidance",
+      "owner": "International Council for Harmonisation",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Draft guidance published for consultation and explicitly not for implementation; requirements may change before finalization.",
+        "Retained only as clearly labeled future-design research input and never treated as current regulation, conformance evidence or a production source."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_RANDOMIZATION_INTERIM_FIREWALL_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_ADAPTIVE_DESIGN_SIMULATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Draft-only research input for the queued adaptive-design simulation gate; not for implementation."
+    },
+    {
+      "source_id": "src.fda.complex-innovative-trial-design.final.2020",
+      "display_name": "FDA — Interacting with the FDA on Complex Innovative Trial Designs final guidance",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Final nonbinding guidance about regulator interaction for complex innovative clinical-trial designs; a local synthetic report is not an FDA interaction, submission or review.",
+        "Used only to research reproducible scenario, code, seed, operating-characteristic and reviewer-artifact expectations."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_ADAPTIVE_DESIGN_SIMULATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Final-guidance research input for reproducible simulation reporting; no regulatory acceptance claim."
+    },
+    {
+      "source_id": "src.fda.bayesian-methodology.draft.2026",
+      "display_name": "FDA — Use of Bayesian Methodology in Clinical Trials draft guidance",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "January 2026 draft guidance explicitly marked not for implementation; content may change and cannot be treated as current conformance or regulatory acceptance.",
+        "Used only to define synthetic methodology-governance checks for prior provenance, external-data borrowing, prior-data conflict, computation and posterior-decision calibration."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_ADAPTIVE_DESIGN_SIMULATION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_BAYESIAN_BORROWING_CALIBRATION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Draft-only research input for a synthetic Bayesian-methodology governance gate; not a conformance, clinical or regulatory claim."
+    },
+    {
+      "source_id": "src.pubmed.li-chen-scott.emap-prior-conflict.2016",
+      "display_name": "Li, Chen, and Scott — Empirical MAP priors for prior-data conflict",
+      "owner": "Journal of Biopharmaceutical Statistics / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_metadata",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Primary methods article and application-specific simulation evidence; it does not establish universal robustness, ParkinSUM clinical validity or regulatory acceptance.",
+        "Only abstract-level method claims were used. No article code, tables, figures or text were copied into the app."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_BORROWING_CALIBRATION_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMID:27541990",
+        "DOI:10.1080/10543406.2016.1226324"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Concept-only input supporting explicit prior-data conflict scenarios and separate frequentist operating-characteristic evaluation."
+    },
+    {
+      "source_id": "src.pubmed.zhang-pan-yuan.elastic-map.2021",
+      "display_name": "Zhang, Pan, and Yuan — Elastic MAP dynamic borrowing",
+      "owner": "Contemporary Clinical Trials / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_metadata",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Primary method and biosimilar-trial simulation evidence; asymptotic and study-specific findings do not prove universal calibration or validate ParkinSUM outputs.",
+        "ParkinSUM implements an independently written robust-mixture synthetic fixture, not the published EMAP algorithm. No article code or content was transferred."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_BORROWING_CALIBRATION_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMID:34506959",
+        "DOI:10.1016/j.cct.2021.106559"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Concept-only input supporting monotone conflict discounting and joint Bayesian/frequentist calibration research."
+    },
+    {
+      "source_id": "src.pubmed.kaizer-koopmeiners-hobbs.multisource-exchangeability.2018",
+      "display_name": "Kaizer, Koopmeiners, and Hobbs — Bayesian multisource exchangeability models",
+      "owner": "Biostatistics / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_full_text",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Primary multi-source exchangeability method with application-specific simulations; it does not prove exchangeability or transportability for ParkinSUM.",
+        "ParkinSUM does not implement MEM or copy its R code, likelihood, priors, data or reported results."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMID:29036300",
+        "DOI:10.1093/biostatistics/kxx031"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Concept-only input for source-specific exchangeability and explicit heterogeneity governance."
+    },
+    {
+      "source_id": "src.pubmed.schmidli.robust-map.2014",
+      "display_name": "Schmidli et al. — Robust meta-analytic-predictive priors",
+      "owner": "Biometrics / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_metadata",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Primary robust-MAP method and scenario evidence do not establish universal robustness, ParkinSUM validity or regulatory acceptance.",
+        "ParkinSUM uses an independently written constructed Beta-Binomial fixture and does not implement the article algorithm."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMID:25355546",
+        "DOI:10.1111/biom.12242"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Concept-only input for robust prior-data conflict and joint operating-characteristic assessment."
+    },
+    {
+      "source_id": "src.pubmed.hupf.semiparametric-map.2021",
+      "display_name": "Hupf et al. — Bayesian semiparametric MAP prior",
+      "owner": "Statistics in Medicine / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_metadata",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Primary semiparametric MAP method; its model, computation, data and findings are not reproduced by ParkinSUM.",
+        "Citation supports retaining multi-study model dependence as an explicit limitation, not a validity claim."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMID:33851441",
+        "DOI:10.1002/sim.8970"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Concept-only input for multi-study MAP and residual model-dependence research."
+    },
+    {
+      "source_id": "src.arxiv.talts.simulation-based-calibration.2018",
+      "display_name": "Talts et al. — Validating Bayesian inference algorithms with simulation-based calibration",
+      "owner": "Authors / arXiv",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "SBC checks algorithmic self-consistency under a chosen generative model; it does not validate the scientific model or real-world data-generating process.",
+        "ParkinSUM implements only a deterministic conjugate rank fixture and does not copy article code or figures."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "arXiv:1804.06788",
+        "DOI:10.48550/arXiv.1804.06788"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methodological input for the separate simulation-based-calibration lane."
+    },
+    {
+      "source_id": "src.jrss.gabry.bayesian-workflow-visualization.2019",
+      "display_name": "Gabry et al. — Visualization in Bayesian workflow",
+      "owner": "Royal Statistical Society / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_preprint",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Bayesian workflow is iterative and context-specific; one prior or posterior predictive check cannot prove model adequacy.",
+        "No article visualization, code, data or prose was copied into ParkinSUM."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "arXiv:1709.01449",
+        "DOI:10.1111/rssa.12378"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary workflow input for keeping prior and posterior predictive criticism separate and visible."
+    },
+    {
+      "source_id": "src.pubmed.shi-miao-tchetgen.negative-controls.2020",
+      "display_name": "Shi, Miao, and Tchetgen Tchetgen — Negative control methods in epidemiology",
+      "owner": "Current Epidemiology Reports / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_full_text",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Negative-control validity depends on causal and subject-matter assumptions that cannot be established by a null empirical result alone.",
+        "The ParkinSUM control is constructed and cannot demonstrate absence of confounding or bias in real external data."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_BAYESIAN_MULTISOURCE_MODEL_CRITICISM_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMID:33996381",
+        "PMCID:PMC8118596",
+        "DOI:10.1007/s40471-020-00243-4"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methodological input for negative-control assumptions and non-overclaim boundaries."
+    },
+    {
+      "source_id": "src.ich.e9-r1.estimands",
+      "display_name": "ICH E9(R1) — Estimands and Sensitivity Analysis",
+      "owner": "International Council for Harmonisation",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Clinical-trial estimand guidance; a machine-readable synthetic estimand does not establish that a scientific question, model, study or estimator is valid.",
+        "Used only to bind treatment condition, population, variable, summary measure and intercurrent-event strategies, and to prevent a sensitivity analysis from silently targeting a different estimand."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_STATISTICAL_ANALYSIS_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary-source research basis for same-estimand sensitivity and explicit intercurrent-event handling."
+    },
+    {
+      "source_id": "src.ema.multiplicity.clinical-trials",
+      "display_name": "EMA — Multiplicity issues in clinical trials",
+      "owner": "European Medicines Agency",
+      "jurisdiction": "European Union",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Regulatory statistical guidance; ParkinSUM does not claim EMA review, a confirmatory clinical trial, type-I-error adequacy for real data, or regulatory acceptance.",
+        "Used only to fail closed when multiple synthetic confirmatory endpoints omit a declared multiplicity method or exceed the declared alpha family budget."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_STATISTICAL_ANALYSIS_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary-source research basis for synthetic multiplicity and uncertainty-governance checks."
+    },
+    {
+      "source_id": "src.clinicaltrials.results-definitions",
+      "display_name": "ClinicalTrials.gov — results data element definitions",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "research_results_transparency",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "ClinicalTrials.gov definitions apply to registered studies; ParkinSUM is not registering or conducting a clinical trial.",
+        "Used only to keep pre-specified, post-hoc, not-collected, unavailable and reported synthetic outcome states distinguishable; no compliance or completeness claim is made."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_PROTOCOL_TRANSPARENCY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary public terminology source for explicit synthetic outcome-disclosure states and reasons for unavailable data."
+    },
+    {
+      "source_id": "src.fda.protocol-deviations.draft.2024",
+      "display_name": "FDA — Protocol Deviations for Clinical Investigations draft guidance",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "research_protocol_deviation_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "December 2024 draft guidance, not for implementation and not a final FDA classification standard.",
+        "ParkinSUM uses only the conservative engineering idea that deviations need consistent classification, importance and reporting; it does not claim clinical-investigation or IRB conformance."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_PROTOCOL_TRANSPARENCY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Draft-status research input for distinguishing amendments from deviations and separately flagging material impact."
+    },
+    {
+      "source_id": "src.asme.vv40.2018.summary",
+      "display_name": "ASME — V&V 40-2018 official public summary",
+      "owner": "American Society of Mechanical Engineers",
+      "jurisdiction": "Global",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Only the official public summary was reviewed. The full standard is licensed, and ParkinSUM does not claim ASME V&V 40 access, implementation, assessment, or conformance.",
+        "A risk-informed credibility framework is not scientific validation, model qualification, regulatory review, external approval, or evidence for ParkinSUM's equations."
+      ],
+      "documentation_refs": [
+        "docs/CONTEXT_OF_USE_REQUALIFICATION_RESEARCH_2026-08-26.md",
+        "docs/PROSPECTIVE_MODEL_CREDIBILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Used only for the public framework boundary between model reliance, decision consequence, completed V&V evidence, and context-specific credibility assessment."
+    },
+    {
+      "source_id": "src.bipm.si-brochure.9",
+      "display_name": "BIPM — International System of Units, 9th edition",
+      "owner": "Bureau International des Poids et Mesures",
+      "jurisdiction": "Global",
+      "source_family": "measurement_standard",
+      "data_domain": "model_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Defines quantities and SI unit semantics but does not validate ParkinSUM formulas, biomedical observables, conversions outside the declared subset, or clinical interpretation."
+      ],
+      "documentation_refs": [
+        "docs/MECHANISTIC_INVARIANT_AND_UNIT_GATE_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary metrology reference for explicit dimensions, canonical units, and unit-invariant quantity equations."
+    },
+    {
+      "source_id": "src.ucum.specification",
+      "display_name": "Regenstrief Institute — Unified Code for Units of Measure specification",
+      "owner": "Regenstrief Institute",
+      "jurisdiction": "Global",
+      "source_family": "measurement_standard",
+      "data_domain": "interoperability",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Reviewed for future machine-readable unit and commensurability architecture only; ParkinSUM does not implement, claim conformance with, or redistribute the UCUM tables today.",
+        "A schema-v1 development preview names four exact UCUM code identifiers (mg, g, ug, mL) from UCUM 2.2 after local confirmation only; it adds no UCUM table, parser, unit descriptions, general terminology validation, or license clearance.",
+        "The UCUM license and release artifacts require review before any tables, parser, or derivative artifact is incorporated."
+      ],
+      "documentation_refs": [
+        "docs/MECHANISTIC_INVARIANT_AND_UNIT_GATE_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary unit-code and dimensional-commensurability reference for the queued typed quantity kernel."
+    },
+    {
+      "source_id": "src.fda.pbpk.guidance",
+      "display_name": "FDA — PBPK analyses format and content guidance",
+      "owner": "U.S. Food and Drug Administration",
+      "jurisdiction": "US",
+      "source_family": "model_governance",
+      "data_domain": "model_governance",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Regulatory reporting guidance for PBPK analyses; it is not product-specific evidence, model qualification, clinical validation, or evidence that ParkinSUM implements a PBPK model."
+      ],
+      "documentation_refs": [
+        "docs/RUNTIME_MODEL_APPLICABILITY_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Used only to define route, dose, formulation, fed-state, verification, and intended-use reporting boundaries."
     },
     {
       "source_id": "src.pare.protein.redistribution.1992",
@@ -1913,6 +2876,815 @@
       "notes": "Future-work; not wired into the engine."
     },
     {
+      "source_id": "src.nlm.errata-retraction-policy",
+      "display_name": "NLM policy for errata, retractions and linked citations",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "evidence_status_governance",
+      "data_domain": "publication_status",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Describes PubMed linking and publication-status policy; it does not establish scientific validity or source applicability.",
+        "The current gate records a manual reviewed snapshot and does not automate PubMed refresh or archive fetched records."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Governance reference for correction, retraction and expression-of-concern status only."
+    },
+    {
+      "source_id": "src.crossref.crossmark",
+      "display_name": "Crossref Crossmark update-status service",
+      "owner": "Crossref",
+      "jurisdiction": "Global",
+      "source_family": "evidence_status_governance",
+      "data_domain": "publication_status",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Crossmark exposes publisher-registered updates but its presence or absence is not a guarantee of scientific validity, completeness or applicability.",
+        "The current gate has no live Crossmark ingestion, archive, retry, cache or publisher-coverage proof."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Governance reference for publisher-registered corrections, retractions, withdrawals and other updates."
+    },
+    {
+      "source_id": "src.cochrane.handbook.chapter14",
+      "display_name": "Cochrane Handbook Chapter 14 — completing Summary of Findings tables and grading certainty",
+      "owner": "Cochrane",
+      "jurisdiction": "Global",
+      "source_family": "evidence_synthesis_governance",
+      "data_domain": "evidence_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Methodology guidance for outcome-specific certainty judgments; it is not evidence that any ParkinSUM claim has a favorable or high-certainty effect.",
+        "The current implementation records reviewer-declared domains but does not implement the complete Cochrane or GRADE workflow."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Governance-pattern reference only; no automatic evidence grade or clinical inference."
+    },
+    {
+      "source_id": "src.ahrq.applicability.methods",
+      "display_name": "AHRQ Methods Guide — assessing applicability",
+      "owner": "Agency for Healthcare Research and Quality",
+      "jurisdiction": "US",
+      "source_family": "evidence_synthesis_governance",
+      "data_domain": "evidence_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Applicability is review-specific and cannot be resolved by one universal checklist.",
+        "The current matrix records structured applicability judgments but has no complete target-population or clinical-review process."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Governance-pattern reference for population, intervention, comparator, outcome and setting applicability."
+    },
+    {
+      "source_id": "src.ahrq.strength-of-evidence.methods",
+      "display_name": "AHRQ Methods Guide — grading strength of evidence",
+      "owner": "Agency for Healthcare Research and Quality",
+      "jurisdiction": "US",
+      "source_family": "evidence_synthesis_governance",
+      "data_domain": "evidence_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Body-of-evidence strength is distinct from individual-study quality and is outcome-specific.",
+        "The current implementation does not automate a clinical evidence grade or replace independent expert review."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Governance-pattern reference for preserving separate body-level certainty and study-level judgments."
+    },
+    {
+      "source_id": "src.nist.sp800-226",
+      "display_name": "NIST SP 800-226 — Guidelines for Evaluating Differential Privacy Guarantees",
+      "owner": "U.S. National Institute of Standards and Technology",
+      "jurisdiction": "US",
+      "source_family": "privacy_engineering_governance",
+      "data_domain": "privacy_methodology",
+      "access_method": "open_download",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Evaluation guidance does not select an appropriate mechanism, epsilon, delta, neighboring relation, contribution bound, or privacy budget for ParkinSUM.",
+        "The current application has no differential-privacy mechanism, accountant, collector, dashboard, or production privacy evaluation."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-18",
+      "notes": "Privacy-engineering governance reference only; it is not clinical evidence and does not make current aggregates anonymous or differentially private."
+    },
+    {
+      "source_id": "src.openfeature.flag-evaluation-spec",
+      "display_name": "OpenFeature specification — flag evaluation",
+      "owner": "Cloud Native Computing Foundation / OpenFeature",
+      "jurisdiction": "Global",
+      "source_family": "release_control_governance",
+      "data_domain": "software_delivery_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Generic feature-evaluation semantics do not establish ParkinSUM trust roots, key custody, privacy, scientific validity, or clinical safety.",
+        "ParkinSUM deliberately omits user targeting and permits only closed global boolean capabilities with conservative defaults."
+      ],
+      "documentation_refs": [
+        "docs/SIGNED_CAPABILITY_ROLLOUT_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methodology reference for typed defaults and non-throwing abnormal evaluation; not a production flag provider endorsement."
+    },
+    {
+      "source_id": "src.tuf.latest-specification",
+      "display_name": "The Update Framework — latest specification",
+      "owner": "The Update Framework project / Linux Foundation",
+      "jurisdiction": "Global",
+      "source_family": "software_update_security",
+      "data_domain": "software_delivery_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "The local manifest verifier borrows rollback, freeze and key-transition principles but is not a TUF client or TUF-conformant repository.",
+        "No production signer, metadata distribution service, threshold root, transparency log or compromise-recovery drill exists yet."
+      ],
+      "documentation_refs": [
+        "docs/SIGNED_CAPABILITY_ROLLOUT_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary update-security reference for replay, rollback, freeze and trusted-key lifecycle boundaries."
+    },
+    {
+      "source_id": "src.dart.cryptography.ed25519",
+      "display_name": "Dart cryptography package — Ed25519 implementation API",
+      "owner": "Dart cryptography package maintainers",
+      "jurisdiction": "Global",
+      "source_family": "cryptographic_implementation",
+      "data_domain": "software_dependency_documentation",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "A correct Ed25519 verification primitive does not establish signer identity, private-key custody, distribution integrity, operational availability, or clinical validity.",
+        "The dependency is pinned by pubspec.lock and used only for local signature verification; private signing keys must never enter the repository or app."
+      ],
+      "documentation_refs": [
+        "docs/SIGNED_CAPABILITY_ROLLOUT_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Implementation reference for local Ed25519 verification in the signed capability envelope."
+    },
+    {
+      "source_id": "src.ietf.rfc9110.http-semantics",
+      "display_name": "IETF RFC 9110 — HTTP Semantics",
+      "owner": "Internet Engineering Task Force",
+      "jurisdiction": "Global",
+      "source_family": "internet_standard",
+      "data_domain": "software_delivery_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "HTTP validators and conditional requests do not authenticate a signer or prove scientific, privacy, or clinical validity.",
+        "ParkinSUM adds stricter endpoint, redirect, size, digest and signed-manifest rules beyond generic HTTP semantics."
+      ],
+      "documentation_refs": [
+        "docs/SIGNED_CAPABILITY_ROLLOUT_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary standard for ETag, If-None-Match, 304, representation metadata and redirect semantics."
+    },
+    {
+      "source_id": "src.ietf.rfc9111.http-caching",
+      "display_name": "IETF RFC 9111 — HTTP Caching",
+      "owner": "Internet Engineering Task Force",
+      "jurisdiction": "Global",
+      "source_family": "internet_standard",
+      "data_domain": "software_delivery_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "HTTP cache validation does not authenticate the response signer or authorize a capability state.",
+        "The worktree has no production CDN, proxy, service-worker or target-browser cache-conformance evidence."
+      ],
+      "documentation_refs": [
+        "docs/SIGNED_CAPABILITY_ROLLOUT_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary standard for binding validators to stored responses, conditional validation, 304 handling and intermediary-cache semantics."
+    },
+    {
+      "source_id": "src.slsa.v1.2",
+      "display_name": "SLSA specification v1.2",
+      "owner": "OpenSSF / SLSA project",
+      "jurisdiction": "Global",
+      "source_family": "software_supply_chain_security",
+      "data_domain": "software_delivery_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "SLSA provenance guidance does not make ParkinSUM builds reproducible or its capability service production-ready.",
+        "No production provenance publisher or independent artifact-verification service exists in this worktree."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary supply-chain reference for future publication provenance and independent verification."
+    },
+    {
+      "source_id": "src.sigstore.rekor.overview",
+      "display_name": "Sigstore Rekor transparency log overview",
+      "owner": "Sigstore project / OpenSSF",
+      "jurisdiction": "Global",
+      "source_family": "software_supply_chain_transparency",
+      "data_domain": "software_delivery_methodology",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Transparency supports inclusion and consistency evidence but does not prevent signer compromise or prove release intent.",
+        "ParkinSUM has no transparency-log integration, witness policy, or equivocation drill today."
+      ],
+      "documentation_refs": [
+        "docs/COMPLETE_APP_NEXT_WAVE_RESEARCH_2026-08-17.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary reference for future append-only consistency and witness research."
+    },
+    {
+      "source_id": "src.pmc.cole-stuart.target-population-weighting",
+      "display_name": "Cole and Stuart — Generalizing randomized-trial evidence to target populations",
+      "owner": "American Journal of Epidemiology / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "An application and methods example cannot prove that ParkinSUM has a representative target sample, adequate overlap or sufficient measured effect modifiers.",
+        "ParkinSUM copies no article data, analysis code, estimate, table, figure or prose; the local fixture is independently constructed and synthetic."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMCID:PMC6289264"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methods input for explicit target membership, sampling weighting and overlap diagnostics; not a transportability claim."
+    },
+    {
+      "source_id": "src.pmc.westreich.inverse-odds-sampling.2017",
+      "display_name": "Westreich et al. — Transportability using inverse odds of sampling weights",
+      "owner": "American Journal of Epidemiology / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Inverse-odds weighting depends on identification, measurement, model and support assumptions and cannot repair structural non-overlap or unmeasured effect modification.",
+        "ParkinSUM does not reproduce the article application or treat a finite synthetic weight diagnostic as external validity evidence."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMCID:PMC5860052",
+        "DOI:10.1093/aje/kwx164"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methods input for inverse-odds-of-sampling estimation and explicit weight diagnostics."
+    },
+    {
+      "source_id": "src.arxiv.dahabreh.doubly-robust-generalization.2017",
+      "display_name": "Dahabreh et al. — Generalizing causal inferences to trial-eligible target individuals",
+      "owner": "Authors / arXiv / Biometrics",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Double robustness is conditional on at least one nuisance model being correctly specified and does not identify an effect under structural positivity failure or invalid transport assumptions.",
+        "The ParkinSUM estimators are manufactured arithmetic fixtures, not a reproduction of the published implementation or empirical findings."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "arXiv:1709.04589",
+        "DOI:10.1111/biom.12909"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methods input for outcome-regression, inverse-odds and augmented one-model-correct comparison."
+    },
+    {
+      "source_id": "src.pmc.lesko.generalizing-potential-outcomes.2018",
+      "display_name": "Lesko et al. — Generalizing study results from a potential-outcomes perspective",
+      "owner": "Epidemiology / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Generalizability and transportability terminology does not by itself establish identification, measurement alignment, overlap or a clinically meaningful effect.",
+        "Used only to require an explicit target population and potential-outcomes boundary."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMCID:PMC6049838"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary conceptual input for explicit target-population and identification terminology."
+    },
+    {
+      "source_id": "src.pmc.dahabreh.transport-bias-functions.2023",
+      "display_name": "Dahabreh et al. — Bias-function sensitivity for extending trial inferences",
+      "owner": "Statistics in Medicine / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Bias functions expose sensitivity to unmeasured effect modification but require investigator-chosen parameters and do not recover unknowable violations automatically.",
+        "ParkinSUM implements only a deterministic synthetic governance fixture; its ranges are not clinically elicited or calibrated and cannot identify an unknown bias."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md",
+        "docs/CREDIBILITY_TRANSPORTABILITY_SENSITIVITY_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [
+        "PMCID:PMC10219839",
+        "arXiv:1905.10684"
+      ],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Primary methods input for the implemented synthetic bias-function and partial-identification gate; not clinical calibration."
+    },
+    {
+      "source_id": "src.arxiv.dahabreh.global-transport-sensitivity.2022",
+      "display_name": "Dahabreh et al. — Global sensitivity analysis for trial-to-target inference",
+      "owner": "arXiv / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Global sensitivity directly parameterizes violations of potential-outcome distribution transportability; it does not learn the true violation from available data.",
+        "ParkinSUM uses a finite synthetic Cartesian fixture and manufactured response surface, not the paper's clinical application or a validated implementation."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TRANSPORTABILITY_SENSITIVITY_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [
+        "arXiv:2207.09982",
+        "PMID:42237885"
+      ],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Primary methods input for result-blind global transportability sensitivity and influence decomposition."
+    },
+    {
+      "source_id": "src.oxford.shook-sa.transport-positivity-synthesis.2025",
+      "display_name": "Shook-Sa et al. — Synthesis estimators for transportability with positivity violations",
+      "owner": "Journal of the Royal Statistical Society Series A / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Synthesis under structural nonpositivity requires explicit external information and statistical or mathematical models; it cannot be justified by overlap diagnostics alone.",
+        "ParkinSUM does not implement the synthesis estimators and holds structural nonpositivity as non-identifiable."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TRANSPORTABILITY_SENSITIVITY_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [
+        "DOI:10.1093/jrsssa/qnae084",
+        "PMID:39810877",
+        "PMCID:PMC11728055"
+      ],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Boundary input explaining why sensitivity parameters cannot silently repair unsupported target strata."
+    },
+    {
+      "source_id": "src.pmc.ross.trial-participation-adherence-transport.2025",
+      "display_name": "Ross et al. — Transporting trial results when participation impacts adherence",
+      "owner": "authors / PubMed Central",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "The method requires user-specified target-versus-trial adherence sensitivity parameters when target treatment and adherence data are unavailable.",
+        "ParkinSUM has not implemented the plug-in or one-step estimators, longitudinal adherence, or clinically elicited parameter distributions."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TRANSPORTABILITY_SENSITIVITY_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [
+        "PMCID:PMC12614279",
+        "PMID:41144860"
+      ],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Primary methods input for the queued trial-participation adherence and treatment-version sensitivity gate."
+    },
+    {
+      "source_id": "src.arxiv.wang.relative-effect-transportability.2024",
+      "display_name": "Wang et al. — Transportability under conditional relative-effect assumptions",
+      "owner": "arXiv / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Conditional relative-effect and difference-effect transportability assumptions are generally not interchangeable and require explicit target baseline-risk and treatment-access conditions.",
+        "ParkinSUM currently implements only an additive synthetic target estimand and has not implemented these estimators."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TRANSPORTABILITY_SENSITIVITY_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [
+        "arXiv:2402.02702",
+        "arXiv:2202.11622"
+      ],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Primary methods input for the queued relative-effect-scale and multi-treatment target gate."
+    },
+    {
+      "source_id": "src.wiley.dahabreh.cluster-randomized-transport.2020",
+      "display_name": "Dahabreh et al. — Extending cluster-randomized trial inferences to a target population",
+      "owner": "Health Services Research / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Cluster-target transport requires cluster-level participation and treatment identities plus valid handling of arbitrary within-cluster dependence.",
+        "The source is a short conference abstract; ParkinSUM has no cluster-randomized transport estimator or external cluster data."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TRANSPORTABILITY_SENSITIVITY_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [
+        "DOI:10.1111/1475-6773.13486"
+      ],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Primary methods input for the queued cluster-randomized target-transportability gate."
+    },
+    {
+      "source_id": "src.pmc.ackerman.complex-survey-generalization.2021",
+      "display_name": "Ackerman et al. — Generalizing trial findings with complex-survey target data",
+      "owner": "Statistics in Medicine / authors",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Complex-survey generalization remains conditional on the target frame, observed effect modifiers, survey-selection information and modeling assumptions.",
+        "ParkinSUM has no complex-survey target sample, survey-weight implementation or design-based variance gate today."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "PMCID:PMC8034867",
+        "PMID:33241607"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methods input for the queued complex-survey design and calibration-weighted transportability gate."
+    },
+    {
+      "source_id": "src.arxiv.dahabreh.multi-trial-transport.2019",
+      "display_name": "Dahabreh et al. — Causally interpretable multi-trial transport to a target population",
+      "owner": "Authors / arXiv",
+      "jurisdiction": "Global",
+      "source_family": "research_governance",
+      "data_domain": "research_governance",
+      "access_method": "open_web",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": true,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": false,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Multi-trial transport requires trial-specific identification and harmonization assumptions; pooling cannot erase incompatibility or residual heterogeneity.",
+        "ParkinSUM currently has only a single-trial synthetic transportability fixture and has not implemented this method."
+      ],
+      "documentation_refs": [
+        "docs/CREDIBILITY_TARGET_POPULATION_TRANSPORTABILITY_RESEARCH_2026-08-26.md"
+      ],
+      "bibliography_refs": [
+        "arXiv:1903.11455"
+      ],
+      "last_policy_reviewed": "2026-08-26",
+      "notes": "Primary methods input for the queued multi-trial transportability, heterogeneity and dependency gate."
+    },
+    {
       "source_id": "src.demo",
       "display_name": "Synthetic demo source",
       "owner": "ParkinSUM synthetic demo",
@@ -1971,6 +3743,37 @@
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-05-30",
       "notes": "App seed catalog + prototype heuristic placeholder."
+    },
+    {
+      "source_id": "src.synthetic.gastric.structural.fixture",
+      "display_name": "ParkinSUM synthetic gastric structural-uncertainty fixture",
+      "owner": "ParkinSUM test suite",
+      "jurisdiction": "-",
+      "source_family": "synthetic_fixture",
+      "data_domain": "synthetic",
+      "access_method": "generated_fixture",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Generated from the unchanged production engineering curve or a deterministic test vector; it is circular for calibration and cannot authorize a fit.",
+        "No participant, patient, instrument, site, or external dataset is represented."
+      ],
+      "documentation_refs": [
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-08-27",
+      "notes": "Fixture identity for observable-matching, mutation, determinism, and fit-authorization gates only."
     }
   ]
 }

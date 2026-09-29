@@ -31,6 +31,8 @@ professional review is not claimed.
 - [ ] `test/firebase_user_binding_test.dart` completed.
 - [ ] `node tool/firestore_rules_contract_check.mjs` completed.
 - [ ] Firebase-backed web build completed.
+- [ ] If Wasm is proposed, a self-contained `--wasm --no-web-resources-cdn`
+      build and checksum-bound hosting attestation completed.
 - [ ] No release-blocking TODO/FIXME found in app-owned files.
 - [ ] App version and release notes match the intended release.
 
@@ -42,7 +44,7 @@ flutter pub get
 flutter analyze
 flutter test
 flutter test test/p0_importers_test.dart --concurrency=1
-flutter build web --dart-define=PARKINSUM_BACKEND=firebase
+flutter build web --dart-define=PARKINSUM_BACKEND=firebase --dart-define=PARKINSUM_FIREBASE_API_KEY=<restricted-prod-web-key>
 ```
 
 Latest P0 local gate results:
@@ -58,12 +60,23 @@ Latest P0 local gate results:
 
 - [ ] Target Firebase environment recorded: dev, stage, or prod.
 - [ ] Target Firebase project id recorded.
+- [ ] Restricted Firebase client key supplied at build time; no concrete key is
+      present in tracked source.
+- [ ] Client key API allowlist contains only required Firebase APIs and excludes
+      Generative Language API.
+- [ ] Browser/app restrictions have been reviewed for the release surface.
 - [ ] `firestore.rules` reviewed for the target project.
 - [ ] `users/{uid}` has no blanket owner-write rule.
 - [ ] Runtime user writes are limited to explicit validated collections.
 - [ ] Profile and clinical-audit patient identifiers bind to auth uid.
 - [ ] Firebase App Check provider is configured and enforcement plan recorded.
 - [ ] Hosting security headers are present in `firebase.json`.
+- [ ] If Wasm is proposed, deployed HTTPS responses independently prove COOP,
+      COEP, MIME, CSP and cache behavior; source configuration alone is not
+      accepted.
+- [ ] If Wasm is proposed, Firebase Auth, Firestore, App Check, reCAPTCHA,
+      workers, frames, service-worker update/offline, rollback and all critical
+      journeys pass under the selected isolation policy.
 - [ ] `app_catalog` read/write policy verified.
 - [ ] Top-level `cdss_tables` remains closed.
 - [ ] Admin/importer custom-claim assignment process recorded.
@@ -126,6 +139,9 @@ Latest P0 local gate results:
 - [ ] `snapshot_manifest.json` retained.
 - [ ] Distribution manifest retained.
 - [ ] Build artifact retained.
+- [ ] Public Web artifacts contain no source maps, unstripped Wasm, private
+      symbols, source paths, or monitoring credentials; private symbolication
+      evidence is bound to the exact release artifact.
 - [ ] Release notes retained.
 - [ ] Known-risk record reviewed.
 - [ ] Rollback runbook inputs retained.

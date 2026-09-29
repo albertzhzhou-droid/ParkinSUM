@@ -4,6 +4,7 @@ import '../../algorithm_sdk/algorithm_component_graph_identity.dart';
 import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../../core/constants/mechanistic_replay_scenarios.dart';
 import '../entities/amino_acid_competition.dart';
+import '../entities/evidence_currency.dart';
 import '../entities/mechanistic_candidate_score.dart';
 import '../entities/mechanistic_conflict_result.dart';
 import '../entities/medication_entry_validation.dart';
@@ -26,6 +27,7 @@ class MechanisticReplayCaseReport {
   final TimelineWindow? absorptionOpportunityWindow;
   final String resultAvailability;
   final bool hasModeledOutput;
+  final EvidenceCurrencyRuntimeBinding? evidenceCurrencyBinding;
   final List<String> abstentionReasons;
   final String? aminoAcidCompetitionBand;
   final double? interactionScore;
@@ -105,6 +107,7 @@ class MechanisticReplayCaseReport {
     required this.absorptionOpportunityWindow,
     required this.resultAvailability,
     required this.hasModeledOutput,
+    this.evidenceCurrencyBinding,
     required this.abstentionReasons,
     required this.aminoAcidCompetitionBand,
     required this.interactionScore,
@@ -172,6 +175,7 @@ class MechanisticReplayCaseReport {
     'absorption_opportunity_window': absorptionOpportunityWindow?.toJson(),
     'result_availability': resultAvailability,
     'has_modeled_output': hasModeledOutput,
+    'evidence_currency_binding': evidenceCurrencyBinding?.toJson(),
     'abstention_reasons': abstentionReasons,
     'amino_acid_competition_band': aminoAcidCompetitionBand,
     'interaction_score': interactionScore,
@@ -242,12 +246,14 @@ class MechanisticReplayRunReport {
   /// `generated_at` JSON key that `SourceVersionDriftChecker` requires; new
   /// consumers should read `deterministic_reference_time`.
   final String generatedAtIso;
+  final String evidenceCurrencyAsOfUtcIso;
 
   final AlgorithmConfigurationIdentity configurationIdentity;
   final List<MechanisticReplayCaseReport> cases;
 
   const MechanisticReplayRunReport({
     required this.generatedAtIso,
+    required this.evidenceCurrencyAsOfUtcIso,
     required this.configurationIdentity,
     required this.cases,
   });
@@ -267,6 +273,7 @@ class MechanisticReplayRunReport {
     // raw JSON should not have to infer that `generated_at` is a constant.
     'deterministic_reference_time': generatedAtIso,
     'generated_at_is_deterministic_reference': true,
+    'evidence_currency_as_of_utc': evidenceCurrencyAsOfUtcIso,
     'passed': passedCount,
     'total': totalCount,
     'algorithm_configuration': {
@@ -291,6 +298,10 @@ class MechanisticReplayRunReport {
       ..writeln(
         'Deterministic reference instant: $generatedAtIso '
         '(fixed anchor, not the time this report was produced)',
+      )
+      ..writeln(
+        'Evidence-currency assessment: $evidenceCurrencyAsOfUtcIso '
+        '(offline snapshot; the JSON report carries unsigned receipts)',
       )
       ..writeln()
       ..writeln(
@@ -331,7 +342,11 @@ class MechanisticReplayRunReport {
         buf.writeln();
       }
     }
-    return buf.toString();
+    // Keep the committed Markdown artifact diff-friendly: sections retain
+    // their separating blank line, while the file itself has exactly one
+    // trailing newline. A second trailing newline makes `git diff --check`
+    // reject an otherwise semantically identical golden refresh.
+    return '${buf.toString().trimRight()}\n';
   }
 }
 
@@ -371,6 +386,7 @@ class MechanisticReplayRunner {
         configurationIdentity ??
         AlgorithmConfigurationIdentity.defaults(
           gastricParameters: this.engine.gastricEmptyingModel.parameters,
+          absorptionParameters: this.engine.absorptionModel.parameters,
           scoringParameters: this.scorer.scoringParameters,
         );
     AlgorithmComponentGraphIdentityValidator.validateExecutionGraph(
@@ -387,14 +403,17 @@ class MechanisticReplayRunner {
   MechanisticReplayRunReport run({
     List<MechanisticReplayScenario> scenarios = mechanisticReplayScenarios,
     DateTime? referenceTime,
+    DateTime? evidenceAsOfUtc,
   }) {
     final now = referenceTime ?? DateTime.utc(2026, 1, 1, 8, 0);
+    final evidenceAsOf = evidenceAsOfUtc?.toUtc() ?? DateTime.utc(2026, 8, 19);
     final cases = <MechanisticReplayCaseReport>[];
     for (final s in scenarios) {
-      cases.add(_runOne(s, now));
+      cases.add(_runOne(s, now, evidenceAsOf));
     }
     return MechanisticReplayRunReport(
       generatedAtIso: now.toIso8601String(),
+      evidenceCurrencyAsOfUtcIso: evidenceAsOf.toIso8601String(),
       configurationIdentity: configurationIdentity,
       cases: List.unmodifiable(cases),
     );
@@ -403,6 +422,7 @@ class MechanisticReplayRunner {
   MechanisticReplayCaseReport _runOne(
     MechanisticReplayScenario scenario,
     DateTime now,
+    DateTime evidenceAsOfUtc,
   ) {
     // Validate medications.
     final medValidations = scenario.medicationEntries
@@ -465,6 +485,7 @@ class MechanisticReplayRunner {
       context: context,
       mealCompositionsById: compositionsById,
       resultId: scenario.scenarioId,
+      evidenceAsOfUtc: evidenceAsOfUtc,
     );
 
     List<MechanisticCandidateScore>? recommendations;
@@ -474,6 +495,7 @@ class MechanisticReplayRunner {
         baseMealCompositionsById: compositionsById,
         candidates: scenario.candidateFoods,
         userDefinedWindow: context.userDefinedWindow,
+        evidenceAsOfUtc: evidenceAsOfUtc,
       );
     }
 
@@ -665,6 +687,7 @@ class MechanisticReplayRunner {
       absorptionOpportunityWindow: result.absorptionOpportunityWindow?.window,
       resultAvailability: result.availability.name,
       hasModeledOutput: result.hasModeledOutput,
+      evidenceCurrencyBinding: result.evidenceCurrencyBinding,
       abstentionReasons: abstentionReasons,
       aminoAcidCompetitionBand: result.hasModeledOutput
           ? result.competitionTimeline?.competitionBand.name ?? 'unknown'

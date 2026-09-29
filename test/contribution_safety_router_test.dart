@@ -323,4 +323,87 @@ void main() {
     ]);
     expect(hasCategory(r, ContributionRiskCategory.phiRisk), isTrue);
   });
+
+  test('positive clinical-validation claim remains a blocker', () {
+    final r = route([
+      change(
+        'docs/model.md',
+        isDocs: true,
+        added: 'This model makes a clinical validation claim.',
+      ),
+    ]);
+
+    expect(hasCategory(r, ContributionRiskCategory.medicalClaimRisk), isTrue);
+    expect(r.blockerCount, 1);
+    expect(r.pass, isFalse);
+  });
+
+  test('reviewed non-claim boundaries do not produce medical blockers', () {
+    for (final boundary in const [
+      'This is not a scientific or clinical validation claim.',
+      'This model carries no clinical-validation claim.',
+      'This model is not clinically validated.',
+    ]) {
+      final r = route([change('docs/model.md', isDocs: true, added: boundary)]);
+
+      expect(
+        hasCategory(r, ContributionRiskCategory.medicalClaimRisk),
+        isFalse,
+        reason: 'reviewed boundary should remain non-blocking: $boundary',
+      );
+      expect(r.pass, isTrue, reason: boundary);
+    }
+  });
+
+  test(
+    'unsafe occurrence still blocks beside a reviewed non-claim boundary',
+    () {
+      final r = route([
+        change(
+          'docs/model.md',
+          isDocs: true,
+          added:
+              'This is not a scientific or clinical validation claim. '
+              'A later section makes a clinical validation claim.',
+        ),
+      ]);
+
+      expect(hasCategory(r, ContributionRiskCategory.medicalClaimRisk), isTrue);
+      expect(r.pass, isFalse);
+    },
+  );
+
+  test(
+    'context-free matched keyword does not override added-content boundary',
+    () {
+      final r = route([
+        change(
+          'docs/model.md',
+          isDocs: true,
+          added: 'This is not a scientific or clinical validation claim.',
+          keywords: const ['clinical validation claim'],
+        ),
+      ]);
+
+      expect(
+        hasCategory(r, ContributionRiskCategory.medicalClaimRisk),
+        isFalse,
+      );
+      expect(r.pass, isTrue);
+    },
+  );
+
+  test('medical keyword without source context remains fail-closed', () {
+    final r = route([
+      change(
+        'docs/model.md',
+        isDocs: true,
+        keywords: const ['clinical validation claim'],
+      ),
+    ]);
+
+    expect(hasCategory(r, ContributionRiskCategory.medicalClaimRisk), isTrue);
+    expect(r.blockerCount, 1);
+    expect(r.pass, isFalse);
+  });
 }

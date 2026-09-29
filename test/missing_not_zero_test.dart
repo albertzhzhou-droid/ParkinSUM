@@ -78,6 +78,16 @@ void main() {
     expect(candidate.components.single.calories, 180);
   });
 
+  test('missing energy marker overrides a stale non-null numeric value', () {
+    final candidate = foodItemToCandidateFood(
+      itemWith(
+        missing: {'fatG', 'fiberG', 'carbsG', 'energyKcal'},
+        energyKcal: 180,
+      ),
+    );
+    expect(candidate.components.single.calories, isNull);
+  });
+
   test('aminoAcidProfile is attached to the component when present', () {
     const aa = AminoAcidProfile(leucine: 2.1, valine: 1.3);
     final candidate = foodItemToCandidateFood(itemWith(aa: aa));

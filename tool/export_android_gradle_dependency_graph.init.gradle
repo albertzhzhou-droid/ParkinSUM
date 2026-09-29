@@ -1,0 +1,296 @@
+import groovy.json.JsonOutput
+import groovy.json.JsonSlurper
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
+
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.security.MessageDigest
+
+def stableComponentIdentity = { identifier, androidRoot, projectByPath, pluginByDirectory ->
+    if (identifier instanceof ModuleComponentIdentifier) {
+        return [
+            kind: 'maven',
+            group: identifier.group,
+            name: identifier.module,
+            version: identifier.version,
+        ]
+    }
+    if (identifier instanceof ProjectComponentIdentifier) {
+        def project = projectByPath[identifier.projectPath]
+        def packageName = project == null ? null : pluginByDirectory[project.projectDir.canonicalFile]
+        if (packageName == null) {
+            throw new GradleException("Android project dependency is not mapped to .flutter-plugins-dependencies: ${identifier.displayName} (build ${identifier.build.name})")
+        }
+        return [kind: 'pub', name: packageName]
+    }
+    throw new GradleException("Unsupported Android runtime dependency identity: ${identifier.displayName}")
+}
+
+def identityKey = { identity -> JsonOutput.toJson(identity) }
+
+def digestFile = { File file ->
+    def digest = MessageDigest.getInstance('SHA-256')
+    file.withInputStream { input ->
+        byte[] buffer = new byte[64 * 1024]
+        int read
+        while ((read = input.read(buffer)) != -1) digest.update(buffer, 0, read)
+    }
+    digest.digest().encodeHex().toString()
+}
+
+def digestBytes = { byte[] bytes ->
+    def digest = MessageDigest.getInstance('SHA-256')
+    digest.update(bytes)
+    digest.digest().encodeHex().toString()
+}
+
+def embeddedLicenseDocuments = { File archive ->
+    if (!archive.isFile() || !(archive.name ==~ /(?i).+\.(jar|aar|zip)/)) return []
+    def nestedDocuments
+    nestedDocuments = { byte[] archiveBytes, String prefix, int depth ->
+        def found = []
+        def input = new java.util.zip.ZipInputStream(new java.io.ByteArrayInputStream(archiveBytes))
+        try {
+            def entry
+            while ((entry = input.nextEntry) != null) {
+                if (entry.directory) {
+                    input.closeEntry()
+                    continue
+                }
+                byte[] contents = input.readAllBytes()
+                def archivePath = "${prefix}${entry.name}"
+                if (entry.name ==~ /(?i)(?:^|.*\/)(LICENSE|LICENCE|NOTICE|NOTICES|COPYING)(?:$|[._-].*)/) {
+                    found << [
+                        archivePath: archivePath,
+                        bytes: contents.length,
+                        sha256: digestBytes(contents),
+                    ]
+                } else if (depth < 2 && entry.name ==~ /(?i).+\.(jar|zip)/) {
+                    found.addAll(nestedDocuments(contents, "${archivePath}!/", depth + 1))
+                }
+                input.closeEntry()
+            }
+        } finally {
+            input.close()
+        }
+        return found
+    }
+    byte[] archiveBytes = archive.bytes
+    nestedDocuments(archiveBytes, '', 0).sort { left, right -> left.archivePath <=> right.archivePath }
+}
+
+gradle.projectsEvaluated {
+    def androidRoot = gradle.rootProject
+    def archiveBytes = { Map entries ->
+        def buffer = new java.io.ByteArrayOutputStream()
+        def output = new java.util.zip.ZipOutputStream(buffer)
+        try {
+            entries.each { name, contents ->
+                output.putNextEntry(new java.util.zip.ZipEntry(name as String))
+                output.write(contents as byte[])
+                output.closeEntry()
+            }
+        } finally {
+            output.close()
+        }
+        buffer.toByteArray()
+    }
+
+    androidRoot.tasks.register('verifyParkinSUMAndroidArchiveLicenseScanner') {
+        group = 'verification'
+        description = 'Verifies direct and nested license-document path extraction.'
+
+        doLast {
+            def utf8 = java.nio.charset.StandardCharsets.UTF_8
+            byte[] directNotice = 'direct notice fixture\n'.getBytes(utf8)
+            byte[] nestedLicense = 'nested license fixture\n'.getBytes(utf8)
+            byte[] deepCopying = 'depth two copying fixture\n'.getBytes(utf8)
+            byte[] deeperZip = archiveBytes(['COPYING': deepCopying])
+            byte[] nestedJar = archiveBytes([
+                'META-INF/LICENSE.txt': nestedLicense,
+                'licenses/deeper.zip': deeperZip,
+            ])
+            byte[] outerArchive = archiveBytes([
+                'META-INF/NOTICE': directNotice,
+                'libs/nested.jar': nestedJar,
+            ])
+
+            androidRoot.buildDir.mkdirs()
+            def fixtureArchive = File.createTempFile(
+                'android-license-scan-fixture-',
+                '.aar',
+                androidRoot.buildDir,
+            )
+            try {
+                fixtureArchive.bytes = outerArchive
+                def observed = embeddedLicenseDocuments(fixtureArchive)
+                def expected = [
+                    [
+                        archivePath: 'META-INF/NOTICE',
+                        bytes: directNotice.length,
+                        sha256: digestBytes(directNotice),
+                    ],
+                    [
+                        archivePath: 'libs/nested.jar!/META-INF/LICENSE.txt',
+                        bytes: nestedLicense.length,
+                        sha256: digestBytes(nestedLicense),
+                    ],
+                    [
+                        archivePath: 'libs/nested.jar!/licenses/deeper.zip!/COPYING',
+                        bytes: deepCopying.length,
+                        sha256: digestBytes(deepCopying),
+                    ],
+                ]
+                if (observed != expected) {
+                    throw new GradleException(
+                        "Android archive license scanner mismatch: ${JsonOutput.toJson(observed)}",
+                    )
+                }
+            } finally {
+                fixtureArchive.delete()
+            }
+            logger.lifecycle(
+                'Verified direct and nested archive-member license document paths and digests.',
+            )
+        }
+    }
+
+    androidRoot.tasks.register('exportParkinSUMAndroidDebugRuntimeGraph') {
+        group = 'verification'
+        description = 'Exports resolved Android debug runtime dependencies for release evidence.'
+
+        doLast {
+            def repositoryRoot = androidRoot.projectDir.parentFile.canonicalFile
+            def pluginMetadataFile = new File(repositoryRoot, '.flutter-plugins-dependencies')
+            if (!pluginMetadataFile.isFile()) {
+                throw new GradleException("Flutter plugin metadata is missing: ${pluginMetadataFile}")
+            }
+            def pluginMetadata = new JsonSlurper().parse(pluginMetadataFile)
+            def androidPlugins = pluginMetadata?.plugins?.android
+            if (!(androidPlugins instanceof List)) {
+                throw new GradleException('Flutter plugin metadata has no Android plugin array')
+            }
+
+            def pluginByDirectory = [:]
+            androidPlugins.each { plugin ->
+                if (!(plugin?.name instanceof String) || !(plugin?.path instanceof String)) {
+                    throw new GradleException('Flutter Android plugin metadata has an invalid name or path')
+                }
+                def pluginDirectory = new File(plugin.path, 'android').canonicalFile
+                if (pluginByDirectory.containsKey(pluginDirectory) && pluginByDirectory[pluginDirectory] != plugin.name) {
+                    throw new GradleException("Flutter plugin directory maps to multiple Pub packages: ${pluginDirectory}")
+                }
+                pluginByDirectory[pluginDirectory] = plugin.name
+            }
+
+            def projectByPath = [:]
+            androidRoot.allprojects.each { project -> projectByPath[project.path] = project }
+            def app = androidRoot.findProject(':app')
+            if (app == null) throw new GradleException('Android application project :app is missing')
+            def configuration = app.configurations.findByName('debugRuntimeClasspath')
+            if (configuration == null || !configuration.canBeResolved) {
+                throw new GradleException('Android :app debugRuntimeClasspath is missing or not resolvable')
+            }
+
+            def resolution = configuration.incoming.resolutionResult
+            def rootComponent = resolution.root
+            def nodes = [:]
+            def expanded = [] as Set
+            def pending = [rootComponent]
+            def rootEdges = [] as Set
+            while (!pending.isEmpty()) {
+                def component = pending.remove(pending.size() - 1)
+                def componentIsRoot = component == rootComponent
+                def componentIdentity = componentIsRoot
+                    ? null
+                    : stableComponentIdentity(component.id, androidRoot, projectByPath, pluginByDirectory)
+                def componentKey = componentIsRoot ? null : identityKey(componentIdentity)
+                if (!componentIsRoot && expanded.contains(componentKey)) continue
+                if (!componentIsRoot && !nodes.containsKey(componentKey)) {
+                    nodes[componentKey] = [identity: componentIdentity, dependencyKeys: [] as Set]
+                }
+                if (!componentIsRoot) expanded.add(componentKey)
+
+                def childKeys = [] as Set
+                component.dependencies.each { dependency ->
+                    if (!(dependency instanceof org.gradle.api.artifacts.result.ResolvedDependencyResult)) {
+                        throw new GradleException("Unresolved Android runtime dependency: ${dependency}")
+                    }
+                    def selected = dependency.selected
+                    if (selected == rootComponent) {
+                        throw new GradleException('Android runtime dependency graph contains a self-reference to its root')
+                    }
+                    def childIdentity = stableComponentIdentity(selected.id, androidRoot, projectByPath, pluginByDirectory)
+                    def childKey = identityKey(childIdentity)
+                    childKeys.add(childKey)
+                    if (componentIsRoot) rootEdges.add(childKey)
+                    pending.add(selected)
+                }
+                if (!componentIsRoot) {
+                    nodes[componentKey].dependencyKeys = childKeys
+                }
+            }
+
+            def artifactLists = [:].withDefault { [] }
+            def externalModuleArtifactView = configuration.incoming.artifactView { view ->
+                view.componentFilter { identifier -> identifier instanceof ModuleComponentIdentifier }
+            }
+            externalModuleArtifactView.artifacts.artifacts.each { artifact ->
+                def artifactIdentity = stableComponentIdentity(
+                    artifact.id.componentIdentifier,
+                    androidRoot,
+                    projectByPath,
+                    pluginByDirectory,
+                )
+                def artifactKey = identityKey(artifactIdentity)
+                if (!nodes.containsKey(artifactKey)) {
+                    throw new GradleException("Android runtime artifact is missing from the resolved graph: ${artifact.file.name}")
+                }
+                def file = artifact.file
+                artifactLists[artifactKey] << [
+                    fileName: file.name,
+                    bytes: file.length(),
+                    sha256: digestFile(file),
+                    licenseDocuments: embeddedLicenseDocuments(file),
+                ]
+            }
+
+            def components = nodes.values().collect { node ->
+                def key = identityKey(node.identity)
+                [
+                    id: node.identity,
+                    dependencies: node.dependencyKeys.toList().sort().collect { edgeKey -> new JsonSlurper().parseText(edgeKey) },
+                    artifacts: artifactLists[key].unique { item -> "${item.fileName}:${item.sha256}" }
+                        .sort { left, right -> "${left.fileName}:${left.sha256}" <=> "${right.fileName}:${right.sha256}" },
+                ]
+            }.sort { left, right -> identityKey(left.id) <=> identityKey(right.id) }
+
+            def graph = [
+                schemaUri: 'parkinsum.android-gradle-runtime-dependency-graph/2',
+                schemaVersion: 2,
+                configuration: 'debugRuntimeClasspath',
+                root: [dependencies: rootEdges.toList().sort().collect { key -> new JsonSlurper().parseText(key) }],
+                components: components,
+            ]
+            def outputArgument = gradle.startParameter.projectProperties['parkinsumOutput']
+            if (!(outputArgument instanceof String) || outputArgument.trim().isEmpty()) {
+                throw new GradleException('Set -PparkinsumOutput to a repository-relative graph output path')
+            }
+            def outputFile = new File(androidRoot.projectDir, outputArgument).canonicalFile
+            if (!outputFile.toPath().startsWith(repositoryRoot.toPath())) {
+                throw new GradleException('Android dependency graph output must remain inside the repository')
+            }
+            Files.createDirectories(outputFile.parentFile.toPath())
+            def temporaryFile = File.createTempFile('android-gradle-runtime-', '.json', outputFile.parentFile)
+            temporaryFile.text = JsonOutput.prettyPrint(JsonOutput.toJson(graph)) + '\n'
+            Files.move(
+                temporaryFile.toPath(),
+                outputFile.toPath(),
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.ATOMIC_MOVE,
+            )
+            logger.lifecycle("Wrote ${components.size()} Android runtime dependency components to ${repositoryRoot.toPath().relativize(outputFile.toPath())}")
+        }
+    }
+}

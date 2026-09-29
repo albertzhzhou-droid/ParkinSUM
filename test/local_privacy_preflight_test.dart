@@ -93,8 +93,8 @@ void main() {
     );
   });
 
-  // 5 — Google API key inside a known Firebase client config → WARN (allowed).
-  test('firebase web API key in known config path → WARN', () {
+  // 5 — Concrete Google API key in tracked Firebase config → BLOCKER.
+  test('firebase client API key in tracked config → BLOCKER', () {
     final r = scan([
       file(
         'lib/firebase_options.dart',
@@ -103,11 +103,11 @@ void main() {
             "SyA1234567890123456789012345678901234',\n",
       ),
     ]);
-    final f = find(r, 'firebase_web_api_key_present');
+    final f = find(r, 'firebase_client_api_key_committed');
     expect(f, isNotNull);
-    expect(f!.severity, LocalPrivacySeverity.warn);
-    expect(f.allowlistReason, isNotEmpty);
-    expect(r.pass, isTrue);
+    expect(f!.severity, LocalPrivacySeverity.blocker);
+    expect(f.allowlistReason, isEmpty);
+    expect(r.pass, isFalse);
   });
 
   // 6 — Google API key OUTSIDE a known config path → BLOCKER.

@@ -1,0 +1,58 @@
+name: Open-source drift proposal
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proposal:
+    name: Read-only upstream metadata review
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out reviewed inventory
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Validate the pinned inventory and offline firewall
+        run: npm run --silent open-source:firewall
+
+      - name: Test the proposal contract
+        run: npm run --silent open-source:drift-proposal:test
+
+      - name: Test the human review ledger contract
+        run: npm run --silent open-source:drift-ledger:test
+
+      - name: Collect public repository metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PREVIOUS_PROPOSAL: config/open_source_drift_proposal_baseline.json
+          PREVIOUS_DECISION_LEDGER: config/open_source_drift_decision_ledger.json
+        run: |
+          set -eu
+          if [ -f "$PREVIOUS_PROPOSAL" ] && [ -f "$PREVIOUS_DECISION_LEDGER" ]; then
+            npm run --silent open-source:drift-proposal -- \
+              --previous-proposal "$PREVIOUS_PROPOSAL" \
+              --previous-decision-ledger "$PREVIOUS_DECISION_LEDGER"
+          elif [ -e "$PREVIOUS_PROPOSAL" ] || [ -e "$PREVIOUS_DECISION_LEDGER" ]; then
+            echo "A reviewed baseline and its decision ledger must be present together." >&2
+            exit 1
+          else
+            npm run --silent open-source:drift-proposal
+          fi
+
+      - name: Upload the review proposal
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-source-drift-proposal
+          path: build/open_source_drift_proposal/
+          if-no-files-found: warn
+          retention-days: 30

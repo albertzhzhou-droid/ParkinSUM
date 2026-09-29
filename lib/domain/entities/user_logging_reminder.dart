@@ -1,5 +1,7 @@
 enum UserLoggingReminderKind { mealLog, intakeLog }
 
+const int userLoggingReminderSchemaVersion = 4;
+
 enum ReminderNotificationPrivacyMode { minimal, generic }
 
 class UserLoggingReminder {
@@ -13,6 +15,7 @@ class UserLoggingReminder {
     this.activationToken = '',
     this.notificationPrivacyMode = ReminderNotificationPrivacyMode.minimal,
     this.notificationLocaleCode = 'en',
+    this.notificationLocaleDecisionCode = 'en',
   });
 
   final String id;
@@ -25,6 +28,12 @@ class UserLoggingReminder {
   final ReminderNotificationPrivacyMode notificationPrivacyMode;
   final String notificationLocaleCode;
 
+  /// Language family against which the user most recently chose to retain or
+  /// update the installed notification copy. It is deliberately separate from
+  /// [notificationLocaleCode]: retaining old copy advances the decision code
+  /// without silently rewriting the scheduled text.
+  final String notificationLocaleDecisionCode;
+
   int get hour => minuteOfDay ~/ 60;
   int get minute => minuteOfDay % 60;
 
@@ -33,6 +42,7 @@ class UserLoggingReminder {
     String? activationToken,
     ReminderNotificationPrivacyMode? notificationPrivacyMode,
     String? notificationLocaleCode,
+    String? notificationLocaleDecisionCode,
   }) => UserLoggingReminder(
     id: id,
     kind: kind,
@@ -45,6 +55,8 @@ class UserLoggingReminder {
         notificationPrivacyMode ?? this.notificationPrivacyMode,
     notificationLocaleCode:
         notificationLocaleCode ?? this.notificationLocaleCode,
+    notificationLocaleDecisionCode:
+        notificationLocaleDecisionCode ?? this.notificationLocaleDecisionCode,
   );
 
   DateTime nextOccurrence(DateTime now) {
@@ -57,7 +69,7 @@ class UserLoggingReminder {
   }
 
   Map<String, dynamic> toJson() => {
-    'schemaVersion': 3,
+    'schemaVersion': userLoggingReminderSchemaVersion,
     'id': id,
     'kind': kind.name,
     'label': label,
@@ -67,6 +79,7 @@ class UserLoggingReminder {
     'activationToken': activationToken,
     'notificationPrivacyMode': notificationPrivacyMode.name,
     'notificationLocaleCode': notificationLocaleCode,
+    'notificationLocaleDecisionCode': notificationLocaleDecisionCode,
   };
 
   factory UserLoggingReminder.fromJson(Map<String, dynamic> json) {
@@ -80,7 +93,11 @@ class UserLoggingReminder {
     final schemaVersion = json['schemaVersion'];
     final privacyModeName = json['notificationPrivacyMode'];
     final rawNotificationLocaleCode = json['notificationLocaleCode'];
-    if (schemaVersion is! int || schemaVersion < 1 || schemaVersion > 3) {
+    final rawNotificationLocaleDecisionCode =
+        json['notificationLocaleDecisionCode'];
+    if (schemaVersion is! int ||
+        schemaVersion < 1 ||
+        schemaVersion > userLoggingReminderSchemaVersion) {
       throw const FormatException('Reminder schema version is unsupported.');
     }
     if (id is! String || id.trim().isEmpty) {
@@ -105,9 +122,11 @@ class UserLoggingReminder {
     if (kind.isEmpty) throw const FormatException('Reminder kind is invalid.');
     final ReminderNotificationPrivacyMode privacyMode;
     final String notificationLocaleCode;
+    final String notificationLocaleDecisionCode;
     if (schemaVersion < 3) {
       privacyMode = ReminderNotificationPrivacyMode.minimal;
       notificationLocaleCode = 'en';
+      notificationLocaleDecisionCode = 'en';
     } else {
       final matches = ReminderNotificationPrivacyMode.values.where(
         (candidate) => candidate.name == privacyModeName,
@@ -118,13 +137,29 @@ class UserLoggingReminder {
         );
       }
       privacyMode = matches.single;
-      if (rawNotificationLocaleCode is! String ||
-          !RegExp(
-            r'^[A-Za-z]{2,3}(?:[-_][A-Za-z]{2,4})?$',
-          ).hasMatch(rawNotificationLocaleCode)) {
+      if (!isReminderNotificationLocaleCodeValid(rawNotificationLocaleCode)) {
         throw const FormatException('Reminder notification locale is invalid.');
       }
-      notificationLocaleCode = rawNotificationLocaleCode.replaceAll('_', '-');
+      notificationLocaleCode = (rawNotificationLocaleCode as String).replaceAll(
+        '_',
+        '-',
+      );
+      if (schemaVersion < 4) {
+        notificationLocaleDecisionCode = reminderNotificationLanguageCode(
+          notificationLocaleCode,
+        );
+      } else {
+        if (!isReminderNotificationLocaleCodeValid(
+          rawNotificationLocaleDecisionCode,
+        )) {
+          throw const FormatException(
+            'Reminder notification locale decision is invalid.',
+          );
+        }
+        notificationLocaleDecisionCode = reminderNotificationLanguageCode(
+          rawNotificationLocaleDecisionCode as String,
+        );
+      }
     }
     return UserLoggingReminder(
       id: id,
@@ -140,6 +175,18 @@ class UserLoggingReminder {
           : '',
       notificationPrivacyMode: privacyMode,
       notificationLocaleCode: notificationLocaleCode,
+      notificationLocaleDecisionCode: notificationLocaleDecisionCode,
     );
   }
+}
+
+bool isReminderNotificationLocaleCodeValid(Object? value) =>
+    value is String &&
+    RegExp(r'^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8}){0,2}$').hasMatch(value);
+
+String reminderNotificationLanguageCode(String localeCode) {
+  if (!isReminderNotificationLocaleCodeValid(localeCode)) {
+    throw const FormatException('Reminder notification locale is invalid.');
+  }
+  return localeCode.trim().toLowerCase().split(RegExp('[-_]')).first;
 }

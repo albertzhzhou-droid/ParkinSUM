@@ -2,6 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'node:child_process';
 
 const root = process.cwd();
 const outputDir = path.join(root, 'build', 'public_release_preflight');
@@ -70,7 +71,9 @@ const sensitiveFilenamePatterns = [
 
 const textFilePattern =
   /\.(md|txt|json|yaml|yml|mjs|js|dart|sh|html|css|xml|plist|rules|lock|gitignore)$/i;
-const maxScanBytes = 1024 * 1024;
+// The canonical append-only evolution timeline now exceeds 1 MiB. Scan it in
+// full while retaining a bounded, fail-closed limit for larger tracked text.
+const maxScanBytes = 4 * 1024 * 1024;
 
 const findings = [];
 const oldPersonalContact = ['albertzhzhou', 'gmail.com'].join('@');
@@ -116,6 +119,38 @@ function listFiles(dir) {
   return out;
 }
 
+function listTrackedFiles() {
+  try {
+    const topLevel = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    if (path.resolve(topLevel) !== path.resolve(root)) {
+      throw new Error('preflight root is not the Git repository root');
+    }
+    const output = execFileSync('git', ['ls-files', '-z'], {
+      cwd: root,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return new Set(
+      output
+        .split('\0')
+        .filter(Boolean)
+        .map((relative) => relative.split(path.sep).join('/')),
+    );
+  } catch {
+    add(
+      'BLOCKER',
+      'git_tracked_files_unavailable',
+      'Unable to enumerate Git-tracked files from the repository root.',
+      '.git',
+    );
+    return new Set();
+  }
+}
+
 function isUnder(relative, dir) {
   return relative === dir || relative.startsWith(`${dir}/`);
 }
@@ -128,7 +163,7 @@ function isSensitiveDir(relative) {
   return sensitiveDirs.some((dir) => isUnder(relative, dir));
 }
 
-function isLikelyFirebaseWebConfig(relative, content) {
+function isKnownFirebaseClientConfig(relative, content) {
   return (
     /google-services\.json$/.test(relative) ||
     /GoogleService-Info\.plist$/.test(relative) ||
@@ -219,7 +254,13 @@ function checkHighRiskClaims(files) {
     if (stat.size > maxScanBytes) continue;
     const content = fs.readFileSync(file.full, 'utf8');
     for (const pattern of bannedClaims) {
-      if (pattern.test(content)) {
+      // Preserve exact negative guardrails in the historical timeline. Remove
+      // only these denied claims, so an affirmative occurrence elsewhere in
+      // the same sentence or document still blocks publication.
+      const claimContent = pattern.source === 'clinically\\s+validated'
+        ? content.replace(/\b(?:(?:not|never)\s+|nothing\s+is\s+)clinically\s+validated\b/gi, '')
+        : content;
+      if (pattern.test(claimContent)) {
         add('BLOCKER', 'high_risk_public_claim', `High-risk public positioning phrase matched ${pattern}.`, file.relative);
       }
     }
@@ -247,7 +288,7 @@ function checkClinicalCalibrationGuardrail(files) {
   }
 }
 
-function checkSensitivePaths(files) {
+function checkSensitivePaths(files, trackedFiles) {
   for (const dir of generatedDirs) {
     if (exists(dir)) {
       add('WARN', 'generated_or_local_dir_present', `Local/generated directory is present and should not be published: ${dir}`, dir);
@@ -261,14 +302,17 @@ function checkSensitivePaths(files) {
     }
     for (const pattern of sensitiveFilenamePatterns) {
       if (pattern.test(file.relative)) {
-        const severity = isGenerated(file.relative) ? 'WARN' : 'BLOCKER';
+        const severity =
+          isGenerated(file.relative) && !trackedFiles.has(file.relative)
+            ? 'WARN'
+            : 'BLOCKER';
         add(severity, 'sensitive_filename_present', 'Potential credential file name is present.', file.relative);
       }
     }
   }
 }
 
-function checkContentSecrets(files) {
+function checkContentSecrets(files, trackedFiles) {
   const privateKeyBoundary = ['-----BEGIN ', 'PRIVATE KEY-----'];
   const privateKeyBlock = new RegExp(`${privateKeyBoundary[0]}(RSA |EC |OPENSSH |)?${privateKeyBoundary[1]}`);
   const serviceAccountPrivateKey = new RegExp(`"private_key"\\s*:\\s*"${privateKeyBoundary[0]}PRIVATE KEY-----`);
@@ -284,7 +328,14 @@ function checkContentSecrets(files) {
     if (!textFilePattern.test(file.relative)) continue;
     const stat = fs.statSync(file.full);
     if (stat.size > maxScanBytes) {
-      if (isGenerated(file.relative)) {
+      if (trackedFiles.has(file.relative)) {
+        add(
+          'BLOCKER',
+          'tracked_large_file_scan_incomplete',
+          'Git-tracked text file exceeds the content-scanner size limit; publication must fail closed until the file is scanned or removed from the public source tree.',
+          file.relative,
+        );
+      } else if (isGenerated(file.relative)) {
         add('WARN', 'large_generated_file_skipped', 'Large generated/local text file skipped by content scanner.', file.relative);
       }
       continue;
@@ -297,20 +348,35 @@ function checkContentSecrets(files) {
       continue;
     }
 
+    const isUntrackedGenerated =
+      isGenerated(file.relative) && !trackedFiles.has(file.relative);
+
     if (/AIza[0-9A-Za-z_-]{20,}/.test(content)) {
-      if (isLikelyFirebaseWebConfig(file.relative, content)) {
-        add('WARN', 'firebase_web_api_key_present', 'Firebase Web API key appears in client config; expected public Firebase config, not an admin secret.', file.relative);
-      } else if (isGenerated(file.relative)) {
+      if (isUntrackedGenerated) {
         add('WARN', 'generated_api_key_like_value', 'API-key-like value appears in generated/local build output.', file.relative);
+      } else if (isGenerated(file.relative)) {
+        add(
+          'BLOCKER',
+          'tracked_generated_api_key_like_value',
+          'API-key-like value appears in a Git-tracked generated file.',
+          file.relative,
+        );
+      } else if (isKnownFirebaseClientConfig(file.relative, content)) {
+        add(
+          'BLOCKER',
+          'firebase_client_api_key_committed',
+          'Firebase client API key is committed. Inject the restricted client key at build time; backend authorization must remain in Security Rules and App Check.',
+          file.relative,
+        );
       } else {
-        add('BLOCKER', 'api_key_like_secret', 'API-key-like value appears outside known Firebase client config.', file.relative);
+        add('BLOCKER', 'api_key_like_secret', 'API-key-like value appears in repository source.', file.relative);
       }
     }
 
     for (const { name, pattern } of secretPatterns) {
       if (!pattern.test(content)) continue;
-      const severity = isGenerated(file.relative) ? 'WARN' : 'BLOCKER';
-      add(severity, name, `${name} matched in ${isGenerated(file.relative) ? 'generated/local' : 'repository'} file.`, file.relative);
+      const severity = isUntrackedGenerated ? 'WARN' : 'BLOCKER';
+      add(severity, name, `${name} matched in ${isUntrackedGenerated ? 'untracked generated/local' : 'repository'} file.`, file.relative);
     }
   }
 }
@@ -420,12 +486,13 @@ function escapeMd(value) {
 
 checkRequiredFiles();
 checkGitignore();
+const trackedFiles = listTrackedFiles();
 const files = listFiles(root);
 checkPublicDocs();
 checkHighRiskClaims(files);
 checkClinicalCalibrationGuardrail(files);
-checkSensitivePaths(files);
-checkContentSecrets(files);
+checkSensitivePaths(files, trackedFiles);
+checkContentSecrets(files, trackedFiles);
 addPositiveEvidence();
 
 const report = writeReports(files);

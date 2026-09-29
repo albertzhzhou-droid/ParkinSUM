@@ -2,9 +2,13 @@ import '../../../domain/entities/amino_acid_profile.dart';
 
 /// Deterministic extractor for per-food amino-acid nutrients from an
 /// FDC-style payload (`foodNutrients` list with nutrient number/name/unit +
-/// amount). Preserves nutrient ids and source refs. Returns null when no
-/// amino-acid fields are present so the LNAA layer can fall back to the
-/// protein-source proxy. No network. Educational prototype; synthetic only.
+/// amount). Preserves accepted nutrient ids and source refs. Recognized rows
+/// with ambiguous units/values or duplicate fields are held (left null) and
+/// mark the returned profile partial; they are never coerced into grams.
+/// Returns null only when no valid or held competing-LNAA field was observed;
+/// a recognized-but-held competing field remains auditable as a partial
+/// profile instead of becoming indistinguishable from source absence.
+/// No network.
 class AminoAcidExtractor {
   /// USDA FoodData Central amino-acid nutrient numbers (verified):
   /// 501 Tryptophan, 502 Threonine, 503 Isoleucine, 504 Leucine,
@@ -24,6 +28,33 @@ class AminoAcidExtractor {
     '510': 'valine',
     '511': 'arginine',
     '512': 'histidine',
+  };
+
+  /// Stable FDC-number order. Assignment, nutrient ids and derivation maps use
+  /// this order so semantically identical payload permutations serialize the
+  /// same way.
+  static const List<String> _canonicalFieldOrder = [
+    'tryptophan',
+    'threonine',
+    'isoleucine',
+    'leucine',
+    'lysine',
+    'methionine',
+    'cystine',
+    'phenylalanine',
+    'tyrosine',
+    'valine',
+    'arginine',
+    'histidine',
+  ];
+
+  static const Set<String> _competingFields = {
+    'leucine',
+    'isoleucine',
+    'valine',
+    'phenylalanine',
+    'tyrosine',
+    'tryptophan',
   };
 
   AminoAcidProfile? extractFromFdcStyle(
@@ -48,21 +79,22 @@ class AminoAcidExtractor {
     final ids = <String>[];
     // Basis follows the payload when present (FDC Foundation/SR are per_100g);
     // defaults to per_100g only when the payload does not declare one.
-    final basis =
-        (payload['basisType'] is String &&
-            (payload['basisType'] as String).trim().isNotEmpty)
-        ? payload['basisType'] as String
-        : 'per_100g';
+    final declaredBasis = payload['basisType'] is String
+        ? (payload['basisType'] as String).trim()
+        : '';
+    final basis = declaredBasis.isEmpty ? 'per_100g' : declaredBasis;
     // Optional FDC food data type (Foundation / SR Legacy / Survey / Branded).
-    final fdcDataType =
-        (payload['dataType'] is String &&
-            (payload['dataType'] as String).trim().isNotEmpty)
-        ? payload['dataType'] as String
-        : null;
+    final declaredDataType = payload['dataType'] is String
+        ? (payload['dataType'] as String).trim()
+        : '';
+    final fdcDataType = declaredDataType.isEmpty ? null : declaredDataType;
     // After normalization all values are expressed in grams.
     const unit = 'g';
     var partial = false;
     final derivations = <String, NutrientDerivation>{};
+    final candidates = <String, _AminoAcidCandidate>{};
+    final rowCountByField = <String, int>{};
+    var heldCompetingField = false;
 
     void assign(String field, double valueG, String number) {
       switch (field) {
@@ -112,27 +144,50 @@ class AminoAcidExtractor {
       if (raw is! Map) continue;
       final nutrient = raw['nutrient'];
       if (nutrient is! Map) continue;
-      final number = (nutrient['number'] ?? '').toString();
-      final name = (nutrient['name'] ?? '').toString().toLowerCase();
-      final amount = raw['amount'];
-      if (amount is! num) continue;
+      final number = (nutrient['number'] ?? '').toString().trim();
+      final name = (nutrient['name'] ?? '').toString().trim().toLowerCase();
       final field = _numberToField[number] ?? _nameToField(name);
       if (field == null) continue;
 
-      final unitName = (nutrient['unitName'] ?? '').toString().toLowerCase();
-      final normalized = _toGrams(amount.toDouble(), unitName);
-      if (normalized == null) {
-        // No / unrecognized unit: accept the raw value provisionally but mark
-        // the whole profile partial (lower confidence; never trusted as exact).
+      final rowCount = (rowCountByField[field] ?? 0) + 1;
+      rowCountByField[field] = rowCount;
+      if (rowCount > 1) {
+        // Multiple upstream rows for one semantic field are ambiguous without
+        // an explicit selection policy. Hold the field rather than making the
+        // result depend on source ordering (even if two rows happen to agree).
         partial = true;
-        assign(field, amount.toDouble(), number);
-      } else {
-        assign(field, normalized, number);
+        if (_competingFields.contains(field)) heldCompetingField = true;
+        candidates.remove(field);
+        continue;
       }
 
-      // Capture FDC per-nutrient provenance when present (additive; missing
-      // stays missing — never fabricated). Keyed by amino-acid field name.
-      final derivation = _extractDerivation(raw);
+      final amount = _finiteNonNegativeAmount(raw['amount']);
+      final unitName = (nutrient['unitName'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
+      final normalized = amount == null ? null : _toGrams(amount, unitName);
+      if (normalized == null) {
+        // Missing/non-numeric/non-finite/negative amount or a missing/unknown
+        // unit is a typed missing value. Never write the raw number into a
+        // profile whose declared unit is grams.
+        partial = true;
+        if (_competingFields.contains(field)) heldCompetingField = true;
+        continue;
+      }
+
+      candidates[field] = _AminoAcidCandidate(
+        valueG: normalized,
+        nutrientId: _numberToField.containsKey(number) ? number : 'name:$field',
+        derivation: _extractDerivation(raw),
+      );
+    }
+
+    for (final field in _canonicalFieldOrder) {
+      final candidate = candidates[field];
+      if (candidate == null || (rowCountByField[field] ?? 0) != 1) continue;
+      assign(field, candidate.valueG, candidate.nutrientId);
+      final derivation = candidate.derivation;
       if (derivation != null) derivations[field] = derivation;
     }
 
@@ -157,7 +212,9 @@ class AminoAcidExtractor {
       derivations: Map.unmodifiable(derivations),
       fdcDataType: fdcDataType,
     );
-    return profile.competingLnaaGrams == null ? null : profile;
+    return profile.competingLnaaGrams == null && !heldCompetingField
+        ? null
+        : profile;
   }
 
   /// Extract an FDC `foodNutrientDerivation` / `dataPoints` / `foodNutrientSource`
@@ -199,8 +256,24 @@ class AminoAcidExtractor {
     );
   }
 
-  /// Normalize an amino-acid amount to grams. Returns null when the unit is
-  /// missing/unrecognized so the caller can mark the profile partial.
+  /// Accept native JSON numbers and canonical numeric strings emitted by FDC
+  /// CSV archives. Invalid, non-finite and negative values remain missing;
+  /// zero is a valid measured value and is deliberately preserved.
+  double? _finiteNonNegativeAmount(Object? raw) {
+    final double? value;
+    if (raw is num) {
+      value = raw.toDouble();
+    } else if (raw is String && raw.trim().isNotEmpty) {
+      value = double.tryParse(raw.trim());
+    } else {
+      value = null;
+    }
+    if (value == null || !value.isFinite || value < 0) return null;
+    return value;
+  }
+
+  /// Normalize an amino-acid amount to grams. Returns null when the trimmed
+  /// unit is missing/unrecognized so the caller can hold the field as missing.
   double? _toGrams(double amount, String unitName) {
     switch (unitName) {
       case 'g':
@@ -232,4 +305,16 @@ class AminoAcidExtractor {
     if (name.contains('arginine')) return 'arginine';
     return null;
   }
+}
+
+final class _AminoAcidCandidate {
+  final double valueG;
+  final String nutrientId;
+  final NutrientDerivation? derivation;
+
+  const _AminoAcidCandidate({
+    required this.valueG,
+    required this.nutrientId,
+    required this.derivation,
+  });
 }

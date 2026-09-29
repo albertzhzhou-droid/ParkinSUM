@@ -155,7 +155,9 @@ void main() {
     test(
       'collects the real safe snapshot and the bundle passes privacy gate',
       () {
-        const collector = PrivacySafeSupportSnapshotService();
+        const collector = PrivacySafeSupportSnapshotService(
+          stopwatchFactory: _zeroElapsedStopwatch,
+        );
         const bundleService = PrivacySafeSupportBundleService();
         final snapshot = collector.collect();
         final artifact = bundleService.create(
@@ -178,6 +180,7 @@ void main() {
     test('unknown exception text is replaced by one stable finding code', () {
       const collector = PrivacySafeSupportSnapshotService(
         beforeCopyDiagnostic: _throwSensitiveException,
+        stopwatchFactory: _zeroElapsedStopwatch,
       );
       final snapshot = collector.collect();
       final check = snapshot.diagnostics.singleWhere(
@@ -190,6 +193,25 @@ void main() {
         isNot(contains('user@example.com')),
       );
       expect(jsonEncode(snapshot.toJson()), isNot(contains('/Users/private')));
+    });
+
+    test('collection budget still fails closed with a stable code', () {
+      final collector = PrivacySafeSupportSnapshotService(
+        stopwatchFactory: () => _FixedElapsedStopwatch(
+          privacySafeSupportSnapshotCollectionBudget +
+              const Duration(microseconds: 1),
+        ),
+      );
+      expect(
+        collector.collect,
+        throwsA(
+          isA<PrivacySafeSupportCollectionException>().having(
+            (error) => error.code,
+            'code',
+            'collection_time_budget_exceeded',
+          ),
+        ),
+      );
     });
 
     test('checked-in version defaults match pubspec version', () {
@@ -257,3 +279,12 @@ PrivacySafeSupportSnapshot _snapshot({
     modelAssumptionCount: 23,
   ),
 );
+
+Stopwatch _zeroElapsedStopwatch() => _FixedElapsedStopwatch(Duration.zero);
+
+class _FixedElapsedStopwatch extends Stopwatch {
+  _FixedElapsedStopwatch(this.elapsed);
+
+  @override
+  final Duration elapsed;
+}

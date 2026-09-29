@@ -185,6 +185,79 @@ void main() {
     expect(mixed.aggregateLagMinutes, greaterThan(0));
   });
 
+  test('mixed physical form executes the declared solid parameter branch', () {
+    final solid = profileFor([
+      component(
+        id: 'solid-form',
+        form: MealPhysicalForm.solid,
+        protein: 10,
+        fat: 3,
+        fiber: 1,
+        carbs: 40,
+        calories: 300,
+        portion: 250,
+      ),
+    ]);
+    final mixed = profileFor([
+      component(
+        id: 'mixed-form',
+        form: MealPhysicalForm.mixed,
+        protein: 10,
+        fat: 3,
+        fiber: 1,
+        carbs: 40,
+        calories: 300,
+        portion: 250,
+      ),
+    ]);
+
+    expect(
+      mixed.componentProfiles.single.lagMinutes,
+      solid.componentProfiles.single.lagMinutes,
+    );
+    expect(
+      mixed.componentProfiles.single.halfEmptyingMinutes,
+      solid.componentProfiles.single.halfEmptyingMinutes,
+    );
+    final formBranch =
+        GastricEmptyingModel.generatorStructure['component_form_branch']
+            as Map<String, Object>;
+    expect(formBranch['mixed'], 'solid_parameter_pair');
+  });
+
+  test('both declared overlap thresholds add uncertainty independently', () {
+    final composition = normalizer.normalize(
+      mealId: 'overlap',
+      components: [
+        component(
+          id: 'reference',
+          form: MealPhysicalForm.solid,
+          protein: 10,
+          fat: 3,
+          fiber: 0,
+          carbs: 40,
+          calories: 300,
+          portion: 250,
+        ),
+      ],
+    );
+    final firstThreshold = model.build(
+      mealId: 'overlap',
+      mealStartMinute: 0,
+      composition: composition,
+      overlappingResidualLoad: 0.2,
+    );
+    final bothThresholds = model.build(
+      mealId: 'overlap',
+      mealStartMinute: 0,
+      composition: composition,
+      overlappingResidualLoad: 0.4,
+    );
+
+    expect(firstThreshold.uncertaintyBand, UncertaintyBand.moderate);
+    expect(bothThresholds.uncertaintyBand, UncertaintyBand.wide);
+  });
+
   test('population variability is exposed as sensitivity, not hidden', () {
     final profile = profileFor([
       component(

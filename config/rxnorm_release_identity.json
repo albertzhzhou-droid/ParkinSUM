@@ -1,0 +1,65 @@
+{
+  "schemaUri": "parkinsum.rxnorm-release-identity/1",
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-23",
+  "terminology": {
+    "id": "RxNorm",
+    "publisher": "U.S. National Library of Medicine",
+    "releaseProduct": "Current Prescribable Content",
+    "jurisdictionScope": "US-centric"
+  },
+  "release": {
+    "date": "2026-09-08",
+    "filename": "RxNorm_full_prescribe_09082026.zip",
+    "downloadUrl": "https://download.nlm.nih.gov/umls/kss/rxnorm/RxNorm_full_prescribe_09082026.zip",
+    "publisherChecksum": {
+      "algorithm": "MD5",
+      "value": "88bbe4cefabd8e71f58651c1c3188646",
+      "sourceUrl": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html",
+      "localVerification": "not_downloaded"
+    },
+    "releaseNotesUrl": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/2026/rxnorm_releasenotes_prescribe_09082026.html"
+  },
+  "scope": {
+    "sourceVocabulary": "RXNORM",
+    "activeTermTypeCounts": {
+      "GPCK": 608,
+      "BPCK": 706,
+      "SCD": 12076,
+      "SBD": 8079,
+      "MIN": 961,
+      "IN": 5844,
+      "PIN": 1943,
+      "BN": 4134,
+      "DF": 120
+    },
+    "rxnormNdcCount": 239152,
+    "evidenceUrl": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/2026/rxnorm_releasenotes_prescribe_09082026.html",
+    "interpretation": "The release notes enumerate active RXNORM term-type and NDC counts; the archive is not parsed by this project."
+  },
+  "terms": {
+    "currentPrescribableContentDownload": "no_license_required_per_NLM_release_listing",
+    "fullMonthlyReleaseDownload": "free_UMLS_license_required",
+    "attributionRequested": true,
+    "redistributionCurrencyDisclosureRequired": true,
+    "noNLMEndorsementOrLogo": true,
+    "otherSourceVocabularyRestrictions": "not_reviewed_for_full_release",
+    "evidenceUrl": "https://www.nlm.nih.gov/research/umls/rxnorm/docs/termsofservice.html"
+  },
+  "consumptionBoundary": {
+    "archiveDownloaded": false,
+    "publisherChecksumVerifiedLocally": false,
+    "terminologyRowsBundled": false,
+    "rxcuiMappingsShipped": false,
+    "absenceInThisSubset": "unresolved_not_retired",
+    "releaseDrift": "hold_and_requalify",
+    "releaseFreshness": "NLM_latest_list_confirmed_on_reviewedAt; offline_checker_does_not_recheck",
+    "algorithmIdentityBound": false,
+    "clinicalOrTerminologyConformance": false
+  },
+  "contentAddress": {
+    "algorithm": "SHA-256",
+    "canonicalization": "parkinsum-sorted-json-v1",
+    "digestHex": "24cd88d4c10dbceccdd263a40876487fb14dee0712c966104fc5ade3eb208ef7"
+  }
+}

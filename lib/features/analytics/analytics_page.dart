@@ -1,13 +1,23 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
-import '../../domain/usecases/local_ai_recommendation_adapter.dart';
-import '../import/import_page.dart';
+import '../../core/theme/paper_theme.dart';
+import '../../domain/entities/protein_trend_point.dart';
+import '../../domain/entities/timeline_event.dart';
 
+/// Insights — descriptive summaries of the user's own entries.
+///
+/// This page used to mix localization status, local-AI endpoint fields, a raw
+/// replay benchmark and an import shortcut. Those were operator tools, not
+/// insights: the local-AI connection now lives in Settings → Advanced, the
+/// benchmark in Engineering diagnostics, and the rest already had homes.
+/// What remains is what a reader wants from their notebook: how often they
+/// logged, how protein was spread across meals, and when entries happen.
+/// Every figure is a count or sum of logged entries — no clinical inference.
 class AnalyticsPage extends StatefulWidget {
   const AnalyticsPage({super.key});
 
@@ -16,499 +26,663 @@ class AnalyticsPage extends StatefulWidget {
 }
 
 class _AnalyticsPageState extends State<AnalyticsPage> {
-  late final TextEditingController _modelController;
-  late final TextEditingController _medicalModelController;
-  late final TextEditingController _ollamaEndpointController;
-  late final TextEditingController _openAiCompatEndpointController;
-  late final TextEditingController _timeoutController;
-  String _providerPreference = LocalAiProviders.auto;
-
-  @override
-  void initState() {
-    super.initState();
-    _modelController = TextEditingController();
-    _medicalModelController = TextEditingController();
-    _ollamaEndpointController = TextEditingController();
-    _openAiCompatEndpointController = TextEditingController();
-    _timeoutController = TextEditingController();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final profile = context.read<AppState>().userProfile;
-    _providerPreference = profile.localAiProviderPreference;
-    _modelController.text = profile.localAiModel;
-    _medicalModelController.text = profile.localAiMedicalModel;
-    _ollamaEndpointController.text = profile.localAiOllamaEndpoint;
-    _openAiCompatEndpointController.text = profile.localAiOpenAiCompatEndpoint;
-    _timeoutController.text = '${profile.localAiTimeoutMs}';
-  }
-
-  @override
-  void dispose() {
-    _modelController.dispose();
-    _medicalModelController.dispose();
-    _ollamaEndpointController.dispose();
-    _openAiCompatEndpointController.dispose();
-    _timeoutController.dispose();
-    super.dispose();
-  }
-
-  String _formatDateTime(DateTime value) {
-    final mm = value.month.toString().padLeft(2, '0');
-    final dd = value.day.toString().padLeft(2, '0');
-    final hh = value.hour.toString().padLeft(2, '0');
-    final min = value.minute.toString().padLeft(2, '0');
-    return '$mm/$dd $hh:$min';
-  }
-
-  String _providerLabel(AppI18n i18n, String provider) {
-    switch (provider) {
-      case LocalAiProviders.ollama:
-        return i18n.tr('analytics.local_ai_provider_ollama');
-      case LocalAiProviders.openAiCompat:
-        return i18n.tr('analytics.local_ai_provider_openai');
-      default:
-        return i18n.tr('analytics.local_ai_provider_auto');
-    }
-  }
-
-  String? _recommendationTemplateSummary(AppState state, AppI18n i18n) {
-    final region = state.recommendationTemplateCountryCode;
-    final mealSlot = state.recommendationTemplateMealSlot;
-    final texture = state.recommendationTemplateTextureLevel;
-    if (region == null || mealSlot == null || texture == null) {
-      return null;
-    }
-    return i18n.tr('dashboard.recommendation_template', {
-      'region': i18n.regionLabel(region),
-      'mealSlot': i18n.mealSlotLabel(mealSlot),
-      'texture': i18n.textureClassLabel(texture),
-    });
-  }
-
-  Future<void> _saveLocalAiSettings(BuildContext context) async {
-    final timeoutMs = int.tryParse(_timeoutController.text.trim()) ?? 4000;
-    await context.read<AppState>().saveLocalAiSettings(
-      providerPreference: _providerPreference,
-      model: _modelController.text.trim().isEmpty
-          ? LocalAiRecommendedModels.gemmaText
-          : _modelController.text.trim(),
-      medicalModel: _medicalModelController.text.trim().isEmpty
-          ? LocalAiRecommendedModels.medGemmaText
-          : _medicalModelController.text.trim(),
-      ollamaEndpoint: _ollamaEndpointController.text.trim(),
-      openAiCompatEndpoint: _openAiCompatEndpointController.text.trim(),
-      timeoutMs: timeoutMs,
-    );
-    if (!context.mounted) return;
-    await context.read<AppState>().refreshLocalAiAvailability();
-  }
+  int _days = 7;
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = context.appI18n;
-    final trend = state.proteinTrend;
-    final localAiStatus = state.localAiAvailability;
-    final replayReport = state.latestReplayBenchmarkReport;
-    final copy = ResponseCopyService(i18n: i18n);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(Duration(days: _days - 1));
+    bool inRange(DateTime t) => !t.toLocal().isBefore(start);
+
+    final events = state.timeline.where((e) => inRange(e.time)).toList();
+    final protein = state.proteinTrend.where((p) => inRange(p.time)).toList()
+      ..sort((a, b) => a.time.compareTo(b.time));
+    int count(TimelineEventType type) =>
+        events.where((e) => e.type == type).length;
+    final avgProtein = protein.isEmpty
+        ? null
+        : protein.fold<double>(0, (sum, p) => sum + p.protein) / protein.length;
 
     return Scaffold(
-      appBar: AppBar(title: Text(i18n.tr('analytics.title'))),
-      body: ListView(
-        padding: const EdgeInsets.all(12),
+      appBar: PaperAppBar(
+        chapterTabs: PaperShellScope.showsChapters(context),
+        title: Text(i18n.tr('insights.title')),
+      ),
+      body: PaperScrollPage(
+        maxWidth: 1180,
+        top: 4,
         children: [
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('analytics.localization'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+          PaperReveal(
+            order: 0,
+            storageId: 'insights-0',
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              alignment: WrapAlignment.spaceBetween,
+              children: [
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: PaperInitialParagraph(
+                    i18n.tr('insights.subtitle'),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Paper.inkSecondary),
+                  ),
+                ),
+                SegmentedButton<int>(
+                  key: const ValueKey('insights-range'),
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(
+                      value: 7,
+                      label: Text(i18n.tr('insights.range_7')),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    i18n.tr('analytics.localization_language', {
-                      'value': i18n.localeLabel(
-                        state.userProfile.displayLocale,
-                      ),
-                    }),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    i18n.tr('analytics.localization_region', {
-                      'value': i18n.regionLabel(
-                        state.userProfile.registrationRegion,
-                      ),
-                    }),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    i18n.tr('analytics.localization_timezone', {
-                      'value': state.userProfile.timezone,
-                    }),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    i18n.tr('analytics.localization_override', {
-                      'value':
-                          state.userProfile.contentJurisdictionOverride.isEmpty
-                          ? i18n.tr('analytics.localization_override_none')
-                          : state.userProfile.contentJurisdictionOverride.join(
-                              ', ',
-                            ),
-                    }),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    i18n.tr('analytics.localization_texture_mode', {
-                      'value': i18n.textureModeLabel(
-                        state.userProfile.swallowingTextureMode,
-                      ),
-                    }),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    i18n.tr('analytics.localization_help'),
-                    style: const TextStyle(color: Colors.black54),
-                  ),
-                ],
-              ),
+                    ButtonSegment(
+                      value: 30,
+                      label: Text(i18n.tr('insights.range_30')),
+                    ),
+                  ],
+                  selected: {_days},
+                  onSelectionChanged: (value) =>
+                      setState(() => _days = value.first),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('analytics.local_ai'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(i18n.tr('analytics.local_ai_enable')),
-                    subtitle: Text(i18n.tr('analytics.local_ai_help')),
-                    value: state.userProfile.hasCurrentLocalAiConsent,
-                    onChanged: (value) =>
-                        context.read<AppState>().setLocalAiConsent(value),
-                  ),
-                  GlassSelectField<String>(
-                    label: i18n.tr('analytics.local_ai_provider'),
-                    value: _providerPreference,
-                    options: [
-                      GlassSelectOption(
-                        value: LocalAiProviders.auto,
-                        label: _providerLabel(i18n, LocalAiProviders.auto),
-                        icon: Icons.auto_awesome_rounded,
-                      ),
-                      GlassSelectOption(
-                        value: LocalAiProviders.ollama,
-                        label: _providerLabel(i18n, LocalAiProviders.ollama),
-                        icon: Icons.memory_rounded,
-                      ),
-                      GlassSelectOption(
-                        value: LocalAiProviders.openAiCompat,
-                        label: _providerLabel(
-                          i18n,
-                          LocalAiProviders.openAiCompat,
-                        ),
-                        icon: Icons.api_rounded,
-                      ),
-                    ],
-                    onChanged: (value) =>
-                        setState(() => _providerPreference = value),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _modelController,
-                    decoration: InputDecoration(
-                      labelText: i18n.tr('analytics.local_ai_model'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _medicalModelController,
-                    decoration: InputDecoration(
-                      labelText: i18n.tr('analytics.local_ai_medical_model'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _ollamaEndpointController,
-                    decoration: InputDecoration(
-                      labelText: i18n.tr('analytics.local_ai_ollama_endpoint'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _openAiCompatEndpointController,
-                    decoration: InputDecoration(
-                      labelText: i18n.tr('analytics.local_ai_openai_endpoint'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _timeoutController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: i18n.tr('analytics.local_ai_timeout_ms'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+          const SizedBox(height: 18),
+          PaperReveal(
+            order: 1,
+            storageId: 'insights-1',
+            child: _KpiStrip(
+              cells: [
+                (
+                  Icons.restaurant_outlined,
+                  '${count(TimelineEventType.meal)}',
+                  i18n.tr('insights.meals'),
+                ),
+                (
+                  Icons.medication_outlined,
+                  '${count(TimelineEventType.medication)}',
+                  i18n.tr('insights.intakes'),
+                ),
+                (
+                  Icons.monitor_heart_outlined,
+                  '${count(TimelineEventType.observation)}',
+                  i18n.tr('insights.observations'),
+                ),
+                (
+                  Icons.egg_alt_outlined,
+                  avgProtein == null
+                      ? '—'
+                      : '${avgProtein.toStringAsFixed(1)} g',
+                  i18n.tr('insights.avg_protein'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          PaperReveal(
+            order: 2,
+            storageId: 'insights-2',
+            child: PaperColumns(
+              minColumnWidth: 400,
+              maxColumns: 2,
+              children: [
+                PaperCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      FilledButton.icon(
-                        onPressed: () => _saveLocalAiSettings(context),
-                        icon: const Icon(Icons.save_outlined),
-                        label: Text(i18n.tr('common.apply')),
+                      PaperSectionHeader(
+                        title: i18n.tr('insights.rhythm_title'),
+                        subtitle: i18n.tr('insights.rhythm_subtitle'),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: () => context
-                            .read<AppState>()
-                            .refreshLocalAiAvailability(),
-                        icon: const Icon(Icons.health_and_safety_outlined),
-                        label: Text(i18n.tr('analytics.local_ai_check')),
+                      const SizedBox(height: 16),
+                      _RhythmChart(
+                        start: start,
+                        days: _days,
+                        events: events,
+                        localeTag: Localizations.localeOf(context).toString(),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '${i18n.tr('analytics.recommendation_path')}: '
-                    '${copy.recommendationPath(state.recommendationDecisionPath)}',
-                  ),
-                  if (_recommendationTemplateSummary(state, i18n)
-                      case final summary?) ...[
-                    const SizedBox(height: 8),
-                    Text(summary),
-                  ],
-                  if (localAiStatus != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      localAiStatus.available
-                          ? i18n.tr('analytics.local_ai_status_available')
-                          : i18n.tr('analytics.local_ai_status_unavailable'),
-                    ),
-                    Text(
-                      '${_providerLabel(i18n, localAiStatus.provider)} · ${localAiStatus.model}',
-                    ),
-                    Text(
-                      '${i18n.tr('analytics.local_ai_medical_model')}: '
-                      '${localAiStatus.medicalModel}'
-                      '${localAiStatus.medicalAvailable ? '' : ' (${i18n.tr('common.optional')})'}',
-                    ),
-                    if (localAiStatus.endpoint.trim().isNotEmpty)
-                      Text(localAiStatus.endpoint),
-                    Text(copy.recommendationMessage(localAiStatus.message)),
-                  ],
-                  if (state.recommendationExplanations.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      i18n.tr('analytics.recommendation_explanations'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    for (final line in state.recommendationExplanations.take(4))
-                      Text('• ${copy.recommendationMessage(line)}'),
-                  ],
-                  if (state.recommendationGateReasons.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            i18n.tr('analytics.recommendation_gate_reasons'),
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          for (final reason
-                              in state.recommendationGateReasons.take(4))
-                            Text('• ${copy.recommendationMessage(reason)}'),
+                      const SizedBox(height: 12),
+                      _Legend(
+                        items: [
+                          (Paper.accent, i18n.tr('insights.meals')),
+                          (Paper.info, i18n.tr('insights.intakes')),
+                          (Paper.success, i18n.tr('insights.observations')),
                         ],
                       ),
-                    ),
-                  const SizedBox(height: 12),
-                  Text(
-                    i18n.tr('dashboard.recommendations'),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  if (state.recommendations.isEmpty)
-                    Text(i18n.tr('dashboard.no_recommendations'))
-                  else
-                    for (final recommendation in state.recommendations.take(5))
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Text(
-                          '• ${i18n.foodName(recommendation.food.id, recommendation.food.name)}'
-                          ' · ${recommendation.score.toStringAsFixed(0)}'
-                          ' · ${i18n.decisionLabel(recommendation.decision)}',
-                        ),
+                ),
+                PaperCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      PaperSectionHeader(
+                        title: i18n.tr('insights.protein_title'),
+                        subtitle: i18n.tr('insights.protein_subtitle'),
                       ),
-                ],
-              ),
+                      const SizedBox(height: 16),
+                      _ProteinChart(points: protein, average: avgProtein),
+                    ],
+                  ),
+                ),
+                PaperCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      PaperSectionHeader(
+                        title: i18n.tr('insights.daypart_title'),
+                        subtitle: i18n.tr('insights.daypart_subtitle'),
+                      ),
+                      const SizedBox(height: 14),
+                      _DaypartTable(events: events),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('analytics.replay_benchmark'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(i18n.tr('analytics.replay_benchmark_help')),
-                  const SizedBox(height: 8),
-                  FilledButton.icon(
-                    onPressed: state.isRunningReplayBenchmark
-                        ? null
-                        : () => context
-                              .read<AppState>()
-                              .runRecommendationReplayBenchmark(),
-                    icon: const Icon(Icons.play_circle_outline),
-                    label: Text(
-                      state.isRunningReplayBenchmark
-                          ? i18n.tr('analytics.replay_running')
-                          : i18n.tr('analytics.replay_run'),
-                    ),
-                  ),
-                  if (state.latestReplayBenchmarkError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      i18n.tr('analytics.replay_report_error', {
-                        'error': state.latestReplayBenchmarkError!,
-                      }),
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
-                  ],
-                  if (replayReport != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      i18n.tr('analytics.replay_last_report'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${replayReport.datasetVersion} · ${replayReport.generatedAtIso}',
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      i18n.tr('analytics.replay_cases', {
-                        'count': '${replayReport.cases.length}',
-                      }),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.08),
-                        ),
-                      ),
-                      child: SelectableText(
-                        replayReport.toMarkdown(),
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('analytics.import_tools'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(i18n.tr('analytics.import_tools_help')),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: FilledButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const ImportPage()),
-                      ),
-                      icon: const Icon(Icons.folder_zip_outlined),
-                      label: Text(i18n.tr('analytics.open_import_tools')),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('analytics.protein_trend'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    i18n.tr('analytics.average_protein', {
-                      'value': state.averageProtein.toStringAsFixed(1),
-                    }),
-                  ),
-                  const SizedBox(height: 8),
-                  if (trend.isEmpty) Text(i18n.tr('analytics.no_trend')),
-                  for (final point in trend.reversed)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('${point.protein.toStringAsFixed(1)} g'),
-                      subtitle: Text(_formatDateTime(point.time)),
-                    ),
-                ],
-              ),
+          const SizedBox(height: 18),
+          PaperReveal(
+            order: 3,
+            storageId: 'insights-3',
+            child: PaperNote(
+              icon: Icons.school_outlined,
+              child: Text(i18n.tr('insights.boundary')),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _KpiStrip extends StatelessWidget {
+  const _KpiStrip({required this.cells});
+
+  final List<(IconData, String, String)> cells;
+
+  @override
+  Widget build(BuildContext context) {
+    return PaperSurface(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final perRow = constraints.maxWidth >= 620 ? 4 : 2;
+          final rows = <Widget>[];
+          for (var start = 0; start < cells.length; start += perRow) {
+            if (start > 0) rows.add(const Divider(height: 1));
+            final slice = cells.skip(start).take(perRow).toList();
+            rows.add(
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < slice.length; i++) ...[
+                      if (i > 0) const VerticalDivider(width: 1),
+                      Expanded(
+                        child: Semantics(
+                          container: true,
+                          label: '${slice[i].$3}: ${slice[i].$2}',
+                          excludeSemantics: true,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+                            child: Row(
+                              children: [
+                                Icon(slice[i].$1, size: 18, color: Paper.gilt),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        slice[i].$2,
+                                        maxLines: 1,
+                                        style: const TextStyle(
+                                          fontFamily: Paper.serif,
+                                          fontSize: 26,
+                                          height: 1.1,
+                                          color: Paper.ink,
+                                        ),
+                                      ),
+                                      Text(
+                                        slice[i].$3,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: Paper.inkMuted,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }
+          return Column(children: rows);
+        },
+      ),
+    );
+  }
+}
+
+/// Entries per day, stacked by kind.
+class _RhythmChart extends StatelessWidget {
+  const _RhythmChart({
+    required this.start,
+    required this.days,
+    required this.events,
+    required this.localeTag,
+  });
+
+  final DateTime start;
+  final int days;
+  final List<TimelineEvent> events;
+  final String localeTag;
+
+  static const _order = [
+    TimelineEventType.meal,
+    TimelineEventType.medication,
+    TimelineEventType.observation,
+  ];
+
+  static Color _color(TimelineEventType type) => switch (type) {
+    TimelineEventType.meal => Paper.accent,
+    TimelineEventType.medication => Paper.info,
+    TimelineEventType.observation => Paper.success,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final perDay = List.generate(
+      days,
+      (_) => {for (final type in _order) type: 0},
+    );
+    for (final event in events) {
+      final t = event.time.toLocal();
+      final index = DateTime(t.year, t.month, t.day).difference(start).inDays;
+      if (index >= 0 && index < days) {
+        perDay[index][event.type] = perDay[index][event.type]! + 1;
+      }
+    }
+    final totals = [
+      for (final day in perDay) day.values.fold(0, (a, b) => a + b),
+    ];
+    final peak = math.max(1, totals.fold(0, math.max));
+    final labelEvery = days <= 7 ? 1 : 5;
+    final localizations = MaterialLocalizations.of(context);
+    return Semantics(
+      label: [
+        for (var i = 0; i < days; i++)
+          '${localizations.formatShortMonthDay(start.add(Duration(days: i)))}: ${totals[i]}',
+      ].join(', '),
+      excludeSemantics: true,
+      child: SizedBox(
+        height: 150,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (var i = 0; i < days; i++)
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: days <= 7 ? 6 : 1.5,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (days <= 7)
+                        Text(
+                          totals[i] == 0 ? '' : '${totals[i]}',
+                          style: const TextStyle(
+                            fontFamily: Paper.mono,
+                            fontSize: 11,
+                            color: Paper.inkMuted,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Expanded(
+                        child: PaperGrowBar(
+                          factor: totals[i] == 0 ? 0.02 : totals[i] / peak,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(3),
+                            child: Column(
+                              children: [
+                                for (final type in _order.reversed)
+                                  if (perDay[i][type]! > 0)
+                                    Expanded(
+                                      flex: perDay[i][type]!,
+                                      child: Container(color: _color(type)),
+                                    ),
+                                if (totals[i] == 0)
+                                  Expanded(
+                                    child: Container(color: Paper.border),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      SizedBox(
+                        height: 14,
+                        child: i % labelEvery == 0 || i == days - 1
+                            ? Text(
+                                days <= 7
+                                    ? localizations
+                                          .formatShortMonthDay(
+                                            start.add(Duration(days: i)),
+                                          )
+                                          .split(' ')
+                                          .last
+                                    : '${start.add(Duration(days: i)).day}',
+                                maxLines: 1,
+                                overflow: TextOverflow.visible,
+                                softWrap: false,
+                                style: const TextStyle(
+                                  fontFamily: Paper.mono,
+                                  fontSize: 10.5,
+                                  color: Paper.inkMuted,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Protein per logged meal, oldest to newest, with the period average.
+class _ProteinChart extends StatelessWidget {
+  const _ProteinChart({required this.points, required this.average});
+
+  final List<ProteinTrendPoint> points;
+  final double? average;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = context.appI18n;
+    if (points.isEmpty) return _Empty(text: i18n.tr('insights.empty'));
+    final shown = points.length > 14
+        ? points.sublist(points.length - 14)
+        : points;
+    final peak = math.max(
+      1.0,
+      shown.fold<double>(0, (m, p) => math.max(m, p.protein)),
+    );
+    return Semantics(
+      label: shown.map((p) => '${p.protein.toStringAsFixed(1)} g').join(', '),
+      excludeSemantics: true,
+      child: SizedBox(
+        height: 150,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const labelSpace = 20.0;
+            final barArea = constraints.maxHeight - labelSpace;
+            final avg = average;
+            return Stack(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    for (final point in shown)
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              SizedBox(
+                                height: barArea,
+                                child: PaperGrowBar(
+                                  factor: math.max(
+                                    2 / barArea,
+                                    point.protein / peak,
+                                  ),
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      color: Paper.clay.withValues(alpha: 0.55),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: labelSpace,
+                                child: Center(
+                                  child: Text(
+                                    point.protein.toStringAsFixed(0),
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      fontFamily: Paper.mono,
+                                      fontSize: 10,
+                                      color: Paper.inkMuted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                if (avg != null)
+                  AnimatedPositioned(
+                    duration: Paper.motion(context, Paper.motionMedium * 2),
+                    curve: Paper.motionCurve,
+                    left: 0,
+                    right: 0,
+                    top: barArea - barArea * avg / peak,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Container(height: 1, color: Paper.accent),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '⌀ ${avg.toStringAsFixed(1)} g',
+                          style: const TextStyle(
+                            fontFamily: Paper.mono,
+                            fontSize: 10.5,
+                            color: Paper.accentInk,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+/// Meals and intakes by part of day.
+class _DaypartTable extends StatelessWidget {
+  const _DaypartTable({required this.events});
+
+  final List<TimelineEvent> events;
+
+  static int _bucket(DateTime t) {
+    final h = t.toLocal().hour;
+    if (h >= 5 && h < 11) return 0;
+    if (h >= 11 && h < 16) return 1;
+    if (h >= 16 && h < 22) return 2;
+    return 3;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = context.appI18n;
+    final labels = [
+      i18n.tr('insights.morning'),
+      i18n.tr('insights.midday'),
+      i18n.tr('insights.evening'),
+      i18n.tr('insights.night'),
+    ];
+    final meals = List.filled(4, 0);
+    final intakes = List.filled(4, 0);
+    for (final event in events) {
+      if (event.type == TimelineEventType.meal) meals[_bucket(event.time)]++;
+      if (event.type == TimelineEventType.medication) {
+        intakes[_bucket(event.time)]++;
+      }
+    }
+    final peak = math.max(1, [...meals, ...intakes].fold(0, math.max));
+    if (meals.every((c) => c == 0) && intakes.every((c) => c == 0)) {
+      return _Empty(text: i18n.tr('insights.empty'));
+    }
+    Widget bar(int value, Color color) => Row(
+      children: [
+        Expanded(
+          child: PaperGrowBar(
+            axis: Axis.horizontal,
+            factor: value == 0 ? 0.01 : value / peak,
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(
+          width: 28,
+          child: Text(
+            '$value',
+            textAlign: TextAlign.end,
+            style: const TextStyle(
+              fontFamily: Paper.mono,
+              fontSize: 11,
+              color: Paper.inkMuted,
+            ),
+          ),
+        ),
+      ],
+    );
+    return Column(
+      children: [
+        for (var i = 0; i < 4; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 84,
+                  child: Text(
+                    labels[i],
+                    style: const TextStyle(
+                      fontFamily: Paper.serif,
+                      fontStyle: FontStyle.italic,
+                      fontSize: 14,
+                      color: Paper.inkSecondary,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    children: [
+                      bar(meals[i], Paper.accent),
+                      const SizedBox(height: 4),
+                      bar(intakes[i], Paper.info),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 6),
+        _Legend(
+          items: [
+            (Paper.accent, i18n.tr('insights.meals')),
+            (Paper.info, i18n.tr('insights.intakes')),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend({required this.items});
+
+  final List<(Color, String)> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 14,
+      runSpacing: 6,
+      children: [
+        for (final (color, label) in items)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 12, color: Paper.inkMuted),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class _Empty extends StatelessWidget {
+  const _Empty({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Center(
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontFamily: Paper.serif,
+            fontStyle: FontStyle.italic,
+            fontSize: 14,
+            color: Paper.inkMuted,
+          ),
+        ),
       ),
     );
   }

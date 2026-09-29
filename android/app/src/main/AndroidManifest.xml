@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
-        android:label="ParkinSUM Companion"
+        android:label="${applicationLabel}"
         android:name="${applicationName}"
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"

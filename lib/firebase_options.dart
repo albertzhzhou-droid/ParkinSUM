@@ -9,6 +9,12 @@ class DefaultFirebaseOptions {
   static const developmentProjectId = 'parkinsum-companion-dev';
   static const stagingProjectId = 'parkinsum-companion-stage';
 
+  static const firebaseApiKeyDefine = 'PARKINSUM_FIREBASE_API_KEY';
+  static const _apiKey = String.fromEnvironment(
+    firebaseApiKeyDefine,
+    defaultValue: '',
+  );
+
   static FirebaseOptions get currentPlatform {
     return currentPlatformForEnvironment('prod');
   }
@@ -21,46 +27,55 @@ class DefaultFirebaseOptions {
         'Use dev, stage, or prod.',
       );
     }
+
+    final FirebaseOptions options;
     if (normalized == 'dev') {
-      if (kIsWeb) {
-        return devWeb;
-      }
-      throw UnsupportedError(
-        'Firebase options for PARKINSUM_ENV=dev are currently generated '
-        'for web only. Add Android/iOS/macOS dev app configs before using '
-        'dev on this platform.',
-      );
-    }
-
-    if (normalized == 'stage') {
-      if (kIsWeb) {
-        return stageWeb;
-      }
-      throw UnsupportedError(
-        'Firebase options for PARKINSUM_ENV=stage are currently generated '
-        'for web only. Add Android/iOS/macOS stage app configs before using '
-        'stage on this platform.',
-      );
-    }
-
-    if (kIsWeb) {
-      return web;
-    }
-
-    switch (defaultTargetPlatform) {
-      case TargetPlatform.android:
-        return android;
-      case TargetPlatform.iOS:
-        return ios;
-      case TargetPlatform.macOS:
-        return macos;
-      case TargetPlatform.windows:
-      case TargetPlatform.linux:
-      case TargetPlatform.fuchsia:
+      if (!kIsWeb) {
         throw UnsupportedError(
-          'Firebase is configured for Android, iOS, and macOS only.',
+          'Firebase options for PARKINSUM_ENV=dev are currently generated '
+          'for web only. Add Android/iOS/macOS dev app configs before using '
+          'dev on this platform.',
         );
+      }
+      options = devWeb;
+    } else if (normalized == 'stage') {
+      if (!kIsWeb) {
+        throw UnsupportedError(
+          'Firebase options for PARKINSUM_ENV=stage are currently generated '
+          'for web only. Add Android/iOS/macOS stage app configs before using '
+          'stage on this platform.',
+        );
+      }
+      options = stageWeb;
+    } else if (kIsWeb) {
+      options = web;
+    } else {
+      options = switch (defaultTargetPlatform) {
+        TargetPlatform.android => android,
+        TargetPlatform.iOS => ios,
+        TargetPlatform.macOS => macos,
+        TargetPlatform.windows ||
+        TargetPlatform.linux ||
+        TargetPlatform.fuchsia => throw UnsupportedError(
+          'Firebase is configured for Android, iOS, and macOS only.',
+        ),
+      };
     }
+
+    return _requireClientApiKey(options, normalized);
+  }
+
+  static FirebaseOptions _requireClientApiKey(
+    FirebaseOptions options,
+    String environment,
+  ) {
+    if (options.apiKey.trim().isNotEmpty) return options;
+    throw UnsupportedError(
+      'Firebase mode for PARKINSUM_ENV=$environment requires '
+      '--dart-define=$firebaseApiKeyDefine=<restricted-client-key>. '
+      'The value remains extractable from a built client, so restrict it in '
+      'Google Cloud and never use it as an authorization boundary.',
+    );
   }
 
   static String projectIdForEnvironment(String environment) {
@@ -80,7 +95,7 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA9D5gYkxGIWjT3al8DbLgY8vNPello3YA',
+    apiKey: _apiKey,
     appId: '1:429989696553:web:79cbc62531c6861ade3838',
     messagingSenderId: '429989696553',
     projectId: 'parkinsum-companion',
@@ -90,7 +105,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions devWeb = FirebaseOptions(
-    apiKey: 'AIzaSyDOVDle3i6f8sixoamxF-XtmT3Dkf82nNI',
+    apiKey: _apiKey,
     appId: '1:36630731726:web:d9359715300da8fb13299f',
     messagingSenderId: '36630731726',
     projectId: 'parkinsum-companion-dev',
@@ -99,7 +114,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions stageWeb = FirebaseOptions(
-    apiKey: 'AIzaSyDvBdbU4cUhOSRkK4CgtvrJ8W1cSuWjS5A',
+    apiKey: _apiKey,
     appId: '1:51798948952:web:2f325617db7742aafe1e2d',
     messagingSenderId: '51798948952',
     projectId: 'parkinsum-companion-stage',
@@ -109,7 +124,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCwg7e1bCiB0j8wjflI9mjPl7n8CS3luAA',
+    apiKey: _apiKey,
     appId: '1:429989696553:android:2b43afa49913cccede3838',
     messagingSenderId: '429989696553',
     projectId: 'parkinsum-companion',
@@ -117,7 +132,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDrfrZIoByQcYALdguirc5Q-Vi1o874-Gc',
+    apiKey: _apiKey,
     appId: '1:429989696553:ios:8f5a5d283008a451de3838',
     messagingSenderId: '429989696553',
     projectId: 'parkinsum-companion',
@@ -126,7 +141,7 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDrfrZIoByQcYALdguirc5Q-Vi1o874-Gc',
+    apiKey: _apiKey,
     appId: '1:429989696553:ios:8f5a5d283008a451de3838',
     messagingSenderId: '429989696553',
     projectId: 'parkinsum-companion',

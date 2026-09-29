@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart';
 
 import '../analysis/catalog_engine.dart';
 import '../i18n/app_i18n.dart';
+import '../i18n/care_workspace_copy.dart';
 import '../analysis/food_repository.dart';
 import '../analysis/medication_repository.dart';
 import '../models/drug_definition.dart';
+import '../models/administration_dose_confirmation.dart';
 import '../models/intake.dart';
 import '../models/interaction_result.dart';
 import '../models/meal.dart';
@@ -15,20 +17,35 @@ import '../models/user_profile.dart';
 import '../models/purpose_bound_consent.dart';
 import '../models/recoverable_user_event.dart';
 import '../services/services.dart';
+import '../services/care_workspace_service.dart';
+import '../../domain/entities/personal_observation.dart';
+import '../../domain/entities/decision_support_followup.dart';
+import '../../domain/entities/care_medication_discussion_entry.dart';
+import '../../domain/entities/care_medication_discussion_outcome.dart';
+import '../../domain/entities/care_medication_list_review.dart';
+import '../../domain/usecases/decision_support_followup_service.dart';
+import '../../domain/entities/visit_preparation.dart';
+import '../../domain/usecases/visit_preparation_service.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
 import '../../domain/entities/food_recommendation.dart';
 import '../models/food_item.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
+import '../../domain/entities/food_rank_sensitivity_assessment.dart';
 import '../../domain/entities/time_axis_events.dart'
     show UserDefinedMealWindow, TimelineWindow, dateTimeToMinute;
 import '../../domain/entities/protein_trend_point.dart';
 import '../../domain/entities/cdss_records.dart';
 import '../../domain/entities/recommendation_replay_models.dart';
 import '../../domain/entities/timeline_event.dart';
+import '../../domain/entities/fhir_r5_dose_quantity_preview.dart';
 import '../../domain/entities/runtime_context.dart';
+import '../../domain/entities/medication_assertion_reconciliation.dart';
 import '../../domain/usecases/knowledge_base_release_service.dart';
 import '../../domain/usecases/local_ai_recommendation_adapter.dart';
+import '../../domain/usecases/administration_dose_confirmation_coordinator.dart';
+import '../../domain/usecases/fhir_r5_dose_quantity_preview_service.dart';
+import '../../domain/usecases/medication_assertion_reconciliation_service.dart';
 import '../../domain/usecases/recoverable_event_restore_impact_service.dart';
 import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../../data/datasources/remote/p0_import_models.dart';
@@ -179,6 +196,445 @@ class AppState extends ChangeNotifier {
   }
 
   StreamSubscription<AuthUser?>? _authSubscription;
+  CareWorkspaceSnapshot? _careWorkspace;
+  String? _careWorkspaceError;
+  int _careSessionEpoch = 0;
+  static const _followupService = DecisionSupportFollowupService();
+
+  String? get careWorkspaceError => _careWorkspaceError;
+  bool get isCareWorkspaceReady =>
+      _careWorkspace?.ownerScope == _authUserId && _authUserId != null;
+  List<PersonalObservation> get observations =>
+      _careWorkspace?.observations ?? const [];
+  List<CareDiscussionNote> get discussionNotes =>
+      _careWorkspace?.notes ?? const [];
+  List<CareMedicationDiscussionEntry> get medicationDiscussionEntries =>
+      _careWorkspace?.medicationDiscussionEntries ?? const [];
+  List<CareMedicationDiscussionOutcome> get medicationDiscussionOutcomes =>
+      _careWorkspace?.medicationDiscussionOutcomes ?? const [];
+  List<CareMedicationListReview> get medicationListReviews =>
+      _careWorkspace?.medicationListReviews ?? const [];
+  List<DecisionSupportFollowupItem> followups({
+    DateTime? now,
+    bool includeHistory = false,
+  }) {
+    final snapshot = _careWorkspace;
+    if (snapshot == null || snapshot.ownerScope != _authUserId) return const [];
+    final currentIds = _mealCheckCache.values
+        .expand((result) => result.followupPrompts)
+        .map((prompt) => prompt.id)
+        .toSet();
+    final all = _followupService.project(
+      ledger: snapshot.followups,
+      ownerScope: snapshot.ownerScope,
+      now: now ?? DateTime.now(),
+    );
+    return includeHistory
+        ? all
+        : all
+              .where((item) => currentIds.contains(item.prompt.id))
+              .toList(growable: false);
+  }
+
+  List<DecisionSupportFollowupItem> followupsForView(
+    DecisionSupportFollowupView view, {
+    DateTime? now,
+  }) {
+    final at = now ?? DateTime.now();
+    final all = followups(now: at, includeHistory: true);
+    final currentIds = followups(now: at).map((item) => item.prompt.id).toSet();
+    return _followupService.filterForView(
+      items: all,
+      currentPromptIds: currentIds,
+      view: view,
+    );
+  }
+
+  Future<void> reloadCareWorkspace() async {
+    final owner = _authUserId;
+    if (owner == null) return;
+    final epoch = ++_careSessionEpoch;
+    _careWorkspace = null;
+    _careWorkspaceError = null;
+    try {
+      final loaded = await services.careWorkspaceService.load(
+        owner,
+        authorize: () =>
+            epoch == _careSessionEpoch &&
+            owner == _authUserId &&
+            services.authService.currentUserId == owner,
+      );
+      if (epoch != _careSessionEpoch || owner != _authUserId) return;
+      _careWorkspace = loaded;
+      // Retry prompt writes from successful saved-meal checks. Merely rereading
+      // the older ledger would otherwise hide the error while losing prompts.
+      await _registerFollowups(
+        _mealCheckCache.values.expand((result) => result.followupPrompts),
+      );
+    } catch (_) {
+      if (epoch != _careSessionEpoch || owner != _authUserId) return;
+      _careWorkspaceError = 'load_failed';
+      _debugLog('[CareWorkspace] load:failed');
+    }
+    if (epoch == _careSessionEpoch && owner == _authUserId) notifyListeners();
+  }
+
+  Future<bool> _mutateCareWorkspace(
+    CareWorkspaceSnapshot Function(CareWorkspaceSnapshot) transform,
+  ) async {
+    final owner = _authUserId;
+    final epoch = _careSessionEpoch;
+    if (owner == null || _careWorkspace?.ownerScope != owner) return false;
+    bool authorized() =>
+        epoch == _careSessionEpoch &&
+        owner == _authUserId &&
+        services.authService.currentUserId == owner;
+    try {
+      final next = await services.careWorkspaceService.mutate(
+        owner,
+        transform,
+        authorize: authorized,
+      );
+      if (!authorized()) return false;
+      _careWorkspace = next;
+      _careWorkspaceError = null;
+      _debugLog('[CareWorkspace] save:committed');
+      notifyListeners();
+      return true;
+    } catch (_) {
+      if (!authorized()) return false;
+      _careWorkspaceError = 'save_failed';
+      _debugLog('[CareWorkspace] save:failed');
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> recordFollowup({
+    required String promptId,
+    required DecisionSupportFollowupStatus status,
+    String? reason,
+    DecisionSupportFeedbackReasonCategory? reasonCategory,
+    DateTime? snoozedUntil,
+  }) {
+    final owner = _authUserId;
+    if (owner == null) return Future.value(false);
+    final at = DateTime.now().toUtc();
+    return _mutateCareWorkspace(
+      (current) => current.copyWith(
+        followups: _followupService.recordFeedback(
+          ledger: current.followups,
+          ownerScope: owner,
+          promptId: promptId,
+          status: status,
+          actorId: owner,
+          actorRole: DecisionSupportFollowupActorRole.user,
+          occurredAt: at,
+          reason: reason,
+          reasonCategory: reasonCategory,
+          snoozedUntil: snoozedUntil,
+        ),
+      ),
+    );
+  }
+
+  Future<bool> saveObservation(PersonalObservation observation) {
+    if (observation.recorderId != _authUserId) return Future.value(false);
+    return _mutateCareWorkspace(
+      (current) => current.copyWith(
+        observations: [
+          ...current.observations.where((o) => o.id != observation.id),
+          observation,
+        ],
+      ),
+    );
+  }
+
+  Future<bool> deleteObservation(String id) => _mutateCareWorkspace(
+    (current) => current.copyWith(
+      observations: current.observations.where((o) => o.id != id),
+    ),
+  );
+
+  Future<bool> addDiscussionNote(String text) {
+    final owner = _authUserId;
+    if (owner == null) return Future.value(false);
+    return _mutateCareWorkspace(
+      (current) => current.copyWith(
+        notes: [
+          ...current.notes,
+          CareDiscussionNote(
+            id: newId('discussion'),
+            text: text.trim(),
+            recordedAt: DateTime.now().toUtc(),
+            recorderId: owner,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool> deleteDiscussionNote(String id) => _mutateCareWorkspace(
+    (current) =>
+        current.copyWith(notes: current.notes.where((n) => n.id != id)),
+  );
+
+  Future<bool> saveMedicationDiscussionEntry(
+    CareMedicationDiscussionEntry entry,
+  ) {
+    if (entry.recorderId != _authUserId) return Future.value(false);
+    return _mutateCareWorkspace(
+      (current) => current.copyWith(
+        medicationDiscussionEntries: [
+          ...current.medicationDiscussionEntries.where(
+            (item) => item.id != entry.id,
+          ),
+          entry,
+        ],
+      ),
+    );
+  }
+
+  Future<bool> setMedicationListReviewSection(
+    CareMedicationListReviewSection section, {
+    required bool reviewed,
+  }) {
+    final owner = _authUserId;
+    if (owner == null) return Future.value(false);
+    return _mutateCareWorkspace((current) {
+      final next = current.medicationListReviews
+          .where((record) => record.section != section)
+          .toList(growable: true);
+      if (reviewed) {
+        next.add(
+          CareMedicationListReview(
+            section: section,
+            recordedAt: DateTime.now().toUtc(),
+            recorderId: owner,
+          ),
+        );
+      }
+      return current.copyWith(medicationListReviews: next);
+    });
+  }
+
+  Future<bool> recordMedicationDiscussionOutcome(
+    CareMedicationDiscussionOutcome outcome,
+  ) {
+    if (outcome.recorderId != _authUserId ||
+        !medicationDiscussionEntries.any(
+          (entry) => entry.id == outcome.entryId,
+        )) {
+      return Future.value(false);
+    }
+    return _mutateCareWorkspace(
+      (current) => current.copyWith(
+        medicationDiscussionOutcomes: [
+          ...current.medicationDiscussionOutcomes,
+          outcome,
+        ],
+      ),
+    );
+  }
+
+  Future<bool> deleteMedicationDiscussionEntry(String id) =>
+      _mutateCareWorkspace(
+        (current) => current.copyWith(
+          medicationDiscussionEntries: current.medicationDiscussionEntries
+              .where((item) => item.id != id),
+          medicationDiscussionOutcomes: current.medicationDiscussionOutcomes
+              .where((outcome) => outcome.entryId != id),
+        ),
+      );
+
+  Future<void> _registerFollowups(
+    Iterable<DecisionSupportPrompt> prompts,
+  ) async {
+    final owner = _authUserId;
+    if (owner == null || _careWorkspace == null) return;
+    final list = prompts.toList(growable: false);
+    if (list.isEmpty) return;
+    await _mutateCareWorkspace(
+      (current) => current.copyWith(
+        followups: _followupService.register(
+          ledger: current.followups,
+          ownerScope: owner,
+          prompts: list,
+        ),
+      ),
+    );
+  }
+
+  VisitPreparationReport prepareVisit({
+    DateTime? now,
+    Set<String>? includedObservationIds,
+  }) {
+    if (!isCareWorkspaceReady) throw StateError('care_workspace_unavailable');
+    final chinese = _userProfile.displayLocale.startsWith('zh');
+    final at = now ?? DateTime.now();
+    final pending = followups(now: at).where((item) => !item.isClosed).toList()
+      ..sort((a, b) => b.prompt.createdAt.compareTo(a.prompt.createdAt));
+    final recentObservations = observations.toList()
+      ..sort((left, right) {
+        final byTime = right.occurredAt.compareTo(left.occurredAt);
+        return byTime != 0 ? byTime : left.id.compareTo(right.id);
+      });
+    final visitObservationCandidates = recentObservations
+        .take(visitPreparationMaxItems)
+        .toList(growable: false);
+    final selectedVisitObservationIds = includedObservationIds?.intersection(
+      visitObservationCandidates.map((item) => item.id).toSet(),
+    );
+    final recentNotes = discussionNotes.toList()
+      ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    final recentMedicationDiscussionEntries =
+        medicationDiscussionEntries.toList()
+          ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    final medicationAssertionReviewIntakes =
+        _intakes.where((intake) => !intake.takenAt.isAfter(at)).toList()
+          ..sort((left, right) {
+            final byTime = right.takenAt.compareTo(left.takenAt);
+            return byTime != 0 ? byTime : left.id.compareTo(right.id);
+          });
+    final unreviewedMedicationAssertionIntakeCount = max(
+      0,
+      medicationAssertionReviewIntakes.length -
+          visitPreparationMaxMedicationAssertionReviews,
+    ).toInt();
+    final medicationAssertionReviews = <VisitMedicationAssertionReview>[];
+    for (final intake in medicationAssertionReviewIntakes.take(
+      visitPreparationMaxMedicationAssertionReviews,
+    )) {
+      final projection = _medicationAssertionReconciliationService
+          .projectBitemporal(
+            intake: intake,
+            ownerScope: _authUserId ?? _userProfile.patientId,
+            validAt: intake.takenAt,
+            knownAt: at,
+          );
+      final graph = projection.historicalConflictGraph;
+      final integrityFindings = {
+        ...graph.integrityFindings,
+        ...projection.integrityFindings,
+      }.toList()..sort();
+      final blockingEdges = graph.blockingEdges.toList()
+        ..sort((left, right) => left.edgeId.compareTo(right.edgeId));
+      if (blockingEdges.isEmpty && integrityFindings.isEmpty) continue;
+      final decision = graph.currentDecision;
+      medicationAssertionReviews.add(
+        VisitMedicationAssertionReview(
+          intakeId: intake.id,
+          drugId: intake.drugId,
+          intakeOccurredAt: intake.takenAt,
+          sourceAssertions: graph.nodes.map(
+            (node) => VisitMedicationAssertionSource(
+              assertionId: node.assertionId,
+              evidenceClass: node.evidenceClass,
+              status: node.status,
+              lifecycle: node.lifecycle,
+              sourceDisplayLabel: node.sourceDisplayLabel,
+              doseValue: node.doseValue,
+              doseUnit: node.doseUnit,
+              route: node.route,
+              dosageForm: node.dosageForm,
+              releaseType: node.releaseType,
+              effectiveStart: node.effectiveStartUtc,
+              effectiveEnd: node.effectiveEndUtc,
+              timePrecision: node.timePrecision,
+              recordedAt: node.recordedAtUtc,
+            ),
+          ),
+          blockingConflicts: blockingEdges
+              .take(visitPreparationMaxMedicationAssertionEdgesPerReview)
+              .map(
+                (edge) => VisitMedicationAssertionConflict(
+                  edgeId: edge.edgeId,
+                  fromAssertionId: edge.fromAssertionId,
+                  toAssertionId: edge.toAssertionId,
+                  relationship: edge.relationship.name,
+                  reasonCode: edge.reasonCode,
+                ),
+              ),
+          omittedBlockingConflictCount: max(
+            0,
+            blockingEdges.length -
+                visitPreparationMaxMedicationAssertionEdgesPerReview,
+          ).toInt(),
+          integrityFindings: integrityFindings,
+          staleDecisionCount: graph.staleDecisionCount,
+          reviewResolution: decision?.resolution,
+          reviewReasonCode: decision?.reasonCode,
+          reviewRecordedAt: decision?.decidedAtUtc,
+        ),
+      );
+    }
+    final omitted = <String>[
+      if (pending.length > 128)
+        chinese
+            ? '提示仅列最近128项，另有${pending.length - 128}项未纳入。'
+            : 'Only the latest 128 prompts are included; ${pending.length - 128} omitted.',
+      if (recentObservations.length > 128)
+        chinese
+            ? '观察仅列最近128条，另有${recentObservations.length - 128}条未纳入。'
+            : 'Only the latest 128 observations are included; ${recentObservations.length - 128} omitted.',
+      if (recentNotes.length > 60)
+        chinese
+            ? '问题仅列最近60条，另有${recentNotes.length - 60}条未纳入。'
+            : 'Only the latest 60 questions are included; ${recentNotes.length - 60} omitted.',
+    ];
+    return const VisitPreparationService().create(
+      generatedAt: at,
+      chinese: chinese,
+      snapshot: VisitPreparationSnapshot(
+        activeDrugIds: _activeDrugIds,
+        medicationCatalog: services.medicationRepository.allDrugs,
+        intakes: _intakes,
+        discussionItems: pending
+            .take(128)
+            .map(
+              (item) => VisitDiscussionItem(
+                label: item.prompt.explanation,
+                status: followupStatusLabel(item.status, chinese: chinese),
+                reason: item.latestFeedback?.reason,
+                recordedAt:
+                    item.latestFeedback?.occurredAt ?? item.prompt.createdAt,
+                sourceIds: [
+                  'prompt:${item.prompt.id}',
+                  'rule:${item.prompt.ruleId}@${item.prompt.ruleVersion}',
+                  ...item.prompt.sourceRefs,
+                ],
+              ),
+            ),
+        observations: visitObservationCandidates.map(
+          (item) => VisitObservationSummary(
+            label: item.summary(chinese: chinese),
+            summary:
+                '${item.notes ?? ''} ${chinese ? '来源' : 'Source'}: ${switch (item.source) {
+                  PersonalObservationSource.selfReported => chinese ? '本人自报' : 'Self-reported',
+                  PersonalObservationSource.deviceManual => chinese ? '手动录入设备读数' : 'Device reading entered manually',
+                  PersonalObservationSource.caregiverReported => chinese ? '照护者提供，本人录入' : 'Caregiver report entered by the account holder',
+                }}; '
+                '${chinese ? '原始时区' : 'Original timezone'}: ${item.originalTimezone}',
+            occurredAt: item.occurredAt,
+            recordedAt: item.recordedAt,
+            sourceRecordId: item.id,
+            sourceIds: ['observation:${item.id}'],
+          ),
+        ),
+        includedObservationIds: selectedVisitObservationIds,
+        medicationDiscussionEntries: recentMedicationDiscussionEntries,
+        medicationDiscussionOutcomes: medicationDiscussionOutcomes,
+        medicationListReviews: medicationListReviews,
+        medicationAssertionReviews: medicationAssertionReviews,
+        unreviewedMedicationAssertionIntakeCount:
+            unreviewedMedicationAssertionIntakeCount,
+        userNotes: [
+          ...recentNotes.take(60).map((note) => note.text),
+          ...omitted,
+        ],
+      ),
+    );
+  }
 
   bool _isBootstrapping = true;
   bool _isOnboarded = false;
@@ -203,6 +659,11 @@ class AppState extends ChangeNotifier {
   List<Intake> _intakes = [];
   final PersistedListMutationCoordinator<Intake> _intakeMutationCoordinator =
       PersistedListMutationCoordinator<Intake>();
+  final AdministrationDoseConfirmationCoordinator _doseConfirmationCoordinator =
+      AdministrationDoseConfirmationCoordinator();
+  static const MedicationAssertionReconciliationService
+  _medicationAssertionReconciliationService =
+      MedicationAssertionReconciliationService();
   List<RecoverableUserEventRevision> _recoverableEventHistory =
       <RecoverableUserEventRevision>[];
   final RecoverableUserEventIdFactory _recoverableEventIdFactory =
@@ -211,6 +672,7 @@ class AppState extends ChangeNotifier {
       const RecoverableEventRestoreImpactService();
   String? _restoreImpactAlgorithmConfigurationDigest;
   List<FoodRecommendation> _recommendations = [];
+  bool _recommendationRankPresentationWithheld = false;
   Map<String, InteractionResult> _mealCheckCache = {};
   bool _isImportingP0 = false;
   ImportTaskResult? _latestImportTask;
@@ -322,6 +784,7 @@ class AppState extends ChangeNotifier {
   Future<void> bootstrap() async {
     _debugLog('[AppState] bootstrap:start');
     _isBootstrapping = true;
+    _mealCheckCache = {};
     _authError = null;
     notifyListeners();
 
@@ -337,12 +800,15 @@ class AppState extends ChangeNotifier {
 
     final uid = await services.authService.ensureUser();
     _authUserId = uid;
+    await reloadCareWorkspace();
     _authUserEmail = services.authService.currentUserEmail;
     _authUserEmailVerified = services.authService.currentUserEmailVerified;
     _authProviderIds = services.authService.currentUserProviderIds;
 
     _isOnboarded = await services.userDataService.loadOnboarded();
-    _userProfile = await services.userDataService.loadUserProfile();
+    _userProfile = (await services.userDataService.loadUserProfile()).copyWith(
+      patientId: uid,
+    );
     PurposeBoundConsentRuntimeGate.synchronize(
       subject: _userProfile.patientId,
       evaluation: _userProfile.localAiConsentEvaluation,
@@ -536,6 +1002,11 @@ class AppState extends ChangeNotifier {
 
   Future<void> _handleAuthUserChanged(AuthUser? user) async {
     final previousUid = _authUserId;
+    if (previousUid != user?.uid) {
+      _careSessionEpoch += 1;
+      _careWorkspace = null;
+      _careWorkspaceError = null;
+    }
     _authUserId = user?.uid;
     _authUserEmail = user?.email;
     _authUserEmailVerified = user?.emailVerified ?? false;
@@ -555,6 +1026,9 @@ class AppState extends ChangeNotifier {
   }
 
   void _clearVisiblePatientData() {
+    _careSessionEpoch += 1;
+    _careWorkspace = null;
+    _careWorkspaceError = null;
     PurposeBoundConsentRuntimeGate.revokeImmediately(_userProfile.patientId);
     _isOnboarded = false;
     _authUserEmailVerified = false;
@@ -565,6 +1039,7 @@ class AppState extends ChangeNotifier {
     _intakes = [];
     _recoverableEventHistory = [];
     _recommendations = [];
+    _recommendationRankPresentationWithheld = false;
     _mealCheckCache = {};
     _recommendationDecisionPath = 'conservative_cdss';
     _recommendationExplanations = const [];
@@ -580,6 +1055,9 @@ class AppState extends ChangeNotifier {
     UserProfile? profile,
     List<String>? activeDrugIds,
     Intake? initialIntake,
+    bool confirmInitialIntakeDose = false,
+    AdministrationDoseAssertionSource initialDoseAssertionSource =
+        AdministrationDoseAssertionSource.typed,
   }) async {
     final expectedUserScope = _authUserId;
     if (expectedUserScope == null) {
@@ -591,11 +1069,35 @@ class AppState extends ChangeNotifier {
     final nextActiveDrugIds = List<String>.from(
       activeDrugIds ?? _activeDrugIds,
     );
-    final nextIntakes = initialIntake == null
+    final preparedInitialIntake = initialIntake == null
+        ? null
+        : _doseConfirmationCoordinator
+              .prepare(
+                draft: initialIntake,
+                current: null,
+                expectedRecordRevisionDigest:
+                    administrationDoseConfirmationAbsentRevisionDigest,
+                ownerScope: expectedUserScope,
+                operationId: _recoverableEventIdFactory.newOperationId(),
+                confirmationRequested: confirmInitialIntakeDose,
+                assertionSource: initialDoseAssertionSource,
+                confirmationAction: 'onboarding.explicit_checkbox',
+                uiContractVersion: 'onboarding-dose-confirmation:1',
+                confirmedAt: DateTime.now().toUtc(),
+              )
+              .intake;
+    if (initialIntake != null && preparedInitialIntake == null) {
+      throw StateError(
+        'Initial dose confirmation is stale or the expression is held.',
+      );
+    }
+    final nextIntakes = preparedInitialIntake == null
         ? List<Intake>.from(_intakes)
         : <Intake>[
-            initialIntake,
-            ..._intakes.where((intake) => intake.id != initialIntake.id),
+            preparedInitialIntake,
+            ..._intakes.where(
+              (intake) => intake.id != preparedInitialIntake.id,
+            ),
           ];
     _debugLog(
       '[AppState] completeOnboarding:start '
@@ -864,7 +1366,262 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<PersistedListMutationResult<Intake>> addIntake(Intake intake) async {
+  String doseConfirmationRevisionDigest(Intake? intake) =>
+      AdministrationDoseConfirmationCoordinator.revisionDigest(intake);
+
+  AdministrationDoseEvaluation evaluateDoseConfirmation(Intake intake) =>
+      _doseConfirmationCoordinator.evaluate(
+        intake,
+        ownerScope: _authUserId ?? _userProfile.patientId,
+      );
+
+  AdministrationDoseResultUseEvaluation evaluateDoseForResultUse(
+    Intake intake, {
+    DateTime? observedAt,
+  }) => _doseConfirmationCoordinator.evaluateForResultUse(
+    intake,
+    ownerScope: _authUserId ?? _userProfile.patientId,
+    observedAt: observedAt ?? DateTime.now().toUtc(),
+  );
+
+  FhirR5DoseQuantityPreview previewFhirR5DoseQuantity(
+    Intake intake, {
+    DateTime? observedAt,
+  }) =>
+      FhirR5DoseQuantityPreviewService(
+        coordinator: _doseConfirmationCoordinator,
+      ).project(
+        intake,
+        ownerScope: _authUserId ?? _userProfile.patientId,
+        observedAt: observedAt ?? DateTime.now().toUtc(),
+      );
+
+  MedicationAssertionGraph medicationAssertionGraphFor(
+    Intake intake, {
+    DateTime? observedAt,
+  }) => _medicationAssertionReconciliationService.build(
+    intake: intake,
+    ownerScope: _authUserId ?? _userProfile.patientId,
+    observedAt: observedAt ?? DateTime.now().toUtc(),
+  );
+
+  MedicationAssertionBitemporalProjection projectMedicationAssertionsBitemporal(
+    Intake intake, {
+    required DateTime validAt,
+    required DateTime knownAt,
+  }) {
+    final projection = _medicationAssertionReconciliationService
+        .projectBitemporal(
+          intake: intake,
+          ownerScope: _authUserId ?? _userProfile.patientId,
+          validAt: validAt,
+          knownAt: knownAt,
+        );
+    _debugLog(
+      '[AppState] projectMedicationAssertionsBitemporal:complete '
+      'available=${projection.availableAssertions.length} '
+      'withheld=${projection.assertions.length - projection.availableAssertions.length}',
+    );
+    return projection;
+  }
+
+  Future<PersistedListMutationResult<Intake>?> appendMedicationAssertion({
+    required String intakeId,
+    required String expectedGraphDigest,
+    required MedicationAssertionEvidenceClass evidenceClass,
+    required MedicationAssertionStatus status,
+    required MedicationAssertionActorRole actorRole,
+    required String sourceLabel,
+    required String sourceRevision,
+    required double? doseValue,
+    required String? doseUnit,
+    required DateTime? effectiveStart,
+    required DateTime? effectiveEnd,
+    required MedicationAssertionTimePrecision timePrecision,
+    required int timeUncertaintyMinutes,
+    required int? timezoneOffsetMinutes,
+    required MedicationAssertionTimezoneSource timezoneSource,
+  }) async {
+    final current = _intakes.where((item) => item.id == intakeId).firstOrNull;
+    if (current == null) return null;
+    if (current.invalidMedicationReconciliationEvidence != null) {
+      _debugLog('[AppState] appendMedicationAssertion:invalid_evidence');
+      return null;
+    }
+    final graph = medicationAssertionGraphFor(current);
+    if (graph.graphDigest != expectedGraphDigest) {
+      _debugLog('[AppState] appendMedicationAssertion:stale_graph');
+      return null;
+    }
+    final normalizedSourceLabel = sourceLabel.trim();
+    final normalizedSourceRevision = sourceRevision.trim();
+    if (normalizedSourceLabel.isEmpty || normalizedSourceRevision.isEmpty) {
+      _debugLog('[AppState] appendMedicationAssertion:invalid_source');
+      return null;
+    }
+    final now = DateTime.now().toUtc();
+    final sourceIdentityDigest =
+        medicationAssertionSnapshotDigest(<String, Object?>{
+          'label': normalizedSourceLabel.toLowerCase(),
+          'evidence_class': evidenceClass.name,
+        });
+    final sourcePayload = <String, Object?>{
+      'label': normalizedSourceLabel,
+      'revision': normalizedSourceRevision,
+      'evidence_class': evidenceClass.name,
+    };
+    final sourceDigest = medicationAssertionSnapshotDigest(sourcePayload);
+    final revisionDigest = medicationAssertionSnapshotDigest(<String, Object?>{
+      'source_artifact_id': sourceIdentityDigest,
+      'revision': normalizedSourceRevision,
+    });
+    final node = MedicationAssertionNode.create(
+      ownerScope: _authUserId ?? _userProfile.patientId,
+      intakeId: current.id,
+      medicationId: current.drugId,
+      productIdentityDigest: medicationAssertionSnapshotDigest(
+        current.productSelection?.toJson(),
+      ),
+      doseValue: doseValue,
+      doseUnit: doseUnit,
+      route: current.route,
+      dosageForm: current.dosageForm,
+      releaseType: current.releaseType,
+      evidenceClass: evidenceClass,
+      sourceDisplayLabel: normalizedSourceLabel,
+      sourceArtifactId: 'source_${sourceIdentityDigest.substring(0, 32)}',
+      sourceArtifactDigest: sourceDigest,
+      sourceRevisionDigest: revisionDigest,
+      actorIdentity: '${actorRole.name}:$normalizedSourceLabel',
+      actorRole: actorRole,
+      effectiveStart: effectiveStart,
+      effectiveEnd: effectiveEnd,
+      timePrecision: timePrecision,
+      timeUncertaintyMinutes: timeUncertaintyMinutes,
+      timezoneOffsetMinutes: timezoneOffsetMinutes,
+      timezoneSource: timezoneSource,
+      assertedAt: now,
+      importedAt:
+          evidenceClass == MedicationAssertionEvidenceClass.importedStatement
+          ? now
+          : null,
+      recordedAt: now,
+      status: status,
+    );
+    _debugLog(
+      '[AppState] appendMedicationAssertion:start class=${evidenceClass.name}',
+    );
+    return updateIntake(
+      current.copyWith(
+        medicationAssertions: <MedicationAssertionNode>[
+          ...current.medicationAssertions,
+          node,
+        ],
+      ),
+    );
+  }
+
+  Future<PersistedListMutationResult<Intake>?>
+  appendMedicationReconciliationDecision({
+    required String intakeId,
+    required String expectedGraphDigest,
+    required MedicationReconciliationResolution resolution,
+  }) async {
+    final current = _intakes.where((item) => item.id == intakeId).firstOrNull;
+    if (current == null) return null;
+    if (current.invalidMedicationReconciliationEvidence != null) {
+      _debugLog('[AppState] reconcileMedicationAssertions:invalid_evidence');
+      return null;
+    }
+    final graph = medicationAssertionGraphFor(current);
+    if (graph.graphDigest != expectedGraphDigest) {
+      _debugLog('[AppState] reconcileMedicationAssertions:stale_graph');
+      return null;
+    }
+    final decision = MedicationReconciliationDecision.create(
+      ownerScope: _authUserId ?? _userProfile.patientId,
+      intakeId: intakeId,
+      graphDigest: graph.graphDigest,
+      acknowledgedAssertionIds: graph.nodes
+          .map((node) => node.assertionId)
+          .toList(growable: false),
+      acknowledgedBlockingEdgeIds: graph.blockingEdges
+          .map((edge) => edge.edgeId)
+          .toList(growable: false),
+      resolution: resolution,
+      reasonCode: switch (resolution) {
+        MedicationReconciliationResolution.confirmedNoConflict =>
+          'user.reviewed_no_conflict',
+        MedicationReconciliationResolution.acknowledgedUnresolved =>
+          'user.acknowledged_unresolved',
+        MedicationReconciliationResolution.heldForReview =>
+          'user.held_for_review',
+      },
+      decidedAt: DateTime.now().toUtc(),
+    );
+    _debugLog(
+      '[AppState] reconcileMedicationAssertions:start '
+      'resolution=${resolution.name}',
+    );
+    return updateIntake(
+      current.copyWith(
+        medicationReconciliationDecisions: <MedicationReconciliationDecision>[
+          ...current.medicationReconciliationDecisions,
+          decision,
+        ],
+      ),
+    );
+  }
+
+  Future<
+    ({
+      AdministrationDosePreparationResult preparation,
+      PersistedListMutationResult<Intake>? mutation,
+    })
+  >
+  saveIntakeWithDoseConfirmation({
+    required Intake draft,
+    required bool isUpdate,
+    required String expectedRecordRevisionDigest,
+    required bool confirmationRequested,
+    required AdministrationDoseAssertionSource assertionSource,
+    required String confirmationAction,
+    required String uiContractVersion,
+  }) async {
+    final current = _intakes
+        .where((intake) => intake.id == draft.id)
+        .firstOrNull;
+    final operationId = _recoverableEventIdFactory.newOperationId();
+    final preparation = _doseConfirmationCoordinator.prepare(
+      draft: draft,
+      current: current,
+      expectedRecordRevisionDigest: expectedRecordRevisionDigest,
+      ownerScope: _authUserId ?? _userProfile.patientId,
+      operationId: operationId,
+      confirmationRequested: confirmationRequested,
+      assertionSource: assertionSource,
+      confirmationAction: confirmationAction,
+      uiContractVersion: uiContractVersion,
+      confirmedAt: DateTime.now().toUtc(),
+    );
+    final prepared = preparation.intake;
+    if (!preparation.canPersist || prepared == null) {
+      _debugLog(
+        '[AppState] saveIntakeWithDoseConfirmation:'
+        '${preparation.status.name}',
+      );
+      return (preparation: preparation, mutation: null);
+    }
+    final mutation = isUpdate
+        ? await updateIntake(prepared, operationId: operationId)
+        : await addIntake(prepared, operationId: operationId);
+    return (preparation: preparation, mutation: mutation);
+  }
+
+  Future<PersistedListMutationResult<Intake>> addIntake(
+    Intake intake, {
+    String? operationId,
+  }) async {
     _debugLog('[AppState] addIntake:start');
     final nextIntakes = <Intake>[
       intake,
@@ -881,6 +1638,7 @@ class AppState extends ChangeNotifier {
       'addIntake',
       nextIntakes,
       revision: _newEventRevision(
+        operationId: operationId,
         eventType: RecoverableUserEventType.intake,
         recordId: intake.id,
         mutationType: previous == null
@@ -893,8 +1651,9 @@ class AppState extends ChangeNotifier {
   }
 
   Future<PersistedListMutationResult<Intake>> updateIntake(
-    Intake intake,
-  ) async {
+    Intake intake, {
+    String? operationId,
+  }) async {
     _debugLog('[AppState] updateIntake:start');
     if (!_intakes.any((item) => item.id == intake.id)) {
       _debugLog('[AppState] updateIntake:unchanged missing_id');
@@ -913,6 +1672,7 @@ class AppState extends ChangeNotifier {
       'updateIntake',
       nextIntakes,
       revision: _newEventRevision(
+        operationId: operationId,
         eventType: RecoverableUserEventType.intake,
         recordId: intake.id,
         mutationType: RecoverableUserEventMutationType.update,
@@ -1045,6 +1805,7 @@ class AppState extends ChangeNotifier {
   }
 
   RecoverableUserEventRevision _newEventRevision({
+    String? operationId,
     required RecoverableUserEventType eventType,
     required String recordId,
     required RecoverableUserEventMutationType mutationType,
@@ -1052,7 +1813,7 @@ class AppState extends ChangeNotifier {
     required Map<String, Object?>? afterPayload,
     String? restoresHistoryId,
   }) => RecoverableUserEventRevision.create(
-    operationId: _recoverableEventIdFactory.newOperationId(),
+    operationId: operationId ?? _recoverableEventIdFactory.newOperationId(),
     eventType: eventType,
     recordId: recordId,
     mutationType: mutationType,
@@ -1262,12 +2023,21 @@ class AppState extends ChangeNotifier {
 
   Future<InteractionResult> checkMeal(Meal meal) async {
     _debugLog('[AppState] checkMeal:start items=${meal.items.length}');
+    final owner = _authUserId;
+    final epoch = _careSessionEpoch;
+    final inputKey = _mealCheckContextKey();
+    bool authorized() =>
+        owner == _authUserId &&
+        epoch == _careSessionEpoch &&
+        services.authService.currentUserId == owner &&
+        inputKey == _mealCheckContextKey();
     final rawResult = await services.databaseBackedMealCheckUseCase(
       meal: meal,
       activeDrugs: _drugsForMealCheck(),
       intakes: _intakes,
       userProfile: _userProfile,
     );
+    if (!authorized()) return rawResult;
     final adapter = services.nextMealRecommendationOrchestrator.localAiAdapter;
     final result = adapter == null
         ? rawResult
@@ -1278,7 +2048,17 @@ class AppState extends ChangeNotifier {
             activeDrugs: _drugsForMealCheck(),
             intakes: _intakes,
           );
-    _mealCheckCache = {..._mealCheckCache, meal.id: result};
+    if (!authorized()) return result;
+    final isSaved = _meals.any(
+      (saved) =>
+          saved.id == meal.id &&
+          jsonEncode(saved.toJson()) == jsonEncode(meal.toJson()),
+    );
+    if (isSaved) {
+      _mealCheckCache = {..._mealCheckCache, meal.id: result};
+      await _registerFollowups(rawResult.followupPrompts);
+    }
+    if (!authorized()) return result;
     await services.userClinicalAuditService.recordMealCheck(
       meal: meal,
       result: result,
@@ -1286,7 +2066,7 @@ class AppState extends ChangeNotifier {
       activeDrugIds: _activeDrugIds,
       intakes: _intakes,
     );
-    notifyListeners();
+    if (authorized()) notifyListeners();
     return result;
   }
 
@@ -1305,12 +2085,16 @@ class AppState extends ChangeNotifier {
       meals: _meals,
       intakes: _intakes,
       medications: services.medicationRepository.allDrugs,
+      observations: observations,
     );
   }
 
   List<FoodRecommendation> get recommendations {
     return List.unmodifiable(_recommendations);
   }
+
+  bool get recommendationRankPresentationWithheld =>
+      _recommendationRankPresentationWithheld;
 
   List<ProteinTrendPoint> get proteinTrend {
     return services.getProteinTrendUseCase(_meals);
@@ -1504,6 +2288,11 @@ class AppState extends ChangeNotifier {
       candidateFoods: services.foodRepository.allFoods,
     );
     _recommendations = result.recommendations;
+    _recommendationRankPresentationWithheld =
+        shouldWithholdRankedFoodPresentation(
+          candidateSetSha256: result.candidateSetSnapshot.sha256Digest,
+          assessment: result.rankSensitivityAssessment,
+        );
     _recommendationDecisionPath = result.decisionPath;
     _recommendationExplanations = result.explanations;
     _recommendationGateReasons = result.gateReasons;
@@ -2073,15 +2862,33 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _refreshMealChecks() async {
+    final owner = _authUserId;
+    final epoch = _careSessionEpoch;
+    final inputKey = _mealCheckContextKey();
     final next = <String, InteractionResult>{};
-    for (final meal in _meals) {
+    for (final meal in List<Meal>.of(_meals)) {
       next[meal.id] = await services.databaseBackedMealCheckUseCase(
         meal: meal,
         activeDrugs: _drugsForMealCheck(),
         intakes: _intakes,
         userProfile: _userProfile,
       );
+      if (owner != _authUserId ||
+          epoch != _careSessionEpoch ||
+          services.authService.currentUserId != owner ||
+          inputKey != _mealCheckContextKey()) {
+        return;
+      }
     }
     _mealCheckCache = next;
+    await _registerFollowups(
+      next.values.expand((result) => result.followupPrompts),
+    );
   }
+
+  String _mealCheckContextKey() => jsonEncode({
+    'profile': _userProfile.toJson(),
+    'drugs': _drugsForMealCheck().map((drug) => drug.toJson()).toList(),
+    'intakes': _intakes.map((intake) => intake.toJson()).toList(),
+  });
 }

@@ -11,10 +11,8 @@ const projectId =
   process.env.FIREBASE_PROJECT_ID ??
   'parkinsum-companion';
 const apiKey = required(
-  args['api-key'] ??
-    process.env.PARKINSUM_FIREBASE_API_KEY ??
-    inferFirebaseWebApiKey(environment, projectId),
-  '--api-key',
+  args['api-key'] ?? process.env.PARKINSUM_FIREBASE_API_KEY,
+  '--api-key or PARKINSUM_FIREBASE_API_KEY',
 );
 const operator = args.operator ?? process.env.USER ?? 'unknown_operator';
 const dryRun = !args.execute;
@@ -134,7 +132,8 @@ try {
 
 function usage() {
   console.log(`Usage:
-  node tool/firebase_prod_readonly_accounts.mjs --env prod --project parkinsum-companion --execute --confirm-project parkinsum-companion
+  PARKINSUM_FIREBASE_API_KEY=<restricted-prod-web-key> \
+    node tool/firebase_prod_readonly_accounts.mjs --env prod --project parkinsum-companion --execute --confirm-project parkinsum-companion
 
 Creates userA/userB prod Auth test accounts with no custom claims, signs them
 in, and writes local tokens to build/operator_tokens/prod_readonly_tokens.json.
@@ -213,25 +212,6 @@ function writeAudit(record) {
   };
   fs.mkdirSync(path.dirname(auditLogPath), { recursive: true });
   fs.appendFileSync(auditLogPath, `${JSON.stringify(entry)}\n`);
-}
-
-function inferFirebaseWebApiKey(env, expectedProjectId) {
-  const optionsPath = path.join(process.cwd(), 'lib', 'firebase_options.dart');
-  if (!fs.existsSync(optionsPath)) return undefined;
-  const source = fs.readFileSync(optionsPath, 'utf8');
-  const optionsName = env === 'dev' ? 'devWeb' : env === 'stage' ? 'stageWeb' : 'web';
-  const blockMatch = source.match(
-    new RegExp(`static const FirebaseOptions ${optionsName} = FirebaseOptions\\(\\s*([\\s\\S]*?)\\n\\s*\\);`),
-  );
-  if (!blockMatch) return undefined;
-  const block = blockMatch[1];
-  const projectMatch = block.match(/projectId:\s*'([^']+)'/);
-  if (projectMatch && projectMatch[1] !== expectedProjectId) {
-    throw new Error(
-      `Firebase options project mismatch for ${env}: expected ${expectedProjectId}, found ${projectMatch[1]}.`,
-    );
-  }
-  return block.match(/apiKey:\s*'([^']+)'/)?.[1];
 }
 
 function parseArgs(argv) {

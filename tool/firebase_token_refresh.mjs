@@ -14,10 +14,8 @@ const projectId =
   process.env.FIREBASE_PROJECT_ID ??
   defaultProjectForEnvironment(environment);
 const apiKey = required(
-  args['api-key'] ??
-    process.env.PARKINSUM_FIREBASE_API_KEY ??
-    inferFirebaseWebApiKey(environment, projectId),
-  '--api-key',
+  args['api-key'] ?? process.env.PARKINSUM_FIREBASE_API_KEY,
+  '--api-key or PARKINSUM_FIREBASE_API_KEY',
 );
 
 if (args.help) {
@@ -192,25 +190,6 @@ function defaultProjectForEnvironment(env) {
   if (env === 'dev') return 'parkinsum-companion-dev';
   if (env === 'stage') return 'parkinsum-companion-stage';
   return 'parkinsum-companion';
-}
-
-function inferFirebaseWebApiKey(env, expectedProjectId) {
-  const optionsPath = path.join(process.cwd(), 'lib', 'firebase_options.dart');
-  if (!fs.existsSync(optionsPath)) return undefined;
-  const source = fs.readFileSync(optionsPath, 'utf8');
-  const optionsName = env === 'dev' ? 'devWeb' : env === 'stage' ? 'stageWeb' : 'web';
-  const blockMatch = source.match(
-    new RegExp(`static const FirebaseOptions ${optionsName} = FirebaseOptions\\(\\s*([\\s\\S]*?)\\n\\s*\\);`),
-  );
-  if (!blockMatch) return undefined;
-  const block = blockMatch[1];
-  const projectMatch = block.match(/projectId:\s*'([^']+)'/);
-  if (projectMatch && projectMatch[1] !== expectedProjectId) {
-    throw new Error(
-      `Firebase options project mismatch for ${env}: expected ${expectedProjectId}, found ${projectMatch[1]}.`,
-    );
-  }
-  return block.match(/apiKey:\s*'([^']+)'/)?.[1];
 }
 
 function redactEmail(email) {

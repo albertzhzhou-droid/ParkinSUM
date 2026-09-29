@@ -2,9 +2,41 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 
-const int mechanisticEventLedgerSchemaVersion = 1;
+import 'local_time_resolution.dart';
+import 'meal_composition.dart';
+import 'time_axis_events.dart';
+
+const int mechanisticEventLedgerSchemaVersion = 3;
 const String mechanisticEventLedgerSchema =
-    'parkinsum.mechanistic-event-ledger/1';
+    'parkinsum.mechanistic-event-ledger/3';
+
+/// Content identity of the complete engine-facing input, including fields that
+/// are intentionally not duplicated into the human-readable event projection.
+/// This lets a ledger authorize an exact immutable view without pretending the
+/// current schema can losslessly reconstruct every medication metadata and
+/// food-component object.
+final class MechanisticLedgerInputBinding {
+  const MechanisticLedgerInputBinding._();
+
+  static String compute({
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+  }) {
+    final sortedCompositionIds = mealCompositionsById.keys.toList()..sort();
+    final payload = <String, Object?>{
+      'schema': 'parkinsum.mechanistic-ledger-input-binding/1',
+      'context': context.toJson(),
+      'meal_compositions': <Object?>[
+        for (final id in sortedCompositionIds)
+          <String, Object?>{
+            'map_key': id,
+            'composition': mealCompositionsById[id]!.toJson(),
+          },
+      ],
+    };
+    return sha256.convert(utf8.encode(_canonicalJson(payload))).toString();
+  }
+}
 
 enum MechanisticLedgerEventKind { dose, meal, observation, context }
 
@@ -24,9 +56,12 @@ enum MechanisticLedgerValueOrigin {
 
 enum MechanisticLedgerDimension {
   mass,
+  volume,
   energy,
   duration,
   fraction,
+  pressure,
+  ordinalSeverity,
   categorical,
 }
 
@@ -87,6 +122,36 @@ final class MechanisticLedgerMeasurement {
       }
     } else if (lowerQuantificationLimit != null) {
       throw ArgumentError('Only below-quantification values carry a limit.');
+    }
+    if (dimension == MechanisticLedgerDimension.pressure &&
+        (!MechanisticUnitConverter.supportsPressureUnit(originalUnit) ||
+            canonicalUnit != 'mm[Hg]' ||
+            (state == MechanisticLedgerValueState.known &&
+                (originalValue! <= 0 || canonicalValue! <= 0)))) {
+      throw ArgumentError('Unsupported or invalid pressure measurement.');
+    }
+    if (dimension == MechanisticLedgerDimension.pressure &&
+        state == MechanisticLedgerValueState.known &&
+        canonicalValue !=
+            MechanisticUnitConverter.convert(
+              value: originalValue!,
+              fromUnit: originalUnit!,
+              toUnit: canonicalUnit!,
+              dimension: dimension,
+            )) {
+      throw ArgumentError(
+        'Canonical pressure must match the declared source unit.',
+      );
+    }
+    if (dimension == MechanisticLedgerDimension.ordinalSeverity &&
+        (originalUnit != 'severity_0_to_10' ||
+            canonicalUnit != 'severity_0_to_10' ||
+            (state == MechanisticLedgerValueState.known &&
+                (originalValue! < 0 ||
+                    originalValue! > 10 ||
+                    originalValue!.truncateToDouble() != originalValue ||
+                    canonicalValue != originalValue)))) {
+      throw ArgumentError('Unsupported or invalid ordinal severity.');
     }
   }
 
@@ -214,6 +279,7 @@ final class MechanisticLedgerEvent {
         throw ArgumentError('Ledger attributes cannot be empty.');
       }
     }
+    _validateLocalTimeResolutionEvidence();
     for (final field in <String?>[formulation, route, compartment]) {
       if (field != null && field.trim().isEmpty) {
         throw ArgumentError('Optional event fields cannot be empty strings.');
@@ -303,6 +369,43 @@ final class MechanisticLedgerEvent {
       compartment: _nullableString(json['compartment'], 'event.compartment'),
     );
   }
+
+  void _validateLocalTimeResolutionEvidence() {
+    const evidenceJsonKey = 'local_time_resolution_evidence_json';
+    const evidenceDigestKey = 'local_time_resolution_evidence_sha256';
+    const evidenceBasis = 'iana_ruleset_resolved_civil_time_evidence';
+    final encodedEvidence = attributes[evidenceJsonKey];
+    final expectedDigest = attributes[evidenceDigestKey];
+    if (encodedEvidence == null && expectedDigest == null) {
+      if (attributes['timezone_basis'] == evidenceBasis) {
+        throw ArgumentError('Timezone evidence attributes are incomplete.');
+      }
+      return;
+    }
+    if (encodedEvidence == null || expectedDigest == null) {
+      throw ArgumentError('Timezone evidence attributes are incomplete.');
+    }
+    if (kind != MechanisticLedgerEventKind.observation) {
+      throw ArgumentError(
+        'Owner local-time evidence is valid only on observation events.',
+      );
+    }
+    final decoded = jsonDecode(encodedEvidence);
+    final evidence = LocalTimeResolutionEvidence.fromJson(
+      _objectMap(decoded, 'local time resolution evidence'),
+    );
+    if (jsonEncode(evidence.toJson()) != encodedEvidence ||
+        expectedDigest != evidence.sha256Digest ||
+        attributes['timezone_basis'] != evidenceBasis ||
+        attributes['declared_timezone'] != evidence.ianaZoneId ||
+        evidence.resolvedAtUtc != occurredAtUtc ||
+        evidence.utcOffsetMinutes != timezoneOffsetMinutes ||
+        evidence.offsetTimestamp != originalTimestamp) {
+      throw ArgumentError(
+        'Local-time evidence disagrees with the observation event.',
+      );
+    }
+  }
 }
 
 final class MechanisticEventLedger {
@@ -310,6 +413,7 @@ final class MechanisticEventLedger {
     required this.ledgerId,
     required this.createdAtUtc,
     required this.configurationDigest,
+    required this.inputBindingSha256,
     required this.boundary,
     required List<MechanisticLedgerEvent> events,
   }) : events = List<MechanisticLedgerEvent>.unmodifiable(
@@ -321,6 +425,7 @@ final class MechanisticEventLedger {
   final String ledgerId;
   final DateTime createdAtUtc;
   final String configurationDigest;
+  final String inputBindingSha256;
   final String boundary;
   final List<MechanisticLedgerEvent> events;
 
@@ -338,6 +443,9 @@ final class MechanisticEventLedger {
     }
     if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(configurationDigest)) {
       throw ArgumentError('Configuration digest must be lowercase SHA-256.');
+    }
+    if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(inputBindingSha256)) {
+      throw ArgumentError('Input binding must be lowercase SHA-256.');
     }
     if (boundary.trim().isEmpty) {
       throw ArgumentError('Ledger boundary is required.');
@@ -361,6 +469,7 @@ final class MechanisticEventLedger {
     'ledger_id': ledgerId,
     'created_at_utc': createdAtUtc.toIso8601String(),
     'configuration_digest': configurationDigest,
+    'input_binding_sha256': inputBindingSha256,
     'boundary': boundary,
     'events': events.map((event) => event.toJson()).toList(),
   };
@@ -369,6 +478,7 @@ final class MechanisticEventLedger {
     'schema': mechanisticEventLedgerSchema,
     'ledger_id': ledgerId,
     'configuration_digest': configurationDigest,
+    'input_binding_sha256': inputBindingSha256,
     'events': [
       for (final event in events)
         <String, Object?>{
@@ -412,6 +522,7 @@ final class MechanisticEventLedger {
       'ledger_id',
       'created_at_utc',
       'configuration_digest',
+      'input_binding_sha256',
       'boundary',
       'events',
       'sha256_digest',
@@ -431,6 +542,10 @@ final class MechanisticEventLedger {
       configurationDigest: _string(
         json['configuration_digest'],
         'configuration_digest',
+      ),
+      inputBindingSha256: _string(
+        json['input_binding_sha256'],
+        'input_binding_sha256',
       ),
       boundary: _string(json['boundary'], 'boundary'),
       events: [
@@ -470,6 +585,10 @@ final class MechanisticUnitConverter {
         'g': 1000,
         'kg': 1000000,
       },
+      MechanisticLedgerDimension.volume => const <String, double>{
+        'ml': 1,
+        'l': 1000,
+      },
       MechanisticLedgerDimension.energy => const <String, double>{
         'kcal': 1,
         'kj': 0.2390057361376673,
@@ -482,6 +601,14 @@ final class MechanisticUnitConverter {
       MechanisticLedgerDimension.fraction => const <String, double>{
         'fraction': 1,
         '%': 0.01,
+      },
+      MechanisticLedgerDimension.pressure => const <String, double>{
+        'mm[hg]': 1,
+        'mmhg': 1,
+        'kpa': 7.500615,
+      },
+      MechanisticLedgerDimension.ordinalSeverity => const <String, double>{
+        'severity_0_to_10': 1,
       },
       MechanisticLedgerDimension.categorical => const <String, double>{},
     };
@@ -496,6 +623,12 @@ final class MechanisticUnitConverter {
     if (!converted.isFinite) throw ArgumentError('Unit conversion overflow.');
     return converted;
   }
+
+  static bool supportsPressureUnit(String? unit) =>
+      switch (unit?.trim().toLowerCase()) {
+        'mm[hg]' || 'mmhg' || 'kpa' => true,
+        _ => false,
+      };
 }
 
 int _compareEvents(MechanisticLedgerEvent left, MechanisticLedgerEvent right) {

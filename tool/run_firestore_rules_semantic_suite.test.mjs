@@ -31,7 +31,7 @@ function tapFixture({
   ].join('\n');
 }
 
-test('accepts exactly the seven required passing semantic cases', () => {
+test('accepts exactly the required passing semantic cases', () => {
   assert.deepEqual(validateSemanticTap(tapFixture()), []);
 });
 
@@ -42,20 +42,30 @@ test('rejects missing, skipped, todo, failed, or extra cases', () => {
       .some((failure) => failure.includes('missing required semantic case')),
   );
   assert.ok(
-    validateSemanticTap(tapFixture({ skipped: 1, pass: 6 }))
+    validateSemanticTap(tapFixture({
+      skipped: 1,
+      pass: requiredFirestoreSemanticCases.length - 1,
+    }))
       .some((failure) => failure.includes('zero skipped')),
   );
   assert.ok(
-    validateSemanticTap(tapFixture({ todo: 1, pass: 6 }))
+    validateSemanticTap(tapFixture({
+      todo: 1,
+      pass: requiredFirestoreSemanticCases.length - 1,
+    }))
       .some((failure) => failure.includes('zero todo')),
   );
   assert.ok(
-    validateSemanticTap(tapFixture({ fail: 1, pass: 6 }))
+    validateSemanticTap(tapFixture({
+      fail: 1,
+      pass: requiredFirestoreSemanticCases.length - 1,
+    }))
       .some((failure) => failure.includes('zero fail')),
   );
   assert.ok(
     validateSemanticTap(tapFixture({
       names: [...requiredFirestoreSemanticCases, 'unexpected case'],
-    })).some((failure) => failure.includes('expected 7 tests')),
+    })).some((failure) =>
+      failure.includes(`expected ${requiredFirestoreSemanticCases.length} tests`)),
   );
 });

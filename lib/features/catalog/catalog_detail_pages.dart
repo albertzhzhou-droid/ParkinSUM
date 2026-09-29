@@ -5,6 +5,18 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/food_item.dart';
 import '../../domain/usecases/cdss_catalog_projection_service.dart';
 
+bool _isLessThanNutrientObservation(NutrientObservationEvidence observation) {
+  final qualifier = observation.qualifierKind?.trim().toLowerCase() ?? '';
+  final raw = observation.rawValueText?.trim() ?? '';
+  return const <String>{
+        'lt',
+        'lte',
+        'less_than',
+        'less_than_or_equal',
+      }.contains(qualifier) ||
+      raw.startsWith('<');
+}
+
 /// 食品详情页：
 /// - 优先展示已经导入到 CDSS 的真实 nutrient/variant 明细；
 /// - 若当前条目没有 CDSS 细节，则回退到目录层的基本信息。
@@ -70,6 +82,7 @@ class FoodDetailPage extends StatelessWidget {
                   ),
                 ),
               ),
+              _FoodCatalogProvenanceCard(food: food),
               if (snapshot.connectionState == ConnectionState.waiting)
                 const Padding(
                   padding: EdgeInsets.all(12),
@@ -125,6 +138,241 @@ class FoodDetailPage extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _FoodCatalogProvenanceCard extends StatelessWidget {
+  final FoodItem food;
+
+  const _FoodCatalogProvenanceCard({required this.food});
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = context.appI18n;
+    final evidence = food.catalogProvenanceEvidence;
+    final observations = food.nutrientObservationEvidence;
+    final hasCatalogEvidence =
+        evidence != null &&
+        (evidence.sourceDocuments.isNotEmpty ||
+            evidence.variantScopes.isNotEmpty ||
+            evidence.conceptVariantMatches.isNotEmpty);
+    final hasAnyEvidence = hasCatalogEvidence || observations.isNotEmpty;
+    String value(String? input) =>
+        input == null || input.trim().isEmpty ? '—' : input;
+    String date(int? epochMs) {
+      if (epochMs == null) return '—';
+      return DateTime.fromMillisecondsSinceEpoch(
+        epochMs,
+        isUtc: true,
+      ).toIso8601String().split('T').first;
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              i18n.tr('detail.food_catalog_provenance_title'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            if (!hasAnyEvidence)
+              Text(i18n.tr('detail.food_catalog_provenance_unavailable')),
+            if (evidence != null && evidence.sourceDocuments.isNotEmpty) ...[
+              Text(
+                i18n.tr('detail.food_catalog_source_documents'),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              for (final document in evidence.sourceDocuments) ...[
+                const SizedBox(height: 6),
+                if (document.resolutionStatus != 'resolved')
+                  Text(
+                    i18n.tr('detail.food_catalog_unresolved', {
+                      'id': document.sourceDocId,
+                    }),
+                  )
+                else ...[
+                  Text(
+                    i18n.tr('detail.food_catalog_document_summary', {
+                      'id': document.sourceDocId,
+                      'title': value(document.title),
+                      'organization': value(document.organization),
+                      'family': value(document.sourceFamily),
+                      'type': value(document.docType),
+                      'tier': value(document.dataTier),
+                      'jurisdiction': value(document.jurisdiction),
+                      'status': value(document.sourceStatus),
+                    }),
+                  ),
+                  Text(
+                    i18n.tr('detail.food_catalog_source_dates', {
+                      'published': date(document.publishedAtEpochMs),
+                      'effective': date(document.effectiveAtEpochMs),
+                    }),
+                  ),
+                  if (document.licenseNote?.trim().isNotEmpty == true)
+                    Text(
+                      i18n.tr('detail.food_catalog_license', {
+                        'value': document.licenseNote!,
+                      }),
+                    ),
+                  if (document.originUrl?.trim().isNotEmpty == true)
+                    SelectableText(
+                      i18n.tr('detail.food_catalog_source_url', {
+                        'value': document.originUrl!,
+                      }),
+                    ),
+                  if (document.sourceRegistryChecksum?.trim().isNotEmpty ==
+                      true)
+                    Text(
+                      i18n.tr('detail.food_catalog_registered_checksum', {
+                        'value': document.sourceRegistryChecksum!,
+                      }),
+                    ),
+                  if (document.payloadSha256 != null)
+                    SelectableText(
+                      i18n.tr('detail.food_catalog_payload_digest', {
+                        'digest': document.payloadSha256!,
+                      }),
+                    )
+                  else
+                    Text(i18n.tr('detail.food_catalog_payload_unavailable')),
+                ],
+              ],
+            ],
+            if (evidence != null && evidence.variantScopes.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                i18n.tr('detail.food_catalog_scopes'),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              for (final scope in evidence.variantScopes) ...[
+                const SizedBox(height: 6),
+                if (scope.resolutionStatus != 'resolved')
+                  Text(
+                    i18n.tr('detail.food_catalog_unresolved', {
+                      'id': scope.scopeHash,
+                    }),
+                  )
+                else
+                  Text(
+                    i18n.tr('detail.food_catalog_scope_summary', {
+                      'hash': scope.scopeHash,
+                      'jurisdiction': value(scope.jurisdiction),
+                      'brand': value(scope.brand),
+                      'preparation': value(scope.preparationState),
+                      'cooking': value(scope.cookingState),
+                      'plant': value(scope.plantPart),
+                      'cultivar': value(scope.cultivar),
+                      'sampling': value(scope.samplingFrame),
+                    }),
+                  ),
+              ],
+            ],
+            if (evidence != null &&
+                evidence.conceptVariantMatches.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                i18n.tr('detail.food_catalog_mappings'),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              for (final mapping in evidence.conceptVariantMatches) ...[
+                const SizedBox(height: 6),
+                Text(
+                  i18n.tr('detail.food_catalog_mapping_summary', {
+                    'system': value(mapping.externalIdSystem),
+                    'externalId': value(mapping.externalIdValue),
+                    'appId': value(mapping.appEntityId),
+                    'confidence': mapping.recordedConfidence?.toString() ?? '—',
+                    'status': value(mapping.status),
+                    'selection': i18n.tr(
+                      mapping.selectedForProjectedFoodId
+                          ? 'detail.food_catalog_mapping_selected'
+                          : 'detail.food_catalog_mapping_not_selected',
+                    ),
+                  }),
+                ),
+                if (mapping.mappingPayloadJson.trim().isNotEmpty)
+                  SelectableText(
+                    i18n.tr('detail.food_catalog_mapping_payload', {
+                      'value': mapping.mappingPayloadJson,
+                    }),
+                  ),
+              ],
+            ],
+            if (food.missingNutrientFields.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  i18n.tr('detail.food_missing_nutrient_fields', {
+                    'fields': (food.missingNutrientFields.toList()..sort())
+                        .join(', '),
+                  }),
+                ),
+              ),
+            if (observations.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                i18n.tr('detail.food_nutrient_observation_evidence'),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              for (final observation in observations)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        i18n.tr(
+                          observation.selectedForLegacyPointProjection
+                              ? 'detail.food_nutrient_projection_selected'
+                              : 'detail.food_nutrient_projection_evidence_only',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: observation.selectedForLegacyPointProjection
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      Text(
+                        i18n.tr('detail.food_nutrient_observation_line', {
+                          'attribute': value(observation.attributeCode),
+                          'raw': value(observation.rawValueText),
+                          'qualifier': value(observation.qualifierKind),
+                          'unit': value(observation.unit),
+                          'basis': value(observation.basisType),
+                          'low': observation.low?.toString() ?? '—',
+                          'high': observation.high?.toString() ?? '—',
+                          'method': value(observation.methodCode),
+                          'source': value(observation.sourceDocId),
+                        }),
+                      ),
+                      if (_isLessThanNutrientObservation(observation))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            i18n.tr('detail.food_nutrient_less_than_boundary', {
+                              'attribute': value(observation.attributeCode),
+                              'raw': value(observation.rawValueText),
+                              'qualifier': value(observation.qualifierKind),
+                            }),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              i18n.tr('detail.food_catalog_provenance_boundary'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,0 +1,44 @@
+{
+  "services": [
+    {
+      "hook": "patient-view",
+      "title": "Synthetic patient review A",
+      "description": "Test-only service metadata; no clinical content or endpoint exists.",
+      "id": "parkinsum-synthetic-patient-review-a",
+      "prefetch": {
+        "patient": "Patient/{{context.patientId}}",
+        "conditions": "Condition?patient={{context.patientId}}&_count=2"
+      }
+    },
+    {
+      "hook": "patient-view",
+      "title": "Synthetic patient review B",
+      "description": "Test-only service metadata; no clinical content or endpoint exists.",
+      "id": "parkinsum-synthetic-patient-review-b",
+      "prefetch": {
+        "subject": "Patient/{{context.patientId}}",
+        "problem-list": "Condition?patient={{context.patientId}}&_count=2"
+      }
+    },
+    {
+      "hook": "order-select",
+      "title": "Synthetic order selection A",
+      "description": "Test-only service metadata; no clinical content or endpoint exists.",
+      "id": "parkinsum-synthetic-order-selection-a",
+      "prefetch": {
+        "patient": "Patient/{{context.patientId}}",
+        "conditions": "Condition?patient={{context.patientId}}&_count=2"
+      }
+    },
+    {
+      "hook": "order-select",
+      "title": "Synthetic order selection B",
+      "description": "Test-only service metadata; no clinical content or endpoint exists.",
+      "id": "parkinsum-synthetic-order-selection-b",
+      "prefetch": {
+        "subject": "Patient/{{context.patientId}}",
+        "problem-list": "Condition?patient={{context.patientId}}&_count=2"
+      }
+    }
+  ]
+}

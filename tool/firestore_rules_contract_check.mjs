@@ -55,6 +55,25 @@ const checks = [
       /validMedicationProductSelection\(request\.resource\.data\.productSelection\)/.test(rules),
   },
   {
+    name: 'dose confirmation receipt is versioned, owner-digested, and exact-shape bounded',
+    pass:
+      /function\s+validDoseConfirmation\(value,\s*intakeId\)[\s\S]*value\.keys\(\)\.hasOnly/s.test(rules) &&
+      /value\.owner_scope_digest[\s\S]*\^\[a-f0-9\]\{64\}\$/s.test(rules) &&
+      /value\.expected_record_revision_digest[\s\S]*\^\[a-f0-9\]\{64\}\$/s.test(rules) &&
+      /value\.grammar_id\s*==\s*'parkinsum\.administration-dose-expression'/.test(rules) &&
+      /validDoseParsedExpression\(value\.parsed_expression\)/.test(rules) &&
+      /validDoseConfirmation\(request\.resource\.data\.doseConfirmation,\s*intakeId\)/.test(rules),
+  },
+  {
+    name: 'medication reconciliation is versioned, bounded, and intake-v3 only',
+    pass:
+      /function\s+validMedicationReconciliation\(value\)[\s\S]*value\.keys\(\)\.hasOnly/s.test(rules) &&
+      /value\.schema\s*==\s*'parkinsum\.medication-reconciliation-envelope\/1'/.test(rules) &&
+      /value\.assertions\.size\(\)\s*>\s*0[\s\S]*value\.assertions\.size\(\)\s*<=\s*64/s.test(rules) &&
+      /value\.decisions\.size\(\)\s*<=\s*128/.test(rules) &&
+      /request\.resource\.data\.schemaVersion\s*==\s*3[\s\S]*validMedicationReconciliation\(/s.test(rules),
+  },
+  {
     name: 'clinical audits are create-only and uid-bound',
     pass:
       /function\s+validClinicalAudit\(uid,\s*auditId\)[\s\S]*request\.resource\.data\.patient_id\s*==\s*uid/s.test(rules) &&
@@ -66,6 +85,12 @@ const checks = [
       /function\s+validRecordHistory\(historyId\)[\s\S]*request\.resource\.data\.schema_version\s*==\s*1/s.test(rules) &&
       /request\.resource\.data\.created_at\s*==\s*request\.time/.test(rules) &&
       /match\s+\/record_history\/\{historyId\}[\s\S]*allow\s+create:\s*if\s+isOwner\(uid\)\s*&&\s*validRecordHistory\(historyId\);[\s\S]*allow\s+update,\s*delete:\s*if\s+false;/s.test(rules),
+  },
+  {
+    name: 'mechanistic replay capsules are digest-keyed, owner-bound, and append-only',
+    pass:
+      /function\s+validMechanisticReplayCapsule\(uid,\s*capsuleSha256\)[\s\S]*canonical_json\.size\(\)\s*<=\s*716800/s.test(rules) &&
+      /match\s+\/mechanistic_replay_capsules\/\{capsuleSha256\}[\s\S]*allow\s+create:\s*if\s+isOwner\(uid\)\s*&&\s*validMechanisticReplayCapsule\(uid,\s*capsuleSha256\);[\s\S]*allow\s+update,\s*delete:\s*if\s+false;/s.test(rules),
   },
   {
     name: 'user-scoped cdss_tables are owner-read-only',

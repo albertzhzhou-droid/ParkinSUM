@@ -1,0 +1,115 @@
+{
+  "$schema": "parkinsum.algorithm-relation-domain-sampling-plan/2",
+  "schemaVersion": 2,
+  "planId": "parkinsum.algorithm-relation-domain-sampling.2026-08-31-v2",
+  "reviewedAtUtc": "2026-08-31T00:00:00Z",
+  "generator": {
+    "id": "parkinsum.xorshift32.relation-production-v2",
+    "version": "2.0.0",
+    "algorithm": "xorshift32",
+    "executionLayer": "dart-production-api-plus-independent-observation-ir",
+    "realHealthDataAllowed": false
+  },
+  "partitions": ["normal", "boundary", "missing", "malformed", "adversarial"],
+  "invalidInputDisposition": "held_precondition_not_product_failure",
+  "boundary": "Deterministic synthetic sampling with paired Dart production-API execution for normal, boundary, and adversarial partitions plus an independent Node observation-IR oracle. Missing and malformed inputs are held before production execution. The separate IR mutation layer calibrates mutation sensitivity and false alarms. Results do not establish exhaustive production-domain coverage, scientific truth, clinical calibration, patient-level accuracy, benefit, safety, or medical advice.",
+  "relations": [
+    {
+      "relationId": "runtime_rule_support.path_permutation",
+      "generatorId": "runtime-rule-path-set-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083101, 2026083102, 2026083103, 2026083104],
+      "precondition": "condition tree is a finite object and all required observation keys are present with string-list values",
+      "preconditionBoundary": "missing required keys or non-list path fields are held before relation evaluation",
+      "shrinkStrategy": "remove non-required paths then minimize to one differing path",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "catalog_resolution.input_permutation",
+      "generatorId": "catalog-candidate-order-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083111, 2026083112, 2026083113, 2026083114],
+      "precondition": "non-empty synthetic candidate identities and required status fields are present",
+      "preconditionBoundary": "missing candidate identity or non-string status is held before relation evaluation",
+      "shrinkStrategy": "minimize to two candidates and one distinguishing token",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "source_authority.jurisdiction_order",
+      "generatorId": "authority-score-order-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083121, 2026083122, 2026083123, 2026083124],
+      "precondition": "finite synthetic authority scores and required provenance classifications are present",
+      "preconditionBoundary": "missing or non-finite scores are held before relation evaluation",
+      "shrinkStrategy": "move adjacent scores toward the smallest order-reversing delta",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "runtime_rule_engine.jurisdiction_and_units",
+      "generatorId": "jurisdiction-unit-equivalence-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083131, 2026083132, 2026083133, 2026083134],
+      "precondition": "finite dose equivalence and non-empty jurisdiction and rule identity lists are present",
+      "preconditionBoundary": "missing chain or non-list rule identities are held before relation evaluation",
+      "shrinkStrategy": "minimize chain to the required prefix and rules to one equivalent pair",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "rule_registry_compiler.schema_rejection",
+      "generatorId": "registry-required-field-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083141, 2026083142, 2026083143, 2026083144],
+      "precondition": "one finite synthetic registry row and required observation keys are present",
+      "preconditionBoundary": "missing count or non-string compiled identity is held before relation evaluation",
+      "shrinkStrategy": "remove optional fields then minimize to one required-field deletion",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "fact_conflict.order_and_scope",
+      "generatorId": "fact-order-scope-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083151, 2026083152, 2026083153, 2026083154],
+      "precondition": "synthetic fact values share a comparable entity, attribute, unit, and explicit scope",
+      "preconditionBoundary": "missing classification or malformed scope result is held before relation evaluation",
+      "shrinkStrategy": "remove unrelated facts then minimize to one conflicting pair and one alternate scope",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "recommendation_orchestrator.deterministic_fallback",
+      "generatorId": "recommendation-replay-order-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083161, 2026083162, 2026083163, 2026083164],
+      "precondition": "synthetic replay cases expose decision paths and paired deterministic and observed candidate sets",
+      "preconditionBoundary": "missing replay pair or malformed candidate list is held before relation evaluation",
+      "shrinkStrategy": "minimize to one blocked replay and the smallest candidate-set difference",
+      "minimumDiversityBudget": 20
+    },
+    {
+      "relationId": "local_ai_adapter.consent_endpoint_whitelist",
+      "generatorId": "local-ai-confinement-v1",
+      "generatorVersion": "1.0.0",
+      "seeds": [2026083171, 2026083172, 2026083173, 2026083174],
+      "precondition": "synthetic loopback cases expose candidate sets, consent, endpoint, availability, skip, and transport-call fields",
+      "preconditionBoundary": "missing confinement fields or malformed candidate lists are held before relation evaluation",
+      "shrinkStrategy": "minimize to one candidate addition or one forbidden transport call",
+      "minimumDiversityBudget": 20
+    }
+  ],
+  "falseRelationFixtures": [
+    {
+      "id": "over_broad.deep_equality",
+      "class": "over_broad",
+      "expectation": "must produce at least one false alarm on valid boundary permutations"
+    },
+    {
+      "id": "under_specified.shape_only",
+      "class": "under_specified",
+      "expectation": "must leave at least one reviewed mutation alive"
+    },
+    {
+      "id": "contradictory.always_fail",
+      "class": "contradictory",
+      "expectation": "must produce false alarms on every valid source case"
+    }
+  ]
+}

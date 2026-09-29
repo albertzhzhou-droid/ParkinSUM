@@ -1,0 +1,417 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-encounter-status-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([Encounter]) and exact Encounter.status.value retrieval predicates",
+  "cases": [
+    {
+      "id": "status_planned",
+      "patientContextId": "synthetic-patient-status-planned",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": true,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-planned"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-planned",
+              "status": "planned",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-planned"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_arrived",
+      "patientContextId": "synthetic-patient-status-arrived",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": true,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-arrived"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-arrived",
+              "status": "arrived",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-arrived"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_triaged",
+      "patientContextId": "synthetic-patient-status-triaged",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": true,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-triaged"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-triaged",
+              "status": "triaged",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-triaged"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_in_progress",
+      "patientContextId": "synthetic-patient-status-in-progress",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": true,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-in-progress"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-in-progress",
+              "status": "in-progress",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-in-progress"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_onleave",
+      "patientContextId": "synthetic-patient-status-onleave",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": true,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-onleave"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-onleave",
+              "status": "onleave",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-onleave"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_finished",
+      "patientContextId": "synthetic-patient-status-finished",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": true,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-finished"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-finished",
+              "status": "finished",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-finished"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_cancelled",
+      "patientContextId": "synthetic-patient-status-cancelled",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": true,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-cancelled"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-cancelled",
+              "status": "cancelled",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-cancelled"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_entered_in_error",
+      "patientContextId": "synthetic-patient-status-entered-in-error",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": true,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-entered-in-error"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-entered-in-error",
+              "status": "entered-in-error",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-entered-in-error"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_unknown",
+      "patientContextId": "synthetic-patient-status-unknown",
+      "expectedOutcomes": {
+        "hasAnyEncounter": true,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-unknown"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-status-unknown",
+              "status": "unknown",
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-unknown"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_encounter",
+      "patientContextId": "synthetic-patient-no-encounter",
+      "expectedOutcomes": {
+        "hasAnyEncounter": false,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-no-encounter"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_encounter",
+      "patientContextId": "synthetic-patient-foreign-subject-encounter",
+      "expectedOutcomes": {
+        "hasAnyEncounter": false,
+        "hasStatusPlanned": false,
+        "hasStatusArrived": false,
+        "hasStatusTriaged": false,
+        "hasStatusInProgress": false,
+        "hasStatusOnleave": false,
+        "hasStatusFinished": false,
+        "hasStatusCancelled": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-foreign-subject-encounter"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Encounter",
+              "id": "synthetic-encounter-foreign-subject-encounter",
+              "status": "in-progress",
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-medication-statement-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([MedicationStatement]) and exact status.value retrieval predicates",
+  "cases": [
+    {
+      "id": "active_statement",
+      "patientContextId": "synthetic-patient-active",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": true,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-active"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-active",
+              "status": "active",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-active"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed_statement",
+      "patientContextId": "synthetic-patient-completed",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": true,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-completed"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-completed",
+              "status": "completed",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-completed"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "entered_in_error_statement",
+      "patientContextId": "synthetic-patient-entered-in-error",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": true,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-entered-in-error"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-entered-in-error",
+              "status": "entered-in-error",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-entered-in-error"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intended_statement",
+      "patientContextId": "synthetic-patient-intended",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": true,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intended"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-intended",
+              "status": "intended",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intended"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "stopped_statement",
+      "patientContextId": "synthetic-patient-stopped",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": true,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-stopped"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-stopped",
+              "status": "stopped",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-stopped"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "unknown_statement",
+      "patientContextId": "synthetic-patient-unknown",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": true,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-unknown"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-unknown",
+              "status": "unknown",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-unknown"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "not_taken_statement",
+      "patientContextId": "synthetic-patient-not-taken",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": true,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-not-taken"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-not-taken",
+              "status": "not-taken",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-not-taken"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "on_hold_statement",
+      "patientContextId": "synthetic-patient-on-hold",
+      "expectedOutcomes": {
+        "hasAnyStatement": true,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-on-hold"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-on-hold",
+              "status": "on-hold",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-on-hold"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_statement",
+      "patientContextId": "synthetic-patient-empty",
+      "expectedOutcomes": {
+        "hasAnyStatement": false,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-empty"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_statement",
+      "patientContextId": "synthetic-patient-isolation",
+      "expectedOutcomes": {
+        "hasAnyStatement": false,
+        "hasActiveStatement": false,
+        "hasStoppedStatement": false,
+        "hasUnknownStatement": false,
+        "hasNotTakenStatement": false,
+        "hasCompletedStatement": false,
+        "hasEnteredInErrorStatement": false,
+        "hasIntendedStatement": false,
+        "hasOnHoldStatement": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-isolation"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationStatement",
+              "id": "synthetic-medication-statement-foreign",
+              "status": "active",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
 import 'package:parkinsum_companion/domain/entities/rule_explanation.dart';
 import 'package:parkinsum_companion/features/diagnostics/rule_audit_trail_page.dart';
+import 'package:parkinsum_companion/features/settings/settings_capability_page.dart';
 
 import 'helpers/page_test_harness.dart';
 
@@ -31,6 +32,29 @@ void main() {
     );
     await tester.pump();
   }
+
+  testWidgets('capability center opens the synthetic rule audit trail', (
+    tester,
+  ) async {
+    await pumpFeaturePage(tester, const SettingsCapabilityPage());
+
+    final auditTrail = find.text('Rule audit trail (synthetic demo)');
+    await tester.scrollUntilVisible(
+      auditTrail,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    // scrollUntilVisible can stop with the row on the viewport edge.
+    await tester.ensureVisible(auditTrail);
+    await tester.pumpAndSettle();
+    await tester.tap(auditTrail);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(RuleAuditTrailPage), findsOneWidget);
+    expect(find.text('Rule audit trail'), findsOneWidget);
+    expectNoWidgetErrors(reason: 'settings could not open the audit trail');
+  });
 
   testWidgets('renders every registry rule, fired and unfired', (tester) async {
     await pumpAuditTrail(tester);
@@ -81,6 +105,30 @@ void main() {
     );
     // At least one rule that did not fire must say so.
     expect(find.textContaining('Outcome:'), findsWidgets);
+  });
+
+  testWidgets('resolves rule source IDs to bounded local source metadata', (
+    tester,
+  ) async {
+    await pumpAuditTrail(tester);
+
+    const ruleId = 'pd.ldopa.protein.window.v1';
+    const sourceTileKey = ValueKey('rule-audit-sources-$ruleId');
+    await tester.scrollUntilVisible(find.byKey(sourceTileKey), 300);
+    await tester.tap(find.byKey(sourceTileKey));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Dhivy label food effect reference'), findsOneWidget);
+    expect(find.text('Organization: FDA / DailyMed'), findsOneWidget);
+    expect(
+      find.text('Source URL: https://dailymed.nlm.nih.gov/dailymed/'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('Registry metadata only; no source is fetched.'),
+      findsWidgets,
+    );
+    expectNoWidgetErrors(reason: 'source details should be safe to inspect');
   });
 
   testWidgets('audit copy carries no banned prescriptive phrases', (

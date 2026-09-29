@@ -7,7 +7,7 @@ import 'package:parkinsum_companion/core/security/account_password_policy.dart';
 import 'package:parkinsum_companion/core/services/data_service.dart';
 import 'package:parkinsum_companion/core/services/user_logging_reminder_service.dart';
 import 'package:parkinsum_companion/core/state/app_state.dart';
-import 'package:parkinsum_companion/core/theme/liquid_glass_theme.dart';
+import 'package:parkinsum_companion/core/theme/paper_theme.dart';
 import 'package:parkinsum_companion/domain/entities/user_logging_reminder.dart';
 import 'package:parkinsum_companion/domain/entities/product_upgrade_queue.dart';
 import 'package:parkinsum_companion/features/auth/auth_page.dart';
@@ -88,32 +88,20 @@ void main() {
     );
 
     expectNoWidgetErrors(reason: 'primary navigation broke at 200% text');
-    for (final label in const [
-      'Home',
-      'Next meal',
-      'Timeline',
-      'Analytics',
-      'Medications',
-      'Catalog',
-    ]) {
+    const chapters = {'Today', 'Timeline', 'Next meal', 'Insights', 'Library'};
+    for (final label in chapters) {
       expect(find.bySemanticsLabel(label), findsOneWidget);
       expect(find.text(label), findsOneWidget);
     }
+    // Chapter tabs never truncate: at large text the row scrolls sideways.
     expect(
       find.byWidgetPredicate(
         (widget) =>
             widget is Text &&
-            const {
-              'Home',
-              'Next meal',
-              'Timeline',
-              'Analytics',
-              'Medications',
-              'Catalog',
-            }.contains(widget.data) &&
-            widget.maxLines == 2,
+            chapters.contains(widget.data) &&
+            widget.overflow != TextOverflow.ellipsis,
       ),
-      findsNWidgets(6),
+      findsNWidgets(chapters.length),
     );
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -208,7 +196,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Registration region'), findsWidgets);
 
-      final firstSelect = find.byType(GlassSelectField<String>).first;
+      final firstSelect = find.byType(PaperSelectField<String>).first;
       await _tabUntilFocused(tester, firstSelect);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump(const Duration(milliseconds: 300));
@@ -302,7 +290,7 @@ void main() {
         logicalSize: const Size(320, 700),
       );
       expectNoWidgetErrors(reason: 'settings broke at 200% text');
-      final registrationRegion = find.byType(GlassSelectField<String>).first;
+      final registrationRegion = find.byType(PaperSelectField<String>).first;
       await tester.ensureVisible(registrationRegion);
       await _tabUntilFocused(tester, registrationRegion, maxTabs: 60);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
@@ -314,11 +302,11 @@ void main() {
     },
   );
 
-  testWidgets('decorative glass background does not animate indefinitely', (
+  testWidgets('decorative paper background does not animate indefinitely', (
     tester,
   ) async {
     await tester.pumpWidget(
-      const MaterialApp(home: LiquidGlassBackground(child: SizedBox.expand())),
+      const MaterialApp(home: PaperBackground(child: SizedBox.expand())),
     );
 
     await tester.pumpAndSettle();
@@ -342,8 +330,8 @@ Future<AppState> _pumpA11yPage(
     ChangeNotifierProvider<AppState>.value(
       value: state,
       child: MaterialApp(
-        theme: LiquidGlass.themeData(),
-        home: LiquidGlassBackground(
+        theme: Paper.themeData(),
+        home: PaperBackground(
           child: DefaultAssetBundle(bundle: StubAssetBundle(), child: page),
         ),
       ),

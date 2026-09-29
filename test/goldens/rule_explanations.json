@@ -56,7 +56,7 @@
     "rule_id": "pd.rasagiline.tyramine.us.v1",
     "triggered": false,
     "triggered_conditions": [],
-    "user_facing_decision": "no modeled interaction",
+    "user_facing_decision": "rule outcome unknown; no conclusion drawn",
     "input_fields_used": [
       "drug.generic_name",
       "drug.daily_dose_mg",
@@ -67,12 +67,12 @@
     ],
     "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
     "evidence_strength": "label",
-    "limitation_text": "This rule did not match the synthetic demo inputs. Some inputs were unavailable (dose), so the result is incomplete. Review with a qualified clinician before making decisions.",
+    "limitation_text": "The available trace does not establish whether this rule matched. Do not interpret this as a negative result. Some inputs were unavailable (dose), so the result is incomplete. Review with a qualified clinician before making decisions.",
     "missing_or_uncertain_inputs": [
       "dose"
     ],
     "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
-    "confidence_note": "low — educational only (evidence=official_label; missing_inputs=1)",
+    "confidence_note": "low — educational only (evidence=official_label; missing_inputs=1; result_state=unknown)",
     "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
     "copy_source": "rule_engine:not_shown",
     "output_type": "educationalInfo"
@@ -81,7 +81,7 @@
     "rule_id": "pd.safinamide.tyramine.us.v1",
     "triggered": false,
     "triggered_conditions": [],
-    "user_facing_decision": "no modeled interaction",
+    "user_facing_decision": "rule outcome unknown; no conclusion drawn",
     "input_fields_used": [
       "drug.generic_name",
       "drug.daily_dose_mg",
@@ -92,12 +92,12 @@
     ],
     "provenance_summary": "Declared evidence level \"official_label\" (active) with 1 source reference(s). Not calibrated for real care.",
     "evidence_strength": "label",
-    "limitation_text": "This rule did not match the synthetic demo inputs. Some inputs were unavailable (dose), so the result is incomplete. Review with a qualified clinician before making decisions.",
+    "limitation_text": "The available trace does not establish whether this rule matched. Do not interpret this as a negative result. Some inputs were unavailable (dose), so the result is incomplete. Review with a qualified clinician before making decisions.",
     "missing_or_uncertain_inputs": [
       "dose"
     ],
     "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
-    "confidence_note": "low — educational only (evidence=official_label; missing_inputs=1)",
+    "confidence_note": "low — educational only (evidence=official_label; missing_inputs=1; result_state=unknown)",
     "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
     "copy_source": "rule_engine:not_shown",
     "output_type": "educationalInfo"

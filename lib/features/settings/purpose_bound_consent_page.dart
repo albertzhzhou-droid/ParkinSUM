@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/purpose_bound_consent.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 
 class PurposeBoundConsentPage extends StatelessWidget {
   const PurposeBoundConsentPage({super.key});
@@ -24,7 +24,7 @@ class PurposeBoundConsentPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(title: Text(i18n.tr('consent.title'))),
+      appBar: PaperAppBar(title: Text(i18n.tr('consent.title'))),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 32, 16, 32),
@@ -35,7 +35,7 @@ class PurposeBoundConsentPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    GlassCard(
+                    PaperCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -132,7 +132,7 @@ class PurposeBoundConsentPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    GlassCard(
+                    PaperCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [

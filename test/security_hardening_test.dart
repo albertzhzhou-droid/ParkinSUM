@@ -43,16 +43,51 @@ void main() {
   });
 
   group('fetch-client URL hygiene', () {
+    test(
+      'unknown destinations and credential queries are blocked pre-transport',
+      () async {
+        var sends = 0;
+        final client = HttpSourceFetchClient(
+          client: MockClient((_) async {
+            sends++;
+            return http.Response('unexpected', 200);
+          }),
+        );
+
+        for (final url in [
+          'https://api.nal.usda.gov.attacker.test/fdc/v1/food/12345?token=SECRET',
+          'https://api.nal.usda.gov/fdc/v1/food/12345?api_key=SECRET',
+        ]) {
+          try {
+            await client.getText(url);
+            fail('expected a StateError');
+          } on StateError catch (e) {
+            expect(e.message, contains('network_egress_denied'));
+            expect(e.message, isNot(contains('SECRET')));
+          }
+        }
+
+        expect(sends, 0);
+      },
+    );
+
     test('HTTP error messages omit the query string', () async {
       final client = HttpSourceFetchClient(
         client: MockClient((_) async => http.Response('nope', 500)),
       );
       try {
-        await client.getText('https://example.org/data?api_key=SECRET123&x=1');
+        await client.getText(
+          'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?pagesize=1&x=SECRET123',
+        );
         fail('expected a StateError');
       } on StateError catch (e) {
         expect(e.message, isNot(contains('SECRET123')));
-        expect(e.message, contains('https://example.org/data'));
+        expect(
+          e.message,
+          contains(
+            'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json',
+          ),
+        );
       }
     });
 
@@ -61,10 +96,13 @@ void main() {
         client: MockClient((_) async => http.Response('ok', 200)),
       );
       try {
-        await client.getText('http://example.org/data?token=SECRET456');
+        await client.getText(
+          'http://api.nal.usda.gov/fdc/v1/food/12345?token=SECRET456',
+        );
         fail('expected a StateError');
       } on StateError catch (e) {
         expect(e.message, isNot(contains('SECRET456')));
+        expect(e.message, contains('network_egress_denied'));
       }
     });
 
@@ -74,7 +112,9 @@ void main() {
         responseByteLimit: 16,
       );
       try {
-        await client.getText('https://example.org/big?api_key=SECRET789');
+        await client.getText(
+          'https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?pagesize=1&x=SECRET789',
+        );
         fail('expected a StateError');
       } on StateError catch (e) {
         expect(e.message, isNot(contains('SECRET789')));

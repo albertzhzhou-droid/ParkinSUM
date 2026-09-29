@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/db/app_database_native.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/recoverable_user_event.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_replay_capsule.dart';
+import 'package:parkinsum_companion/domain/usecases/algorithm_observatory_service.dart';
 
 String get _sqlite3Executable =>
     File('/usr/bin/sqlite3').existsSync() ? '/usr/bin/sqlite3' : 'sqlite3';
@@ -111,6 +113,54 @@ void main() {
       expect(historyRows.single['history_id'], revision.historyId);
       expect(historyRows.single['operation_id'], revision.operationId);
     });
+
+    test(
+      'schema v11 stores the exact replay capsule by content digest',
+      () async {
+        final capsule = AlgorithmObservatoryService()
+            .build(ObservatoryScenario.mixedReference)
+            .replayCapsule;
+        final markV10 = await _runSqlite(
+          databasePath,
+          'PRAGMA user_version = 10',
+        );
+        expect(markV10.exitCode, 0, reason: markV10.stderr.toString());
+        final create = await _runSqlite(
+          databasePath,
+          'BEGIN EXCLUSIVE; $nativeMechanisticReplayCapsulesCreateTableSql; '
+          'PRAGMA user_version = $nativeAppDatabaseSchemaVersion; COMMIT',
+        );
+        expect(create.exitCode, 0, reason: create.stderr.toString());
+
+        final insert = await _runSqlite(
+          databasePath,
+          _insert('mechanistic_replay_capsules', <String, Object?>{
+            'capsule_sha256': capsule.capsuleSha256,
+            'canonical_json': capsule.canonicalJson,
+            'generated_at_utc': capsule.generatedAtUtc,
+          }),
+        );
+        expect(insert.exitCode, 0, reason: insert.stderr.toString());
+        final rows = await _query(
+          databasePath,
+          'SELECT capsule_sha256, canonical_json, generated_at_utc '
+          'FROM mechanistic_replay_capsules',
+        );
+        final restored = MechanisticReplayCapsule.fromJson(
+          Map<String, Object?>.from(
+            jsonDecode(rows.single['canonical_json'] as String) as Map,
+          ),
+        );
+
+        expect(nativeAppDatabaseSchemaVersion, 11);
+        final version = await _runSqlite(databasePath, 'PRAGMA user_version');
+        expect(version.stdout.toString().trim(), '11');
+        expect(rows.single['capsule_sha256'], capsule.capsuleSha256);
+        expect(rows.single['generated_at_utc'], capsule.generatedAtUtc);
+        expect(restored.canonicalJson, capsule.canonicalJson);
+        expect(restored.capsuleSha256, capsule.capsuleSha256);
+      },
+    );
 
     test('history constraint failure rolls the business mutation back', () async {
       final original = Intake(

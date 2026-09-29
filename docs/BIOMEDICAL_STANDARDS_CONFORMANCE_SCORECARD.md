@@ -125,6 +125,12 @@ boundary.
   `conformance_status = inspired_not_conformant` and
   `phi_policy = subject_omitted_no_phi`, reuses the shared non-prescriptive
   safety copy, and carries `not_clinically_calibrated = true`.
+- **AAE-001 truth boundary:** the amino-acid summary is complete/actual only
+  when recognized unit and basis metadata, all six competing LNAAs, finite
+  non-negative values, and the protein-bound check are valid for every
+  participating positive-protein component. Unknown or invalid protein,
+  incomplete coverage, or a held amino-acid field yields a partial or absent
+  summary; a valid measured zero remains zero.
 - **Safety (critical, enforced):** the view **deliberately omits** `subject`,
   patient/encounter/practitioner/care-team/diagnosis/treatment, and any
   patient-record semantics — it never constructs a Patient/Reference/Encounter.
@@ -183,18 +189,27 @@ boundary.
 
 ### S5 — USDA FDC FoodNutrient provenance — 🟢 Inspired-Aligned (B1 shipped)
 
-- **Standard:** the FDC OpenAPI `FoodNutrient` (non-abridged) family carries, per
+- **Standard:** the [FDC API specification](https://fdc.nal.usda.gov/api-spec/fdc_api.html)
+  exposes the `FoodNutrient` transport family; non-abridged records carry, per
   nutrient value, a derivation (`foodNutrientDerivation` with `code`/`description`
   and nested `foodNutrientSource`), `dataPoints` (sample count), and
   `min`/`max`/`median`; foods carry a `dataType` (Foundation / SR Legacy / FNDDS
-  / Branded). *(Exact field names to be re-verified against the live FDC OpenAPI
-  spec as step 0 of the spike — see `docs/design/SPIKE_FDC_FOUNDATION_PROVENANCE.md`.)*
-- **Current state (evidence):** `AminoAcidExtractor`
-  (`lib/data/datasources/remote/amino_acid_extractor.dart`) extracts 9 LNAA-set
-  nutrients by **verified number** (501,502,503,504,506,508,509,510,512) with a
-  name fallback, mg→g normalization, and a `partial` flag for unit-ambiguous
-  values. But `basis` is **hard-coded `per_100g`**, and it captures **no**
-  derivation code, sample count, analytical method, or `dataType`.
+  / Branded). USDA's official [Foundation Foods documentation](https://fdc.nal.usda.gov/Foundation_Foods_Documentation/)
+  says an absent nutrient value may mean it was not analyzed rather than zero
+  and documents Foundation values on a 100 g basis. The official
+  [Global Branded Foods documentation](https://fdc.nal.usda.gov/GBFPD_Documentation/)
+  describes standardization to 100 g or 100 mL.
+- **Current extraction contract (AAE-001):** `AminoAcidExtractor`
+  (`lib/data/datasources/remote/amino_acid_extractor.dart`) extracts the
+  LNAA-set nutrients by verified nutrient number (with conservative name
+  fallback and number precedence). Only recognized `g` and `mg` mass units are
+  normalized to canonical grams (`mg`→`g`) under the limited
+  [BIPM SI boundary](https://www.bipm.org/en/publications/si-brochure/). A
+  present, finite, non-negative true zero is preserved. Missing/unknown units,
+  invalid/non-numeric/non-finite/negative values, and duplicate semantic rows
+  are held as null and mark the profile partial—never guessed as grams and never
+  coerced to zero. A held-only competing-LNAA observation remains an auditable
+  partial profile rather than being collapsed into source absence.
 - **Shipped (B1):** `AminoAcidExtractor` now captures per-nutrient
   `foodNutrientDerivation` / `dataPoints` / `foodNutrientSource` and food
   `dataType`, and `basis` follows the payload when present.
@@ -222,10 +237,32 @@ boundary.
   source-quality perturbation report surfaces `nutrient_confidence_tier` /
   `nutrient_provenance_quality` / `provenance_quality_score` / `confidence_band`
   and a case showing authority and provenance tier move **independently**.
+- **Production and verification path:** `FdcP0Importer` carries valid extracted
+  profiles into the import bundle and catalog projection places them on
+  `FoodItem`s; the source-adapter registry separately declares the FDC source
+  contract and fail-closed limitation. The downstream projection preserves
+  explicit nutrient-missing markers over stale numbers and retains a present
+  true zero. For a source amino-acid value `V` in grams per 100 g and a valid
+  serving mass `W` in grams, it applies `N=(V×W)/100` only when the basis
+  is exactly `per_100g`. A `per_100mL` or other incompatible/unknown basis,
+  unknown unit, invalid source value, or invalid serving mass is held as null;
+  no density or 100 mL→100 g equivalence is inferred. The FHIR-inspired
+  NutritionIntake mapper emits a complete actual-amino-acid summary only when
+  the AAE-001 validity conditions in S2 hold. The invariant gate now reports
+  23/23 passing digest-bound specifications: 15 fixed checks, five dose probes,
+  one legacy-scorer probe, one production FDC extraction probe, and one
+  production catalog-candidate projection probe. Its production-facing
+  mathematical/unit coverage is 22/63 registered algorithms, with 41
+  explicitly uncovered.
 - **Safety:** provenance/**source-quality** signals only — not clinical/biological
   accuracy; never fabricate a sample count or method; missing → never higher
   confidence; tier never overrides source-authority/jurisdiction policy or
   conflict-overlap dominance.
+- **Residual:** the implementation still lacks a repository-wide typed quantity
+  algebra, proof that every importer supplies correct basis/missingness
+  metadata, and independent external reproduction. Passing these checks does
+  not establish biological validity, clinical validity, calibration, or
+  standards conformance.
 
 ### S6 — FAO/INFOODS component identifiers (tagnames) — ⬜ Absent
 

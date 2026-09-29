@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 2,
+  "scope": "synthetic-fhir-r4-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([Condition])",
+  "cases": [
+    {
+      "id": "condition_present",
+      "patientContextId": "synthetic-patient-present",
+      "expectedCql": "true",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": [],
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-present"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-present",
+              "subject": {
+                "reference": "Patient/synthetic-patient-present"
+              },
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-test",
+                    "code": "condition-placeholder",
+                    "display": "Synthetic test-only placeholder"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "condition_absent",
+      "patientContextId": "synthetic-patient-empty",
+      "expectedCql": "false",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": ["criterion_not_met"],
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-empty"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "condition_foreign_patient",
+      "patientContextId": "synthetic-patient-empty",
+      "expectedCql": "false",
+      "expectedResponseErrors": [],
+      "expectedResponseWarnings": ["criterion_not_met"],
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-empty"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "Condition",
+              "id": "synthetic-condition-foreign",
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              },
+              "code": {
+                "coding": [
+                  {
+                    "system": "urn:parkinsum:synthetic-test",
+                    "code": "condition-placeholder",
+                    "display": "Synthetic test-only placeholder"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -19,6 +19,12 @@ This repository is a public prototype showcase. Use synthetic or sample data
 only. If you accidentally disclose a secret or private record, revoke or rotate
 the exposed credential first, then contact the maintainer.
 
+Firebase client API keys are public project identifiers, not backend
+authorization credentials. Even so, this repository keeps their concrete
+values out of tracked source and injects them at build time. Keep each key
+restricted to the required Firebase APIs and intended app surface; enforce
+data access with Firebase Security Rules and App Check.
+
 ## Supported Security Review Scope
 
 Security reports may cover:

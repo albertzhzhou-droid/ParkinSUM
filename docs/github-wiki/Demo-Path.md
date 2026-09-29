@@ -1,87 +1,65 @@
 # Demo Path
 
-Use this walkthrough when showing ParkinSUM Companion to a reviewer, classmate,
-mentor, or open-source contributor. It demonstrates visible software behavior
-with synthetic fixtures; it is not a clinical workflow or medical-use demo.
+Use a fresh **local-mode, synthetic** profile when showing ParkinSUM to a
+reviewer. Keep the educational boundary visible. The current Paper navigation
+is Today, Timeline, Next meal, Insights, and Library.
 
-## Reproducible Demo Context
+## A short walkthrough
 
-- Source: `main@23619f1`
-- Reference capture date: 2026-08-18
-- Backend: default local mode
-- State: fresh synthetic onboarding with no reused account records
-- Observatory inputs: fixed, non-personal scenario fixtures
-- Reference viewports: 1440 x 1000 desktop browser and 390 x 844 responsive
-  browser
+1. **Open Today.** Show the single composer for a meal, medication intake, or
+   observation. A fresh empty state is valid; do not invent prior records.
+2. **Inspect Library.** Distinguish selected medications from the source catalog.
+   Show provenance and jurisdiction without treating catalog identity as proof
+   of a complete product/formulation context.
+3. **Add a synthetic entry.** Use explicit units and supported context. In
+   Timeline, inspect the record and its source rather than inferring missing
+   values or promoting self-reported data to verified clinical evidence.
+4. **Open Next meal.** Supply a user-defined time window. Inspect candidate
+   explanations and visible missingness. Abstention is an expected result when
+   the context does not support interpretation.
+5. **Open Algorithm Observatory** from the evidence sidebar group or command
+   palette. Compare fixed, non-personal fixtures; inspect production-derived
+   traces and the explanation tree. Static contracts remain separately labeled.
+6. **Open the synthetic rule test workbench.** Show authored expectations and
+   expected/actual assertions in its disposable workspace. A passing case does
+   not authorize installing a rule or establish clinical correctness.
+7. **Show verification evidence.** Use the capability matrix, command guide, and
+   dated iteration timeline to explain what was tested and what remains open.
 
-## Walkthrough
+## Decision boundaries
 
-1. Start the Flutter app in default local mode.
-2. Complete a fresh onboarding flow using synthetic values only.
-3. Show the runtime dashboard and explain that its visible cards establish only
-   the captured UI state.
-4. Open Settings, then the capability center.
-5. Enter the Algorithm Observatory.
-6. Compare the mixed-reference, high-fat-plus-protein, and missing-data fixed
-   fixtures. Explain that their values are educational model outputs, not
-   patient predictions.
-7. Show the scenario comparison and educational gastric-residence trace. Do not
-   describe the curves as measured gastric emptying, absorbed dose, plasma
-   concentration, predicted symptoms, or medical advice.
-8. Show conflict composition and point out that severity and confidence are
-   reported separately.
-9. Expand the explanation tree to show inputs, emitted trace values, evidence
-   references, and the boundary where interpretation must stop.
-10. Open the result-affecting algorithm coverage surface and describe it as an
-    auditable UI contract, not proof that the algorithms are clinically valid.
-11. Reflow the fixed scenario table at 390 x 844 and explicitly identify it as
-    a responsive browser viewport check.
-12. Finish with the public verification commands and the project's educational,
-    non-clinical boundary.
+Deterministic rules own classifications, scores, safety gates, and evidence.
+The mechanistic model remains `trace_only`: it does not select a meal time or
+reorder candidate recommendations. Optional consent-gated loopback AI may only
+rerank rule-screened, non-BLOCK candidates or polish existing copy.
 
-## Current Reference Media
+Observatory curves are educational sensitivity views. They are not clinical
+measurements, plasma concentrations, symptom predictions, or individualized
+medication/diet guidance. A registry descriptor count is a snapshot of that
+revision, not a permanent count or proof of complete executable coverage.
 
-| Demo step | Repository asset |
-| --- | --- |
-| Runtime dashboard | `docs/assets/screenshots/runtime-dashboard-desktop.png` |
-| Capability center | `docs/assets/screenshots/capability-center-desktop.png` |
-| Observatory overview | `docs/assets/screenshots/algorithm-observatory-overview-desktop.png` |
-| Conflict composition and explanation tree | `docs/assets/screenshots/algorithm-observatory-explanation-desktop.png` |
-| Replay and algorithm coverage | `docs/assets/screenshots/algorithm-observatory-coverage-desktop.png` |
-| Responsive scenario comparison | `docs/assets/screenshots/algorithm-observatory-responsive.png` |
+## Reference media
 
-There are no planned or nonexistent media paths in this walkthrough. The asset
-index and retirement record are maintained at:
+Use the [screenshot index](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/assets/screenshots/README.md)
+for current Paper captures, recorded capture context, and historical media.
+August 2026 screenshots document their older source revision. Retired unsafe
+captures must not be restored or reused.
 
-https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/assets/screenshots/README.md
+Browser images establish visible rendering at a recorded state. They do not
+prove complete workflow execution, persistence, native integrations, algorithm
+correctness, clinical validity, physical-device behavior, or accessibility
+conformance.
 
-## Evidence Boundaries
+Follow the [media checklist](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/media-capture-checklist.md):
+review each full image at readable zoom and supplement with OCR-style review
+when available. Repository preflight does not inspect pixels. Exclude real
+account identifiers, health records, credentials, private endpoints, logs,
+notifications, and machine-specific paths.
 
-The desktop and responsive images show browser-rendered UI at one source
-revision. They do not prove workflow completion, persistence, native-platform
-behavior, algorithm correctness, clinical validity, or patient outcomes.
-
-The 390 x 844 image is not physical-device evidence and does not establish
-native Android/iOS behavior, performance, touch ergonomics, screen-reader or
-switch-control behavior, or accessibility conformance. Use separate target
-platform and assistive-technology evidence for those claims.
-
-## Media Safety
-
-Every public image requires a human, full-image pixel review and an OCR-style
-text review. `npm run public:preflight` does not inspect pixels or perform OCR,
-so a passing preflight cannot clear screenshot privacy. Reject and recapture any
-image that relies on masking, blurring, or cropping to conceal an identifier.
-
-Eight older masked images were removed from the current tree and must not be
-restored from Git history for display. Four safe older files remain legacy and
-unembedded. See the
-[media capture checklist](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/media-capture-checklist.md)
-for the exact retired and legacy lists and the publication procedure.
-
-## Verification Commands
+## Verification commands
 
 ```sh
+npm ci
 flutter analyze
 flutter test
 npm run public:preflight
@@ -90,5 +68,6 @@ npm run mechanistic:replay
 npm run source:quality
 ```
 
-See:
-https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md
+The [verification guide](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md)
+records prerequisites and scope. Actual results and unresolved limits belong
+in the [iteration timeline](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/APP_EVOLUTION_TIMELINE.md).

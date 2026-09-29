@@ -1,0 +1,36 @@
+{
+  "cards": [
+    {
+      "summary": "Synthetic educational rule trace; inputs may be incomplete.",
+      "indicator": "info",
+      "detail": "Rule trace: not_matched\n\nResult interpretation: unknown\n\nThe available trace does not establish whether this rule matched. Do not interpret this as a negative result.\n\nEducational prototype only; not medical advice.",
+      "source": {
+        "label": "ParkinSUM synthetic interoperability fixture"
+      },
+      "extension": {
+        "org.parkinsum.cdss-rule-trace": {
+          "schemaVersion": "1.0.0",
+          "ruleId": "synthetic_rule",
+          "ruleVersion": "1.0.0",
+          "rulePackVersion": "synthetic_rules_v1",
+          "inputDigest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "traceDecision": "not_matched",
+          "resultState": "unknown",
+          "inputCompleteness": "incomplete",
+          "inputFieldsUsed": [
+            "meal.total_protein_g"
+          ],
+          "sourceRefs": [
+            "synthetic_source_ref"
+          ],
+          "missingOrUncertainInputs": [
+            "meal.total_protein_g"
+          ],
+          "evidenceStrength": "insufficient",
+          "outputType": "educationalInfo",
+          "displayCopySource": "synthetic_fixture"
+        }
+      }
+    }
+  ]
+}

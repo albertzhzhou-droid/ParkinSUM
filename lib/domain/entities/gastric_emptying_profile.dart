@@ -19,7 +19,97 @@ enum MechanisticProviderAvailability {
 
 /// Engineering tolerance used only to compare deterministic derived values
 /// that were computed from the same finite component inputs.
-const double gastricDerivedCoherenceTolerance = 1e-9;
+const double gastricDerivedCoherenceTolerance =
+    GastricEmptyingOutputContract.derivedCoherenceTolerance;
+
+/// Versioned structural contract for derived gastric curves and their
+/// persisted/public projection.
+///
+/// These are engineering semantics shared by the generator and the output
+/// validator. Keeping the constants here prevents a configuration witness from
+/// describing a window or curve policy different from the one actually
+/// executed.
+abstract final class GastricEmptyingOutputContract {
+  static const String schema = 'parkinsum.gastric-emptying-output-contract/1';
+  static const double derivedCoherenceTolerance = 1e-9;
+  static const double fractionSumTolerance = 1e-9;
+  static const double peakWindowHalfTimeMultiplier = 1.5;
+  static const double mostlyEmptiedHalfTimeMultiplier = 4.0;
+  static const double timeScaleClampMinimum = 0.05;
+  static const double timeScaleClampMaximum = 10.0;
+  static const int arrivalRateCentralDifferenceMinutes = 1;
+
+  static const Map<String, Object> integrityConfiguration = <String, Object>{
+    r'$schema': schema,
+    'availability_states': <String>[
+      'available',
+      'notApplicable',
+      'insufficient',
+      'blockedIntegrity',
+    ],
+    'available_requires_structural_integrity': true,
+    'identity_constraints': <String, Object>{
+      'meal_id': 'nonempty',
+      'component_id': 'nonempty_and_unique',
+    },
+    'component_numeric_constraints': <String, Object>{
+      'lag_minutes': 'finite_and_greater_than_or_equal_to_zero',
+      'half_emptying_minutes': 'finite_and_strictly_greater_than_zero',
+      'fraction_of_meal': 'finite_and_in_[0,1]',
+    },
+    'fraction_bounds': <String, Object>{
+      'minimum_inclusive': 0.0,
+      'maximum_inclusive': 1.0,
+      'sum_target': 1.0,
+      'sum_tolerance': fractionSumTolerance,
+    },
+    'residence_curve': <String, Object>{
+      'formula': 'exp(-ln(2) * (t - lag) / half_time)',
+      'before_or_at_lag_remaining': 1.0,
+      'emptied_fraction_formula': '1 - remaining_fraction',
+      'output_clamp': <double>[0.0, 1.0],
+    },
+    'window_derivation': <String, Object>{
+      'rounding': 'nearest_integer_minutes',
+      'peak_half_time_multiplier': peakWindowHalfTimeMultiplier,
+      'mostly_emptied_half_time_multiplier': mostlyEmptiedHalfTimeMultiplier,
+      'shared_window_origin': true,
+      'peak_duration_strictly_positive': true,
+      'mostly_emptied_contains_peak_window': true,
+    },
+    'aggregate_coherence': <String, Object>{
+      'lag_formula': 'sum(component_fraction * component_lag)',
+      'lag_finite_and_greater_than_or_equal_to_zero': true,
+      'tolerance': derivedCoherenceTolerance,
+    },
+    'sensitivity_envelope': <String, Object>{
+      'symmetric_fraction': true,
+      'fraction_domain': '[0,1)',
+      'time_scale_clamp': <double>[
+        timeScaleClampMinimum,
+        timeScaleClampMaximum,
+      ],
+    },
+    'arrival_rate': <String, Object>{
+      'method': 'central_difference_of_emptied_fraction',
+      'step_minutes': arrivalRateCentralDifferenceMinutes,
+      'left_boundary_clamp_minutes': 0,
+      'output_clamp': <double>[0.0, 1.0],
+    },
+    'empty_component_query_policy': <String, Object>{
+      'remaining_fraction': 1.0,
+      'sensitivity_remaining': 1.0,
+    },
+    'wire_policy': <String, Object>{
+      'unavailable_numeric_outputs': 'null',
+      'unavailable_component_profiles': 'empty',
+      'integrity_failures_added_to_effective_reasons_when_declared_available':
+          true,
+      'available_with_integrity_failure_becomes': 'blockedIntegrity',
+      'has_modeled_output_only_when_available': true,
+    },
+  };
+}
 
 typedef GastricComponentKinetics = ({
   double fractionOfMeal,
@@ -46,8 +136,12 @@ GastricDerivedProfileShape deriveGastricProfileShape(
     aggregateLag += component.fractionOfMeal * component.lagMinutes;
     aggregateHalf += component.fractionOfMeal * component.halfEmptyingMinutes;
   }
-  final peakDuration = aggregateHalf * 1.5;
-  final mostlyEmptiedDuration = aggregateHalf * 4;
+  final peakDuration =
+      aggregateHalf *
+      GastricEmptyingOutputContract.peakWindowHalfTimeMultiplier;
+  final mostlyEmptiedDuration =
+      aggregateHalf *
+      GastricEmptyingOutputContract.mostlyEmptiedHalfTimeMultiplier;
   return (
     aggregateLagMinutes: aggregateLag,
     aggregateHalfEmptyingMinutes: aggregateHalf,
@@ -94,7 +188,10 @@ class EmptyingComponentProfile {
     int minutesSinceMealStart,
     double timeScale,
   ) {
-    final safeScale = timeScale.clamp(0.05, 10.0);
+    final safeScale = timeScale.clamp(
+      GastricEmptyingOutputContract.timeScaleClampMinimum,
+      GastricEmptyingOutputContract.timeScaleClampMaximum,
+    );
     final scaledLag = lagMinutes * safeScale;
     final scaledHalf = halfEmptyingMinutes * safeScale;
     if (minutesSinceMealStart <= scaledLag) return 1.0;
@@ -195,13 +292,15 @@ class GastricEmptyingProfile {
         reasons.add('gastric_emptying.profile_half_time_invalid');
       }
       if (!component.fractionOfMeal.isFinite ||
-          component.fractionOfMeal <= 0 ||
+          component.fractionOfMeal < 0 ||
           component.fractionOfMeal > 1) {
         reasons.add('gastric_emptying.profile_fraction_invalid');
       }
       fractionSum += component.fractionOfMeal;
     }
-    if (!fractionSum.isFinite || (fractionSum - 1).abs() > 1e-9) {
+    if (!fractionSum.isFinite ||
+        (fractionSum - 1).abs() >
+            GastricEmptyingOutputContract.fractionSumTolerance) {
       reasons.add('gastric_emptying.profile_fraction_sum_invalid');
     }
     final derived = deriveGastricProfileShape(
@@ -301,7 +400,8 @@ class GastricEmptyingProfile {
   /// Approximate instantaneous intestinal arrival *rate* at minute t, via
   /// central-difference of the emptied fraction. Deterministic.
   double intestinalArrivalRateAt(int minutesSinceMealStart) {
-    const dt = 1;
+    const dt =
+        GastricEmptyingOutputContract.arrivalRateCentralDifferenceMinutes;
     final leftT = minutesSinceMealStart - dt < 0
         ? 0
         : minutesSinceMealStart - dt;

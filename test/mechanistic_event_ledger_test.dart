@@ -35,6 +35,15 @@ void main() {
         ),
         0.25,
       );
+      expect(
+        MechanisticUnitConverter.convert(
+          value: 1.5,
+          fromUnit: 'l',
+          toUnit: 'ml',
+          dimension: MechanisticLedgerDimension.volume,
+        ),
+        1500,
+      );
     });
 
     test('rejects nonfinite, ambiguous, and cross-dimension conversions', () {
@@ -255,6 +264,7 @@ void main() {
         ledgerId: 'equivalent_replay',
         createdAtUtc: DateTime.utc(2026),
         configurationDigest: _digest,
+        inputBindingSha256: _digest,
         boundary: 'test boundary',
         events: [
           MechanisticLedgerEvent(
@@ -313,6 +323,7 @@ void main() {
           ledgerId: 'duplicate_id',
           createdAtUtc: DateTime.utc(2026),
           configurationDigest: _digest,
+          inputBindingSha256: _digest,
           boundary: 'test boundary',
           events: [event, event],
         ),
@@ -323,6 +334,7 @@ void main() {
           ledgerId: 'duplicate_order',
           createdAtUtc: DateTime.utc(2026),
           configurationDigest: _digest,
+          inputBindingSha256: _digest,
           boundary: 'test boundary',
           events: [
             event,

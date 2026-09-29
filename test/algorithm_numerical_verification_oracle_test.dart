@@ -9,32 +9,39 @@ import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
 void main() {
   const oracle = AlgorithmNumericalVerificationOracle();
 
-  test('independent reference vectors verify all six production providers', () {
-    final report = oracle.run();
+  test(
+    'independent vectors verify six numerical providers without relabelling replay',
+    () {
+      final report = oracle.run();
 
-    expect(report.blockReasonCode, isNull);
-    expect(report.failedCaseCount, 0);
-    expect(report.passedCaseCount, 19);
-    expect(
-      report.coveredAlgorithmIds,
-      AlgorithmNumericalVerificationOracle.requiredCoveredAlgorithmIds,
-    );
-    expect(
-      report.coveredAlgorithmIds,
-      AlgorithmObservatoryService.traceProviderContract.algorithmIds.toSet(),
-    );
-    for (final id in report.coveredAlgorithmIds) {
+      expect(report.blockReasonCode, isNull);
+      expect(report.failedCaseCount, 0);
+      expect(report.passedCaseCount, 19);
       expect(
-        report.statusFor(id),
-        AlgorithmNumericalOracleStatus.verified,
-        reason: id,
+        report.coveredAlgorithmIds,
+        AlgorithmNumericalVerificationOracle.requiredCoveredAlgorithmIds,
       );
-    }
-    expect(
-      report.statusFor('runtime_rule_engine'),
-      AlgorithmNumericalOracleStatus.notCovered,
-    );
-  });
+      expect(
+        AlgorithmObservatoryService.traceProviderContract.algorithmIds.toSet(),
+        containsAll(report.coveredAlgorithmIds),
+      );
+      expect(
+        report.statusFor('mechanistic_lossless_replay_capsule'),
+        AlgorithmNumericalOracleStatus.notCovered,
+      );
+      for (final id in report.coveredAlgorithmIds) {
+        expect(
+          report.statusFor(id),
+          AlgorithmNumericalOracleStatus.verified,
+          reason: id,
+        );
+      }
+      expect(
+        report.statusFor('runtime_rule_engine'),
+        AlgorithmNumericalOracleStatus.notCovered,
+      );
+    },
+  );
 
   test('truth manifest is stable, finite, unique, and method-bounded', () {
     expect(
@@ -151,7 +158,11 @@ void main() {
       expect(json['oracle_id'], algorithmNumericalOracleId);
       expect(json['boundary'], contains('not biological validation'));
       expect(
-        AlgorithmRegistry.all.where((entry) => entry.hasLiveTrace),
+        AlgorithmRegistry.all.where(
+          (entry) => AlgorithmNumericalVerificationOracle
+              .requiredCoveredAlgorithmIds
+              .contains(entry.id),
+        ),
         everyElement(
           isA<AlgorithmDescriptor>().having(
             (entry) => statuses[entry.id],
@@ -160,6 +171,7 @@ void main() {
           ),
         ),
       );
+      expect(statuses['mechanistic_lossless_replay_capsule'], 'notCovered');
     },
   );
 }

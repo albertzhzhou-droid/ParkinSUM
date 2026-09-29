@@ -17,6 +17,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { inspectPlatformNetworkConfiguration } from './runtime_network_platform_policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const contractPath = path.join(root, 'config/store_privacy_contract.json');
@@ -39,6 +40,20 @@ function equalStringSets(left, right) {
   const a = sorted(new Set(left));
   const b = sorted(new Set(right));
   return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function stableValue(value) {
+  if (Array.isArray(value)) return value.map(stableValue);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, stableValue(value[key])]),
+    );
+  }
+  return value;
+}
+
+function structurallyEqual(left, right) {
+  return JSON.stringify(stableValue(left)) === JSON.stringify(stableValue(right));
 }
 
 function directYamlKeys(text, sectionName, nextSectionName) {
@@ -172,7 +187,11 @@ export function extractLiteralHostsFromDart(directory) {
   const hosts = new Set();
   for (const file of walkFiles(directory, '.dart')) {
     const text = readFileSync(file, 'utf8');
-    for (const match of text.matchAll(/https?:\/\/[^'"\s)]+/g)) {
+    // Anchored raw regex strings describe accepted input syntax, not network
+    // destinations. Keep ordinary raw URL strings in the scan, including
+    // malformed ones, so only explicit ^...$ pattern literals are excluded.
+    const literalText = text.replace(/\br(['"])\^(?:(?!\1)[^\r\n])*\$\1/g, '');
+    for (const match of literalText.matchAll(/https?:\/\/[^'"\s)]+/g)) {
       try {
         const cleaned = match[0].replace(/[},;]+$/, '');
         hosts.add(new URL(cleaned).hostname);
@@ -459,6 +478,70 @@ export function validateContractSnapshot(contract, observed, options = {}) {
       'lib/',
     );
   }
+  const egressManifestDeclaration =
+    contract.networkDestinations?.runtimeEgressPolicyManifest;
+  if (egressManifestDeclaration) {
+    const manifest = observed.runtimeEgressPolicyManifest;
+    if (!manifest) {
+      addFinding(
+        findings,
+        'runtime_egress_policy_manifest_missing',
+        'The declared application egress policy manifest is missing or invalid.',
+        egressManifestDeclaration.path,
+      );
+    } else {
+      const ruleList = Array.isArray(manifest.rules) ? manifest.rules : [];
+      const ids = ruleList.map((rule) => rule?.id);
+      const expiresAt = Date.parse(manifest.expiresAt ?? '');
+      if (
+        manifest.schemaVersion !== 1 ||
+        manifest.policyVersion !== egressManifestDeclaration.policyVersion ||
+        manifest.status !== egressManifestDeclaration.status ||
+        !Array.isArray(manifest.rules) ||
+        observed.runtimeEgressPolicyManifestSha256 !==
+          egressManifestDeclaration.sha256 ||
+        ids.some((id) => typeof id !== 'string' || id.length === 0) ||
+        new Set(ids).size !== ids.length
+      ) {
+        addFinding(
+          findings,
+          'runtime_egress_policy_manifest_drift',
+          'The egress policy manifest version, status, or rule identities differ from the reviewed reference.',
+          egressManifestDeclaration.path,
+        );
+      }
+      if (!Number.isFinite(expiresAt) || expiresAt <= (options.now ?? Date.now())) {
+        addFinding(
+          findings,
+          'runtime_egress_policy_manifest_expired',
+          'The application egress policy manifest is expired or has an invalid expiry.',
+          egressManifestDeclaration.path,
+        );
+      }
+    }
+  }
+  if (egressManifestDeclaration) {
+    const platformConfigurationSnapshot =
+      observed.runtimeEgressPolicyManifest?.platformConfigurationSnapshot;
+    if (!platformConfigurationSnapshot) {
+      addFinding(
+        findings,
+        'runtime_platform_configuration_snapshot_missing',
+        'The egress policy manifest lacks a source-level platform network configuration snapshot.',
+        egressManifestDeclaration.path,
+      );
+    } else if (!structurallyEqual(
+      observed.platformNetworkConfiguration,
+      platformConfigurationSnapshot,
+    )) {
+      addFinding(
+        findings,
+        'runtime_platform_configuration_drift',
+        'Android, Apple, or Web network source configuration differs from the reviewed egress manifest snapshot.',
+        egressManifestDeclaration.path,
+      );
+    }
+  }
   for (const flow of contract.dataFlows ?? []) {
     requireSafeIdentifier(flow.id, 'data flow id', findings);
     requireSafeIdentifier(flow.location, `data flow location ${flow.id}`, findings);
@@ -506,6 +589,29 @@ export function validateContractSnapshot(contract, observed, options = {}) {
 
 function collectObserved({ androidManifestPath = null, appleBundlePath = null } = {}) {
   const contract = JSON.parse(readFileSync(contractPath, 'utf8'));
+  const egressManifestDeclaration =
+    contract.networkDestinations?.runtimeEgressPolicyManifest;
+  let runtimeEgressPolicyManifest = null;
+  let runtimeEgressPolicyManifestSha256 = null;
+  if (typeof egressManifestDeclaration?.path === 'string') {
+    const manifestPath = path.resolve(root, egressManifestDeclaration.path);
+    const relativePath = path.relative(root, manifestPath);
+    if (
+      relativePath &&
+      !relativePath.startsWith(`..${path.sep}`) &&
+      relativePath !== '..' &&
+      existsSync(manifestPath)
+    ) {
+      try {
+        runtimeEgressPolicyManifest = JSON.parse(
+          readFileSync(manifestPath, 'utf8'),
+        );
+        runtimeEgressPolicyManifestSha256 = sha256File(manifestPath);
+      } catch {
+        runtimeEgressPolicyManifest = null;
+      }
+    }
+  }
   const lockIdentities = {};
   for (const file of Object.keys(contract.lockIdentities ?? {})) {
     const absolute = path.join(root, file);
@@ -586,6 +692,9 @@ function collectObserved({ androidManifestPath = null, appleBundlePath = null } 
       readFileSync(path.join(root, 'android/app/src/main/AndroidManifest.xml'), 'utf8'),
     ),
     literalHosts: extractLiteralHostsFromDart(path.join(root, 'lib')),
+    platformNetworkConfiguration: inspectPlatformNetworkConfiguration(root),
+    runtimeEgressPolicyManifest,
+    runtimeEgressPolicyManifestSha256,
   };
   const androidSourceManifest = path.join(root, 'android/app/src/main/AndroidManifest.xml');
   const extractionRulesPath = path.join(root, contract.android?.dataExtractionRules?.path ?? '');
@@ -682,6 +791,9 @@ function runCli() {
         observed.androidDataExtractionRulesSha256,
       android_source_permissions: observed.androidSourcePermissions,
       literal_hosts: observed.literalHosts,
+      platform_network_configuration: observed.platformNetworkConfiguration,
+      runtime_egress_policy_manifest_sha256:
+        observed.runtimeEgressPolicyManifestSha256,
     }),
   );
   const report = {
@@ -694,6 +806,21 @@ function runCli() {
     source_identity_sha256: sourceIdentity,
     pubspec_package_count: Object.keys(observed.pubspecPackages ?? {}).length,
     literal_host_count: observed.literalHosts?.length ?? 0,
+    platform_network_evidence_scope:
+      observed.platformNetworkConfiguration?.evidenceScope ?? null,
+    android_merged_manifest_capture:
+      observed.platformNetworkConfiguration?.android?.mergedManifestCapture ?? null,
+    apple_bundle_network_capture:
+      observed.platformNetworkConfiguration?.apple?.bundleNetworkCapture ?? null,
+    web_hosted_response_header_capture:
+      observed.platformNetworkConfiguration?.web?.hostedResponseHeaderCapture ?? null,
+    platform_network_configuration: observed.platformNetworkConfiguration,
+    runtime_egress_policy_version:
+      observed.runtimeEgressPolicyManifest?.policyVersion ?? null,
+    runtime_egress_policy_status:
+      observed.runtimeEgressPolicyManifest?.status ?? null,
+    runtime_egress_policy_expires_at:
+      observed.runtimeEgressPolicyManifest?.expiresAt ?? null,
     android_merged_manifest_sha256: observed.androidMergedManifestSha256 ?? null,
     apple_bundle_manifest_sha256: observed.appleBundleManifestSha256 ?? null,
     findings,

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
+import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
@@ -7,18 +8,25 @@ import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/medication_product_pack.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/entities/food_recommendation.dart';
+import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_event_ledger.dart';
+import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/next_meal_recommendation_models.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 import 'package:parkinsum_companion/domain/usecases/cdss_catalog_projection_service.dart';
+import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 import 'package:parkinsum_companion/domain/usecases/get_food_recommendations_usecase.dart';
 import 'package:parkinsum_companion/domain/usecases/intake_dose_context_builder.dart';
 import 'package:parkinsum_companion/domain/usecases/local_ai_recommendation_adapter.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_event_ledger_authorization.dart';
+import 'package:parkinsum_companion/domain/usecases/mechanistic_replay_capsule_service.dart';
 import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orchestrator.dart';
 
 /// Guards the production boundary end-to-end: mechanistic candidate scores are
 /// inspectable educational traces, but they are not validated or calibrated to
 /// replace the conservative ranking.
 void main() {
+  final doseConfirmation = AdministrationDoseConfirmationCoordinator();
   FoodItem food(String id, String name, double protein) => FoodItem(
     id: id,
     name: name,
@@ -58,22 +66,38 @@ void main() {
           releaseType: 'immediate',
           jurisdiction: 'US',
         );
+    final profile = UserProfile.defaults().copyWith(
+      registrationRegion: 'US',
+      contentJurisdictionOverride: const ['US'],
+    );
+    final unconfirmed =
+        intakeOverride ??
+        Intake(
+          id: 'intake_1',
+          drugId: drug.id,
+          takenAt: now.subtract(const Duration(minutes: 30)),
+          dosageNote: '100 mg',
+        );
+    final confirmed = doseConfirmation
+        .prepare(
+          draft: unconfirmed,
+          current: null,
+          expectedRecordRevisionDigest:
+              administrationDoseConfirmationAbsentRevisionDigest,
+          ownerScope: profile.patientId,
+          operationId: 'event_op_${unconfirmed.id}',
+          confirmationRequested: true,
+          assertionSource: AdministrationDoseAssertionSource.typed,
+          confirmationAction: 'test.explicit_confirmation',
+          uiContractVersion: 'test-dose-confirmation:1',
+          confirmedAt: DateTime.utc(2026, 1, 1, 7, 59),
+        )
+        .intake!;
     return NextMealRecommendationRequest(
-      userProfile: UserProfile.defaults().copyWith(
-        registrationRegion: 'US',
-        contentJurisdictionOverride: const ['US'],
-      ),
+      userProfile: profile,
       history: history,
       activeDrugs: [drug],
-      intakes: [
-        intakeOverride ??
-            Intake(
-              id: 'intake_1',
-              drugId: drug.id,
-              takenAt: now.add(const Duration(minutes: 30)),
-              dosageNote: '100 mg',
-            ),
-      ],
+      intakes: [confirmed],
       now: now,
       userConsentedToAi: false,
       userDefinedWindow: window,
@@ -135,6 +159,150 @@ void main() {
         result.recommendations.map((item) => item.food.id),
         conservative.recommendations.map((item) => item.food.id),
       );
+      expect(
+        result.candidateSetSnapshot.sha256Digest,
+        conservative.candidateSetSnapshot.sha256Digest,
+      );
+      expect(result.candidateSetSnapshot.orderedCandidateIds, <String>[
+        'food_low',
+        'food_high',
+      ]);
+      expect(
+        result.candidateSetSnapshot.tieBreakPolicy,
+        'score_desc_food_id_asc',
+      );
+    },
+  );
+
+  test(
+    'projected food override is bound to the returned candidate snapshot',
+    () async {
+      final projectedReplacement = food('food_low', 'projected low protein', 4);
+      final callerReplacement = food('food_low', 'caller low protein', 12);
+      final orchestrator = NextMealRecommendationOrchestrator(
+        conservativeRecommender: GetFoodRecommendationsUseCase(),
+        projectionService: _FakeProjectionService(<FoodItem>[
+          projectedReplacement,
+        ]),
+        localAiAdapter: null,
+      );
+      final result = await orchestrator.recommend(
+        request: request(),
+        candidateFoods: <FoodItem>[callerReplacement, candidates.last],
+      );
+
+      expect(result.candidateSetSnapshot.callerCandidateCount, 2);
+      expect(result.candidateSetSnapshot.projectedCandidateCount, 1);
+      expect(result.candidateSetSnapshot.mergedCandidateCount, 2);
+      expect(result.candidateSetSnapshot.orderedCandidateIds, <String>[
+        'food_low',
+        'food_high',
+      ]);
+      expect(
+        result.candidateSetSnapshot.mergedCandidateRecords.singleWhere(
+          (record) => record['id'] == 'food_low',
+        )['name'],
+        'projected low protein',
+      );
+      expect(
+        result.candidateSetSnapshot.toJson()['projected_override_ids'],
+        <String>['food_low'],
+      );
+      expect(
+        (result.candidateSetSnapshot.toJson()['projection_query_audit']
+            as Map<String, Object?>)['schema_id'],
+        'test.synthetic-projection-query-audit/1',
+      );
+    },
+  );
+
+  test(
+    'ledger authorization rejection blocks all numerical model output',
+    () async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final orchestrator = NextMealRecommendationOrchestrator(
+        conservativeRecommender: GetFoodRecommendationsUseCase(),
+        projectionService: _FakeProjectionService(const []),
+        localAiAdapter: null,
+        ledgerAuthorizer: const _RejectingLedgerAuthorizer(),
+      );
+      final result = await orchestrator.recommend(
+        request: request(
+          history: [
+            Meal(
+              id: 'authorization_history',
+              eatenAt: now.subtract(const Duration(hours: 1)),
+              title: 'Authorization fixture',
+              items: [
+                MealItem.fromFood(food: candidates.first, quantityFactor: 1),
+              ],
+            ),
+          ],
+          window: UserDefinedMealWindow(
+            window: TimelineWindow(
+              startMinute: dateTimeToMinute(now) + 60,
+              endMinute: dateTimeToMinute(now) + 120,
+            ),
+            source: 'test',
+          ),
+        ),
+        candidateFoods: candidates,
+      );
+
+      expect(
+        result.mechanisticTrace!.availability,
+        MechanisticResultAvailability.blockedIntegrity,
+      );
+      expect(result.mechanisticCandidateScores, isNull);
+      expect(
+        result.rankerEligibility!.fallbackReasons,
+        contains('authorization.test_rejection'),
+      );
+    },
+  );
+
+  test(
+    'replay reconstruction failure blocks all numerical model output',
+    () async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final orchestrator = NextMealRecommendationOrchestrator(
+        conservativeRecommender: GetFoodRecommendationsUseCase(),
+        projectionService: _FakeProjectionService(const []),
+        localAiAdapter: null,
+        replayRoundTripper: const _RejectingReplayRoundTripper(),
+      );
+      final result = await orchestrator.recommend(
+        request: request(
+          history: [
+            Meal(
+              id: 'replay_history',
+              eatenAt: now.subtract(const Duration(hours: 1)),
+              title: 'Replay fixture',
+              items: [
+                MealItem.fromFood(food: candidates.first, quantityFactor: 1),
+              ],
+            ),
+          ],
+          window: UserDefinedMealWindow(
+            window: TimelineWindow(
+              startMinute: dateTimeToMinute(now) + 60,
+              endMinute: dateTimeToMinute(now) + 120,
+            ),
+            source: 'test',
+          ),
+        ),
+        candidateFoods: candidates,
+      );
+
+      expect(
+        result.mechanisticTrace!.availability,
+        MechanisticResultAvailability.blockedIntegrity,
+      );
+      expect(result.mechanisticCandidateScores, isNull);
+      expect(
+        result.rankerEligibility!.fallbackReasons,
+        contains('authorization.replay_pipeline_failed:StateError'),
+      );
     },
   );
 
@@ -150,6 +318,48 @@ void main() {
       contains('missing_user_defined_window'),
     );
   });
+
+  test(
+    'unconfirmed legacy dose remains visible but cannot enter model',
+    () async {
+      final now = DateTime.utc(2026, 1, 1, 8);
+      final confirmedRequest = request(
+        window: UserDefinedMealWindow(
+          window: TimelineWindow(
+            startMinute: dateTimeToMinute(now) + 60,
+            endMinute: dateTimeToMinute(now) + 120,
+          ),
+          source: 'test',
+        ),
+      );
+      final unconfirmed = NextMealRecommendationRequest(
+        userProfile: confirmedRequest.userProfile,
+        history: confirmedRequest.history,
+        activeDrugs: confirmedRequest.activeDrugs,
+        intakes: [
+          confirmedRequest.intakes.single.withoutDoseConfirmation(
+            clearStructuredDose: true,
+          ),
+        ],
+        now: confirmedRequest.now,
+        userDefinedWindow: confirmedRequest.userDefinedWindow,
+      );
+      final result = await buildOrchestrator().recommend(
+        request: unconfirmed,
+        candidateFoods: candidates,
+      );
+      expect(
+        result.mechanisticCandidateScores!.every(
+          (score) => !score.hasModeledOutput,
+        ),
+        isTrue,
+      );
+      expect(
+        result.rankerEligibility!.fallbackReasons,
+        contains('insufficient_candidate_context'),
+      );
+    },
+  );
 
   test(
     'selected package without formulation snapshot blocks an otherwise IR trace',
@@ -172,7 +382,7 @@ void main() {
           .build(
             id: 'intake_1',
             drugId: catalogDrug.id,
-            takenAt: now.add(const Duration(minutes: 30)),
+            takenAt: now.subtract(const Duration(minutes: 30)),
             dosageNote: '100 mg',
             drug: catalogDrug,
           )
@@ -356,7 +566,7 @@ void main() {
           field: 'route',
           drug: DrugDefinition(
             id: 'bad_route',
-            genericName: 'levodopa/carbidopa',
+            genericName: 'carbidopa/levodopa',
             brandNames: const [],
             tags: const [DrugTag.levodopaLike],
             notes: '',
@@ -371,7 +581,7 @@ void main() {
           field: 'missing route',
           drug: DrugDefinition(
             id: 'missing_route',
-            genericName: 'levodopa/carbidopa',
+            genericName: 'carbidopa/levodopa',
             brandNames: const [],
             tags: const [DrugTag.levodopaLike],
             notes: '',
@@ -385,7 +595,7 @@ void main() {
           field: 'form',
           drug: DrugDefinition(
             id: 'bad_form',
-            genericName: 'levodopa/carbidopa',
+            genericName: 'carbidopa/levodopa',
             brandNames: const [],
             tags: const [DrugTag.levodopaLike],
             notes: '',
@@ -400,7 +610,7 @@ void main() {
           field: 'release',
           drug: DrugDefinition(
             id: 'bad_release',
-            genericName: 'levodopa/carbidopa',
+            genericName: 'carbidopa/levodopa',
             brandNames: const [],
             tags: const [DrugTag.levodopaLike],
             notes: '',
@@ -440,12 +650,64 @@ void main() {
   }
 }
 
+class _RejectingLedgerAuthorizer implements MechanisticLedgerAuthorizer {
+  const _RejectingLedgerAuthorizer();
+
+  @override
+  MechanisticLedgerAuthorizationDecision authorize({
+    required MechanisticEventLedger ledger,
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+    required String expectedConfigurationSha256,
+  }) => MechanisticLedgerAuthorizationDecision(
+    assessment: MechanisticLedgerAuthorizationAssessment(
+      ledger: ledger,
+      expectedConfigurationSha256: expectedConfigurationSha256,
+      recomputedInputBindingSha256: MechanisticLedgerInputBinding.compute(
+        context: context,
+        mealCompositionsById: mealCompositionsById,
+      ),
+      inputMedicationEventCount: context.medicationEvents.length,
+      inputMealEventCount: context.mealEvents.length,
+      inputFoodComponentEventCount: context.foodComponentEvents.length,
+      boundCompositionCount: mealCompositionsById.length,
+      findings: const ['authorization.test_rejection'],
+    ),
+    view: null,
+  );
+}
+
+class _RejectingReplayRoundTripper
+    implements MechanisticReplayCapsuleRoundTripper {
+  const _RejectingReplayRoundTripper();
+
+  @override
+  MechanisticReplayRoundTrip captureAndRestore({
+    required String capsuleId,
+    required DateTime generatedAtUtc,
+    required MechanisticEventLedger ledger,
+    required TimeAxisConflictContext context,
+    required Map<String, MealComposition> mealCompositionsById,
+    required String expectedConfigurationSha256,
+  }) => throw StateError('synthetic replay failure');
+}
+
 class _FakeProjectionService extends CdssCatalogProjectionService {
   _FakeProjectionService(this._foods) : super(database: const _StubDb());
   final List<FoodItem> _foods;
 
   @override
   Future<List<FoodItem>> projectFoods() async => _foods;
+
+  @override
+  Future<CdssFoodProjectionResult> projectFoodsWithAudit() async =>
+      CdssFoodProjectionResult(
+        foods: _foods,
+        queryAudit: const <String, Object?>{
+          'schema_id': 'test.synthetic-projection-query-audit/1',
+          'capture_status': 'synthetic_fixture',
+        },
+      );
 
   @override
   Future<ProjectedDrugDetail?> projectDrugDetail(DrugDefinition drug) async =>

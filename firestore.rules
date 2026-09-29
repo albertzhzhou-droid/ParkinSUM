@@ -121,6 +121,105 @@ service cloud.firestore {
         );
     }
 
+    function validDoseParsedExpression(value) {
+      return value is map &&
+        value.keys().hasOnly(['value', 'unit', 'role', 'source_span']) &&
+        (value.value is int || value.value is float) &&
+        value.value > 0 && value.value <= 1000000 &&
+        value.role == 'administrationDose' &&
+        value.unit is map &&
+        value.unit.keys().hasOnly(['display', 'system', 'code', 'version', 'dimension']) &&
+        value.unit.display is string && value.unit.display.size() > 0 && value.unit.display.size() <= 48 &&
+        value.unit.system == 'urn:parkinsum:dose-unit' &&
+        value.unit.code is string && value.unit.code.size() > 0 && value.unit.code.size() <= 16 &&
+        value.unit.version is string && value.unit.version.size() > 0 && value.unit.version.size() <= 16 &&
+        value.unit.dimension in ['mass', 'volume'] &&
+        value.source_span is map &&
+        value.source_span.keys().hasOnly(['start', 'end']) &&
+        value.source_span.start is int && value.source_span.start >= 0 &&
+        value.source_span.end is int && value.source_span.end > value.source_span.start &&
+        value.source_span.end <= 256;
+    }
+
+    function validDoseConfirmation(value, intakeId) {
+      return value is map &&
+        value.keys().hasOnly([
+          'schema_version',
+          'receipt_id',
+          'receipt_digest',
+          'operation_id',
+          'owner_scope_digest',
+          'intake_id',
+          'expected_record_revision_digest',
+          'record_binding_digest',
+          'medication_id',
+          'product_snapshot_digest',
+          'raw_expression',
+          'parsed_expression',
+          'grammar_id',
+          'grammar_version',
+          'grammar_digest',
+          'unit_system',
+          'unit_system_version',
+          'structured_value',
+          'structured_unit',
+          'administration_at_utc',
+          'confirmed_at_utc',
+          'assertion_source',
+          'confirmation_action',
+          'ui_contract_version',
+          'meaning_boundary',
+        ]) &&
+        value.schema_version == 1 &&
+        safeId(value.operation_id) &&
+        value.intake_id == intakeId &&
+        safeId(value.medication_id) &&
+        value.receipt_id is string && value.receipt_id.size() == 77 &&
+        value.receipt_id.matches('^dose_receipt_[a-f0-9]{64}$') &&
+        value.receipt_digest is string && value.receipt_digest.matches('^[a-f0-9]{64}$') &&
+        value.owner_scope_digest is string && value.owner_scope_digest.matches('^[a-f0-9]{64}$') &&
+        value.expected_record_revision_digest is string && value.expected_record_revision_digest.matches('^[a-f0-9]{64}$') &&
+        value.record_binding_digest is string && value.record_binding_digest.matches('^[a-f0-9]{64}$') &&
+        value.product_snapshot_digest is string && value.product_snapshot_digest.matches('^[a-f0-9]{64}$') &&
+        value.grammar_digest is string && value.grammar_digest.matches('^[a-f0-9]{64}$') &&
+        value.raw_expression is string && value.raw_expression.size() > 0 && value.raw_expression.size() <= 256 &&
+        validDoseParsedExpression(value.parsed_expression) &&
+        value.grammar_id == 'parkinsum.administration-dose-expression' &&
+        value.grammar_version == 1 &&
+        value.unit_system == 'urn:parkinsum:dose-unit' &&
+        value.unit_system_version == '1' &&
+        (value.structured_value is int || value.structured_value is float) &&
+        value.structured_value > 0 && value.structured_value <= 1000000 &&
+        value.structured_unit is string && value.structured_unit.size() > 0 && value.structured_unit.size() <= 16 &&
+        value.administration_at_utc is string && value.administration_at_utc.size() <= 80 &&
+        value.confirmed_at_utc is string && value.confirmed_at_utc.size() <= 80 &&
+        value.assertion_source in ['typed', 'packageDerived', 'imported'] &&
+        safeId(value.confirmation_action) &&
+        safeId(value.ui_contract_version) &&
+        value.meaning_boundary is string && value.meaning_boundary.size() <= 240;
+    }
+
+    function validMedicationReconciliation(value) {
+      return value is map &&
+        value.keys().hasOnly([
+          'schema',
+          'schemaVersion',
+          'assertions',
+          'decisions',
+          'meaningBoundary',
+        ]) &&
+        value.schema == 'parkinsum.medication-reconciliation-envelope/1' &&
+        value.schemaVersion == 1 &&
+        value.assertions is list &&
+        value.assertions.size() > 0 &&
+        value.assertions.size() <= 64 &&
+        value.decisions is list &&
+        value.decisions.size() <= 128 &&
+        value.meaningBoundary is string &&
+        value.meaningBoundary.size() > 0 &&
+        value.meaningBoundary.size() <= 240;
+    }
+
     function validProfile(uid) {
       return request.resource.data.keys().hasOnly([
         'patientId',
@@ -224,13 +323,15 @@ service cloud.firestore {
         'route',
         'releaseType',
         'productSelection',
+        'doseConfirmation',
+        'medicationReconciliation',
         'takenAtIso',
       ]) &&
       request.resource.data.id == intakeId &&
-      request.resource.data.schemaVersion == 1 &&
+      request.resource.data.schemaVersion in [1, 2, 3] &&
       validString('drugId', 160) &&
       validString('takenAt', 80) &&
-      optionalString('dosageNote', 240) &&
+      optionalString('dosageNote', 256) &&
       (
         !('doseAmount' in request.resource.data) ||
         request.resource.data.doseAmount == null ||
@@ -248,6 +349,24 @@ service cloud.firestore {
         !('productSelection' in request.resource.data) ||
         request.resource.data.productSelection == null ||
         validMedicationProductSelection(request.resource.data.productSelection)
+      ) &&
+      (
+        !('doseConfirmation' in request.resource.data) ||
+        request.resource.data.doseConfirmation == null ||
+        (
+          request.resource.data.schemaVersion in [2, 3] &&
+          validDoseConfirmation(request.resource.data.doseConfirmation, intakeId)
+        )
+      ) &&
+      (
+        !('medicationReconciliation' in request.resource.data) ||
+        request.resource.data.medicationReconciliation == null ||
+        (
+          request.resource.data.schemaVersion == 3 &&
+          validMedicationReconciliation(
+            request.resource.data.medicationReconciliation
+          )
+        )
       ) &&
       optionalString('takenAtIso', 80);
     }
@@ -382,6 +501,25 @@ service cloud.firestore {
         ) ||
         validRecoverableEventHistory(historyId)
       );
+    }
+
+    function validMechanisticReplayCapsule(uid, capsuleSha256) {
+      return capsuleSha256.matches('^[a-f0-9]{64}$') &&
+        request.resource.data.keys().hasOnly([
+          'schema_version',
+          'capsule_sha256',
+          'generated_at_utc',
+          'canonical_json',
+          'owner_uid',
+        ]) &&
+        request.resource.data.schema_version == 1 &&
+        request.resource.data.capsule_sha256 == capsuleSha256 &&
+        request.resource.data.owner_uid == uid &&
+        request.resource.data.generated_at_utc is string &&
+        request.resource.data.generated_at_utc.size() <= 40 &&
+        request.resource.data.canonical_json is string &&
+        request.resource.data.canonical_json.size() > 0 &&
+        request.resource.data.canonical_json.size() <= 716800;
     }
 
     function validRecoverableEventHistory(historyDocumentId) {
@@ -581,6 +719,13 @@ service cloud.firestore {
       match /record_history/{historyId} {
         allow read: if isOwner(uid);
         allow create: if isOwner(uid) && validRecordHistory(historyId);
+        allow update, delete: if false;
+      }
+
+      match /mechanistic_replay_capsules/{capsuleSha256} {
+        allow read: if isOwner(uid) && capsuleSha256.matches('^[a-f0-9]{64}$');
+        allow create: if isOwner(uid) &&
+          validMechanisticReplayCapsule(uid, capsuleSha256);
         allow update, delete: if false;
       }
 

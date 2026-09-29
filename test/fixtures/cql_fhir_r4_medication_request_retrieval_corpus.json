@@ -1,0 +1,877 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-medication-request-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([MedicationRequest]) and exact status.value and intent.value retrieval predicates",
+  "cases": [
+    {
+      "id": "status_active_request",
+      "patientContextId": "synthetic-patient-status-active-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-active-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-active-request",
+              "status": "active",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-active-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_on_hold_request",
+      "patientContextId": "synthetic-patient-status-on-hold-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": true,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-on-hold-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-on-hold-request",
+              "status": "on-hold",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-on-hold-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_cancelled_request",
+      "patientContextId": "synthetic-patient-status-cancelled-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": true,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-cancelled-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-cancelled-request",
+              "status": "cancelled",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-cancelled-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_completed_request",
+      "patientContextId": "synthetic-patient-status-completed-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": true,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-completed-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-completed-request",
+              "status": "completed",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-completed-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_entered_in_error_request",
+      "patientContextId": "synthetic-patient-status-entered-in-error-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": true,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-entered-in-error-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-entered-in-error-request",
+              "status": "entered-in-error",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-entered-in-error-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_stopped_request",
+      "patientContextId": "synthetic-patient-status-stopped-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": true,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-stopped-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-stopped-request",
+              "status": "stopped",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-stopped-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_draft_request",
+      "patientContextId": "synthetic-patient-status-draft-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": true,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-draft-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-draft-request",
+              "status": "draft",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-draft-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_unknown_request",
+      "patientContextId": "synthetic-patient-status-unknown-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": true,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-unknown-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-status-unknown-request",
+              "status": "unknown",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-unknown-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_proposal_request",
+      "patientContextId": "synthetic-patient-intent-proposal-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": true,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-proposal-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-proposal-request",
+              "status": "active",
+              "intent": "proposal",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-proposal-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_plan_request",
+      "patientContextId": "synthetic-patient-intent-plan-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": true,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-plan-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-plan-request",
+              "status": "active",
+              "intent": "plan",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-plan-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_order_request",
+      "patientContextId": "synthetic-patient-intent-order-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": true,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-order-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-order-request",
+              "status": "active",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-order-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_original_order_request",
+      "patientContextId": "synthetic-patient-intent-original-order-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": true,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-original-order-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-original-order-request",
+              "status": "active",
+              "intent": "original-order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-original-order-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_reflex_order_request",
+      "patientContextId": "synthetic-patient-intent-reflex-order-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": true,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-reflex-order-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-reflex-order-request",
+              "status": "active",
+              "intent": "reflex-order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-reflex-order-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_filler_order_request",
+      "patientContextId": "synthetic-patient-intent-filler-order-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": true,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-filler-order-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-filler-order-request",
+              "status": "active",
+              "intent": "filler-order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-filler-order-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_instance_order_request",
+      "patientContextId": "synthetic-patient-intent-instance-order-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": true,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-instance-order-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-instance-order-request",
+              "status": "active",
+              "intent": "instance-order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-instance-order-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "intent_option_request",
+      "patientContextId": "synthetic-patient-intent-option-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": true,
+        "hasStatusActive": true,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-intent-option-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-intent-option-request",
+              "status": "active",
+              "intent": "option",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-intent-option-request"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_request",
+      "patientContextId": "synthetic-patient-no-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": false,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-no-request"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_request",
+      "patientContextId": "synthetic-patient-foreign-subject-request",
+      "expectedOutcomes": {
+        "hasAnyRequest": false,
+        "hasStatusActive": false,
+        "hasStatusOnHold": false,
+        "hasStatusCancelled": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusDraft": false,
+        "hasStatusUnknown": false,
+        "hasIntentProposal": false,
+        "hasIntentPlan": false,
+        "hasIntentOrder": false,
+        "hasIntentOriginalOrder": false,
+        "hasIntentReflexOrder": false,
+        "hasIntentFillerOrder": false,
+        "hasIntentInstanceOrder": false,
+        "hasIntentOption": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-foreign-subject-request"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationRequest",
+              "id": "synthetic-medication-request-foreign-subject-request",
+              "status": "active",
+              "intent": "order",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

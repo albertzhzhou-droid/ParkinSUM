@@ -1,15 +1,18 @@
 {
-  "$schema": "https://parkinsum.app/schemas/open-source-influence-inventory/v1",
-  "schemaVersion": 1,
+  "$schema": "https://parkinsum.app/schemas/open-source-influence-inventory/v7",
+  "schemaVersion": 7,
   "review": {
-    "reviewedAt": "2026-08-18",
+    "reviewedAt": "2026-09-29",
     "reviewerRole": "repository_open_source_boundary_review",
-    "legalApproval": "not_requested_concept_only"
+    "legalApproval": "not_requested_no_release_distribution"
   },
   "releaseBoundary": {
     "copiedLinkedVendoredOrDerivedInfluenceIds": [
+      "adobe_source_serif_font_assets",
       "flutter_framework",
-      "flutter_local_notifications"
+      "flutter_local_notifications",
+      "share_plus",
+      "vercel_geist_font_assets"
     ],
     "distributedUpstreamArtifactPaths": [],
     "noticePath": null,
@@ -24,6 +27,46 @@
         "version": "22.3.0",
         "versionSource": "pubspec.lock",
         "sourceRevision": "b475bc883dab07da3c1b19e86b0746eb20f14f2f"
+      },
+      "share_plus": {
+        "version": "13.3.0",
+        "versionSource": "pubspec.lock",
+        "sourceRevision": "2c5b4935c85fdbfeffea2bd68c9286c064ed8b7c"
+      },
+      "adobe_source_serif_font_assets": {
+        "version": "Source Serif 4 4.004",
+        "versionSource": "pubspec.yaml",
+        "sourceRevision": "a9eaef81588dddd479f2275d87b3707ed7ae2847"
+      },
+      "vercel_geist_font_assets": {
+        "version": "Geist 1.800; Geist Mono 1.701",
+        "versionSource": "pubspec.yaml",
+        "sourceRevision": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24"
+      },
+      "cqframework_cql_exec_fhir_reference": {
+        "version": "2.1.6",
+        "versionSource": "package.json",
+        "sourceRevision": "f3f9a968d597e2f029533a9e5cb1e6a643f2f69a"
+      },
+      "cqframework_cql_execution_reference": {
+        "version": "3.3.2",
+        "versionSource": "package.json",
+        "sourceRevision": "1991335e7ad490a8db88a05dd7f03dc3eecbda6d"
+      },
+      "cqframework_cql_reference": {
+        "version": "5.3.0",
+        "versionSource": "tool/cqf_jvm_cql_differential/build.gradle",
+        "sourceRevision": "88693baefa482ec6f189c90113cfe1f3f4ce9d31"
+      },
+      "google_cql_engine_reference": {
+        "version": "v0.0.3-0.20260814184421-b9169ccd54a3",
+        "versionSource": "tool/google_cql_differential/go.mod",
+        "sourceRevision": "b9169ccd54a3a8b0ac928aff338b9f7d6a4b163a"
+      },
+      "google_fhir_go_reference": {
+        "version": "v0.7.4",
+        "versionSource": "tool/google_cql_differential/go.mod",
+        "sourceRevision": "31c3b614b7bf203c9b1d53306688b3bd6984e11d"
       }
     },
     "dependencyEvidence": [
@@ -31,15 +74,27 @@
       "pubspec.lock"
     ],
     "sbomStatus": "dependency_locks_only_signed_release_sbom_open",
-    "networkRefreshRequiredForOfflineGate": false
+    "networkRefreshRequiredForOfflineGate": false,
+    "developmentToolInfluenceIds": [
+      "cqframework_cql_exec_fhir_reference",
+      "cqframework_cql_execution_reference",
+      "cqframework_cql_reference",
+      "google_cql_engine_reference",
+      "google_fhir_go_reference"
+    ]
   },
   "discovery": {
     "roots": [
+      "assets",
       "config/complete_app_upgrade_queue.json",
-      "docs"
+      "docs",
+      "lib",
+      "pubspec.yaml",
+      "tool"
     ],
     "excludedRepositories": [
-      "albertzhzhou-droid/parkinsum"
+      "github.com/albertzhzhou-droid/parkinsum",
+      "github.com/AHRQ-CDS/AHRQ-CDS-Connect-Authoring-Tool"
     ],
     "forbiddenVendoredDirectoryNames": [
       "external",
@@ -48,22 +103,566 @@
       "vendor"
     ]
   },
+  "assetFileLicenseEvidence": [
+    {
+      "assetPath": "assets/fonts/Geist-Bold.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "15418797695b9c9c8dbcb25a7108643187ab9f4839972c6ffb356ec932a04c1e",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-Geist.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/Geist-Medium.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "ee16b8c452fe0b4812abe47ebb3cf93b482dbab9abab334fb3700bb3eda39d73",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-Geist.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/Geist-Regular.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "22b30e9f4f4dc199ee6df986a6895846ad27d95c6591811c9813bc400471f74b",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-Geist.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/Geist-SemiBold.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "d0a7762d532ac995238a0fc9398e438adea385810a1d379e89e411bacdadbc43",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-Geist.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/GeistMono-Medium.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "668b198e9dfe55e90383cb94fe79a848856d2116cbc1280ad2d4546c4ddf079e",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-GeistMono.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/GeistMono-Regular.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "ae2053741b54aa9adc2b8b039be4b6eb57d9547d839c712c32c54bd9250a332b",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-GeistMono.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/GeistMono-SemiBold.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "5815b673113e0c2d56e6635038de9d16ee8c5ec93eedcff405501a19588d93c7",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-GeistMono.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/OFL-Geist.txt",
+      "assetRole": "license_text",
+      "assetSha256": "1781d2806a07d91c4edf4740b88449fab7d0eadad53f7c351b94cd4d4eb8c00f",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "copied_license_text_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/OFL-GeistMono.txt",
+      "assetRole": "license_text",
+      "assetSha256": "1781d2806a07d91c4edf4740b88449fab7d0eadad53f7c351b94cd4d4eb8c00f",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "copied_license_text_source_equivalence_unverified",
+      "influenceId": "vercel_geist_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts"
+    },
+    {
+      "assetPath": "assets/fonts/OFL-SourceSerif4.txt",
+      "assetRole": "license_text",
+      "assetSha256": "acb2b8ba7420e412cd26f7d2b05d1692951ea8c6f4118a3a2c903a0f1fff1feb",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "copied_license_text_source_equivalence_unverified",
+      "influenceId": "adobe_source_serif_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "a9eaef81588dddd479f2275d87b3707ed7ae2847",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/adobe-fonts/source-serif/tree/a9eaef81588dddd479f2275d87b3707ed7ae2847"
+    },
+    {
+      "assetPath": "assets/fonts/SourceSerif4Display-Italic.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "a9552b924ede9bccd0bdc98f8ed5f561e5ab50c75def6edd0959dca67105222d",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "adobe_source_serif_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-SourceSerif4.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "a9eaef81588dddd479f2275d87b3707ed7ae2847",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/adobe-fonts/source-serif/tree/a9eaef81588dddd479f2275d87b3707ed7ae2847"
+    },
+    {
+      "assetPath": "assets/fonts/SourceSerif4Display-Medium.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "23b5ac14a1669ab0d61f8dfd351211ee0a33c4c16bba2960c51a454609e7fb0b",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "adobe_source_serif_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-SourceSerif4.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "a9eaef81588dddd479f2275d87b3707ed7ae2847",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/adobe-fonts/source-serif/tree/a9eaef81588dddd479f2275d87b3707ed7ae2847"
+    },
+    {
+      "assetPath": "assets/fonts/SourceSerif4Display-Regular.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "90ccf82dfb4f49d409b71a9a7f9a8e6e52da72195815728bef8e0c159a9b7837",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "adobe_source_serif_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-SourceSerif4.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "a9eaef81588dddd479f2275d87b3707ed7ae2847",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/adobe-fonts/source-serif/tree/a9eaef81588dddd479f2275d87b3707ed7ae2847"
+    },
+    {
+      "assetPath": "assets/fonts/SourceSerif4Display-SemiBold.ttf",
+      "assetRole": "font_binary",
+      "assetSha256": "6c64bb44c5bce43ef62bea224ae9b1fdac08902a923a61cbae97e8b740edd8f8",
+      "artifactType": "font_asset",
+      "declaredSpdx": "OFL-1.1",
+      "detectedSpdx": "OFL-1.1",
+      "derivationStatus": "derived_static_font_source_equivalence_unverified",
+      "influenceId": "adobe_source_serif_font_assets",
+      "licenseStatus": "machine_detected",
+      "noticePaths": [
+        "assets/fonts/OFL-SourceSerif4.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "pinnedCommit": "a9eaef81588dddd479f2275d87b3707ed7ae2847",
+      "reviewStatus": "reviewed",
+      "sourceLocator": "https://github.com/adobe-fonts/source-serif/tree/a9eaef81588dddd479f2275d87b3707ed7ae2847"
+    }
+  ],
   "influences": [
+    {
+      "id": "adobe_source_serif_font_assets",
+      "officialUrl": "https://github.com/adobe-fonts/source-serif",
+      "pinnedCommit": "a9eaef81588dddd479f2275d87b3707ed7ae2847",
+      "defaultBranch": "release",
+      "declaredSpdx": "OFL-1.1",
+      "repositoryDetectedSpdx": "OFL-1.1",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "font_asset"
+      ],
+      "reviewedConcepts": [
+        "Pinned Source Serif 4.004R family terms and the line-ending-normalized Adobe OFL 1.1 license, including Reserved Font Name Source, are retained. On 2026-09-29 the four pre-existing static derivatives were given the embedded family Parkin Serif Display and matching unique, full and PostScript names; copyright, trademark and license name records remain intact. Only the name table and required head checksum changed: glyph outlines, character maps, shaping, weight and advance metrics were byte-identical before and after. Existing asset filenames and the Flutter SourceSerif4Display alias remain for compatibility and are not the embedded primary font name. The Google Fonts input revision is 87a44ad3d4535f7b3a5a715a08e8944f144afd06; this review resolves the derivative naming obligation and verifies the license text against the pinned upstream file after CRLF-to-LF normalization, but does not claim byte equivalence of derived fonts to upstream binaries or external legal approval."
+      ],
+      "transferStatus": "derived",
+      "copyingAuthorized": true,
+      "distributionAuthorized": true,
+      "localPaths": [
+        "assets/fonts/OFL-SourceSerif4.txt",
+        "assets/fonts/SourceSerif4Display-Italic.ttf",
+        "assets/fonts/SourceSerif4Display-Medium.ttf",
+        "assets/fonts/SourceSerif4Display-Regular.ttf",
+        "assets/fonts/SourceSerif4Display-SemiBold.ttf"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "font_asset",
+          "assetScope": "transferred_files_at_pinned_revision",
+          "declaredSpdx": "OFL-1.1",
+          "detectedSpdx": "OFL-1.1",
+          "licenseStatus": "machine_detected",
+          "reviewStatus": "reviewed",
+          "sourceLocator": "https://github.com/adobe-fonts/source-serif/tree/a9eaef81588dddd479f2275d87b3707ed7ae2847",
+          "obligations": [
+            "license_notice",
+            "reserved_font_name_resolution"
+          ],
+          "localPaths": [
+            "assets/fonts/OFL-SourceSerif4.txt",
+            "assets/fonts/SourceSerif4Display-Italic.ttf",
+            "assets/fonts/SourceSerif4Display-Medium.ttf",
+            "assets/fonts/SourceSerif4Display-Regular.ttf",
+            "assets/fonts/SourceSerif4Display-SemiBold.ttf"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ahrq_cds_cql_services",
+      "officialUrl": "https://github.com/AHRQ-CDS/AHRQ-CDS-Connect-CQL-SERVICES",
+      "pinnedCommit": "72932fd7a8ca279afc72beb55c30aad772a58d53",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "CQL-to-CDS Hooks 2.0 card mapping, response-level errors and warnings, and transport/security boundary; historical reference only"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "ahrq_cql_testing_framework",
+      "officialUrl": "https://github.com/AHRQ-CDS/CQL-Testing-Framework",
+      "pinnedCommit": "60aae55fbab5cb7ad5aea8039e33148e42653954",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation",
+        "source_code",
+        "terminology_asset"
+      ],
+      "reviewedConcepts": [
+        "Pinned package version 2.6.1 describes YAML expected-result suites for FHIR-based CQL across DSTU2, STU3, and R4, with result diffs, JSON/FHIR Bundle export, and optional CQL Hooks Postman tests; no framework code was transferred",
+        "Example CQL under test/yaml/pain_r401/cql, FHIR fixtures under test/yaml/pain_r401/tests, and the VSAC value-set cache under test/yaml/pain_r401/.vscache each remain a separate unresolved NOASSERTION asset hold"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/AHRQ-CDS/CQL-Testing-Framework/tree/60aae55fbab5cb7ad5aea8039e33148e42653954/test/yaml/pain_r401/cql",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/AHRQ-CDS/CQL-Testing-Framework/tree/60aae55fbab5cb7ad5aea8039e33148e42653954/test/yaml/pain_r401/tests",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "terminology_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/AHRQ-CDS/CQL-Testing-Framework/tree/60aae55fbab5cb7ad5aea8039e33148e42653954/test/yaml/pain_r401/.vscache",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
     {
       "id": "appium_flutter_driver",
       "officialUrl": "https://github.com/appium/appium-flutter-driver",
       "pinnedCommit": "4708377f5e2843b53d0517396e587809d0893ca8",
       "defaultBranch": "main",
       "declaredSpdx": "MIT",
-      "githubDetectedSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["artifact-level device automation boundary"],
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "artifact-level device automation boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "apple_xnu_process_identity_reference",
+      "officialUrl": "https://github.com/apple-oss-distributions/xnu",
+      "pinnedCommit": "f6217f891ac0bb64f3d375211650a4c1ff8ca1ea",
+      "defaultBranch": "main",
+      "declaredSpdx": "APSL-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Darwin process-start identity API and private ABI boundary"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "arcwell_research_platform_reference",
+      "officialUrl": "https://github.com/arcweb/arcwell",
+      "pinnedCommit": "4be1ed002249b397698e1c588b1bbc81a0c28346",
+      "defaultBranch": "develop",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Clinical research platform and pathway/CDSS architecture; pinned README lists the FHIR bridge and embedded EHR as roadmap items, so they are not current capabilities; no code or clinical content transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "arden2bytecode",
+      "officialUrl": "https://github.com/PLRI/arden2bytecode",
+      "pinnedCommit": "9263f86944a5ebab2a8e5b038d534107d735c806",
+      "defaultBranch": "master",
+      "declaredSpdx": "GPL-3.0-only",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Arden Syntax 2.5 JVM compiler/runtime boundary and documented language omissions; root license declares GPL-3.0-only for the whole compiler and includes a separate Apache-2.0 JewelCLI license notice; no code or MLM transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "aria_polypharmacy_reference",
+      "officialUrl": "https://github.com/wiqilee/ARIA",
+      "pinnedCommit": "719693b93f9b9b32c1da8169caa1073e5bd816c3",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "README describes a hybrid AI polypharmacy system with multi-drug interaction graphs, risk timelines, and deprescribing outputs; these are repository claims, not independently validated clinical evidence",
+        "The pinned mcp-server/src/data directory contains beers_stopp.json and renal_dosing.json; README also names Gemini 2.5 Pro and external OpenFDA, RxNorm, DrugBank Open, and PubMed sources; no rule or data asset was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/wiqilee/ARIA/tree/719693b93f9b9b32c1da8169caa1073e5bd816c3/mcp-server/src/data",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/wiqilee/ARIA/tree/719693b93f9b9b32c1da8169caa1073e5bd816c3/mcp-server/src/data",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "automerge_reference",
@@ -71,15 +670,678 @@
       "pinnedCommit": "3b1827dda85632ac6499d5bb9f5fc9cba71a30c6",
       "defaultBranch": "main",
       "declaredSpdx": "MIT",
-      "githubDetectedSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["OpenAPI contract generation and drift automation"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "OpenAPI contract generation and drift automation"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "carepath_cds_specifications_reference",
+      "officialUrl": "https://github.com/srdc/carepath-cds-specifications",
+      "pinnedCommit": "82839d8ef5f3d23306beaf072790cb08a379e4fa",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "clinical_rule_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes CDS Hooks service definitions and card templates derived from the CAREPATH consensus clinical guideline; the pinned tree contains 65 JSON service definitions, 13 Excel specifications, and 349 Mustache card templates; a peer-reviewed report describes 65 implemented CDS Hooks endpoints with FHIRPath rules and Mustache cards; repository Apache-2.0 does not separately resolve guideline-derived clinical asset rights, which remain held; no code, specification, rule, card, terminology, or data was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/srdc/carepath-cds-specifications/tree/82839d8ef5f3d23306beaf072790cb08a379e4fa",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "cascade_conformal_pd_reference",
+      "officialUrl": "https://github.com/rdiazrincon/cascade_conformal_pd",
+      "pinnedCommit": "840ae293ac05dadb0d13d08c032c7db4bcf4ab21",
+      "defaultBranch": "master",
+      "declaredSpdx": "BSD-3-Clause-Clear",
+      "repositoryDetectedSpdx": "BSD-3-Clause-Clear",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "data_asset",
+        "documentation",
+        "report_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned repository and arXiv paper describe a two-stage Parkinson medication-management research method: Venn-Abers uncertainty from the change-needed classifier scales conformal intervals for the downstream levodopa-equivalent daily-dose change estimate; concept-only architecture reference, no clinical rule or model was transferred",
+        "The pinned tree contains four Jupyter notebooks with model-training/evaluation code and saved outputs but no data_1Y.csv; the README says the real Parkinson EHR dataset cannot be shared, so the referenced cohort data and notebook report outputs remain separate unresolved assets",
+        "The root LICENSE identifies Clear BSD / BSD-3-Clause-Clear but leaves copyright-holder text as [2026] [XYZ]; machine license detection is recorded without authorizing reuse or distribution"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/rdiazrincon/cascade_conformal_pd/tree/840ae293ac05dadb0d13d08c032c7db4bcf4ab21",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "report_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/rdiazrincon/cascade_conformal_pd/tree/840ae293ac05dadb0d13d08c032c7db4bcf4ab21",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "cds_hooks_sandbox",
+      "officialUrl": "https://github.com/cds-hooks/sandbox",
+      "pinnedCommit": "60b985a4d50b46d62d1ef4fa3a3be955a5e2a185",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "synthetic mock-EHR workflows and request/response conformance panel; no patient data or UI copied"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cds4cpm_guide_reference",
+      "officialUrl": "https://github.com/cqframework/cds4cpm",
+      "pinnedCommit": "e73c2d2953aaad08f09428a6e70d5a07c5c7db31",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "FHIR Implementation Guide for chronic-pain decision support and shared decision-making; pinned README says system design is a work in progress and CDS Hooks deployment remains open; no clinical artifact transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/cqframework/cds4cpm/tree/e73c2d2953aaad08f09428a6e70d5a07c5c7db31",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "cds4cpm_sandbox_reference",
+      "officialUrl": "https://github.com/DBCG/cds4cpm-sandbox",
+      "pinnedCommit": "9266b4137e47d7a84553b3040dfc2c12e9e6d3f9",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "data_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README documents a Docker sandbox linking MyPain, PainManager, CQF-Ruler, and SMART Launcher; it instructs disabling browser web security and references sample patient data, which were not exercised or transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/DBCG/cds4cpm-sandbox/tree/9266b4137e47d7a84553b3040dfc2c12e9e6d3f9",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "clincalc_clinical_calculator_reference",
+      "officialUrl": "https://github.com/pacharanero/clincalc",
+      "pinnedCommit": "6ed6201b7321cca179053907aaa7baacb2659355",
+      "defaultBranch": "main",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes one Rust clinical-scoring engine exposed through CLI, REST, MCP, and Python interfaces; calculators cite primary literature, publish typed input schemas and per-calculator license metadata, and are tested against published vectors. This is an architecture reference, not a Parkinson-specific decision system or a validated ParkinSUM feature",
+        "README says the project is for development, research, education, and evaluation and is not a finished medical device or an independent basis for decisions about an individual patient. The pinned Cargo.toml declares the compound expression AGPL-3.0-or-later AND LGPL-3.0-or-later, README describes QRISK3/QFracture as LGPL derivatives and clinical references as CC-BY-SA-4.0, while GitHub labels the root license AGPL-3.0; this inventory cannot represent that mixed repository expression as one detected SPDX identifier, so repository-level licensing remains NOASSERTION. Per-calculator clinical-rule assets remain separately unresolved; no code, score, test vector, or clinical content was copied or executed"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/pacharanero/clincalc/tree/6ed6201b7321cca179053907aaa7baacb2659355/src/calculators",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "clinicclaw_policy_gated_fhir_workflow_reference",
+      "officialUrl": "https://github.com/Chesterguan/cliniclaw",
+      "pinnedCommit": "fe1378817c730f4de4fa6b4d92f95ed7fc49ce2e",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes ClinicClaw as a research/demo v0.1.0 with eight FHIR R4 clinical workflows, OPA allow/deny/approval gates, pluggable LLMs, and hash-chained audit; it explicitly says auth is dev-mode passthrough and not to deploy with real patient data; benchmark metrics are self-reported and were not independently verified",
+        "README documents separate clinical skill metadata and Synthea FHIR fixtures; no source, policy, patient fixture, benchmark result, or model output was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Chesterguan/cliniclaw/tree/fe1378817c730f4de4fa6b4d92f95ed7fc49ce2e/crates/cliniclaw-policy",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Chesterguan/cliniclaw/tree/fe1378817c730f4de4fa6b4d92f95ed7fc49ce2e/data/synthea/fhir",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "clinicdx_rag_cdss_reference",
+      "officialUrl": "https://github.com/ClinicDx/ClinicDx",
+      "pinnedCommit": "1e329e903f297942160184dbf484874c33bd5e52",
+      "defaultBranch": "main",
+      "declaredSpdx": "CC-BY-4.0",
+      "repositoryDetectedSpdx": "CC-BY-4.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation",
+        "model_asset"
+      ],
+      "reviewedConcepts": [
+        "Pinned README and RESEARCH.md describe hybrid BM25/semantic retrieval with intent reranking and report held-out synthetic evaluation, knowledge-base coverage gaps, and no formal clinical validation; architecture reference only",
+        "Model weights, guideline knowledge-base content, and clinical-rule assets referenced by the repository are separate from its CC-BY-4.0 repository license and remain unreviewed; no implementation or assets inspected or transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/ClinicDx/ClinicDx/tree/1e329e903f297942160184dbf484874c33bd5e52",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/ClinicDx/ClinicDx/tree/1e329e903f297942160184dbf484874c33bd5e52",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/ClinicDx/ClinicDx/tree/1e329e903f297942160184dbf484874c33bd5e52",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "con_gait_contestable_parkinson_cdss_reference",
+      "officialUrl": "https://github.com/hungdothanh/Con-GaIT",
+      "pinnedCommit": "3101558fa527cc3092cb2f7970a4d3ba78808b2d",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation",
+        "model_asset",
+        "report_asset",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "Pinned README presents ConGaIT as a clinician-focused Parkinson gait demo with 10-second gait windows, CNN Hoehn-and-Yahr staging, LRP explanations, and clinician contest-and-justify interactions; this is a concept-only contestability pattern, not validation of ParkinSUM",
+        "README describes sending structured clinician feedback to an LLM API and instructs users to place an API key in config.py; the tree also contains dataset, weights, and figures, whose specific contents and terms were not reviewed or transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/hungdothanh/Con-GaIT/tree/3101558fa527cc3092cb2f7970a4d3ba78808b2d/src",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/hungdothanh/Con-GaIT/tree/3101558fa527cc3092cb2f7970a4d3ba78808b2d/dataset",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/hungdothanh/Con-GaIT/tree/3101558fa527cc3092cb2f7970a4d3ba78808b2d/weights",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "report_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/hungdothanh/Con-GaIT/tree/3101558fa527cc3092cb2f7970a4d3ba78808b2d/figures",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "cqf_ruler_reference",
+      "officialUrl": "https://github.com/cqframework/cqf-ruler",
+      "pinnedCommit": "fec88ddc762b67b61a30b6c0433882e9cff9708a",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "FHIR Clinical Reasoning and CDS Hooks server architecture with documented migration of core operations into HAPI; no server or source adopted"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cqframework_clinical_reasoning_reference",
+      "officialUrl": "https://github.com/cqframework/clinical-reasoning",
+      "pinnedCommit": "0d58353526c3508cc1ab252e8e8fa6201650536a",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "FHIR-native CQL and clinical-reasoning service architecture; no server, clinical artifact, or source adopted"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cqframework_cql_exec_fhir_reference",
+      "officialUrl": "https://github.com/cqframework/cql-exec-fhir",
+      "pinnedCommit": "f3f9a968d597e2f029533a9e5cb1e6a643f2f69a",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned cql-exec-fhir 2.1.6 supplies a local FHIR R4.0.1 Bundle PatientSource for the JavaScript CQL runtime and does not query FHIR servers",
+        "The upstream PatientSource selects by resource type/profile and does not scope Observation.subject to the Patient context; the synthetic harness filters foreign subjects before loading a Bundle"
+      ],
+      "transferStatus": "development_linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": false,
+      "localPaths": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "development_only",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cqframework_cql_exec_vsac_reference",
+      "officialUrl": "https://github.com/cqframework/cql-exec-vsac",
+      "pinnedCommit": "fe7c19cc3e51095ec050b60486598023afa3ac98",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned cql-exec-vsac v2.2.0 is an optional CQF terminology adapter for VSAC-backed ValueSets; API-backed refresh requires a UMLS API key and network access, while local cache lookup is a separate path",
+        "Concept-only reference: the package is not installed or called; no endpoint, credential, cache, terminology expansion, or clinical code is transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cqframework_cql_execution_reference",
+      "officialUrl": "https://github.com/cqframework/cql-execution",
+      "pinnedCommit": "1991335e7ad490a8db88a05dd7f03dc3eecbda6d",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned cql-execution 3.3.2 ELM runtime used only as a local synthetic differential oracle; partial CQL support and no bundled data-model or terminology service are retained as limitations"
+      ],
+      "transferStatus": "development_linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": false,
+      "localPaths": [
+        "package-lock.json",
+        "package.json"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "development_only",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cqframework_cql_reference",
+      "officialUrl": "https://github.com/cqframework/clinical_quality_language",
+      "pinnedCommit": "88693baefa482ec6f189c90113cfe1f3f4ce9d31",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "CQF CQL 5.3.0 translator, engine, and engine-fhir plus quick model-info modules are used only by development checks: nine fixed synthetic literal cases and a separate three-case synthetic FHIR R4 retrieval probe",
+        "The CQF JVM and JavaScript artifacts share the same upstream implementation family for literal platform parity; no source, terminology service, clinical rule content, or CQF runtime dependency is shipped with the app"
+      ],
+      "transferStatus": "development_linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": false,
+      "localPaths": [
+        "package-lock.json",
+        "package.json",
+        "tool/cqf_jvm_cql_differential/build.gradle",
+        "tool/cqf_jvm_cql_differential/gradle.lockfile"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "development_only",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "cqframework_cql_studio_reference",
+      "officialUrl": "https://github.com/cqframework/cql-studio",
+      "pinnedCommit": "d2d6b678f0e7c7e23df9b5165a3fc42d6f4a5816",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "CQL/FHIR artifact authoring and test workflows only; the full suite includes server, database, authentication, FHIR, and optional AI services that are not adopted"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "dikb_evidence_analytics_reference",
+      "officialUrl": "https://github.com/dbmi-pitt/DIKB-Evidence-analytics",
+      "pinnedCommit": "9ffd629db30c41ced224ff2afdf132ce9276ae3f",
+      "defaultBranch": "master",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "README describes an evidence-focused drug-interaction knowledge base for pharmacoepidemiology and clinical decision support, with separate assertion/evidence records and evidence-for/evidence-against and assumption links; it says licensing varies by subproject, so no repository-wide open-source conclusion is made and no code, evidence, or interaction rule was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "drug_interact_fda_label_reference",
+      "officialUrl": "https://github.com/robinson-vidva/DrugInteract",
+      "pinnedCommit": "1d1f4129c623c49add57e3634fcea2a00771fbe6",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "The pinned README describes an education-only client-side drug-interaction reference that normalizes drug names with RxNorm and searches openFDA label sections 4, 5, and 7; it presents source wording with five distinct lookup states, does not grade severity, and makes no clinical recommendations",
+        "The pinned README and DATA_LICENSE distinguish MIT application code from remotely queried U.S. government API data and state that no interaction dataset is bundled; a label that does not mention an interaction is not evidence of safety, API coverage is limited, and no code, label text, or UI asset was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "fasteval_parkinsonism_motor_assessment_reference",
+      "officialUrl": "https://github.com/yuyuan871111/fast_eval_Parkinsonism",
+      "pinnedCommit": "5e7b08ecc8495f9c9a69bba7d224fad69f6fbd16",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "model_asset",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes FastEval Parkinsonism as a video-based finger-tapping motor-assessment workflow with hand-keypoint prediction, severity estimation, a report, and a separate Hand Predictor API; this is an adjacent workflow reference, not a validated CDSS or diagnostic claim",
+        "The pinned tree contains src/lib/hand_predictor/utils/saved_models, whose model contents and terms were not reviewed; the README says tests are not implemented. The 2024 study evaluates finger tapping and says original videos are not public; access requires author permission, institutional approval, and a proposal. No source, model, or video was transferred or executed"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/yuyuan871111/fast_eval_Parkinsonism/tree/5e7b08ecc8495f9c9a69bba7d224fad69f6fbd16/src/lib/hand_predictor/utils/saved_models",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "flutter_framework",
@@ -87,15 +1349,28 @@
       "pinnedCommit": "4cf24164269a5ebf0c16a028a00727d0e77bbb05",
       "defaultBranch": "master",
       "declaredSpdx": "BSD-3-Clause",
-      "githubDetectedSpdx": "BSD-3-Clause",
+      "repositoryDetectedSpdx": "BSD-3-Clause",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["Flutter 3.47.0 cross-platform application and accessibility contracts"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Flutter 3.47.0 cross-platform application and accessibility contracts"
+      ],
       "transferStatus": "linked",
       "copyingAuthorized": true,
       "distributionAuthorized": true,
-      "localPaths": ["pubspec.lock", "pubspec.yaml"],
-      "obligations": ["dependency_lock", "generated_license_bundle", "license_notice"]
+      "localPaths": [
+        "pubspec.lock",
+        "pubspec.yaml"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "generated_license_bundle",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "flutter_local_notifications",
@@ -103,15 +1378,28 @@
       "pinnedCommit": "b475bc883dab07da3c1b19e86b0746eb20f14f2f",
       "defaultBranch": "master",
       "declaredSpdx": "BSD-3-Clause",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "declared_not_machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["flutter_local_notifications 22.3.0 platform capability boundaries"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "flutter_local_notifications 22.3.0 platform capability boundaries"
+      ],
       "transferStatus": "linked",
       "copyingAuthorized": true,
       "distributionAuthorized": true,
-      "localPaths": ["pubspec.lock", "pubspec.yaml"],
-      "obligations": ["dependency_lock", "generated_license_bundle", "license_notice"]
+      "localPaths": [
+        "pubspec.lock",
+        "pubspec.yaml"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "generated_license_bundle",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "flutter_pills_reminder",
@@ -119,15 +1407,261 @@
       "pinnedCommit": "d8c9726a09429dcbbbdf1bfcacc0534d07123d69",
       "defaultBranch": "release",
       "declaredSpdx": "MIT",
-      "githubDetectedSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["reminder setup and presentation flow"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "reminder setup and presentation flow"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "food_drug_interaction_detector_reference",
+      "officialUrl": "https://github.com/nexorin9/food-drug-interaction-detector",
+      "pinnedCommit": "c2147d44ae774681042530310a3fdb247ff176fb",
+      "defaultBranch": "main",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "README claims a rule-based meal/medication interaction detector, but the repository has one commit and no LICENSE at the pinned revision; source-available only, open-source status unconfirmed; no rules or code transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/nexorin9/food-drug-interaction-detector/tree/c2147d44ae774681042530310a3fdb247ff176fb",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "fully_open_meditron_llm_cdss_pipeline_reference",
+      "officialUrl": "https://github.com/EPFLiGHT/FullyOpenMeditron",
+      "pinnedCommit": "65d23a58df15cffdc151fd366083cbe4e49615be",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "data_asset",
+        "documentation",
+        "model_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes a research pipeline for LLM-based CDSS training and evaluation: guideline/question/vignette corpus creation and decontamination, model fine-tuning, and benchmark and pairwise-judge runs. These are project descriptions; the citation field is TODO and this review does not establish clinical validation or reproduce outcomes",
+        "Pinned root LICENSE declares Apache-2.0 for repository code. README separately says the corpus has a research-use license and models/data are not approved for clinical deployment; listed model releases have no separately reviewed model-card terms here. Data and model categories remain separate unresolved holds; no source, data, model, or result was copied or executed"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/EPFLiGHT/FullyOpenMeditron/tree/65d23a58df15cffdc151fd366083cbe4e49615be/data/decontaminated_synthetic_moove",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/EPFLiGHT/FullyOpenMeditron/tree/65d23a58df15cffdc151fd366083cbe4e49615be",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "genpres_medication_order_entry_reference",
+      "officialUrl": "https://github.com/informedica/GenPRES",
+      "pinnedCommit": "9ab8234577075808c7a79475058790cbf37f43de",
+      "defaultBranch": "master",
+      "declaredSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "data_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Generic prescribing, preparation, and administration order-entry patterns in an initial Dutch setting; README says direct clinical use requires appropriate validation and regulatory approval, and the full medication cache is not freely distributable; no source, cache, or clinical content transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/informedica/GenPRES/tree/9ab8234577075808c7a79475058790cbf37f43de",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "google_cql_engine_reference",
+      "officialUrl": "https://github.com/google/cql",
+      "pinnedCommit": "b9169ccd54a3a8b0ac928aff338b9f7d6a4b163a",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "experimental Go CQL parser and interpreter used only as a pinned development differential runner; no ELM import/export, general-purpose, or production-compatibility claim"
+      ],
+      "transferStatus": "development_linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": false,
+      "localPaths": [
+        "tool/google_cql_differential/go.mod",
+        "tool/google_cql_differential/go.sum"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "development_only",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "google_fhir_go_reference",
+      "officialUrl": "https://github.com/google/fhir",
+      "pinnedCommit": "31c3b614b7bf203c9b1d53306688b3bd6984e11d",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "FHIR JSON-to-proto support used by the pinned Google CQL local R4 Bundle retriever; development-only test dependency, not an app runtime or FHIR conformance claim"
+      ],
+      "transferStatus": "development_linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": false,
+      "localPaths": [
+        "tool/google_cql_differential/go.mod",
+        "tool/google_cql_differential/go.sum"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "development_only",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "google_fonts_collection_reference",
+      "officialUrl": "https://github.com/google/fonts",
+      "pinnedCommit": "87a44ad3d4535f7b3a5a715a08e8944f144afd06",
+      "defaultBranch": "main",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "The collection README says licenses are family-specific and the repository contains multiple license families; this pin documents the Google Fonts Geist 1.800 import/source pointer only. No collection-wide license is inferred and no Google Fonts repository files are transferred."
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "google_fuzzing_guidance",
+      "officialUrl": "https://github.com/google/fuzzing",
+      "pinnedCommit": "734e55f3cfed1adbb51bf6cb5c65b4c1197b7089",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "deterministic fuzz-target and corpus-promotion boundaries"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "grevaluator_guideline_recommendation_evaluator",
+      "officialUrl": "https://github.com/CEOsys/grevaluator",
+      "pinnedCommit": "769ad73ae6e715d989c652fed9f8bd9b66206cf4",
+      "defaultBranch": "master",
+      "declaredSpdx": "AGPL-3.0",
+      "repositoryDetectedSpdx": "AGPL-3.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "README describes GREvaluator as a Docker-based prototype integrating clinical guideline recommendations with real-time clinical data; the README clone URL and CEOsys repository resolve to the same pinned commit, dated 2023-05-30; README says it generates secrets and sample patient data, which were not run or reviewed; no code, guideline asset, sample data, or clinical recommendation was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "hapi_fhir",
@@ -135,15 +1669,44 @@
       "pinnedCommit": "b22ae16b5c933fc1be6e04787c954ab865db6e71",
       "defaultBranch": "master",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["versioned FHIR interoperability boundary"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "versioned FHIR interoperability boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "hapi_fhir_core",
+      "officialUrl": "https://github.com/hapifhir/org.hl7.fhir.core",
+      "pinnedCommit": "1b90fb13f77bfd6e138db8e96f26a32195fb090d",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Official FHIR validator CLI 6.10.4 used only on synthetic local blood-pressure resources; validator JAR is not shipped"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "health_md_android",
@@ -151,15 +1714,22 @@
       "pinnedCommit": "ba1a228429e51eaa574b32e9e2640569f3e3dfa4",
       "defaultBranch": "main",
       "declaredSpdx": "AGPL-3.0",
-      "githubDetectedSpdx": "AGPL-3.0",
+      "repositoryDetectedSpdx": "AGPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["portable health journal and local-first data ownership"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "portable health journal and local-first data ownership"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "healthlog",
@@ -167,15 +1737,102 @@
       "pinnedCommit": "0a20925d3531ccd6292e5e3efe4a70b714f53049",
       "defaultBranch": "main",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["self-hosted health timeline, recovery, and operator boundaries"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "self-hosted health timeline, recovery, and operator boundaries"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "hl7_davinci_br_payer_reference",
+      "officialUrl": "https://github.com/HL7-DaVinci/br-payer",
+      "pinnedCommit": "5afe15b8afa4450c8f28fe1df2fcf4834accce24",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned README documents payer-side CRD, DTR, and PAS workflows; pinned AGENTS.md describes CDS Hooks and DTR/PAS operations, FHIR Library/CQL/PlanDefinition assets, and PlanDefinition-derived scenarios; architecture only, no clinical rule validation"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/HL7-DaVinci/br-payer/tree/5afe15b8afa4450c8f28fe1df2fcf4834accce24/library",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "hl7_davinci_br_provider_reference",
+      "officialUrl": "https://github.com/HL7-DaVinci/br-provider",
+      "pinnedCommit": "9a3215241308467496a98efc020d89b621c1ac35",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes a provider-side HAPI FHIR JPA reference server for CRD, DTR, and PAS workflows; reviewed as interoperability architecture, not Parkinson nutrition rules or clinical validation"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "in_toto_attestation",
+      "officialUrl": "https://github.com/in-toto/attestation",
+      "pinnedCommit": "2dcd055e9f72e746687c306e35f4e59720ff45be",
+      "defaultBranch": "main",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "versioned statement and envelope identity boundaries"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "joplin",
@@ -183,15 +1840,93 @@
       "pinnedCommit": "ce449a5a50c8beb1e3255fe2b3fbba03603b3e1a",
       "defaultBranch": "dev",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["user-owned synchronization and conflict handling"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "user-owned synchronization and conflict handling"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "langcare_mcp_fhir_cdss_reference",
+      "officialUrl": "https://github.com/langcare/langcare-mcp-fhir",
+      "pinnedCommit": "d3651b3c8cb940be47c5f376255dded4035a14b8",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "clinical_rule_asset",
+        "documentation",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes a FHIR R4 MCP server with search, read, create, and update tools plus more than 40 agent-agnostic workflow guides across eight categories, including medication management and clinical decision support",
+        "This is an agent-facing FHIR connector and workflow-library reference, not an independently evaluated clinical decision engine; workflow skill content remains a separate unresolved license hold and no code, skill, data, or patient content was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/langcare/langcare-mcp-fhir/tree/d3651b3c8cb940be47c5f376255dded4035a14b8/skills",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "md2skill_guideline_skill_library_reference",
+      "officialUrl": "https://github.com/dromlakhani/MD2SKILL",
+      "pinnedCommit": "1e539eba7bff01b3a0a9abd3bd314398b42d2b89",
+      "defaultBranch": "main",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README advertises 888 guideline-derived clinical decision-support prompt skills across 11 specialties in SKILL.md and system-prompt.md formats; this count and the project description are repository claims, not independently validated coverage",
+        "The README claims MIT, but the pinned public root file listing has no separate license file; repository licensing remains NOASSERTION, and the clinical prompt library has its own unresolved asset hold. No prompt, guideline text, code, or patient data was transferred; clinical validation was not established"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/dromlakhani/MD2SKILL/tree/1e539eba7bff01b3a0a9abd3bd314398b42d2b89/skills",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "medication_tracker",
@@ -199,15 +1934,22 @@
       "pinnedCommit": "cfad84170a40378b684a115b6afe7486fa5f5a2a",
       "defaultBranch": "main",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["medication logging and reminder user journey"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "medication logging and reminder user journey"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "medplum",
@@ -215,15 +1957,22 @@
       "pinnedCommit": "b58e422314c7e4fd3c42b5e29b6f2475ab07460f",
       "defaultBranch": "main",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["FHIR application and identity boundaries"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "FHIR application and identity boundaries"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "mhabit",
@@ -231,15 +1980,84 @@
       "pinnedCommit": "e9527bc35a1dd2806991f43cd5d1769e7f75133a",
       "defaultBranch": "main",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["cross-platform local-first export, import, and optional sync"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "cross-platform local-first export, import, and optional sync"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "microsoft_azure_healthcare_digital_quality_cql_sdk",
+      "officialUrl": "https://github.com/microsoft/azure-healthcare-digital-quality-cql-sdk",
+      "pinnedCommit": "c2f1335543d0e385104a42e028fc10141b729a9f",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "api_contract",
+        "documentation",
+        "source_code",
+        "terminology_asset"
+      ],
+      "reviewedConcepts": [
+        "The pinned repository README describes SDK 0.7.0 compiling CQL/ELM to parameterized PostgreSQL SQL over FHIR R4 JSONB; PostgreSQL 16 execution is an adjacent digital-quality engine pattern, not a standalone point-of-care PlanDefinition service",
+        "The README lists CMS122v11, CMS165v9, and ePC-02 measure examples and explicitly says SDK MIT terms do not grant rights to third-party measure specifications, ValueSets, or code systems; those bundled content categories remain separate unresolved asset holds",
+        "The README attributes architectural concepts to Firely/NCQA and states the SDK is not a drop-in replacement; no source code, CQL, measure specification, terminology, fixture, or patient data was copied, linked, installed, or executed locally"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/microsoft/azure-healthcare-digital-quality-cql-sdk/tree/c2f1335543d0e385104a42e028fc10141b729a9f/measures",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/microsoft/azure-healthcare-digital-quality-cql-sdk/tree/c2f1335543d0e385104a42e028fc10141b729a9f/tests/fixtures",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "terminology_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/microsoft/azure-healthcare-digital-quality-cql-sdk/tree/c2f1335543d0e385104a42e028fc10141b729a9f/src/cql_sdk/postgres",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "mollyim_android",
@@ -247,15 +2065,21 @@
       "pinnedCommit": "0e202dda90785771ff8c87526eaaf30c655f54f3",
       "defaultBranch": "main",
       "declaredSpdx": "AGPL-3.0",
-      "githubDetectedSpdx": "AGPL-3.0",
+      "repositoryDetectedSpdx": "AGPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["device-bound secret storage and backup exclusion"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "device-bound secret storage and backup exclusion"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "mpower_researchkit",
@@ -263,15 +2087,21 @@
       "pinnedCommit": "a6afce541a0b228aad19fa6c11d39599d151a1fd",
       "defaultBranch": "master",
       "declaredSpdx": "BSD-3-Clause",
-      "githubDetectedSpdx": "BSD-3-Clause",
+      "repositoryDetectedSpdx": "BSD-3-Clause",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["research data collection and consent separation"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "research data collection and consent separation"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "mrgsolve",
@@ -279,15 +2109,70 @@
       "pinnedCommit": "57d6a6db7a1a063cef764bbf0fbd3fda0a5a6f52",
       "defaultBranch": "main",
       "declaredSpdx": "GPL-2.0",
-      "githubDetectedSpdx": "GPL-2.0",
+      "repositoryDetectedSpdx": "GPL-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["event-driven pharmacometric simulation boundaries"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "event-driven pharmacometric simulation boundaries"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "neurolink_parkinson_screening_candidate",
+      "officialUrl": "https://github.com/nishnarudkar/NeuroLynk-AI",
+      "pinnedCommit": "9f12bbedcc3fac5bbde118ecfc9097ecc6227490",
+      "defaultBranch": "main",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "data_asset",
+        "documentation",
+        "model_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "README describes a hackathon-built Parkinson speech-screening pipeline using 753 vocal features, XGBoost and SHAP, with an LLM summary and FHIR R4 DiagnosticReport; this is a project description, not evidence of clinical validation",
+        "The pinned root contains data and model directories but no LICENSE; source and model/data redistribution rights are unconfirmed and no artifact was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/nishnarudkar/NeuroLynk-AI/tree/9f12bbedcc3fac5bbde118ecfc9097ecc6227490/data",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/nishnarudkar/NeuroLynk-AI/tree/9f12bbedcc3fac5bbde118ecfc9097ecc6227490/models",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "nightscout",
@@ -295,15 +2180,22 @@
       "pinnedCommit": "7e0e77f88fc113a76fe363504125f5b36b8a3fe3",
       "defaultBranch": "master",
       "declaredSpdx": "AGPL-3.0",
-      "githubDetectedSpdx": "AGPL-3.0",
+      "repositoryDetectedSpdx": "AGPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["self-hosting, device data, and operational safety boundaries"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "self-hosting, device data, and operational safety boundaries"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "nlmixr2",
@@ -311,15 +2203,56 @@
       "pinnedCommit": "f1ac84b7504174cd1e57d4e866851714cf4a77ca",
       "defaultBranch": "main",
       "declaredSpdx": "GPL-3.0",
-      "githubDetectedSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "report_asset", "source_code"],
-      "reviewedConcepts": ["population-estimation diagnostics and provenance"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "report_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "population-estimation diagnostics and provenance"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "report_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/nlmixr2/nlmixr2/tree/f1ac84b7504174cd1e57d4e866851714cf4a77ca",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "nutriken_clinical_nutrition_reference",
+      "officialUrl": "https://github.com/abrangel/Nutriken",
+      "pinnedCommit": "5eb45263b5478192f5452c474336f463829ef1ea",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Clinical nutrition and medication/nutrient research platform pattern; root LICENSE is MIT but README adds academic/research-only wording, so scope needs maintainer/legal resolution before transfer; README also requires separate review of external and DrugBank data; no code, rules, or data transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "ohif_viewers",
@@ -327,15 +2260,22 @@
       "pinnedCommit": "6155c587988e351cdbbf4b7261a30f8eba95d083",
       "defaultBranch": "master",
       "declaredSpdx": "MIT",
-      "githubDetectedSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["registered extension lifecycle and provider-owned visualization"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "registered extension lifecycle and provider-owned visualization"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "open_mhealth_shimmer",
@@ -343,15 +2283,22 @@
       "pinnedCommit": "9c1430dc69650f576be031b0ba1df4516cd0af0d",
       "defaultBranch": "master",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["portable health-data envelope separation"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "portable health-data envelope separation"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "open_nutri_tracker",
@@ -359,15 +2306,58 @@
       "pinnedCommit": "9ab14fe3149a24940bef2800451ad9b8cb9df4e9",
       "defaultBranch": "main",
       "declaredSpdx": "GPL-3.0",
-      "githubDetectedSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["nutrition capture and catalog interaction"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "nutrition capture and catalog interaction"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "open_triage_reference",
+      "officialUrl": "https://github.com/dnspangler/openTriage",
+      "pinnedCommit": "7644ca32c7c4ee19de57f70173630bde74de3471",
+      "defaultBranch": "master",
+      "declaredSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "model_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Python REST inference service and pluggable input/model/output frameworks for prehospital risk scores; repository metadata last updated 2025-05-07; no model, dataset, API, or source transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/dnspangler/openTriage/tree/7644ca32c7c4ee19de57f70173630bde74de3471",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "open_wearables_health_sdk",
@@ -375,15 +2365,206 @@
       "pinnedCommit": "b253d06afe2120a6f5ea3142b59b5431d6830802",
       "defaultBranch": "main",
       "declaredSpdx": "MIT",
-      "githubDetectedSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["wearable connector isolation and normalized data boundary"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "wearable connector isolation and normalized data boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "opencds_core_reference",
+      "officialUrl": "https://bitbucket.org/opencds/opencds",
+      "pinnedCommit": "c14c8d8313737c23fe9f4fece56b0322355bce6d",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "OpenCDS official overview documents a Java decision-support engine with CDS Hooks/FHIR and HL7 DSS/vMR client patterns, and lists CQL as future support; pinned root LICENSE.txt declares Apache-2.0; no code or rules transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "opencds_example_reference",
+      "officialUrl": "https://bitbucket.org/opencds/opencds-example",
+      "pinnedCommit": "322a775f08e11e66206160d828ae417179513528",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned root tree lists CDS Hooks service, KnowledgeModule and FHIR R4 KnowledgeModule examples; pinned pom.xml declares Apache-2.0; example rules and adapters were not reviewed or transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://bitbucket.org/opencds/opencds-example/src/322a775f08e11e66206160d828ae417179513528",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "openclinical_proformajs_reference",
+      "officialUrl": "https://gitlab.com/openclinical/proformajs",
+      "pinnedCommit": "642e8559ab67cfdc11ef156b96f4af13bbc62548",
+      "defaultBranch": "main",
+      "declaredSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned PROforma engine separates design-time protocol trees from serializable runtime Enactments; Rewinder can inspect prior states and replay timestamped actions. package.json declares GPL-3.0 and README offers a separate commercial license; no source, engine, protocol, or rule was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://gitlab.com/openclinical/proformajs/-/tree/642e8559ab67cfdc11ef156b96f4af13bbc62548/etc",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "openehr_gdl_guideline_models",
+      "officialUrl": "https://github.com/openEHR/gdl-guideline-models",
+      "pinnedCommit": "f11cfd534d6fb4bd5def85b0c96d6ed17a5defe0",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "openEHR guideline-model catalog README reports 740 CDS examples and explicitly limits them to demonstrations; no clinical guideline or archetype content reviewed or transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/openEHR/gdl-guideline-models/tree/f11cfd534d6fb4bd5def85b0c96d6ed17a5defe0",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "openehr_gdl_tools",
+      "officialUrl": "https://github.com/openEHR/gdl-tools",
+      "pinnedCommit": "15911c891dfae363c60f81e47cbbd10b257c038f",
+      "defaultBranch": "master",
+      "declaredSpdx": "MPL-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Java GDL parser/editor tooling and host platform boundary; root LICENSE.txt declares MPL-2.0 but GitHub does not detect an SPDX license; compatibility with the separately documented GDL2 Editor not established; no code or rules transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "openemr_cdr_reference",
+      "officialUrl": "https://github.com/openemr/openemr",
+      "pinnedCommit": "e01d65b33858e82c11892471001dd3d9963a27bf",
+      "defaultBranch": "master",
+      "declaredSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "EHR-integrated clinical decision rules with bibliographic citation, developer, funding, release and web-reference metadata plus rule-action logging; source-review pattern only"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/openemr/openemr/tree/e01d65b33858e82c11892471001dd3d9963a27bf",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "openfoodfacts_dart",
@@ -391,15 +2572,22 @@
       "pinnedCommit": "1924e749434f356172e4d1465722a2a64f4f91b6",
       "defaultBranch": "master",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["food-catalog client and source attribution boundary"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "food-catalog client and source attribution boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "openmrs_core",
@@ -407,15 +2595,105 @@
       "pinnedCommit": "000d3d8a071f852239d1003cfe34ef823022ce50",
       "defaultBranch": "master",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["versioned clinical record and module boundaries"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "versioned clinical record and module boundaries"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "openmrs_ddi_knowledge_base_reference",
+      "officialUrl": "https://github.com/pbiondich/openmrs-ddi-knowledge-base",
+      "pinnedCommit": "7e2bd2c245bd33550ca1b14951d6955767026775",
+      "defaultBranch": "main",
+      "declaredSpdx": "MPL-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation",
+        "source_code",
+        "terminology_asset"
+      ],
+      "reviewedConcepts": [
+        "README describes a DDInter-derived drug-interaction and drug-condition knowledge base, an RxNorm normalization path, a CIEL crosswalk, and a separately labelled derived tier; its disclaimer says coverage is incomplete and severity was not revalidated for a specific patient",
+        "Pinned ATTRIBUTION.md says DDInter use is subject to its terms and the CIEL crosswalk permission is for OpenMRS-supporting work; the repository MPL-2.0 license and healthcare disclaimer do not resolve those separate data and terminology terms"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/pbiondich/openmrs-ddi-knowledge-base/tree/7e2bd2c245bd33550ca1b14951d6955767026775/out",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/pbiondich/openmrs-ddi-knowledge-base/tree/7e2bd2c245bd33550ca1b14951d6955767026775/out",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "terminology_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/pbiondich/openmrs-ddi-knowledge-base/tree/7e2bd2c245bd33550ca1b14951d6955767026775/out",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "openmrs_module_drools_reference",
+      "officialUrl": "https://github.com/openmrs/openmrs-module-drools",
+      "pinnedCommit": "fd63af4dd7994759e74fb13a5bf9c896537c8ab9",
+      "defaultBranch": "main",
+      "declaredSpdx": "MPL-2.0",
+      "repositoryDetectedSpdx": "MPL-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "OpenMRS-hosted Drools CDS module for patient flags, alerts, tasks, and rule-driven forms; Java server architecture only"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "opentelemetry_collector",
@@ -423,15 +2701,22 @@
       "pinnedCommit": "6725868dfcac2582652d0bd3a7039f154ea8be68",
       "defaultBranch": "main",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["privacy-bounded telemetry pipeline and emergency disable"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "privacy-bounded telemetry pipeline and emergency disable"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "osp_pbpk_model_library",
@@ -439,15 +2724,57 @@
       "pinnedCommit": "07a71b3e025879db5cc46feca1d262cc786ed0f6",
       "defaultBranch": "master",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["data_asset", "documentation", "model_asset", "report_asset"],
-      "reviewedConcepts": ["qualified-model manifest and model applicability evidence"],
+      "artifactTypesReviewed": [
+        "data_asset",
+        "documentation",
+        "model_asset",
+        "report_asset"
+      ],
+      "reviewedConcepts": [
+        "qualified-model manifest and model applicability evidence"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Open-Systems-Pharmacology/OSP-PBPK-Model-Library/tree/07a71b3e025879db5cc46feca1d262cc786ed0f6",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Open-Systems-Pharmacology/OSP-PBPK-Model-Library/tree/07a71b3e025879db5cc46feca1d262cc786ed0f6",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "report_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Open-Systems-Pharmacology/OSP-PBPK-Model-Library/tree/07a71b3e025879db5cc46feca1d262cc786ed0f6",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "osp_pk_sim",
@@ -455,15 +2782,46 @@
       "pinnedCommit": "4d39ebcdeaa9c09e9bf20b54b1f2a1797e40d52c",
       "defaultBranch": "develop",
       "declaredSpdx": "GPL-2.0-only",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "declared_not_machine_detected",
-      "artifactTypesReviewed": ["documentation", "model_asset", "report_asset", "source_code"],
-      "reviewedConcepts": ["replaceable model building blocks and structural alternatives"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "model_asset",
+        "report_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "replaceable model building blocks and structural alternatives"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Open-Systems-Pharmacology/PK-Sim/tree/4d39ebcdeaa9c09e9bf20b54b1f2a1797e40d52c",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "report_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Open-Systems-Pharmacology/PK-Sim/tree/4d39ebcdeaa9c09e9bf20b54b1f2a1797e40d52c",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "osp_suite",
@@ -471,15 +2829,35 @@
       "pinnedCommit": "daf7b6179abe406622bcd13e52e7a9b1e5455669",
       "defaultBranch": "develop",
       "declaredSpdx": "GPL-2.0-only",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "declared_not_machine_detected",
-      "artifactTypesReviewed": ["documentation", "model_asset", "release_package", "source_code"],
-      "reviewedConcepts": ["model qualification and extension-module lifecycle"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "model_asset",
+        "release_package",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "model qualification and extension-module lifecycle"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Open-Systems-Pharmacology/Suite/tree/daf7b6179abe406622bcd13e52e7a9b1e5455669",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "paradigma",
@@ -487,15 +2865,81 @@
       "pinnedCommit": "39abb7865387a30d61d18ae56e01d50fd9eebf5d",
       "defaultBranch": "main",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["Parkinson wearable pipeline and evidence boundary"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Parkinson wearable pipeline and evidence boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "parkinson_helper_reference",
+      "officialUrl": "https://github.com/parkinsonhelper/parkinson-helper",
+      "pinnedCommit": "540235dcbef2891bdeebc9b05e20c9a0c7c16e34",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "README describes a functional iOS MVP for user-configured medication schedules, daily tasks, and blood-pressure capture/history; this is an adjacent self-management app, not a clinical interaction or recommendation engine",
+        "README claims local Core Data storage; no independent privacy or clinical validation review was performed, and no source or UI asset was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "parkinson_progression_cdss_candidate",
+      "officialUrl": "https://github.com/Andreater/parkinson_cdss",
+      "pinnedCommit": "bfe2c677ea5a9a42322a14f466564e56f8f8b9ad",
+      "defaultBranch": "main",
+      "declaredSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "unresolved",
+      "artifactTypesReviewed": [
+        "data_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "README describes an exploratory PPMI/Verily smartwatch project that predicts MDS-UPDRS progression; it reports no statistically significant improvement over baseline at p greater than 0.05 and says the observed follow-up was insufficient",
+        "The pinned root has no LICENSE, so the public source is not confirmed open source; PPMI data access requires an application and signed Data Use Agreement, and no code or data was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/Andreater/parkinson_cdss/tree/bfe2c677ea5a9a42322a14f466564e56f8f8b9ad",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "pbpk_mcp",
@@ -503,15 +2947,70 @@
       "pinnedCommit": "d611ee3cae538ebdcab5fa4f20fe92b6d0513646",
       "defaultBranch": "main",
       "declaredSpdx": "Apache-2.0",
-      "githubDetectedSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["api_contract", "documentation", "source_code"],
-      "reviewedConcepts": ["tool-mediated PBPK orchestration boundary"],
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "tool-mediated PBPK orchestration boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "pharmexpert_ddi_reference",
+      "officialUrl": "https://github.com/AnnaKazarian13/pharmexpert-drug-interactions",
+      "pinnedCommit": "facf0f5ad4404482a3163915699ad9fa45869692",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "data_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "README describes a pairwise drug-interaction screening app with source attribution and an explicit rule that an unlisted pair is not safe; it also states there is no dose, route, or patient-factor engine",
+        "Pinned DATA.md separates MIT application code from DDInter 2.0 data declared CC BY-NC-SA 4.0 and lists separate ONC mappings and DailyMed label overrides; those asset sources and terms remain independently held"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/AnnaKazarian13/pharmexpert-drug-interactions/tree/facf0f5ad4404482a3163915699ad9fa45869692/data",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "data_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/AnnaKazarian13/pharmexpert-drug-interactions/tree/facf0f5ad4404482a3163915699ad9fa45869692/data",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "plate_nutrition",
@@ -519,15 +3018,82 @@
       "pinnedCommit": "5bcfd19e014ac081038da8eaa6e5f7e012503345",
       "defaultBranch": "main",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["meal capture and nutrition presentation"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "meal capture and nutrition presentation"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "prana_acute_care_cdss_reference",
+      "officialUrl": "https://github.com/hodanesthtmcvns-stack/jk",
+      "pinnedCommit": "11fd6cd52d561c428682866b70b187bcb18e7c40",
+      "defaultBranch": "main",
+      "declaredSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned PRANA README lists offline single-file HTML tools for anesthesia and critical care, including NEWS2 triage, ICU and sepsis support, ventilation/PEEP, laboratory alerts, delirium, and inpatient basal-insulin titration; architecture reference only",
+        "Pinned README says the tools support clinical decisions and education and do not replace professional judgement or institutional protocols; no independent clinical validation was established and no software or clinical content was transferred",
+        "The root LICENSE is GNU GPL version 3 and GitHub detects GPL-3.0; embedded scores, algorithms, and guideline-derived rule content remain a separate unresolved asset category"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/hodanesthtmcvns-stack/jk/tree/11fd6cd52d561c428682866b70b187bcb18e7c40",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "reason_framework_cpg_execution_reference",
+      "officialUrl": "https://github.com/reason-healthcare/reason-framework",
+      "pinnedCommit": "2e8d91daf360f184e6c98f700031414829c64921",
+      "defaultBranch": "main",
+      "declaredSpdx": "MIT",
+      "repositoryDetectedSpdx": "MIT",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README documents FHIR R5 ActivityDefinition/$apply and PlanDefinition/$apply, a CDS Hooks/FHIR operation service, a CPG review UI, and Cucumber integration-test support",
+        "Repository license is MIT; no implementation source, clinical guideline content, terminology, test fixture, or patient data was reviewed or transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "rxode2",
@@ -535,15 +3101,71 @@
       "pinnedCommit": "1d6e2a564bdd639129a52dfa7aa1512d9cd27cdc",
       "defaultBranch": "main",
       "declaredSpdx": "GPL-3.0",
-      "githubDetectedSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["unit-bearing ordered dosing and observation events"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "unit-bearing ordered dosing and observation events"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "secure_systems_lab_dsse",
+      "officialUrl": "https://github.com/secure-systems-lab/dsse",
+      "pinnedCommit": "440901313676fedd0e31f16125c302b0df81e006",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "Apache-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "pre-authentication encoding and exact signed-byte binding"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "share_plus",
+      "officialUrl": "https://github.com/fluttercommunity/plus_plugins",
+      "pinnedCommit": "2c5b4935c85fdbfeffea2bd68c9286c064ed8b7c",
+      "defaultBranch": "main",
+      "declaredSpdx": "BSD-3-Clause",
+      "repositoryDetectedSpdx": "BSD-3-Clause",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "share_plus 13.3.0 as a user-initiated system-share adapter for the offline handoff HTML; a reported share action does not prove recipient receipt or saving"
+      ],
+      "transferStatus": "linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": true,
+      "localPaths": [
+        "pubspec.lock",
+        "pubspec.yaml"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "generated_license_bundle",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
     },
     {
       "id": "signal_android",
@@ -551,15 +3173,67 @@
       "pinnedCommit": "0713a470129fd31cf552f4b9947fd035ecd4e842",
       "defaultBranch": "main",
       "declaredSpdx": "AGPL-3.0",
-      "githubDetectedSpdx": "AGPL-3.0",
+      "repositoryDetectedSpdx": "AGPL-3.0",
       "licenseStatus": "machine_detected",
-      "artifactTypesReviewed": ["documentation", "source_code"],
-      "reviewedConcepts": ["device-bound key material and migration boundary"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "device-bound key material and migration boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "snomed_fhir_cds_service_reference",
+      "officialUrl": "https://github.com/IHTSDO/snomed-fhir-cds-service",
+      "pinnedCommit": "be6b5e6a8d636636cdef55310073857c92880574",
+      "defaultBranch": "master",
+      "declaredSpdx": "Apache-2.0",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation",
+        "terminology_asset"
+      ],
+      "reviewedConcepts": [
+        "Pinned README describes a demonstration Java/FHIR R4/CDS Hooks v2 service with SNOMED CT value-set-driven medication and diagnostic rules; bundled rule/terminology assets were not reviewed"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/IHTSDO/snomed-fhir-cds-service/tree/be6b5e6a8d636636cdef55310073857c92880574",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "terminology_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/IHTSDO/snomed-fhir-cds-service/tree/be6b5e6a8d636636cdef55310073857c92880574",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "sparky_fitness",
@@ -567,15 +3241,93 @@
       "pinnedCommit": "f50c1ad41f9030cdee567d60d263886432dd1aab",
       "defaultBranch": "main",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["health dashboard and responsive navigation"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "health dashboard and responsive navigation"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "spice_2_server_reference",
+      "officialUrl": "https://github.com/Medtronic-LABS/spice-2.0-server",
+      "pinnedCommit": "bdc06bbdd855aa65f0692df9218eeb0102bf74b5",
+      "defaultBranch": "main",
+      "declaredSpdx": "BSD-3-Clause",
+      "repositoryDetectedSpdx": "BSD-3-Clause",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Pinned README documents separate CQL, FHIR mapper, offline, notification, authentication, and user service boundaries; architecture reference only, not an evaluated deployment",
+        "Implementation files and clinical rules were not reviewed; no source, service, guideline, or patient content was transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "srdc_smart_on_fhir_cds_reference",
+      "officialUrl": "https://github.com/srdc/smart-on-fhir-cds",
+      "pinnedCommit": "89ddcfb7347c5b51aa55de8296e472d571addf65",
+      "defaultBranch": "main",
+      "declaredSpdx": "GPL-3.0",
+      "repositoryDetectedSpdx": "GPL-3.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "api_contract",
+        "clinical_rule_asset",
+        "documentation",
+        "model_asset"
+      ],
+      "reviewedConcepts": [
+        "README documents CDS Hooks service discovery, per-service FHIR prefetch templates, request-provided or server-fetched prefetch, and cards with suggestions/actions",
+        "Repository README explicitly limits the service to demonstration use and says it is not intended for real-world clinical decision-making",
+        "GitHub reports GPL-3.0 for the repository; NOTICE lists bundled assets with separate terms including QRISK3 LGPL-3.0-or-later plus a disclaimer, ADVANCE CC BY 4.0, ACC/AHA CC BY-NC-ND 3.0, and SCORE2 based on ESC studies; no code, model, coefficients, clinical content, or assets transferred"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/srdc/smart-on-fhir-cds/tree/89ddcfb7347c5b51aa55de8296e472d571addf65",
+          "obligations": [],
+          "localPaths": []
+        },
+        {
+          "artifactType": "model_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/srdc/smart-on-fhir-cds/tree/89ddcfb7347c5b51aa55de8296e472d571addf65",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
     },
     {
       "id": "take_your_meds",
@@ -583,15 +3335,153 @@
       "pinnedCommit": "8b42d6da8883fd36681090235ab02ae1fd7f3ddf",
       "defaultBranch": "main",
       "declaredSpdx": "NOASSERTION",
-      "githubDetectedSpdx": "NOASSERTION",
+      "repositoryDetectedSpdx": "NOASSERTION",
       "licenseStatus": "unresolved",
-      "artifactTypesReviewed": ["documentation", "source_code", "ui_pattern"],
-      "reviewedConcepts": ["medication reminder journey and adherence boundary"],
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code",
+        "ui_pattern"
+      ],
+      "reviewedConcepts": [
+        "medication reminder journey and adherence boundary"
+      ],
       "transferStatus": "concept_only",
       "copyingAuthorized": false,
       "distributionAuthorized": false,
       "localPaths": [],
-      "obligations": []
+      "obligations": [],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "tricc_reference",
+      "officialUrl": "https://github.com/SwissTPH/tricc",
+      "pinnedCommit": "b8ee6dc4a9f0e89372f59beb6d076684bc070f81",
+      "defaultBranch": "develop",
+      "declaredSpdx": "MPL-2.0",
+      "repositoryDetectedSpdx": "MPL-2.0",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "clinical_rule_asset",
+        "documentation"
+      ],
+      "reviewedConcepts": [
+        "Clinical flowchart authoring and form-generation strategies for XLSForm/CHT; pinned README labels OpenMRS development and FHIR output untested; no clinical flow or content reviewed"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "clinical_rule_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/SwissTPH/tricc/tree/b8ee6dc4a9f0e89372f59beb6d076684bc070f81",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "two_stage_conformal_pd_reference",
+      "officialUrl": "https://github.com/rdiazrincon/two-stage_conformal_pd",
+      "pinnedCommit": "4f9fbcd537b9bb0592638e843d9ca018fc34e681",
+      "defaultBranch": "master",
+      "declaredSpdx": "BSD-3-Clause-Clear",
+      "repositoryDetectedSpdx": "BSD-3-Clause-Clear",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "report_asset",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Pinned MLHC 2025/PMLR research implementation stages Parkinson medication-need classification before conformal regression of levodopa-equivalent daily-dose change; the paper reports 631 UF Health inpatient admissions from 2011-2021, and this remains a research-method reference only",
+        "The pinned tree contains a notebook, baseline.json, conformal_metrics.json, and generated figures but no patient-row source file; result summaries and figure assets are separate unresolved report-license holds, with no code, cohort data, or results transferred",
+        "The root LICENSE.md declares Clear BSD terms with a named copyright holder and GitHub detects BSD-3-Clause-Clear; repository license evidence does not substitute for separate report-asset review"
+      ],
+      "transferStatus": "concept_only",
+      "copyingAuthorized": false,
+      "distributionAuthorized": false,
+      "localPaths": [],
+      "obligations": [],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "report_asset",
+          "assetScope": "all_assets_of_type_at_pinned_revision",
+          "declaredSpdx": "NOASSERTION",
+          "detectedSpdx": "NOASSERTION",
+          "licenseStatus": "unresolved",
+          "reviewStatus": "not_reviewed",
+          "sourceLocator": "https://github.com/rdiazrincon/two-stage_conformal_pd/tree/4f9fbcd537b9bb0592638e843d9ca018fc34e681",
+          "obligations": [],
+          "localPaths": []
+        }
+      ]
+    },
+    {
+      "id": "vercel_geist_font_assets",
+      "officialUrl": "https://github.com/vercel/geist-font",
+      "pinnedCommit": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24",
+      "defaultBranch": "main",
+      "declaredSpdx": "OFL-1.1",
+      "repositoryDetectedSpdx": "OFL-1.1",
+      "licenseStatus": "machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "font_asset"
+      ],
+      "reviewedConcepts": [
+        "Pinned Geist source and OFL 1.1 terms; local static Geist and Geist Mono weights plus the full license texts are listed explicitly. Internal TTF name-table versions are 1.800 and 1.701. Local TTF versions were checked, but byte-level equivalence between each static FontTools output and the pinned variable-font source was not established; release review remains separate."
+      ],
+      "transferStatus": "derived",
+      "copyingAuthorized": true,
+      "distributionAuthorized": true,
+      "localPaths": [
+        "assets/fonts/Geist-Bold.ttf",
+        "assets/fonts/Geist-Medium.ttf",
+        "assets/fonts/Geist-Regular.ttf",
+        "assets/fonts/Geist-SemiBold.ttf",
+        "assets/fonts/GeistMono-Medium.ttf",
+        "assets/fonts/GeistMono-Regular.ttf",
+        "assets/fonts/GeistMono-SemiBold.ttf",
+        "assets/fonts/OFL-Geist.txt",
+        "assets/fonts/OFL-GeistMono.txt"
+      ],
+      "obligations": [
+        "license_notice",
+        "reserved_font_name_resolution"
+      ],
+      "artifactLicenseEvidence": [
+        {
+          "artifactType": "font_asset",
+          "assetScope": "transferred_files_at_pinned_revision",
+          "declaredSpdx": "OFL-1.1",
+          "detectedSpdx": "OFL-1.1",
+          "licenseStatus": "machine_detected",
+          "reviewStatus": "reviewed",
+          "sourceLocator": "https://github.com/vercel/geist-font/tree/91158e012bdc4abd59fa066d0eae9fc11c2c9f24/fonts",
+          "obligations": [
+            "license_notice",
+            "reserved_font_name_resolution"
+          ],
+          "localPaths": [
+            "assets/fonts/Geist-Bold.ttf",
+            "assets/fonts/Geist-Medium.ttf",
+            "assets/fonts/Geist-Regular.ttf",
+            "assets/fonts/Geist-SemiBold.ttf",
+            "assets/fonts/GeistMono-Medium.ttf",
+            "assets/fonts/GeistMono-Regular.ttf",
+            "assets/fonts/GeistMono-SemiBold.ttf",
+            "assets/fonts/OFL-Geist.txt",
+            "assets/fonts/OFL-GeistMono.txt"
+          ]
+        }
+      ]
     }
   ]
 }

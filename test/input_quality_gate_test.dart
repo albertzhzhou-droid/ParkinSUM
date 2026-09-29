@@ -128,6 +128,25 @@ void main() {
     expect(r.mechanisticPrimaryEligible, isFalse);
   });
 
+  test('non-finite strength is an invalid blocking dosage', () {
+    final r = gate.evaluate(
+      InputQualityGateInput(
+        medicationEntry: validMed(strength: double.nan),
+        mealComposition: meal([comp()]),
+        userDefinedWindow: window,
+      ),
+    );
+    final dim = r.dimension(InputQualityDimension.medicationDosage)!;
+    expect(dim.status, InputQualityStatus.invalid);
+    expect(
+      dim.findings.any(
+        (finding) => finding.findingId == 'dosage_invalid_shape',
+      ),
+      isTrue,
+    );
+    expect(r.mechanisticPrimaryEligible, isFalse);
+  });
+
   // 3 — product strength does not rescue a missing user dose.
   test('product strength does not rescue missing user dosage', () {
     final r = gate.evaluate(

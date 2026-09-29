@@ -8,7 +8,7 @@ import '../../core/services/firebase_backend.dart';
 import '../../core/services/reminder_notification_privacy_policy.dart';
 import '../../core/services/user_logging_reminder_service.dart';
 import '../../core/state/app_state.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/user_logging_reminder.dart';
 
 class ReminderCenterPage extends StatefulWidget {
@@ -167,6 +167,31 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
       _boundUserScope == userScope &&
       identical(_activeController(), controller);
 
+  Future<void> _reconcileNotificationLocale({required bool updateCopy}) async {
+    final controller = _activeController();
+    final userScope = _boundUserScope;
+    if (controller == null || userScope == null) return;
+    final localeName = Localizations.localeOf(context).toLanguageTag();
+    final succeeded = await controller.reconcileNotificationLocale(
+      appLocaleName: localeName,
+      updateCopy: updateCopy,
+    );
+    if (!_leaseIsCurrent(controller, userScope) || !succeeded || !mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.appI18n.tr(
+            updateCopy
+                ? 'reminders.locale_updated_confirmation'
+                : 'reminders.locale_retained_confirmation',
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final i18n = context.appI18n;
@@ -176,14 +201,14 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
         key: const ValueKey<String>('reminder-account-unavailable'),
         backgroundColor: Colors.transparent,
         extendBodyBehindAppBar: true,
-        appBar: GlassAppBar(title: Text(i18n.tr('reminders.title'))),
+        appBar: PaperAppBar(title: Text(i18n.tr('reminders.title'))),
         body: const SafeArea(child: Center(child: CircularProgressIndicator())),
       );
     }
     return Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      appBar: GlassAppBar(
+      appBar: PaperAppBar(
         title: Text(i18n.tr('reminders.title')),
         actions: [
           if (controller.supportsScheduledDelivery)
@@ -210,6 +235,12 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
             final lastSync = controller.lastSynchronizedAt;
             final scheduleManifest = controller.scheduleManifest;
             final pendingAttestation = controller.pendingIdentityAttestation;
+            final deliveryReadiness = controller.deliveryReadiness;
+            final appLocaleName = Localizations.localeOf(
+              context,
+            ).toLanguageTag();
+            final localeDecisionRequired = controller
+                .notificationLocaleDecisionRequired(appLocaleName);
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 28, 16, 112),
               children: [
@@ -219,7 +250,7 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        GlassCard(
+                        PaperCard(
                           child: ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: const Icon(Icons.info_outline),
@@ -228,8 +259,75 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
                           ),
                         ),
                         const SizedBox(height: 12),
+                        _ReminderDeliveryReadinessCard(
+                          readiness: deliveryReadiness,
+                        ),
+                        if (localeDecisionRequired) ...[
+                          const SizedBox(height: 12),
+                          PaperCard(
+                            child: Column(
+                              key: const ValueKey(
+                                'reminder-locale-reconciliation',
+                              ),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: const Icon(Icons.translate_outlined),
+                                  title: Text(
+                                    i18n.tr(
+                                      'reminders.locale_reconciliation_title',
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    i18n.tr(
+                                      'reminders.locale_reconciliation_body',
+                                    ),
+                                  ),
+                                ),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    OutlinedButton(
+                                      key: const ValueKey(
+                                        'reminder-locale-retain',
+                                      ),
+                                      onPressed: controller.busy
+                                          ? null
+                                          : () => _reconcileNotificationLocale(
+                                              updateCopy: false,
+                                            ),
+                                      child: Text(
+                                        i18n.tr(
+                                          'reminders.locale_retain_action',
+                                        ),
+                                      ),
+                                    ),
+                                    FilledButton(
+                                      key: const ValueKey(
+                                        'reminder-locale-update',
+                                      ),
+                                      onPressed: controller.busy
+                                          ? null
+                                          : () => _reconcileNotificationLocale(
+                                              updateCopy: true,
+                                            ),
+                                      child: Text(
+                                        i18n.tr(
+                                          'reminders.locale_update_action',
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
                         if (!controller.supportsScheduledDelivery)
-                          GlassCard(
+                          PaperCard(
                             child: ListTile(
                               contentPadding: EdgeInsets.zero,
                               leading: const Icon(Icons.language_outlined),
@@ -244,7 +342,7 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
                           const SizedBox(height: 12),
                           Semantics(
                             liveRegion: true,
-                            child: GlassCard(
+                            child: PaperCard(
                               child: ListTile(
                                 key: const ValueKey('reminder-sync-status'),
                                 contentPadding: EdgeInsets.zero,
@@ -266,7 +364,7 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
                                 ReminderPendingIdentityAttestationStatus
                                     .unsupported) ...[
                           const SizedBox(height: 12),
-                          GlassCard(
+                          PaperCard(
                             child: ListTile(
                               key: const ValueKey(
                                 'reminder-pending-identity-attestation',
@@ -321,7 +419,7 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
                         if (controller.supportsScheduledDelivery &&
                             scheduleManifest != null) ...[
                           const SizedBox(height: 12),
-                          GlassCard(
+                          PaperCard(
                             child: ListTile(
                               key: const ValueKey('reminder-schedule-capacity'),
                               contentPadding: EdgeInsets.zero,
@@ -381,7 +479,7 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
                         if (controller.busy && controller.reminders.isEmpty)
                           const Center(child: CircularProgressIndicator())
                         else if (controller.reminders.isEmpty)
-                          GlassCard(
+                          PaperCard(
                             child: ListTile(
                               contentPadding: EdgeInsets.zero,
                               leading: const Icon(Icons.notifications_none),
@@ -481,6 +579,224 @@ class _ReminderCenterPageState extends State<ReminderCenterPage>
   }
 }
 
+class _ReminderDeliveryReadinessCard extends StatelessWidget {
+  const _ReminderDeliveryReadinessCard({required this.readiness});
+
+  final ReminderDeliveryReadiness readiness;
+
+  @override
+  Widget build(BuildContext context) {
+    final i18n = context.appI18n;
+    final platformKey = switch (readiness.profile.platform) {
+      ReminderNotificationPlatform.android => 'android',
+      ReminderNotificationPlatform.iOS => 'ios',
+      ReminderNotificationPlatform.macOS => 'macos',
+      ReminderNotificationPlatform.web => 'web',
+      ReminderNotificationPlatform.windows => 'windows',
+      ReminderNotificationPlatform.linux => 'linux',
+      ReminderNotificationPlatform.unknown => 'unknown',
+    };
+    String evidenceValue(ReminderNotificationCapability capability) =>
+        switch (readiness.profile.evidenceFor(capability)) {
+          ReminderNotificationCapabilityEvidence.artifactVerified => i18n.tr(
+            'reminders.readiness_evidence_artifact_verified',
+          ),
+          ReminderNotificationCapabilityEvidence.implementedUnverified =>
+            i18n.tr('reminders.readiness_evidence_implemented_unverified'),
+          ReminderNotificationCapabilityEvidence.unavailable => i18n.tr(
+            'reminders.readiness_evidence_unavailable',
+          ),
+        };
+    final adapterValue = switch (readiness.profile.deliveryMode) {
+      ReminderNotificationDeliveryMode.planOnly => i18n.tr(
+        'reminders.readiness_adapter_plan_only',
+      ),
+      ReminderNotificationDeliveryMode.scheduled => evidenceValue(
+        ReminderNotificationCapability.scheduleAdapter,
+      ),
+    };
+    final permissionInspection = i18n.tr(
+      'reminders.readiness_inspection_${_permissionInspectionKey(readiness.permissionInspection)}',
+    );
+
+    return Semantics(
+      container: true,
+      child: PaperCard(
+        key: const ValueKey('reminder-delivery-readiness'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.fact_check_outlined),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Semantics(
+                        header: true,
+                        child: Text(
+                          i18n.tr('reminders.readiness_title'),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        i18n.tr('reminders.readiness_contract', {
+                          'platform': i18n.tr(
+                            'reminders.readiness_platform_$platformKey',
+                          ),
+                          'digest': readiness.capabilityContractSha256
+                              .substring(0, 12),
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_local_plan'),
+              value: switch (readiness.localPlan) {
+                ReminderLocalPlanReadiness.noneConfigured => i18n.tr(
+                  'reminders.readiness_local_none',
+                ),
+                ReminderLocalPlanReadiness.savedLocally => i18n.tr(
+                  'reminders.readiness_local_saved',
+                ),
+              },
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_adapter'),
+              value: adapterValue,
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_schedule_request'),
+              value: i18n.tr(
+                'reminders.readiness_request_${_scheduleRequestKey(readiness.scheduleRequest)}',
+              ),
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_permission_request'),
+              value: i18n.tr(
+                'reminders.readiness_permission_${_permissionRequestKey(readiness.permissionRequest)}',
+              ),
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_permission_inspection'),
+              value: permissionInspection,
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_body_tap'),
+              value: evidenceValue(ReminderNotificationCapability.bodyTap),
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_cold_start'),
+              value: evidenceValue(ReminderNotificationCapability.coldStart),
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_background_action'),
+              value: evidenceValue(
+                ReminderNotificationCapability.backgroundAction,
+              ),
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_registry'),
+              value: i18n.tr(
+                'reminders.readiness_registry_${_registryKey(readiness.registry)}',
+              ),
+            ),
+            _ReminderReadinessLine(
+              label: i18n.tr('reminders.readiness_visible_delivery'),
+              value: switch (readiness.visibleDelivery) {
+                ReminderVisibleDeliveryReadiness.unverified => i18n.tr(
+                  'reminders.readiness_visible_unverified',
+                ),
+                ReminderVisibleDeliveryReadiness.artifactVerified => i18n.tr(
+                  'reminders.readiness_visible_artifact_verified',
+                ),
+              },
+            ),
+            const SizedBox(height: 8),
+            Text(
+              i18n.tr('reminders.readiness_boundary'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _scheduleRequestKey(ReminderScheduleRequestReadiness state) =>
+      switch (state) {
+        ReminderScheduleRequestReadiness.notRequested => 'not_requested',
+        ReminderScheduleRequestReadiness.applied => 'applied',
+        ReminderScheduleRequestReadiness.rolledBack => 'rolled_back',
+        ReminderScheduleRequestReadiness.superseded => 'superseded',
+        ReminderScheduleRequestReadiness.unsupported => 'unsupported',
+        ReminderScheduleRequestReadiness.failed => 'failed',
+        ReminderScheduleRequestReadiness.recoveryRequired =>
+          'recovery_required',
+      };
+
+  static String _permissionRequestKey(
+    ReminderPermissionRequestReadiness state,
+  ) => switch (state) {
+    ReminderPermissionRequestReadiness.notRequested => 'not_requested',
+    ReminderPermissionRequestReadiness.returnedAllowed => 'granted',
+    ReminderPermissionRequestReadiness.returnedNotAllowed => 'denied',
+    ReminderPermissionRequestReadiness.adapterUnavailable => 'unavailable',
+    ReminderPermissionRequestReadiness.failed => 'failed',
+  };
+
+  static String _permissionInspectionKey(
+    ReminderPermissionInspectionReadiness state,
+  ) => switch (state) {
+    ReminderPermissionInspectionReadiness.notInspected => 'not_inspected',
+    ReminderPermissionInspectionReadiness.enabled => 'enabled',
+    ReminderPermissionInspectionReadiness.disabled => 'disabled',
+    ReminderPermissionInspectionReadiness.unavailable => 'unavailable',
+    ReminderPermissionInspectionReadiness.failed => 'failed',
+  };
+
+  static String _registryKey(ReminderRegistryReadiness state) =>
+      switch (state) {
+        ReminderRegistryReadiness.notInspected => 'not_inspected',
+        ReminderRegistryReadiness.matched => 'matched',
+        ReminderRegistryReadiness.drift => 'drift',
+        ReminderRegistryReadiness.uninspectable => 'uninspectable',
+        ReminderRegistryReadiness.unsupported => 'unsupported',
+      };
+}
+
+class _ReminderReadinessLine extends StatelessWidget {
+  const _ReminderReadinessLine({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: '$label: $value',
+    excludeSemantics: true,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 2),
+          Text(value),
+        ],
+      ),
+    ),
+  );
+}
+
 class _ReminderTile extends StatelessWidget {
   const _ReminderTile({
     required this.reminder,
@@ -505,7 +821,7 @@ class _ReminderTile extends StatelessWidget {
       minute: reminder.minute,
     ).format(context);
     final days = reminder.weekdays.toList()..sort();
-    return GlassCard(
+    return PaperCard(
       key: ValueKey('reminder-${reminder.id}'),
       child: Column(
         children: [
@@ -770,7 +1086,14 @@ class _ReminderEditorDialogState extends State<_ReminderEditorDialog> {
         weekdays: Set.unmodifiable(_weekdays),
         enabled: widget.initial?.enabled ?? true,
         notificationPrivacyMode: _privacyMode,
-        notificationLocaleCode: Localizations.localeOf(context).toLanguageTag(),
+        notificationLocaleCode:
+            ReminderNotificationPrivacyPolicy.supportedLanguageCode(
+              Localizations.localeOf(context).toLanguageTag(),
+            ),
+        notificationLocaleDecisionCode:
+            ReminderNotificationPrivacyPolicy.supportedLanguageCode(
+              Localizations.localeOf(context).toLanguageTag(),
+            ),
       ),
     );
   }

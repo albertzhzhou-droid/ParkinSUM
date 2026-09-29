@@ -57,7 +57,7 @@ preflight's behavior.
 | D | Raw private exports | Filenames suggesting raw/private dumps or operator logs (`*_export.json`, `firestore_export.*`, `operator_log*`, `patient-dump*`, …) |
 | E | Health narratives | Phrases that read like a real patient story (e.g. "my patient", "diagnosed with", "real medication schedule") |
 | F | Generated/local dirs | Presence of `build/`, `.dart_tool/`, `coverage/`, `node_modules/`, `.firebase/` (should not be published) |
-| G | Firebase public config | Google Web API key inside a **known public client config** path (expected, allowlisted) |
+| G | Firebase client config | Concrete Google API key inside a tracked Firebase client-config path |
 | H | Safety-policy allowlist | Known safe policy/provenance values (e.g. `synthetic_demo_only`, `not_clinically_calibrated`) that must never be flagged |
 
 > Detector definitions are written value-/filename-shaped, and this tool's own
@@ -68,13 +68,14 @@ preflight's behavior.
 
 - **BLOCKER** (fails the gate, exit non-zero): private keys, service-account
   credentials, bearer/OAuth tokens, concrete password/api-key/secret values,
-  DB URLs with real embedded credentials, API-key-like values **outside** the
-  known Firebase client config, concrete PHI-like values in non-synthetic
+  DB URLs with real embedded credentials, concrete Google API keys in any
+  tracked source (including Firebase client config), concrete PHI-like values
+  in non-synthetic
   context, raw private export filenames, and real-health narratives in
   fixture/sample data.
-- **WARN** (surfaced, does not fail): Firebase Web API key in a known public
-  client config, generated/local directory present, weak PHI-like field names,
-  schema-like names, API-key-like values inside generated output.
+- **WARN** (surfaced, does not fail): generated/local directory present, weak
+  PHI-like field names, schema-like names, API-key-like values inside generated
+  output.
 - **INFO** (informational): docs/guidance that legitimately *mention* a phrase
   while warning against it, local-path examples in docs, fixture/placeholder
   credentials (e.g. `localhost`, `user:pass@`), and synthetic/policy values.
@@ -83,11 +84,13 @@ preflight's behavior.
 
 ## 6. Allowlists
 
-- **Known public Firebase client config paths** — `lib/firebase_options.dart`,
-  `android/app/google-services.json`,
-  `ios/Runner/GoogleService-Info.plist`,
-  `macos/Runner/GoogleService-Info.plist`. A Web API key here is expected public
-  client config and stays **WARN**, never BLOCKER.
+- **Firebase client config paths are classification-only** —
+  `lib/firebase_options.dart`, `android/app/google-services.json`,
+  `ios/Runner/GoogleService-Info.plist`, and
+  `macos/Runner/GoogleService-Info.plist`. Firebase client keys are public
+  identifiers rather than backend authorization credentials, but this public
+  repository requires their concrete values to be injected at build time. A
+  committed value is therefore a **BLOCKER**, not an allowlisted warning.
 - **Safety-policy values** — values such as `no_patient_no_subject_no_encounter`,
   `subject_omitted_no_phi`, `not_clinically_calibrated`, and `synthetic_demo_only`
   are never treated as a BLOCKER. Synthetic markers (`synthetic`, `demo`,
@@ -158,7 +161,8 @@ Findings include a `suggested_fix` and, when allowlisted, an `allowlist_reason`.
 
 `test/local_privacy_preflight_test.dart` uses in-memory fixtures only (it never
 scans the whole repo). It covers each rule family, the severity model, the
-Firebase and safety-policy allowlists (which must never produce a BLOCKER), the
+Firebase client-config blocker, safety-policy allowlist (which must never
+produce a BLOCKER), the
 docs/fixture severity split, negated narratives, `--strict` escalation,
 deterministic JSON encoding, the key-level no-PHI shape, and that a clean target
 passes.

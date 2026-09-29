@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "scope": "synthetic-fhir-r4-medication-administration-retrieval",
+  "fhirVersion": "4.0.1",
+  "context": "Patient",
+  "expression": "exists([MedicationAdministration]) and exact status.value retrieval predicates",
+  "cases": [
+    {
+      "id": "status_in_progress_administration",
+      "patientContextId": "synthetic-patient-status-in-progress-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": true,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-in-progress-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-in-progress-administration",
+              "status": "in-progress",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-in-progress-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_not_done_administration",
+      "patientContextId": "synthetic-patient-status-not-done-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": true,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-not-done-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-not-done-administration",
+              "status": "not-done",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-not-done-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_on_hold_administration",
+      "patientContextId": "synthetic-patient-status-on-hold-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": true,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-on-hold-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-on-hold-administration",
+              "status": "on-hold",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-on-hold-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_completed_administration",
+      "patientContextId": "synthetic-patient-status-completed-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": true,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-completed-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-completed-administration",
+              "status": "completed",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-completed-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_entered_in_error_administration",
+      "patientContextId": "synthetic-patient-status-entered-in-error-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": true,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-entered-in-error-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-entered-in-error-administration",
+              "status": "entered-in-error",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-entered-in-error-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_stopped_administration",
+      "patientContextId": "synthetic-patient-status-stopped-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": true,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-stopped-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-stopped-administration",
+              "status": "stopped",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-stopped-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "status_unknown_administration",
+      "patientContextId": "synthetic-patient-status-unknown-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": true,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": true
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-status-unknown-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-status-unknown-administration",
+              "status": "unknown",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-status-unknown-administration"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_administration",
+      "patientContextId": "synthetic-patient-no-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": false,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-no-administration"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "foreign_subject_administration",
+      "patientContextId": "synthetic-patient-foreign-subject-administration",
+      "expectedOutcomes": {
+        "hasAnyAdministration": false,
+        "hasStatusInProgress": false,
+        "hasStatusNotDone": false,
+        "hasStatusOnHold": false,
+        "hasStatusCompleted": false,
+        "hasStatusEnteredInError": false,
+        "hasStatusStopped": false,
+        "hasStatusUnknown": false
+      },
+      "bundle": {
+        "resourceType": "Bundle",
+        "type": "collection",
+        "entry": [
+          {
+            "resource": {
+              "resourceType": "Patient",
+              "id": "synthetic-patient-foreign-subject-administration"
+            }
+          },
+          {
+            "resource": {
+              "resourceType": "MedicationAdministration",
+              "id": "synthetic-ma-foreign-subject-administration",
+              "status": "in-progress",
+              "medicationCodeableConcept": {
+                "text": "Synthetic medication placeholder"
+              },
+              "subject": {
+                "reference": "Patient/synthetic-patient-other"
+              },
+              "effectiveDateTime": "2026-01-15T12:00:00Z"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

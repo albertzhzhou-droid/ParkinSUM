@@ -128,19 +128,181 @@ void main() {
     expect(p, isNull); // no competing LNAA → caller uses protein-source proxy
   });
 
-  test('missing unit marks the profile partial (not silently trusted)', () {
+  test('missing/unknown units are held, never coerced into grams', () {
     final p = extractor.extractFromFdcStyle({
       'foodNutrients': [
         {
-          // 504 = leucine (a competing LNAA) with NO unitName → accepted
-          // provisionally and the profile is flagged partial.
-          'nutrient': {'number': '504', 'name': 'Leucine'},
+          'nutrient': {'number': '504', 'name': 'Leucine', 'unitName': 'g'},
           'amount': 2.1,
+        },
+        {
+          'nutrient': {'number': '510', 'name': 'Valine'},
+          'amount': 1.3,
+        },
+        {
+          'nutrient': {
+            'number': '508',
+            'name': 'Phenylalanine',
+            'unitName': 'IU',
+          },
+          'amount': 1.0,
         },
       ],
     });
     expect(p, isNotNull);
-    expect(p!.partial, isTrue);
+    expect(p!.leucine, 2.1);
+    expect(p.valine, isNull);
+    expect(p.phenylalanine, isNull);
+    expect(p.partial, isTrue);
+    expect(p.nutrientIds, ['504']);
+  });
+
+  test('invalid amino-acid amounts are held fail-closed', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'g'},
+          'amount': 2.0,
+        },
+        {
+          'nutrient': {'number': '503', 'unitName': 'g'},
+          'amount': -1,
+        },
+        {
+          'nutrient': {'number': '510', 'unitName': 'g'},
+          'amount': double.nan,
+        },
+        {
+          'nutrient': {'number': '508', 'unitName': 'g'},
+          'amount': double.infinity,
+        },
+        {
+          'nutrient': {'number': '509', 'unitName': 'g'},
+          'amount': 'not-a-number',
+        },
+      ],
+    });
+    expect(p, isNotNull);
+    expect(p!.leucine, 2.0);
+    expect(p.isoleucine, isNull);
+    expect(p.valine, isNull);
+    expect(p.phenylalanine, isNull);
+    expect(p.tyrosine, isNull);
+    expect(p.partial, isTrue);
+    expect(p.nutrientIds, ['504']);
+  });
+
+  test('valid zero remains distinct from a missing amount', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'g'},
+          'amount': 0,
+        },
+        {
+          'nutrient': {'number': '510', 'unitName': 'g'},
+        },
+      ],
+    });
+    expect(p, isNotNull);
+    expect(p!.leucine, 0);
+    expect(p.valine, isNull);
+    expect(p.competingLnaaGrams, 0);
+    expect(p.partial, isTrue);
+
+    final missingOnly = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504', 'unitName': 'g'},
+        },
+      ],
+    });
+    expect(missingOnly, isNotNull);
+    expect(missingOnly!.leucine, isNull);
+    expect(missingOnly.competingLnaaGrams, isNull);
+    expect(missingOnly.partial, isTrue);
+  });
+
+  test('a sole held competing field remains auditable, not source-absent', () {
+    final p = extractor.extractFromFdcStyle({
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '504'},
+          'amount': 2.1,
+        },
+      ],
+    });
+
+    expect(p, isNotNull);
+    expect(p!.leucine, isNull);
+    expect(p.competingLnaaGrams, isNull);
+    expect(p.partial, isTrue);
+    expect(p.nutrientIds, isEmpty);
+  });
+
+  test('duplicate fields are held and payload ordering is deterministic', () {
+    Map<String, dynamic> payload(List<Map<String, dynamic>> rows) => {
+      'foodNutrients': rows,
+    };
+
+    final rows = <Map<String, dynamic>>[
+      {
+        'nutrient': {'number': '504', 'unitName': 'g'},
+        'amount': 2.0,
+      },
+      {
+        'nutrient': {'number': '504', 'unitName': 'g'},
+        'amount': 3.0,
+      },
+      {
+        'nutrient': {'number': '510', 'unitName': 'g'},
+        'amount': 1.3,
+      },
+    ];
+    final forward = extractor.extractFromFdcStyle(payload(rows));
+    final reverse = extractor.extractFromFdcStyle(
+      payload(rows.reversed.toList(growable: false)),
+    );
+    expect(forward, isNotNull);
+    expect(reverse, isNotNull);
+    expect(forward!.leucine, isNull);
+    expect(forward.valine, 1.3);
+    expect(forward.partial, isTrue);
+    expect(forward.nutrientIds, ['510']);
+    expect(reverse!.toJson(), forward.toJson());
+  });
+
+  test('metadata and units are trimmed; nutrient ids use canonical order', () {
+    final p = extractor.extractFromFdcStyle({
+      'basisType': '  per_100g  ',
+      'dataType': '  Foundation  ',
+      'foodNutrients': [
+        {
+          'nutrient': {'number': '510', 'unitName': ' G '},
+          'amount': '1.3',
+        },
+        {
+          'nutrient': {'number': '504', 'unitName': 'milligrams'},
+          'amount': '2100',
+        },
+        {
+          'nutrient': {'number': '501', 'unitName': 'GRAM'},
+          'amount': 0.3,
+        },
+        {
+          'nutrient': {'number': '503', 'unitName': 'mg'},
+          'amount': 1200,
+        },
+      ],
+    });
+    expect(p, isNotNull);
+    expect(p!.basis, 'per_100g');
+    expect(p.fdcDataType, 'Foundation');
+    expect(p.unit, 'g');
+    expect(p.leucine, closeTo(2.1, 1e-12));
+    expect(p.isoleucine, closeTo(1.2, 1e-12));
+    expect(p.nutrientIds, ['501', '503', '504', '510']);
+    expect(p.partial, isFalse);
   });
 
   test('correct FDC numbers map to the right amino acids', () {

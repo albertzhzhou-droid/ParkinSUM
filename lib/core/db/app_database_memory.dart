@@ -8,6 +8,7 @@ import '../models/user_profile.dart';
 import '../models/recoverable_user_event.dart';
 import 'app_database.dart';
 import 'recoverable_user_event_store.dart';
+import '../../domain/entities/mechanistic_replay_capsule.dart';
 
 /// Process-local [AppDatabase] used by deterministic demos and device tests.
 ///
@@ -26,6 +27,8 @@ class InMemoryAppDatabase implements AppDatabase, RecoverableUserEventStore {
   List<InteractionRuleRecord> _rules = <InteractionRuleRecord>[];
   List<RecoverableUserEventRevision> _eventHistory =
       <RecoverableUserEventRevision>[];
+  final Map<String, MechanisticReplayCapsule> _replayCapsules =
+      <String, MechanisticReplayCapsule>{};
   String? _completedOnboardingOperationId;
 
   @override
@@ -92,6 +95,28 @@ class InMemoryAppDatabase implements AppDatabase, RecoverableUserEventStore {
   @override
   Future<void> saveIntakes(List<Intake> intakes) async {
     _intakes = List<Intake>.from(intakes);
+  }
+
+  @override
+  Future<void> saveMechanisticReplayCapsule(
+    MechanisticReplayCapsule capsule,
+  ) async {
+    final snapshot = canonicalMechanisticReplayCapsuleSnapshot(capsule);
+    final prior = _replayCapsules[snapshot.capsuleSha256];
+    if (prior != null && prior.canonicalJson != snapshot.canonicalJson) {
+      throw StateError('Replay capsule digest collision.');
+    }
+    _replayCapsules[snapshot.capsuleSha256] = snapshot;
+  }
+
+  @override
+  Future<List<MechanisticReplayCapsule>> loadMechanisticReplayCapsules() async {
+    final capsules =
+        _replayCapsules.values
+            .map(canonicalMechanisticReplayCapsuleSnapshot)
+            .toList()
+          ..sort(compareMechanisticReplayCapsulesByGeneratedAt);
+    return List<MechanisticReplayCapsule>.unmodifiable(capsules);
   }
 
   @override

@@ -4,6 +4,7 @@ import '../../../core/models/food_item.dart';
 import '../../../core/utils/texture_support.dart';
 import '../../../core/utils/qualified_value_parser.dart';
 import '../../../domain/entities/cdss_records.dart';
+import 'amino_acid_extractor.dart';
 import 'archive_import_support.dart';
 import 'crosswalk_builders.dart';
 import 'importer_audit.dart';
@@ -75,6 +76,8 @@ class FdcP0Importer {
     final nutrientRows = _loadCsvRows(files, 'nutrient');
     final foodNutrientRows = _loadCsvRows(files, 'food_nutrient');
     final categoryRows = _loadCsvRows(files, 'food_category');
+    final derivationRows = _loadCsvRows(files, 'food_nutrient_derivation');
+    final nutrientSourceRows = _loadCsvRows(files, 'food_nutrient_source');
 
     final nutrientById = {
       for (final row in nutrientRows)
@@ -85,6 +88,14 @@ class FdcP0Importer {
         (row['id'] ?? row['food_category_id'] ?? '').toString():
             (row['description'] ?? row['food_category_description'] ?? '')
                 .toString(),
+    };
+    final derivationById = {
+      for (final row in derivationRows)
+        (row['id'] ?? row['derivation_id'] ?? '').toString(): row,
+    };
+    final nutrientSourceById = {
+      for (final row in nutrientSourceRows)
+        (row['id'] ?? row['food_nutrient_source_id'] ?? '').toString(): row,
     };
     final nutrientRowsByFood = <String, List<Map<String, String>>>{};
     for (final row in foodNutrientRows) {
@@ -106,8 +117,36 @@ class FdcP0Importer {
                         .toString();
                     final nutrient =
                         nutrientById[nutrientId] ?? const <String, String>{};
+                    final derivationId = (item['derivation_id'] ?? '').trim();
+                    final derivation =
+                        derivationById[derivationId] ??
+                        const <String, String>{};
+                    final sourceId = (item['food_nutrient_source_id'] ?? '')
+                        .trim();
+                    final nutrientSource =
+                        nutrientSourceById[sourceId] ??
+                        const <String, String>{};
                     return <String, dynamic>{
                       'amount': item['amount'],
+                      'dataPoints': item['data_points'],
+                      'min': item['min'],
+                      'max': item['max'],
+                      'median': item['median'],
+                      'standardError': item['standard_error'],
+                      'footnote': item['footnote'],
+                      'minYearAcquired': item['min_year_acquired'],
+                      if (derivation.isNotEmpty)
+                        'foodNutrientDerivation': {
+                          'code': derivation['code'],
+                          'description': derivation['description'],
+                          'reference_id': derivationId,
+                        },
+                      if (nutrientSource.isNotEmpty)
+                        'foodNutrientSource': {
+                          'code': nutrientSource['code'],
+                          'description': nutrientSource['description'],
+                          'reference_id': sourceId,
+                        },
                       'nutrient': {
                         'number': (nutrient['number'] ?? '').toString(),
                         'name': (nutrient['name'] ?? '').toString(),
@@ -155,6 +194,8 @@ class FdcP0Importer {
     final crosswalks = <ConceptVariantCrosswalkRecord>[];
     final conceptIds = <String>{};
     final portionAuditGaps = <Map<String, dynamic>>[];
+    final nutrientStatisticsAudit = <Map<String, dynamic>>[];
+    final aminoAcidExtractor = AminoAcidExtractor();
 
     for (final food in foods) {
       final fdcId = '${food['fdcId'] ?? ''}'.trim();
@@ -232,6 +273,70 @@ class FdcP0Importer {
         }
         final rawValue = '$amount';
         nutrientMap[attributeCode] = rawValue;
+        final derivation = _nestedRecord(map['foodNutrientDerivation']);
+        final nutrientSource = _nestedRecord(map['foodNutrientSource']);
+        final methodCode = _nonEmptyString(derivation?['code']);
+        final sourceCode = _nonEmptyString(nutrientSource?['code']);
+        final dataPoints = _nullableInt(
+          map['dataPoints'] ?? map['data_points'],
+        );
+        final minimum = _nullableDouble(map['min']);
+        final maximum = _nullableDouble(map['max']);
+        final median = _nullableDouble(map['median']);
+        final standardError = _nullableDouble(
+          map['standardError'] ?? map['standard_error'],
+        );
+        final derivationDescription = _nonEmptyString(
+          derivation?['description'],
+        );
+        final sourceStatisticsPresent =
+            dataPoints != null ||
+            minimum != null ||
+            maximum != null ||
+            median != null ||
+            standardError != null ||
+            derivation != null ||
+            nutrientSource != null ||
+            map['footnote'] != null ||
+            map['minYearAcquired'] != null ||
+            map['min_year_acquired'] != null;
+        final hasSampleRange =
+            minimum != null &&
+            maximum != null &&
+            (dataPoints == null || dataPoints > 0);
+        final rangeRawValueText = hasSampleRange
+            ? <String>[
+                'source_min=$minimum',
+                'source_max=$maximum',
+                'data_points=${dataPoints ?? 'unknown'}',
+                if (median != null) 'median=$median',
+                if (standardError != null) 'standard_error=$standardError',
+                if (methodCode != null) 'derivation_code=$methodCode',
+                if (sourceCode != null) 'source_code=$sourceCode',
+              ].join('; ')
+            : null;
+        final rangeObservationId = hasSampleRange
+            ? 'obs_${stableHash('$variantId:$attributeCode:fdc_source_range:$rangeRawValueText')}'
+            : null;
+        if (sourceStatisticsPresent) {
+          nutrientStatisticsAudit.add({
+            'fdc_id': fdcId,
+            'attribute_code': attributeCode,
+            'average_amount': amount,
+            'data_points': dataPoints,
+            'min': minimum,
+            'max': maximum,
+            'median': median,
+            'standard_error': standardError,
+            'derivation_code': methodCode,
+            'derivation_description': derivationDescription,
+            'nutrient_source_code': sourceCode,
+            'footnote': map['footnote'],
+            'min_year_acquired':
+                map['minYearAcquired'] ?? map['min_year_acquired'],
+            'range_observation_id': rangeObservationId,
+          });
+        }
         final observation = ObservationRecord(
           observationId:
               'obs_${stableHash('$variantId:$attributeCode:$rawValue')}',
@@ -248,7 +353,7 @@ class FdcP0Importer {
           scopeHash: scopeHash,
           sourceDocId: sourceDocId,
           recordLocator: '$fdcId:$attributeCode',
-          methodCode: null,
+          methodCode: methodCode,
           extractionConfidence: 1,
         );
         observations.add(observation);
@@ -259,14 +364,48 @@ class FdcP0Importer {
             snapshotId: 'facts_fdc_import_v1',
           ),
         );
+        if (hasSampleRange) {
+          observations.add(
+            ObservationRecord(
+              observationId: rangeObservationId!,
+              domain: 'food',
+              entityType: 'food_variant',
+              entityKey: variantId,
+              attributeCode: attributeCode,
+              valueType: 'numeric_interval',
+              value: QualifiedValue(
+                qualifierKind: QualifierKind.range,
+                low: minimum,
+                high: maximum,
+                valueNum: null,
+                rawValueText: rangeRawValueText!,
+              ),
+              unit:
+                  '${nutrient['unitName'] ?? unitForAttributeCode(attributeCode)}',
+              basisType: 'per_100g_edible_part',
+              basisAmount: 100,
+              scopeHash: scopeHash,
+              sourceDocId: sourceDocId,
+              recordLocator: '$fdcId:$attributeCode:sample_range',
+              methodCode: methodCode,
+              extractionConfidence: 1,
+            ),
+          );
+        }
       }
 
       final foodPortions = food['foodPortions'];
+      final foodPortionEvidence = <FoodPortionEvidence>[];
       if (foodPortions is List && foodPortions.isNotEmpty) {
         final summarized = <Map<String, dynamic>>[];
         final fieldNamesObserved = <String>{};
         var unparsed = 0;
-        for (final raw in foodPortions) {
+        for (
+          var portionIndex = 0;
+          portionIndex < foodPortions.length;
+          portionIndex++
+        ) {
+          final raw = foodPortions[portionIndex];
           if (raw is! Map) {
             unparsed += 1;
             continue;
@@ -274,6 +413,13 @@ class FdcP0Importer {
           for (final key in raw.keys) {
             fieldNamesObserved.add(key.toString());
           }
+          final evidence = FoodPortionEvidence.fromFdc(
+            sourceDocId: sourceDocId,
+            sourceFoodId: fdcId,
+            portionIndex: portionIndex,
+            portion: raw,
+          );
+          foodPortionEvidence.add(evidence);
           final amount = raw['amount'];
           final modifier =
               raw['modifier'] ??
@@ -282,16 +428,8 @@ class FdcP0Importer {
           final gramWeight = raw['gramWeight'];
           if (amount == null && modifier == null && gramWeight == null) {
             unparsed += 1;
-            continue;
           }
-          summarized.add({
-            'amount': ?amount,
-            if (modifier != null) 'modifier': modifier.toString(),
-            'gram_weight': ?gramWeight,
-            if (raw['measureUnit'] is Map &&
-                (raw['measureUnit'] as Map)['name'] != null)
-              'measure_unit': (raw['measureUnit'] as Map)['name'],
-          });
+          summarized.add(evidence.toJson());
         }
         portionAuditGaps.add({
           'fdc_id': fdcId,
@@ -302,7 +440,7 @@ class FdcP0Importer {
           ...ImporterAudit.auditGap(
             fieldName: 'foodPortions',
             reason:
-                'foodPortions kept in raw_payload only; no structured portion table is implemented downstream.',
+                'Source-reported portion fields are retained as evidence only; no serving is selected and no nutrient conversion or rescaling is performed.',
             observedCount: foodPortions.length,
             observedKeys: fieldNamesObserved.toList()..sort(),
           ),
@@ -314,6 +452,7 @@ class FdcP0Importer {
         description: '${food['foodCategory'] ?? ''} $dataType',
         categoryName: '${food['foodCategory'] ?? 'other'}',
       );
+      final aminoAcidProfile = aminoAcidExtractor.extractFromFdcStyle(food);
       crosswalks.add(
         buildCrosswalk(
           domain: 'food',
@@ -432,6 +571,8 @@ class FdcP0Importer {
           fatG: displayValueFromRaw(nutrientMap['fat_g'] ?? '0'),
           fiberG: displayValueFromRaw(nutrientMap['fiber_g'] ?? '0'),
           sodiumMg: displayValueFromRaw(nutrientMap['sodium_mg'] ?? '0'),
+          aminoAcidProfile: aminoAcidProfile,
+          foodPortionEvidence: foodPortionEvidence,
         ),
       );
     }
@@ -449,6 +590,7 @@ class FdcP0Importer {
       rawPayload: stringifyPayload({
         'source_label': sourceLabel,
         'food_count': foods.length,
+        'nutrient_statistics_audit': nutrientStatisticsAudit,
         'food_portions_audit': portionAuditGaps,
       }),
     );
@@ -480,6 +622,33 @@ class FdcP0Importer {
     }, orElse: () => const MapEntry('', ''));
     if (match.key.isEmpty) return const <Map<String, String>>[];
     return ArchiveImportSupport.parseDelimitedRows(match.value);
+  }
+
+  Map<String, Object?>? _nestedRecord(Object? value) {
+    if (value is! Map) return null;
+    return <String, Object?>{
+      for (final entry in value.entries) entry.key.toString(): entry.value,
+    };
+  }
+
+  String? _nonEmptyString(Object? value) {
+    final text = value?.toString().trim() ?? '';
+    return text.isEmpty ? null : text;
+  }
+
+  double? _nullableDouble(Object? value) {
+    final number = value is num
+        ? value.toDouble()
+        : double.tryParse('${value ?? ''}'.trim());
+    return number != null && number.isFinite ? number : null;
+  }
+
+  int? _nullableInt(Object? value) {
+    if (value is int) return value;
+    if (value is num && value.isFinite && value == value.roundToDouble()) {
+      return value.toInt();
+    }
+    return int.tryParse('${value ?? ''}'.trim());
   }
 
   String? _attributeCodeFromFdcNutrient({

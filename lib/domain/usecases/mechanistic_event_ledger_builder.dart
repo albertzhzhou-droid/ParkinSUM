@@ -26,11 +26,15 @@ final class MechanisticEventLedgerBuilder {
     for (final medication in context.medicationEvents) {
       final strength = medication.context.strength;
       final unit = medication.context.unit;
+      final doseDimension = _doseDimension(unit);
+      final canonicalUnit = doseDimension == MechanisticLedgerDimension.volume
+          ? 'mL'
+          : 'mg';
       final canonical = MechanisticUnitConverter.convert(
         value: strength,
         fromUnit: unit,
-        toUnit: 'mg',
-        dimension: MechanisticLedgerDimension.mass,
+        toUnit: canonicalUnit,
+        dimension: doseDimension,
       );
       drafts.add(
         _LedgerEventDraft(
@@ -44,14 +48,14 @@ final class MechanisticEventLedgerBuilder {
             MechanisticLedgerMeasurement(
               id: 'dose_strength',
               state: MechanisticLedgerValueState.known,
-              dimension: MechanisticLedgerDimension.mass,
+              dimension: doseDimension,
               origin: synthetic
                   ? MechanisticLedgerValueOrigin.syntheticFixture
                   : MechanisticLedgerValueOrigin.observedOriginal,
               originalValue: strength,
               originalUnit: unit,
               canonicalValue: canonical,
-              canonicalUnit: 'mg',
+              canonicalUnit: canonicalUnit,
             ),
           ],
           attributes: <String, String>{
@@ -176,6 +180,11 @@ final class MechanisticEventLedgerBuilder {
         ],
         attributes: <String, String>{
           'configuration_digest': configurationDigest,
+          'reference_minute': '${context.referenceMinute}',
+          'food_component_event_count': '${context.foodComponentEvents.length}',
+          if (window != null)
+            'window_start_minute': '${window.window.startMinute}',
+          if (window != null) 'window_end_minute': '${window.window.endMinute}',
           if (window != null) 'window_source': window.source,
           if (context.missingFields.isNotEmpty)
             'missing_fields': _sortedJoin(context.missingFields),
@@ -202,10 +211,16 @@ final class MechanisticEventLedgerBuilder {
       ledgerId: ledgerId,
       createdAtUtc: createdAtUtc,
       configurationDigest: configurationDigest,
+      inputBindingSha256: MechanisticLedgerInputBinding.compute(
+        context: context,
+        mealCompositionsById: mealCompositionsById,
+      ),
       boundary:
-          'Read-only replay evidence. The ledger never creates, infers, '
-          'recommends, or reschedules a medication dose and is not a clinical '
-          'record or calibrated pharmacokinetic dataset.',
+          'Input-bound replay and authorization evidence. The readable event '
+          'projection is not a lossless serialization of every engine input. '
+          'The ledger never creates, infers, recommends, or reschedules a '
+          'medication dose and is not a clinical record or calibrated '
+          'pharmacokinetic dataset.',
       events: events,
     );
   }
@@ -214,6 +229,14 @@ final class MechanisticEventLedgerBuilder {
 String _sortedJoin(Iterable<String> values) {
   final sorted = values.toList()..sort();
   return sorted.join(',');
+}
+
+MechanisticLedgerDimension _doseDimension(String unit) {
+  return switch (unit.trim().toLowerCase()) {
+    'ml' || 'l' => MechanisticLedgerDimension.volume,
+    'mcg' || 'ug' || 'mg' || 'g' || 'kg' => MechanisticLedgerDimension.mass,
+    _ => throw ArgumentError('Unsupported mechanistic dose unit: $unit.'),
+  };
 }
 
 MechanisticLedgerMeasurement _projected({

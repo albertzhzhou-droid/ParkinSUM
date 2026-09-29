@@ -557,7 +557,9 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
     } else if (raw.basis == 'per_100g') {
       final portion = component.portionGrams;
       if (portion == null || !portion.isFinite || portion <= 0) return null;
-      profile = raw.scaledToGrams(portion);
+      final scaled = raw.scaledToGrams(portion);
+      if (scaled == null) return null;
+      profile = scaled;
     } else {
       return null;
     }

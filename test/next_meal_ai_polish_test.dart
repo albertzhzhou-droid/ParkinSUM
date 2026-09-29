@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
+import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/entities/cdss_records.dart';
@@ -14,6 +15,63 @@ import 'package:parkinsum_companion/domain/usecases/local_ai_recommendation_adap
 import 'package:parkinsum_companion/domain/usecases/next_meal_recommendation_orchestrator.dart';
 
 void main() {
+  test(
+    'conservative result carries source-range sensitivity assessment',
+    () async {
+      final orchestrator = NextMealRecommendationOrchestrator(
+        conservativeRecommender: GetFoodRecommendationsUseCase(),
+        projectionService: const CdssCatalogProjectionService(
+          database: _EmptyCdssDatabase(),
+        ),
+        localAiAdapter: null,
+      );
+      final foods = <FoodItem>[
+        _foodWithProteinRange(),
+        FoodItem(
+          id: 'fixed_protein',
+          name: 'Fixed protein',
+          category: FoodCategory.other,
+          sourceSystem: 'TEST_FIXTURE',
+          jurisdiction: 'US',
+          proteinG: 12,
+          carbsG: 0,
+          fatG: 0,
+          fiberG: 0,
+          sodiumMg: 0,
+        ),
+      ];
+      final result = await orchestrator.recommend(
+        request: NextMealRecommendationRequest(
+          userProfile: UserProfile.defaults(),
+          history: const [],
+          activeDrugs: <DrugDefinition>[
+            DrugDefinition(
+              id: 'levodopa-fixture',
+              genericName: 'Levodopa',
+              brandNames: const <String>[],
+              tags: const <DrugTag>[DrugTag.levodopaLike],
+              notes: '',
+            ),
+          ],
+          now: DateTime.utc(2026, 9, 26),
+          mode: RecommendationMode.conservativeOnly,
+        ),
+        candidateFoods: foods,
+      );
+
+      final assessment = result.rankSensitivityAssessment;
+      expect(assessment, isNotNull);
+      expect(
+        assessment!.candidateSetSha256,
+        result.candidateSetSnapshot.sha256Digest,
+      );
+      expect(assessment.hasBoundedScenarios, isTrue);
+      expect(assessment.scenariosEvaluated, greaterThan(0));
+      expect(assessment.fullRankStabilityAssessed, isFalse);
+      expect(assessment.unresolvedReasonCounts, isNotEmpty);
+    },
+  );
+
   test('AI copy polish stays on when rerank is blocked by safety gate', () async {
     var callCount = 0;
     final client = MockClient((request) async {
@@ -115,6 +173,67 @@ void main() {
     expect(callCount, 3);
   });
 }
+
+FoodItem _foodWithProteinRange() => FoodItem(
+  id: 'ranged_protein',
+  name: 'Ranged protein',
+  category: FoodCategory.other,
+  sourceSystem: 'TEST_FIXTURE',
+  jurisdiction: 'US',
+  proteinG: 10,
+  carbsG: 0,
+  fatG: 0,
+  fiberG: 0,
+  sodiumMg: 0,
+  nutrientObservationEvidence: <NutrientObservationEvidence>[
+    _proteinObservation(
+      id: 'protein_point',
+      valueNum: 10,
+      low: 10,
+      high: 10,
+      qualifierKind: 'exact',
+      selected: true,
+    ),
+    _proteinObservation(
+      id: 'protein_range',
+      valueNum: null,
+      low: 0,
+      high: 25,
+      qualifierKind: 'range',
+      selected: false,
+    ),
+  ],
+);
+
+NutrientObservationEvidence _proteinObservation({
+  required String id,
+  required double? valueNum,
+  required double? low,
+  required double? high,
+  required String qualifierKind,
+  required bool selected,
+}) => NutrientObservationEvidence(
+  observationId: id,
+  domain: 'food',
+  entityType: 'food_variant',
+  entityKey: 'food_variant_range_fixture',
+  attributeCode: 'protein_g',
+  valueType: 'numeric_interval',
+  valueNum: valueNum,
+  low: low,
+  high: high,
+  qualifierKind: qualifierKind,
+  rawValueText: qualifierKind == 'exact' ? '$valueNum' : '$low-$high',
+  unit: 'g',
+  basisType: 'per_100g_edible_part',
+  basisAmount: 100,
+  scopeHash: 'scope_range_fixture',
+  sourceDocId: 'source_range_fixture',
+  recordLocator: id,
+  methodCode: 'method_range_fixture',
+  extractionConfidence: 1,
+  selectedForLegacyPointProjection: selected,
+);
 
 class _EmptyCdssDatabase implements CdssDatabase {
   const _EmptyCdssDatabase();

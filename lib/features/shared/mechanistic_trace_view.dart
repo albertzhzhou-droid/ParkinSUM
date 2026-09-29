@@ -5,7 +5,7 @@
 /// (which falls back to the banned-phrase-safe `RuleExplanation` defaults).
 ///
 /// Layout philosophy:
-/// - Use one `GlassCard` per trace section.
+/// - Use one `PaperCard` per trace section.
 /// - Show typed band chips, not raw JSON.
 /// - Hide everything behind an `ExpansionTile` so the section stays
 ///   collapsed by default and doesn't clutter the existing UI.
@@ -16,7 +16,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../core/models/interaction_result.dart';
-import '../../core/theme/liquid_glass_theme.dart';
+import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/amino_acid_competition.dart';
 import '../../domain/entities/gastric_emptying_profile.dart';
 import '../../domain/entities/mechanistic_candidate_score.dart';
@@ -46,7 +46,7 @@ class MechanisticConflictTraceCard extends StatelessWidget {
     final trace = persistedTrace ?? typedResult?.toJson();
     if (trace == null) return const SizedBox.shrink();
     final view = MechanisticTraceViewModel.fromJson(trace);
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       child: ExpansionTile(
         tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -59,10 +59,7 @@ class MechanisticConflictTraceCard extends StatelessWidget {
           view.hasModeledOutput
               ? 'Interaction score ${view.scoreText} · severity ${view.severityLabel} · confidence ${view.confidenceLabel}'
               : '${view.abstentionHeading} · ${view.applicabilityLabel}',
-          style: const TextStyle(
-            color: LiquidGlass.onSurfaceMuted,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Paper.inkMuted, fontSize: 12),
         ),
         children: [
           if (usesTypedTrace && view.hasModeledOutput)
@@ -84,7 +81,7 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final view = MechanisticCandidateScoreViewModel.fromScore(score);
-    return GlassCard(
+    return PaperCard(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +105,7 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
           if (view.insufficientContext)
             Text(
               view.firstExplanationLine,
-              style: const TextStyle(color: LiquidGlass.onSurfaceMuted),
+              style: const TextStyle(color: Paper.inkMuted),
             )
           else ...[
             Wrap(
@@ -136,10 +133,7 @@ class MechanisticCandidateScoreLine extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             score.notAdviceText,
-            style: const TextStyle(
-              fontSize: 11,
-              color: LiquidGlass.onSurfaceMuted,
-            ),
+            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
         ],
       ),
@@ -205,34 +199,22 @@ class _TraceBody extends StatelessWidget {
         ],
         Text(
           view.limitationText,
-          style: const TextStyle(
-            fontSize: 11,
-            color: LiquidGlass.onSurfaceMuted,
-          ),
+          style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
         ),
         const SizedBox(height: 4),
         Text(
           view.safetyBoundary,
-          style: const TextStyle(
-            fontSize: 11,
-            color: LiquidGlass.onSurfaceMuted,
-          ),
+          style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
         ),
         const SizedBox(height: 4),
         Text(
           view.notAdviceText,
-          style: const TextStyle(
-            fontSize: 11,
-            color: LiquidGlass.onSurfaceMuted,
-          ),
+          style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
         ),
         const SizedBox(height: 10),
         Text(
           view.sourceRefsLabel,
-          style: const TextStyle(
-            fontSize: 11,
-            color: LiquidGlass.onSurfaceMuted,
-          ),
+          style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
         ),
         // Each source's title and — crucially — what it does *not* establish.
         // The registry has always carried this copy; nothing displayed it.
@@ -294,7 +276,7 @@ class _TraceMiniCharts extends StatelessWidget {
             ),
             const Text(
               'Meal remaining (blue). Sensitivity curve—not a gastric-emptying test.',
-              style: TextStyle(fontSize: 10, color: LiquidGlass.onSurfaceMuted),
+              style: TextStyle(fontSize: 10, color: Paper.inkMuted),
             ),
             const SizedBox(height: 10),
           ],
@@ -325,10 +307,7 @@ class _TraceMiniCharts extends StatelessWidget {
             ),
             Text(
               'Opportunity (purple) · LNAA pressure (red) · overlap ${(competition.overlapWithAbsorptionWindow * 100).toStringAsFixed(1)}%. Unitless educational weights.',
-              style: const TextStyle(
-                fontSize: 10,
-                color: LiquidGlass.onSurfaceMuted,
-              ),
+              style: const TextStyle(fontSize: 10, color: Paper.inkMuted),
             ),
             const SizedBox(height: 12),
           ],
@@ -452,10 +431,7 @@ class _SourceRefLine extends StatelessWidget {
           Text(
             '• ${source.title}'
             '${source.resolved ? ' (${source.evidenceLevel})' : ' (unresolved reference)'}',
-            style: const TextStyle(
-              fontSize: 11,
-              color: LiquidGlass.onSurfaceMuted,
-            ),
+            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
           ),
           if (source.limitation.isNotEmpty)
             Padding(
@@ -465,7 +441,7 @@ class _SourceRefLine extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 10,
                   fontStyle: FontStyle.italic,
-                  color: LiquidGlass.onSurfaceMuted,
+                  color: Paper.inkMuted,
                 ),
               ),
             ),

@@ -35,11 +35,25 @@ void main() {
       await _pumpUi(tester);
       expect(find.byType(SettingsCapabilityPage), findsOneWidget);
 
+      // Settings leads with the profile form; the tools index follows it.
+      await tester.scrollUntilVisible(
+        find.byIcon(Icons.notifications_active_outlined),
+        400,
+        scrollable: find
+            .descendant(
+              of: find.byType(SettingsCapabilityPage),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       final reminderTile = find.ancestor(
         of: find.byIcon(Icons.notifications_active_outlined),
         matching: find.byType(ListTile),
       );
       await tester.ensureVisible(reminderTile);
+      // ensureVisible only schedules the scroll; lay out before tapping so
+      // the tap targets the tile's scrolled position, not its old offset.
+      await tester.pump();
       await tester.tap(reminderTile);
       await _pumpUi(tester);
       expect(find.byType(ReminderCenterPage), findsOneWidget);

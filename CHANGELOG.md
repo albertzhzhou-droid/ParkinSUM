@@ -7,6 +7,50 @@ release language must preserve the educational-only safety boundary and must not
 claim clinical validation, medical-device status, treatment guidance, or
 real-world patient-care readiness.
 
+## Unreleased — September 2026 development update
+
+This source update follows the versioned `v0.2.0-beta` notes. App metadata
+remains `0.2.0+2`; the update does not imply a new tagged release or binary.
+Per-iteration verification and unresolved boundaries are recorded in
+[`docs/APP_EVOLUTION_TIMELINE.md`](docs/APP_EVOLUTION_TIMELINE.md).
+
+### Interface and showcase
+
+- Introduced the Paper design system: cream surfaces, Source Serif 4 and Geist
+  typography, responsive chapter navigation, one entry composer, a shared
+  command palette, and finite transitions that respect reduced motion.
+- Organized the main workspace into Today, Timeline, Next meal, Insights, and
+  Library; evidence, data, operations, and settings tools have separate routes.
+- Reworked the README, documentation index, landing page, and visual wiki to
+  describe the current app and distinguish runtime features from research tools.
+
+### Records and evidence
+
+- Expanded owner-entered observations, explicit medication-intake dose evidence,
+  portable data packages, recoverable event history, and selected-record
+  visit-preparation summaries, with provenance and missingness boundaries.
+- Expanded the Algorithm Observatory with production-derived traces,
+  configuration identities, explanation surfaces, bounded sensitivity views,
+  and lossless replay-capsule support. Static registry coverage remains separate
+  from executable trace coverage.
+- Added synthetic rule-workbench and rule-pack comparison paths; unsupported
+  units, ambiguous context, stale evidence, and configuration drift retain
+  explicit fail-closed behavior rather than silently authorizing interpretation.
+- Extended fixture-based FHIR/CQL/CDS Hooks experiments, cross-runtime checks,
+  source/license inventories, and reviewable verification reports.
+
+### Boundaries
+
+- The mechanistic model remains educational, not clinically calibrated, and
+  `trace_only`: its traces do not select meal times or reorder recommendations.
+- Optional consent-gated loopback AI stays outside the deterministic rule path;
+  its roles are limited to screened-whitelist reranking and wording polish.
+- Public examples and model checks use synthetic data. Owner record workflows
+  may contain sensitive information and must not be used as public demo data.
+- No clinical validation, general standards conformance, physical-device
+  acceptance, production deployment, or permission to reuse third-party
+  clinical/model/data content is established by this update.
+
 ## v0.2.0-beta - 2026-06-02
 
 ### Added

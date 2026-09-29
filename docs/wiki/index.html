@@ -3,203 +3,62 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="ParkinSUM Companion Wiki: an animated, liquid-glass style guide to the educational prototype, architecture, safety boundary, and demo paths."
-    />
-    <title>ParkinSUM Wiki | Liquid Glass Showcase</title>
-    <link rel="icon" href="../assets/brand/parkinsum-icon.png" />
+    <meta name="description" content="A guide to ParkinSUM's Paper workspace, deterministic evidence architecture, synthetic demo route, and research boundaries." />
+    <meta name="theme-color" content="#f6f1e6" />
+    <title>ParkinSUM · The project guide</title>
+    <link rel="icon" href="../assets/brand/parkinsum-icon-warm.png" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="ambient" aria-hidden="true">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-
+    <a class="skip-link" href="#main">Skip to content</a>
     <header class="topbar">
-      <a class="brand-lockup" href="#overview" aria-label="ParkinSUM Wiki home">
-        <img src="../assets/brand/parkinsum-icon.png" alt="" />
-        <span>ParkinSUM Wiki</span>
-      </a>
-      <nav aria-label="Wiki sections">
-        <a href="#overview">Overview</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#demo">Demo</a>
-        <a href="#safety">Safety</a>
-        <a href="#contribute">Contribute</a>
-      </nav>
+      <a class="brand" href="../site/"><img src="../assets/brand/parkinsum-icon-warm.png" alt="" width="34" height="34" /><span>ParkinSUM <small>The project guide</small></span></a>
+      <nav aria-label="Guide sections"><a href="#architecture">Architecture</a><a href="#demo">Demo route</a><a href="#boundary">Boundaries</a><a href="../site/">Showcase →</a></nav>
     </header>
-
-    <main>
-      <section class="hero" id="overview">
-        <div class="hero-copy">
-          <p class="eyebrow">Animated public wiki</p>
-          <h1>Explore the ParkinSUM Companion prototype.</h1>
-          <p>
-            A visual guide to the local-first Flutter app, deterministic
-            food-medication interaction checks, evidence traceability layer, and
-            the boundaries that keep public demos synthetic and educational.
-          </p>
-          <div class="actions" aria-label="Primary wiki actions">
-            <a class="button primary" href="https://github.com/albertzhzhou-droid/ParkinSUM#readme">Read README</a>
-            <a class="button" href="../site/">Open landing page</a>
-            <a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md">
-              Verify locally
-            </a>
-          </div>
-        </div>
-        <div class="hero-orbit" aria-label="ParkinSUM feature map">
-          <img src="../assets/brand/parkinsum-wordmark.png" alt="ParkinSUM" />
-          <div class="orbit-ring ring-a"></div>
-          <div class="orbit-ring ring-b"></div>
-          <div class="orbit-node meal">Meal context</div>
-          <div class="orbit-node medication">Medication context</div>
-          <div class="orbit-node evidence">Evidence trace</div>
-          <div class="orbit-node boundary">Safety boundary</div>
-        </div>
+    <main id="main">
+      <section class="guide-hero">
+        <p class="eyebrow">A reader's guide · September 2026</p>
+        <h1>Follow the context.<br /><em>Inspect the evidence.</em></h1>
+        <p class="lead">ParkinSUM's Paper workspace connects local records with deterministic explanations and a synthetic research workbench. This guide shows where to start, how the layers fit together, and where the evidence stops.</p>
+        <p class="boundary">Educational production-architecture prototype. Synthetic public demos only. Not medical advice or a medical device; no clinical validation is claimed.</p>
       </section>
-
-      <section class="glass-panel summary">
-        <article>
-          <span class="metric">Local-first</span>
-          <p>Captured local-mode scenarios are fixed and non-personal.</p>
-        </article>
-        <article>
-          <span class="metric">Deterministic</span>
-          <p>Rules own classifications, scores, gates, evidence, and traces.</p>
-        </article>
-        <article>
-          <span class="metric">Synthetic only</span>
-          <p>Public screenshots, examples, and walkthroughs must exclude real account identifiers and health data.</p>
-        </article>
-      </section>
-
       <section class="section" id="architecture">
-        <div class="section-heading">
-          <p class="eyebrow">Architecture map</p>
-          <h2>Readable layers from UI to educational output.</h2>
+        <div class="section-heading"><p class="eyebrow">I. Architecture</p><h2>A visible path from context to explanation.</h2></div>
+        <div class="architecture-grid">
+          <article class="chapter"><span class="chapter-number">01 / Interface</span><h3>The Paper chapters</h3><p>Today, Timeline, Next meal, Insights, and Library share one composer and command palette. Evidence and operational tools have separate homes.</p></article>
+          <article class="chapter"><span class="chapter-number">02 / Records</span><h3>Local state &amp; provenance</h3><p>Owner-entered records, catalog metadata, explicit units, and missingness remain distinct. Public demonstrations use fresh synthetic state.</p></article>
+          <article class="chapter"><span class="chapter-number">03 / Interpretation</span><h3>Deterministic rules</h3><p>Supported context passes through applicability and provenance gates. Rules own classifications, scores, safety gates, and evidence.</p></article>
+          <article class="chapter"><span class="chapter-number">04 / Model</span><h3>Educational traces</h3><p>Mechanistic sensitivity views stay trace-only. They do not select meal times, reorder recommendations, or establish patient-specific predictions.</p></article>
+          <article class="chapter"><span class="chapter-number">05 / Optional AI</span><h3>A bounded post-rule role</h3><p>Explicit consent permits only rule-screened, non-BLOCK whitelist reranking or copy polish. Rule-owned results cannot be overridden.</p></article>
+          <article class="chapter"><span class="chapter-number">06 / Review</span><h3>Observatory &amp; replay</h3><p>Production-derived traces, static contracts, synthetic rule cases, and replay artifacts have separate evidence labels and limitations.</p></article>
         </div>
-        <div class="flow-grid">
-          <article class="flow-card">
-            <span>01</span>
-            <h3>Flutter UI</h3>
-            <p>Liquid Glass screens for dashboard, search, meals, and timeline.</p>
-          </article>
-          <article class="flow-card">
-            <span>02</span>
-            <h3>App state</h3>
-            <p>Provider-backed state coordinates catalog, meals, intakes, and copy.</p>
-          </article>
-          <article class="flow-card">
-            <span>03</span>
-            <h3>Local data</h3>
-            <p>Seeded catalogs and SharedPreferences or local database adapters.</p>
-          </article>
-          <article class="flow-card">
-            <span>04</span>
-            <h3>Rule engine</h3>
-            <p>Deterministic checks own classifications, scores, gates, evidence, and traces.</p>
-          </article>
-          <article class="flow-card">
-            <span>05</span>
-            <h3>Optional AI</h3>
-            <p>Post-rule whitelist reranking and copy polish only; no rule-output overrides.</p>
-          </article>
-          <article class="flow-card">
-            <span>06</span>
-            <h3>Review output</h3>
-            <p>Educational summaries, trace bundles, and public verification docs.</p>
-          </article>
-        </div>
+        <p class="section-note"><a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/ARCHITECTURE.md">Read the architecture document ↗</a></p>
       </section>
-
-      <section class="section split" id="demo">
-        <div class="glass-panel demo-card">
-          <p class="eyebrow">Demo path</p>
-          <h2>What a reviewer should open first.</h2>
-          <ol class="timeline">
-            <li>
-              <strong>Open the captured build context.</strong>
-              <span>Browser captures are tied to <code>main@23619f1</code>.</span>
-            </li>
-            <li>
-              <strong>Use the local-mode fixture.</strong>
-              <span>Its scenarios are fixed and non-personal.</span>
-            </li>
-            <li>
-              <strong>Inspect deterministic outputs.</strong>
-              <span>Rule-owned classifications, scores, gates, evidence, and traces stay authoritative.</span>
-            </li>
-            <li>
-              <strong>Read the capture boundary.</strong>
-              <span>“58” belongs only to the captured commit, not a permanent count.</span>
-            </li>
-          </ol>
-        </div>
-        <div class="glass-panel media-card">
-          <img src="../assets/brand/parkinsum-wordmark.png" alt="ParkinSUM" />
-          <div>
-            <h3>Media status</h3>
-            <p>
-              Screenshots and GIFs must follow the public media checklist and
-              exclude real account identifiers and health data. A responsive
-              browser-viewport capture is not physical-device, native-runtime, or
-              accessibility-conformance evidence.
-            </p>
-            <a href="../media-capture-checklist.md">Open media checklist</a>
-          </div>
-        </div>
+      <section class="section" id="demo">
+        <div class="section-heading"><p class="eyebrow">II. Demo route</p><h2>Begin with a synthetic notebook.</h2><p>Run the app with its local backend and a fresh synthetic profile. Keep personal records, real identifiers, credentials, and exports out of public demonstrations.</p></div>
+        <ol class="tour">
+          <li><span class="tour-index">01</span><div><h3>Today → Library → Timeline</h3><p>Show the entry composer, source-aware catalog, and a synthetic record. An empty fresh state is valid; unsupported context should remain explicit.</p></div></li>
+          <li><span class="tour-index">02</span><div><h3>Next meal → explanations</h3><p>Supply a user-defined time window and inspect candidate rationale, missingness, and limitations. A withheld interpretation can be the correct bounded result.</p></div></li>
+          <li><span class="tour-index">03</span><div><h3>Algorithm Observatory</h3><p>Open it from the evidence group or command palette. Compare fixed non-personal fixtures and inspect explanation trees. Static registry contracts are not live trace observations.</p></div></li>
+          <li><span class="tour-index">04</span><div><h3>Synthetic rule test workbench</h3><p>Inspect authored expectations and actual assertions in a disposable workspace. Passing a case does not install a rule or establish clinical correctness.</p></div></li>
+          <li><span class="tour-index">05</span><div><h3>Verification &amp; open boundaries</h3><p>Read the capability matrix and dated timeline. Distinguish a documented check from a recorded successful run and a proposal from an implemented feature.</p></div></li>
+        </ol>
+        <div class="action-row"><a class="button primary" href="https://github.com/albertzhzhou-droid/ParkinSUM#run-locally">Run the local app ↗</a><a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/github-wiki/Demo-Path.md">Full demo walkthrough ↗</a></div>
       </section>
-
-      <section class="section safety" id="safety">
-        <div class="section-heading">
-          <p class="eyebrow">Safety boundary</p>
-          <h2>The wiki keeps the same claims as the app.</h2>
-        </div>
-        <div class="boundary-grid">
-          <article>
-            <h3>Allowed public framing</h3>
-            <p>Educational prototype, architecture review, synthetic-data demo.</p>
-          </article>
-          <article>
-            <h3>Disallowed framing</h3>
-            <p>No diagnosis, treatment, medication timing, diet advice, or care use.</p>
-          </article>
-          <article>
-            <h3>Validation wording</h3>
-            <p>No clinical validation or patient-outcome claims.</p>
-          </article>
-        </div>
+      <section class="safety" id="boundary">
+        <div><p class="eyebrow">III. Evidence limits</p><h2>What the demonstration establishes.</h2><p>A browser capture shows visible rendering at a recorded source state. A passing synthetic case establishes its scoped assertion. Neither establishes clinical validity, complete standards conformance, production readiness, or physical-device and accessibility acceptance.</p><p>The model is not clinically calibrated. ParkinSUM is not for diagnosis, treatment, medication timing, dose or diet guidance, patient care, or emergencies. Owner-entered records may contain sensitive information.</p></div>
+        <div class="safety-actions"><a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/DISCLAIMER.md">Read the disclaimer ↗</a><a class="text-link" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/assets/screenshots/README.md">Capture provenance &amp; retired media ↗</a></div>
       </section>
-
-      <section class="section" id="contribute">
-        <div class="section-heading">
-          <p class="eyebrow">Contribution route</p>
-          <h2>Good changes improve clarity without weakening boundaries.</h2>
-        </div>
-        <div class="link-grid">
-          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/CONTRIBUTING.md">Contribution guide</a>
-          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/contribution-backlog.md">Public backlog</a>
-          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/RULE_ENGINE.md">Rule engine overview</a>
-          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md">
-            Evidence demo guide
-          </a>
-          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/DISCLAIMER.md">Safety disclaimer</a>
-          <a href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/SECURITY.md">Security policy</a>
+      <section class="section guide-links">
+        <div class="section-heading"><p class="eyebrow">Keep reading</p><h2>A reviewable project, one change at a time.</h2></div>
+        <div class="launch-grid">
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/README.md"><h3>Documentation index ↗</h3><p>Records, algorithms, standards experiments, sources, and releases.</p></a>
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CAPABILITY_MATRIX.md"><h3>Capability matrix ↗</h3><p>Implemented features, synthetic evidence, reports, and future work.</p></a>
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md"><h3>Verification guide ↗</h3><p>Commands, expected results, prerequisites, and failure scope.</p></a>
+          <a class="launch-card" href="https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/CONTRIBUTING.md"><h3>Contribute ↗</h3><p>Improve provenance, reproducibility, accessibility, and explanation clarity.</p></a>
         </div>
       </section>
     </main>
-
-    <footer>
-      <p>
-        ParkinSUM Companion is a production-architecture prototype for
-        educational demonstrations. Synthetic/demo data only.
-      </p>
-      <a href="https://github.com/albertzhzhou-droid/ParkinSUM">
-        GitHub repository
-      </a>
-    </footer>
+    <footer><span>ParkinSUM Companion · Educational software prototype</span><a href="../site/">Return to the showcase →</a></footer>
   </body>
 </html>
