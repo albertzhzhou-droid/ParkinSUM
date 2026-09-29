@@ -4,18 +4,21 @@ This roadmap is scoped to the public educational prototype. It does not imply
 clinical validation, real-world patient use, regulatory clearance, or readiness
 for medical decision-making.
 
-## v0.1.0-alpha Showcase
+## Public Showcase Maintenance
 
-- Publish a GitHub release with educational/research-only release notes.
-- Add real app screenshots captured with synthetic data.
+- Publish releases with educational/research-only release notes.
+- Maintain commit-identified runtime browser captures made with fresh synthetic
+  state and fixed, non-personal fixtures.
 - Add a 1-2 minute demo video or GIF showing onboarding, meal entry,
-  medication context, and conflict explanation.
+  medication context, and conflict explanation only after the same pixel-level
+  privacy review used for screenshots.
 - Provide a sample demo dataset or clearly documented demo-mode path.
 - Keep `npm run public:preflight` at zero `BLOCKER` findings.
 
 ## Evidence And Rule Transparency
 
-- Build an evidence-linked rule registry overview for reviewers.
+- Maintain the evidence-linked registry and read-only Algorithm Observatory for
+  reviewers.
 - Document severity labels, source references, and rule trace fields.
 - Add more synthetic examples for levodopa-food interaction awareness,
   protein-timing education, and non-clinical explanation copy.
