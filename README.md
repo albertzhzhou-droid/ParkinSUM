@@ -6,6 +6,7 @@
 
 [Brand assets: icon, logo & GitHub card](docs/media/social-preview.md)
 
+[![Latest release](https://img.shields.io/github/v/release/albertzhzhou-droid/ParkinSUM?label=Latest)](https://github.com/albertzhzhou-droid/ParkinSUM/releases/latest)
 [![CI](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/albertzhzhou-droid/ParkinSUM/actions/workflows/ci.yml)
 ![Flutter](https://img.shields.io/badge/Flutter-Local_first-A84B2A)
 ![Educational Prototype](https://img.shields.io/badge/Scope-Educational_prototype-6E655A)
@@ -28,9 +29,10 @@ calibrated. Public demonstrations use synthetic or sample data only.**
 [Verification guide](docs/PUBLIC_VERIFICATION.md) ·
 [Changelog](CHANGELOG.md)
 
-## September 2026 update
+## v0.2.0 — September 2026 update
 
-The latest development update brings the app, research tools, and public
+The [v0.2.0 release](https://github.com/albertzhzhou-droid/ParkinSUM/releases/tag/v0.2.0)
+brings the app, research tools, and public
 showcase together around the **Paper** interface: warm paper tones, serif
 headings, legible opaque surfaces, and restrained motion that respects reduced
 motion settings. The app bundles Source Serif 4, Geist, and Geist Mono under
@@ -47,8 +49,10 @@ SIL OFL licenses; it does not download these fonts at runtime.
 The [iteration timeline](docs/APP_EVOLUTION_TIMELINE.md) records individual
 changes, checks, unresolved boundaries, and rollback scopes. The
 [capability matrix](docs/CAPABILITY_MATRIX.md) distinguishes implemented,
-fixture-tested, report-only, and future work. This development update does not
-create a new versioned release; package metadata remains `0.2.0+2`.
+fixture-tested, report-only, and future work. The
+[v0.2.0 release notes](docs/release/v0.2.0-notes.md) record this source and
+release-metadata publication, its verification, and remaining limits. Flutter
+app metadata remains `0.2.0+2`; this release does not distribute an app binary.
 
 ## The Paper workspace
 
@@ -240,14 +244,16 @@ or treat unfinished research as a shipped capability.
 
 ## Releases and contact
 
-The versioned beta notes remain at
-[v0.2.0-beta](docs/release/v0.2.0-beta-notes.md); subsequent development is
-summarized in [CHANGELOG.md](CHANGELOG.md). See
-[GitHub Releases](https://github.com/albertzhzhou-droid/ParkinSUM/releases) for
-published artifacts rather than assuming the latest source update includes a
-new binary. Android demo/debug artifacts do not establish production signing
-or app-store readiness. The scoped
-[npm package](packages/npm/README.md) contains release metadata.
+The latest release as of 2026-09-29 is
+[v0.2.0](https://github.com/albertzhzhou-droid/ParkinSUM/releases/tag/v0.2.0).
+Read its [release notes](docs/release/v0.2.0-notes.md) and
+[changelog](CHANGELOG.md), or use GitHub's
+[Latest release](https://github.com/albertzhzhou-droid/ParkinSUM/releases/latest)
+link. It publishes source and the scoped
+[npm release-metadata package](packages/npm/README.md), with no app binary.
+Historical [v0.2.0-beta notes](docs/release/v0.2.0-beta-notes.md) remain available.
+Android demo/debug artifacts from other releases do not establish production
+signing or app-store readiness.
 
 Public contact: **parkinsumservice@gmail.com**.
 

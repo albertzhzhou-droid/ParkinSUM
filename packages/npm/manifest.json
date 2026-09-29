@@ -1,12 +1,12 @@
 {
   "name": "@albertzhzhou-droid/parkinsum-companion",
-  "release": "v0.2.0-beta",
+  "release": "v0.2.0",
   "appPackage": "parkinsum_companion",
   "appVersion": "0.2.0+2",
-  "releaseType": "public-beta-showcase",
-  "prerelease": true,
+  "releaseType": "public-source-showcase",
+  "prerelease": false,
   "repository": "https://github.com/albertzhzhou-droid/ParkinSUM",
-  "releaseNotes": "docs/release/v0.2.0-beta-notes.md",
+  "releaseNotes": "docs/release/v0.2.0-notes.md",
   "changelog": "CHANGELOG.md",
   "capabilityMatrix": "docs/CAPABILITY_MATRIX.md",
   "safetyBoundary": {

@@ -39,9 +39,38 @@ jobs:
           scope: '@albertzhzhou-droid'
 
       - name: Smoke-check the package manifest
-        run: node -e "const r=require('./index.js'); if(!r.release||r.safetyBoundary.isMedicalDevice!==false){process.exit(1)} console.log('manifest ok:', r.release)"
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const pkg = require('./package.json');
+          const release = require('./index.js');
+          assert.equal(release.name, pkg.name);
+          assert.equal(release.release, `v${pkg.version}`);
+          assert.equal(release.prerelease, false);
+          assert.equal(release.safetyBoundary.isMedicalDevice, false);
+          assert.equal(release.safetyBoundary.isClinicallyValidated, false);
+          assert.equal(release.safetyBoundary.providesMedicalAdvice, false);
+          assert.equal(pkg.license, 'Apache-2.0');
+          assert.equal(fs.readFileSync('LICENSE', 'utf8'), fs.readFileSync('../../LICENSE', 'utf8'));
+          if (process.env.RELEASE_TAG) {
+            assert.equal(process.env.RELEASE_TAG, release.release);
+          }
+          console.log('manifest ok:', release.release);
+          NODE
 
       - name: Publish to GitHub Packages
-        run: npm publish
+        run: npm publish --tag latest
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify the latest package version
+        run: |
+          expected="$(node -p "require('./package.json').version")"
+          actual="$(npm view @albertzhzhou-droid/parkinsum-companion dist-tags.latest)"
+          test "$actual" = "$expected"
+          echo "GitHub Packages latest: $actual"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
