@@ -7,10 +7,13 @@ release language must preserve the educational-only safety boundary and must not
 claim clinical validation, medical-device status, treatment guidance, or
 real-world patient-care readiness.
 
-## Unreleased — September 2026 development update
+## v0.2.0 - 2026-09-29
 
-This source update follows the versioned `v0.2.0-beta` notes. App metadata
-remains `0.2.0+2`; the update does not imply a new tagged release or binary.
+The [v0.2.0 release](https://github.com/albertzhzhou-droid/ParkinSUM/releases/tag/v0.2.0)
+publishes the accumulated source update and version `0.2.0` of the scoped
+release-metadata package. Flutter app metadata remains `0.2.0+2`; no app binary
+is distributed. See the [release notes](docs/release/v0.2.0-notes.md) for the
+verified source baseline and remaining limits.
 Per-iteration verification and unresolved boundaries are recorded in
 [`docs/APP_EVOLUTION_TIMELINE.md`](docs/APP_EVOLUTION_TIMELINE.md).
 
@@ -50,6 +53,10 @@ Per-iteration verification and unresolved boundaries are recorded in
 - No clinical validation, general standards conformance, physical-device
   acceptance, production deployment, or permission to reuse third-party
   clinical/model/data content is established by this update.
+- Five required evidence lanes remain incomplete and promotion remains
+  `blockedPendingEvidence`. Complete result-dependency closure remains held.
+- Fourteen known transitive development-dependency alerts remain (six high,
+  eight moderate), refreshed after the 2026-09-29 main-branch dependency scan; the production-only audit does not include those tools.
 
 ## v0.2.0-beta - 2026-06-02
 

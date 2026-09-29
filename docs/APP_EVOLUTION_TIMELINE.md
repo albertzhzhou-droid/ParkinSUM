@@ -8880,3 +8880,65 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   restore retired unsafe screenshots, or reset/clean the shared checkout.
   The branch/PR preserves the complete submitted change for review; protected
   main and Pages require the normal review and merge flow.
+
+## 2026-09-29 — PUBLICATION-20260929-V020 — Latest source release and package
+
+### Baseline and scope
+
+- Committed HEAD and refreshed public `origin/main` at this iteration's start
+  were both `7dfce952e2255f0d529933a2c1b9c76d27f089a3` (merged PR #133).
+  Its source tree matches the previously validated `f41995b` tree exactly.
+  Main CI `36587995352`, public preflight `36587995241`, and Pages deployment
+  `36587993477` succeeded. Publication changes are prepared separately on
+  `release/v0.2.0-publication`; the new release tag identifies their final commit.
+- GitHub release version becomes `v0.2.0` and the npm release-metadata package
+  becomes `0.2.0`. Flutter app metadata remains `0.2.0+2`; no application,
+  persistence, evidence, or CoU schema changes. CoU ledger `2026.09.29-v39`
+  and the three bound configuration/baseline/source identities are unchanged.
+
+### Changes
+
+- Added `docs/release/v0.2.0-notes.md`, explicitly marked Latest as of this date;
+  updated README release links and badge, CHANGELOG, and both CITATION versions.
+  Historical prerelease notes remain intact.
+- Updated `packages/npm/{package.json,manifest.json,README.md}` to identify the
+  normal source-showcase release and pinned documentation links. Included the
+  unchanged root Apache-2.0 text as `packages/npm/LICENSE`, replacing the
+  unusable out-of-package license reference.
+- The npm publishing workflow now checks release/package identity, educational
+  boundary flags, and license inclusion, explicitly publishes with `--tag latest`,
+  and reads back `dist-tags.latest` to require the expected version.
+- The intended publication uses GitHub's official Latest setting with a normal,
+  non-prerelease Release. It does not distribute native or Web app binaries.
+  Package contents are release metadata only. These publication changes use the
+  normal PR review flow for main and do not alter its protection requirements.
+
+### Verification and remaining boundaries
+
+- Release contract tests passed 24/24. Public preflight passed with zero blockers,
+  25 warnings, and four information entries, including the final staged snapshot.
+- An actual npm pack contained only six expected files (5,616 compressed bytes).
+  Packaged LICENSE matched the root byte-for-byte; package exports and TypeScript
+  declaration fields matched the manifest. Workflow YAML and shell syntax passed;
+  its smoke check accepted `v0.2.0` and rejected a mismatched `v9.9.9` event tag.
+  Forty-four release-document links resolved to repository files or known URLs.
+- No runtime code changed, so the already-green application suite was not repeated
+  locally for this metadata iteration. Remote package publication and the Latest
+  display are checked after the release event; this source entry does not claim
+  they have already occurred.
+- The refreshed main-branch dependency scan reports 14 open development-scope
+  alerts (six high, eight moderate), including three surfaced after the merge.
+  Release notes use this current count; no dependency lockfile is changed.
+- Five required evidence lanes remain incomplete, `blockedPendingEvidence` and
+  `trace_only` remain unchanged, and complete result-dependency closure is held.
+  Synthetic engineering checks do not establish independent approval, clinical
+  validity, native-device acceptance, or unresolved third-party content licenses.
+
+### Surgical rollback
+
+- Revert only this iteration's release documentation, citation/package version
+  changes, added package license copy, publishing-workflow checks, and this entry.
+  Preserve the merged application baseline and all existing evidence holds.
+  Published npm versions and immutable GitHub releases are historical artifacts;
+  correct any publication mistake with a subsequent version rather than rewriting
+  the published tag or overwriting its contents.
