@@ -110,7 +110,7 @@ void main() {
     expect(
       kinds(
         base.copyWith(
-          custody: base.custody.copyWith(seedSecret: 'forged-short-seed'),
+          custody: base.custody.copyWith(seedSecret: 'synthetic-bad-seed'),
         ),
       ),
       contains(RandomizationInterimFindingKind.scheduleCommitmentMismatch),

@@ -123,12 +123,26 @@ jobs:
           distribution: temurin
           java-version: "21"
 
+      # Flutter materializes its ignored Android wrapper during an Android
+      # build, not during pub get. This job runs the JVM checks independently.
+      - name: Set up the pinned Gradle runtime for CQF JVM checks
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.14'
+
       - name: Install dependencies
         run: |
           flutter pub get
           npm ci
 
+      # Resolve both compile and runtime artifacts from gradle.lockfile before
+      # the synthetic comparison tasks intentionally run with --offline.
+      - name: Prepare locked CQF JVM dependencies
+        run: gradle --no-daemon -p tool/cqf_jvm_cql_differential --quiet installDist
+
       - name: Compare synthetic CQL across CQL execution paths
+        env:
+          PARKINSUM_CQF_JVM_GRADLE_BIN: gradle
         run: npm run cql:diff
 
       - name: Run public repository preflight

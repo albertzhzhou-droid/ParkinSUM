@@ -240,7 +240,7 @@ Map<String, RandomizationInterimGovernanceAssessment> _mutations(
     ),
     'schedule_commitment_forgery': verifier.verify(
       base.copyWith(
-        custody: base.custody.copyWith(seedSecret: 'forged-short-seed'),
+        custody: base.custody.copyWith(seedSecret: 'synthetic-bad-seed'),
       ),
     ),
     'generator_enrollment_role_collapse': verifier.verify(

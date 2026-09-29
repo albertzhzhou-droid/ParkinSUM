@@ -769,24 +769,27 @@ void main() {
       find.byKey(const Key('observatory-cou-integrity-status')),
       findsOneWidget,
     );
-    expect(find.textContaining('LEDGER DRIFT · 4 findings'), findsOneWidget);
+    expect(
+      find.textContaining('LEDGER INTEGRITY VERIFIED · 0 drift findings'),
+      findsOneWidget,
+    );
     expect(
       find.textContaining('ledger.current_configuration_identity_mismatch'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.textContaining(
         'ledger.evidence_synthesis_registry_identity_mismatch',
       ),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.textContaining('ledger.latest_configuration_mismatch'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.textContaining('ledger.latest_evidence_synthesis_registry_mismatch'),
-      findsOneWidget,
+      findsNothing,
     );
     expect(
       find.byKey(const Key('cou-evidence-implementationVerification')),

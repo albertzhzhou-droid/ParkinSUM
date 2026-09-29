@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/algorithm_sdk/algorithm_configuration_identity.dart';
 import 'package:parkinsum_companion/domain/entities/context_of_use_requalification.dart';
+import 'package:parkinsum_companion/domain/entities/evidence_synthesis.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_medication_applicability.dart';
 
 void main() {
@@ -17,7 +18,7 @@ void main() {
     );
   }
 
-  test('unrecorded configuration and evidence registry drift fails closed', () {
+  test('bound configuration and evidence registry retain evidence holds', () {
     final ledger = currentLedger();
 
     expect(
@@ -30,24 +31,14 @@ void main() {
     );
     expect(
       ledger.currentConfigurationSha256,
-      isNot(
-        ContextOfUseRequalificationLedger.expectedCurrentConfigurationSha256,
-      ),
+      ContextOfUseRequalificationLedger.expectedCurrentConfigurationSha256,
     );
-    expect(
-      ledger.integrityReasons,
-      containsAll(const [
-        'ledger.current_configuration_identity_mismatch',
-        'ledger.evidence_synthesis_registry_identity_mismatch',
-        'ledger.latest_configuration_mismatch',
-        'ledger.latest_evidence_synthesis_registry_mismatch',
-      ]),
-    );
+    expect(ledger.integrityReasons, isEmpty);
     expect(
       ledger.evidenceSynthesisAssessment.registrySha256,
       '3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c',
     );
-    expect(ledger.integrityVerified, isFalse);
+    expect(ledger.integrityVerified, isTrue);
     expect(ledger.evidenceSynthesisAssessment.heldBodies, hasLength(5));
     expect(ledger.evidenceSynthesisAssessment.blockedBodies, isEmpty);
     expect(ledger.evidenceSynthesisAssessment.requiresRequalification, isTrue);
@@ -174,6 +165,42 @@ void main() {
     );
     expect(ledger.integrityVerified, isFalse);
     expect(ledger.canPromoteResearchTraceOnly, isFalse);
+  });
+
+  test('unrecorded evidence registry drift fails closed before promotion', () {
+    final bodies = EvidenceSynthesisRegistry.current.bodies;
+    final changedRegistry = EvidenceSynthesisRegistry(
+      bodies: [
+        bodies.first.copyWith(
+          reviewArtifactIds: [
+            ...bodies.first.reviewArtifactIds,
+            'synthetic.unrecorded-review-artifact',
+          ],
+        ),
+        ...bodies.skip(1),
+      ],
+    );
+    final ledger = ContextOfUseRequalificationLedger.current(
+      manifest: MechanisticApplicabilityManifest.current,
+      configurationSha256:
+          AlgorithmConfigurationIdentity.defaults().sha256Digest,
+      evidenceAsOfUtc: evidenceAsOfUtc,
+      evidenceSynthesisRegistry: changedRegistry,
+    );
+
+    expect(
+      ledger.integrityReasons,
+      containsAll(const [
+        'ledger.evidence_synthesis_registry_identity_mismatch',
+        'ledger.latest_evidence_synthesis_registry_mismatch',
+      ]),
+    );
+    expect(ledger.integrityVerified, isFalse);
+    expect(ledger.canPromoteResearchTraceOnly, isFalse);
+    expect(
+      ledger.latest.releaseDisposition,
+      CouReleaseDisposition.blockedPendingEvidence,
+    );
   });
 
   test('committed record and evidence collections are immutable', () {

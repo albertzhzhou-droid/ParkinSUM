@@ -8837,10 +8837,38 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Browser QA completed Add meal → save → Timeline/Today using one synthetic
   banana meal, zero selected medications, and no AI consent. Static pages
   passed local-link/image checks and desktop/mobile overflow/render review.
-- Final composed governance verification and rebuilt Web artifact are recorded
-  below when complete. Local checks do not substitute for GitHub CI, required
-  independent review, physical-device testing, native-speaker review,
-  scientific/clinical validation, or unresolved distribution licensing holds.
+- Chrome configuration-pin regression passed (1/1); both external digest
+  pins matched. The full page's debug-browser initialization took 6m26s,
+  so this is correctness evidence, not a Web performance claim.
+- The first remote Flutter job passed all tests, Web/Android builds, privacy
+  artifact checks, and generated notices; the separate public preflight passed.
+  Node CQL comparison exposed an absent ignored Android wrapper and cold JVM
+  dependencies. CI now selects official Gradle 8.14 explicitly and prepares
+  locked compile/runtime artifacts before the unchanged offline comparison.
+  An empty-cache preparation and five-comparator/30-case replay passed locally.
+- The first composed run passed 52/55 gates and exposed three stale/misclassified
+  inputs. Rebound three mechanically generated sampling report fingerprints
+  and the CoU ledger's current configuration/evidence-synthesis identities under
+  the existing authorization. CoU ledger revision is now `2026.09.29-v39`
+  (schema v1 unchanged); original synthetic timestamps, five evidence HOLDs,
+  and `blockedPendingEvidence` remain. Added an explicit registry-drift negative
+  test and retained the configuration-drift test. The three root configuration,
+  comparison-baseline, and source-bundle digests remained byte-identical.
+- Reworded three intentionally invalid credential-like test literals to explicit
+  synthetic/placeholder values; safety assertions and the privacy scanner were
+  unchanged. Privacy preflight then passed over 1,321 text files with zero
+  blockers. The five affected test files passed 42/42 and the Observatory
+  interaction case passed 1/1 with zero identity mismatches and promotion blocked.
+  The final 55-gate composed rerun, rebuilt Web artifact, and new remote CI run
+  are pending at this corrective commit; their outcomes are reported on the PR.
+- The production-only npm audit excludes development tools. GitHub's 11 existing
+  transitive development-dependency alerts (five high, six moderate) remain
+  applicable; the CQL dependency also adds a path to the already-flagged
+  `csv-parse` advisory through `@lhncbc/ucum-lhc`. No broad dependency upgrade is
+  included. Do not interpret the scoped zero production audit as zero alerts.
+- Local checks do not substitute for required independent review, physical-device
+  testing, native-speaker review, scientific/clinical validation, or unresolved
+  distribution licensing holds.
 
 ### Surgical rollback
 

@@ -595,7 +595,7 @@ void main() {
       () {
         final cases = <({String url, String method, String? expected})>[
           (
-            url: 'https://user:password@api.nal.usda.gov/fdc/v1/food/12345',
+            url: 'https://username:password@api.nal.usda.gov/fdc/v1/food/12345',
             method: 'GET',
             expected: 'userinfo_rejected',
           ),

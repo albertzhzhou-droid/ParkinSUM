@@ -1558,6 +1558,9 @@ test('prospective credibility planning and execution independence stay separate'
 
   assert.equal(plan.status, 'queued');
   assert.match(plan.currentGap, /2026\.09\.21-v36/);
+  assert.match(plan.currentGap, /historical 2026-09-21 checkpoint/);
+  assert.match(plan.currentGap, /2026-09-29 mechanical rebind.*2026\.09\.29-v37/);
+  assert.match(plan.currentGap, /preserves the original synthetic timestamps, all seven held evidence lanes/);
   assert.match(
     plan.currentGap,
     /918baef0e5864928bcd20b8e8e855280f8fc1a306b956110498f9d7b06997940 at 2026\.09\.21-v41/,
@@ -1569,6 +1572,13 @@ test('prospective credibility planning and execution independence stay separate'
   assert.ok(split.dependencies.includes('calibration_dataset_governance'));
   assert.equal(split.status, 'queued');
   assert.match(split.currentGap, /2026\.09\.21-v35/);
+  assert.match(split.currentGap, /historical 2026-09-21 checkpoint/);
+  assert.match(split.currentGap, /2026-09-29 mechanical rebind.*2026\.09\.29-v36/);
+  assert.match(split.currentGap, /preserves all original synthetic data, evidence bodies and timestamps/);
+  for (const item of [plan, split]) {
+    assert.match(item.currentGap, /2026\.09\.29-v52 configuration SHA-256 e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05/);
+    assert.match(item.currentGap, /promotion remains blocked/);
+  }
   assert.match(
     split.currentGap,
     /918baef0e5864928bcd20b8e8e855280f8fc1a306b956110498f9d7b06997940 at 2026\.09\.21-v41/,
@@ -2341,27 +2351,27 @@ test('next-wave applicability, oracle, terminology, privacy, and durability gate
   assert.match(applicability.acceptanceCriteria.join(' '), /notApplicable/);
   assert.ok(requalification.dependencies.includes(applicability.id));
   assert.equal(requalification.status, 'queued');
-  assert.match(requalification.currentGap, /2026\.09\.21-v38/);
-  assert.match(requalification.currentGap, /2026\.09\.28-v51/);
+  assert.match(requalification.currentGap, /2026-09-29 rebind.*2026\.09\.29-v39/);
+  assert.match(requalification.currentGap, /2026\.09\.29-v52/);
   assert.match(
     requalification.currentGap,
-    /547c92ae42945b10f91b484e194973f8701fb57f2fb1018bcfca0d31ac71978a/,
+    /e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05/,
   );
   assert.match(
     requalification.currentGap,
-    /ledger\.current_configuration_identity_mismatch/,
+    /8f05e6ff6ad02ace71b621ea840cb795831d63562ebd91b54ae8139ab999dcc2/,
   );
   assert.match(
     requalification.currentGap,
-    /ledger\.latest_configuration_mismatch/,
+    /Current identity and structural integrity are verified/,
   );
   assert.match(
     requalification.currentGap,
-    /ledger\.evidence_synthesis_registry_identity_mismatch/,
+    /four historical identity mismatch findings no longer describe the current ledger/,
   );
   assert.match(
     requalification.currentGap,
-    /ledger\.latest_evidence_synthesis_registry_mismatch/,
+    /All five evidence lanes remain held/,
   );
   assert.match(
     requalification.currentGap,
