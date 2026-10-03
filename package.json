@@ -131,18 +131,18 @@
     "catalog:inventory": "node tool/run_catalog_inventory.mjs"
   },
   "dependencies": {
-    "firebase-admin": "^14.2.0"
+    "firebase-admin": "^14.5.0"
   },
   "overrides": {
     "uuid": "^11.1.1"
   },
   "devDependencies": {
-    "@cqframework/cql": "5.3.0",
-    "@firebase/rules-unit-testing": "^5.0.1",
-    "@playwright/cli": "0.1.18",
-    "cql-exec-fhir": "2.1.6",
+    "@cqframework/cql": "5.4.0",
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/cli": "0.1.22",
+    "cql-exec-fhir": "2.2.0",
     "cql-execution": "3.3.2",
-    "firebase": "^12.17.1",
-    "firebase-tools": "15.27.0"
+    "firebase": "^12.19.0",
+    "firebase-tools": "15.32.0"
   }
 }
