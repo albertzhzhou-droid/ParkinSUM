@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload the review proposal
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: open-source-drift-proposal
           path: build/open_source_drift_proposal/
