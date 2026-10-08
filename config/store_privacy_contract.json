@@ -2,14 +2,14 @@
   "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
   "schemaVersion": 1,
   "review": {
-    "reviewedAt": "2026-09-29",
+    "reviewedAt": "2026-10-08",
     "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository source facts refreshed for the public source update; previously recorded built-artifact facts are not re-attested. This automated review is not human privacy approval or an App Store Connect or Play Console submission receipt."
+    "approvalScope": "Repository source facts refreshed for the public source update and the 2026-10-08 patch-level Node security update (@fastify/busboy, @grpc/grpc-js, brace-expansion; server and tooling packages only, no Flutter app dependency change); previously recorded built-artifact facts are not re-attested. This automated review is not human privacy approval or an App Store Connect or Play Console submission receipt."
   },
   "lockIdentities": {
     "pubspec.lock": "270beb8b2ea01f4eb8d02827f06228577c129125c9fb7bb151afc28bc502e17b",
-    "package-lock.json": "c3e5439063f8c3f4312e78bf4da95a1c64808d01a27cd2ef6afbbc99a06b5f8c",
+    "package-lock.json": "74b88a8e8e6992248197a8676ab6da7f35abf3f465935f59cd8acddb28ee0e68",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
   },
