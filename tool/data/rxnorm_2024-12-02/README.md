@@ -16,7 +16,9 @@ when it lies wholly inside a window. Selected concepts:
   carbidopa 2019, levodopa 6375, metformin 6809, midodrine 6963,
   selegiline 9639, trihexyphenidyl 10811, ferrous sulfate 24947,
   entacapone 60307, ropinirole 72302, tolcapone 72937, rasagiline 134748,
-  rivastigmine 183379, polyethylene glycol 3350 221147.
+  rivastigmine 183379, polyethylene glycol 3350 221147, rotigotine 616739,
+  pramipexole 746741, droxidopa 1489913, pimavanserin 1791685,
+  istradefylline 2199015, opicapone 2362167.
 - Clinical drugs (SCD, with linked NDC products): bromocriptine 2.5 mg
   tablet 197411, bromocriptine 5 mg capsule 197412, carbidopa/levodopa
   10/100, 25/100 and 25/250 mg tablets (197443, 197444, 197445) and 25/100

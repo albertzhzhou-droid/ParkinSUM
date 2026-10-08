@@ -15,7 +15,7 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 ## Known gaps
 
 - Source documents not carrying live data: 6 of 43
-- Catalog entries with a placeholder external code: 27
+- Catalog entries with a placeholder external code: 22
 
 ## By source family (documents)
 
@@ -106,8 +106,8 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 
 | Value | Count |
 | --- | --- |
-| RXNORM | 16 |
-| DAILYMED | 9 |
+| RXNORM | 21 |
+| DAILYMED | 4 |
 | HEALTH_CANADA_DPD | 1 |
 
 ## By jurisdiction (medications)

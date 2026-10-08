@@ -55,6 +55,32 @@ const List<MedicationReferenceIdentity> medicationReferenceIdentities = [
     drugId: 'drug_peg_3350',
     ingredientRxcuis: [221147],
   ),
+  MedicationReferenceIdentity(
+    drugId: 'drug_rotigotine',
+    ingredientRxcuis: [616739],
+  ),
+  MedicationReferenceIdentity(
+    drugId: 'drug_pramipexole',
+    ingredientRxcuis: [746741],
+  ),
+  MedicationReferenceIdentity(
+    drugId: 'drug_droxidopa',
+    ingredientRxcuis: [1489913],
+  ),
+  MedicationReferenceIdentity(
+    drugId: 'drug_pimavanserin',
+    ingredientRxcuis: [1791685],
+  ),
+  MedicationReferenceIdentity(
+    drugId: 'drug_istradefylline',
+    ingredientRxcuis: [2199015],
+  ),
+  // The catalog keeps its DailyMed set id as the product code; the
+  // ingredient identity is verified separately.
+  MedicationReferenceIdentity(
+    drugId: 'drug_opicapone',
+    ingredientRxcuis: [2362167],
+  ),
   // Fixed-dose combination: ingredients verified; the multiple-ingredient
   // and clinical-drug concepts were not.
   MedicationReferenceIdentity(
@@ -65,34 +91,10 @@ const List<MedicationReferenceIdentity> medicationReferenceIdentities = [
 
 const List<UnverifiedMedicationIdentity> unverifiedMedicationIdentities = [
   UnverifiedMedicationIdentity(
-    'drug_opicapone',
-    'RxNorm concept not located in the reviewed release extract; the '
-        'existing DailyMed set id is kept.',
-  ),
-  UnverifiedMedicationIdentity(
     'drug_safinamide',
-    'RxNorm concept not located in the reviewed release extract; the '
-        'existing DailyMed set id is kept.',
-  ),
-  UnverifiedMedicationIdentity(
-    'drug_pramipexole',
-    'RxNorm concept not located in the reviewed release extract.',
-  ),
-  UnverifiedMedicationIdentity(
-    'drug_rotigotine',
-    'RxNorm concept not located in the reviewed release extract.',
-  ),
-  UnverifiedMedicationIdentity(
-    'drug_istradefylline',
-    'RxNorm concept not located in the reviewed release extract.',
-  ),
-  UnverifiedMedicationIdentity(
-    'drug_pimavanserin',
-    'RxNorm concept not located in the reviewed release extract.',
-  ),
-  UnverifiedMedicationIdentity(
-    'drug_droxidopa',
-    'RxNorm concept not located in the reviewed release extract.',
+    'No safinamide concept was found in the reviewed release windows, '
+        'including those around its 2017 U.S. approval; the existing DailyMed '
+        'set id is kept.',
   ),
   UnverifiedMedicationIdentity(
     'drug_iron',

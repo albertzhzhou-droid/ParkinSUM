@@ -10,7 +10,7 @@
     "model_assumptions": 44
   },
   "source_documents_not_live": 6,
-  "catalog_entries_with_placeholder_source_code": 27,
+  "catalog_entries_with_placeholder_source_code": 22,
   "breakdowns": [
     {
       "dimension": "source family (documents)",
@@ -114,8 +114,8 @@
       "distinct_values": 3,
       "total": 26,
       "counts": {
-        "RXNORM": 16,
-        "DAILYMED": 9,
+        "RXNORM": 21,
+        "DAILYMED": 4,
         "HEALTH_CANADA_DPD": 1
       }
     },

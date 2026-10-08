@@ -9084,3 +9084,55 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   - identity `2026.10.08-v53` with its digests, the trace-manifest digests, the CoU v40/plan v38/attestation v37 pins, the queue sentence and the goldens.
 - Then remove research Section 8, the R14 additions, and this entry.
 - Preserve every unrelated file.
+
+## 2026-10-08 — CI-RXNORM-20261008 — CI repair and six further RxNorm identities
+
+### Baseline and scope
+
+- Branch `claude/modest-knuth-rl15va` (PR #142), baseline HEAD `63aee4c` (FOOD-MED-REFDATA-20261008). This entry covers the CI repair commit and the RxNorm extension. It preserves all unrelated files.
+- Algorithm configuration identity stays `2026.10.08-v54` (configuration SHA-256 `48b6ede1c08109c0a2b60af162ebe30fc5e35315257d0cb9999f3c31eacb1427`); the probe confirms that no registered source changed. No persisted schema version changes.
+
+### Changes
+
+- **CI, governance gates.** The independent-oracle and relation-sampling reports bind the configuration and source-bundle digests, so the v54 rebind changed their report digests.
+  - Every relation, mutation and production case still passes: 8/8 relations, 16/16 and 32/32 mutations, and 96/96 production cases.
+  - Only the four report-digest pins were moved, in `lib/domain/entities/{algorithm_contract_independent_oracle_attestation,algorithm_relation_domain_sampling_attestation}.dart`.
+- **CI, Node preflight.** `npm audit --omit=dev --audit-level=high` reported newly published high-severity advisories for three transitive packages. They were updated within their existing ranges with `npm update`:
+  - `@fastify/busboy` 3.2.0 → 3.2.2;
+  - `@grpc/grpc-js` 1.14.4 → 1.14.6;
+  - `brace-expansion` 2.1.4 → 2.1.7 and 1.1.18 → 1.1.21.
+
+  `config/store_privacy_contract.json` re-pins `package-lock.json` as an automated source-fact refresh. These are server and tooling packages only, the Flutter app dependencies are unchanged, and store-owner approval stays pending. The failure was not caused by this branch: the same advisories affect the base lockfile.
+- **RxNorm.** Six more ingredient concepts were located in the same RxNorm 2024-12-02 file and appended verbatim as complete blocks with their FDA UNII atoms (13 atoms; the subset now holds 212):
+
+  | Ingredient | RxCUI | UNII |
+  | --- | --- | --- |
+  | rotigotine | 616739 | `87T4T8BO2E` |
+  | pramipexole | 746741 | `83619PEU5T` |
+  | droxidopa | 1489913 | `J7A92W69L7` |
+  | pimavanserin | 1791685 | `JZ963P0DIK` |
+  | istradefylline | 2199015 | `2GZ0LIK7T4` |
+  | opicapone | 2362167 | `Y5929UIJ5N` |
+
+  - Eighteen catalog medications now carry verified identities.
+  - Five placeholder `UNSPECIFIED_DAILYMED_SETID_*` codes became `RXCUI_IN:<id>`.
+  - Opicapone keeps its DailyMed set id.
+  - Safinamide stays unverified: no concept was found in the windows around its 2017 U.S. approval, and a remembered RxCUI was rejected.
+- **Changed files:**
+  - Data and generated table: `tool/data/rxnorm_2024-12-02/{RXNCONSO_parkinson_reference_subset.RRF,README.md}`, `lib/core/constants/{rxnorm_reference_table,medication_reference_identities}.dart`, `lib/core/analysis/medication_repository.dart`.
+  - Tests and goldens: `test/rxnorm_reference_table_test.dart`, two goldens.
+  - Docs: research note Section 8.4, `docs/known_risks.md` R14, and this timeline.
+
+### Verification and remaining boundaries
+
+- `npm run verify:all` passes all 55 gates locally after the CI repair.
+- `npm audit --omit=dev --audit-level=high` reports 0 vulnerabilities, and `npm run privacy:store` passes.
+- The RxNorm table test checks the new subset SHA-256 and every UNII.
+- The catalog inventory golden shows RXNORM 16 → 21, DAILYMED 9 → 4 and placeholder codes 27 → 22.
+- Identity data never implies a dose or schedule; all demo data stays synthetic.
+
+### Surgical rollback
+
+- Restore the four attestation pins, the lockfile and the privacy-contract pin and review note from `63aee4c`. Note that this re-exposes the Node advisories.
+- Remove the 13 appended RxNorm lines and regenerate the table. Restore the six unverified entries and the five placeholder codes, the test expectations, the goldens, the docs, and remove this entry.
+- Preserve every unrelated file.

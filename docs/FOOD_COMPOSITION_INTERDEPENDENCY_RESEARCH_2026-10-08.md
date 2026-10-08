@@ -314,12 +314,14 @@ nutrients. `tool/data/seed_food_sources.json` maps each one:
 ### 8.4 Medication identities from NLM RxNorm
 
 - **Source.** `tool/data/rxnorm_2024-12-02/RXNCONSO_parkinson_reference_subset.RRF`
-  holds 199 atoms from the RxNorm release of 2 December 2024. They form
+  holds 212 atoms from the RxNorm release of 2 December 2024. They form
   complete concept blocks, extracted by a script.
-  - 19 ingredients, each with its FDA UNII.
+  - 25 ingredients, each with its FDA UNII.
   - 7 clinical drugs, each with its linked NDC products.
-- **Verified identities.** Twelve catalog medications carry verified
-  ingredient identities, with codes such as `RXCUI_IN:2019+6375`.
+- **Verified identities.** Eighteen catalog medications carry verified
+  ingredient identities, with codes such as `RXCUI_IN:2019+6375`. Opicapone
+  keeps its DailyMed set id as the product code, and its ingredient identity
+  is verified separately.
 - **Clinical-drug entries.** Five carbidopa/levodopa clinical drugs become
   catalog entries:
   - 10/100, 25/100 and 25/250 mg tablets;
@@ -327,15 +329,23 @@ nutrients. `tool/data/seed_food_sources.json` maps each one:
 
   Their release type is read from the RxNorm dose form, so the existing
   applicability policy still holds back extended-release forms.
-- **Unverified.** Nine medications stay unverified, each with a reason:
-  - Opicapone, safinamide, pramipexole, rotigotine, istradefylline,
-    pimavanserin and droxidopa: the concept was not located in the reviewed
-    release extract.
+- **Unverified.** Three medications stay unverified, each with a reason:
+  - Safinamide: no concept was found in the reviewed release windows,
+    including those around its March 2017 U.S. approval.
   - "Iron supplement": a generic class with no single salt.
   - Levodopa/benserazide: not marketed in the United States and outside
     RxNorm prescribable content.
 - **Scope.** This is identity data only. No dose, schedule or recommendation
   is derived from it.
+- **How the six later identities were located.** Pramipexole, rotigotine,
+  droxidopa, pimavanserin, istradefylline and opicapone were added in a
+  follow-up pass. The file is sorted by RxCUI, so small probes mapped byte
+  offsets to RxCUIs. For newer drugs, brand-name atoms with known U.S.
+  approval dates narrowed the search (for example, Nourianz sits next to
+  istradefylline and Ongentys next to opicapone). Each identity was accepted
+  only from its `RXNORM|IN` atom in a complete block. Two remembered RxCUIs
+  (for safinamide and pimavanserin) were wrong and were rejected by this
+  check.
 
 ### 8.5 Retrieval path
 

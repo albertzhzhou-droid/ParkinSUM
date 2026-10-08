@@ -284,9 +284,10 @@ Residual risks:
   Legacy or FNDDS values; 44 of 186 seed foods have no verified record and
   show every nutrient as unknown. Seven proxy matches (a close but
   non-identical record) are labelled as proxies.
-- Twelve catalog medications carry verified RxNorm (2 December 2024)
+- Eighteen catalog medications carry verified RxNorm (2 December 2024)
   ingredient identities and five carbidopa/levodopa clinical drugs carry
-  RxNorm dose forms; nine medications remain unverified with a reason.
+  RxNorm dose forms; three medications (safinamide, the generic iron entry
+  and levodopa/benserazide) remain unverified with a reason.
   Identity data never implies a dose or schedule.
 - The FoodData Central 2025-04-24 nutrient definitions and conversion factors
   are pinned; a later FDC release can renumber or redefine nutrients and

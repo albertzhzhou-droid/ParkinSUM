@@ -18,7 +18,7 @@ void main() {
   test('the committed RxNorm subset keeps its verified bytes', () {
     expect(
       sha256.convert(File(rxnormSubsetPath).readAsBytesSync()).toString(),
-      '16819f803684ca40a9511b5ed96fce155500f883a5f2ad19bd6c868d1b25afdf',
+      '7b8eb0a92a4991badd222ff52e40c2653dd95e2d01082cc79d600b5e051228a3',
     );
   });
 
@@ -49,6 +49,12 @@ void main() {
       'drug_rivastigmine': ['rivastigmine'],
       'drug_midodrine': ['midodrine'],
       'drug_peg_3350': ['polyethylene glycol 3350'],
+      'drug_rotigotine': ['rotigotine'],
+      'drug_pramipexole': ['pramipexole'],
+      'drug_droxidopa': ['droxidopa'],
+      'drug_pimavanserin': ['pimavanserin'],
+      'drug_istradefylline': ['istradefylline'],
+      'drug_opicapone': ['opicapone'],
       'drug_levodopa_entacapone': ['carbidopa', 'levodopa', 'entacapone'],
     };
     for (final identity in medicationReferenceIdentities) {
@@ -72,6 +78,12 @@ void main() {
     expect(uniiForIngredient(2019), 'MNX7R8C5VO');
     expect(uniiForIngredient(60307), '4975G9NM6T');
     expect(uniiForIngredient(134748), '003N66TS6T');
+    expect(uniiForIngredient(746741), '83619PEU5T');
+    expect(uniiForIngredient(616739), '87T4T8BO2E');
+    expect(uniiForIngredient(1489913), 'J7A92W69L7');
+    expect(uniiForIngredient(1791685), 'JZ963P0DIK');
+    expect(uniiForIngredient(2199015), '2GZ0LIK7T4');
+    expect(uniiForIngredient(2362167), 'Y5929UIJ5N');
   });
 
   test('clinical drugs parse into strengths, dose form and release type', () {
