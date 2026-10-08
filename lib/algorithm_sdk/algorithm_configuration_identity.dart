@@ -45,7 +45,14 @@ final class AlgorithmConfigurationIdentity {
   // v51 adds the standalone synthetic dose-parser trace to the observatory.
   // v52 gates mechanistic traces on an exact evidence-currency assessment and
   // binds each result to the reviewed snapshot, as-of time, and provider set.
-  static const String defaultVersion = '2026.09.29-v52';
+  // v53 adds the food-composition interdependency layer to the mechanistic
+  // conflict engine (food-borne L-dopa presence, dry/cooked ambiguity and
+  // energy-identity findings). It can add drivers and uncertainty and cap
+  // confidence; it never changes the interaction score.
+  // v54 binds the composition identity audit (food-specific energy factors,
+  // proximate closure and part-within-whole checks) and the expanded FDC
+  // importer sources. Engine scores and severities are unchanged.
+  static const String defaultVersion = '2026.10.08-v54';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -53,7 +60,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '8f05e6ff6ad02ace71b621ea840cb795831d63562ebd91b54ae8139ab999dcc2';
+      'a4dfcae4d9bb7e47a0d9a6a3451835847c79850af947f0dca0415e4cd5a75bd0';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -84,7 +91,9 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/amino_acid_competition_model.dart':
         '499cb3a8939f135c01ffa630202fa8c9abf57dae5cd5868ca4f3b0012bbf5f70',
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
-        '62b386c55f82dd2028b3f92ad876c9755513ec81f4bd25128ba5947b4740e6e0',
+        '79c01e3d8de22b7660ba16d917682f28a1447d7e867af09f84651cfd878c05cf',
+    'lib/domain/usecases/food_composition_interdependency_model.dart':
+        '5efcccb9b2e9fff12082609fea62ca23f2b6d5f4f1cdc3120c64430e54c7d614',
     'lib/domain/usecases/protein_distribution_model.dart':
         '9ab6035545b0dc2d6d462112a7c2d42f900bb24a9b6ecd7b9a42b7fbcfa2f881',
     'lib/domain/usecases/next_meal_scoring_parameters.dart':

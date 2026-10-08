@@ -8942,3 +8942,197 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   Published npm versions and immutable GitHub releases are historical artifacts;
   correct any publication mistake with a subsequent version rather than rewriting
   the published tag or overwriting its contents.
+
+
+## 2026-10-08 — FOOD-INTERDEP-20261008 — Verified food-composition subset and interdependency layer
+
+### Baseline and scope
+
+- Cloud checkout on branch `claude/modest-knuth-rl15va`, baseline HEAD `197519a` (merged PR #135). This entry covers the uncommitted changes in this iteration only and preserves all unrelated files.
+- Algorithm configuration identity advances `2026.09.29-v52` → `2026.10.08-v53`. Configuration SHA-256 `006082abc5d9f5aa280daeb18b83e3eff34790be7d38e077a6a2452720d9d60e`; previous-configuration fixture `340e05012e36fbc3a4fc8d1ee2a80e6dd2b7dbe1a2160365254f20f94f1ca942`; registered-source bundle `9638c21fb06d94e8e5f56b5ced1b830a4aca0a3e42b9707a619b8112c9f5bfb8`. CoU ledger `2026.10.08-v40`, prospective plan `2026.10.08-v38`, and evidence attestation `2026.10.08-v37` are mechanically rebound to it; none adds evidence, review, or qualification. No persisted schema version changes.
+
+### Changes
+
+- Added a verbatim USDA FoodData Central SR Legacy (April 2018) subset of 224 foods covering 16 food groups (`tool/data/usda_sr_legacy_reference_subset_2018.csv`), curation metadata, a generator, and the generated table `lib/core/constants/reference_food_composition_table.dart`. The default food repository now also includes these foods with namespaced ids (`food_ref_usda_<fdcId>`). Unknown values stay unknown, not zero.
+- Added `lib/domain/usecases/food_composition_interdependency_model.dart`. It covers:
+  - FAO Paper 77 energy identity (alcohol and organic-acid residuals).
+  - Carbohydrate-convention harmonisation and the sodium-to-salt identity.
+  - 23 protein-tracer derivation edges (raw, cooked, dried, juice and salted forms) and an egg part–whole check.
+  - Food-borne L-dopa source recognition for *Vicia faba* and *Mucuna* (tissue ranges are recorded but never applied to a serving).
+  - Dry-versus-cooked ambiguity, resolved by protein density.
+  - A non-heme iron co-consumption context.
+  - Cross-source comparison.
+- The mechanistic conflict engine adds a traced `food_composition_interdependency` layer. It can add drivers and uncertainty reasons and cap confidence from high to medium. Interaction score, severity, and type are unchanged.
+- Added 16 PubMed/standards-referenced assumptions to the model assumption registry, `config/source_access_registry.json`, and `Bibliographies.md`.
+- Defects fixed:
+  - The FDC importer no longer stores carbohydrate by difference (which includes fibre) as available carbohydrate. Available carbohydrate is derived only from exact values and is method-coded.
+  - P0 seed sodium, energy and water are now marked missing instead of zero.
+  - The physically implausible P0 coffee vitamin B6 value is withdrawn.
+- Added the research note `docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md` and known-risk R14.
+- Changed files:
+  - Engine, model and registry: `lib/domain/usecases/{mechanistic_conflict_engine,food_composition_interdependency_model,model_assumption_registry,algorithm_registry,algorithm_configuration_change_impact_service,cdss_catalog_projection_service}.dart`.
+  - Data and entities: `lib/domain/entities/{reference_food_composition,context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation}.dart`, `lib/core/constants/{reference_food_composition_table,reference_food_catalog,p0_food_source_seed}.dart`, `lib/core/analysis/food_repository.dart`, `lib/data/datasources/remote/fdc_p0_importer.dart`, `lib/algorithm_sdk/algorithm_configuration_identity.dart`.
+  - Config: `config/{algorithm_surface_allowlist,algorithm_trace_surface_manifest,source_access_registry,complete_app_upgrade_queue}.json`.
+  - Tooling: `tool/{reference_food_composition_codegen,generate_reference_food_composition_table}.dart`, `tool/data/*`.
+  - Tests and goldens: two new test files, `test/p0_importers_test.dart`, four goldens.
+  - Docs: `Bibliographies.md`, `docs/known_risks.md`, and this timeline.
+
+### Verification and remaining boundaries
+
+- The new reference-table and interdependency tests pass. Goldens were regenerated:
+  - The replay changes are the additive trace layer, plus one genuine energy-identity finding in the s34 fixture.
+  - The model-assumption count goes 24 → 40.
+- These checks also pass:
+  - Governance, SDK digest, change-impact, CoU, credibility-chain and trace-manifest tests.
+  - Numerical-oracle gates.
+  - `node --test tool/complete_app_upgrade_queue_check.test.mjs` (57/57).
+  - `dart analyze` and `dart format`.
+- The full `flutter test` run passed 2,458 tests. Its nine failures all shell out to the `sqlite3` CLI, which the cloud container lacks; they are environment-only and predate this change.
+- Of 224 rows, 218 reconcile with the energy identity within tolerance. The other six are explained by ethanol or acetic acid.
+- Eight CIQUAL-vs-USDA differences are listed in the research note as source differences, not errors.
+- Evidence-currency records for the 16 new sources are not registered. A 2026-10-08 observation date would block providers for earlier fixture clocks.
+- The SR Legacy values came through a third-party Hugging Face mirror, because direct USDA hosts are blocked by the environment's network policy. They were verified independently by identity checks, not against the USDA host.
+- China CDC carbohydrate convention remains unverified, and the model abstains on it.
+- Nothing here is dietary, medication, or timing advice; all demo data stays synthetic.
+
+### Surgical rollback
+
+- Remove the two new constants files, the entity file, the model file, the two tool files, `tool/data/`, the two new tests, and the research note.
+- Revert the engine's interdependency block, the 16 registry assumptions, the 16 source-registry entries, the bibliography section, the allowlist and algorithm-registry path additions, the repository merge, and the importer/seed fixes.
+- Restore identity `2026.09.29-v52` with its digests, and the CoU v39/plan v37/attestation v36 pins, the trace-manifest digests, the four queue `currentGap` sentences, and the goldens. Then remove R14 and this entry.
+- Preserve every unrelated file.
+
+## 2026-10-08 — FOOD-MED-REFDATA-20261008 — Product-level food and medication reference data
+
+### Baseline and scope
+
+- Cloud checkout on branch `claude/modest-knuth-rl15va`, baseline HEAD `7c60be1` (FOOD-INTERDEP-20261008). This entry covers the uncommitted changes in this iteration only and preserves all unrelated files.
+- Scope: the app stays a fixture-level educational prototype; the food and medication reference data is raised to a product-level standard. Every value is a verbatim copy of a named official release, pinned by SHA-256 and regenerated by a script. Anything that could not be verified is marked unknown or unverified, with a reason.
+- Algorithm configuration identity advances `2026.10.08-v53` → `2026.10.08-v54`. Configuration SHA-256 `48b6ede1c08109c0a2b60af162ebe30fc5e35315257d0cb9999f3c31eacb1427`; previous-configuration fixture `30bb96f1aea9811a6995f868e87112a98db5ac694a4477ac8864fad0965edf06`; registered-source bundle `a4dfcae4d9bb7e47a0d9a6a3451835847c79850af947f0dca0415e4cd5a75bd0`. CoU ledger `2026.10.08-v41`, prospective plan `2026.10.08-v39`, and evidence attestation `2026.10.08-v38` are mechanically rebound to it; none adds evidence, review, or qualification. No persisted schema version changes.
+
+### Changes
+
+- **FoodData Central importer, release 2025-04-24.**
+  - The new `lib/data/datasources/remote/fdc_nutrient_definitions.dart` holds 59 nutrient definitions. Each is checked field by field against the official `nutrient.csv` (committed verbatim with the Foundation and conversion-factor files in `tool/data/fdc_2025-04-24/`).
+  - The importer resolves nutrients by id, then legacy number, then exact name, and rejects unit mismatches.
+  - It reads FNDDS Survey and Branded records. Branded records contribute label nutrients per serving, GTIN/UPC and WWEIA crosswalks, and an ingredient scan for food-borne L-dopa.
+  - Analytical sample records are excluded, and each exclusion is audited.
+  - Atwater-specific or general energy and AOAC 2011.25 fibre are derived only when the measured value is absent, with method codes.
+  - Food-specific nitrogen and calorie factors are imported.
+- **Composition identity audit.** Added to `food_composition_interdependency_model.dart`:
+  - food-specific energy factors, with the Handbook 74 alcohol factor of 6.93 kcal/g;
+  - kJ↔kcal;
+  - nitrogen→protein;
+  - proximate closure;
+  - part-within-whole checks for fibre, sugars, starch, added sugars, NLEA fat and fatty acids;
+  - heme + non-heme iron;
+  - the RAE and DFE lower bounds.
+
+  On real data, 64 of 65 SR/Foundation pairs reproduce their published energy from their own factors. The documented exception is coconut oil, whose fat factor differs between releases.
+- **Seed and regional catalog foods.** The 930 lines of hand-entered nutrients were removed.
+  - 142 of 186 foods now read verbatim values: SR Legacy 2018 (117 matches over 116 rows) or FNDDS 2017-2018 (25). Seven of them are labelled proxies.
+  - The other 44 show every nutrient as unknown, each with a reason.
+- **Medication identities.** NLM RxNorm (2 December 2024) concept blocks were extracted by a script: 199 atoms covering 19 ingredients with FDA UNIIs and 7 clinical drugs with NDC products.
+  - Twelve catalog medications carry verified ingredient identities (`RXCUI_IN:…`).
+  - Five carbidopa/levodopa clinical drugs become catalog entries, with their release type read from the RxNorm dose form.
+  - Nine stay unverified, each with a reason.
+- **Defects fixed.**
+  - The importer's CSV loader matched file suffixes, so `food.csv` also matched `branded_food.csv`.
+  - The importer read a nonexistent `number` column instead of `nutrient_nbr`.
+  - Reference row 170459 (tomato paste) had lost its vitamin C cell (21.9 mg).
+- **Registries.**
+  - Four sources were added to the model assumption registry, `config/source_access_registry.json` and `Bibliographies.md`: Handbook 74, FDC 2025-04-24, FNDDS 2017-2018 and RxNorm 2024-12-02.
+  - The new files were added to the algorithm registry and the surface allowlist.
+- **Changed files:**
+  - Importer: `lib/data/datasources/remote/{fdc_p0_importer,fdc_nutrient_definitions,seed_catalog_composition,seed_catalog_importer,regional_seed_catalog_importer}.dart`.
+  - Model: `lib/domain/usecases/{food_composition_interdependency_model,model_assumption_registry,algorithm_registry,algorithm_configuration_change_impact_service}.dart`.
+  - Entities: `lib/domain/entities/{rxnorm_reference,seed_food_composition,context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation}.dart`.
+  - Constants and identity: `lib/core/constants/{rxnorm_reference_table,seed_food_composition_table,medication_reference_identities,reference_food_composition_table}.dart`, `lib/core/analysis/medication_repository.dart`, `lib/algorithm_sdk/algorithm_configuration_identity.dart`.
+  - Config: `config/{algorithm_surface_allowlist,algorithm_trace_surface_manifest,source_access_registry,complete_app_upgrade_queue}.json`. The trace manifest re-pins only its registry-surface and manifest digests (the registry gained two source paths); the trace ownership is unchanged.
+  - Tooling: `tool/{rxnorm_reference_codegen,generate_rxnorm_reference_table,seed_food_composition_codegen,generate_seed_food_composition_table}.dart`, `tool/data/{fdc_2025-04-24,fndds_2017_2018,rxnorm_2024-12-02}/`, `tool/data/{seed_food_sources.json,usda_sr_legacy_seed_subset_2018.csv,usda_sr_legacy_reference_subset_2018.csv}`.
+  - Tests and goldens: four new test files, `test/food_composition_interdependency_model_test.dart`, three goldens.
+  - Docs: `Bibliographies.md`, `docs/known_risks.md`, `docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md` (Section 8), and this timeline.
+
+### Verification and remaining boundaries
+
+- Every committed source file is pinned by SHA-256. Every generated value is compared with its source cell.
+- Goldens were regenerated:
+  - medications 21 → 26 (five RxNorm clinical drugs);
+  - model assumptions 40 → 44;
+  - placeholder external codes 38 → 27.
+- These checks also pass:
+  - the coverage, registry, source-reference and goldens tests;
+  - `node --test tool/complete_app_upgrade_queue_check.test.mjs` (57/57);
+  - `dart analyze` and `dart format`.
+- The new tests pass: FDC importer (7), nutrient definitions, RxNorm table, seed composition, and composition identity audit. `test/p0_importers_test.dart` also passes.
+- Full `flutter test`: 2,485 passed. The nine failures all shell out to the `sqlite3` CLI, which the container lacked. After `sqlite3` 3.45.1 was installed, all nine passed as well (13/13 in their files, including the default-seed FoodItem round trip).
+- All data came through public Hugging Face mirrors, because the environment's network policy blocks the USDA, NLM and openFDA hosts. Identity checks detect transcription and join errors, but not an upstream value that is wrong yet internally consistent.
+- Evidence-currency records for the new sources are still not registered.
+- Identity data never implies a dose or schedule. Nothing here is dietary, medication, or timing advice, and all demo data stays synthetic.
+
+### Surgical rollback
+
+- Remove the new files:
+  - `fdc_nutrient_definitions.dart`, `seed_catalog_composition.dart`, `rxnorm_reference.dart`, `seed_food_composition.dart`;
+  - the three generated or constant tables;
+  - the four tool scripts and the three new `tool/data/` directories, plus `seed_food_sources.json` and `usda_sr_legacy_seed_subset_2018.csv`;
+  - the four new tests.
+- Restore from `7c60be1`:
+  - the importer, seed importers, medication repository, interdependency model and test, reference subset and table;
+  - the registry, assumption, source-registry and bibliography additions;
+  - the allowlist entries;
+  - identity `2026.10.08-v53` with its digests, the trace-manifest digests, the CoU v40/plan v38/attestation v37 pins, the queue sentence and the goldens.
+- Then remove research Section 8, the R14 additions, and this entry.
+- Preserve every unrelated file.
+
+## 2026-10-08 — CI-RXNORM-20261008 — CI repair and six further RxNorm identities
+
+### Baseline and scope
+
+- Branch `claude/modest-knuth-rl15va` (PR #142), baseline HEAD `63aee4c` (FOOD-MED-REFDATA-20261008). This entry covers the CI repair commit and the RxNorm extension. It preserves all unrelated files.
+- Algorithm configuration identity stays `2026.10.08-v54` (configuration SHA-256 `48b6ede1c08109c0a2b60af162ebe30fc5e35315257d0cb9999f3c31eacb1427`); the probe confirms that no registered source changed. No persisted schema version changes.
+
+### Changes
+
+- **CI, governance gates.** The independent-oracle and relation-sampling reports bind the configuration and source-bundle digests, so the v54 rebind changed their report digests.
+  - Every relation, mutation and production case still passes: 8/8 relations, 16/16 and 32/32 mutations, and 96/96 production cases.
+  - Only the four report-digest pins were moved, in `lib/domain/entities/{algorithm_contract_independent_oracle_attestation,algorithm_relation_domain_sampling_attestation}.dart`.
+- **CI, Node preflight.** `npm audit --omit=dev --audit-level=high` reported newly published high-severity advisories for three transitive packages. They were updated within their existing ranges with `npm update`:
+  - `@fastify/busboy` 3.2.0 → 3.2.2;
+  - `@grpc/grpc-js` 1.14.4 → 1.14.6;
+  - `brace-expansion` 2.1.4 → 2.1.7 and 1.1.18 → 1.1.21.
+
+  `config/store_privacy_contract.json` re-pins `package-lock.json` as an automated source-fact refresh. These are server and tooling packages only, the Flutter app dependencies are unchanged, and store-owner approval stays pending. The failure was not caused by this branch: the same advisories affect the base lockfile.
+- **RxNorm.** Six more ingredient concepts were located in the same RxNorm 2024-12-02 file and appended verbatim as complete blocks with their FDA UNII atoms (13 atoms; the subset now holds 212):
+
+  | Ingredient | RxCUI | UNII |
+  | --- | --- | --- |
+  | rotigotine | 616739 | `87T4T8BO2E` |
+  | pramipexole | 746741 | `83619PEU5T` |
+  | droxidopa | 1489913 | `J7A92W69L7` |
+  | pimavanserin | 1791685 | `JZ963P0DIK` |
+  | istradefylline | 2199015 | `2GZ0LIK7T4` |
+  | opicapone | 2362167 | `Y5929UIJ5N` |
+
+  - Eighteen catalog medications now carry verified identities.
+  - Five placeholder `UNSPECIFIED_DAILYMED_SETID_*` codes became `RXCUI_IN:<id>`.
+  - Opicapone keeps its DailyMed set id.
+  - Safinamide stays unverified: no concept was found in the windows around its 2017 U.S. approval, and a remembered RxCUI was rejected.
+- **Changed files:**
+  - Data and generated table: `tool/data/rxnorm_2024-12-02/{RXNCONSO_parkinson_reference_subset.RRF,README.md}`, `lib/core/constants/{rxnorm_reference_table,medication_reference_identities}.dart`, `lib/core/analysis/medication_repository.dart`.
+  - Tests and goldens: `test/rxnorm_reference_table_test.dart`, two goldens.
+  - Docs: research note Section 8.4, `docs/known_risks.md` R14, and this timeline.
+
+### Verification and remaining boundaries
+
+- `npm run verify:all` passes all 55 gates locally after the CI repair.
+- `npm audit --omit=dev --audit-level=high` reports 0 vulnerabilities, and `npm run privacy:store` passes.
+- The RxNorm table test checks the new subset SHA-256 and every UNII.
+- The catalog inventory golden shows RXNORM 16 → 21, DAILYMED 9 → 4 and placeholder codes 27 → 22.
+- Identity data never implies a dose or schedule; all demo data stays synthetic.
+
+### Surgical rollback
+
+- Restore the four attestation pins, the lockfile and the privacy-contract pin and review note from `63aee4c`. Note that this re-exposes the Node advisories.
+- Remove the 13 appended RxNorm lines and regenerate the table. Restore the six unverified entries and the five placeholder codes, the test expectations, the goldens, the docs, and remove this entry.
+- Preserve every unrelated file.

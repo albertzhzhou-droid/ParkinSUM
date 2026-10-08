@@ -10,6 +10,7 @@ import '../entities/rule_explanation.dart';
 import '../entities/time_axis_events.dart';
 import '../entities/gastric_emptying_parameters.dart';
 import 'amino_acid_competition_model.dart';
+import 'food_composition_interdependency_model.dart';
 import 'gastric_emptying_model.dart';
 import 'levodopa_absorption_opportunity_model.dart';
 import 'meal_composition_normalizer.dart';
@@ -35,6 +36,14 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       MedicationEntryValidator();
   static final String _applicabilityManifestRef =
       MechanisticApplicabilityManifest.current.sourceRef;
+
+  /// Food-composition interdependency layer. It never changes the
+  /// interaction score: food-borne L-dopa is an additional precursor exposure
+  /// the competition/delay proxy does not represent, and an unstated
+  /// dry-versus-cooked state makes logged protein uncertain. Both are carried
+  /// as drivers/uncertainty and cap confidence instead of being scored.
+  static const FoodCompositionInterdependencyModel _interdependencyModel =
+      FoodCompositionInterdependencyModel();
 
   static List<String> _modelSourceRefs(Iterable<String> refs) {
     // These are scientific and engineering assumption references. The
@@ -576,14 +585,35 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       absorption.uncertaintyBand,
       competition.uncertaintyBand,
     ]);
-    final confidence = _confidence(
+    // Interdependency findings for every relevant meal (deterministic order).
+    // Food-borne L-dopa anywhere in the evaluated timeline matters; dry versus
+    // cooked ambiguity matters where it feeds the scored protein amount.
+    final interdependencyAssessments = [
+      for (final compositionId
+          in canonicalMealCompositionsById.keys.toList()..sort())
+        _interdependencyModel.assessMeal(
+          canonicalMealCompositionsById[compositionId]!,
+        ),
+    ];
+    final hasIntrinsicLevodopaSource = interdependencyAssessments.any(
+      (assessment) => assessment.intrinsicLevodopaSources.isNotEmpty,
+    );
+    final scoredCompositionIds = evaluations
+        .map((evaluation) => evaluation.composition.id)
+        .toSet();
+    final hasScoredPreparationAmbiguity = interdependencyAssessments.any(
+      (assessment) =>
+          scoredCompositionIds.contains(assessment.compositionId) &&
+          assessment.preparationStateAmbiguities.isNotEmpty,
+    );
+    final modeledConfidence = _confidence(
       compositionCompleteness: composition.compositionCompleteness,
       consumedUpstreamUncertainty: consumedUpstreamUncertainty,
       missingTimelineFields: context.missingFields.length,
       competitionUnknown:
           competition.competitionBand == CompetitionBand.unknown,
     );
-    if (confidence == ConfidenceBand.insufficient) {
+    if (modeledConfidence == ConfidenceBand.insufficient) {
       return MechanisticConflictResult.insufficientContext(
         id: resultId,
         reason: MechanisticInteractionType.insufficientMealContext,
@@ -601,6 +631,15 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       );
     }
 
+    // The interdependency layer can only lower confidence: the model does
+    // not represent food-borne L-dopa, and a protein amount whose dry/cooked
+    // state is unstated can differ 2–5x from the value scored.
+    final confidence =
+        (hasIntrinsicLevodopaSource || hasScoredPreparationAmbiguity) &&
+            modeledConfidence == ConfidenceBand.high
+        ? ConfidenceBand.medium
+        : modeledConfidence;
+
     final drivers = <String>[];
     if (competition.competitionBand == CompetitionBand.high) {
       drivers.add('amino_acid_competition_proxy_high');
@@ -614,6 +653,9 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       drivers.add('delayed_gastric_arrival_moderate');
     }
     if (residual > 0.3) drivers.add('overlapping_meal_residual_stomach_load');
+    if (hasIntrinsicLevodopaSource) {
+      drivers.add('food_intrinsic_levodopa_source_present');
+    }
 
     final interactionType = drivers.contains('delayed_gastric_arrival_high')
         ? MechanisticInteractionType.delayedGastricArrival
@@ -636,13 +678,25 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
       if (residual > 0.1) 'overlapping_meal_residual_load',
       if (absorption.missingInputs.isNotEmpty)
         ...absorption.missingInputs.map((m) => 'absorption_missing:$m'),
+      for (final assessment in interdependencyAssessments)
+        ...assessment.uncertaintyReasons,
     ];
 
     final sourceRefs = _modelSourceRefs(<String>{
       ...emptyingProfile.sourceRefs,
       ...absorption.sourceRefs,
       ...competition.sourceRefs,
+      for (final assessment in interdependencyAssessments)
+        ...assessment.sourceRefs,
     });
+    final interdependencyFindingCount = interdependencyAssessments
+        .map(
+          (assessment) =>
+              assessment.intrinsicLevodopaSources.length +
+              assessment.preparationStateAmbiguities.length +
+              assessment.componentEnergyInconsistencies.length,
+        )
+        .fold<int>(0, (a, b) => a + b);
 
     final explanation = _buildExplanation(
       resultId: resultId,
@@ -695,6 +749,30 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
           competition.assumptions,
           competition.uncertaintyBand.name,
           'Competition pressure timeline integrated over absorption window.',
+        ),
+        _trace(
+          'food_composition_interdependency',
+          [
+            'meal_composition.food_components.name',
+            'meal_composition.food_components.calories',
+            'meal_composition.food_components.macronutrients',
+          ],
+          [
+            'model_version=${FoodCompositionInterdependencyModel.modelVersion}',
+            'food_borne_levodopa_presence_only_never_dose_equivalent',
+            'dry_versus_cooked_state_changes_protein_per_100g',
+            'energy_reconciled_with_general_conversion_factors',
+            'findings=$interdependencyFindingCount',
+            if (hasIntrinsicLevodopaSource)
+              'confidence_capped:food_intrinsic_levodopa_not_modeled',
+            if (hasScoredPreparationAmbiguity)
+              'confidence_capped:scored_protein_state_ambiguous',
+          ],
+          interdependencyFindingCount == 0 ? 'narrow' : 'wide',
+          'Food composition interdependencies checked: food-borne L-dopa '
+              'sources, dry-versus-cooked state, and energy-macronutrient '
+              'identity. Findings widen uncertainty; they do not change the '
+              'score.',
         ),
       ],
       inputFieldsUsed: const [

@@ -2,15 +2,15 @@
   "report_type": "parkinsum_catalog_inventory",
   "counts": {
     "foods": 20,
-    "drugs": 21,
+    "drugs": 26,
     "source_documents": 43,
     "rules": 10,
     "copy_templates": 25,
     "replay_scenarios": 41,
-    "model_assumptions": 24
+    "model_assumptions": 44
   },
   "source_documents_not_live": 6,
-  "catalog_entries_with_placeholder_source_code": 38,
+  "catalog_entries_with_placeholder_source_code": 22,
   "breakdowns": [
     {
       "dimension": "source family (documents)",
@@ -111,31 +111,32 @@
     },
     {
       "dimension": "source system (medications)",
-      "distinct_values": 2,
-      "total": 21,
+      "distinct_values": 3,
+      "total": 26,
       "counts": {
-        "DAILYMED": 20,
+        "RXNORM": 21,
+        "DAILYMED": 4,
         "HEALTH_CANADA_DPD": 1
       }
     },
     {
       "dimension": "jurisdiction (medications)",
       "distinct_values": 2,
-      "total": 21,
+      "total": 26,
       "counts": {
-        "US": 20,
+        "US": 25,
         "CA": 1
       }
     },
     {
       "dimension": "evidence level (model assumptions)",
       "distinct_values": 4,
-      "total": 24,
+      "total": 44,
       "counts": {
-        "mechanism": 20,
+        "mechanism": 39,
         "label": 2,
-        "prototypeHeuristic": 1,
-        "regulatoryGuidance": 1
+        "regulatoryGuidance": 2,
+        "prototypeHeuristic": 1
       }
     }
   ],

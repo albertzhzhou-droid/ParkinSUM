@@ -775,6 +775,8 @@ class CdssCatalogProjectionService {
         return 'Protein';
       case 'carbohydrate_g':
         return 'Carbohydrate';
+      case 'carbohydrate_by_difference_g':
+        return 'Carbohydrate, by difference (includes fibre)';
       case 'fat_g':
         return 'Fat';
       case 'fiber_g':

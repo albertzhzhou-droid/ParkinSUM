@@ -3774,6 +3774,670 @@
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-08-27",
       "notes": "Fixture identity for observable-matching, mutation, determinism, and fit-authorization gates only."
+    },
+    {
+      "source_id": "src.usda.sr_legacy.2018",
+      "display_name": "USDA FoodData Central SR Legacy (April 2018) reference subset",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Historical sample averages; varieties, processing and recipes change real foods.",
+        "Retrieved through a third-party Hugging Face mirror; the subset is checked for internal consistency but the mirror is not an official USDA distribution."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.usda.sr_legacy.2018"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim 224-row subset in tool/data/usda_sr_legacy_reference_subset_2018.csv; public domain."
+    },
+    {
+      "source_id": "src.fao.food_energy.2003",
+      "display_name": "FAO Food and Nutrition Paper 77 — food energy conversion factors (2003)",
+      "owner": "Food and Agriculture Organization of the United Nations",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "General factors; data sets also use food-specific factors, so checks need a tolerance band."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.fao.food_energy.2003"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Energy reconciliation factors only."
+    },
+    {
+      "source_id": "src.eu.reg1169.salt_factor",
+      "display_name": "Regulation (EU) No 1169/2011 Annex I salt factor",
+      "owner": "European Union",
+      "jurisdiction": "EU",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Labelling convention; does not attribute sodium to added salt."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.eu.reg1169.salt_factor"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Sodium-to-salt conversion only."
+    },
+    {
+      "source_id": "src.mariotti.nitrogen_protein.2008",
+      "display_name": "Mariotti et al. — nitrogen-to-protein conversion factors (2008)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Explains definitional protein differences; no per-food correction is applied."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.mariotti.nitrogen_protein.2008"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Cross-source protein comparison context."
+    },
+    {
+      "source_id": "src.duan.faba_ldopa_thermal.2021",
+      "display_name": "Duan et al. — L-dopa in faba bean leaves and seeds after thermal processing (2021)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Single accession; dry-weight basis; no serving or absorbed amount."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.duan.faba_ldopa_thermal.2021"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Intrinsic food L-dopa presence and tissue range."
+    },
+    {
+      "source_id": "src.tesoro.faba_pod_ldopa.2024",
+      "display_name": "Tesoro et al. — L-dopa in Vicia faba pod valves and seeds (2024)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "One cultivar; dry-weight basis; plant-part and variety dependent."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.tesoro.faba_pod_ldopa.2024"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Intrinsic food L-dopa presence and tissue range."
+    },
+    {
+      "source_id": "src.aureli.mucuna_ldopa.2025",
+      "display_name": "Aureli et al. — natural L-dopa products and Mucuna content range (2025)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Content range only; product labelling can be inaccurate."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.aureli.mucuna_ldopa.2025"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Intrinsic L-dopa source content range."
+    },
+    {
+      "source_id": "src.contin.mucuna_pk.2015",
+      "display_name": "Contin et al. — Mucuna versus standard levodopa kinetics (2015)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Two-patient report; plant L-dopa is not convertible into a formulated dose."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.contin.mucuna_pk.2015"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Non-equivalence boundary for intrinsic L-dopa."
+    },
+    {
+      "source_id": "src.campbell.ferrous_sulfate_levodopa.1989",
+      "display_name": "Campbell and Hasinoff — ferrous sulfate and levodopa bioavailability (1989)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Supplement iron salt in healthy adults; not extrapolated to food iron."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.campbell.ferrous_sulfate_levodopa.1989"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Boundary note separating supplement iron from food iron."
+    },
+    {
+      "source_id": "src.hallberg.calcium_iron.1991",
+      "display_name": "Hallberg et al. — calcium and iron absorption (1991)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Single-meal isotope studies; context only."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.hallberg.calcium_iron.1991"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Meal co-consumption context for non-heme iron."
+    },
+    {
+      "source_id": "src.zijp.tea_iron.2000",
+      "display_name": "Zijp et al. — tea and other dietary factors on iron absorption (2000)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Review of meal studies; enhancers can offset inhibitors."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.zijp.tea_iron.2000"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Meal co-consumption context for non-heme iron."
+    },
+    {
+      "source_id": "src.cook_reddy.ascorbate_iron.2001",
+      "display_name": "Cook and Reddy — ascorbic acid and non-heme iron from a complete diet (2001)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Twelve participants; single-meal effects do not translate directly to whole diets."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.cook_reddy.ascorbate_iron.2001"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Boundary on vitamin C enhancement context."
+    },
+    {
+      "source_id": "src.nagayama.ascorbate_levodopa.2004",
+      "display_name": "Nagayama et al. — ascorbic acid and levodopa pharmacokinetics (2004)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Supplement dose; subgroup finding only."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.nagayama.ascorbate_levodopa.2004"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Context note; no levodopa adjustment is derived."
+    },
+    {
+      "source_id": "src.demarcaida.rasagiline_tyramine.2006",
+      "display_name": "deMarcaida et al. — tyramine challenge with rasagiline (2006)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Applies to the studied drug and doses only."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.demarcaida.rasagiline_tyramine.2006"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Tyramine context boundary."
+    },
+    {
+      "source_id": "src.shulman.tyramine_soy.1999",
+      "display_name": "Shulman and Walker — tyramine content of pizzas and soy products (1999)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Product- and storage-specific; supports variability, not fixed values."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.shulman.tyramine_soy.1999"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Tyramine variability context."
+    },
+    {
+      "source_id": "src.astarloa.fiber_levodopa.1992",
+      "display_name": "Astarloa et al. — insoluble fibre diet and levodopa (1992)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Small study in constipated patients; context only."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.astarloa.fiber_levodopa.1992"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Fibre context note."
+    },
+    {
+      "source_id": "src.merrill_watt.handbook74.1973",
+      "display_name": "Merrill and Watt — USDA Agriculture Handbook No. 74, energy value of foods (1955, rev. 1973)",
+      "owner": "U.S. Department of Agriculture",
+      "jurisdiction": "US",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Factors describe food records, not digestion in any person; a residual flags a record for review only."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.merrill_watt.handbook74.1973"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Source of food-specific Atwater factors and the 6.93 kcal/g alcohol factor used by the composition identity audit."
+    },
+    {
+      "source_id": "src.usda.fdc.full_download.2025_04_24",
+      "display_name": "USDA FoodData Central full CSV download, release 2025-04-24",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Retrieved through a third-party Hugging Face mirror; complete files match the mirror's published byte sizes and every file is pinned by SHA-256.",
+        "Nutrient definitions and conversion factors can change in later FDC releases."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.usda.fdc.full_download.2025_04_24"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim nutrient.csv, Foundation and conversion-factor files in tool/data/fdc_2025-04-24/; public domain."
+    },
+    {
+      "source_id": "src.usda.fndds.2017_2018",
+      "display_name": "USDA Food and Nutrient Database for Dietary Studies 2017-2018",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Recipe-computed values, not direct analyses; non-identical dish matches are labelled as proxies.",
+        "Retrieved through a third-party Hugging Face mirror."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.usda.fndds.2017_2018"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim seed-food subset in tool/data/fndds_2017_2018/; public domain."
+    },
+    {
+      "source_id": "src.nlm.rxnorm.2024_12_02",
+      "display_name": "NLM RxNorm release of 2 December 2024 (Current Prescribable Content)",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "drug_identity",
+      "data_domain": "drug",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Identity and coding data only; no dose, schedule or recommendation is derived.",
+        "Retrieved through a third-party Hugging Face mirror; concepts can be retired or remapped in later releases."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.nlm.rxnorm.2024_12_02"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim complete concept blocks in tool/data/rxnorm_2024-12-02/; Current Prescribable Content needs no UMLS license."
     }
   ]
 }

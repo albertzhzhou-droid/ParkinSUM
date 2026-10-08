@@ -40,7 +40,7 @@ final class AlgorithmContractIndependentOracleAttestation {
   static const String expectedExecutableSpecificationSha256 =
       '8dab2d3d0c7da97aee60917defeeae4f8d0a889e2ee9918305468d6da06caf1d';
   static const String expectedReportSha256 =
-      '4f4e3ac3713f2e823ec86e4c9d5fb6db4bd11136306043afc438038f85d5c57e';
+      'b306114f616838bbd077e0b834cc81f36b9846309ab0c64703178001f24231a5';
 
   static const String boundary =
       'Committed offline cross-runtime software-verification evidence over '

@@ -109,6 +109,68 @@ The runtime registry now also contains the following primary/consensus records:
 - `src.camilleri.ge.variation.2012` — Camilleri et al., *Neurogastroenterol
   Motil* 24:1076-e562, PMID:22747676.
 
+### 2026-10-08 food-composition interdependency update
+
+Registered for `lib/domain/usecases/food_composition_interdependency_model.dart`
+and the USDA SR Legacy reference subset. Details, quantitative values used and
+boundaries: `docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md`.
+
+- `src.usda.sr_legacy.2018` — U.S. Department of Agriculture, Agricultural
+  Research Service. *FoodData Central: SR Legacy*, April 2018; retrieved via
+  the Hugging Face mirror ULM-DS-Lab/food-composition-matrix. Public domain.
+- `src.fao.food_energy.2003` — FAO. *Food Energy — Methods of Analysis and
+  Conversion Factors.* FAO Food and Nutrition Paper 77, 2003.
+- `src.eu.reg1169.salt_factor` — Regulation (EU) No 1169/2011, Annex I,
+  point 11 (salt = sodium × 2.5).
+- `src.mariotti.nitrogen_protein.2008` — Mariotti, Tomé, and Mirand, *Crit
+  Rev Food Sci Nutr* 48:177–184, doi:10.1080/10408390701279749, PMID:18274971.
+- `src.duan.faba_ldopa_thermal.2021` — Duan, Kwon, and Eom, *Antioxidants*
+  10:1207, doi:10.3390/antiox10081207, PMID:34439455.
+- `src.tesoro.faba_pod_ldopa.2024` — Tesoro et al., *Molecules* 29:3943,
+  doi:10.3390/molecules29163943, PMID:39203021.
+- `src.aureli.mucuna_ldopa.2025` — Aureli et al., *Front Chem* 13:1597784,
+  doi:10.3389/fchem.2025.1597784, PMID:41169659.
+- `src.contin.mucuna_pk.2015` — Contin et al., *Clin Neuropharmacol*
+  38:201–203, doi:10.1097/WNF.0000000000000098, PMID:26366963.
+- `src.campbell.ferrous_sulfate_levodopa.1989` — Campbell and Hasinoff, *Clin
+  Pharmacol Ther* 45:220–225, doi:10.1038/clpt.1989.21, PMID:2920496.
+- `src.hallberg.calcium_iron.1991` — Hallberg et al., *Am J Clin Nutr*
+  53:112–119, doi:10.1093/ajcn/53.1.112, PMID:1984335.
+- `src.zijp.tea_iron.2000` — Zijp, Korver, and Tijburg, *Crit Rev Food Sci
+  Nutr* 40:371–398, doi:10.1080/10408690091189194, PMID:11029010.
+- `src.cook_reddy.ascorbate_iron.2001` — Cook and Reddy, *Am J Clin Nutr*
+  73:93–98, doi:10.1093/ajcn/73.1.93, PMID:11124756.
+- `src.nagayama.ascorbate_levodopa.2004` — Nagayama et al., *Clin
+  Neuropharmacol* 27:270–273, doi:10.1097/01.wnf.0000150865.21759.bc,
+  PMID:15613930.
+- `src.demarcaida.rasagiline_tyramine.2006` — deMarcaida et al., *Mov Disord*
+  21:1716–1721, doi:10.1002/mds.21048, PMID:16856145.
+- `src.shulman.tyramine_soy.1999` — Shulman and Walker, *J Clin Psychiatry*
+  60:191–193, PMID:10192596.
+- `src.astarloa.fiber_levodopa.1992` — Astarloa et al., *Clin Neuropharmacol*
+  15:375–380, doi:10.1097/00002826-199210000-00004, PMID:1330307.
+
+Product-level reference data (iteration 2 of 2026-10-08):
+
+- `src.merrill_watt.handbook74.1973` — Merrill, Annabel L., and Bernice K.
+  Watt. *Energy Value of Foods: Basis and Derivation.* Agriculture Handbook
+  No. 74, U.S. Department of Agriculture, 1955, slightly revised 1973.
+- `src.usda.fdc.full_download.2025_04_24` — U.S. Department of Agriculture,
+  Agricultural Research Service. *FoodData Central*, full CSV download,
+  release 2025-04-24; retrieved via the Hugging Face mirror
+  yvfu/FoodData_Central_csv_2025-04-24. Public domain.
+- `src.usda.fndds.2017_2018` — U.S. Department of Agriculture, Agricultural
+  Research Service, Food Surveys Research Group. *Food and Nutrient Database
+  for Dietary Studies 2017-2018*; retrieved via the Hugging Face mirror
+  tramzel/fndds. Public domain.
+- `src.nlm.rxnorm.2024_12_02` — U.S. National Library of Medicine. *RxNorm*,
+  release of 2 December 2024, Current Prescribable Content; retrieved via the
+  Hugging Face mirror OnDeviceMedNotes/nih-rxnorm-dec-2-2024.
+
+Food-borne L-dopa and tyramine are carried as presence and variability
+context only; no per-serving amount is derived, and food L-dopa is never
+treated as a substitute for, or an equivalent of, a prescribed medicine.
+
 The detailed evidence map, quantitative observations used, negative findings,
 and non-generalization boundaries are versioned in
 `docs/CORE_ALGORITHM_EVIDENCE_REVIEW_2026-08-17.md`.

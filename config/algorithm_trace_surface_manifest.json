@@ -5,7 +5,7 @@
   "algorithm_count": 65,
   "production_trace_count": 14,
   "static_contract_only_count": 51,
-  "registry_surface_sha256": "1f8671b779b3037734a9a2fe991f9f0bfee453762d375ec3d8d203e29e43e61f",
+  "registry_surface_sha256": "49568d7fcce7eae680bae8680a0c6f29a8853cf24606788d377daed56eabe2ee",
   "providers": [
     {
       "provider_id": "observatory.production-snapshot/1",
@@ -124,5 +124,5 @@
     "timeline_projection",
     "variant_resolver"
   ],
-  "manifest_sha256": "52c4ed73a916fdfc8cbac2bfc7ba292bd5cc2a97a80f87a9daf664e172406f9f"
+  "manifest_sha256": "bc1bb96a5c49e733f743169dc2f8e29ee674ebe3110efbcc6ead9e4c8a913374"
 }
