@@ -9048,7 +9048,7 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   - Model: `lib/domain/usecases/{food_composition_interdependency_model,model_assumption_registry,algorithm_registry,algorithm_configuration_change_impact_service}.dart`.
   - Entities: `lib/domain/entities/{rxnorm_reference,seed_food_composition,context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation}.dart`.
   - Constants and identity: `lib/core/constants/{rxnorm_reference_table,seed_food_composition_table,medication_reference_identities,reference_food_composition_table}.dart`, `lib/core/analysis/medication_repository.dart`, `lib/algorithm_sdk/algorithm_configuration_identity.dart`.
-  - Config: `config/{algorithm_surface_allowlist,source_access_registry,complete_app_upgrade_queue}.json`.
+  - Config: `config/{algorithm_surface_allowlist,algorithm_trace_surface_manifest,source_access_registry,complete_app_upgrade_queue}.json`. The trace manifest re-pins only its registry-surface and manifest digests (the registry gained two source paths); the trace ownership is unchanged.
   - Tooling: `tool/{rxnorm_reference_codegen,generate_rxnorm_reference_table,seed_food_composition_codegen,generate_seed_food_composition_table}.dart`, `tool/data/{fdc_2025-04-24,fndds_2017_2018,rxnorm_2024-12-02}/`, `tool/data/{seed_food_sources.json,usda_sr_legacy_seed_subset_2018.csv,usda_sr_legacy_reference_subset_2018.csv}`.
   - Tests and goldens: four new test files, `test/food_composition_interdependency_model_test.dart`, three goldens.
   - Docs: `Bibliographies.md`, `docs/known_risks.md`, `docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md` (Section 8), and this timeline.
@@ -9080,6 +9080,6 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   - the importer, seed importers, medication repository, interdependency model and test, reference subset and table;
   - the registry, assumption, source-registry and bibliography additions;
   - the allowlist entries;
-  - identity `2026.10.08-v53` with its digests, the CoU v40/plan v38/attestation v37 pins, the queue sentence and the goldens.
+  - identity `2026.10.08-v53` with its digests, the trace-manifest digests, the CoU v40/plan v38/attestation v37 pins, the queue sentence and the goldens.
 - Then remove research Section 8, the R14 additions, and this entry.
 - Preserve every unrelated file.
