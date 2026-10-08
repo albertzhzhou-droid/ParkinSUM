@@ -8942,3 +8942,62 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   Published npm versions and immutable GitHub releases are historical artifacts;
   correct any publication mistake with a subsequent version rather than rewriting
   the published tag or overwriting its contents.
+
+
+## 2026-10-08 — FOOD-INTERDEP-20261008 — Verified food-composition subset and interdependency layer
+
+### Baseline and scope
+
+- Cloud checkout on branch `claude/modest-knuth-rl15va`, baseline HEAD `197519a` (merged PR #135). This entry covers the uncommitted changes in this iteration only and preserves all unrelated files.
+- Algorithm configuration identity advances `2026.09.29-v52` → `2026.10.08-v53`. Configuration SHA-256 `006082abc5d9f5aa280daeb18b83e3eff34790be7d38e077a6a2452720d9d60e`; previous-configuration fixture `340e05012e36fbc3a4fc8d1ee2a80e6dd2b7dbe1a2160365254f20f94f1ca942`; registered-source bundle `9638c21fb06d94e8e5f56b5ced1b830a4aca0a3e42b9707a619b8112c9f5bfb8`. CoU ledger `2026.10.08-v40`, prospective plan `2026.10.08-v38`, and evidence attestation `2026.10.08-v37` are mechanically rebound to it; none adds evidence, review, or qualification. No persisted schema version changes.
+
+### Changes
+
+- Added a verbatim USDA FoodData Central SR Legacy (April 2018) subset of 224 foods covering 16 food groups (`tool/data/usda_sr_legacy_reference_subset_2018.csv`), curation metadata, a generator, and the generated table `lib/core/constants/reference_food_composition_table.dart`. The default food repository now also includes these foods with namespaced ids (`food_ref_usda_<fdcId>`). Unknown values stay unknown, not zero.
+- Added `lib/domain/usecases/food_composition_interdependency_model.dart`. It covers:
+  - FAO Paper 77 energy identity (alcohol and organic-acid residuals).
+  - Carbohydrate-convention harmonisation and the sodium-to-salt identity.
+  - 23 protein-tracer derivation edges (raw, cooked, dried, juice and salted forms) and an egg part–whole check.
+  - Food-borne L-dopa source recognition for *Vicia faba* and *Mucuna* (tissue ranges are recorded but never applied to a serving).
+  - Dry-versus-cooked ambiguity, resolved by protein density.
+  - A non-heme iron co-consumption context.
+  - Cross-source comparison.
+- The mechanistic conflict engine adds a traced `food_composition_interdependency` layer. It can add drivers and uncertainty reasons and cap confidence from high to medium. Interaction score, severity, and type are unchanged.
+- Added 16 PubMed/standards-referenced assumptions to the model assumption registry, `config/source_access_registry.json`, and `Bibliographies.md`.
+- Defects fixed:
+  - The FDC importer no longer stores carbohydrate by difference (which includes fibre) as available carbohydrate. Available carbohydrate is derived only from exact values and is method-coded.
+  - P0 seed sodium, energy and water are now marked missing instead of zero.
+  - The physically implausible P0 coffee vitamin B6 value is withdrawn.
+- Added the research note `docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md` and known-risk R14.
+- Changed files:
+  - Engine, model and registry: `lib/domain/usecases/{mechanistic_conflict_engine,food_composition_interdependency_model,model_assumption_registry,algorithm_registry,algorithm_configuration_change_impact_service,cdss_catalog_projection_service}.dart`.
+  - Data and entities: `lib/domain/entities/{reference_food_composition,context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation}.dart`, `lib/core/constants/{reference_food_composition_table,reference_food_catalog,p0_food_source_seed}.dart`, `lib/core/analysis/food_repository.dart`, `lib/data/datasources/remote/fdc_p0_importer.dart`, `lib/algorithm_sdk/algorithm_configuration_identity.dart`.
+  - Config: `config/{algorithm_surface_allowlist,algorithm_trace_surface_manifest,source_access_registry,complete_app_upgrade_queue}.json`.
+  - Tooling: `tool/{reference_food_composition_codegen,generate_reference_food_composition_table}.dart`, `tool/data/*`.
+  - Tests and goldens: two new test files, `test/p0_importers_test.dart`, four goldens.
+  - Docs: `Bibliographies.md`, `docs/known_risks.md`, and this timeline.
+
+### Verification and remaining boundaries
+
+- The new reference-table and interdependency tests pass. Goldens were regenerated:
+  - The replay changes are the additive trace layer, plus one genuine energy-identity finding in the s34 fixture.
+  - The model-assumption count goes 24 → 40.
+- These checks also pass:
+  - Governance, SDK digest, change-impact, CoU, credibility-chain and trace-manifest tests.
+  - Numerical-oracle gates.
+  - `node --test tool/complete_app_upgrade_queue_check.test.mjs` (57/57).
+  - `dart analyze` and `dart format`.
+- The full `flutter test` run passed 2,458 tests. Its nine failures all shell out to the `sqlite3` CLI, which the cloud container lacks; they are environment-only and predate this change.
+- Of 224 rows, 218 reconcile with the energy identity within tolerance. The other six are explained by ethanol or acetic acid.
+- Eight CIQUAL-vs-USDA differences are listed in the research note as source differences, not errors.
+- Evidence-currency records for the 16 new sources are not registered. A 2026-10-08 observation date would block providers for earlier fixture clocks.
+- The SR Legacy values came through a third-party Hugging Face mirror, because direct USDA hosts are blocked by the environment's network policy. They were verified independently by identity checks, not against the USDA host.
+- China CDC carbohydrate convention remains unverified, and the model abstains on it.
+- Nothing here is dietary, medication, or timing advice; all demo data stays synthetic.
+
+### Surgical rollback
+
+- Remove the two new constants files, the entity file, the model file, the two tool files, `tool/data/`, the two new tests, and the research note.
+- Revert the engine's interdependency block, the 16 registry assumptions, the 16 source-registry entries, the bibliography section, the allowlist and algorithm-registry path additions, the repository merge, and the importer/seed fixes.
+- Restore identity `2026.09.29-v52` with its digests, and the CoU v39/plan v37/attestation v36 pins, the trace-manifest digests, the four queue `currentGap` sentences, and the goldens. Then remove R14 and this entry.
+- Preserve every unrelated file.

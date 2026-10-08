@@ -1,5 +1,6 @@
 import '../models/food_item.dart';
 import '../constants/p0_food_source_seed.dart';
+import '../constants/reference_food_catalog.dart';
 import 'nutrition_rules.dart';
 
 /// FoodRepository：
@@ -14,7 +15,13 @@ class FoodRepository {
   /// 工厂：构建默认目录
   factory FoodRepository.createDefault() {
     // 默认目录优先复用已经接入数据库设计的 P0 食物集合，避免 UI 搜索与 CDSS 事实库脱节。
-    return FoodRepository._(buildP0FoodCatalog());
+    // The USDA SR Legacy reference subset (224 foods across every major food
+    // group, verbatim per-100 g values) extends logging coverage; its ids are
+    // namespaced (`food_ref_usda_<fdcId>`) so they never collide with P0 ids.
+    return FoodRepository._([
+      ...buildP0FoodCatalog(),
+      ...buildReferenceFoodCatalog(),
+    ]);
   }
 
   List<FoodItem> get allFoods => List.unmodifiable(_foods);

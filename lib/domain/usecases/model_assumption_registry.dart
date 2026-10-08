@@ -20,6 +20,10 @@ enum ModelSourceType {
   modelPaper,
   regulatoryGuidance,
   internalSafetyBoundary,
+  // Laboratory food-chemistry measurement (no human participants).
+  analyticalStudy,
+  // Published food-composition reference dataset.
+  referenceDataset,
 }
 
 class ModelAssumption {
@@ -504,6 +508,342 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-05-27',
   );
 
+  // --- Food composition interdependency layer (2026-10-08) -----------------
+
+  static const ModelAssumption usdaSrLegacy = ModelAssumption(
+    sourceId: 'src.usda.sr_legacy.2018',
+    title: 'USDA FoodData Central — SR Legacy (April 2018) composition data',
+    sourceType: ModelSourceType.referenceDataset,
+    mechanismSupported:
+        'Per-100 g composition of 224 reference foods reproduced verbatim '
+        '(energy, protein, fat, carbohydrate by difference, fibre, minerals, '
+        'selected vitamins). Paired raw/cooked, whole/part and fresh/dried '
+        'records support tracer-based consistency checks between foods.',
+    limitation:
+        'Sample averages from historical analyses; cultivar, season, '
+        'processing and recipe change real foods. Values describe foods, not '
+        'any person, and the subset is not every food a person may eat.',
+    citationText:
+        'U.S. Department of Agriculture, Agricultural Research Service. '
+        'FoodData Central: SR Legacy, April 2018. Retrieved via the public '
+        'Hugging Face mirror ULM-DS-Lab/food-composition-matrix '
+        '(usda_sr_legacy_2018_wide.csv); public domain.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption faoFoodEnergy = ModelAssumption(
+    sourceId: 'src.fao.food_energy.2003',
+    title:
+        'FAO Food and Nutrition Paper 77 — Food energy: methods of analysis '
+        'and conversion factors',
+    sourceType: ModelSourceType.consensusStandard,
+    mechanismSupported:
+        'General energy conversion factors: protein and available '
+        'carbohydrate 4 kcal/g, fat 9 kcal/g, dietary fibre 2 kcal/g, '
+        'alcohol 7 kcal/g, organic acids about 3 kcal/g. Used to reconcile '
+        'reported energy with reported macronutrients.',
+    limitation:
+        'Data sets also use food-specific factors, so a general-factor check '
+        'needs a tolerance band; a residual flags a record for review and is '
+        'not proof of an error.',
+    citationText:
+        'FAO. Food energy — methods of analysis and conversion factors. '
+        'Report of a Technical Workshop, Rome, 3–6 December 2002. FAO Food '
+        'and Nutrition Paper 77. Rome: FAO, 2003.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption euSaltFactor = ModelAssumption(
+    sourceId: 'src.eu.reg1169.salt_factor',
+    title: 'Regulation (EU) No 1169/2011, Annex I(11): salt = sodium × 2.5',
+    sourceType: ModelSourceType.regulatoryGuidance,
+    mechanismSupported:
+        'Labelling convention converting sodium to salt equivalent.',
+    limitation:
+        'Labelling convention (NaCl/Na mass ratio is 2.54); it does not say '
+        'all sodium comes from added salt.',
+    citationText:
+        'Regulation (EU) No 1169/2011 of the European Parliament and of the '
+        'Council on the provision of food information to consumers, Annex I, '
+        'point 11. OJ L 304, 22.11.2011.',
+    evidenceLevel: ModelEvidenceLevel.regulatoryGuidance,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption mariottiNitrogenFactors = ModelAssumption(
+    sourceId: 'src.mariotti.nitrogen_protein.2008',
+    title: 'Converting nitrogen into protein — beyond 6.25 and Jones\' factors',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'Food "protein" is measured nitrogen multiplied by a conversion '
+        'factor; the factor convention differs between foods and sources, '
+        'so cross-source protein differences can be partly definitional.',
+    limitation:
+        'Explains why small cross-source protein differences are expected; '
+        'it does not give a per-food correction applied by ParkinSUM.',
+    citationText:
+        'Mariotti F., Tomé D., Mirand P.P. Converting nitrogen into '
+        'protein — beyond 6.25 and Jones\' factors. Crit Rev Food Sci Nutr '
+        '48(2):177-184, 2008. doi:10.1080/10408390701279749. PMID:18274971.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption duanFabaLdopaThermal = ModelAssumption(
+    sourceId: 'src.duan.faba_ldopa_thermal.2021',
+    title:
+        'Effect of thermal processing on L-dopa in faba bean leaves and seeds',
+    sourceType: ModelSourceType.analyticalStudy,
+    mechanismSupported:
+        'HPLC measured L-dopa at 24.44 (young leaves), 18.13 (old leaves) '
+        'and 0.15 (mature seeds) mg/g dry weight in one accession; steaming '
+        'lowered leaf L-dopa to 8.52–10.88 mg/g while seed values stayed '
+        'at 0.10–0.15 mg/g after up to 1 h of dry or wet heat.',
+    limitation:
+        'Single accession grown in one greenhouse; dry-weight basis. It does '
+        'not give the L-dopa content of a cooked serving or any absorbed '
+        'amount, and it is not a basis for substituting food for medicine.',
+    citationText:
+        'Duan S.C., Kwon S.J., Eom S.H. Effect of Thermal Processing on '
+        'Color, Phenolic Compounds, and Antioxidant Activity of Faba Bean '
+        '(Vicia faba L.) Leaves and Seeds. Antioxidants (Basel) 10(8):1207, '
+        '2021. doi:10.3390/antiox10081207. PMID:34439455.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption tesoroFabaPodLdopa = ModelAssumption(
+    sourceId: 'src.tesoro.faba_pod_ldopa.2024',
+    title: 'Vicia faba pod valves: L-dopa content compared with seeds',
+    sourceType: ModelSourceType.analyticalStudy,
+    mechanismSupported:
+        'LC-UV measured L-dopa at 28.65 mg/g dry weight in broad bean pod '
+        'valves versus 0.76 mg/g dry weight in seeds of the same cultivar.',
+    limitation:
+        'One regional cultivar; dry-weight basis. Shows that L-dopa content '
+        'depends strongly on plant part and variety, not a serving amount.',
+    citationText:
+        'Tesoro C. et al. Vicia faba L. Pod Valves: A By-Product with High '
+        'Potential as an Adjuvant in the Treatment of Parkinson\'s Disease. '
+        'Molecules 29(16):3943, 2024. doi:10.3390/molecules29163943. '
+        'PMID:39203021.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption aureliMucunaLdopa = ModelAssumption(
+    sourceId: 'src.aureli.mucuna_ldopa.2025',
+    title:
+        'Quality assessment of "naturally occurring" high-percentage L-dopa '
+        'products (Mucuna pruriens)',
+    sourceType: ModelSourceType.analyticalStudy,
+    mechanismSupported:
+        'Reports that the natural L-dopa percentage in Mucuna pruriens seeds '
+        'or leaves varies from 1% to 7%, and analysed labelling accuracy of '
+        'commercial L-dopa supplement products.',
+    limitation:
+        'Content range only; product labelling can be inaccurate, so a '
+        'declared amount is not treated as a measured amount.',
+    citationText:
+        'Aureli F. et al. Quality assessment of "naturally occurring" '
+        'high-percentage L-dopa commercial products proposed as dietary '
+        'supplements on the Internet. Front Chem 13:1597784, 2025. '
+        'doi:10.3389/fchem.2025.1597784. PMID:41169659.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption continMucunaPk = ModelAssumption(
+    sourceId: 'src.contin.mucuna_pk.2015',
+    title:
+        'Mucuna pruriens in Parkinson disease: kinetic-dynamic comparison '
+        'with standard levodopa formulations',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In two patients, levodopa bioavailability from a Mucuna extract '
+        'without a decarboxylase inhibitor was markedly lower than from '
+        'standard levodopa/inhibitor formulations at a nominally equal dose.',
+    limitation:
+        'Two-patient case report; shows that plant L-dopa exposure is not '
+        'interchangeable with a formulated dose and cannot be converted into '
+        'one.',
+    citationText:
+        'Contin M. et al. Mucuna pruriens in Parkinson Disease: A '
+        'Kinetic-Dynamic Comparison With Levodopa Standard Formulations. '
+        'Clin Neuropharmacol 38(5):201-203, 2015. '
+        'doi:10.1097/WNF.0000000000000098. PMID:26366963.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption campbellFerrousSulfate = ModelAssumption(
+    sourceId: 'src.campbell.ferrous_sulfate_levodopa.1989',
+    title: 'Ferrous sulfate reduces levodopa bioavailability',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In eight healthy volunteers, 325 mg ferrous sulfate taken with '
+        '250 mg levodopa lowered peak levodopa by 55% and AUC by 51%; '
+        'chelation of ferric iron by levodopa is the proposed mechanism.',
+    limitation:
+        'Supplement-dose iron salt in healthy adults; it does not establish '
+        'an effect of iron naturally present in foods, so ParkinSUM does not '
+        'extrapolate it to food iron.',
+    citationText:
+        'Campbell N.R., Hasinoff B. Ferrous sulfate reduces levodopa '
+        'bioavailability: chelation as a possible mechanism. Clin Pharmacol '
+        'Ther 45(3):220-225, 1989. doi:10.1038/clpt.1989.21. PMID:2920496.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption hallbergCalciumIron = ModelAssumption(
+    sourceId: 'src.hallberg.calcium_iron.1991',
+    title:
+        'Calcium: effect of different amounts on nonheme- and heme-iron '
+        'absorption in humans',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Calcium reduced iron absorption dose-dependently up to 300 mg; '
+        '165 mg calcium given as milk, cheese or calcium chloride reduced '
+        'absorption from a meal by 50–60%.',
+    limitation:
+        'Single-meal isotope studies; long-term iron status effects are '
+        'smaller and individual. Used only as a co-consumption context note.',
+    citationText:
+        'Hallberg L. et al. Calcium: effect of different amounts on '
+        'nonheme- and heme-iron absorption in humans. Am J Clin Nutr '
+        '53(1):112-119, 1991. doi:10.1093/ajcn/53.1.112. PMID:1984335.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption zijpTeaIron = ModelAssumption(
+    sourceId: 'src.zijp.tea_iron.2000',
+    title: 'Effect of tea and other dietary factors on iron absorption',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'Ascorbic acid and meat, fish and poultry enhance non-heme iron '
+        'absorption; polyphenols in tea and coffee, phytate and calcium '
+        'inhibit it; heme iron is little affected by these factors.',
+    limitation:
+        'Review of meal studies; enhancers present in mixed diets can '
+        'offset inhibitors. Context only, not an iron-status prediction.',
+    citationText:
+        'Zijp I.M., Korver O., Tijburg L.B. Effect of tea and other dietary '
+        'factors on iron absorption. Crit Rev Food Sci Nutr 40(5):371-398, '
+        '2000. doi:10.1080/10408690091189194. PMID:11029010.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption cookReddyAscorbate = ModelAssumption(
+    sourceId: 'src.cook_reddy.ascorbate_iron.2001',
+    title:
+        'Effect of ascorbic acid intake on nonheme-iron absorption from a '
+        'complete diet',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Over 5-day complete-diet periods (vitamin C 51–247 mg/d), mean '
+        'non-heme iron absorption did not differ significantly, in contrast '
+        'with the pronounced single-meal effect.',
+    limitation:
+        'Twelve participants; shows that single-meal enhancement does not '
+        'translate directly into whole-diet effects.',
+    citationText:
+        'Cook J.D., Reddy M.B. Effect of ascorbic acid intake on '
+        'nonheme-iron absorption from a complete diet. Am J Clin Nutr '
+        '73(1):93-98, 2001. doi:10.1093/ajcn/73.1.93. PMID:11124756.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption nagayamaAscorbateLevodopa = ModelAssumption(
+    sourceId: 'src.nagayama.ascorbate_levodopa.2004',
+    title:
+        'Effect of ascorbic acid on the pharmacokinetics of levodopa in '
+        'elderly patients with Parkinson disease',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Adding 200 mg ascorbic acid to 100/10 mg levodopa/carbidopa did not '
+        'change pharmacokinetics across all 67 participants; AUC and Cmax '
+        'rose only in the 25 with low baseline AUC.',
+    limitation:
+        'Supplement dose, subgroup finding; ParkinSUM does not convert food '
+        'vitamin C into any levodopa adjustment.',
+    citationText:
+        'Nagayama H. et al. The effect of ascorbic acid on the '
+        'pharmacokinetics of levodopa in elderly patients with Parkinson '
+        'disease. Clin Neuropharmacol 27(6):270-273, 2004. '
+        'doi:10.1097/01.wnf.0000150865.21759.bc. PMID:15613930.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption demarcaidaRasagilineTyramine = ModelAssumption(
+    sourceId: 'src.demarcaida.rasagiline_tyramine.2006',
+    title:
+        'Tyramine administration in Parkinson disease patients treated '
+        'with the selective MAO-B inhibitor rasagiline',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Tyramine challenges of 50–75 mg in 110 participants produced no '
+        'clinically significant pressor reaction at rasagiline 0.5–2 mg/day.',
+    limitation:
+        'Applies to the studied drug and doses; tyramine content of foods '
+        'is highly variable and is not quantified per food by ParkinSUM.',
+    citationText:
+        'deMarcaida J.A. et al. Effects of tyramine administration in '
+        'Parkinson\'s disease patients treated with selective MAO-B '
+        'inhibitor rasagiline. Mov Disord 21(10):1716-1721, 2006. '
+        'doi:10.1002/mds.21048. PMID:16856145.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption shulmanTyramineSoy = ModelAssumption(
+    sourceId: 'src.shulman.tyramine_soy.1999',
+    title:
+        'Refining the MAOI diet: tyramine content of pizzas and soy '
+        'products',
+    sourceType: ModelSourceType.analyticalStudy,
+    mechanismSupported:
+        'HPLC found marked variability in soy products, including high '
+        'tyramine in one soy sauce and clinically relevant levels in tofu '
+        'stored for a week.',
+    limitation:
+        'Product- and storage-specific measurements; supports "variable, '
+        'storage-dependent" rather than a fixed per-food value.',
+    citationText:
+        'Shulman K.I., Walker S.E. Refining the MAOI diet: tyramine content '
+        'of pizzas and soy products. J Clin Psychiatry 60(3):191-193, 1999. '
+        'PMID:10192596.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption astarloaFiberLevodopa = ModelAssumption(
+    sourceId: 'src.astarloa.fiber_levodopa.1992',
+    title:
+        'Clinical and pharmacokinetic effects of a diet rich in insoluble '
+        'fiber on Parkinson disease',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In constipated patients, an insoluble-fibre-rich diet was '
+        'associated with higher early plasma L-dopa and better motor scores.',
+    limitation:
+        'Small clinical study in constipated patients; direction differs '
+        'from fibre-related gastric-emptying uncertainty and is context only.',
+    citationText:
+        'Astarloa R. et al. Clinical and pharmacokinetic effects of a diet '
+        'rich in insoluble fiber on Parkinson disease. Clin Neuropharmacol '
+        '15(5):375-380, 1992. doi:10.1097/00002826-199210000-00004. '
+        'PMID:1330307.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
   static const List<ModelAssumption> all = [
     sinemetLabel,
     sinemetExtendedLabel,
@@ -529,6 +869,22 @@ class ModelAssumptionRegistry {
     virmaniProtein,
     fdcFoundationDocs,
     internalPrototypeHeuristic,
+    usdaSrLegacy,
+    faoFoodEnergy,
+    euSaltFactor,
+    mariottiNitrogenFactors,
+    duanFabaLdopaThermal,
+    tesoroFabaPodLdopa,
+    aureliMucunaLdopa,
+    continMucunaPk,
+    campbellFerrousSulfate,
+    hallbergCalciumIron,
+    zijpTeaIron,
+    cookReddyAscorbate,
+    nagayamaAscorbateLevodopa,
+    demarcaidaRasagilineTyramine,
+    shulmanTyramineSoy,
+    astarloaFiberLevodopa,
   ];
 
   static ModelAssumption? byId(String sourceId) {

@@ -860,7 +860,12 @@ const _p0FoodSeeds = <_P0FoodSeed>[
       'fat_g': '0.018',
       'fiber_g': '0',
       'potassium_mg': '150',
-      'vitamin_b6_mg': '0.73',
+      // Withheld (was 0.73 mg/100 g): brewed coffee holds only ~0.6–1.5 g
+      // dissolved solids per 100 g (USDA SR Legacy FDC 171890: 1 kcal,
+      // 0.12 g protein), so 0.73 mg vitamin B6 would mean roughly 50–120 mg
+      // B6 per 100 g of solids — far above vitamin B6 densities reported for
+      // foods. Kept unknown until re-extracted from the official CIQUAL file.
+      'vitamin_b6_mg': 'UNSPECIFIED',
     },
   ),
 ];
@@ -904,6 +909,21 @@ List<FoodItem> buildP0FoodCatalog() {
           fatG: fat,
           fiberG: fiber,
           sodiumMg: 0,
+          // Missing ≠ zero: this curated seed carries no sodium, energy or
+          // water observations, and any `UNSPECIFIED` macro stays unknown.
+          missingNutrientFields: {
+            'sodiumMg',
+            'energyKcal',
+            'waterG',
+            for (final entry in const {
+              'protein_g': 'proteinG',
+              'carbohydrate_g': 'carbsG',
+              'fat_g': 'fatG',
+              'fiber_g': 'fiberG',
+            }.entries)
+              if ((seed.nutrients[entry.key] ?? 'UNSPECIFIED') == 'UNSPECIFIED')
+                entry.value,
+          },
         );
       })
       .toList(growable: false);

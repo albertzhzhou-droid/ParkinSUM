@@ -272,6 +272,10 @@ class FdcP0Importer {
           continue;
         }
         final rawValue = '$amount';
+        if (attributeCode == 'fiber_g' && nutrientMap.containsKey('fiber_g')) {
+          // Keep the first total-fibre method (291 precedes AOAC 2011.25).
+          continue;
+        }
         nutrientMap[attributeCode] = rawValue;
         final derivation = _nestedRecord(map['foodNutrientDerivation']);
         final nutrientSource = _nestedRecord(map['foodNutrientSource']);
@@ -389,6 +393,60 @@ class FdcP0Importer {
               recordLocator: '$fdcId:$attributeCode:sample_range',
               methodCode: methodCode,
               extractionConfidence: 1,
+            ),
+          );
+        }
+      }
+
+      // Derive available carbohydrate (by difference − total fibre) only when
+      // the source gave no by-summation value and both terms are exact
+      // numbers. The derivation is recorded as such; missing fibre is never
+      // assumed to be zero.
+      if (!nutrientMap.containsKey('carbohydrate_g')) {
+        final byDifference = parseQualifiedValue(
+          nutrientMap['carbohydrate_by_difference_g'] ?? '',
+        );
+        final fiber = parseQualifiedValue(nutrientMap['fiber_g'] ?? '');
+        final carbValue = byDifference.valueNum;
+        final fiberValue = fiber.valueNum;
+        if (byDifference.qualifierKind == QualifierKind.exact &&
+            fiber.qualifierKind == QualifierKind.exact &&
+            carbValue != null &&
+            fiberValue != null &&
+            carbValue.isFinite &&
+            fiberValue.isFinite &&
+            carbValue >= 0 &&
+            fiberValue >= 0 &&
+            carbValue - fiberValue >= -0.05) {
+          final available = carbValue - fiberValue < 0
+              ? 0.0
+              : carbValue - fiberValue;
+          final rawValue = _roundedDecimal(available);
+          nutrientMap['carbohydrate_g'] = rawValue;
+          final derived = ObservationRecord(
+            observationId:
+                'obs_${stableHash('$variantId:carbohydrate_g:derived:$rawValue')}',
+            domain: 'food',
+            entityType: 'food_variant',
+            entityKey: variantId,
+            attributeCode: 'carbohydrate_g',
+            valueType: 'numeric_interval',
+            value: parseQualifiedValue(rawValue),
+            unit: 'g',
+            basisType: 'per_100g_edible_part',
+            basisAmount: 100,
+            scopeHash: scopeHash,
+            sourceDocId: sourceDocId,
+            recordLocator: '$fdcId:carbohydrate_g:derived',
+            methodCode: derivedAvailableCarbohydrateMethodCode,
+            extractionConfidence: 1,
+          );
+          observations.add(derived);
+          resolvedFacts.add(
+            resolvedFactFromObservation(
+              observation: derived,
+              policyId: 'fdc_import_v1',
+              snapshotId: 'facts_fdc_import_v1',
             ),
           );
         }
@@ -571,6 +629,16 @@ class FdcP0Importer {
           fatG: displayValueFromRaw(nutrientMap['fat_g'] ?? '0'),
           fiberG: displayValueFromRaw(nutrientMap['fiber_g'] ?? '0'),
           sodiumMg: displayValueFromRaw(nutrientMap['sodium_mg'] ?? '0'),
+          // Absent source fields are unknown, not zero.
+          missingNutrientFields: {
+            if (!nutrientMap.containsKey('protein_g')) 'proteinG',
+            if (!nutrientMap.containsKey('carbohydrate_g')) 'carbsG',
+            if (!nutrientMap.containsKey('fat_g')) 'fatG',
+            if (!nutrientMap.containsKey('fiber_g')) 'fiberG',
+            if (!nutrientMap.containsKey('sodium_mg')) 'sodiumMg',
+            'energyKcal',
+            'waterG',
+          },
           aminoAcidProfile: aminoAcidProfile,
           foodPortionEvidence: foodPortionEvidence,
         ),
@@ -624,6 +692,16 @@ class FdcP0Importer {
     return ArchiveImportSupport.parseDelimitedRows(match.value);
   }
 
+  /// Method code for available carbohydrate derived from by-difference
+  /// carbohydrate minus total dietary fibre.
+  static const String derivedAvailableCarbohydrateMethodCode =
+      'derived:carbohydrate_by_difference_minus_total_fiber';
+
+  String _roundedDecimal(double value) {
+    final rounded = (value * 10000).roundToDouble() / 10000;
+    return rounded.toString();
+  }
+
   Map<String, Object?>? _nestedRecord(Object? value) {
     if (value is! Map) return null;
     return <String, Object?>{
@@ -658,11 +736,28 @@ class FdcP0Importer {
     final number = nutrientNumber.trim();
     final lower = nutrientName.toLowerCase();
     if (number == '203' || lower == 'protein') return 'protein_g';
-    if (number == '205' || lower.contains('carbohydrate')) {
+    // Carbohydrate definitions differ. FDC 205/1005 "by difference" includes
+    // dietary fibre; the local catalog's `carbohydrate_g` is available
+    // carbohydrate (CIQUAL "Glucides"), matched by FDC 1050 "by summation".
+    // Storing both under one code double-counts fibre across sources, so the
+    // by-difference value keeps its own code and any other carbohydrate
+    // definition stays unmapped rather than guessed.
+    if (number == '205' ||
+        number == '1005' ||
+        lower == 'carbohydrate, by difference') {
+      return 'carbohydrate_by_difference_g';
+    }
+    if (number == '1050' || lower == 'carbohydrate, by summation') {
       return 'carbohydrate_g';
     }
+    if (lower.contains('carbohydrate')) return null;
     if (number == '204' || lower == 'total lipid (fat)') return 'fat_g';
-    if (number == '291' || lower.contains('fiber')) return 'fiber_g';
+    // Total dietary fibre only; soluble/insoluble fractions are not totals.
+    if (number == '291' ||
+        lower == 'fiber, total dietary' ||
+        lower.startsWith('total dietary fiber')) {
+      return 'fiber_g';
+    }
     if (number == '307' || lower == 'sodium, na') return 'sodium_mg';
     if (number == '303' || lower == 'iron, fe') return 'iron_mg';
     if (number == '306' || lower == 'potassium, k') return 'potassium_mg';

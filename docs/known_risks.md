@@ -21,6 +21,7 @@ every stage/prod release decision.
 | Prod live signed-in probe | mitigated for internal prerelease | Prod read-only probe passed with disposable Auth test users and `writeProbeAllowed=false`; test accounts are retained enabled by operator decision. |
 | Monitoring and audit | mitigated for internal prerelease | Cloud Logging/Error Reporting APIs are enabled for prod, Monitoring email notification channel and uptime/error alert policies are configured, local redacted operator-audit summary exists, and `zhouzhenghang` owns monitoring/incident response for internal/private prerelease. |
 | Browser public visual smoke | mitigated | Current public visual smoke evidence is recorded in `build/browser_smoke/public_visual_smoke_20260523.json`. |
+| Food composition accuracy and interdependency | monitored | Verbatim USDA SR Legacy subset with energy/closure/derivation tests; convention-aware carbohydrate handling; food-borne L-dopa and dry/cooked ambiguity widen uncertainty only. See R14. |
 
 ## R1: Regulatory Positioning
 
@@ -255,3 +256,35 @@ Required mitigation:
 - keep Chrome/Computer Use read-only if used for visual verification.
 - do not route around Browser policy with another automation surface in the
   same blocked session.
+
+## R14: Food Composition Accuracy and Interdependency
+
+Status: monitored.
+
+Food values are sample averages and depend on variety, preparation and the
+database's definitions. The 2026-10-08 update adds a verbatim USDA SR Legacy
+subset (224 foods), tests every record against energy and closure identities,
+tests 23 raw/cooked, dried, juiced and salted derivations plus egg
+part–whole, and fixes a carbohydrate-convention mismatch that double-counted
+fibre across sources.
+
+Residual risks:
+
+- The subset is retrieved through a third-party mirror (direct USDA access is
+  blocked in the build environment); identity checks detect transcription
+  errors but not an upstream value that is internally consistent yet wrong.
+- Eight CIQUAL-labelled seed foods have a value differing materially from USDA and
+  need re-verification against the official CIQUAL file
+  (`docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md`, Section 5).
+- Food-borne L-dopa (broad beans, Mucuna) is detected by name/reference id and
+  shown as unquantified context; published content varies more than 280-fold
+  by tissue and variety. A name the matcher does not know is missed.
+- Evidence-currency records for the new sources are not registered yet.
+
+Required mitigation:
+
+- keep food-borne L-dopa and tyramine as presence/variability context; never
+  derive a dose equivalent or a food instruction from them.
+- re-verify flagged seed values against official source files before any
+  public demonstration relies on them.
+- review questions about food, iron, or medicines with a qualified clinician.

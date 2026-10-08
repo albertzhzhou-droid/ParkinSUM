@@ -327,6 +327,9 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.decide,
       visualization: AlgorithmVisualization.scoreBreakdown,
       sourcePath: 'lib/domain/usecases/mechanistic_conflict_engine.dart',
+      additionalSourcePaths: [
+        'lib/domain/usecases/food_composition_interdependency_model.dart',
+      ],
       userVisibleImpact:
           'Composes timing, emptying, absorption, and competition into one trace.',
       inputs: 'Time axis and normalized meal compositions',

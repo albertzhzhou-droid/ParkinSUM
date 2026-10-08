@@ -263,12 +263,12 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.09.29-v39';
+  static const String ledgerVersion = '2026.10.08-v40';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
-      'e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05';
+      '006082abc5d9f5aa280daeb18b83e3eff34790be7d38e077a6a2452720d9d60e';
   static const String expectedInitialSemanticDiffSha256 =
       '1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937';
   static const String expectedCurrentEvidenceCurrencyRegistrySha256 =
@@ -359,8 +359,10 @@ final class ContextOfUseRequalificationLedger {
           'Implementation and calculation verification do not establish '
           'scientific validation, model qualification, regulatory review, or '
           'external approval. The changed capability remains unpromoted. '
-          'The v52 release refresh binds the current configuration and '
-          'evidence-synthesis registry identities only; retained synthetic '
+          'The v52 release refresh bound the configuration and '
+          'evidence-synthesis registry identities; the v53 rebind binds the '
+          'food-composition interdependency configuration only. Retained '
+          'synthetic '
           'fixture timestamps do not '
           'attest current-worktree review or evidence coverage.',
     );
