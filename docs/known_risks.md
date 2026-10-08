@@ -21,7 +21,7 @@ every stage/prod release decision.
 | Prod live signed-in probe | mitigated for internal prerelease | Prod read-only probe passed with disposable Auth test users and `writeProbeAllowed=false`; test accounts are retained enabled by operator decision. |
 | Monitoring and audit | mitigated for internal prerelease | Cloud Logging/Error Reporting APIs are enabled for prod, Monitoring email notification channel and uptime/error alert policies are configured, local redacted operator-audit summary exists, and `zhouzhenghang` owns monitoring/incident response for internal/private prerelease. |
 | Browser public visual smoke | mitigated | Current public visual smoke evidence is recorded in `build/browser_smoke/public_visual_smoke_20260523.json`. |
-| Food composition accuracy and interdependency | monitored | Verbatim USDA SR Legacy subset with energy/closure/derivation tests; convention-aware carbohydrate handling; food-borne L-dopa and dry/cooked ambiguity widen uncertainty only. See R14. |
+| Food composition accuracy and interdependency | monitored | Verbatim USDA SR Legacy, FNDDS and FDC 2025 data and NLM RxNorm identities, pinned by SHA-256; energy/closure/derivation and food-specific factor tests; convention-aware carbohydrate handling; food-borne L-dopa and dry/cooked ambiguity widen uncertainty only. See R14. |
 
 ## R1: Regulatory Positioning
 
@@ -280,6 +280,18 @@ Residual risks:
   shown as unquantified context; published content varies more than 280-fold
   by tissue and variety. A name the matcher does not know is missed.
 - Evidence-currency records for the new sources are not registered yet.
+- Iteration 2 replaced hand-entered seed-food nutrients with verbatim USDA SR
+  Legacy or FNDDS values; 44 of 186 seed foods have no verified record and
+  show every nutrient as unknown. Seven proxy matches (a close but
+  non-identical record) are labelled as proxies.
+- Twelve catalog medications carry verified RxNorm (2 December 2024)
+  ingredient identities and five carbidopa/levodopa clinical drugs carry
+  RxNorm dose forms; nine medications remain unverified with a reason.
+  Identity data never implies a dose or schedule.
+- The FoodData Central 2025-04-24 nutrient definitions and conversion factors
+  are pinned; a later FDC release can renumber or redefine nutrients and
+  needs a re-pin. One food-specific energy factor (coconut oil) disagrees
+  across releases and is documented, not corrected.
 
 Required mitigation:
 

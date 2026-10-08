@@ -49,7 +49,10 @@ final class AlgorithmConfigurationIdentity {
   // conflict engine (food-borne L-dopa presence, dry/cooked ambiguity and
   // energy-identity findings). It can add drivers and uncertainty and cap
   // confidence; it never changes the interaction score.
-  static const String defaultVersion = '2026.10.08-v53';
+  // v54 binds the composition identity audit (food-specific energy factors,
+  // proximate closure and part-within-whole checks) and the expanded FDC
+  // importer sources. Engine scores and severities are unchanged.
+  static const String defaultVersion = '2026.10.08-v54';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -57,7 +60,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '9638c21fb06d94e8e5f56b5ced1b830a4aca0a3e42b9707a619b8112c9f5bfb8';
+      'a4dfcae4d9bb7e47a0d9a6a3451835847c79850af947f0dca0415e4cd5a75bd0';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -90,7 +93,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
         '79c01e3d8de22b7660ba16d917682f28a1447d7e867af09f84651cfd878c05cf',
     'lib/domain/usecases/food_composition_interdependency_model.dart':
-        'cb9139b1bee3e54e1b7263c24b56c4ea0ee9d9b3f4b23aae198add1f29f9cec7',
+        '5efcccb9b2e9fff12082609fea62ca23f2b6d5f4f1cdc3120c64430e54c7d614',
     'lib/domain/usecases/protein_distribution_model.dart':
         '9ab6035545b0dc2d6d462112a7c2d42f900bb24a9b6ecd7b9a42b7fbcfa2f881',
     'lib/domain/usecases/next_meal_scoring_parameters.dart':

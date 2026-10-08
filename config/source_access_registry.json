@@ -4303,6 +4303,141 @@
       ],
       "last_policy_reviewed": "2026-10-08",
       "notes": "Fibre context note."
+    },
+    {
+      "source_id": "src.merrill_watt.handbook74.1973",
+      "display_name": "Merrill and Watt — USDA Agriculture Handbook No. 74, energy value of foods (1955, rev. 1973)",
+      "owner": "U.S. Department of Agriculture",
+      "jurisdiction": "US",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Factors describe food records, not digestion in any person; a residual flags a record for review only."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.merrill_watt.handbook74.1973"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Source of food-specific Atwater factors and the 6.93 kcal/g alcohol factor used by the composition identity audit."
+    },
+    {
+      "source_id": "src.usda.fdc.full_download.2025_04_24",
+      "display_name": "USDA FoodData Central full CSV download, release 2025-04-24",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Retrieved through a third-party Hugging Face mirror; complete files match the mirror's published byte sizes and every file is pinned by SHA-256.",
+        "Nutrient definitions and conversion factors can change in later FDC releases."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.usda.fdc.full_download.2025_04_24"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim nutrient.csv, Foundation and conversion-factor files in tool/data/fdc_2025-04-24/; public domain."
+    },
+    {
+      "source_id": "src.usda.fndds.2017_2018",
+      "display_name": "USDA Food and Nutrient Database for Dietary Studies 2017-2018",
+      "owner": "USDA Agricultural Research Service",
+      "jurisdiction": "US",
+      "source_family": "food_composition",
+      "data_domain": "food",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": true,
+      "known_limitations": [
+        "Recipe-computed values, not direct analyses; non-identical dish matches are labelled as proxies.",
+        "Retrieved through a third-party Hugging Face mirror."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.usda.fndds.2017_2018"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim seed-food subset in tool/data/fndds_2017_2018/; public domain."
+    },
+    {
+      "source_id": "src.nlm.rxnorm.2024_12_02",
+      "display_name": "NLM RxNorm release of 2 December 2024 (Current Prescribable Content)",
+      "owner": "U.S. National Library of Medicine",
+      "jurisdiction": "US",
+      "source_family": "drug_identity",
+      "data_domain": "drug",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": true,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": true,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Identity and coding data only; no dose, schedule or recommendation is derived.",
+        "Retrieved through a third-party Hugging Face mirror; concepts can be retired or remapped in later releases."
+      ],
+      "documentation_refs": [
+        "docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.nlm.rxnorm.2024_12_02"
+      ],
+      "last_policy_reviewed": "2026-10-08",
+      "notes": "Verbatim complete concept blocks in tool/data/rxnorm_2024-12-02/; Current Prescribable Content needs no UMLS license."
     }
   ]
 }

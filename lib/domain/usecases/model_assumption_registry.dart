@@ -844,6 +844,92 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-10-08',
   );
 
+  // --- Product-level food and medication reference data (2026-10-08) -------
+
+  static const ModelAssumption handbook74Energy = ModelAssumption(
+    sourceId: 'src.merrill_watt.handbook74.1973',
+    title:
+        'Agriculture Handbook No. 74 — Energy value of foods: basis and '
+        'derivation',
+    sourceType: ModelSourceType.consensusStandard,
+    mechanismSupported:
+        'Food-specific energy conversion factors (the FDC calorie conversion '
+        'factors) and the 6.93 kcal/g factor for ethyl alcohol, used to '
+        'reconcile reported energy with reported proximates.',
+    limitation:
+        'Factors describe food records, not digestion in any person. A '
+        'residual flags a record for review and is not proof of an error.',
+    citationText:
+        'Merrill A.L., Watt B.K. Energy Value of Foods: Basis and Derivation. '
+        'Agriculture Handbook No. 74. Washington, DC: USDA, 1955; slightly '
+        'revised 1973.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption usdaFdcRelease2025 = ModelAssumption(
+    sourceId: 'src.usda.fdc.full_download.2025_04_24',
+    title:
+        'USDA FoodData Central — full CSV download, release 2025-04-24 '
+        '(nutrient definitions and conversion factors)',
+    sourceType: ModelSourceType.referenceDataset,
+    mechanismSupported:
+        'Official nutrient ids, legacy numbers, names and units used by the '
+        'importer, and the per-food nitrogen-to-protein and calorie '
+        'conversion factors used by the composition identity audit.',
+    limitation:
+        'Retrieved through a third-party mirror and pinned by SHA-256; '
+        'definitions and factors can change in later FDC releases.',
+    citationText:
+        'U.S. Department of Agriculture, Agricultural Research Service. '
+        'FoodData Central, full download of all data types, April 2025 '
+        '(release 2025-04-24). Retrieved via the Hugging Face mirror '
+        'yvfu/FoodData_Central_csv_2025-04-24; public domain.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption usdaFndds20172018 = ModelAssumption(
+    sourceId: 'src.usda.fndds.2017_2018',
+    title: 'USDA Food and Nutrient Database for Dietary Studies 2017-2018',
+    sourceType: ModelSourceType.referenceDataset,
+    mechanismSupported:
+        'Per-100 g composition of mixed dishes and prepared foods that SR '
+        'Legacy does not describe, used verbatim for seed catalog foods.',
+    limitation:
+        'FNDDS values are computed from recipes and ingredient records, not '
+        'analysed directly; a dish named alike may differ from a regional '
+        'recipe, so non-identical matches are marked as proxies.',
+    citationText:
+        'U.S. Department of Agriculture, Agricultural Research Service, Food '
+        'Surveys Research Group. Food and Nutrient Database for Dietary '
+        'Studies 2017-2018 (FoodData Central Survey foods). Retrieved via the '
+        'Hugging Face mirror tramzel/fndds; public domain.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
+  static const ModelAssumption nlmRxnorm20241202 = ModelAssumption(
+    sourceId: 'src.nlm.rxnorm.2024_12_02',
+    title:
+        'NLM RxNorm, release of 2 December 2024 (Current Prescribable '
+        'Content)',
+    sourceType: ModelSourceType.referenceDataset,
+    mechanismSupported:
+        'Ingredient (IN) and clinical drug (SCD) concepts, FDA UNII codes and '
+        'linked NDC products that give catalog medications verified '
+        'identities and dose-form release types.',
+    limitation:
+        'Identity and coding data only; no dose, schedule or recommendation '
+        'is derived. Concepts can be retired or remapped in later releases.',
+    citationText:
+        'U.S. National Library of Medicine. RxNorm, release of 2 December '
+        '2024, Current Prescribable Content (RXNCONSO.RRF). Retrieved via the '
+        'Hugging Face mirror OnDeviceMedNotes/nih-rxnorm-dec-2-2024.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-08',
+  );
+
   static const List<ModelAssumption> all = [
     sinemetLabel,
     sinemetExtendedLabel,
@@ -885,6 +971,10 @@ class ModelAssumptionRegistry {
     demarcaidaRasagilineTyramine,
     shulmanTyramineSoy,
     astarloaFiberLevodopa,
+    handbook74Energy,
+    usdaFdcRelease2025,
+    usdaFndds20172018,
+    nlmRxnorm20241202,
   ];
 
   static ModelAssumption? byId(String sourceId) {

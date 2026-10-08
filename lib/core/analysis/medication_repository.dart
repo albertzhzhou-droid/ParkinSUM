@@ -1,3 +1,5 @@
+import '../constants/medication_reference_identities.dart';
+import '../constants/rxnorm_reference_table.dart';
 import '../models/drug_definition.dart';
 
 /// MedicationRepository：
@@ -13,7 +15,11 @@ class MedicationRepository {
     // 这里保留的是当前 App 可直接消费的高相关 PD 药物目录。
     // 未完成：
     // 1. 还不是完整 DailyMed / Drugs@FDA / EMA / DPD / PMDA ETL 结果；
-    // 2. 一些 sourceProductCode 仍未回填稳定外部主键，因此显式标注 UNSPECIFIED_*；
+    // 2. Entries with a verified identity use `sourceSystem: 'RXNORM'` and
+    //    `RXCUI_IN:<ingredient RxCUIs>` (NLM RxNorm 2024-12-02; see
+    //    medication_reference_identities.dart). Entries that could not be
+    //    verified keep their DailyMed set id or an explicit `UNSPECIFIED_*`
+    //    placeholder rather than a guessed code;
     // 3. notes / interactionSummary 是面向产品的摘要，不替代正式标签全文。
     final drugs = <DrugDefinition>[
       DrugDefinition(
@@ -26,8 +32,8 @@ class MedicationRepository {
             'Core oral levodopa combination for Parkinson disease. High-protein meals may delay or reduce response, and iron salts may reduce bioavailability.',
         interactionSummary:
             'Protein timing and iron chelation are the main food-related concerns.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_CARBIDOPA_LEVODOPA',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:2019+6375',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
@@ -47,8 +53,8 @@ class MedicationRepository {
             'Peripheral COMT inhibitor used with levodopa to reduce wearing-off.',
         interactionSummary:
             'Usually evaluated together with levodopa timing rather than as a standalone food conflict.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_ENTACAPONE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:60307',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
@@ -63,8 +69,8 @@ class MedicationRepository {
             'COMT inhibitor with liver toxicity monitoring requirements; typically reserved for selected patients.',
         interactionSummary:
             'Food interaction is not the primary concern; monitoring and levodopa co-therapy context are more important.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_TOLCAPONE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:72937',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
@@ -95,8 +101,8 @@ class MedicationRepository {
             'MAO-B inhibitor used in Parkinson disease. Most patients do not need routine tyramine restriction at recommended doses, but very high tyramine exposure still matters.',
         interactionSummary:
             'Very high tyramine foods remain the main dietary caution, especially if dose or formulation changes.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_SELEGILINE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:9639',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet_or_odt',
@@ -175,8 +181,8 @@ class MedicationRepository {
             'Dopamine agonist used in early and adjunctive Parkinson disease treatment.',
         interactionSummary:
             'No major food-triggered hard rule in the current engine; monitor tolerability and dose titration context.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_ROPINIROLE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:72302',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
@@ -207,8 +213,8 @@ class MedicationRepository {
             'Rapid-acting dopamine agonist used for rescue or advanced OFF management depending on formulation.',
         interactionSummary:
             'Food interaction is not the main issue; route-specific tolerability and rescue context are more important.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_APOMORPHINE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:1043',
         jurisdiction: 'US',
         route: 'sublingual_or_subcutaneous',
         dosageForm: 'film_or_injection',
@@ -223,8 +229,8 @@ class MedicationRepository {
             'Amantadine is used for Parkinson symptoms and dyskinesia depending on product and regimen.',
         interactionSummary:
             'Food-triggered rules are limited in the current engine; renal function and formulation context matter more.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_AMANTADINE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:620',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'capsule_or_tablet',
@@ -270,8 +276,8 @@ class MedicationRepository {
             'Cholinesterase inhibitor used for Parkinson disease dementia. Oral formulations are commonly taken with food for tolerability; patch formulations bypass the gut.',
         interactionSummary:
             'Meal timing may matter for oral tolerability, while patch therapy changes the gastrointestinal context.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_RIVASTIGMINE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:183379',
         jurisdiction: 'US',
         route: 'oral_or_transdermal',
         dosageForm: 'capsule_or_patch',
@@ -301,8 +307,8 @@ class MedicationRepository {
         notes: 'Alpha-1 agonist used for symptomatic orthostatic hypotension.',
         interactionSummary:
             'Current engine does not use a direct food rule; daytime scheduling and supine hypertension context are more important.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_MIDODRINE',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:6963',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
@@ -317,8 +323,8 @@ class MedicationRepository {
             'Osmotic laxative often used in PD-associated constipation management.',
         interactionSummary:
             'Current hard rule focuses on incompatibility with starch-based thickeners in the swallowing context.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_PEG3350',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:221147',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'powder_for_solution',
@@ -334,8 +340,8 @@ class MedicationRepository {
             'Fixed-dose combination that inherits the core levodopa food-timing concerns while also carrying COMT adjunct context.',
         interactionSummary:
             'Use the same protein-timing and iron-separation caution used for levodopa-containing therapy.',
-        sourceSystem: 'DAILYMED',
-        sourceProductCode: 'UNSPECIFIED_DAILYMED_SETID_STALEVO',
+        sourceSystem: 'RXNORM',
+        sourceProductCode: 'RXCUI_IN:2019+6375+60307',
         jurisdiction: 'US',
         route: 'oral',
         dosageForm: 'tablet',
@@ -360,7 +366,50 @@ class MedicationRepository {
       ),
     ];
 
-    return MedicationRepository._(drugs);
+    return MedicationRepository._([
+      ...drugs,
+      ..._rxnormClinicalDrugEntries(drugs),
+    ]);
+  }
+
+  /// Product-level entries for the RxNorm clinical drugs (SCD) verified for a
+  /// catalog medication. Strength, dose form and release profile come from
+  /// the RxNorm clinical-drug name, so an extended-release tablet is never
+  /// presented as an immediate-release one. Identity only; not dosing.
+  static List<DrugDefinition> _rxnormClinicalDrugEntries(
+    List<DrugDefinition> parents,
+  ) {
+    final entries = <DrugDefinition>[];
+    for (final parent in parents) {
+      final identity = medicationReferenceIdentityFor(parent.id);
+      if (identity == null) continue;
+      for (final rxcui in identity.clinicalDrugRxcuis) {
+        final drug = rxnormClinicalDrug(rxcui);
+        if (drug == null) continue;
+        entries.add(
+          DrugDefinition(
+            id: 'drug_rxnorm_scd_$rxcui',
+            genericName: drug.name,
+            brandNames: const [],
+            aliases: [parent.genericName, 'RxCUI $rxcui'],
+            tags: parent.tags,
+            notes:
+                'RxNorm clinical drug $rxcui ($rxnormReferenceRelease). '
+                'Strengths and dose form are copied from the RxNorm name; '
+                '${drug.productNdcs.length} NDC products are linked. Identity '
+                'only; not a dose or schedule.',
+            interactionSummary: parent.interactionSummary,
+            sourceSystem: 'RXNORM',
+            sourceProductCode: '$rxcui',
+            jurisdiction: 'US',
+            route: drug.route,
+            dosageForm: drug.dosageForm,
+            releaseType: drug.releaseType,
+          ),
+        );
+      }
+    }
+    return entries;
   }
 
   List<DrugDefinition> get allDrugs => List.unmodifiable(_drugs);

@@ -494,6 +494,371 @@ NutrientIdentityAudit auditReferenceRow(ReferenceFoodCompositionRow row) {
 }
 
 // ---------------------------------------------------------------------------
+// Composition identity audit for imported records
+// ---------------------------------------------------------------------------
+
+/// Ethanol energy used by USDA food-specific energy calculations
+/// (Merrill & Watt, Agriculture Handbook No. 74, 1973).
+const double kcalPerGramAlcoholHandbook74 = 6.93;
+
+/// kJ per thermochemical kcal.
+const double kilojoulesPerKilocalorie = 4.184;
+
+/// Atwater factors applied to one food (FDC `.CalorieConversionFactor`).
+final class FoodSpecificCalorieFactors {
+  final double? proteinKcalPerG;
+  final double? fatKcalPerG;
+  final double? carbohydrateKcalPerG;
+
+  const FoodSpecificCalorieFactors({
+    this.proteinKcalPerG,
+    this.fatKcalPerG,
+    this.carbohydrateKcalPerG,
+  });
+
+  Map<String, Object?> toJson() => {
+    'protein_kcal_per_g': proteinKcalPerG,
+    'fat_kcal_per_g': fatKcalPerG,
+    'carbohydrate_kcal_per_g': carbohydrateKcalPerG,
+  };
+}
+
+/// One imported food record, keyed by local attribute code
+/// (`energy_kcal`, `protein_g`, `iron_heme_mg`, ...). Only exact, finite,
+/// non-negative values belong here; unknown values are simply absent.
+final class FoodCompositionIdentityInput {
+  final String recordId;
+  final String description;
+  final Map<String, double> values;
+
+  /// FDC `.ProteinConversionFactor` (nitrogen-to-protein), when reported.
+  final double? nitrogenToProteinFactor;
+  final FoodSpecificCalorieFactors? calorieFactors;
+
+  const FoodCompositionIdentityInput({
+    required this.recordId,
+    required this.description,
+    required this.values,
+    this.nitrogenToProteinFactor,
+    this.calorieFactors,
+  });
+}
+
+final class CompositionIdentityAudit {
+  final String recordId;
+
+  /// Identity checks that had enough data to run.
+  final List<String> checksRun;
+  final List<NutrientIdentityFinding> findings;
+
+  /// Energy reconciliation with general factors, when it could run.
+  final EnergyReconciliation? generalEnergy;
+
+  const CompositionIdentityAudit({
+    required this.recordId,
+    required this.checksRun,
+    required this.findings,
+    required this.generalEnergy,
+  });
+
+  bool get isConsistent => findings.isEmpty;
+
+  Map<String, Object?> toJson() => {
+    'record_id': recordId,
+    'checks_run': checksRun,
+    'findings': [for (final finding in findings) finding.toJson()],
+    if (generalEnergy != null) 'general_energy': generalEnergy!.toJson(),
+  };
+}
+
+double _tolerance(double reference, double absolute, double relative) {
+  final relativeTolerance = reference.abs() * relative;
+  return relativeTolerance > absolute ? relativeTolerance : absolute;
+}
+
+/// Audits the definitional identities among one record's nutrients.
+///
+/// Every identity below follows from how the values are defined, not from
+/// typical composition, so a violation means a transcription, unit, basis or
+/// definition error in the record (or a source-documented exception), never a
+/// statement about a person. Findings are recorded; values are not changed.
+///
+/// - Energy with general factors (FAO 2003), and with food-specific
+///   Atwater factors when the source reports them (Merrill & Watt 1973).
+/// - kJ = 4.184 × kcal.
+/// - Protein = nitrogen × the reported nitrogen-to-protein factor.
+/// - Carbohydrate by difference = 100 − water − protein − fat − ash
+///   (− alcohol).
+/// - Parts never exceed their whole: fibre, sugars and starch within
+///   carbohydrate by difference; added within total sugars; fatty-acid
+///   classes within total lipid; NLEA fat within total lipid.
+/// - Heme + non-heme iron = total iron.
+/// - Vitamin A RAE ≥ retinol + β-carotene/12; folate DFE ≥ total folate.
+CompositionIdentityAudit auditCompositionIdentities(
+  FoodCompositionIdentityInput input,
+) {
+  final v = input.values;
+  final checks = <String>[];
+  final findings = <NutrientIdentityFinding>[];
+  String fmt(double value) => value.toStringAsFixed(2);
+
+  void finding(String code, String detail) =>
+      findings.add(NutrientIdentityFinding(code, detail));
+
+  // Energy with general factors (any reported energy must fall within the
+  // general-factor tolerance; Foundation records may report only 2047/2048).
+  final reportedKcal =
+      v['energy_kcal'] ??
+      v['energy_atwater_general_kcal'] ??
+      v['energy_atwater_specific_kcal'];
+  final byDifference = v['carbohydrate_by_difference_g'];
+  final available = v['carbohydrate_g'];
+  EnergyReconciliation? generalEnergy;
+  if (reportedKcal != null && (byDifference != null || available != null)) {
+    checks.add('energy_general_factors');
+    generalEnergy = reconcileEnergy(
+      reportedKcal: reportedKcal,
+      proteinG: v['protein_g'],
+      fatG: v['fat_g'],
+      carbohydrateG: byDifference ?? available,
+      fiberG: v['fiber_g'],
+      convention: byDifference != null
+          ? CarbohydrateConvention.byDifferenceIncludingFiber
+          : CarbohydrateConvention.availableExcludingFiber,
+      nonMacronutrientEnergyHint: (v['alcohol_g'] ?? 0) > 0
+          ? NonMacronutrientEnergyHint.alcohol
+          : nonMacronutrientEnergyHintFor(input.description),
+    );
+    if (generalEnergy.status == EnergyReconciliationStatus.inconsistent) {
+      finding(
+        'energy_general_factor_residual',
+        'reported ${fmt(reportedKcal)} kcal; residual '
+            '${fmt(generalEnergy.residualKcal!)} kcal exceeds '
+            '${fmt(generalEnergy.toleranceKcal)} kcal',
+      );
+    }
+  }
+
+  // Energy with food-specific factors (applied to carbohydrate by
+  // difference, as in USDA calculations).
+  final factors = input.calorieFactors;
+  final specificReported =
+      v['energy_atwater_specific_kcal'] ?? v['energy_kcal'];
+  if (factors != null && specificReported != null) {
+    final protein = v['protein_g'];
+    final fat = v['fat_g'];
+    final carbohydrate = byDifference ?? 0.0;
+    final carbohydrateFactor = factors.carbohydrateKcalPerG;
+    final canRun =
+        protein != null &&
+        fat != null &&
+        factors.proteinKcalPerG != null &&
+        factors.fatKcalPerG != null &&
+        (carbohydrate <= 0.0 || carbohydrateFactor != null);
+    if (canRun) {
+      checks.add('energy_specific_factors');
+      final calculated =
+          factors.proteinKcalPerG! * protein +
+          factors.fatKcalPerG! * fat +
+          (carbohydrate > 0 ? carbohydrateFactor! * carbohydrate : 0.0) +
+          kcalPerGramAlcoholHandbook74 * (v['alcohol_g'] ?? 0.0);
+      final residual = specificReported - calculated;
+      final tolerance = _tolerance(specificReported, 2.0, 0.02);
+      if (residual.abs() > tolerance) {
+        finding(
+          'energy_specific_factor_residual',
+          'reported ${fmt(specificReported)} kcal; food-specific factors give '
+              '${fmt(calculated)} kcal (tolerance ${fmt(tolerance)} kcal)',
+        );
+      }
+    }
+  }
+
+  // kJ / kcal.
+  final kj = v['energy_kj'];
+  final kcal = v['energy_kcal'];
+  if (kj != null && kcal != null) {
+    checks.add('energy_kj_kcal');
+    final expected = kilojoulesPerKilocalorie * kcal;
+    final tolerance = _tolerance(expected, 3.0, 0.005);
+    if ((kj - expected).abs() > tolerance) {
+      finding(
+        'energy_kj_kcal_mismatch',
+        '${fmt(kj)} kJ vs ${fmt(kcal)} kcal × 4.184 = ${fmt(expected)} kJ',
+      );
+    }
+  }
+
+  // Nitrogen × factor = protein.
+  final nitrogen = v['nitrogen_g'];
+  final proteinFactor = input.nitrogenToProteinFactor;
+  final protein = v['protein_g'];
+  if (nitrogen != null &&
+      protein != null &&
+      proteinFactor != null &&
+      proteinFactor > 0) {
+    checks.add('nitrogen_protein_factor');
+    final expected = nitrogen * proteinFactor;
+    final tolerance = _tolerance(expected, 0.05, 0.015);
+    if ((protein - expected).abs() > tolerance) {
+      finding(
+        'nitrogen_protein_factor_mismatch',
+        'protein ${fmt(protein)} g vs nitrogen ${fmt(nitrogen)} g × '
+            '$proteinFactor = ${fmt(expected)} g',
+      );
+    }
+  }
+
+  // Carbohydrate by difference closes the proximate composition.
+  final water = v['water_g'];
+  final fat = v['fat_g'];
+  final ash = v['ash_g'];
+  if (water != null &&
+      protein != null &&
+      fat != null &&
+      ash != null &&
+      byDifference != null) {
+    checks.add('proximate_closure');
+    final total =
+        water + protein + fat + ash + byDifference + (v['alcohol_g'] ?? 0.0);
+    if ((total - 100.0).abs() > 0.6) {
+      finding(
+        'proximate_closure_mismatch',
+        'water + protein + fat + ash + carbohydrate by difference'
+            '${v.containsKey('alcohol_g') ? ' + alcohol' : ''} = '
+            '${fmt(total)} g/100 g',
+      );
+    }
+  }
+
+  void partWithinWhole(
+    String check,
+    String part,
+    String whole, {
+    double absolute = 0.05,
+    double relative = 0.01,
+  }) {
+    final partValue = v[part];
+    final wholeValue = v[whole];
+    if (partValue == null || wholeValue == null) return;
+    checks.add(check);
+    if (partValue > wholeValue + _tolerance(wholeValue, absolute, relative)) {
+      finding(
+        '${check}_exceeded',
+        '$part ${fmt(partValue)} > $whole ${fmt(wholeValue)}',
+      );
+    }
+  }
+
+  partWithinWhole(
+    'fiber_within_carbohydrate',
+    'fiber_g',
+    'carbohydrate_by_difference_g',
+  );
+  partWithinWhole(
+    'aoac_2011_25_fiber_within_carbohydrate',
+    'fiber_aoac_2011_25_g',
+    'carbohydrate_by_difference_g',
+  );
+  partWithinWhole(
+    'sugars_within_carbohydrate',
+    'sugars_total_g',
+    'carbohydrate_by_difference_g',
+  );
+  partWithinWhole(
+    'starch_within_carbohydrate',
+    'starch_g',
+    'carbohydrate_by_difference_g',
+  );
+  partWithinWhole(
+    'added_within_total_sugars',
+    'sugars_added_g',
+    'sugars_total_g',
+  );
+  partWithinWhole('nlea_fat_within_total_lipid', 'fat_nlea_g', 'fat_g');
+
+  final sugars = v['sugars_total_g'];
+  final starch = v['starch_g'];
+  final fiber = v['fiber_g'];
+  if (sugars != null &&
+      starch != null &&
+      fiber != null &&
+      byDifference != null) {
+    checks.add('carbohydrate_fractions_within_total');
+    final sum = sugars + starch + fiber;
+    if (sum > byDifference + _tolerance(byDifference, 0.5, 0.03)) {
+      finding(
+        'carbohydrate_fractions_within_total_exceeded',
+        'sugars + starch + fibre ${fmt(sum)} g > carbohydrate by difference '
+            '${fmt(byDifference)} g',
+      );
+    }
+  }
+
+  final saturated = v['fatty_acids_saturated_g'];
+  final mono = v['fatty_acids_monounsaturated_g'];
+  final poly = v['fatty_acids_polyunsaturated_g'];
+  if (saturated != null && mono != null && poly != null && fat != null) {
+    checks.add('fatty_acids_within_total_lipid');
+    final sum = saturated + mono + poly;
+    if (sum > fat + _tolerance(fat, 0.1, 0.02)) {
+      finding(
+        'fatty_acids_within_total_lipid_exceeded',
+        'saturated + monounsaturated + polyunsaturated ${fmt(sum)} g > total '
+            'lipid ${fmt(fat)} g',
+      );
+    }
+  }
+
+  final iron = v['iron_mg'];
+  final heme = v['iron_heme_mg'];
+  final nonHeme = v['iron_non_heme_mg'];
+  if (iron != null && heme != null && nonHeme != null) {
+    checks.add('heme_plus_non_heme_iron');
+    final sum = heme + nonHeme;
+    if ((sum - iron).abs() > _tolerance(iron, 0.05, 0.03)) {
+      finding(
+        'heme_plus_non_heme_iron_mismatch',
+        'heme ${fmt(heme)} + non-heme ${fmt(nonHeme)} mg ≠ total iron '
+            '${fmt(iron)} mg',
+      );
+    }
+  }
+
+  final rae = v['vitamin_a_rae_ug'];
+  final retinol = v['retinol_ug'];
+  if (rae != null && retinol != null) {
+    checks.add('vitamin_a_rae_lower_bound');
+    final lowerBound = retinol + (v['beta_carotene_ug'] ?? 0.0) / 12.0;
+    if (rae + _tolerance(lowerBound, 1.0, 0.02) < lowerBound) {
+      finding(
+        'vitamin_a_rae_below_components',
+        'RAE ${fmt(rae)} µg < retinol + β-carotene/12 = ${fmt(lowerBound)} µg',
+      );
+    }
+  }
+
+  final dfe = v['folate_dfe_ug'];
+  final folate = v['folate_total_ug'];
+  if (dfe != null && folate != null) {
+    checks.add('folate_dfe_lower_bound');
+    if (dfe + _tolerance(folate, 1.0, 0.02) < folate) {
+      finding(
+        'folate_dfe_below_total_folate',
+        'DFE ${fmt(dfe)} µg < total folate ${fmt(folate)} µg',
+      );
+    }
+  }
+
+  return CompositionIdentityAudit(
+    recordId: input.recordId,
+    checksRun: List.unmodifiable(checks),
+    findings: List.unmodifiable(findings),
+    generalEnergy: generalEnergy,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Cross-source comparison (definition-aware)
 // ---------------------------------------------------------------------------
 

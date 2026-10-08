@@ -1369,7 +1369,7 @@ referenceFoodCompositionRows = <ReferenceFoodCompositionRow>[
     thiaminMg: 0.06,
     riboflavinMg: 0.153,
     niacinMg: 3.076,
-    vitaminCMg: null,
+    vitaminCMg: 21.9,
   ),
   ReferenceFoodCompositionRow(
     fdcId: 168482,

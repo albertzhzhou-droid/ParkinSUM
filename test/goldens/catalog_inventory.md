@@ -5,17 +5,17 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 | Item | Count |
 | --- | --- |
 | Foods | 20 |
-| Medications | 21 |
+| Medications | 26 |
 | Source documents | 43 |
 | CDSS rules | 10 |
 | Safe-copy templates | 25 |
 | Replay scenarios | 41 |
-| Model assumptions | 40 |
+| Model assumptions | 44 |
 
 ## Known gaps
 
 - Source documents not carrying live data: 6 of 43
-- Catalog entries with a placeholder external code: 38
+- Catalog entries with a placeholder external code: 27
 
 ## By source family (documents)
 
@@ -106,21 +106,22 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 
 | Value | Count |
 | --- | --- |
-| DAILYMED | 20 |
+| RXNORM | 16 |
+| DAILYMED | 9 |
 | HEALTH_CANADA_DPD | 1 |
 
 ## By jurisdiction (medications)
 
 | Value | Count |
 | --- | --- |
-| US | 20 |
+| US | 25 |
 | CA | 1 |
 
 ## By evidence level (model assumptions)
 
 | Value | Count |
 | --- | --- |
-| mechanism | 35 |
+| mechanism | 39 |
 | label | 2 |
 | regulatoryGuidance | 2 |
 | prototypeHeuristic | 1 |

@@ -150,6 +150,23 @@ boundaries: `docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md`.
 - `src.astarloa.fiber_levodopa.1992` — Astarloa et al., *Clin Neuropharmacol*
   15:375–380, doi:10.1097/00002826-199210000-00004, PMID:1330307.
 
+Product-level reference data (iteration 2 of 2026-10-08):
+
+- `src.merrill_watt.handbook74.1973` — Merrill, Annabel L., and Bernice K.
+  Watt. *Energy Value of Foods: Basis and Derivation.* Agriculture Handbook
+  No. 74, U.S. Department of Agriculture, 1955, slightly revised 1973.
+- `src.usda.fdc.full_download.2025_04_24` — U.S. Department of Agriculture,
+  Agricultural Research Service. *FoodData Central*, full CSV download,
+  release 2025-04-24; retrieved via the Hugging Face mirror
+  yvfu/FoodData_Central_csv_2025-04-24. Public domain.
+- `src.usda.fndds.2017_2018` — U.S. Department of Agriculture, Agricultural
+  Research Service, Food Surveys Research Group. *Food and Nutrient Database
+  for Dietary Studies 2017-2018*; retrieved via the Hugging Face mirror
+  tramzel/fndds. Public domain.
+- `src.nlm.rxnorm.2024_12_02` — U.S. National Library of Medicine. *RxNorm*,
+  release of 2 December 2024, Current Prescribable Content; retrieved via the
+  Hugging Face mirror OnDeviceMedNotes/nih-rxnorm-dec-2-2024.
+
 Food-borne L-dopa and tyramine are carried as presence and variability
 context only; no per-serving amount is derived, and food L-dopa is never
 treated as a substitute for, or an equivalent of, a prescribed medicine.

@@ -48,7 +48,7 @@ fdc_id,description,Energy,Protein,Fat,Carbohydrate,Fiber,Calcium,Phosphorus,Iron
 170438,"Potatoes, boiled, cooked in skin, flesh, without salt",87.0,1.87,0.1,20.13,1.8,5.0,44.0,0.31,4.0,379.0,0.188,0.3,0.0,2.0,0.106,0.02,1.439,13.0
 170440,"Potatoes, boiled, cooked without skin, flesh, without salt",86.0,1.71,0.1,20.01,1.8,8.0,40.0,0.31,5.0,328.0,0.167,0.27,0.0,1.0,0.098,0.019,1.312,7.4
 170457,"Tomatoes, red, ripe, raw, year round average",18.0,0.88,0.2,3.89,1.2,10.0,24.0,0.27,5.0,237.0,0.059,0.17,0.0,449.0,0.037,0.019,0.594,13.7
-170459,"Tomato products, canned, paste, without salt added (Includes foods for USDA's Food Distribution Program)",82.0,4.32,0.47,18.91,4.1,36.0,83.0,2.98,59.0,1014.0,0.365,0.63,0.0,901.0,0.06,0.153,3.076,
+170459,"Tomato products, canned, paste, without salt added (Includes foods for USDA's Food Distribution Program)",82.0,4.32,0.47,18.91,4.1,36.0,83.0,2.98,59.0,1014.0,0.365,0.63,0.0,901.0,0.06,0.153,3.076,21.9
 168482,"Sweet potato, raw, unprepared (Includes foods for USDA's Food Distribution Program)",86.0,1.57,0.05,20.12,3.0,30.0,47.0,0.61,55.0,337.0,0.151,0.3,0.0,8509.0,0.078,0.061,0.557,2.4
 168483,"Sweet potato, cooked, baked in skin, flesh, without salt",90.0,2.01,0.15,20.71,3.3,38.0,54.0,0.69,36.0,475.0,0.161,0.32,0.0,11509.0,0.107,0.106,1.487,19.6
 169225,"Cucumber, peeled, raw",10.0,0.59,0.16,2.16,0.7,14.0,21.0,0.22,2.0,136.0,0.071,0.17,0.0,31.0,0.031,0.025,0.037,3.2
