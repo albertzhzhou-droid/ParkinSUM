@@ -9065,6 +9065,7 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   - `node --test tool/complete_app_upgrade_queue_check.test.mjs` (57/57);
   - `dart analyze` and `dart format`.
 - The new tests pass: FDC importer (7), nutrient definitions, RxNorm table, seed composition, and composition identity audit. `test/p0_importers_test.dart` also passes.
+- Full `flutter test`: 2,485 passed. The nine failures all shell out to the `sqlite3` CLI, which the container lacked. After `sqlite3` 3.45.1 was installed, all nine passed as well (13/13 in their files, including the default-seed FoodItem round trip).
 - All data came through public Hugging Face mirrors, because the environment's network policy blocks the USDA, NLM and openFDA hosts. Identity checks detect transcription and join errors, but not an upstream value that is wrong yet internally consistent.
 - Evidence-currency records for the new sources are still not registered.
 - Identity data never implies a dose or schedule. Nothing here is dietary, medication, or timing advice, and all demo data stays synthetic.
