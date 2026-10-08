@@ -9136,3 +9136,13 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Restore the four attestation pins, the lockfile and the privacy-contract pin and review note from `63aee4c`. Note that this re-exposes the Node advisories.
 - Remove the 13 appended RxNorm lines and regenerate the table. Restore the six unverified entries and the five placeholder codes, the test expectations, the goldens, the docs, and remove this entry.
 - Preserve every unrelated file.
+
+## 2026-10-08 — PUBLISH-20261008-036 — Claude baseline and publication record
+
+- **Committed local HEAD:** `b07c55a952a58f47f1a34835ecd07b712ddad792`.
+- **Refreshed public-main baseline / publication parent:** `af7ef6981dad160c222c398b4d44946b21c30f8c`; Claude PR #142 is merged, including the food reference data, medication identities, FDC importer and food-composition interdependency engine layer.
+- **Scope:** add `docs/UPGRADE_PUBLICATION_2026-10-08.md` and append this one entry. No production source, reference data, medication data, dependency file or existing timeline entry is replaced by this documentation publication.
+- **Schema/version:** no new runtime version in this iteration. Claude baseline remains `2026.10.08-v54`, configuration `48b6ede1c08109c0a2b60af162ebe30fc5e35315257d0cb9999f3c31eacb1427`, source bundle `a4dfcae4d9bb7e47a0d9a6a3451835847c79850af947f0dca0415e4cd5a75bd0`. Local v73 results remain a separate historical candidate, not an integrated identity.
+- **Verification evidence:** public main was read through the GitHub connector and `git ls-remote`; CI run 37816778647 and public preflight run 37816778552 are completed/success on that Claude baseline. The publication branch must retain all parent-tree entries except the new document and this append. These are documentation/public-baseline checks, not re-execution of local runtime suites.
+- **Unresolved boundaries:** local Git status timed out at 45 and 120 seconds; local fetch timed out at 90 seconds; cloud placeholders prevent complete local change review. Local source integration, publication and fresh formal UI/two-tab checks remain pending. Historical 034 and 035 test results are not relabelled as current integration results. No clinical or physical-device qualification is asserted.
+- **Surgical rollback:** revert only this added document and this unique timeline entry. Preserve Claude PR #142, every earlier timeline entry, local uncommitted code and unrelated changes.
