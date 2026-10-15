@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.07-v60';
+  static const String ledgerVersion = '2026.10.15-v61';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'c0a34a359397ce0405474b1ca006067e58ecc7f0b7a13d65ca03c4df92ba5d40';
+  static const String historicalV73ConfigurationSha256 =
       'eaca417fdd38ab1179050eb235a09f2d19b9ace0b7ee97fd5e3b1fd3a1a712ab';
   static const String historicalV69ConfigurationSha256 =
       '9d11461bbadee06329cc25c218306603bc392a8d2833cbe4eeaf3967ee7d183d';
@@ -1046,7 +1048,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           ordinaryImportStatusCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV73ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           ordinaryImportStatusCandidateRecord.evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1070,6 +1072,52 @@ final class ContextOfUseRequalificationLedger {
       approvalSignature: null,
       decisionBoundary:
           'The v73 candidate moves the complete Web personal-record aggregate into a separate versioned IndexedDB envelope with retained exact original legacy witnesses, transaction completion and full read-back. Participating readers and writers share the existing same-origin Web Lock and isolate queue. Optional portable schema-v5 shares whole captured food-item evidence while retaining original quantities, checksum binding, the unchanged wire budgets and a separate pre-expansion budget; default small export and legacy migration target remain v4. Late uncooperative legacy writes can be detected after an already committed value; localStorage and IndexedDB have no cross-store atomic transaction. Browser quota, storage eviction and OS-kill durability remain outside this engineering contract. All twenty-one prior whole governance records and twenty-two numerical implementation fingerprints and parameters remain exact. Exact software fixtures do not establish authenticated human review, upstream currency, clinical permission, physical-device performance, complete transitive algorithm closure, signature or publication. No release approval is granted.',
+    );
+    final publicNutritionIntegrationCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 23,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          personalRecordCapacityCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          personalRecordCapacityCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          personalRecordCapacityCandidateRecord.evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          personalRecordCapacityCandidateRecord.evidenceSynthesisRegistrySha256,
+      semanticDiffSha256:
+          personalRecordCapacityCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          personalRecordCapacityCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          personalRecordCapacityCandidateRecord.affectedPredicateIds,
+      changeClasses: personalRecordCapacityCandidateRecord.changeClasses,
+      modelRisk: personalRecordCapacityCandidateRecord.modelRisk,
+      questionOfInterest:
+          personalRecordCapacityCandidateRecord.questionOfInterest,
+      contextOfUse: personalRecordCapacityCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-15T17:26:53.000Z',
+      releaseArtifact: 'unreleased-worktree:claude-nutrition-integration-v74',
+      evidenceDecisions:
+          personalRecordCapacityCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v74 candidate integrates the public Claude nutrition baseline '
+          'from main af7ef6981dad160c222c398b4d44946b21c30f8c, whose '
+          'separate 2026.10.08-v54 configuration was '
+          '48b6ede1c08109c0a2b60af162ebe30fc5e35315257d0cb9999f3c31eacb1427, '
+          'with the local v73 storage, provenance and held-evidence review '
+          'boundaries. The original twenty-two ledger records remain exact. '
+          'The food-composition interdependency and composition identity audit '
+          'are source-bound engineering behavior; inherited synthetic evidence '
+          'decisions and earlier branch tests do not qualify this merged source. '
+          'This record binds a new software identity only. It supplies no '
+          'new independent review, scientific validity, clinical calibration, '
+          'authenticated approval, release signature or production acceptance. '
+          'All required evidence holds and blocked promotion remain in force.',
     );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
@@ -1100,6 +1148,7 @@ final class ContextOfUseRequalificationLedger {
         reviewedProductIntegrationCandidateRecord,
         ordinaryImportStatusCandidateRecord,
         personalRecordCapacityCandidateRecord,
+        publicNutritionIntegrationCandidateRecord,
       ],
     );
   }

@@ -5,10 +5,11 @@ import '../../../core/models/food_item.dart';
 import '../../../core/utils/texture_support.dart';
 import '../../../core/utils/qualified_value_parser.dart';
 import '../../../domain/entities/cdss_records.dart';
+import '../../../domain/usecases/food_composition_interdependency_model.dart';
+import 'fdc_nutrient_definitions.dart';
 import 'amino_acid_extractor.dart';
 import 'archive_import_support.dart';
 import 'crosswalk_builders.dart';
-import 'fdc_nutrient_identity.dart';
 import 'importer_audit.dart';
 import 'p0_import_models.dart';
 import 'p0_import_support.dart';
@@ -21,9 +22,23 @@ import 'source_fetch_client.dart';
 /// 1. 已拿到 `/food/{fdcId}` JSON；
 /// 2. 已拿到 Foundation bulk JSON 中的 food object 列表。
 ///
-/// JSON and CSV portions retain their source weights as evidence; no serving
-/// is selected automatically. Foundation composition uses the explicit preview
-/// service, which checks food, document, basis and unit identity.
+/// Current FDC releases (checked against the 2025-04-24 full download):
+/// - Nutrients are resolved by FDC nutrient id, then legacy number, then
+///   exact name, and only when the unit matches ([fdcNutrientDefinitions]).
+/// - Foundation Foods energy (2047/2048), nitrogen-to-protein and
+///   food-specific calorie conversion factors are retained, and every food's
+///   definitional nutrient identities are audited
+///   ([auditCompositionIdentities]). Findings are recorded, never "fixed".
+/// - Branded Foods keep their GTIN/UPC, brand owner, ingredient statement and
+///   per-serving label nutrients (as label evidence, never as per-100 g
+///   facts). Ingredient statements are scanned for food-borne L-dopa sources.
+/// - Survey (FNDDS) foods keep their WWEIA food category.
+/// - Laboratory sample, sub-sample, acquisition and experimental records are
+///   not foods and are excluded with an audit entry.
+///
+/// 未完成：
+/// - 还没有处理 `foodPortions` 到独立 portion 表。
+/// Source basis, censored values and original source fields remain explicit.
 class FdcP0Importer {
   final SourceFetchClient fetchClient;
 
@@ -123,6 +138,14 @@ class FdcP0Importer {
       'food_protein_conversion_factor',
     );
     final fatFactorRows = _loadCsvRows(files, 'food_fat_conversion_factor');
+    final brandedRows = _loadCsvRows(files, 'branded_food');
+    final surveyRows = _loadCsvRows(files, 'survey_fndds_food');
+    final wweiaRows = _loadCsvRows(files, 'wweia_food_category');
+    final ndbRows = [
+      ..._loadCsvRows(files, 'foundation_food'),
+      ..._loadCsvRows(files, 'sr_legacy_food'),
+    ];
+
     final portionRows = _loadCsvRows(files, 'food_portion');
     final measureUnitRows = _loadCsvRows(files, 'measure_unit');
     final measureUnitById = {
@@ -179,6 +202,23 @@ class FdcP0Importer {
           .add(row);
     }
 
+    final brandedByFood = {
+      for (final row in brandedRows) (row['fdc_id'] ?? '').trim(): row,
+    };
+    final wweiaDescriptionByCode = {
+      for (final row in wweiaRows)
+        (row['wweia_food_category'] ?? '').trim():
+            (row['wweia_food_category_description'] ?? '').trim(),
+    };
+    final surveyByFood = {
+      for (final row in surveyRows) (row['fdc_id'] ?? '').trim(): row,
+    };
+    final ndbByFood = {
+      for (final row in ndbRows)
+        (row['fdc_id'] ?? '').trim(): (row['NDB_number'] ?? row['ndb_number'])
+            ?.trim(),
+    };
+
     final foods = foodRows
         .map((row) {
           final fdcId = (row['fdc_id'] ?? row['id'] ?? '').toString();
@@ -227,7 +267,11 @@ class FdcP0Importer {
                         },
                       'nutrient': {
                         'id': nutrientId,
-                        'number': (nutrient['number'] ?? '').toString(),
+                        'number':
+                            (nutrient['nutrient_nbr'] ??
+                                    nutrient['number'] ??
+                                    '')
+                                .toString(),
                         'name': (nutrient['name'] ?? '').toString(),
                         'unitName':
                             (nutrient['unit_name'] ??
@@ -238,6 +282,10 @@ class FdcP0Importer {
                     };
                   })
                   .toList(growable: false);
+          final branded = brandedByFood[fdcId];
+          final survey = surveyByFood[fdcId];
+          final wweiaCode = (survey?['wweia_category_code'] ?? '').trim();
+          final ndbNumber = ndbByFood[fdcId];
           return <String, dynamic>{
             'fdcId': fdcId,
             'description': (row['description'] ?? '').toString(),
@@ -245,8 +293,37 @@ class FdcP0Importer {
                 .toString(),
             'foodCategory':
                 categoryById[categoryId] ??
+                (branded?['branded_food_category']?.trim().isNotEmpty == true
+                    ? branded!['branded_food_category']!.trim()
+                    : null) ??
+                (categoryId.isNotEmpty && int.tryParse(categoryId) == null
+                    ? categoryId
+                    : null) ??
                 (row['food_class'] ?? 'other').toString(),
             'foodNutrients': nutrients,
+            if (ndbNumber != null && ndbNumber.isNotEmpty)
+              'ndbNumber': ndbNumber,
+            if (branded != null) ...{
+              'brandOwner': branded['brand_owner'],
+              'brandName': branded['brand_name'],
+              'gtinUpc': branded['gtin_upc'],
+              'ingredients': branded['ingredients'],
+              'servingSize': branded['serving_size'],
+              'servingSizeUnit': branded['serving_size_unit'],
+              'householdServingFullText': branded['household_serving_fulltext'],
+              'brandedFoodCategory': branded['branded_food_category'],
+              'marketCountry': branded['market_country'],
+              'discontinuedDate': branded['discontinued_date'],
+            },
+            if (survey != null) ...{
+              'foodCode': survey['food_code'],
+              if (wweiaCode.isNotEmpty)
+                'wweiaFoodCategory': {
+                  'wweiaFoodCategoryCode': wweiaCode,
+                  'wweiaFoodCategoryDescription':
+                      wweiaDescriptionByCode[wweiaCode],
+                },
+            },
             'foodPortions': portionsByFood[fdcId] ?? const [],
             if (row.containsKey('publication_date'))
               'publicationDate': row['publication_date'],
@@ -293,7 +370,7 @@ class FdcP0Importer {
           },
     ];
     final parserIdentity =
-        '${qualifiedBasisEvidence.isEmpty ? '' : ':fdc_source_basis_v1'}${brandedProductDetails.isEmpty ? '' : ':fdc_branded_product_detail_v1'}';
+        '${qualifiedBasisEvidence.isEmpty ? '' : ':fdc_source_basis_v1'}${brandedProductDetails.isEmpty ? '' : ':fdc_branded_product_detail_v1'}:fdc_claude_current_release_v1';
     final contentSha256 = sha256
         .convert(utf8.encode(jsonEncode(foods)))
         .toString();
@@ -316,13 +393,34 @@ class FdcP0Importer {
     final nutrientStatisticsAudit = <Map<String, dynamic>>[];
     final nutrientValueAudit = <Map<String, dynamic>>[];
     final sourceNutrientSummaries = <Map<String, dynamic>>[];
+    final unitMismatchAudit = <Map<String, Object?>>[];
+    final duplicateNutrientAudit = <Map<String, Object?>>[];
+    final unmappedNutrientCounts = <String, int>{};
+    final excludedRecords = <Map<String, Object?>>[];
+    final conversionFactorAudit = <Map<String, Object?>>[];
+    final compositionIdentityAudit = <Map<String, Object?>>[];
+    final labelNutrientAudit = <Map<String, Object?>>[];
+    final intrinsicLevodopaIngredientAudit = <Map<String, Object?>>[];
     final aminoAcidExtractor = AminoAcidExtractor();
 
     for (final food in foods) {
       final fdcId = '${food['fdcId'] ?? ''}'.trim();
       final description = '${food['description'] ?? ''}'.trim();
       if (fdcId.isEmpty || description.isEmpty) continue;
-      final dataType = '${food['dataType'] ?? 'FDC'}';
+      final rawDataType = '${food['dataType'] ?? 'FDC'}'.trim();
+      if (nonFoodDataTypes.contains(rawDataType.toLowerCase())) {
+        excludedRecords.add({
+          'fdc_id': fdcId,
+          'data_type': rawDataType,
+          'reason':
+              'Laboratory sample, acquisition or experimental record; not a '
+              'consumable food.',
+        });
+        continue;
+      }
+      final dataType =
+          _canonicalDataTypes[rawDataType.toLowerCase()] ?? rawDataType;
+
       final sourceBasis = FdcFoodBasis.inspect(food);
       final conceptId = buildFoodConceptId(description);
       final variantId = buildFoodVariantId(
@@ -383,11 +481,14 @@ class FdcP0Importer {
       final provenRowsByAttribute = <String, List<Map>>{};
       for (final row in nutrientRows.whereType<Map>()) {
         final nutrient = row['nutrient'] is Map ? row['nutrient'] as Map : row;
-        final attribute = _attributeCodeFromFdcNutrient(
-          nutrientId: nutrient['id'],
-          nutrientNumber: '${nutrient['number'] ?? ''}',
-          nutrientName: '${nutrient['name'] ?? ''}',
+        final resolution = _resolveNutrient(
+          Map<String, dynamic>.from(nutrient),
+          Map<String, dynamic>.from(row),
         );
+        // A recognized row with an invalid unit is still a competing source
+        // claim for this quantity. Do not let rejection of that row make a
+        // remaining exact row appear uniquely supported.
+        final attribute = resolution.definition?.attributeCode;
         if (attribute != null) {
           final previous = provenRowsByAttribute.putIfAbsent(
             attribute,
@@ -414,12 +515,12 @@ class FdcP0Importer {
         if (nutrientRow is! Map<String, dynamic>) continue;
         final map = nutrientRow;
         final nutrient = (map['nutrient'] as Map<String, dynamic>?) ?? map;
-        final attributeCode = _attributeCodeFromFdcNutrient(
-          nutrientId: nutrient['id'],
-          nutrientNumber: '${nutrient['number'] ?? ''}',
-          nutrientName: '${nutrient['name'] ?? ''}',
-        );
-        final sourceAmount = _nullableDouble(map['amount']);
+        final resolution = _resolveNutrient(nutrient, map);
+        final definition = resolution.definition;
+        final attributeCode = resolution.isMapped
+            ? definition!.attributeCode
+            : null;
+        final sourceAmount = _nullableDouble(map['amount'] ?? map['value']);
         final sourceLoq = _nullableDouble(
           map['loq'] ?? map['limitOfQuantification'],
         );
@@ -431,6 +532,7 @@ class FdcP0Importer {
         final sampleDetails = map['nutrientAnalysisDetails'];
         sourceNutrientSummaries.add({
           'fdc_id': fdcId,
+          'source_fields': map,
           'food_nutrient_id': map['id'],
           'nutrient_id': nutrient['id'],
           'nutrient_number': nutrient['number'],
@@ -439,15 +541,15 @@ class FdcP0Importer {
           'nutrient_source_fields': map['foodNutrientSource'],
           if (_isAtwaterIdentity(nutrient))
             'energy_method_identity_status': attributeCode == null
-                ? 'hold_conflicting_source_identifiers'
-                : 'identified_by_source_nutrient_id_or_number',
+                ? 'hold_unmapped_or_unit_mismatch'
+                : 'identified_by_current_release_definition',
           if (attributeCode == 'energy_atwater_general_kcal')
             'energy_method': 'atwater_general_factors',
           if (attributeCode == 'energy_atwater_specific_kcal')
             'energy_method': 'atwater_specific_factors',
           'unit': nutrient['unitName'],
           'value_scope': 'reported_food_summary',
-          'reported_amount': map['amount'],
+          'reported_amount': map['amount'] ?? map['value'],
           'reported_loq': map['loq'] ?? map['limitOfQuantification'],
           'complete_sample_mean_verified': false,
           'quantification_status': summaryBelowLoq
@@ -473,17 +575,38 @@ class FdcP0Importer {
               : const [],
         });
         if (attributeCode == null) {
+          if (resolution.status == FdcNutrientResolutionStatus.unitMismatch) {
+            unitMismatchAudit.add({
+              'fdc_id': fdcId,
+              'nutrient_id': definition!.id,
+              'expected_unit': definition.unitName,
+              'observed_unit': resolution.observedUnit,
+            });
+          } else {
+            final key =
+                _nonEmptyString(nutrient['id'] ?? map['nutrientId']) ??
+                _nonEmptyString(nutrient['number'] ?? map['nutrientNumber']) ??
+                'name:${nutrient['name'] ?? map['nutrientName'] ?? ''}';
+            unmappedNutrientCounts[key] =
+                (unmappedNutrientCounts[key] ?? 0) + 1;
+          }
           nutrientValueAudit.add({
             'fdc_id': fdcId,
             'nutrient_id': nutrient['id'],
             'nutrient_number': nutrient['number'],
             'nutrient_name': nutrient['name'],
-            'decision': 'retained_source_fields_only',
-            'reason': 'unrecognized_or_inconsistent_nutrient_identity',
+            'decision':
+                resolution.status == FdcNutrientResolutionStatus.unitMismatch
+                ? 'withheld'
+                : 'retained_source_fields_only',
+            'reason':
+                resolution.status == FdcNutrientResolutionStatus.unitMismatch
+                ? 'unit_mismatch'
+                : 'unmapped_current_release_nutrient',
           });
           continue;
         }
-        final amount = map['amount'];
+        final amount = map['amount'] ?? map['value'];
         if (amount == null) {
           continue;
         }
@@ -506,9 +629,7 @@ class FdcP0Importer {
                     'point_status=held_quantification_scope_unverified',
               )
             : parseQualifiedValue(rawValue);
-        final unit = canonicalFdcNutrientUnit(
-          '${nutrient['unitName'] ?? _expectedNutrientUnit(attributeCode)}',
-        );
+        final unit = definition!.canonicalUnit;
         final valueNumbers = [
           parsedValue.low,
           parsedValue.high,
@@ -524,13 +645,11 @@ class FdcP0Importer {
                 '$loqRaw'.trim().isNotEmpty &&
                 (loq == null || loq < 0));
         final unitMatches =
-            (!const {
-                  'energy_atwater_general_kcal',
-                  'energy_atwater_specific_kcal',
-                }.contains(attributeCode) ||
-                _nonEmptyString(nutrient['unitName']) != null) &&
-            unit.toLowerCase() ==
-                _expectedNutrientUnit(attributeCode).toLowerCase();
+            !const {
+              'energy_atwater_general_kcal',
+              'energy_atwater_specific_kcal',
+            }.contains(attributeCode) ||
+            _nonEmptyString(nutrient['unitName'] ?? map['unitName']) != null;
         if (invalidValue || !unitMatches) {
           nutrientValueAudit.add({
             'fdc_id': fdcId,
@@ -570,6 +689,12 @@ class FdcP0Importer {
           nutrientMap[attributeCode] = rawValue;
         }
         if (duplicateAttribute) {
+          duplicateNutrientAudit.add({
+            'fdc_id': fdcId,
+            'attribute_code': attributeCode,
+            'source_row_count': attributeCounts[attributeCode],
+            'decision': 'retain_ambiguous_source_rows_without_point_projection',
+          });
           nutrientValueAudit.add({
             'fdc_id': fdcId,
             'attribute_code': attributeCode,
@@ -709,6 +834,299 @@ class FdcP0Importer {
               extractionConfidence: 1,
             ),
           );
+        }
+      }
+
+      // Values exactly as the source reported them, before any derivation.
+      final sourceNutrientMap = Map<String, String>.unmodifiable(nutrientMap);
+
+      void addDerivedObservation({
+        required String attributeCode,
+        required String rawValue,
+        required String unit,
+        required String methodCode,
+      }) {
+        nutrientMap[attributeCode] = rawValue;
+        final derived = ObservationRecord(
+          observationId:
+              'obs_${stableHash('$sourceDocId:$variantId:$attributeCode:derived:$rawValue')}',
+          domain: 'food',
+          entityType: 'food_variant',
+          entityKey: variantId,
+          attributeCode: attributeCode,
+          valueType: 'numeric_interval',
+          value: parseQualifiedValue(rawValue),
+          unit: unit,
+          basisType: 'per_100g_edible_part',
+          basisAmount: 100,
+          scopeHash: scopeHash,
+          sourceDocId: sourceDocId,
+          recordLocator: '$fdcId:$attributeCode:derived',
+          methodCode: methodCode,
+          extractionConfidence: 1,
+        );
+        observations.add(derived);
+        resolvedFacts.add(
+          resolvedFactFromObservation(
+            observation: derived,
+            policyId: 'fdc_import_v1',
+            snapshotId: 'facts_fdc_import_v1',
+          ),
+        );
+      }
+
+      // Foundation Foods report energy as 2048 (food-specific Atwater
+      // factors) and 2047 (general factors) instead of 1008. The catalog's
+      // energy field takes 2048, else 2047, with the choice method-coded.
+      if (!nutrientMap.containsKey('energy_kcal')) {
+        for (final (code, method) in const [
+          ('energy_atwater_specific_kcal', derivedEnergyFromSpecificMethodCode),
+          ('energy_atwater_general_kcal', derivedEnergyFromGeneralMethodCode),
+        ]) {
+          final raw = nutrientMap[code];
+          final value = parseQualifiedValue(raw ?? '');
+          if (raw != null && value.qualifierKind == QualifierKind.exact) {
+            addDerivedObservation(
+              attributeCode: 'energy_kcal',
+              rawValue: raw,
+              unit: 'kcal',
+              methodCode: method,
+            );
+            break;
+          }
+        }
+      }
+      // Total dietary fibre by AOAC 2011.25 stands in for the catalog's
+      // fibre field only when no AOAC 985.29-family total is reported.
+      if (!nutrientMap.containsKey('fiber_g')) {
+        final raw = nutrientMap['fiber_aoac_2011_25_g'];
+        if (raw != null &&
+            parseQualifiedValue(raw).qualifierKind == QualifierKind.exact) {
+          addDerivedObservation(
+            attributeCode: 'fiber_g',
+            rawValue: raw,
+            unit: 'g',
+            methodCode: derivedFiberFromAoac201125MethodCode,
+          );
+        }
+      }
+
+      // Derive available carbohydrate (by difference − total fibre) only when
+      // the source gave no by-summation value and both terms are exact
+      // numbers. The derivation is recorded as such; missing fibre is never
+      // assumed to be zero.
+      if (!nutrientMap.containsKey('carbohydrate_g')) {
+        final byDifference = parseQualifiedValue(
+          nutrientMap['carbohydrate_by_difference_g'] ?? '',
+        );
+        final fiber = parseQualifiedValue(nutrientMap['fiber_g'] ?? '');
+        final carbValue = byDifference.valueNum;
+        final fiberValue = fiber.valueNum;
+        if (byDifference.qualifierKind == QualifierKind.exact &&
+            fiber.qualifierKind == QualifierKind.exact &&
+            carbValue != null &&
+            fiberValue != null &&
+            carbValue.isFinite &&
+            fiberValue.isFinite &&
+            carbValue >= 0 &&
+            fiberValue >= 0 &&
+            carbValue - fiberValue >= -0.05) {
+          final available = carbValue - fiberValue < 0
+              ? 0.0
+              : carbValue - fiberValue;
+          final rawValue = _roundedDecimal(available);
+          nutrientMap['carbohydrate_g'] = rawValue;
+          final derived = ObservationRecord(
+            observationId:
+                'obs_${stableHash('$sourceDocId:$variantId:carbohydrate_g:derived:$rawValue')}',
+            domain: 'food',
+            entityType: 'food_variant',
+            entityKey: variantId,
+            attributeCode: 'carbohydrate_g',
+            valueType: 'numeric_interval',
+            value: parseQualifiedValue(rawValue),
+            unit: 'g',
+            basisType: 'per_100g_edible_part',
+            basisAmount: 100,
+            scopeHash: scopeHash,
+            sourceDocId: sourceDocId,
+            recordLocator: '$fdcId:carbohydrate_g:derived',
+            methodCode: derivedAvailableCarbohydrateMethodCode,
+            extractionConfidence: 1,
+          );
+          observations.add(derived);
+          resolvedFacts.add(
+            resolvedFactFromObservation(
+              observation: derived,
+              policyId: 'fdc_import_v1',
+              snapshotId: 'facts_fdc_import_v1',
+            ),
+          );
+        }
+      }
+
+      // Nitrogen-to-protein and food-specific calorie conversion factors.
+      final factors = _conversionFactors(food['nutrientConversionFactors']);
+      for (final invalid in factors.invalid) {
+        conversionFactorAudit.add({'fdc_id': fdcId, ...invalid});
+      }
+      void addFactorObservation(String code, double value, String unit) {
+        observations.add(
+          ObservationRecord(
+            observationId:
+                'obs_${stableHash('$sourceDocId:$variantId:$code:$value')}',
+            domain: 'food',
+            entityType: 'food_variant',
+            entityKey: variantId,
+            attributeCode: code,
+            valueType: 'numeric_interval',
+            value: parseQualifiedValue('$value'),
+            unit: unit,
+            basisType: 'food_specific_conversion_factor',
+            basisAmount: null,
+            scopeHash: scopeHash,
+            sourceDocId: sourceDocId,
+            recordLocator: '$fdcId:$code',
+            methodCode: 'fdc:nutrient_conversion_factor',
+            extractionConfidence: 1,
+          ),
+        );
+      }
+
+      final proteinFactor = factors.nitrogenToProtein;
+      if (proteinFactor != null) {
+        addFactorObservation(
+          'nitrogen_to_protein_factor',
+          proteinFactor,
+          'g protein/g N',
+        );
+      }
+      final calorieFactors = factors.calorie;
+      if (calorieFactors != null) {
+        for (final (code, value) in [
+          ('calorie_factor_protein_kcal_per_g', calorieFactors.proteinKcalPerG),
+          ('calorie_factor_fat_kcal_per_g', calorieFactors.fatKcalPerG),
+          (
+            'calorie_factor_carbohydrate_kcal_per_g',
+            calorieFactors.carbohydrateKcalPerG,
+          ),
+        ]) {
+          if (value != null) addFactorObservation(code, value, 'kcal/g');
+        }
+      }
+
+      // Definitional identities among the source-reported values.
+      final exactSourceValues = <String, double>{};
+      for (final entry in sourceNutrientMap.entries) {
+        final value = parseQualifiedValue(entry.value);
+        final number = value.valueNum;
+        if (value.qualifierKind == QualifierKind.exact &&
+            number != null &&
+            number.isFinite &&
+            number >= 0) {
+          exactSourceValues[entry.key] = number;
+        }
+      }
+      final identityAudit = auditCompositionIdentities(
+        FoodCompositionIdentityInput(
+          recordId: fdcId,
+          description: description,
+          values: exactSourceValues,
+          nitrogenToProteinFactor: proteinFactor,
+          calorieFactors: calorieFactors,
+        ),
+      );
+      if (identityAudit.checksRun.isNotEmpty) {
+        compositionIdentityAudit.add({
+          'fdc_id': fdcId,
+          'data_type': dataType,
+          'checks_run': identityAudit.checksRun,
+          'findings': [
+            for (final finding in identityAudit.findings) finding.toJson(),
+          ],
+        });
+      }
+
+      // Branded Foods: label evidence, product code and ingredients.
+      final gtinUpc = _nonEmptyString(food['gtinUpc']);
+      final brandOwner = _nonEmptyString(food['brandOwner']);
+      final brandName = _nonEmptyString(food['brandName']);
+      final ingredients = _nonEmptyString(food['ingredients']);
+      final labelNutrients = food['labelNutrients'];
+      if (labelNutrients is Map) {
+        final servingSize = _nullableDouble(food['servingSize']);
+        final servingUnit = _nonEmptyString(food['servingSizeUnit']);
+        final comparisons = <Map<String, Object?>>[];
+        for (final entry in labelNutrients.entries) {
+          final mapping = _labelNutrientCodes[entry.key.toString()];
+          final rawNode = entry.value;
+          final labelValue = _nullableDouble(
+            rawNode is Map ? rawNode['value'] : rawNode,
+          );
+          if (mapping == null || labelValue == null || labelValue < 0) continue;
+          final (code, unit) = mapping;
+          // Per-serving label values are evidence only: no resolved fact,
+          // so they can never be read as per-100 g composition.
+          observations.add(
+            ObservationRecord(
+              observationId:
+                  'obs_${stableHash('$sourceDocId:$variantId:$code:label:$labelValue')}',
+              domain: 'food',
+              entityType: 'food_variant',
+              entityKey: variantId,
+              attributeCode: code,
+              valueType: 'numeric_interval',
+              value: parseQualifiedValue('$labelValue'),
+              unit: unit,
+              basisType: 'per_serving_label',
+              basisAmount: servingSize,
+              scopeHash: scopeHash,
+              sourceDocId: sourceDocId,
+              recordLocator: '$fdcId:label:${entry.key}',
+              methodCode: 'fdc:label_nutrients',
+              extractionConfidence: 1,
+            ),
+          );
+          final per100 = exactSourceValues[code];
+          if (per100 != null &&
+              servingSize != null &&
+              servingSize > 0 &&
+              (servingUnit?.toLowerCase() == 'g' ||
+                  servingUnit?.toLowerCase() == 'grm')) {
+            comparisons.add({
+              'attribute_code': code,
+              'label_per_serving': labelValue,
+              'per_100g_scaled_to_serving': per100 * servingSize / 100.0,
+            });
+          }
+        }
+        labelNutrientAudit.add({
+          'fdc_id': fdcId,
+          'serving_size': servingSize,
+          'serving_size_unit': servingUnit,
+          'household_serving': _nonEmptyString(
+            food['householdServingFullText'],
+          ),
+          'label_vs_per_100g': comparisons,
+          'note':
+              'Label values follow FDA rounding rules, so small differences '
+              'from scaled per-100 g values are expected and are not errors.',
+        });
+      }
+      if (ingredients != null) {
+        final matched = <String>{};
+        for (final part in ingredients.split(RegExp(r'[,;()\[\]]'))) {
+          final match = matchIntrinsicLevodopaSource(name: part.trim());
+          if (match != null) matched.add(match.source.id);
+        }
+        if (matched.isNotEmpty) {
+          intrinsicLevodopaIngredientAudit.add({
+            'fdc_id': fdcId,
+            'intrinsic_levodopa_source_ids': matched.toList()..sort(),
+            'note':
+                'The ingredient statement names a plant that contains '
+                'L-dopa. The amount per serving is not known from the label.',
+          });
         }
       }
 
@@ -872,12 +1290,80 @@ class FdcP0Importer {
         );
       }
 
+      if (gtinUpc != null) {
+        crosswalks.add(
+          buildCrosswalk(
+            domain: 'food',
+            conceptId: conceptId,
+            variantId: variantId,
+            externalIdSystem: 'GTIN/UPC',
+            externalIdValue: gtinUpc,
+            jurisdiction: 'US',
+            sourceDocId: sourceDocId,
+            confidence: 1.0,
+            mappingPayload: {
+              'fdc_id': fdcId,
+              'brand_owner': brandOwner,
+              'brand_name': brandName,
+              'branded_food_category': _nonEmptyString(
+                food['brandedFoodCategory'],
+              ),
+              'market_country': _nonEmptyString(food['marketCountry']),
+              'discontinued_date': _nonEmptyString(food['discontinuedDate']),
+              'ingredients': ingredients,
+              ...ImporterAudit.confidenceReason(
+                sourceIdentifierType:
+                    ImporterAudit.sourceIdTypeAuthoritativeProductCode,
+                reason:
+                    'GTIN/UPC copied verbatim from the FDC Branded Foods record.',
+                promotedFields: const ['gtinUpc'],
+                nonPromotedFields: const ['labelNutrients', 'ingredients'],
+              ),
+            },
+          ),
+        );
+      }
+      final wweia = food['wweiaFoodCategory'];
+      if (wweia is Map) {
+        final code = _nonEmptyString(
+          wweia['wweiaFoodCategoryCode'] ?? wweia['wweiaFoodCategory'],
+        );
+        if (code != null) {
+          crosswalks.add(
+            buildCrosswalk(
+              domain: 'food',
+              conceptId: conceptId,
+              variantId: variantId,
+              externalIdSystem: 'USDA WWEIA food category',
+              externalIdValue: code,
+              jurisdiction: 'US',
+              sourceDocId: sourceDocId,
+              confidence: 0.9,
+              mappingPayload: {
+                'fdc_id': fdcId,
+                'description': _nonEmptyString(
+                  wweia['wweiaFoodCategoryDescription'],
+                ),
+                ...ImporterAudit.confidenceReason(
+                  sourceIdentifierType:
+                      ImporterAudit.sourceIdTypeMetadataAttribute,
+                  reason:
+                      'WWEIA category copied from the FDC Survey (FNDDS) record.',
+                  promotedFields: const ['wweiaFoodCategory'],
+                  nonPromotedFields: const ['inputFoods'],
+                ),
+              },
+            ),
+          );
+        }
+      }
+
       projectedFoods.add(
         FoodItem(
           id: 'food_fdc_$fdcId',
           name: description,
           category: inferFoodCategory('${food['foodCategory'] ?? 'other'}'),
-          aliases: [description],
+          aliases: [description, ?brandName, ?brandOwner],
           description: 'FDC imported food variant ($dataType)',
           sourceSystem: dataType,
           sourceFoodCode: fdcId,
@@ -934,6 +1420,7 @@ class FdcP0Importer {
       language: 'en',
       rawPayload: stringifyPayload({
         'source_label': sourceLabel,
+        'parser_contract': 'fdc_claude_current_release_v1',
         'source_food_objects_sha256': contentSha256,
         'source_archive_metadata': ?sourceArchiveMetadata,
         if (brandedProductDetails.isNotEmpty)
@@ -963,25 +1450,24 @@ class FdcP0Importer {
               ),
               'source_fields': food['nutrientConversionFactors'],
               'evidence_scope': 'source_reported_conversion_factors',
-              'calculation_applied': false,
-              'runtime_factor_selection': null,
+              'source_values_modified': false,
+              'calculation_scope': 'composition_identity_audit_only',
             },
         ],
         'energy_method_policy': {
-          'policy_id': 'fdc_distinct_source_energy_methods_v1',
+          'policy_id': 'fdc_claude_current_release_energy_selection_v1',
           'general_nutrient_id': 2047,
           'specific_nutrient_id': 2048,
-          'generic_energy_method_selected': false,
-          'new_energy_or_protein_calculation_applied': false,
+          'generic_energy_selection': 'source_1008_else_2048_else_2047',
+          'derived_values_method_coded': true,
         },
         'nutrient_identity_policy': {
-          'policy_id': 'fdc_identifier_consensus_distinct_quantities_v2',
-          'supported_source_quantities': fdcNutrientIdentities.length,
-          'identifier_disagreement':
-              'retain_source_fields_without_numeric_projection',
+          'policy_id': 'fdc_claude_current_release_definitions_v1',
+          'supported_source_quantities': fdcNutrientDefinitions.length,
+          'definitions_release': fdcNutrientDefinitionsRelease,
+          'legacy_number_precedence_for_extract_ids': true,
           'unit_spelling_normalization_only': true,
           'vitamin_equivalence_conversion_applied': false,
-          'sugar_quantity_methods_merged': false,
           'new_clinical_thresholds': false,
         },
         'food_count': foods.length,
@@ -989,6 +1475,15 @@ class FdcP0Importer {
         'nutrient_value_audit': nutrientValueAudit,
         'source_nutrient_summaries': sourceNutrientSummaries,
         'food_portions_audit': portionAuditGaps,
+        'nutrient_definitions_release': fdcNutrientDefinitionsRelease,
+        'unit_mismatch_audit': unitMismatchAudit,
+        'duplicate_nutrient_audit': duplicateNutrientAudit,
+        'unmapped_nutrient_counts': unmappedNutrientCounts,
+        'excluded_non_food_records': excludedRecords,
+        'conversion_factor_audit': conversionFactorAudit,
+        'composition_identity_audit': compositionIdentityAudit,
+        'label_nutrient_audit': labelNutrientAudit,
+        'intrinsic_levodopa_ingredient_audit': intrinsicLevodopaIngredientAudit,
       }),
     );
 
@@ -1089,22 +1584,9 @@ class FdcP0Importer {
     return int.tryParse('${value ?? ''}'.trim());
   }
 
-  String? _attributeCodeFromFdcNutrient({
-    Object? nutrientId,
-    required String nutrientNumber,
-    required String nutrientName,
-  }) => fdcNutrientAttributeCode(
-    nutrientId: nutrientId,
-    nutrientNumber: nutrientNumber,
-    nutrientName: nutrientName,
-  );
-
   bool _isAtwaterIdentity(Map nutrient) =>
       const {'2047', '2048'}.contains(_nonEmptyString(nutrient['id'])) ||
       const {'957', '958'}.contains('${nutrient['number'] ?? ''}'.trim());
-
-  String _expectedNutrientUnit(String attribute) =>
-      attribute.endsWith('_kcal') ? 'kcal' : unitForAttributeCode(attribute);
 
   List<Map<String, dynamic>> _csvConversionFactors(
     String foodId,
@@ -1150,5 +1632,146 @@ class FdcP0Importer {
       }
     }
     return result;
+  }
+
+  /// Method code for available carbohydrate derived from by-difference
+  /// carbohydrate minus total dietary fibre.
+  static const String derivedAvailableCarbohydrateMethodCode =
+      'derived:carbohydrate_by_difference_minus_total_fiber';
+
+  String _roundedDecimal(double value) {
+    final rounded = (value * 10000).roundToDouble() / 10000;
+    return rounded.toString();
+  }
+
+  /// Method code for energy taken from FDC 2048 (food-specific factors).
+  static const String derivedEnergyFromSpecificMethodCode =
+      'derived:energy_kcal_from_fdc_2048_atwater_specific';
+
+  /// Method code for energy taken from FDC 2047 (general factors).
+  static const String derivedEnergyFromGeneralMethodCode =
+      'derived:energy_kcal_from_fdc_2047_atwater_general';
+
+  /// Method code for total fibre taken from FDC 2033 (AOAC 2011.25).
+  static const String derivedFiberFromAoac201125MethodCode =
+      'derived:fiber_g_from_fdc_2033_aoac_2011_25';
+
+  /// FDC data types that are laboratory inputs, not consumable foods.
+  static const Set<String> nonFoodDataTypes = {
+    'sample_food',
+    'sub_sample_food',
+    'agricultural_acquisition',
+    'market_acquisition',
+    'experimental_food',
+  };
+
+  static const Map<String, String> _canonicalDataTypes = {
+    'foundation': 'Foundation',
+    'foundation_food': 'Foundation',
+    'sr legacy': 'SR Legacy',
+    'sr_legacy_food': 'SR Legacy',
+    'survey (fndds)': 'Survey (FNDDS)',
+    'survey_fndds_food': 'Survey (FNDDS)',
+    'branded': 'Branded',
+    'branded_food': 'Branded',
+  };
+
+  /// FDC `labelNutrients` keys and their per-serving label units.
+  static const Map<String, (String, String)> _labelNutrientCodes = {
+    'calories': ('energy_kcal', 'kcal'),
+    'protein': ('protein_g', 'g'),
+    'fat': ('fat_g', 'g'),
+    'saturatedFat': ('fatty_acids_saturated_g', 'g'),
+    'transFat': ('fatty_acids_trans_g', 'g'),
+    'cholesterol': ('cholesterol_mg', 'mg'),
+    'sodium': ('sodium_mg', 'mg'),
+    // US label "Total Carbohydrate" includes dietary fibre.
+    'carbohydrates': ('carbohydrate_by_difference_g', 'g'),
+    'fiber': ('fiber_g', 'g'),
+    'sugars': ('sugars_total_g', 'g'),
+    'addedSugar': ('sugars_added_g', 'g'),
+    'calcium': ('calcium_mg', 'mg'),
+    'iron': ('iron_mg', 'mg'),
+    'potassium': ('potassium_mg', 'mg'),
+  };
+
+  FdcNutrientResolution _resolveNutrient(
+    Map<String, dynamic> nutrient,
+    Map<String, dynamic> row,
+  ) {
+    final id = _nullableInt(
+      nutrient['id'] ?? row['nutrientId'] ?? row['nutrient_id'],
+    );
+    final number = _nonEmptyString(nutrient['number'] ?? row['nutrientNumber']);
+    final name = _nonEmptyString(nutrient['name'] ?? row['nutrientName']);
+    final unit = _nonEmptyString(nutrient['unitName'] ?? row['unitName']);
+    if (id != null && number != null) {
+      final byId = resolveFdcNutrient(id: id, unitName: unit);
+      final idDefinition = byId.definition;
+      // A local extract may number its nutrient table independently; when
+      // the id points at a different nutrient than the number, the number
+      // (which is printed on every FDC record) decides.
+      if (idDefinition != null && idDefinition.number == number) return byId;
+      return resolveFdcNutrient(number: number, name: name, unitName: unit);
+    }
+    return resolveFdcNutrient(
+      id: id,
+      number: number,
+      name: name,
+      unitName: unit,
+    );
+  }
+
+  ({
+    double? nitrogenToProtein,
+    FoodSpecificCalorieFactors? calorie,
+    List<Map<String, Object?>> invalid,
+  })
+  _conversionFactors(Object? raw) {
+    double? protein;
+    FoodSpecificCalorieFactors? calorie;
+    final invalid = <Map<String, Object?>>[];
+    if (raw is! List) {
+      return (nitrogenToProtein: null, calorie: null, invalid: invalid);
+    }
+    bool plausible(double? value, double low, double high) =>
+        value != null && value >= low && value <= high;
+    for (final entry in raw) {
+      if (entry is! Map) continue;
+      final type = '${entry['type'] ?? ''}';
+      if (type.contains('ProteinConversionFactor')) {
+        final value = _nullableDouble(entry['value']);
+        // Published nitrogen-to-protein factors span about 5.18 to 6.38;
+        // 0.0 and other out-of-range values are placeholders.
+        if (plausible(value, 4.0, 7.0)) {
+          protein = value;
+        } else {
+          invalid.add({'factor': 'nitrogen_to_protein', 'value': value});
+        }
+      } else if (type.contains('CalorieConversionFactor')) {
+        final p = _nullableDouble(entry['proteinValue']);
+        final f = _nullableDouble(entry['fatValue']);
+        final c = _nullableDouble(entry['carbohydrateValue']);
+        final usable =
+            (p == null || plausible(p, 1.0, 5.0)) &&
+            (f == null || plausible(f, 7.0, 9.5)) &&
+            (c == null || plausible(c, 1.0, 4.5));
+        if (usable && (p != null || f != null || c != null)) {
+          calorie = FoodSpecificCalorieFactors(
+            proteinKcalPerG: p,
+            fatKcalPerG: f,
+            carbohydrateKcalPerG: c,
+          );
+        } else {
+          invalid.add({
+            'factor': 'calorie',
+            'protein': p,
+            'fat': f,
+            'carbohydrate': c,
+          });
+        }
+      }
+    }
+    return (nitrogenToProtein: protein, calorie: calorie, invalid: invalid);
   }
 }

@@ -226,6 +226,70 @@ void main() {
     expect(bundle.projectedFoods.single.aminoAcidProfile!.valine, 1.3);
     expect(bundle.projectedFoods.single.textureClass, isNull);
     expect(bundle.observations.length, 2);
+    // By-difference carbohydrate includes fibre; without a fibre value the
+    // available carbohydrate used by the catalog stays unknown, not 22.8.
+    expect(
+      bundle.observations.map((o) => o.attributeCode),
+      contains('carbohydrate_by_difference_g'),
+    );
+    expect(
+      bundle.projectedFoods.single.missingNutrientFields,
+      containsAll(['carbsG', 'fiberG', 'fatG', 'sodiumMg']),
+    );
+  });
+
+  test('FDC importer derives available carbohydrate from exact values', () {
+    const importer = FdcP0Importer(
+      fetchClient: FakeSourceFetchClient(textByUrl: {}),
+    );
+    final bundle = importer.importFoods([
+      {
+        'fdcId': 173944,
+        'description': 'Bananas, raw',
+        'dataType': 'SR Legacy',
+        'foodCategory': 'fruit',
+        'foodNutrients': [
+          {
+            'amount': 22.84,
+            'nutrient': {
+              'number': '205',
+              'name': 'Carbohydrate, by difference',
+              'unitName': 'g',
+            },
+          },
+          {
+            'amount': 2.6,
+            'nutrient': {
+              'number': '291',
+              'name': 'Fiber, total dietary',
+              'unitName': 'g',
+            },
+          },
+          {
+            'amount': 0.8,
+            'nutrient': {
+              'number': '295',
+              'name': 'Fiber, soluble',
+              'unitName': 'g',
+            },
+          },
+        ],
+      },
+    ], sourceLabel: 'carbohydrate_convention_fixture');
+
+    final derived = bundle.observations.singleWhere(
+      (o) => o.attributeCode == 'carbohydrate_g',
+    );
+    expect(derived.value.valueNum, closeTo(20.24, 1e-9));
+    expect(
+      derived.methodCode,
+      FdcP0Importer.derivedAvailableCarbohydrateMethodCode,
+    );
+    final food = bundle.projectedFoods.single;
+    expect(food.carbsG, closeTo(20.24, 1e-9));
+    // Soluble fibre is a fraction, never the total.
+    expect(food.fiberG, 2.6);
+    expect(food.missingNutrientFields.contains('carbsG'), isFalse);
   });
 
   test('FDC Foundation sample ranges stay separate from the legacy point', () {

@@ -2,14 +2,14 @@
   "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
   "schemaVersion": 1,
   "review": {
-    "reviewedAt": "2026-10-01",
+    "reviewedAt": "2026-10-15",
     "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository source facts refreshed after the Flutter 3.47 SDK floor migration. All 138 resolved Pub package objects and the other reviewed lock identities are unchanged; the complete Pub lock digest changes only for the Flutter SDK floor. Previously recorded built-artifact facts are not re-attested. This automated review is not human privacy approval or an App Store Connect or Play Console submission receipt."
+    "approvalScope": "Repository source facts reconciled for the local upgrade and the Claude nutrition/reference-data baseline. Retains the native SDK migration, original data-flow declarations, and main branch Node security dependency updates. Lock identities refer to the merged files. Previously recorded built-artifact facts are not re-attested; owner approval remains pending. This is not a human privacy approval or store submission receipt."
   },
   "lockIdentities": {
-    "pubspec.lock": "2158845bcc9cb217238fea451bb2cad09000638151db69e15970c8b3416e24d1",
-    "package-lock.json": "13f800e034ba75dcb421a9d932c80189f99f5493da58a14b82fcbc11cc084e97",
+    "pubspec.lock": "a8a5be6f96efe4428693876a6453cdc81cae021064dc0925968b3e78dfdd4b46",
+    "package-lock.json": "e398a3b28d4edc4ebf46e70c7141acbbd21ea85a3a7f762ed962ba813b9bd9a2",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
   },
@@ -33,12 +33,14 @@
     "pdf": "offline_personal_log_pdf_generation",
     "printing": "user_initiated_system_print_and_share",
     "provider": "local_state_management",
-    "shared_preferences": "local_preferences_web_user_records_owner_scoped_drafts_and_review_receipts",
     "share_plus": "user_initiated_system_share_of_reviewed_local_html",
+    "shared_preferences": "local_preferences_web_user_records_owner_scoped_drafts_and_review_receipts",
+    "shared_preferences_platform_interface": "local_persistence_backend_interface_and_explicit_test_store_detection",
+    "shared_preferences_web": "official_browser_local_preferences_backend",
     "sqflite": "local_structured_persistence",
     "timezone": "local_schedule_calculation",
+    "web": "wasm_compatible_browser_download_and_indexeddb_local_persistence_interop",
     "xml": "local_import_parsing",
-    "web": "wasm_compatible_browser_download_interop",
     "yaml": "local_configuration_parsing"
   },
   "operatorDependencies": {

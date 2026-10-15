@@ -2396,6 +2396,43 @@ class ClinicalDecisionSupportService {
     };
     final grouped = <String, List<ObservationRecord>>{};
     for (final observation in bundle.observations) {
+      // FDC labels are retained above as per-serving evidence, not promoted
+      // per-100 g composition. Comparing the two bases in one numeric cluster
+      // would hold an otherwise valid import without a comparable conflict.
+      if (observation.domain == 'food' &&
+          observation.basisType == 'per_serving_label' &&
+          observation.methodCode == 'fdc:label_nutrients' &&
+          sourceById[observation.sourceDocId]?.sourceFamily == 'FDC' &&
+          !bundle.resolvedFacts.any(
+            (fact) => fact.chosenObservationId == observation.observationId,
+          )) {
+        final historicalReferences = previousFacts
+            .where(
+              (fact) => fact.chosenObservationId == observation.observationId,
+            )
+            .toList(growable: false);
+        if (historicalReferences.isEmpty) {
+          continue;
+        }
+        // Evidence-only labels must not overwrite an adopted original. Check
+        // its entity/attribute here, before grouping could hide that incumbent;
+        // the complete original payload is checked by the conflict engine.
+        if (historicalReferences.any(
+          (fact) =>
+              fact.entityKey != observation.entityKey ||
+              fact.attributeCode != observation.attributeCode,
+        )) {
+          identityIssues.add({
+            'cluster_key': 'observation:${observation.observationId}',
+            'status': 'historical_observation_identity_collision',
+            'source_doc_refs': [observation.sourceDocId],
+            'needs_human_review': true,
+            'explanation':
+                'An adopted observation identity cannot be reassigned to a different entity or attribute.',
+          });
+          continue;
+        }
+      }
       final key = [
         observation.domain,
         observation.entityType,

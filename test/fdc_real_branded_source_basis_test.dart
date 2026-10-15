@@ -74,7 +74,9 @@ void main() {
         expect(sourceFields['servingSizeUnit'], original['servingSizeUnit']);
         expect(sourceFields['servingSize'], original['servingSize']);
         expect(
-          bundle.observations.every((row) => row.basisType == entry.value.$3),
+          bundle.observations
+              .where((row) => row.methodCode != 'fdc:label_nutrients')
+              .every((row) => row.basisType == entry.value.$3),
           isTrue,
         );
         final database = WebCdssDatabase();

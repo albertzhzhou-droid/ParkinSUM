@@ -416,8 +416,8 @@ class _ProbeRun {
       final identity = AlgorithmConfigurationIdentity.defaults();
       _equal(
         identity.version,
-        '2026.10.07-v73',
-        'current v73 configuration identity',
+        '2026.10.15-v74',
+        'current v74 configuration identity',
       );
       report['configurationIdentity'] = <String, Object?>{
         'id': identity.id,

@@ -42,6 +42,8 @@ const supportedEvidenceKinds = new Set([
 // their declared source evidence below, so this registry cannot silently become a second version
 // authority.
 export const requiredSchemaSurfaces = Object.freeze([
+  ['parkinsum.indexeddb-user-state', 'lib/core/db/web_user_state_store_indexeddb.dart'],
+  ['parkinsum.user-portable-data-compact-transport', 'lib/domain/usecases/portable_data_compact_transport_service.dart'],
   ['parkinsum.reviewed-import-preview', 'lib/domain/usecases/clinical_decision_support_service.dart'],
   ['parkinsum.food-product-evidence', 'lib/core/models/food_item.dart'],
   ['parkinsum.reviewed-import-activation', 'lib/domain/usecases/clinical_decision_support_service.dart'],

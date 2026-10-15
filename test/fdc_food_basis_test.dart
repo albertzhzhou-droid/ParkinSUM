@@ -149,7 +149,7 @@ void main() {
   );
 
   test(
-    'basis repair uses a new parse identity while ordinary source identity stays compatible',
+    'current-release nutrition uses a new parser identity for both qualified and ordinary foods',
     () {
       for (final rows in [
         foods,
@@ -171,7 +171,13 @@ void main() {
         if (identical(rows, foods)) {
           expect(bundle.sourceDocuments.single.sourceDocId, isNot(oldIdentity));
         } else {
-          expect(bundle.sourceDocuments.single.sourceDocId, oldIdentity);
+          expect(bundle.sourceDocuments.single.sourceDocId, isNot(oldIdentity));
+          expect(
+            jsonDecode(
+              bundle.sourceDocuments.single.rawPayload,
+            )['parser_contract'],
+            'fdc_claude_current_release_v1',
+          );
           expect(
             jsonDecode(bundle.sourceDocuments.single.rawPayload),
             isNot(contains('food_basis_evidence')),

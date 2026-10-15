@@ -96,6 +96,8 @@ class ActiveDrugSelectionCoordinator {
       if (!current()) return cancelled();
       try {
         await persist(next);
+      } on UserPreferenceWriteCommittedForPreviousSession {
+        return previousSessionCommit();
       } on UserPreferenceWriteScopeChanged {
         return cancelled();
       } catch (error) {

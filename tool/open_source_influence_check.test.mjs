@@ -67,7 +67,7 @@ test('committed inventory covers every documented influence and release path', (
   assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
   assert.equal(inventory.$schema, 'https://parkinsum.app/schemas/open-source-influence-inventory/v7');
   assert.equal(inventory.schemaVersion, 7);
-  assert.equal(inventory.influences.length, 101);
+  assert.equal(inventory.influences.length, 102);
   assert.equal(inventory.influences.filter((entry) => entry.transferStatus === 'concept_only').length, 89);
   assert.equal(inventory.releaseBoundary.developmentToolInfluenceIds.length, 5);
   assert.ok(inventory.influences.every((entry) => Array.isArray(entry.artifactLicenseEvidence)));
@@ -106,7 +106,7 @@ test('committed inventory covers every documented influence and release path', (
     observed.sourceRepositories.filter((repository) =>
       repository.startsWith('github.com/'),
     ).length,
-    98,
+    99,
   );
   assert.equal(
     observed.sourceRepositories.filter((repository) =>
@@ -574,7 +574,7 @@ test('committed inventory covers every documented influence and release path', (
     inventory.influences
       .filter((entry) => ['copied', 'derived', 'linked', 'vendored'].includes(entry.transferStatus))
       .map((entry) => entry.id),
-    ['adobe_source_serif_font_assets', 'dart_pdf_printing', 'flutter_framework', 'flutter_local_notifications', 'google_fonts_collection_reference', 'share_plus', 'vercel_geist_font_assets'],
+    ['adobe_source_serif_font_assets', 'dart_pdf_printing', 'flutter_framework', 'flutter_local_notifications', 'flutter_packages_shared_preferences', 'google_fonts_collection_reference', 'share_plus', 'vercel_geist_font_assets'],
   );
   assert.deepEqual(
     inventory.releaseBoundary.developmentToolInfluenceIds,
@@ -582,8 +582,35 @@ test('committed inventory covers every documented influence and release path', (
   );
   assert.deepEqual(
     Object.keys(inventory.releaseBoundary.linkedVersionEvidence),
-    ['flutter_framework', 'flutter_local_notifications', 'share_plus', 'adobe_source_serif_font_assets', 'vercel_geist_font_assets', 'cqframework_cql_exec_fhir_reference', 'cqframework_cql_execution_reference', 'cqframework_cql_reference', 'google_cql_engine_reference', 'google_fhir_go_reference', 'google_fonts_collection_reference', 'dart_pdf_printing'],
+    ['flutter_framework', 'flutter_local_notifications', 'share_plus', 'adobe_source_serif_font_assets', 'vercel_geist_font_assets', 'cqframework_cql_exec_fhir_reference', 'cqframework_cql_execution_reference', 'cqframework_cql_reference', 'google_cql_engine_reference', 'google_fhir_go_reference', 'google_fonts_collection_reference', 'dart_pdf_printing', 'flutter_packages_shared_preferences'],
   );
+});
+
+test('existing Web preferences dependency retains its exact package pin and scoped license evidence', () => {
+  const { inventory, observed } = fixture();
+  const entry = inventory.influences.find((candidate) => candidate.id === 'flutter_packages_shared_preferences');
+  assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
+  assert.equal(entry.officialUrl, 'https://github.com/flutter/packages');
+  assert.equal(entry.pinnedCommit, 'cb4fb13e19756cbbcb523bc33fbf7b7a5923e787');
+  assert.equal(entry.transferStatus, 'linked');
+  assert.equal(entry.declaredSpdx, 'BSD-3-Clause');
+  assert.equal(entry.repositoryDetectedSpdx, 'NOASSERTION');
+  assert.equal(entry.licenseStatus, 'declared_not_machine_detected');
+  assert.deepEqual(entry.localPaths, ['pubspec.lock', 'pubspec.yaml']);
+  assert.deepEqual(entry.obligations, ['dependency_lock', 'generated_license_bundle', 'license_notice']);
+  assert.deepEqual(entry.artifactLicenseEvidence, []);
+  assert.deepEqual(inventory.releaseBoundary.linkedVersionEvidence[entry.id], {
+    version: '2.4.3',
+    versionSource: 'pubspec.lock',
+    sourceRevision: entry.pinnedCommit,
+  });
+  assert.match(readFileSync('pubspec.lock', 'utf8'), /shared_preferences_web:[\s\S]*?sha256: c49bd060261c9a3f0ff445892695d6212ff603ef3115edbb448509d407600019[\s\S]*?version: "2\.4\.3"/);
+  assert.match(entry.reviewedConcepts.join(' '), /does not pin every package/);
+  assert.match(entry.reviewedConcepts.join(' '), /Repository-wide machine license detection.*were not established/);
+  assert.match(entry.reviewedConcepts.join(' '), /no new dependency, storage durability guarantee, legal approval or clinical qualification/);
+  assert.ok(!inventory.discovery.excludedRepositories.includes('github.com/flutter/packages'));
+  entry.licenseStatus = 'machine_detected';
+  assert.ok(codes(inventory, observed).includes('false_machine_detection'));
 });
 
 test('CQF CQL JVM reference is linked only to locked development tooling', () => {

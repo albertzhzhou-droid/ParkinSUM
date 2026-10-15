@@ -292,7 +292,33 @@ class CdssCatalogProjectionService {
         }
       }
     }
-    final originalSelection = selectQualifiedNutrientPoints(observations);
+    final resolvedObservationIds = {
+      for (final fact in snapshot?.rows['resolved_fact'] ?? const [])
+        fact['chosen_observation_id'],
+    };
+    final fdcSourceIds = {
+      for (final source in sourceDocuments)
+        if (source['source_family'] == 'FDC') source['source_doc_id'],
+    };
+    // Current FDC imports retain label quantities as a separate per-serving
+    // evidence stream. They neither supply a mass point nor contradict a
+    // qualified per-100g observation. Mask only this explicit, unselected
+    // sidecar in a complete snapshot, preserving original indexes and every
+    // original row for the provenance view below. Other basis disagreements
+    // and any label incorrectly selected by a resolved fact remain held.
+    final pointEvidence = [
+      for (final row in observations)
+        if (snapshot != null &&
+            row['domain'] == 'food' &&
+            row['basis_type'] == 'per_serving_label' &&
+            row['method_code'] == 'fdc:label_nutrients' &&
+            fdcSourceIds.contains(row['source_doc_id']) &&
+            !resolvedObservationIds.contains(row['observation_id']))
+          const <String, Object?>{}
+        else
+          row,
+    ];
+    final originalSelection = selectQualifiedNutrientPoints(pointEvidence);
     final reviewedSelection = _reviewedFoodPoints(snapshot);
     final pointSelection = QualifiedNutrientPointSelection(
       points: {
@@ -1096,6 +1122,8 @@ class CdssCatalogProjectionService {
         return 'Protein';
       case 'carbohydrate_g':
         return 'Carbohydrate';
+      case 'carbohydrate_by_difference_g':
+        return 'Carbohydrate, by difference (includes fibre)';
       case 'fat_g':
         return 'Fat';
       case 'fiber_g':

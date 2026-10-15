@@ -86,6 +86,17 @@ final class UserPreferenceWriteScopeChanged implements Exception {
   String toString() => 'User preference session changed before write dispatch.';
 }
 
+/// Raised only after the complete value has committed and passed readback.
+/// The old session must not publish UI state, but its write was not cancelled.
+final class UserPreferenceWriteCommittedForPreviousSession
+    implements Exception {
+  const UserPreferenceWriteCommittedForPreviousSession();
+
+  @override
+  String toString() =>
+      'User preference persisted before its session authorization expired.';
+}
+
 /// Optional capability: production stores recheck after their own waits.
 abstract interface class ScopedUserPreferenceStore {
   Future<void> saveUserProfileForSession(

@@ -11,7 +11,10 @@ import 'package:parkinsum_companion/core/db/web_user_state_store.dart';
 import 'package:parkinsum_companion/core/db/web_user_state_store_indexeddb.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/core/models/portable_data_restore.dart';
+import 'package:parkinsum_companion/core/models/user_preference_write_scope.dart';
 import 'package:parkinsum_companion/core/services/user_state_change_notifications.dart';
+import 'package:parkinsum_companion/core/state/active_drug_selection_transaction.dart';
+import 'package:parkinsum_companion/core/state/persisted_value_mutation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web/web.dart' as web;
 
@@ -19,9 +22,16 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   var sequence = 0;
   late String databaseName;
+  const notificationPulseKey = 'parkinsum.user_state.revision.v1';
+  String? originalNotificationPulse;
+  String? ownedNotificationPulse;
   final connections = <IndexedDbWebUserStateStore>[];
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    originalNotificationPulse = web.window.localStorage.getItem(
+      notificationPulseKey,
+    );
+    ownedNotificationPulse = null;
     sequence += 1;
     databaseName =
         'parkinsum.synthetic.user-state.${DateTime.now().microsecondsSinceEpoch}.$sequence';
@@ -35,6 +45,16 @@ void main() {
     web.window.localStorage.removeItem(
       'parkinsum.indexeddb.migrated.$databaseName',
     );
+    if (ownedNotificationPulse != null &&
+        web.window.localStorage.getItem(notificationPulseKey) ==
+            ownedNotificationPulse) {
+      final original = originalNotificationPulse;
+      if (original == null) {
+        web.window.localStorage.removeItem(notificationPulseKey);
+      } else {
+        web.window.localStorage.setItem(notificationPulseKey, original);
+      }
+    }
   });
 
   IndexedDbWebUserStateStore connect({
@@ -47,7 +67,12 @@ void main() {
       databaseName: databaseName,
       beforePublication: beforePublication,
       afterWriteQueued: afterWriteQueued,
-      afterPublication: afterPublication,
+      afterPublication: () {
+        ownedNotificationPulse = web.window.localStorage.getItem(
+          notificationPulseKey,
+        );
+        afterPublication?.call();
+      },
       readCurrentLegacy: readCurrentLegacy,
     );
     connections.add(store);
@@ -249,6 +274,9 @@ void main() {
       final listener = externalUserStateChanges.listen((_) => changes += 1);
       addTearDown(listener.cancel);
       notifyUserStateChanged();
+      ownedNotificationPulse = web.window.localStorage.getItem(
+        notificationPulseKey,
+      );
       await Future<void>.delayed(const Duration(milliseconds: 100));
       expect(changes, 0);
     },
@@ -273,6 +301,113 @@ void main() {
       expect(await connect().read(legacy), 'committed original-owner value');
     },
   );
+
+  for (final field in ['profile', 'active_drug']) {
+    for (final phase in ['before_commit', 'after_commit', 'storage_failure']) {
+      test(
+        'real IndexedDB $field distinguishes $phase expiry without publishing old-session UI',
+        () async {
+          var authorized = true;
+          final scope = UserPreferenceWriteScope(
+            ownerUid: 'synthetic_owner',
+            sessionEpoch: 1,
+            isCurrent: () => authorized,
+          );
+          final storageFailure = StateError('synthetic publication failure');
+          final database = WebAppDatabase(
+            userStateStore: connect(
+              beforePublication: () {
+                if (phase == 'after_commit') return;
+                authorized = false;
+                if (phase == 'before_commit') scope.requireCurrent();
+                throw storageFailure;
+              },
+              afterPublication: () => authorized = false,
+            ),
+          );
+          final before = await database.loadPortableRestoreState();
+          var applied = 0;
+          var refreshed = 0;
+          var errorCallbacks = 0;
+          final running = <bool>[];
+          final result = field == 'profile'
+              ? await PersistedValueMutationCoordinator<UserProfile>()
+                    .commit(
+                      previousValue: before.profile,
+                      nextValue: before.profile.copyWith(
+                        patientId: scope.ownerUid,
+                        displayLocale: 'fr-CA',
+                      ),
+                      persist: (value) => database.saveUserProfileForSession(
+                        value,
+                        scope: scope,
+                      ),
+                      apply: (_) => applied += 1,
+                      refresh: () async => refreshed += 1,
+                      onRunningChanged: running.add,
+                      isCurrent: () => authorized,
+                    )
+                    .then(
+                      (value) => (
+                        status: value.status.name,
+                        committed: value.wasCommitted,
+                        applies: value.appliesToCurrentSession,
+                        error: value.persistenceError,
+                      ),
+                    )
+              : await ActiveDrugSelectionCoordinator()
+                    .commit(
+                      previousIds: const [],
+                      nextIds: const ['synthetic_drug'],
+                      persist: (value) => database.saveActiveDrugIdsForSession(
+                        value,
+                        scope: scope,
+                      ),
+                      apply: (_) => applied += 1,
+                      refresh: () async => refreshed += 1,
+                      onRunningChanged: running.add,
+                      onError: (_, _) => errorCallbacks += 1,
+                      isCurrent: () => authorized,
+                    )
+                    .then(
+                      (value) => (
+                        status: value.status.name,
+                        committed: value.wasCommitted,
+                        applies: value.appliesToCurrentSession,
+                        error: value.persistenceError,
+                      ),
+                    );
+          expect(result.status, switch (phase) {
+            'after_commit' => 'committedForPreviousSession',
+            'before_commit' => 'cancelledBeforePersistence',
+            _ => 'failedForPreviousSession',
+          });
+          expect(result.committed, phase == 'after_commit');
+          expect(result.applies, isFalse);
+          expect(applied, 0);
+          expect(refreshed, 0);
+          expect(errorCallbacks, 0);
+          expect(running, [true]);
+          if (phase == 'storage_failure') {
+            expect(result.error, same(storageFailure));
+          }
+          final restarted = WebAppDatabase(userStateStore: connect());
+          if (phase != 'after_commit') {
+            expect(
+              (await restarted.loadPortableRestoreState()).canonicalJson,
+              before.canonicalJson,
+            );
+          } else if (field == 'profile') {
+            final profile = await restarted.loadUserProfile();
+            expect(profile.displayLocale, 'fr-CA');
+            expect(profile.patientId, scope.ownerUid);
+          } else {
+            expect(await restarted.loadActiveDrugIds(), ['synthetic_drug']);
+          }
+        },
+      );
+    }
+  }
 
   test(
     'missing document replaced by an unknown key is rejected and raw envelope remains exact',

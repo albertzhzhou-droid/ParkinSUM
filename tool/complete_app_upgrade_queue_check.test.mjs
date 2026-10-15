@@ -1126,7 +1126,7 @@ test('transitive result dependency closure remains conservative and fail closed'
     JSON.parse(fs.readFileSync('package.json', 'utf8')).scripts[
       'algorithm:direct-edge-probe'
     ],
-    'dart --packages=.dart_tool/package_config.json tool/run_algorithm_direct_edge_probe.dart',
+    'dart --packages=.dart_tool/package_config.json tool/run_algorithm_direct_edge_probe.dart && node --test tool/algorithm_result_sink_slice.test.mjs && node tool/algorithm_result_sink_slice.mjs',
   );
   assert.deepEqual(identity.dependencies, [
     'mechanistic_model_invariant_and_unit_gate',

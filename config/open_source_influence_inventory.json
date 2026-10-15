@@ -12,6 +12,7 @@
       "dart_pdf_printing",
       "flutter_framework",
       "flutter_local_notifications",
+      "flutter_packages_shared_preferences",
       "google_fonts_collection_reference",
       "share_plus",
       "vercel_geist_font_assets"
@@ -79,6 +80,11 @@
         "version": "3.13.0",
         "versionSource": "pubspec.lock",
         "sourceRevision": "0833cd2fc8cf3e62b0228732e81402afca5cc542"
+      },
+      "flutter_packages_shared_preferences": {
+        "version": "2.4.3",
+        "versionSource": "pubspec.lock",
+        "sourceRevision": "cb4fb13e19756cbbcb523bc33fbf7b7a5923e787"
       }
     },
     "dependencyEvidence": [
@@ -1507,6 +1513,36 @@
       ],
       "reviewedConcepts": [
         "flutter_local_notifications 22.3.0 platform capability boundaries"
+      ],
+      "transferStatus": "linked",
+      "copyingAuthorized": true,
+      "distributionAuthorized": true,
+      "localPaths": [
+        "pubspec.lock",
+        "pubspec.yaml"
+      ],
+      "obligations": [
+        "dependency_lock",
+        "generated_license_bundle",
+        "license_notice"
+      ],
+      "artifactLicenseEvidence": []
+    },
+    {
+      "id": "flutter_packages_shared_preferences",
+      "officialUrl": "https://github.com/flutter/packages",
+      "pinnedCommit": "cb4fb13e19756cbbcb523bc33fbf7b7a5923e787",
+      "defaultBranch": "main",
+      "declaredSpdx": "BSD-3-Clause",
+      "repositoryDetectedSpdx": "NOASSERTION",
+      "licenseStatus": "declared_not_machine_detected",
+      "artifactTypesReviewed": [
+        "documentation",
+        "source_code"
+      ],
+      "reviewedConcepts": [
+        "Existing locked shared_preferences_web 2.4.3 is the release-linked legacy Web preference adapter. On 2026-10-15, its official shared_preferences_web-v2.4.3 tag resolved to cb4fb13e19756cbbcb523bc33fbf7b7a5923e787 and the official Pub archive SHA-256 c49bd060261c9a3f0ff445892695d6212ff603ef3115edbb448509d407600019 matched pubspec.lock. This package reference does not pin every package in the Flutter packages monorepo or the separately versioned shared_preferences 2.5.5 package.",
+        "The pinned packages/shared_preferences/shared_preferences_web/LICENSE declares BSD three-clause terms and exactly matches the installed package LICENSE (SHA-256 89519eca6f7b9529b35bdddd623a58c3af06a88c458dbd6531ddb4675acf75a9). Repository-wide machine license detection and whole-source-to-package byte equivalence were not established. Existing generated license bundle and notice obligations remain; no new dependency, storage durability guarantee, legal approval or clinical qualification is inferred."
       ],
       "transferStatus": "linked",
       "copyingAuthorized": true,

@@ -85,6 +85,8 @@ class PersistedValueMutationCoordinator<T> {
       if (!current()) return cancelled();
       try {
         await persist(nextValue);
+      } on UserPreferenceWriteCommittedForPreviousSession {
+        return previousSessionCommit();
       } on UserPreferenceWriteScopeChanged {
         return cancelled();
       } catch (error) {

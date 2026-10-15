@@ -50,6 +50,44 @@ class _ProjectionDatabase extends RecordingCdssDatabase {
   }
 }
 
+// Historical source vectors stay unchanged. These explicit migration expectations
+// use the Claude current-release quantity contract, not the old local aliases.
+const _currentAttributes = {
+  'carbohydrate_by_summation_g': 'carbohydrate_g',
+  'vitamin_e_alpha_tocopherol_mg': 'vitamin_e_mg',
+  'vitamin_d_total_ug': 'vitamin_d_ug',
+  'vitamin_k_phylloquinone_ug': 'vitamin_k1_ug',
+  'choline_total_mg': 'choline_mg',
+  'sugars_total_1063_g': 'sugars_total_by_summation_g',
+  'sugars_total_2000_g': 'sugars_total_g',
+};
+const _sourceOnlyAttributes = {
+  'vitamin_d2_ug',
+  'vitamin_d3_ug',
+  'vitamin_d_total_iu',
+  'vitamin_k_menaquinone4_ug',
+  'vitamin_k_dihydrophylloquinone_ug',
+  'sucrose_g',
+  'glucose_g',
+  'fructose_g',
+  'lactose_g',
+  'maltose_g',
+  'galactose_g',
+  'fiber_soluble_g',
+  'fiber_insoluble_g',
+  'ala_n3_g',
+  'epa_n3_g',
+  'dha_n3_g',
+};
+String _currentAttribute(Map vector) =>
+    _currentAttributes[vector['expected_attribute']] ??
+    '${vector['expected_attribute']}';
+
+// Claude canonicalizes source kilojoule spelling to kJ; raw unit spelling is
+// still asserted separately against the untouched historical source vector.
+String _currentUnit(Map vector) =>
+    vector['expected_unit'] == 'kj' ? 'kJ' : '${vector['expected_unit']}';
+
 void main() {
   const importer = FdcP0Importer(
     fetchClient: FakeSourceFetchClient(textByUrl: {}),
@@ -63,7 +101,7 @@ void main() {
           as Map;
   final vectors = fixture['vectors'] as List;
   test(
-    '49 source quantities survive actual database writes and food projection',
+    'current-release quantities survive writes while unsupported source fields remain attributable',
     () async {
       final foods = <String, Map<String, dynamic>>{};
       for (final vector in vectors) {
@@ -93,23 +131,32 @@ void main() {
       ).projectFoods();
       expect(projected, hasLength(foods.length));
       for (final vector in vectors) {
+        if (_sourceOnlyAttributes.contains(vector['expected_attribute'])) {
+          expect(
+            database.tables['observation']!.where(
+              (row) => row['attribute_code'] == vector['expected_attribute'],
+            ),
+            isEmpty,
+          );
+          continue;
+        }
         final food = projected.singleWhere(
           (food) => food.sourceFoodCode == '${vector['fdc_id']}',
         );
         final evidence = food.nutrientObservationEvidence.singleWhere(
           (row) =>
-              row.attributeCode == vector['expected_attribute'] &&
+              row.attributeCode == _currentAttribute(vector) &&
               !(row.recordLocator?.endsWith(':sample_range') ?? false),
         );
-        expect(evidence.unit, vector['expected_unit']);
+        expect(evidence.unit, _currentUnit(vector));
         expect(evidence.qualifierKind, vector['expected_qualifier']);
         expect(evidence.valueNum, vector['expected_point']);
         expect(evidence.sourceDocId, bundle.sourceDocuments.single.sourceDocId);
         expect(
           evidence.selectedForLegacyPointProjection,
-          isFalse,
+          _currentAttribute(vector) == 'carbohydrate_g',
           reason:
-              '${vector['expected_attribute']} has no legacy FoodItem numeric field',
+              'Only the Claude available-carbohydrate quantity has a legacy field here',
         );
       }
     },
@@ -130,10 +177,35 @@ void main() {
         final summaries = bundle.observations
             .where((o) => !o.recordLocator.endsWith(':sample_range'))
             .toList();
-        expect(summaries, hasLength(1));
-        final observation = summaries.single;
-        expect(observation.attributeCode, vector['expected_attribute']);
-        expect(observation.unit, vector['expected_unit']);
+        final supported = !_sourceOnlyAttributes.contains(
+          vector['expected_attribute'],
+        );
+        if (!supported) {
+          expect(summaries, isEmpty);
+          final source =
+              jsonDecode(bundle.sourceDocuments.single.rawPayload) as Map;
+          final summary =
+              (source['source_nutrient_summaries'] as List).single as Map;
+          expect(summary['source_fields'], vector['source_row']);
+          expect(
+            summary['reported_amount'],
+            (vector['source_row'] as Map)['amount'],
+          );
+          expect(
+            summary['nutrient_id'],
+            ((vector['source_row'] as Map)['nutrient'] as Map)['id'],
+          );
+          expect(
+            (source['nutrient_value_audit'] as List).single['decision'],
+            'retained_source_fields_only',
+          );
+          return;
+        }
+        final observation = summaries.singleWhere(
+          (o) => o.attributeCode == _currentAttribute(vector),
+        );
+        expect(observation.attributeCode, _currentAttribute(vector));
+        expect(observation.unit, _currentUnit(vector));
         expect(
           observation.value.qualifierKind.wireValue,
           vector['expected_qualifier'],
@@ -144,6 +216,7 @@ void main() {
             jsonDecode(bundle.sourceDocuments.single.rawPayload) as Map;
         final sourceSummary =
             (source['source_nutrient_summaries'] as List).single as Map;
+        expect(sourceSummary['source_fields'], vector['source_row']);
         expect(sourceSummary['unit'], vector['original_unit']);
         expect(
           sourceSummary['reported_amount'],
@@ -158,7 +231,7 @@ void main() {
   }
 
   test(
-    'contradictory identifiers cannot be repaired by a familiar display name',
+    'Claude extract-number policy retains independently numbered source rows without inventing a unique duplicate point',
     () {
       final bundle = importer.importFoods([
         {
@@ -186,7 +259,12 @@ void main() {
           ],
         },
       ], sourceLabel: 'synthetic_identifier_disagreement');
-      expect(bundle.observations, isEmpty);
+      expect(bundle.observations, hasLength(2));
+      expect(
+        bundle.observations.every((o) => o.attributeCode == 'protein_g'),
+        isTrue,
+      );
+      expect(bundle.resolvedFacts, isEmpty);
       expect(
         bundle.projectedFoods.single.isNutrientMissing('proteinG'),
         isTrue,

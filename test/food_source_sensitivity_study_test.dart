@@ -12,9 +12,9 @@ void main() {
           as Map<String, dynamic>;
   Map<String, dynamic> domain() => read('joint_source_domain.json');
   Map<String, dynamic> source() => read('six_original_foundation_foods.json');
-  final expectations = read('joint_independent_expectations.json');
+  final expectations = read('joint_claude_current_release_expectations.json');
   test(
-    'all original five nutrient identities and same-food portions agree with frozen independent arithmetic',
+    'Claude available carbohydrate and same-food portions agree with frozen independent source arithmetic',
     () {
       final actual = jointSourceStudy(domain(), source());
       expect(actual['legal_joint_combinations'], 64);
@@ -120,7 +120,53 @@ void main() {
     });
   }
   test(
-    'distinct original source methods survive separately and never fill one another',
+    'frozen arithmetic binds source identities and exact portion inputs',
+    () {
+      final rawFoods = {
+        for (final food in source()['FoundationFoods'] as List)
+          '${food['fdcId']}': food,
+      };
+      for (final group in expectations['groups'] as List) {
+        for (final option in group['options'] as List) {
+          final raw = rawFoods[option['fdc_id']] as Map;
+          final portion =
+              raw['foodPortions'][option['original_food_portion_index']];
+          expect(portion['id'], option['portion_id']);
+          final grams = (portion['gramWeight'] as num).toDouble();
+          for (final entry in (option['source_arithmetic'] as Map).entries) {
+            final arithmetic = entry.value as Map;
+            final inputs = arithmetic['inputs'] as List;
+            for (final input in inputs) {
+              final row = (raw['foodNutrients'] as List).singleWhere(
+                (r) => r['nutrient']['id'] == input['id'],
+              );
+              expect(row['nutrient']['number'], input['number']);
+              expect(row['nutrient']['unitName'], input['unit']);
+              expect(
+                (row['amount'] as num).toDouble(),
+                double.parse(input['amount'] as String),
+              );
+            }
+            final expected = double.parse(
+              arithmetic['expected_per_100g'] as String,
+            );
+            final independentlyCalculated =
+                arithmetic['operation'] == 'source_exact'
+                ? double.parse(inputs.single['amount'] as String)
+                : double.parse(inputs[0]['amount'] as String) -
+                      double.parse(inputs[1]['amount'] as String);
+            expect(expected, closeTo(independentlyCalculated, 1e-9));
+            expect(
+              double.parse(option['expected_per_portion'][entry.key] as String),
+              closeTo(expected * grams / 100, 1e-9),
+            );
+          }
+        }
+      }
+    },
+  );
+  test(
+    'source totals and AOAC fiber remain distinct while available carbohydrate records its derivation',
     () {
       final bundle =
           const FdcP0Importer(
@@ -130,15 +176,39 @@ void main() {
             sourceLabel: 'source-method-check',
           );
       final facts = bundle.observations.where(
-        (o) => o.recordLocator.contains('sample_range') != true,
+        (o) => !o.recordLocator.contains('sample_range'),
       );
       expect(
-        facts.where((o) => o.attributeCode == 'carbohydrate_by_summation_g'),
+        facts.where((o) => o.attributeCode == 'carbohydrate_by_difference_g'),
+        hasLength(6),
+      );
+      final available = facts.where((o) => o.attributeCode == 'carbohydrate_g');
+      expect(available, hasLength(6));
+      final derived = available.where(
+        (o) =>
+            o.methodCode ==
+            FdcP0Importer.derivedAvailableCarbohydrateMethodCode,
+      );
+      expect(derived.map((o) => o.recordLocator.split(':').first).toSet(), {
+        '323294',
+        '790577',
+        '790646',
+      });
+      expect(
+        available.where((o) => !o.recordLocator.endsWith(':derived')),
         hasLength(3),
       );
       expect(
         facts.where((o) => o.attributeCode == 'fiber_aoac_2011_25_g'),
         hasLength(4),
+      );
+      expect(
+        facts.where(
+          (o) =>
+              o.methodCode ==
+              FdcP0Importer.derivedFiberFromAoac201125MethodCode,
+        ),
+        isEmpty,
       );
       expect(
         bundle.projectedFoods.every(
@@ -150,36 +220,113 @@ void main() {
     },
   );
   test(
-    'foreign method IDs or descriptive fiber names cannot become generic point nutrition',
+    'current definitions resolve legacy numbers and explicitly code method fallbacks',
+    () {
+      final importer = const FdcP0Importer(
+        fetchClient: FakeSourceFetchClient(textByUrl: {}),
+      );
+      final cases = [
+        // The authoritative policy uses the legacy number on an ID/number conflict.
+        (2033, '291', 'Fiber, total dietary', 'fiber_g', false, true),
+        (
+          1050,
+          '205',
+          'Carbohydrate, by difference',
+          'carbohydrate_by_difference_g',
+          false,
+          false,
+        ),
+        (
+          2033,
+          '293',
+          'Total dietary fiber (AOAC 2011.25)',
+          'fiber_aoac_2011_25_g',
+          false,
+          true,
+        ),
+        (
+          1050,
+          '205.2',
+          'Carbohydrate, by summation',
+          'carbohydrate_g',
+          true,
+          false,
+        ),
+      ];
+      for (final (id, number, name, attribute, carbs, fiber) in cases) {
+        final bundle = importer.importFoods([
+          {
+            'fdcId': 123,
+            'description': 'Synthetic method policy',
+            'dataType': 'Foundation',
+            'foodNutrients': [
+              {
+                'nutrient': {
+                  'id': id,
+                  'number': number,
+                  'name': name,
+                  'unitName': 'g',
+                },
+                'amount': 4,
+              },
+            ],
+          },
+        ], sourceLabel: 'method-policy');
+        final food = bundle.projectedFoods.single;
+        expect(
+          bundle.observations.any(
+            (o) => o.attributeCode == attribute && o.value.valueNum == 4,
+          ),
+          isTrue,
+        );
+        expect(food.isNutrientMissing('proteinG'), isTrue);
+        expect(food.isNutrientMissing('carbsG'), !carbs);
+        expect(food.isNutrientMissing('fiberG'), !fiber);
+        if (carbs) {
+          expect(food.carbsG, 4);
+        }
+        if (fiber) {
+          expect(food.fiberG, 4);
+        }
+        if (number == '293') {
+          expect(
+            bundle.observations
+                .singleWhere((o) => o.attributeCode == 'fiber_g')
+                .methodCode,
+            FdcP0Importer.derivedFiberFromAoac201125MethodCode,
+          );
+        }
+        // A by-difference row alone must never assume missing fiber is zero.
+        if (number == '205') {
+          expect(
+            bundle.observations.where(
+              (o) => o.attributeCode == 'carbohydrate_g',
+            ),
+            isEmpty,
+          );
+        }
+      }
+    },
+  );
+  test(
+    'unknown descriptive names and mismatched units stay out of point nutrition',
     () {
       final importer = const FdcP0Importer(
         fetchClient: FakeSourceFetchClient(textByUrl: {}),
       );
       for (final nutrient in [
-        {
-          'id': 2033,
-          'number': '291',
-          'name': 'Fiber, total dietary',
-          'unitName': 'g',
-        },
-        {
-          'id': 1050,
-          'number': '205',
-          'name': 'Carbohydrate, by difference',
-          'unitName': 'g',
-        },
         {'id': 999999, 'name': 'Fiber invented subset', 'unitName': 'g'},
-        {
-          'id': 2033,
-          'number': '293',
-          'name': 'Total dietary fiber (AOAC 2011.25)',
-          'unitName': 'g',
-        },
         {
           'id': 1050,
           'number': '205.2',
           'name': 'Carbohydrate, by summation',
-          'unitName': 'g',
+          'unitName': 'mg',
+        },
+        {
+          'id': 2033,
+          'number': '293',
+          'name': 'Total dietary fiber (AOAC 2011.25)',
+          'unitName': 'mg',
         },
       ]) {
         final bundle = importer.importFoods([
@@ -192,18 +339,10 @@ void main() {
             ],
           },
         ], sourceLabel: 'method-hold');
-        expect(
-          bundle.projectedFoods.single.isNutrientMissing('proteinG'),
-          isTrue,
-        );
-        expect(
-          bundle.projectedFoods.single.isNutrientMissing('carbsG'),
-          isTrue,
-        );
-        expect(
-          bundle.projectedFoods.single.isNutrientMissing('fiberG'),
-          isTrue,
-        );
+        final food = bundle.projectedFoods.single;
+        expect(food.isNutrientMissing('proteinG'), isTrue);
+        expect(food.isNutrientMissing('carbsG'), isTrue);
+        expect(food.isNutrientMissing('fiberG'), isTrue);
       }
     },
   );

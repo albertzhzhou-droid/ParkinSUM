@@ -21,6 +21,7 @@ every stage/prod release decision.
 | Prod live signed-in probe | mitigated for internal prerelease | Prod read-only probe passed with disposable Auth test users and `writeProbeAllowed=false`; test accounts are retained enabled by operator decision. |
 | Monitoring and audit | mitigated for internal prerelease | Cloud Logging/Error Reporting APIs are enabled for prod, Monitoring email notification channel and uptime/error alert policies are configured, local redacted operator-audit summary exists, and `zhouzhenghang` owns monitoring/incident response for internal/private prerelease. |
 | Browser public visual smoke | mitigated | Current public visual smoke evidence is recorded in `build/browser_smoke/public_visual_smoke_20260523.json`. |
+| Food composition accuracy and interdependency | monitored | Verbatim USDA SR Legacy, FNDDS and FDC 2025 data and NLM RxNorm identities, pinned by SHA-256; energy/closure/derivation and food-specific factor tests; convention-aware carbohydrate handling; food-borne L-dopa and dry/cooked ambiguity widen uncertainty only. See R14. |
 
 ## R1: Regulatory Positioning
 
@@ -255,3 +256,48 @@ Required mitigation:
 - keep Chrome/Computer Use read-only if used for visual verification.
 - do not route around Browser policy with another automation surface in the
   same blocked session.
+
+## R14: Food Composition Accuracy and Interdependency
+
+Status: monitored.
+
+Food values are sample averages and depend on variety, preparation and the
+database's definitions. The 2026-10-08 update adds a verbatim USDA SR Legacy
+subset (224 foods), tests every record against energy and closure identities,
+tests 23 raw/cooked, dried, juiced and salted derivations plus egg
+part–whole, and fixes a carbohydrate-convention mismatch that double-counted
+fibre across sources.
+
+Residual risks:
+
+- The subset is retrieved through a third-party mirror (direct USDA access is
+  blocked in the build environment); identity checks detect transcription
+  errors but not an upstream value that is internally consistent yet wrong.
+- Eight CIQUAL-labelled seed foods have a value differing materially from USDA and
+  need re-verification against the official CIQUAL file
+  (`docs/FOOD_COMPOSITION_INTERDEPENDENCY_RESEARCH_2026-10-08.md`, Section 5).
+- Food-borne L-dopa (broad beans, Mucuna) is detected by name/reference id and
+  shown as unquantified context; published content varies more than 280-fold
+  by tissue and variety. A name the matcher does not know is missed.
+- Evidence-currency records for the new sources are not registered yet.
+- Iteration 2 replaced hand-entered seed-food nutrients with verbatim USDA SR
+  Legacy or FNDDS values; 44 of 186 seed foods have no verified record and
+  show every nutrient as unknown. Seven proxy matches (a close but
+  non-identical record) are labelled as proxies.
+- Eighteen catalog medications carry verified RxNorm (2 December 2024)
+  ingredient identities and five carbidopa/levodopa clinical drugs carry
+  RxNorm dose forms; three medications (safinamide, the generic iron entry
+  and levodopa/benserazide) remain unverified with a reason.
+  Identity data never implies a dose or schedule.
+- The FoodData Central 2025-04-24 nutrient definitions and conversion factors
+  are pinned; a later FDC release can renumber or redefine nutrients and
+  needs a re-pin. One food-specific energy factor (coconut oil) disagrees
+  across releases and is documented, not corrected.
+
+Required mitigation:
+
+- keep food-borne L-dopa and tyramine as presence/variability context; never
+  derive a dose equivalent or a food instruction from them.
+- re-verify flagged seed values against official source files before any
+  public demonstration relies on them.
+- review questions about food, iron, or medicines with a qualified clinician.

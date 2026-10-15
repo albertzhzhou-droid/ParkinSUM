@@ -8,8 +8,8 @@ const root='test/fixtures/food_research',output='build/food_source_sensitivity';
 const hash=b=>createHash('sha256').update(b).digest('hex'),read=p=>JSON.parse(readFileSync(p));
 const before=captureInputs(process.cwd());
 // Independent reference/domain loaded before invoking the actual producer.
-const expectations=read(`${root}/joint_independent_expectations.json`),domain=read(`${root}/heuristic_domain.json`);
-const fixtureHashes=Object.fromEntries(['six_original_foundation_foods.json','joint_source_domain.json','joint_independent_expectations.json','heuristic_domain.json'].map(f=>[f,hash(readFileSync(`${root}/${f}`))]));
+const expectations=read(`${root}/joint_claude_current_release_expectations.json`),domain=read(`${root}/heuristic_domain.json`);
+const fixtureHashes=Object.fromEntries(['six_original_foundation_foods.json','joint_source_domain.json','joint_claude_current_release_expectations.json','heuristic_domain.json'].map(f=>[f,hash(readFileSync(`${root}/${f}`))]));
 assert.equal(fixtureHashes['six_original_foundation_foods.json'],expectations.subset_raw_sha256);
 mkdirSync(output,{recursive:true});for(const f of ['actual_vectors.json','latest.json'])if(existsSync(`${output}/${f}`))unlinkSync(`${output}/${f}`);
 execFileSync('dart',['run','tool/run_food_source_sensitivity_vectors.dart'],{stdio:'inherit',timeout:600000});

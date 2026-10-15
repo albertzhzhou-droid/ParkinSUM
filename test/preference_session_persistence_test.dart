@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/db/app_database_memory.dart';
 import 'package:parkinsum_companion/core/db/app_database_web.dart';
+import 'package:parkinsum_companion/core/db/web_user_state_store.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/core/models/user_preference_write_scope.dart';
 import 'package:parkinsum_companion/core/services/services.dart';
@@ -118,6 +119,51 @@ void main() {
     expect(applied, ['fresh-next']);
     expect(running, [true, true, false]);
   });
+
+  test(
+    'expiry during database readback preserves the acknowledged profile commit',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      var authorized = true;
+      final store = _ReadbackExpiryStore(() => authorized = false);
+      final database = WebAppDatabase(userStateStore: store);
+      final before = await database.loadUserProfile();
+      var applied = 0;
+      var refreshed = 0;
+      final running = <bool>[];
+      final result = await PersistedValueMutationCoordinator<UserProfile>()
+          .commit(
+            previousValue: before,
+            nextValue: before.copyWith(
+              patientId: 'synthetic_owner',
+              displayLocale: 'fr-CA',
+            ),
+            persist: (value) => database.saveUserProfileForSession(
+              value,
+              scope: _scope(() => authorized),
+            ),
+            apply: (_) => applied += 1,
+            refresh: () async => refreshed += 1,
+            onRunningChanged: running.add,
+            isCurrent: () => authorized,
+          );
+      expect(
+        result.status,
+        PersistedValueMutationStatus.committedForPreviousSession,
+      );
+      expect(result.wasCommitted, isTrue);
+      expect(result.appliesToCurrentSession, isFalse);
+      expect(applied, 0);
+      expect(refreshed, 0);
+      expect(running, [true]);
+      expect(
+        (await WebAppDatabase(
+          userStateStore: store,
+        ).loadUserProfile()).displayLocale,
+        'fr-CA',
+      );
+    },
+  );
 
   test(
     'already invalid authorization causes no persistence or callbacks',
@@ -371,4 +417,40 @@ class _DelayedDispatchedMemoryStore extends InMemoryAppDatabase {
 class _WriteGate {
   final started = Completer<void>();
   final release = Completer<void>();
+}
+
+/// Expires the session after storage has acknowledged, during the database's
+/// independent readback. This is later than the store's own publication hook.
+class _ReadbackExpiryStore implements WebUserStateStore {
+  _ReadbackExpiryStore(this.expire);
+
+  final void Function() expire;
+  String? _document;
+  bool _awaitingReadback = false;
+
+  @override
+  String get backendId => 'synthetic acknowledged readback';
+
+  @override
+  Future<String?> read(WebUserStateLegacySnapshot legacy) async {
+    if (_awaitingReadback) {
+      _awaitingReadback = false;
+      expire();
+    }
+    return _document;
+  }
+
+  @override
+  Future<void> write(
+    String document, {
+    required String? expectedDocument,
+    required WebUserStateLegacySnapshot legacy,
+    required bool Function() authorize,
+  }) async {
+    if (!authorize() || expectedDocument != _document) {
+      throw StateError('synthetic write refused');
+    }
+    _document = document;
+    _awaitingReadback = true;
+  }
 }

@@ -60,7 +60,7 @@ Map<String, dynamic> _payload(P0ImportBundle bundle) =>
         as Map<String, dynamic>;
 
 List<ObservationRecord> _energy(P0ImportBundle bundle) => bundle.observations
-    .where((row) => row.attributeCode.startsWith('energy_'))
+    .where((row) => [_general, _specific].contains(row.attributeCode))
     .toList();
 
 void main() {
@@ -181,7 +181,7 @@ void main() {
   );
 
   test(
-    'actual complete food retains two source calculations without choosing generic energy',
+    'complete food retains both source methods and selects Claude specific-energy fallback',
     () {
       final bundle = _importer.importFoods([
         _officialFood(),
@@ -200,9 +200,9 @@ void main() {
       }
       expect(energy.map((o) => o.recordLocator).toSet(), hasLength(2));
       final food = bundle.projectedFoods.single;
-      expect(food.energyKcal, isNull);
-      expect(food.isNutrientMissing('energyKcal'), isTrue);
-      expect(foodItemToCandidateFood(food).components.single.calories, isNull);
+      expect(food.energyKcal, 55.6);
+      expect(food.isNutrientMissing('energyKcal'), isFalse);
+      expect(foodItemToCandidateFood(food).components.single.calories, 55.6);
       expect(
         (_payload(bundle)['nutrient_value_audit'] as List).where(
           (row) =>
@@ -244,35 +244,46 @@ void main() {
       expect(bundle.resolvedFacts.map((r) => r.attributeCode), [
         _general,
         _specific,
+        'energy_kcal',
       ]);
-      expect(bundle.projectedFoods.single.energyKcal, isNull);
+      expect(bundle.projectedFoods.single.energyKcal, 50);
+      expect(
+        bundle.observations
+            .singleWhere((o) => o.attributeCode == 'energy_kcal')
+            .methodCode,
+        FdcP0Importer.derivedEnergyFromSpecificMethodCode,
+      );
     },
   );
 
   test(
-    'contradictory supplied method identifiers are held despite a plausible name',
+    'Claude extract-number policy resolves independently numbered rows without bypassing units',
     () {
-      for (final row in [
-        _row(2047, '958', 61.8),
-        _row(2048, '957', 55.6),
-        _row(9999, '957', 61.8),
-        _row(2047, '203', 61.8),
+      for (final item in [
+        (_row(2047, '958', 61.8), _specific, 61.8),
+        (_row(2048, '957', 55.6), _general, 55.6),
+        (_row(9999, '957', 61.8), _general, 61.8),
       ]) {
-        (row['nutrient'] as Map)['name'] = 'Energy (Atwater General Factors)';
-        final bundle = _import([row]);
-        expect(bundle.observations, isEmpty);
-        expect(bundle.resolvedFacts, isEmpty);
+        (item.$1['nutrient'] as Map)['name'] =
+            'Energy (Atwater General Factors)';
+        final bundle = _import([item.$1]);
+        expect(_energy(bundle).single.attributeCode, item.$2);
+        expect(bundle.projectedFoods.single.energyKcal, item.$3);
         expect(
           (_payload(bundle)['source_nutrient_summaries'] as List)
-              .single['energy_method_identity_status'],
-          'hold_conflicting_source_identifiers',
+              .single['nutrient_id'],
+          (item.$1['nutrient'] as Map)['id'],
         );
       }
+      // Number 203 identifies protein, so an energy unit cannot qualify it.
+      final incompatible = _import([_row(2047, '203', 61.8)]);
+      expect(incompatible.observations, isEmpty);
+      expect(incompatible.projectedFoods.single.energyKcal, isNull);
     },
   );
 
   test(
-    'ID-only and number-only source identity retain the method; name-only does not',
+    'ID-only, number-only and exact names use Claude definitions with explicit units',
     () {
       for (final method in [
         (2047, '957', _general),
@@ -281,7 +292,9 @@ void main() {
         for (final omitted in ['id', 'number']) {
           final row = _row(method.$1, method.$2, 20);
           (row['nutrient'] as Map).remove(omitted);
-          expect(_import([row]).observations.single.attributeCode, method.$3);
+          final bundle = _import([row]);
+          expect(_energy(bundle).single.attributeCode, method.$3);
+          expect(bundle.projectedFoods.single.energyKcal, 20);
         }
       }
       final row = _row(2047, '957', 20);
@@ -289,7 +302,7 @@ void main() {
         'name': 'Energy (Atwater General Factors)',
         'unitName': 'kcal',
       };
-      expect(_import([row]).observations, isEmpty);
+      expect(_energy(_import([row])).single.attributeCode, _general);
     },
   );
 
@@ -325,8 +338,11 @@ void main() {
       final b = _row(2047, '957', 70)..['id'] = 999;
       final bundle = _import([a, b, _row(2048, '958', 55.6)]);
       expect(_energy(bundle).map((o) => o.value.valueNum), [50, 70, 55.6]);
-      expect(bundle.resolvedFacts.map((o) => o.attributeCode), [_specific]);
-      expect(bundle.projectedFoods.single.energyKcal, isNull);
+      expect(bundle.resolvedFacts.map((o) => o.attributeCode), [
+        _specific,
+        'energy_kcal',
+      ]);
+      expect(bundle.projectedFoods.single.energyKcal, 55.6);
       final held = _import([_row(2047, '957', 0)..['loq'] = 0.03]);
       expect(held.observations.single.value.valueNum, isNull);
       expect(held.observations.single.value.high, 0.03);
@@ -335,7 +351,7 @@ void main() {
   );
 
   test(
-    'factor fields and publication remain exact evidence and never trigger arithmetic',
+    'factor fields remain exact while Claude identity audits consume qualified factors',
     () {
       final original = _officialFood();
       final before = _importer.importFoods([
@@ -346,8 +362,8 @@ void main() {
           (payload['food_conversion_factor_evidence'] as List).single;
       expect(factors['source_fields'], original['nutrientConversionFactors']);
       expect(factors['source_field_present'], isTrue);
-      expect(factors['calculation_applied'], isFalse);
-      expect(factors['runtime_factor_selection'], isNull);
+      expect(factors['source_values_modified'], isFalse);
+      expect(factors['calculation_scope'], 'composition_identity_audit_only');
       expect(
         (payload['food_publication_metadata'] as List)
             .single['publication_date'],
@@ -463,7 +479,7 @@ void main() {
             .single['publication_date'],
         '10/30/2020',
       );
-      expect(bundle.projectedFoods.single.energyKcal, isNull);
+      expect(bundle.projectedFoods.single.energyKcal, 55.6);
     },
   );
 
@@ -492,7 +508,7 @@ void main() {
   );
 
   test(
-    'catalogue projection and JSON roundtrip retain method evidence without legacy selection',
+    'catalogue projection retains original methods and selects the derived generic energy',
     () async {
       final bundle = _importer.importFoods([
         _officialFood(),
@@ -506,8 +522,8 @@ void main() {
           .toList();
       expect(methods, hasLength(2));
       expect(methods.every((o) => !o.selectedForLegacyPointProjection), isTrue);
-      expect(food.energyKcal, isNull);
-      expect(foodItemToCandidateFood(food).components.single.calories, isNull);
+      expect(food.energyKcal, 55.6);
+      expect(foodItemToCandidateFood(food).components.single.calories, 55.6);
       final roundtrip = FoodItem.fromJson(food.toJson());
       expect(roundtrip.toJson(), food.toJson());
       final lines = (await projection.projectFoodDetail(food))!.nutrientLines

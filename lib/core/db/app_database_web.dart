@@ -192,14 +192,30 @@ class WebAppDatabase
           if (observed != encoded) {
             throw StateError('Web user-state write did not persist exactly.');
           }
-          if (store != null && authorize != null && !authorize()) {
-            throw StateError('portable_restore_scope_changed');
+          try {
+            if (store != null && authorize != null && !authorize()) {
+              throw StateError('portable_restore_scope_changed');
+            }
+          } on UserPreferenceWriteScopeChanged {
+            throw const UserPreferenceWriteCommittedForPreviousSession();
           }
-        } catch (_) {
+        } on UserPreferenceWriteCommittedForPreviousSession {
+          rethrow;
+        } catch (error, stackTrace) {
           // The platform can commit and then lose its acknowledgment. Read the
           // persisted single value before deciding whether retry is necessary.
           await prefs.reload();
-          if (store != null && authorize != null && !authorize()) rethrow;
+          if (store != null && authorize != null) {
+            final bool authorized;
+            try {
+              authorized = authorize();
+            } on UserPreferenceWriteScopeChanged {
+              // Expiry cannot turn an earlier storage error into a claim that
+              // the operation was cancelled before persistence.
+              Error.throwWithStackTrace(error, stackTrace);
+            }
+            if (!authorized) rethrow;
+          }
           final observed = store == null
               ? prefs.getString(_kUserState)
               : await store.read(_legacyUserStateSnapshot(prefs));

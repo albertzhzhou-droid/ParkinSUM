@@ -61,7 +61,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.match(followupLedger.compatibility, /unclassified/);
   assert.match(followupLedger.compatibility, /migrate to v3/);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
-  assert.equal(catalog.schemas.length, 199);
+  assert.equal(catalog.schemas.length, 201);
   const catalogChangeDiff = schemaById(
     catalog,
     'parkinsum.catalog-version-change-diff',
@@ -281,7 +281,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned')
       .length,
-    193,
+    195,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned')
@@ -708,7 +708,7 @@ test('owner observation audit schema stays supplemental to engine input identity
     'parkinsum.personal-observation-event-ledger',
   );
   assert.equal(schema.currentVersion, 2);
-  assert.equal(catalog.schemas.length, 199);
+  assert.equal(catalog.schemas.length, 201);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
   assert.equal(
     schema.source,
@@ -747,10 +747,10 @@ test('open-source influence inventory schema v7 matches its source and catalog p
 test('open-source drift decision and ledger schemas are versioned governance artifacts', () => {
   const { catalog, failures } = baseline();
   const source = readFileSync('tool/open_source_drift_decision_ledger.mjs', 'utf8');
-  assert.equal(catalog.schemas.length, 199);
+  assert.equal(catalog.schemas.length, 201);
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned').length,
-    193,
+    195,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned').length,
@@ -767,6 +767,40 @@ test('open-source drift decision and ledger schemas are versioned governance art
     assert.match(source, new RegExp(`${id}/1`));
     assert.ok(!failures.some((failure) => failure.includes(id)), failures.join('\n'));
     assert.ok(requiredSchemaSurfaces.some((required) => required.id === id));
+  }
+});
+
+test('IndexedDB envelope and compact transport retain separate storage and logical-package identities', () => {
+  const { catalog, failures } = baseline();
+  assert.deepEqual(failures, []);
+  const envelope = schemaById(catalog, 'parkinsum.indexeddb-user-state');
+  assert.equal(envelope.currentVersion, 1);
+  assert.equal(envelope.surfaceKind, 'persisted-envelope');
+  assert.equal(envelope.source, 'lib/core/db/web_user_state_store_indexeddb.dart');
+  assert.match(envelope.compatibility, /Exact five-field envelope.*original six-key legacy values/);
+  assert.match(envelope.compatibility, /marker or legacy mismatch fails closed/);
+  assert.match(envelope.compatibility, /no quota fallback or inference of OS-kill durability/);
+  assert.match(envelope.compatibility, /aggregate version remains separately v3/);
+
+  const compact = schemaById(catalog, 'parkinsum.user-portable-data-compact-transport');
+  assert.equal(compact.currentVersion, 5);
+  assert.equal(compact.surfaceKind, 'nested-public-contract');
+  assert.equal(compact.source, 'lib/domain/usecases/portable_data_compact_transport_service.dart');
+  assert.match(compact.compatibility, /Optional v5 transport for the v4 logical package/);
+  assert.match(compact.compatibility, /Whole food-item evidence is checksum keyed and shared; quantities remain per meal/);
+  assert.match(compact.compatibility, /separate pre-expansion budgets/);
+  assert.match(compact.compatibility, /No reconciliation, evidence promotion, authentication or clinical qualification/);
+  for (const id of [envelope.id, compact.id]) {
+    assert.ok(requiredSchemaSurfaces.some((required) => required.id === id));
+    const changed = structuredClone(catalog);
+    schemaById(changed, id).currentVersion += 1;
+    assert.ok(validateSchemaCatalog(changed).some((failure) => failure.includes(id)), id);
+    const missing = structuredClone(catalog);
+    missing.schemas = missing.schemas.filter((schema) => schema.id !== id);
+    assert.ok(
+      validateSchemaCatalog(missing).includes(`required schema surface is missing: ${id}`),
+      id,
+    );
   }
 });
 

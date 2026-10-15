@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import '../models/portable_data_restore.dart';
+import '../models/user_preference_write_scope.dart';
 import '../services/user_state_change_notifications.dart';
 import 'web_user_state_store.dart';
 
@@ -304,7 +305,13 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     notifyUserStateChanged();
     afterPublication?.call();
     _requireUnchangedLiveLegacy(legacy);
-    if (!authorize()) throw StateError('web_user_state_authorization_changed');
+    try {
+      if (!authorize()) {
+        throw StateError('web_user_state_authorization_changed');
+      }
+    } on UserPreferenceWriteScopeChanged {
+      throw const UserPreferenceWriteCommittedForPreviousSession();
+    }
     debugPrint('WebUserState: complete personal-record aggregate persisted');
   }
 
