@@ -1,0 +1,1587 @@
+{
+  "source_url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip",
+  "source_archive_sha256": "186e988ec542e913f51ef62b86a47758e8cdd0d1dc3889e7b055581f3c09c77a",
+  "source_member_sha256": "27d1fe3fd89edfbe528ed915da5619320e1d004d4594603a1b19bdb1511590cc",
+  "scope": "49 individually retained complete nutrient summary fields from independently frozen source rows; cropped field corpus, not full lexical food objects or newly acquired data. Expected values copied from source with only declared unit spelling normalization.",
+  "vectors": [
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219712,
+        "nutrient": {
+          "id": 1162,
+          "number": "401",
+          "name": "Vitamin C, total ascorbic acid",
+          "rank": 6300,
+          "unitName": "mg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "vitamin_c_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219713,
+        "nutrient": {
+          "id": 1165,
+          "number": "404",
+          "name": "Thiamin",
+          "rank": 6400,
+          "unitName": "mg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.17,
+        "min": 0.12,
+        "median": 0.16,
+        "amount": 0.15
+      },
+      "expected_attribute": "thiamin_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.15,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219714,
+        "nutrient": {
+          "id": 1166,
+          "number": "405",
+          "name": "Riboflavin",
+          "rank": 6500,
+          "unitName": "mg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.14,
+        "min": 0.08,
+        "median": 0.12,
+        "amount": 0.115
+      },
+      "expected_attribute": "riboflavin_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.115,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219715,
+        "nutrient": {
+          "id": 1177,
+          "number": "417",
+          "name": "Folate, total",
+          "rank": 6900,
+          "unitName": "µg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 53.0,
+        "min": 13.0,
+        "median": 41.0,
+        "amount": 36.0
+      },
+      "expected_attribute": "folate_total_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 36.0,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219716,
+        "nutrient": {
+          "id": 1184,
+          "number": "429",
+          "name": "Vitamin K (Dihydrophylloquinone)",
+          "rank": 8900,
+          "unitName": "µg"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "vitamin_k_dihydrophylloquinone_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219717,
+        "nutrient": {
+          "id": 1185,
+          "number": "430",
+          "name": "Vitamin K (phylloquinone)",
+          "rank": 8800,
+          "unitName": "µg"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 23.3,
+        "min": 11.2,
+        "median": 17.2,
+        "amount": 17.2
+      },
+      "expected_attribute": "vitamin_k_phylloquinone_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 17.2,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219718,
+        "nutrient": {
+          "id": 1257,
+          "number": "605",
+          "name": "Fatty acids, total trans",
+          "rank": 15400,
+          "unitName": "g"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 0.018
+      },
+      "expected_attribute": "fatty_acids_trans_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.018,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219719,
+        "nutrient": {
+          "id": 1258,
+          "number": "606",
+          "name": "Fatty acids, total saturated",
+          "rank": 9700,
+          "unitName": "g"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 2.22
+      },
+      "expected_attribute": "fatty_acids_saturated_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 2.22,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219723,
+        "nutrient": {
+          "id": 1272,
+          "number": "621",
+          "name": "PUFA 22:6 n-3 (DHA)",
+          "rank": 15300,
+          "unitName": "g"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "dha_n3_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219725,
+        "nutrient": {
+          "id": 1278,
+          "number": "629",
+          "name": "PUFA 20:5 n-3 (EPA)",
+          "rank": 15000,
+          "unitName": "g"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "epa_n3_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219737,
+        "nutrient": {
+          "id": 1404,
+          "number": "851",
+          "name": "PUFA 18:3 n-3 c,c,c (ALA)",
+          "rank": 14000,
+          "unitName": "g"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.742,
+        "min": 0.411,
+        "median": 0.668,
+        "amount": 0.637
+      },
+      "expected_attribute": "ala_n3_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.637,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219741,
+        "nutrient": {
+          "id": 1007,
+          "number": "207",
+          "name": "Ash",
+          "rank": 1000,
+          "unitName": "g"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 2.12,
+        "min": 1.73,
+        "median": 1.99,
+        "amount": 1.97
+      },
+      "expected_attribute": "ash_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 1.97,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219742,
+        "nutrient": {
+          "id": 1009,
+          "number": "209",
+          "name": "Starch",
+          "rank": 2200,
+          "unitName": "g"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 8.8,
+        "min": 7.7,
+        "median": 8.0,
+        "amount": 8.12
+      },
+      "expected_attribute": "starch_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 8.12,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219743,
+        "nutrient": {
+          "id": 1012,
+          "number": "212",
+          "name": "Fructose",
+          "rank": 1800,
+          "unitName": "g"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.3,
+        "min": 0.0,
+        "median": 0.15,
+        "amount": 0.15
+      },
+      "expected_attribute": "fructose_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.15,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219744,
+        "nutrient": {
+          "id": 1013,
+          "number": "213",
+          "name": "Lactose",
+          "rank": 1900,
+          "unitName": "g"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "lactose_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219745,
+        "nutrient": {
+          "id": 1062,
+          "number": "268",
+          "name": "Energy",
+          "rank": 400,
+          "unitName": "kJ"
+        },
+        "foodNutrientDerivation": {
+          "code": "NC",
+          "description": "Calculated",
+          "foodNutrientSource": {
+            "id": 2,
+            "code": "4",
+            "description": "Calculated or imputed"
+          }
+        },
+        "amount": 960
+      },
+      "expected_attribute": "energy_kj",
+      "expected_unit": "kj",
+      "expected_qualifier": "exact",
+      "expected_point": 960,
+      "original_unit": "kJ"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219746,
+        "nutrient": {
+          "id": 1075,
+          "number": "287",
+          "name": "Galactose",
+          "rank": 2100,
+          "unitName": "g"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "galactose_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219749,
+        "nutrient": {
+          "id": 1090,
+          "number": "304",
+          "name": "Magnesium, Mg",
+          "rank": 5500,
+          "unitName": "mg"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 82.0,
+        "min": 56.6,
+        "median": 70.4,
+        "amount": 71.1
+      },
+      "expected_attribute": "magnesium_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 71.1,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219750,
+        "nutrient": {
+          "id": 1091,
+          "number": "305",
+          "name": "Phosphorus, P",
+          "rank": 5600,
+          "unitName": "mg"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 190,
+        "min": 134,
+        "median": 179,
+        "amount": 166
+      },
+      "expected_attribute": "phosphorus_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 166,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219752,
+        "nutrient": {
+          "id": 1098,
+          "number": "312",
+          "name": "Copper, Cu",
+          "rank": 6000,
+          "unitName": "mg"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.396,
+        "min": 0.27,
+        "median": 0.376,
+        "amount": 0.348
+      },
+      "expected_attribute": "copper_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.348,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219753,
+        "nutrient": {
+          "id": 1101,
+          "number": "315",
+          "name": "Manganese, Mn",
+          "rank": 6100,
+          "unitName": "mg"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 1.21,
+        "min": 0.785,
+        "median": 1.15,
+        "amount": 1.06
+      },
+      "expected_attribute": "manganese_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 1.06,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219754,
+        "nutrient": {
+          "id": 1106,
+          "number": "320",
+          "name": "Vitamin A, RAE",
+          "rank": 7420,
+          "unitName": "µg"
+        },
+        "foodNutrientDerivation": {
+          "code": "NC",
+          "description": "Calculated",
+          "foodNutrientSource": {
+            "id": 2,
+            "code": "4",
+            "description": "Calculated or imputed"
+          }
+        },
+        "amount": 1.0
+      },
+      "expected_attribute": "vitamin_a_rae_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 1.0,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219759,
+        "nutrient": {
+          "id": 1292,
+          "number": "645",
+          "name": "Fatty acids, total monounsaturated",
+          "rank": 11400,
+          "unitName": "g"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 6.37
+      },
+      "expected_attribute": "fatty_acids_monounsaturated_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 6.37,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219760,
+        "nutrient": {
+          "id": 1293,
+          "number": "646",
+          "name": "Fatty acids, total polyunsaturated",
+          "rank": 12900,
+          "unitName": "g"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 7.48
+      },
+      "expected_attribute": "fatty_acids_polyunsaturated_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 7.48,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219782,
+        "nutrient": {
+          "id": 1167,
+          "number": "406",
+          "name": "Niacin",
+          "rank": 6600,
+          "unitName": "mg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 1.09,
+        "min": 0.82,
+        "median": 0.95,
+        "amount": 0.948
+      },
+      "expected_attribute": "niacin_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.948,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219783,
+        "nutrient": {
+          "id": 1170,
+          "number": "410",
+          "name": "Pantothenic acid",
+          "rank": 6700,
+          "unitName": "mg"
+        },
+        "dataPoints": 4,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.37,
+        "min": 0.26,
+        "median": 0.32,
+        "amount": 0.318
+      },
+      "expected_attribute": "pantothenic_acid_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.318,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219784,
+        "nutrient": {
+          "id": 1175,
+          "number": "415",
+          "name": "Vitamin B-6",
+          "rank": 6800,
+          "unitName": "mg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.16,
+        "min": 0.11,
+        "median": 0.15,
+        "amount": 0.143
+      },
+      "expected_attribute": "vitamin_b6_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 0.143,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219785,
+        "nutrient": {
+          "id": 1183,
+          "number": "428",
+          "name": "Vitamin K (Menaquinone-4)",
+          "rank": 8950,
+          "unitName": "µg"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "vitamin_k_menaquinone4_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219789,
+        "nutrient": {
+          "id": 1010,
+          "number": "210",
+          "name": "Sucrose",
+          "rank": 1600,
+          "unitName": "g"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.37,
+        "min": 0.0,
+        "median": 0.18,
+        "amount": 0.18
+      },
+      "expected_attribute": "sucrose_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.18,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219790,
+        "nutrient": {
+          "id": 1011,
+          "number": "211",
+          "name": "Glucose",
+          "rank": 1700,
+          "unitName": "g"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "glucose_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219791,
+        "nutrient": {
+          "id": 1014,
+          "number": "214",
+          "name": "Maltose",
+          "rank": 2000,
+          "unitName": "g"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "maltose_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219793,
+        "nutrient": {
+          "id": 1087,
+          "number": "301",
+          "name": "Calcium, Ca",
+          "rank": 5300,
+          "unitName": "mg"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 57.0,
+        "min": 26.0,
+        "median": 46.0,
+        "amount": 41.0
+      },
+      "expected_attribute": "calcium_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 41.0,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219795,
+        "nutrient": {
+          "id": 1095,
+          "number": "309",
+          "name": "Zinc, Zn",
+          "rank": 5900,
+          "unitName": "mg"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 1.5,
+        "min": 1.17,
+        "median": 1.45,
+        "amount": 1.38
+      },
+      "expected_attribute": "zinc_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 1.38,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219796,
+        "nutrient": {
+          "id": 1103,
+          "number": "317",
+          "name": "Selenium, Se",
+          "rank": 6200,
+          "unitName": "µg"
+        },
+        "dataPoints": 2,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 32.3,
+        "min": 0.0,
+        "median": 16.2,
+        "amount": 16.2
+      },
+      "expected_attribute": "selenium_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 16.2,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219797,
+        "nutrient": {
+          "id": 1109,
+          "number": "323",
+          "name": "Vitamin E (alpha-tocopherol)",
+          "rank": 7905,
+          "unitName": "mg"
+        },
+        "dataPoints": 6,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 2.89,
+        "min": 1.4,
+        "median": 1.53,
+        "amount": 1.74
+      },
+      "expected_attribute": "vitamin_e_alpha_tocopherol_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 1.74,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219798,
+        "nutrient": {
+          "id": 1002,
+          "number": "202",
+          "name": "Nitrogen",
+          "rank": 500,
+          "unitName": "g"
+        },
+        "dataPoints": 11,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 1.29,
+        "min": 0.99,
+        "median": 1.25,
+        "amount": 1.18
+      },
+      "expected_attribute": "nitrogen_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 1.18,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219806,
+        "nutrient": {
+          "id": 1180,
+          "number": "421",
+          "name": "Choline, total",
+          "rank": 7220,
+          "unitName": "mg"
+        },
+        "dataPoints": 1,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "median": 46.6,
+        "amount": 46.6
+      },
+      "expected_attribute": "choline_total_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 46.6,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 321358,
+      "description": "Hummus, commercial",
+      "source_row": {
+        "id": 2219813,
+        "nutrient": {
+          "id": 1063,
+          "number": "269.3",
+          "name": "Sugars, Total",
+          "rank": 1500,
+          "unitName": "g"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 0.34
+      },
+      "expected_attribute": "sugars_total_1063_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.34,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 323121,
+      "description": "Frankfurter, beef, unheated",
+      "source_row": {
+        "id": 2227724,
+        "nutrient": {
+          "id": 1178,
+          "number": "418",
+          "name": "Vitamin B-12",
+          "rank": 7300,
+          "unitName": "µg"
+        },
+        "dataPoints": 9,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 1.1,
+        "min": 0.84,
+        "median": 0.95,
+        "amount": 0.97
+      },
+      "expected_attribute": "vitamin_b12_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 0.97,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 323121,
+      "description": "Frankfurter, beef, unheated",
+      "source_row": {
+        "id": 2227759,
+        "nutrient": {
+          "id": 1105,
+          "number": "319",
+          "name": "Retinol",
+          "rank": 7430,
+          "unitName": "µg"
+        },
+        "dataPoints": 3,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 5.0,
+        "min": 2.0,
+        "median": 3.0,
+        "amount": 3.0
+      },
+      "expected_attribute": "retinol_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 3.0,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 323604,
+      "description": "Egg, whole, raw, frozen, pasteurized",
+      "source_row": {
+        "id": 2229854,
+        "nutrient": {
+          "id": 1111,
+          "number": "325",
+          "name": "Vitamin D2 (ergocalciferol)",
+          "rank": 8710,
+          "unitName": "µg"
+        },
+        "dataPoints": 14,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.0,
+        "min": 0.0,
+        "median": 0.0,
+        "amount": 0.0
+      },
+      "expected_attribute": "vitamin_d2_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 0.0,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 323604,
+      "description": "Egg, whole, raw, frozen, pasteurized",
+      "source_row": {
+        "id": 2229861,
+        "nutrient": {
+          "id": 1112,
+          "number": "326",
+          "name": "Vitamin D3 (cholecalciferol)",
+          "rank": 8720,
+          "unitName": "µg"
+        },
+        "dataPoints": 14,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 5.1,
+        "min": 0.8,
+        "median": 1.9,
+        "amount": 2.3
+      },
+      "expected_attribute": "vitamin_d3_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 2.3,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 323604,
+      "description": "Egg, whole, raw, frozen, pasteurized",
+      "source_row": {
+        "id": 2229862,
+        "nutrient": {
+          "id": 1114,
+          "number": "328",
+          "name": "Vitamin D (D2 + D3)",
+          "rank": 8700,
+          "unitName": "µg"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 2.3
+      },
+      "expected_attribute": "vitamin_d_total_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 2.3,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 323604,
+      "description": "Egg, whole, raw, frozen, pasteurized",
+      "source_row": {
+        "id": 2229863,
+        "nutrient": {
+          "id": 1110,
+          "number": "324",
+          "name": "Vitamin D (D2 + D3), International Units",
+          "rank": 8650,
+          "unitName": "IU"
+        },
+        "foodNutrientDerivation": {
+          "code": "AS",
+          "description": "Summed",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "amount": 91.0
+      },
+      "expected_attribute": "vitamin_d_total_iu",
+      "expected_unit": "iu",
+      "expected_qualifier": "exact",
+      "expected_point": 91.0,
+      "original_unit": "IU"
+    },
+    {
+      "fdc_id": 323604,
+      "description": "Egg, whole, raw, frozen, pasteurized",
+      "source_row": {
+        "id": 2229864,
+        "nutrient": {
+          "id": 1253,
+          "number": "601",
+          "name": "Cholesterol",
+          "rank": 15700,
+          "unitName": "mg"
+        },
+        "dataPoints": 14,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 463,
+        "min": 385,
+        "median": 416,
+        "amount": 420
+      },
+      "expected_attribute": "cholesterol_mg",
+      "expected_unit": "mg",
+      "expected_qualifier": "exact",
+      "expected_point": 420,
+      "original_unit": "mg"
+    },
+    {
+      "fdc_id": 323604,
+      "description": "Egg, whole, raw, frozen, pasteurized",
+      "source_row": {
+        "id": 2229867,
+        "nutrient": {
+          "id": 1100,
+          "number": "314",
+          "name": "Iodine, I",
+          "rank": 6150,
+          "unitName": "µg"
+        },
+        "dataPoints": 14,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 80.9,
+        "min": 45.1,
+        "median": 56.1,
+        "amount": 61.6
+      },
+      "expected_attribute": "iodine_ug",
+      "expected_unit": "ug",
+      "expected_qualifier": "exact",
+      "expected_point": 61.6,
+      "original_unit": "µg"
+    },
+    {
+      "fdc_id": 325430,
+      "description": "Peaches, yellow, raw",
+      "source_row": {
+        "id": 2236454,
+        "nutrient": {
+          "id": 1084,
+          "number": "297",
+          "name": "Fiber, insoluble",
+          "rank": 1260,
+          "unitName": "g"
+        },
+        "dataPoints": 8,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 1.2,
+        "min": 0.8,
+        "median": 0.9,
+        "amount": 0.9
+      },
+      "expected_attribute": "fiber_insoluble_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.9,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 325430,
+      "description": "Peaches, yellow, raw",
+      "source_row": {
+        "id": 2236455,
+        "nutrient": {
+          "id": 1082,
+          "number": "295",
+          "name": "Fiber, soluble",
+          "rank": 1240,
+          "unitName": "g"
+        },
+        "dataPoints": 8,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 0.9,
+        "min": 0.2,
+        "median": 0.6,
+        "amount": 0.6
+      },
+      "expected_attribute": "fiber_soluble_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 0.6,
+      "original_unit": "g"
+    },
+    {
+      "fdc_id": 1750339,
+      "description": "Apples, red delicious, with skin, raw",
+      "source_row": {
+        "id": 21115264,
+        "nutrient": {
+          "id": 2000,
+          "number": "269",
+          "name": "Total Sugars",
+          "rank": 1510,
+          "unitName": "g"
+        },
+        "dataPoints": 8,
+        "foodNutrientDerivation": {
+          "code": "A",
+          "description": "Analytical",
+          "foodNutrientSource": {
+            "id": 1,
+            "code": "1",
+            "description": "Analytical or derived from analytical"
+          }
+        },
+        "max": 14.3,
+        "min": 9.26,
+        "median": 12.4,
+        "amount": 12.2
+      },
+      "expected_attribute": "sugars_total_2000_g",
+      "expected_unit": "g",
+      "expected_qualifier": "exact",
+      "expected_point": 12.2,
+      "original_unit": "g"
+    }
+  ]
+}

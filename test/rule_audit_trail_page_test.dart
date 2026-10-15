@@ -118,10 +118,15 @@ void main() {
     await tester.tap(find.byKey(sourceTileKey));
     await tester.pumpAndSettle();
 
-    expect(find.text('Dhivy label food effect reference'), findsOneWidget);
+    expect(
+      find.text('DHIVY oral tablet label: food effect, sections 2.4 and 12.3'),
+      findsOneWidget,
+    );
     expect(find.text('Organization: FDA / DailyMed'), findsOneWidget);
     expect(
-      find.text('Source URL: https://dailymed.nlm.nih.gov/dailymed/'),
+      find.text(
+        'Source URL: https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=39d79ade-8ee0-40ba-9fdd-13045b8ddbdf',
+      ),
       findsOneWidget,
     );
     expect(

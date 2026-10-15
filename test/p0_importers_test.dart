@@ -325,10 +325,10 @@ void main() {
           'fdc_id,description,data_type,food_category_id\n'
           '8123,"Range fixture",Foundation,9',
       'food_category.csv': 'id,description\n9,fruit',
-      'nutrient.csv': 'id,number,name,unit_name\n1,203,Protein,g',
+      'nutrient.csv': 'id,number,name,unit_name\n1003,203,Protein,g',
       'food_nutrient.csv':
           'fdc_id,nutrient_id,amount,data_points,min,max,median,standard_error,derivation_id,food_nutrient_source_id\n'
-          '8123,1,10.0,4,8.0,12.0,9.5,0.5,7,3',
+          '8123,1003,10.0,4,8.0,12.0,9.5,0.5,7,3',
       'food_nutrient_derivation.csv': 'id,code,description\n7,A,Analytical',
       'food_nutrient_source.csv': 'id,code,description\n3,1,USDA',
     }, sourceLabel: 'fdc_csv_range_fixture');
@@ -363,14 +363,14 @@ void main() {
       'food_category.csv': 'id,description\n9,legume',
       'nutrient.csv':
           'id,number,name,unit_name\n'
-          '1,203,Protein,g\n'
-          '2,504,Leucine,mg\n'
-          '3,510,Valine,g',
+          '1003,203,Protein,g\n'
+          '1213,504,Leucine,mg\n'
+          '1219,510,Valine,g',
       'food_nutrient.csv':
           'fdc_id,nutrient_id,amount\n'
-          '456,1,8.5\n'
-          '456,2,2100\n'
-          '456,3,0',
+          '456,1003,8.5\n'
+          '456,1213,2100\n'
+          '456,1219,0',
     }, sourceLabel: 'fdc_csv_amino_acids');
 
     final projected = bundle.projectedFoods.single;
@@ -1195,6 +1195,7 @@ void main() {
                     'DRUG_OPICAPONE#US#DAILYMED#drug_opicapone',
                 'external_product_code': 'drug_opicapone',
                 'jurisdiction': 'US',
+                'regulator': 'DAILYMED',
               },
             ],
             'drug_label_section': [
@@ -4296,7 +4297,20 @@ Map<String, List<String>> _importerAuditSmokeSignature(
   };
 }
 
-class _CountingCdssDatabase implements CdssDatabase {
+class _CountingCdssDatabase implements CdssDatabase, CdssAtomicWriter {
+  @override
+  Future<T> runAtomicWrite<T>(Future<T> Function() action) async {
+    final before = runs.map((r) => Map<String, Object?>.from(r)).toList();
+    try {
+      return await action();
+    } catch (_) {
+      runs
+        ..clear()
+        ..addAll(before);
+      rethrow;
+    }
+  }
+
   final List<Map<String, Object?>> runs = <Map<String, Object?>>[];
 
   @override
@@ -4538,7 +4552,11 @@ String _escapeXml(String input) {
       .replaceAll("'", '&apos;');
 }
 
-class _FakeCdssDatabase implements CdssDatabase {
+class _FakeCdssDatabase implements CdssDatabase, CdssAtomicWriter {
+  // This fixture discards all catalogue writes, so it has no pending state.
+  @override
+  Future<T> runAtomicWrite<T>(Future<T> Function() action) => action();
+
   _FakeCdssDatabase({this.tables = const {}});
 
   final Map<String, List<Map<String, Object?>>> tables;

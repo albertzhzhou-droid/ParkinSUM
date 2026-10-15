@@ -1,0 +1,105 @@
+{
+  "schema": "parkinsum.synthetic-spl-class-independent-fixture/1",
+  "frozen_at_utc": "2026-09-30T21:55:12.775010+00:00",
+  "source": "https://www.fda.gov/media/84201/download?attachment=",
+  "source_pages": [
+    45,
+    74,
+    75,
+    78
+  ],
+  "boundary": "FDA SPL implementation guide v1, exact active ingredient classes ACTIB/ACTIM/ACTIR. These inputs are synthetic and code-format completeness is outside this probe.",
+  "prechange_disagreements": [
+    "actix_only",
+    "actib_plus_actix"
+  ],
+  "cases": [
+    {
+      "id": "actib_only",
+      "sha256": "5220718c31d2ea80376c1aa7a437254c559ca4e4c1b57a97bb6bff4d202f212f",
+      "class_codes": [
+        "ACTIB"
+      ],
+      "expected_product_scope_eligible": true,
+      "expected_qualified_active_names": [
+        "SYNTHETIC 0"
+      ],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient classCode=\"ACTIB\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    },
+    {
+      "id": "actim_only",
+      "sha256": "4619b55a0876b4527c1085fd624cc94d53c8f1e0410623e68abde0fb2c85f303",
+      "class_codes": [
+        "ACTIM"
+      ],
+      "expected_product_scope_eligible": true,
+      "expected_qualified_active_names": [
+        "SYNTHETIC 0"
+      ],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient classCode=\"ACTIM\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    },
+    {
+      "id": "actir_only",
+      "sha256": "dfa526737802f45886d17d2984a4d83be5a6ec4375d70089d8d15896654c31a7",
+      "class_codes": [
+        "ACTIR"
+      ],
+      "expected_product_scope_eligible": true,
+      "expected_qualified_active_names": [
+        "SYNTHETIC 0"
+      ],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient classCode=\"ACTIR\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name><asEquivalentSubstance><definingSubstance><code code=\"SYNTH00002\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC REFERENCE</name></definingSubstance></asEquivalentSubstance></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    },
+    {
+      "id": "actix_only",
+      "sha256": "3be561562ddbf6a4307a332498601d8d7d11c9748f8f5067edcc35ff36bd8ccb",
+      "class_codes": [
+        "ACTIX"
+      ],
+      "expected_product_scope_eligible": false,
+      "expected_qualified_active_names": [],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient classCode=\"ACTIX\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    },
+    {
+      "id": "missing_class_only",
+      "sha256": "cccea19ac0281c2a4a837da3ff7e11a915213b48ed30ec04db2be653918eb26f",
+      "class_codes": [
+        null
+      ],
+      "expected_product_scope_eligible": false,
+      "expected_qualified_active_names": [],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    },
+    {
+      "id": "actib_plus_actix",
+      "sha256": "cb3a7c87e879e56c56a33affa587af921e05e30138b7b1b03d099391109b742a",
+      "class_codes": [
+        "ACTIB",
+        "ACTIX"
+      ],
+      "expected_product_scope_eligible": false,
+      "expected_qualified_active_names": [],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient classCode=\"ACTIB\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name></ingredientSubstance></ingredient><ingredient classCode=\"ACTIX\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 1</name></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    },
+    {
+      "id": "actib_plus_iact",
+      "sha256": "99745e428cfcc03c573cd9cc3ce9042d7d1a2ad5fe5588051289e29d45fb30c1",
+      "class_codes": [
+        "ACTIB",
+        "IACT"
+      ],
+      "expected_product_scope_eligible": true,
+      "expected_qualified_active_names": [
+        "SYNTHETIC 0"
+      ],
+      "expectation_kind": "FDA exact active-class enumeration plus conservative product completeness rule; unknown/missing classification must not promote active evidence. Synthetic structure only, not a valid FDA submission.",
+      "xml": "<document xmlns=\"urn:hl7-org:v3\"><id root=\"00000000-0000-4000-8000-000000000001\"/><setId root=\"00000000-0000-4000-8000-000000000002\"/><versionNumber value=\"1\"/><effectiveTime value=\"20260930\"/><title>SYNTHETIC INGREDIENT CLASS PROBE</title><component><structuredBody><component><section><code code=\"48780-1\" codeSystem=\"2.16.840.1.113883.6.1\"/><subject><manufacturedProduct><manufacturedProduct><code code=\"99999-001\" codeSystem=\"2.16.840.1.113883.6.69\"/><name>SYNTHETIC NOT AN APPROVED PRODUCT</name><formCode code=\"C42998\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"TABLET\"/><ingredient classCode=\"ACTIB\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 0</name></ingredientSubstance></ingredient><ingredient classCode=\"IACT\"><quantity><numerator value=\"100\" unit=\"mg\"/><denominator value=\"1\" unit=\"1\"/></quantity><ingredientSubstance><code code=\"SYNTH00001\" codeSystem=\"2.16.840.1.113883.4.9\"/><name>SYNTHETIC 1</name></ingredientSubstance></ingredient></manufacturedProduct><consumedIn><substanceAdministration><routeCode code=\"C38288\" codeSystem=\"2.16.840.1.113883.3.26.1.1\" displayName=\"ORAL\"/></substanceAdministration></consumedIn></manufacturedProduct></subject></section></component></structuredBody></component></document>"
+    }
+  ]
+}

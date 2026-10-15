@@ -68,12 +68,17 @@ class MealRuntimeContext {
   final bool highFatHighCalorie;
   final List<String> itemIds;
 
+  /// Explicit missingness supplied by item/catalog evidence. A measured zero
+  /// keeps this false. The numeric field may hold a partial display aggregate.
+  final bool proteinEvidenceMissing;
+
   const MealRuntimeContext({
     required this.id,
     required this.totalProteinG,
     required this.tyramineMgEstimate,
     required this.highFatHighCalorie,
     required this.itemIds,
+    this.proteinEvidenceMissing = false,
   });
 }
 
@@ -153,7 +158,10 @@ class UnifiedRuntimeContext {
         ? null
         : {
             'id': meal!.id,
-            'protein_g': meal!.totalProteinG,
+            'protein_g': meal!.proteinEvidenceMissing
+                ? null
+                : meal!.totalProteinG,
+            if (meal!.proteinEvidenceMissing) 'protein_evidence_missing': true,
             'tyramine_mg_est': meal!.tyramineMgEstimate,
             'high_fat_high_calorie': meal!.highFatHighCalorie,
             'item_ids': meal!.itemIds,

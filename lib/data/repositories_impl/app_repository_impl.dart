@@ -4,6 +4,7 @@ import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/atomic_onboarding_commit.dart';
 import '../../core/models/user_profile.dart';
+import '../../core/models/user_preference_write_scope.dart';
 import '../../core/models/recoverable_user_event.dart';
 import '../../domain/repositories/app_repository.dart';
 import '../datasources/local/app_local_datasource.dart';
@@ -11,7 +12,10 @@ import '../models/interaction_rule_record.dart';
 import '../../domain/entities/mechanistic_replay_capsule.dart';
 
 class AppRepositoryImpl
-    implements AppRepository, RecoverableUserEventRepository {
+    implements
+        AppRepository,
+        RecoverableUserEventRepository,
+        ScopedUserPreferenceStore {
   final AppLocalDataSource local;
 
   AppRepositoryImpl({required this.local});
@@ -61,6 +65,18 @@ class AppRepositoryImpl
   @override
   Future<void> saveUserProfile(UserProfile profile) =>
       local.saveUserProfile(profile);
+
+  @override
+  Future<void> saveUserProfileForSession(
+    UserProfile profile, {
+    required UserPreferenceWriteScope scope,
+  }) => local.saveUserProfileForSession(profile, scope: scope);
+
+  @override
+  Future<void> saveActiveDrugIdsForSession(
+    List<String> ids, {
+    required UserPreferenceWriteScope scope,
+  }) => local.saveActiveDrugIdsForSession(ids, scope: scope);
 
   @override
   Future<void> commitOnboarding(AtomicOnboardingCommit commit) =>

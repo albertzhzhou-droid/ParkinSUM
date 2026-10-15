@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
@@ -9,24 +11,7 @@ const LN2 = fromDecimal(
 );
 const BASE_TOLERANCE = fromDecimal('0.000000000005');
 
-const dart = spawnSync(
-  'dart',
-  ['run', 'tool/run_gastric_structural_uncertainty_check.dart'],
-  { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-);
-if (dart.status !== 0) {
-  process.stderr.write(dart.stdout ?? '');
-  process.stderr.write(dart.stderr ?? '');
-  throw new Error('Dart gastric structural gate did not produce a valid fixture.');
-}
-
-const fixture = JSON.parse(
-  readFileSync('build/gastric_structural_uncertainty/latest.json', 'utf8'),
-);
-if (fixture.passed !== true || !Array.isArray(fixture.reference_vectors)) {
-  throw new Error('Gastric structural fixture is missing or not passing.');
-}
-
+export function verifyLegacyFixture(fixture) {
 const cases = [];
 for (const vector of fixture.reference_vectors) {
   const parameters = Object.fromEntries(
@@ -67,7 +52,7 @@ const mutationDetected =
   abs(mutationObserved - mutationExpected) > mutationTolerance;
 const passed = cases.every((entry) => entry.passed) && mutationDetected;
 
-const report = {
+return {
   schema: SCHEMA,
   pass: passed,
   arithmetic: {
@@ -92,37 +77,9 @@ const report = {
     + 'prediction, treatment guidance, or medical advice.',
 };
 
-mkdirSync('build/gastric_high_precision_reference', { recursive: true });
-writeFileSync(
-  'build/gastric_high_precision_reference/latest.json',
-  `${JSON.stringify(report, null, 2)}\n`,
-);
-writeFileSync(
-  'build/gastric_high_precision_reference/latest.md',
-  [
-    '# Gastric high-precision reference check',
-    '',
-    `**Result:** ${passed ? 'PASS' : 'FAILED'}`,
-    '',
-    `Structures: ${report.structure_count}`,
-    `Reference cases: ${report.case_count}`,
-    `Failed cases: ${report.failed_case_count}`,
-    `Mutation detected: ${mutationDetected ? 'yes' : 'NO'}`,
-    '',
-    '## Boundary',
-    '',
-    report.boundary,
-    '',
-  ].join('\n'),
-);
+}
 
-process.stdout.write(
-  `Gastric high-precision reference: ${passed ? 'PASS' : 'FAILED'}; `
-    + `${cases.length} cases; ${fixture.reference_vectors.length} structures.\n`,
-);
-if (!passed) process.exitCode = 1;
-
-function evaluate(kind, p, minute) {
+export function evaluate(kind, p, minute) {
   const t = minute * SCALE;
   switch (kind) {
     case 'productionComponentLagExponential': {
@@ -271,7 +228,10 @@ function roundDivide(numerator, denominator) {
     : quotient;
 }
 
-function fromDecimal(input) {
+export function fromDecimal(input) {
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(String(input).trim()) || String(input).length > 512) {
+    throw new Error(`Invalid finite decimal: ${input}`);
+  }
   let text = String(input).trim().toLowerCase();
   let sign = 1n;
   if (text.startsWith('-')) {
@@ -282,7 +242,7 @@ function fromDecimal(input) {
   }
   const [mantissa, exponentText = '0'] = text.split('e');
   const exponent = Number.parseInt(exponentText, 10);
-  if (!Number.isInteger(exponent)) throw new Error(`Invalid decimal: ${input}`);
+  if (!Number.isInteger(exponent) || Math.abs(exponent) > 400) throw new Error(`Invalid decimal: ${input}`);
   const [whole = '0', fraction = ''] = mantissa.split('.');
   const digits = `${whole}${fraction}`.replace(/^0+(?=\d)/, '') || '0';
   const power = Number(PRECISION) + exponent - fraction.length;
@@ -291,7 +251,7 @@ function fromDecimal(input) {
   return sign * roundDivide(BigInt(digits), divisor);
 }
 
-function toDecimal(value, places) {
+export function toDecimal(value, places) {
   const negative = value < 0n;
   const digits = abs(value).toString().padStart(Number(PRECISION) + 1, '0');
   const whole = digits.slice(0, -Number(PRECISION));
@@ -308,3 +268,168 @@ function abs(value) {
 function max(left, right) {
   return left > right ? left : right;
 }
+
+export const DOMAIN_CORPUS_SCHEMA = 'parkinsum.gastric-high-precision-domain-corpus/1';
+export const DOMAIN_VECTOR_SCHEMA = 'parkinsum.gastric-high-precision-domain-vectors/1';
+export const DOMAIN_CORPUS_PATH = 'test/fixtures/gastric_high_precision_domain/cases.json';
+export const DOMAIN_SEED = 20260930;
+const sha256 = value => createHash('sha256').update(value).digest('hex');
+
+// Frozen manufactured calculation domain, not biological parameter support.
+// The cancellation exclusion was declared before any Dart vectors were run.
+export function domainHoldReason(kind, parameters, minute) {
+  if (!Number.isInteger(minute) || minute < 0 || minute > 10080) return 'time_domain';
+  let p;
+  try { p = Object.fromEntries(Object.entries(parameters).map(([k, v]) => [k, fromDecimal(v)])); }
+  catch { return 'finite_decimal_required'; }
+  const inRange = (key, low, high) => Object.hasOwn(p, key) &&
+    p[key] >= fromDecimal(low) && p[key] <= fromDecimal(high);
+  const shape = key => inRange(key, '0.05', '8');
+  const scale = key => inRange(key, '0.000001', '1000000');
+  let keys;
+  switch (kind) {
+    case 'productionComponentLagExponential': {
+      const ids = new Set(Object.keys(p).map(k => /^production\.([^.]+)\.(fraction|lag|half)$/.exec(k)?.[1]));
+      if (ids.has(undefined) || ids.size < 1 || ids.size > 4) return 'component_identity';
+      let total = 0n;
+      for (const id of ids) {
+        if (!inRange(`production.${id}.fraction`, '0', '1') ||
+            !inRange(`production.${id}.lag`, '0', '1440') || !scale(`production.${id}.half`)) return 'parameter_domain';
+        total += p[`production.${id}.fraction`];
+      }
+      if (Object.keys(p).length !== ids.size * 3 || abs(total - SCALE) > fromDecimal('0.000000000001')) return 'component_weights';
+      return null;
+    }
+    case 'elashoffPowerExponential':
+      keys = ['elashoff.t50', 'elashoff.beta'];
+      if (!scale(keys[0]) || !shape(keys[1])) return 'parameter_domain';
+      break;
+    case 'siegelModifiedPowerExponential':
+      keys = ['siegel.k', 'siegel.beta'];
+      if (!inRange(keys[0], '0.000000001', '4') || !shape(keys[1])) return 'parameter_domain';
+      if (minute > 0 && p[keys[1]] < SCALE && p[keys[0]] * BigInt(minute) < fromDecimal('0.000001')) return 'siegel_cancellation_domain';
+      break;
+    case 'explicitLagExponential':
+      keys = ['lag_exp.lag', 'lag_exp.half'];
+      if (!inRange(keys[0], '0', '1440') || !scale(keys[1])) return 'parameter_domain';
+      break;
+    case 'linearExponentialVolume':
+      keys = ['linexp.v0', 'linexp.kappa', 'linexp.time'];
+      if (!inRange(keys[0], '0', '2000') || !inRange(keys[1], '0', '2') || !scale(keys[2])) return 'parameter_domain';
+      break;
+    case 'doubleWeibullPellet':
+      keys = ['double_weibull.h', 'double_weibull.eta1', 'double_weibull.beta1', 'double_weibull.eta2', 'double_weibull.beta2'];
+      if (!inRange(keys[0], '0', '1') || !scale(keys[1]) || !shape(keys[2]) || !scale(keys[3]) || !shape(keys[4])) return 'parameter_domain';
+      break;
+    default: return 'unsupported_structure';
+  }
+  return Object.keys(p).length === keys.length && Object.keys(p).every(k => keys.includes(k)) ? null : 'parameter_identity';
+}
+
+export function evaluateDecimal(kind, parameters, minute) {
+  const p = Object.fromEntries(Object.entries(parameters).map(([key, value]) => [key, fromDecimal(value)]));
+  return evaluate(kind, p, BigInt(minute));
+}
+
+export function verifyDomainFixture(corpus, fixture, corpusBytes) {
+  if (corpus.schema !== DOMAIN_CORPUS_SCHEMA || fixture.schema !== DOMAIN_VECTOR_SCHEMA ||
+      corpus.seed !== DOMAIN_SEED || corpus.tolerance_decimal !== '0.000000000005' ||
+      fixture.input_sha256 !== sha256(corpusBytes)) throw new Error('Domain corpus/vector identity mismatch.');
+  const vectors = new Map(fixture.vectors.map(v => [v.case_id, v]));
+  if (vectors.size !== fixture.vectors.length || vectors.size !== corpus.cases.length) throw new Error('Domain vector coverage mismatch.');
+  const cases = []; const held = []; const diagnostics = [];
+  for (const input of corpus.cases) {
+    const vector = vectors.get(input.case_id);
+    if (!vector || vector.kind !== input.kind || JSON.stringify(vector.parameters) !== JSON.stringify(input.parameters) ||
+        vector.points.length !== input.minutes.length) throw new Error(`Domain input changed: ${input.case_id}`);
+    for (let i = 0; i < input.minutes.length; i += 1) {
+      const minute = input.minutes[i]; const point = vector.points[i];
+      const reason = domainHoldReason(input.kind, input.parameters, minute);
+      if (point.minute !== minute || point.hold_reason !== reason || point.status !== (reason ? 'HOLD' : 'supported') ||
+          input.expected_status !== (reason ? 'HOLD' : 'supported') ||
+          (input.expected_hold_reason ?? null) !== reason) throw new Error(`Domain disposition mismatch: ${input.case_id}:${minute}`);
+      if (reason) {
+        held.push({ case_id: input.case_id, minute, reason, numeric_projection: 'HOLD' });
+        if (!input.diagnostic_only && point.value_decimal !== null) throw new Error('Held case emitted an ordinary numeric projection.');
+        if (!input.diagnostic_only) continue;
+      }
+      const expected = evaluateDecimal(input.kind, input.parameters, minute);
+      const observed = fromDecimal(point.value_decimal);
+      const difference = abs(expected - observed);
+      const tolerance = multiply(BASE_TOLERANCE, max(SCALE, abs(expected)));
+      const entry = { case_id: input.case_id, kind: input.kind, minute,
+        expected_decimal: toDecimal(expected, 30), dart_decimal: point.value_decimal,
+        absolute_difference: toDecimal(difference, 30), tolerance: toDecimal(tolerance, 30),
+        passed: difference <= tolerance };
+      if (input.diagnostic_only) diagnostics.push({ ...entry, outside_supported_domain: true, numeric_projection: 'HOLD' });
+      else cases.push(entry);
+      if (input.analytic_anchors?.[minute] !== undefined &&
+          abs(expected - fromDecimal(input.analytic_anchors[minute])) > fromDecimal('1e-45')) throw new Error('Independent analytic anchor failed.');
+    }
+  }
+  const worst = entries => entries.reduce((a, b) => !a || fromDecimal(b.absolute_difference) > fromDecimal(a.absolute_difference) ? b : a, null);
+  const first = cases[0];
+  const mutationDetected = abs(fromDecimal(first.dart_decimal) + fromDecimal('0.001') -
+      fromDecimal(first.expected_decimal)) > fromDecimal(first.tolerance);
+  const counterexampleDetected = diagnostics.length > 0 && diagnostics.some(c => !c.passed);
+  return {
+    pass: cases.every(c => c.passed) && mutationDetected && counterexampleDetected,
+    seed: DOMAIN_SEED, input_sha256: sha256(corpusBytes),
+    parameter_case_count: corpus.cases.length, supported_point_count: cases.length,
+    held_point_count: held.length, failed_supported_point_count: cases.filter(c => !c.passed).length,
+    worst_supported_error: worst(cases), worst_excluded_diagnostic_error: worst(diagnostics),
+    manufacturing_mutation_detected: mutationDetected,
+    predeclared_cancellation_counterexample_detected: counterexampleDetected,
+    cases, held, diagnostics,
+  };
+}
+
+function runDart(script) {
+  const run = spawnSync(process.env.DART_BIN ?? 'dart', ['run', script], { encoding: 'utf8' });
+  if (run.status !== 0) throw new Error(`Dart vector runner failed: ${script}\n${run.stdout ?? ''}${run.stderr ?? ''}${run.error?.message ?? ''}`);
+}
+
+function main() {
+  const domainOnly = process.argv.includes('--domain-only');
+  const fixtureArgument = process.argv.indexOf('--domain-fixture');
+  let legacy = null;
+  if (!domainOnly) {
+    runDart('tool/run_gastric_structural_uncertainty_check.dart');
+    const fixture = JSON.parse(readFileSync('build/gastric_structural_uncertainty/latest.json', 'utf8'));
+    if (fixture.passed !== true || !Array.isArray(fixture.reference_vectors)) throw new Error('Legacy structural fixture is missing or not passing.');
+    legacy = verifyLegacyFixture(fixture);
+  }
+  if (fixtureArgument < 0) runDart('tool/run_gastric_high_precision_domain_vectors.dart');
+  const corpusBytes = readFileSync(DOMAIN_CORPUS_PATH);
+  const corpus = JSON.parse(corpusBytes);
+  const vectorBytes = readFileSync(fixtureArgument < 0 ? 'build/gastric_high_precision_domain_vectors/latest.json' : process.argv[fixtureArgument + 1]);
+  const domain = verifyDomainFixture(corpus, JSON.parse(vectorBytes), corpusBytes);
+  const report = {
+    ...(legacy ?? { schema: SCHEMA, arithmetic: { implementation: 'independent-node-bigint-fixed-decimal', decimal_digits: Number(PRECISION), shared_runtime_with_production: false } }),
+    pass: (legacy?.pass ?? true) && domain.pass,
+    legacy_gate_included: !domainOnly,
+    extended_domain: domain,
+    production_vector_sha256: sha256(vectorBytes),
+    reference_source_sha256: sha256(readFileSync('tool/gastric_high_precision_reference_check.mjs')),
+    production_evaluator_source_sha256: sha256(readFileSync('lib/domain/usecases/gastric_structural_uncertainty_service.dart')),
+    production_runner_source_sha256: sha256(readFileSync('tool/run_gastric_high_precision_domain_vectors.dart')),
+    input_generator_source_sha256: sha256(readFileSync('tool/generate_gastric_high_precision_domain_corpus.mjs')),
+    tolerance_policy: '5e-12 * max(1, abs(independent_expected)); frozen before production vectors',
+    boundary: 'Manufactured calculation verification only. Supported-domain numerical agreement is not biological validity, identifiability, clinical calibration or treatment guidance. Excluded diagnostics retain numeric projection HOLD.',
+  };
+  report.report_digest = sha256(JSON.stringify(report));
+  mkdirSync('build/gastric_high_precision_reference', { recursive: true });
+  writeFileSync('build/gastric_high_precision_reference/latest.json', `${JSON.stringify(report, null, 2)}\n`);
+  writeFileSync('build/gastric_high_precision_reference/latest.md', [
+    '# Gastric high-precision reference check', '', `Result: ${report.pass ? 'PASS' : 'FAILED'}`,
+    `Legacy gate included: ${report.legacy_gate_included}`, `Supported extended points: ${domain.supported_point_count}`,
+    `Held points: ${domain.held_point_count}`, `Failed supported points: ${domain.failed_supported_point_count}`,
+    `Worst supported absolute error: ${domain.worst_supported_error.absolute_difference}`,
+    `Excluded diagnostic error: ${domain.worst_excluded_diagnostic_error.absolute_difference}`,
+    '', report.boundary, '',
+  ].join('\n'));
+  console.log(`Gastric high-precision reference: ${report.pass ? 'PASS' : 'FAILED'}; domain=${domain.supported_point_count} supported/${domain.held_point_count} HOLD; legacy=${!domainOnly}.`);
+  if (!report.pass) process.exitCode = 1;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

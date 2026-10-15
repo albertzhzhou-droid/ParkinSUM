@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
@@ -167,6 +170,34 @@ FoodItem _foodWithProvenance() => FoodItem(
 );
 
 void main() {
+  testWidgets('non-edible source basis explains withheld portion values', (
+    tester,
+  ) async {
+    final food = FoodItem.fromJson({
+      ..._foodWithProvenance().toJson(),
+      'basisType': 'per_100g_dry_matter',
+      'missingNutrientFields': <String>[],
+    });
+    await pumpFeaturePage(
+      tester,
+      FoodDetailPage(food: food, future: Future<ProjectedFoodDetail?>.value()),
+      settle: true,
+    );
+    expect(
+      find.text(
+        AppI18n.fromLocaleTag('en').tr('detail.food_basis_unavailable'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.textContaining('P Unknown'), findsOneWidget);
+    expect(find.textContaining('raw value 12'), findsOneWidget);
+    expect(
+      find.text('Selected for the current legacy point-value projection'),
+      findsNothing,
+    );
+    expectNoWidgetErrors();
+  });
+
   testWidgets('food details show source, scope, mapping and nutrient evidence', (
     tester,
   ) async {
@@ -227,8 +258,52 @@ void main() {
     expectNoWidgetErrors();
   });
 
+  testWidgets('complete branded original fields remain accessible in details', (
+    tester,
+  ) async {
+    final original =
+        jsonDecode(
+              File(
+                'test/fixtures/importers/usda_fdc_branded_2385707_full_2026_10_02.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final food = FoodItem.fromJson({
+      ..._foodWithProvenance().toJson(),
+      'foodProductEvidence': [
+        FoodProductEvidence(
+          sourceDocId: 'synthetic-product-source',
+          sourceFoodId: '2385707',
+          sourceFields: original,
+        ).toJson(),
+      ],
+    });
+    await pumpFeaturePage(
+      tester,
+      FoodDetailPage(food: food, future: Future<ProjectedFoodDetail?>.value()),
+      settle: true,
+    );
+    final full = find.text('Complete original product record');
+    await tester.scrollUntilVisible(
+      full,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await Scrollable.ensureVisible(tester.element(full), alignment: .5);
+    await tester.pumpAndSettle();
+    await tester.tap(full);
+    await tester.pumpAndSettle();
+    final encoded = const JsonEncoder.withIndent('  ').convert(original);
+    expect(find.text(encoded), findsOneWidget);
+    expect(
+      find.textContaining('Source serving: ${original['servingSize']} ml'),
+      findsOneWidget,
+    );
+    expectNoWidgetErrors();
+  });
   test('food provenance copy resolves in every shipped language family', () {
     const translationKeys = <String>[
+      'detail.food_basis_unavailable',
       'detail.food_catalog_provenance_title',
       'detail.food_missing_nutrient_fields',
       'detail.food_nutrient_less_than_boundary',

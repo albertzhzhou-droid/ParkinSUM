@@ -61,7 +61,7 @@ void _runCampaign() {
       throw StateError('Property-order mutation did not change root order.');
     }
     final future = Map<String, Object?>.from(selectedDocument)
-      ..['schemaVersion'] = 5;
+      ..['schemaVersion'] = 6;
     final unknown = Map<String, Object?>.from(selectedDocument)
       ..['syntheticFutureField'] = seed;
     cases.addAll(<Map<String, Object?>>[

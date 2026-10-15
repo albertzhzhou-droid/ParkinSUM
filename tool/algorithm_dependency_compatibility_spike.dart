@@ -18,7 +18,13 @@ import 'package:yaml/yaml.dart';
 /// Absolute paths are necessary API inputs but are never copied into the
 /// returned durable evidence.
 Future<AlgorithmDependencyCompatibilityReport>
-runAlgorithmDependencyCompatibilitySpike({String? repositoryRoot}) async {
+runAlgorithmDependencyCompatibilitySpike({
+  String? repositoryRoot,
+  void Function(String stage, int elapsedMicroseconds)? onTiming,
+}) async {
+  final stopwatch = Stopwatch()..start();
+  void observeTiming(String stage) =>
+      onTiming?.call(stage, stopwatch.elapsedMicroseconds);
   final root = path.normalize(
     path.absolute(repositoryRoot ?? Directory.current.path),
   );
@@ -79,11 +85,19 @@ runAlgorithmDependencyCompatibilitySpike({String? repositoryRoot}) async {
   AnalysisContextCollection? collection;
   var contextCount = 0;
   try {
+    observeTiming('before_context_collection');
     collection = AnalysisContextCollection(
-      includedPaths: [path.join(root, 'lib')],
+      // Register every reviewed primary-library root. Imported dependencies
+      // still resolve through the analyzer; unrelated lib files need not be
+      // scheduled as additional analysis targets by this bounded spike.
+      includedPaths: [
+        for (final entry in manifest.entries)
+          path.normalize(path.join(root, entry.sourcePath)),
+      ],
       sdkPath: runtime.dartSdkPath,
     );
     contextCount = collection.contexts.length;
+    observeTiming('after_context_collection');
     final sessions = <AnalysisContext, AnalysisSession>{};
     final canonicalRoot = Directory(root).resolveSymbolicLinksSync();
     for (final entry in manifest.entries) {
@@ -110,7 +124,9 @@ runAlgorithmDependencyCompatibilitySpike({String? repositoryRoot}) async {
           context,
           () => context.currentSession,
         );
+        observeTiming('before_resolve:${entry.algorithmId}');
         final raw = await session.getResolvedUnit(absoluteSourcePath);
+        observeTiming('after_resolve:${entry.algorithmId}');
         if (raw is! ResolvedUnitResult) {
           observations.add(_unavailableObservation(entry, _resultVariant(raw)));
           continue;
@@ -149,7 +165,9 @@ runAlgorithmDependencyCompatibilitySpike({String? repositoryRoot}) async {
       }
     }
   } finally {
+    observeTiming('before_context_disposal');
     await collection?.dispose();
+    observeTiming('after_context_disposal');
   }
 
   return AlgorithmDependencyCompatibilityReport(

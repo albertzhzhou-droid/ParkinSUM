@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../models/drug_definition.dart';
 import '../models/food_item.dart';
 import '../models/intake.dart';
@@ -49,9 +47,7 @@ AppDatabase createAppDatabase() => createAppDatabaseImpl();
 /// Re-parses canonical bytes into an independent persistence-safe snapshot.
 MechanisticReplayCapsule canonicalMechanisticReplayCapsuleSnapshot(
   MechanisticReplayCapsule capsule,
-) => MechanisticReplayCapsule.fromJson(
-  Map<String, Object?>.from(jsonDecode(capsule.canonicalJson) as Map),
-);
+) => MechanisticReplayCapsule.fromJsonString(capsule.canonicalJson);
 
 /// Newest generated capsule first, with digest as a stable tie-break.
 int compareMechanisticReplayCapsulesByGeneratedAt(

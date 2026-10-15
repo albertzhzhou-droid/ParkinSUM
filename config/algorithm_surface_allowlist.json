@@ -11,7 +11,9 @@
         "lib/app/bootstrap_attempt_controller.dart",
         "lib/app/bootstrap_gate.dart",
         "lib/firebase_options.dart",
-        "lib/main.dart"
+        "lib/main.dart",
+        "lib/main_synthetic_meal_demo.dart",
+        "lib/main_personal_log_view_benchmark.dart"
       ]
     },
     {
@@ -24,9 +26,11 @@
         "lib/core/constants/p0_food_source_seed.dart",
         "lib/core/constants/profile_options.dart",
         "lib/core/constants/regional_master_data.dart",
+        "lib/core/constants/synthetic_meal_journey.dart",
         "lib/core/i18n/app_i18n.dart",
         "lib/core/i18n/app_i18n_context.dart",
         "lib/core/i18n/app_i18n_full_translations.dart",
+        "lib/core/i18n/app_i18n_log_view_translations.dart",
         "lib/core/i18n/fhir_r4_encounter_copy.dart"
       ]
     },
@@ -34,14 +38,10 @@
       "id": "persistence_or_transport",
       "reason": "Persistence adapters, backend transports, and repository seams execute already-decided mutations without changing scores, ranks, risks, or recommendations.",
       "paths": [
-        "lib/core/db/app_database.dart",
         "lib/core/db/app_database_factory.dart",
         "lib/core/db/app_database_factory_stub.dart",
         "lib/core/db/app_database_firestore.dart",
         "lib/core/db/app_database_memory.dart",
-        "lib/core/db/app_database_native.dart",
-        "lib/core/db/app_database_web.dart",
-        "lib/core/db/recoverable_user_event_store.dart",
         "lib/core/db/cdss_database.dart",
         "lib/core/db/cdss_database_factory.dart",
         "lib/core/db/cdss_database_factory_stub.dart",
@@ -49,19 +49,36 @@
         "lib/core/db/cdss_database_memory.dart",
         "lib/core/db/cdss_database_native.dart",
         "lib/core/db/cdss_database_web.dart",
+        "lib/core/db/portable_data_restore_store.dart",
+        "lib/core/db/recoverable_user_event_store.dart",
+        "lib/core/db/web_user_state_store.dart",
+        "lib/core/db/web_user_state_store_factory.dart",
+        "lib/core/db/web_user_state_store_factory_stub.dart",
+        "lib/core/db/web_user_state_store_factory_web.dart",
+        "lib/core/db/web_user_state_store_indexeddb.dart",
+        "lib/core/security/protected_secret_store.dart",
         "lib/core/services/capability_manifest_distribution.dart",
         "lib/core/services/data_service.dart",
         "lib/core/services/firebase_backend.dart",
         "lib/core/services/firebase_user_data_paths.dart",
         "lib/core/services/firestore_data_service.dart",
-        "lib/core/security/protected_secret_store.dart",
+        "lib/core/services/meal_draft_service.dart",
+        "lib/core/services/origin_storage_coordination.dart",
+        "lib/core/services/origin_storage_coordination_contract.dart",
+        "lib/core/services/origin_storage_coordination_stub.dart",
+        "lib/core/services/origin_storage_coordination_web.dart",
         "lib/core/services/personal_log_handoff_document_service.dart",
-        "lib/core/services/privacy_safe_support_snapshot_service.dart",
+        "lib/core/services/personal_log_handoff_html_download.dart",
+        "lib/core/services/personal_log_handoff_html_download_web.dart",
         "lib/core/services/portable_data_export_sink.dart",
         "lib/core/services/portable_data_export_sink_io.dart",
         "lib/core/services/portable_data_export_sink_stub.dart",
         "lib/core/services/portable_data_export_sink_web.dart",
+        "lib/core/services/privacy_safe_support_snapshot_service.dart",
         "lib/core/services/user_data_service.dart",
+        "lib/core/services/user_state_change_notifications.dart",
+        "lib/core/services/user_state_change_notifications_stub.dart",
+        "lib/core/services/user_state_change_notifications_web.dart",
         "lib/data/datasources/local/app_local_datasource.dart",
         "lib/data/datasources/local/cdss_local_datasource.dart",
         "lib/data/repositories_impl/app_repository_impl.dart",
@@ -73,18 +90,22 @@
       "reason": "State transactions, authentication coordination, reminder lifecycle, and user-owned data-package services orchestrate persistence, serialization, or registered policies rather than define a separate result algorithm.",
       "paths": [
         "lib/core/models/atomic_onboarding_commit.dart",
+        "lib/core/models/meal_draft.dart",
+        "lib/core/models/portable_data_restore.dart",
         "lib/core/models/purpose_bound_consent.dart",
+        "lib/core/models/user_preference_write_scope.dart",
         "lib/core/services/atomic_onboarding_commit_coordinator.dart",
         "lib/core/services/auth_service.dart",
         "lib/core/services/capability_rollout_service.dart",
         "lib/core/services/portable_data_owner_scope_service.dart",
+        "lib/core/services/portable_data_restore_coordinator.dart",
         "lib/core/services/reminder_activation_inbox.dart",
-        "lib/core/services/reminder_notification_capability_matrix.dart",
-        "lib/core/services/reminder_notification_run_attestation.dart",
-        "lib/core/services/reminder_notification_privacy_policy.dart",
         "lib/core/services/reminder_activation_store_factory.dart",
         "lib/core/services/reminder_activation_store_io.dart",
         "lib/core/services/reminder_activation_store_stub.dart",
+        "lib/core/services/reminder_notification_capability_matrix.dart",
+        "lib/core/services/reminder_notification_privacy_policy.dart",
+        "lib/core/services/reminder_notification_run_attestation.dart",
         "lib/core/services/services.dart",
         "lib/core/services/user_clinical_audit_service.dart",
         "lib/core/services/user_logging_reminder_service.dart",
@@ -95,6 +116,7 @@
         "lib/core/state/persisted_value_mutation.dart",
         "lib/domain/entities/operational_observability.dart",
         "lib/domain/usecases/personal_log_handoff_summary_service.dart",
+        "lib/domain/usecases/portable_data_compact_transport_service.dart",
         "lib/domain/usecases/portable_schema_migration_registry.dart",
         "lib/domain/usecases/privacy_safe_support_bundle_service.dart",
         "lib/domain/usecases/recoverable_event_restore_impact_service.dart",
@@ -130,7 +152,6 @@
       "paths": [
         "lib/core/models/drug_definition.dart",
         "lib/core/models/intake.dart",
-        "lib/core/models/interaction_result.dart",
         "lib/core/models/recoverable_user_event.dart",
         "lib/core/models/user_profile.dart",
         "lib/data/models/interaction_rule_record.dart",
@@ -207,7 +228,8 @@
         "lib/domain/usecases/catalog_version_change_diff_service.dart",
         "lib/domain/usecases/configuration_baseline_registry_service.dart",
         "lib/domain/usecases/target_population_transportability_simulator.dart",
-        "lib/domain/usecases/transportability_bias_function_sensitivity_simulator.dart"
+        "lib/domain/usecases/transportability_bias_function_sensitivity_simulator.dart",
+        "lib/domain/usecases/evidence_currency_candidate_comparison.dart"
       ]
     },
     {
@@ -223,11 +245,15 @@
         "lib/features/diagnostics/capability_rollout_page.dart",
         "lib/features/diagnostics/data_integrity_page.dart",
         "lib/features/diagnostics/engineering_diagnostics_page.dart",
-        "lib/features/diagnostics/replay_benchmark_card.dart",
+        "lib/features/diagnostics/evidence_currency_candidate_panel.dart",
         "lib/features/diagnostics/operational_observability_page.dart",
+        "lib/features/diagnostics/replay_benchmark_card.dart",
         "lib/features/diagnostics/rule_audit_trail_page.dart",
         "lib/features/entry/entry_page.dart",
+        "lib/features/entry/food_portion_preview_dialog.dart",
+        "lib/features/entry/synthetic_meal_journey_page.dart",
         "lib/features/import/import_page.dart",
+        "lib/features/import/source_import_review_page.dart",
         "lib/features/legal/privacy_disclaimer_page.dart",
         "lib/features/main_shell/app_destinations.dart",
         "lib/features/main_shell/command_palette.dart",
@@ -243,13 +269,15 @@
         "lib/features/onboarding/onboarding_page.dart",
         "lib/features/reminders/reminder_center_page.dart",
         "lib/features/settings/change_password_dialog.dart",
+        "lib/features/settings/local_ai_connection_panel.dart",
         "lib/features/settings/personal_log_handoff_page.dart",
         "lib/features/settings/portable_data_package_page.dart",
         "lib/features/settings/privacy_safe_support_bundle_page.dart",
         "lib/features/settings/purpose_bound_consent_page.dart",
         "lib/features/settings/recoverable_event_history_page.dart",
-        "lib/features/settings/local_ai_connection_panel.dart",
         "lib/features/settings/settings_capability_page.dart",
+        "lib/features/shared/local_storage_stale_page.dart",
+        "lib/features/shared/personal_log_view_controls.dart",
         "lib/features/timeline/timeline_page.dart"
       ]
     },
@@ -262,7 +290,8 @@
         "lib/core/theme/paper_theme.dart",
         "lib/core/theme/paper_widgets.dart",
         "lib/core/utils/focus_visibility_guard.dart",
-        "lib/core/utils/texture_support.dart"
+        "lib/core/utils/texture_support.dart",
+        "lib/core/services/personal_log_handoff_text_pdf_renderer.dart"
       ]
     },
     {
@@ -270,6 +299,7 @@
       "reason": "Local care records, exact prompt snapshot capture, explicit user feedback transitions and visit-agenda projections do not modify deterministic clinical decisions, scores, ranks or medication regimens. Ingredient-name equality prompts manual reconciliation only; it does not classify duplicate therapy or interactions. UI and localized state labels expose these bookkeeping operations.",
       "paths": [
         "lib/core/i18n/care_workspace_copy.dart",
+        "lib/core/services/care_portable_data_service.dart",
         "lib/core/services/care_workspace_service.dart",
         "lib/core/services/care_workspace_store.dart",
         "lib/domain/entities/care_medication_discussion_entry.dart",
@@ -278,11 +308,14 @@
         "lib/domain/entities/decision_support_followup.dart",
         "lib/domain/entities/personal_observation.dart",
         "lib/domain/entities/visit_preparation.dart",
+        "lib/domain/entities/visit_report_selection.dart",
         "lib/domain/usecases/decision_support_followup_service.dart",
         "lib/domain/usecases/decision_support_prompt_capture.dart",
         "lib/domain/usecases/source_reference_projection.dart",
         "lib/domain/usecases/visit_preparation_service.dart",
+        "lib/features/care_workspace/care_portable_data_page.dart",
         "lib/features/care_workspace/care_workspace_page.dart",
+        "lib/features/care_workspace/visit_report_selection_page.dart",
         "lib/features/observations/observation_editor.dart"
       ]
     },
@@ -420,9 +453,9 @@
     },
     {
       "id": "local_time_evidence_resolver",
-      "reason": "The standalone resolver maps explicit civil time, IANA zone, offset and fold choice to versioned timezone evidence; no production CDSS or reminder path consumes it, and it does not infer a timestamp or medication action.",
+      "reason": "Flutter offline asset loading/lifecycle wrapper for exact pinned timezone data. Pure rule/source binding and explicit resolver are now owned by the protein-trend calendar projection descriptor. Loading does not infer original timezones, prescribe a dose time or rebase historical evidence.",
       "paths": [
-        "lib/domain/usecases/timezone_local_time_resolver.dart"
+        "lib/core/services/pinned_timezone_rules_service.dart"
       ]
     },
     {
@@ -450,6 +483,14 @@
         "lib/data/datasources/remote/openfda_label_mention_search.dart",
         "lib/domain/entities/openfda_label_mention_search.dart",
         "lib/features/diagnostics/openfda_label_mention_search_page.dart"
+      ]
+    },
+    {
+      "id": "synthetic_performance_fixture",
+      "reason": "A separately built engineering target generates fixed fabricated volumes and measures software durations. Its separate persistent experiment refuses populated unmarked origins, checks source/owner markers, retains production validation and budget holds, and verifies owned-row cleanup. It uses existing production paths without changing classifications, qualification or weights. Build and same-source W31 provenance require independent checks; this is not cross-tab locking or clinical performance evidence.",
+      "paths": [
+        "lib/engineering/personal_log_view_benchmark_fixture.dart",
+        "lib/engineering/personal_log_persistent_benchmark.dart"
       ]
     }
   ]

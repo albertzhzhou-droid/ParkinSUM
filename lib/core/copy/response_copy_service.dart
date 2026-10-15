@@ -51,6 +51,7 @@ class ResponseCopyService {
   }
 
   String interactionSummary(InteractionResult result) {
+    if (!result.hasAssessment) return interactionText(result.summary);
     if (result.status == InteractionStatus.ok || result.score == 0) {
       return interactionText(result.summary);
     }
@@ -60,7 +61,7 @@ class ResponseCopyService {
         'missing': _joinLabels(_missingInputLabels(result)),
       });
     }
-    if (result.score >= 70) {
+    if (result.score! >= 70) {
       return i18n.tr('copy.interaction_summary_high', {
         'score': '${result.score}',
       });
@@ -69,6 +70,7 @@ class ResponseCopyService {
   }
 
   String interactionAnalysis(InteractionResult result) {
+    if (!result.hasAssessment) return interactionText(result.analysisText);
     if (result.status == InteractionStatus.ok || result.score == 0) {
       return interactionText(result.analysisText);
     }

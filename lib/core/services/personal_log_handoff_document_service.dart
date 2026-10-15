@@ -1,18 +1,28 @@
 import 'dart:convert';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../domain/usecases/personal_log_handoff_summary_service.dart';
+import 'personal_log_handoff_html_download.dart'
+    if (dart.library.js_interop) 'personal_log_handoff_html_download_web.dart'
+    as html_download;
 
 const personalLogHandoffMaxPdfBytes = 32 * 1024 * 1024;
 const personalLogHandoffMaxHtmlBytes = 32 * 1024 * 1024;
 
-enum PersonalLogHandoffDeliveryStatus { completed, cancelled, unavailable }
+enum PersonalLogHandoffDeliveryStatus {
+  completed,
+  cancelled,
+  unavailable,
+  downloadRequested,
+}
 
 final class PersonalLogHandoffDeliveryException implements Exception {
   const PersonalLogHandoffDeliveryException(this.code);
@@ -113,6 +123,20 @@ final class SystemPersonalLogHandoffDelivery
     if (!authorize()) {
       throw const PersonalLogHandoffDeliveryException('authorization_expired');
     }
+    if (kIsWeb) {
+      try {
+        await html_download.downloadHtml(
+          bytes: bytes,
+          fileName: fileName,
+          authorize: authorize,
+        );
+        return PersonalLogHandoffDeliveryStatus.downloadRequested;
+      } on html_download.HandoffHtmlDownloadException catch (error) {
+        throw PersonalLogHandoffDeliveryException(error.code);
+      } catch (_) {
+        throw const PersonalLogHandoffDeliveryException('html_download_failed');
+      }
+    }
     if (!kIsWeb && defaultTargetPlatform == TargetPlatform.linux) {
       return PersonalLogHandoffDeliveryStatus.unavailable;
     }
@@ -175,9 +199,21 @@ final class PersonalLogHandoffHtmlSerializer {
     if (artifact.documentBlocks.isEmpty) {
       throw const FormatException('handoff_document_blocks_missing');
     }
+    final metadata = artifact.semanticDocument['document'];
+    final language = metadata is Map ? metadata['language'] ?? 'en' : 'en';
+    final direction = metadata is Map
+        ? metadata['direction'] ?? 'auto'
+        : 'auto';
+    if (language is! String ||
+        !RegExp(
+          r'^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8}){0,3}$',
+        ).hasMatch(language) ||
+        !const ['auto', 'ltr', 'rtl'].contains(direction)) {
+      throw const FormatException('handoff_document_language_invalid');
+    }
     final html = StringBuffer()
       ..write('<!doctype html>\n')
-      ..write('<html lang="en" dir="auto">\n<head>\n')
+      ..write('<html lang="$language" dir="$direction">\n<head>\n')
       ..write('<meta charset="utf-8">\n')
       ..write(
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n',
@@ -260,6 +296,94 @@ abstract interface class PersonalLogHandoffRenderer {
   });
 }
 
+enum PersonalLogHandoffFailureStage {
+  snapshot,
+  summary,
+  renderPdf,
+  canvasLayout,
+  canvasRasterize,
+  pdfEncode,
+  validateRevision,
+  delivery,
+}
+
+/// Failure diagnostics contain no exception message, URL, identifier or record.
+/// Release Web stacks retain only the compiled source basename and coordinates.
+final class PersonalLogHandoffFailureDiagnostic {
+  const PersonalLogHandoffFailureDiagnostic._(
+    this.stage,
+    this.failureType,
+    this.sourceFrames,
+  );
+
+  factory PersonalLogHandoffFailureDiagnostic.capture({
+    required PersonalLogHandoffFailureStage stage,
+    required Object error,
+    required StackTrace stackTrace,
+  }) {
+    final type = switch (error) {
+      FormatException() => 'FormatException',
+      StateError() => 'StateError',
+      ArgumentError() => 'ArgumentError',
+      FlutterError() => 'FlutterError',
+      PdfException() => 'PdfException',
+      DiagnosticsNode() => 'DiagnosticsNode',
+      Error() => 'Error',
+      Exception() => 'Exception',
+      _ => 'Object',
+    };
+    // An allowlist prevents arbitrary stack text and filesystem/URL data from
+    // becoming log output. Method names and error.toString() are never emitted.
+    const sourceNames = <String>{
+      'personal_log_handoff_document_service.dart',
+      'personal_log_handoff_page.dart',
+      'personal_log_handoff_summary_service.dart',
+      'adapter.dart',
+      'framework.dart',
+      'diagnostics.dart',
+      'object.dart',
+      'layer.dart',
+      'proxy_box.dart',
+      'view.dart',
+      'widget_wrapper.dart',
+      'document.dart',
+      'image_provider.dart',
+      'main.dart.js',
+    };
+    final frames = <String>[];
+    final locations = RegExp(
+      r'(?:^|[/\s(])([a-zA-Z0-9_]+\.dart(?:\.js)?):(\d{1,8}):(\d{1,8})(?=\D|$)',
+      multiLine: true,
+    );
+    for (final match in locations.allMatches(stackTrace.toString())) {
+      final source = match.group(1)!;
+      if (!sourceNames.contains(source)) continue;
+      final frame = '$source:${match.group(2)}:${match.group(3)}';
+      if (!frames.contains(frame)) frames.add(frame);
+      if (frames.length == 6) break;
+    }
+    return PersonalLogHandoffFailureDiagnostic._(
+      stage,
+      type,
+      List<String>.unmodifiable(frames),
+    );
+  }
+
+  final PersonalLogHandoffFailureStage stage;
+  final String failureType;
+  final List<String> sourceFrames;
+
+  String get logLine =>
+      '[PersonalLogHandoff] failed stage=${stage.name} '
+      'type=$failureType source=${sourceFrames.isEmpty ? 'unavailable' : sourceFrames.join(',')}';
+}
+
+final class PersonalLogHandoffRenderException implements Exception {
+  const PersonalLogHandoffRenderException(this.diagnostic);
+
+  final PersonalLogHandoffFailureDiagnostic diagnostic;
+}
+
 final class SystemPersonalLogHandoffPdfRenderer
     implements PersonalLogHandoffRenderer {
   const SystemPersonalLogHandoffPdfRenderer({this.pixelRatio = 1.5});
@@ -271,7 +395,7 @@ final class SystemPersonalLogHandoffPdfRenderer
     required BuildContext context,
     required PersonalLogHandoffArtifact artifact,
   }) async {
-    if (pixelRatio < 1 || pixelRatio > 3) {
+    if (!pixelRatio.isFinite || pixelRatio < 1 || pixelRatio > 3) {
       throw const FormatException('handoff_pdf_pixel_ratio_invalid');
     }
     final document = pw.Document(
@@ -287,17 +411,10 @@ final class SystemPersonalLogHandoffPdfRenderer
         throw const FormatException('handoff_pdf_context_disposed');
       }
       final wrapped =
-          await WidgetWrapper.fromWidget(
+          await _rasterizePage(
             context: context,
-            constraints: const BoxConstraints.tightFor(
-              width: PersonalLogHandoffPageCanvas.pageWidth,
-              height: PersonalLogHandoffPageCanvas.pageHeight,
-            ),
-            pixelRatio: pixelRatio,
-            widget: PersonalLogHandoffPageCanvas(
-              page: page,
-              totalPages: artifact.pages.length,
-            ),
+            page: page,
+            totalPages: artifact.pages.length,
           ).timeout(
             const Duration(seconds: 15),
             onTimeout: () =>
@@ -311,11 +428,116 @@ final class SystemPersonalLogHandoffPdfRenderer
         ),
       );
     }
-    final bytes = await document.save();
+    final Uint8List bytes;
+    try {
+      bytes = await document.save();
+    } catch (error, stackTrace) {
+      throw PersonalLogHandoffRenderException(
+        PersonalLogHandoffFailureDiagnostic.capture(
+          stage: PersonalLogHandoffFailureStage.pdfEncode,
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    }
     if (bytes.isEmpty || bytes.length > personalLogHandoffMaxPdfBytes) {
       throw const FormatException('handoff_pdf_byte_budget_exceeded');
     }
     return bytes;
+  }
+
+  Future<pw.ImageProvider> _rasterizePage({
+    required BuildContext context,
+    required PersonalLogHandoffDocumentPage page,
+    required int totalPages,
+  }) async {
+    const size = Size(
+      PersonalLogHandoffPageCanvas.pageWidth,
+      PersonalLogHandoffPageCanvas.pageHeight,
+    );
+    final boundary = RenderRepaintBoundary();
+    final position = RenderPositionedBox(child: boundary);
+    final renderView = RenderView(
+      view: View.of(context),
+      configuration: ViewConfiguration(
+        logicalConstraints: BoxConstraints.tight(size),
+        physicalConstraints: BoxConstraints.tight(size * pixelRatio),
+        devicePixelRatio: pixelRatio,
+      ),
+      child: position,
+    );
+    final pipeline = PipelineOwner()..rootNode = renderView;
+    final focusManager = FocusManager();
+    final buildOwner = BuildOwner(focusManager: focusManager);
+    RenderObjectToWidgetElement<RenderBox>? root;
+    ui.Image? image;
+    var stage = PersonalLogHandoffFailureStage.canvasLayout;
+    try {
+      renderView.prepareInitialFrame();
+      // WidgetWrapper.fromWidget reads debugFillProperties to discover these
+      // constraints. Flutter drops DiagnosticPropertiesBuilder.add in release,
+      // so that path throws before painting. Use the explicit page constraints
+      // and the same canvas with public rendering APIs in every build mode.
+      root = RenderObjectToWidgetAdapter<RenderBox>(
+        container: boundary,
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: SizedBox.fromSize(
+            size: size,
+            child: PersonalLogHandoffPageCanvas(
+              page: page,
+              totalPages: totalPages,
+            ),
+          ),
+        ),
+      ).attachToRenderTree(buildOwner);
+      buildOwner
+        ..buildScope(root)
+        ..finalizeTree();
+      pipeline
+        ..flushLayout()
+        ..flushCompositingBits()
+        ..flushPaint();
+      stage = PersonalLogHandoffFailureStage.canvasRasterize;
+      image = await boundary.toImage(pixelRatio: pixelRatio);
+      final data = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      if (data == null) {
+        throw const FormatException('handoff_pdf_image_data_unavailable');
+      }
+      return pw.RawImage(
+        bytes: data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+        width: image.width,
+        height: image.height,
+      );
+    } catch (error, stackTrace) {
+      throw PersonalLogHandoffRenderException(
+        PersonalLogHandoffFailureDiagnostic.capture(
+          stage: stage,
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
+    } finally {
+      image?.dispose();
+      if (root != null) {
+        RenderObjectToWidgetAdapter<RenderBox>(
+          container: boundary,
+        ).attachToRenderTree(buildOwner, root);
+        buildOwner
+          ..buildScope(root)
+          ..finalizeTree();
+      }
+      pipeline.rootNode = null;
+      position.child = null;
+      // The adapter now has no children; its local root can be collected. The
+      // detached host render objects are owned here and released explicitly.
+      boundary.dispose();
+      renderView.child = null;
+      position.dispose();
+      renderView.dispose();
+      focusManager.dispose();
+      pipeline.dispose();
+    }
   }
 }
 
@@ -385,8 +607,10 @@ class PersonalLogHandoffPageCanvas extends StatelessWidget {
     final isWarning = line.startsWith('! ');
     final visible = isTitle
         ? line.substring(2)
-        : isSection || isWarning
+        : isSection
         ? line.substring(3)
+        : isWarning
+        ? line.substring(2)
         : line;
     final style = TextStyle(
       color: isWarning ? const Color(0xFF9A3412) : const Color(0xFF111827),

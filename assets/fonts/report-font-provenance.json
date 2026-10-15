@@ -1,0 +1,39 @@
+{
+  "source_repository": "https://github.com/google/fonts",
+  "pinned_commit": "9710da1eacb3be272583c3224dcb70f9da6eadbb",
+  "derivatives": [
+    {
+      "derived_name": "ParkinSUMReportSC",
+      "source_sha256": "a3041811a78c361b1de50f953c805e0244951c21c5bd412f7232ef0d899af0da",
+      "sha256": "4cdd4523695bd7362b82ae02df431355fc302134dcfed1cac33c9088d5f056e7",
+      "bytes": 10595920,
+      "axes": {
+        "wght": 400
+      },
+      "glyph_codepoints": 30890,
+      "tool": "fonttools4.59.2",
+      "modification": "Static instance plus distinct derivative family/PostScript names; original copyright and OFL remain.",
+      "bundled_path": "assets/fonts/ParkinSUMReportSC-Regular.ttf",
+      "upstream_source_path": "ofl/notosanssc/NotoSansSC[wght].ttf",
+      "upstream_source_url": "https://raw.githubusercontent.com/google/fonts/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf"
+    },
+    {
+      "derived_name": "ParkinSUMReportArabic",
+      "source_sha256": "63111b5b2e074dd48cc67692e0a2726d86ee94c1c37fe8598257b7b4e87e869e",
+      "sha256": "c6d4df12655090594db10a6f63e5e2dd4dc6edc620e418d4d9e12cead7195e12",
+      "bytes": 194304,
+      "axes": {
+        "wght": 400,
+        "wdth": 100
+      },
+      "glyph_codepoints": 1561,
+      "tool": "fonttools4.59.2",
+      "modification": "Static instance plus distinct derivative family/PostScript names; original copyright and OFL remain.",
+      "bundled_path": "assets/fonts/ParkinSUMReportArabic-Regular.ttf",
+      "upstream_source_path": "ofl/notosansarabic/NotoSansArabic[wdth,wght].ttf",
+      "upstream_source_url": "https://raw.githubusercontent.com/google/fonts/9710da1eacb3be272583c3224dcb70f9da6eadbb/ofl/notosansarabic/NotoSansArabic%5Bwdth%2Cwght%5D.ttf"
+    }
+  ],
+  "license": "SIL Open Font License 1.1; original notices retained; derivative names avoid reserved names.",
+  "runtime_network_font_fetch": false
+}

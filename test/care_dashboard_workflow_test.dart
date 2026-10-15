@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/models/food_item.dart';
+import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/core/services/care_workspace_store.dart';
 import 'package:parkinsum_companion/core/services/services.dart';
@@ -72,6 +74,10 @@ Future<void> _tap(WidgetTester tester, Finder target) async {
     // Real ephemeral services enqueue transactions outside the widget clock.
     await Future<void>.delayed(Duration.zero);
   });
+  await tester.pump();
+  // Entry now performs an asynchronous owner-bound draft load after its first
+  // build. Let the service zone finish before settling the loading animation.
+  await tester.runAsync(() => Future<void>.delayed(Duration.zero));
   await tester.pumpAndSettle();
 }
 
@@ -82,9 +88,10 @@ Future<void> _waitForVisible(WidgetTester tester, Finder target) async {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 20)),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 100));
   }
   expect(target, findsOneWidget);
+  await tester.pumpAndSettle();
 }
 
 PersonalObservation _bloodPressure(AppState state) {
@@ -116,6 +123,70 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets(
+    'dashboard displays UTC and local representations of the same instant identically',
+    (tester) async {
+      final state = await _pumpDashboard(tester);
+      final utc = DateTime.parse('2026-09-30T06:04:24.727Z');
+      final local = utc.toLocal();
+      expect(utc.isUtc, isTrue);
+      expect(local.isUtc, isFalse);
+      expect(local.microsecondsSinceEpoch, utc.microsecondsSinceEpoch);
+      final food = FoodItem(
+        id: 'dashboard-time-food',
+        name: 'Synthetic time display food',
+        category: FoodCategory.other,
+        proteinG: 20,
+        carbsG: 0,
+        fatG: 0,
+        fiberG: 0,
+        sodiumMg: 0,
+      );
+      state.foodRepo.replaceAll([food]);
+      for (final entry in [
+        (id: 'utc-meal', time: utc),
+        (id: 'local-meal', time: local),
+      ]) {
+        await tester.runAsync(
+          () => state.addMeal(
+            Meal(
+              id: entry.id,
+              title: entry.id,
+              eatenAt: entry.time,
+              occurredAt: entry.time,
+              items: [MealItem.fromFood(food: food, quantityFactor: 1)],
+            ),
+          ),
+        );
+      }
+      await tester.pumpAndSettle();
+      final times = state.proteinTrend.map((point) => point.time).toList();
+      expect(times, hasLength(2));
+      expect(times.first.isAtSameMomentAs(times.last), isTrue);
+      expect(times.map((time) => time.isUtc).toSet(), {true, false});
+      final expectedTime =
+          '${local.month.toString().padLeft(2, '0')}/${local.day.toString().padLeft(2, '0')} '
+          '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
+      final proteinLabels = find.byWidgetPredicate(
+        (widget) =>
+            widget is Semantics &&
+            widget.properties.label?.endsWith(' · 20.0 g') == true,
+      );
+      await _reveal(tester, proteinLabels);
+      expect(proteinLabels, findsNWidgets(2));
+      expect(
+        tester
+            .widgetList<Semantics>(proteinLabels)
+            .map((widget) => widget.properties.label),
+        everyElement('$expectedTime · 20.0 g'),
+      );
+      await _reveal(tester, find.text('utc-meal'));
+      final recentTimes = find.textContaining('$expectedTime · ');
+      expect(recentTimes, findsNWidgets(2));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
     'EntryPage saves a new meal and dashboard reflects persisted prompts and observation',
     (tester) async {
       final state = await _pumpDashboard(tester);
@@ -124,6 +195,10 @@ void main() {
 
       await _tap(tester, find.text('Add meal'));
       expect(find.byType(EntryPage), findsOneWidget);
+      await _waitForVisible(
+        tester,
+        find.byKey(const ValueKey('entry-title-field')),
+      );
       await tester.enterText(
         find.byKey(const ValueKey('entry-title-field')),
         'Dashboard workflow meal',
@@ -150,7 +225,7 @@ void main() {
       final meal = state.meals.single;
       expect(meal.title, 'Dashboard workflow meal');
       expect(meal.items, hasLength(1));
-      final cached = state.cachedMealCheck(meal);
+      final cached = state.cachedMealCheck(meal)!;
       expect(cached.followupPrompts, isNotEmpty);
       expect(
         state.followups().map((item) => item.prompt.id).toSet(),

@@ -13,6 +13,8 @@ final class TimezoneRuleSnapshot {
     required this.database,
     required this.tzdbRelease,
     required this.providerIdentity,
+    this.supportedStartUtc,
+    this.supportedEndUtcExclusive,
   }) {
     if (!RegExp(r'^\d{4}[a-z]$').hasMatch(tzdbRelease)) {
       throw ArgumentError.value(tzdbRelease, 'tzdbRelease');
@@ -22,11 +24,25 @@ final class TimezoneRuleSnapshot {
         providerIdentity.contains(RegExp(r'[\x00-\x1f\x7f]'))) {
       throw ArgumentError.value(providerIdentity, 'providerIdentity');
     }
+    if ((supportedStartUtc == null) != (supportedEndUtcExclusive == null) ||
+        (supportedStartUtc != null &&
+            (!supportedStartUtc!.isUtc ||
+                !supportedEndUtcExclusive!.isUtc ||
+                !supportedEndUtcExclusive!.isAfter(supportedStartUtc!)))) {
+      throw ArgumentError('Timezone artifact support interval is invalid.');
+    }
   }
 
   final tz.LocationDatabase database;
   final String tzdbRelease;
   final String providerIdentity;
+  final DateTime? supportedStartUtc;
+  final DateTime? supportedEndUtcExclusive;
+
+  bool supportsInstant(DateTime instant) =>
+      supportedStartUtc == null ||
+      (!instant.isBefore(supportedStartUtc!) &&
+          instant.isBefore(supportedEndUtcExclusive!));
 }
 
 /// Resolves an explicitly supplied local civil time against an injected IANA
@@ -126,6 +142,11 @@ final class TimezoneLocalTimeResolver {
     if (selected.offsetMinutes != utcOffsetMinutes) {
       throw const FormatException(
         'Explicit UTC offset does not match the selected timezone interpretation.',
+      );
+    }
+    if (!snapshot.supportsInstant(selected.utc)) {
+      throw const FormatException(
+        'The instant is outside the pinned timezone artifact interval.',
       );
     }
 

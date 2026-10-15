@@ -1,0 +1,25 @@
+{
+  "schema": "parkinsum.public-source-field-expectations/1",
+  "authorship": "Manually transcribed from previously inspected official fields and source documentation before production changes; no production outputs used.",
+  "complete_sample_mean_checks": "HOLD",
+  "cases": [
+    {"case_id":"D01","checks":[{"path":["versionNumber"],"equals":"14"},{"path":["effectiveTime"],"equals":"20260821"},{"path":["setId"],"equals":"39d79ade-8ee0-40ba-9fdd-13045b8ddbdf"}]},
+    {"case_id":"D02","checks":[{"path":["route"],"equals":"ORAL"},{"path":["form"],"equals":"TABLET"},{"path":["active",0,"name"],"equals":"CARBIDOPA HYDRATE"},{"path":["active",0,"numerator","value"],"equals":"25"},{"path":["active",1,"numerator","value"],"equals":"100"},{"path":["active",1,"denominator","value"],"equals":"1"}]},
+    {"case_id":"D03","checks":[{"path":["protein_threshold_g"],"equals":null},{"path":["fat_meal_cmax_change_percent"],"equals":-25},{"path":["fat_meal_auc_change"],"equals":"unchanged"},{"path":["peak_delay_minutes"],"equals":30}]},
+    {"case_id":"D04","products":[["78206-166","10","100"],["78206-168","25","100"],["78206-167","25","250"],["78206-190","25","100"]]},
+    {"case_id":"D05","products":[["64896-661","23.75","95"],["64896-662","36.25","145"],["64896-663","48.75","195"],["64896-664","61.25","245"]],"all_forms":"CAPSULE, EXTENDED RELEASE"},
+    {"case_id":"D06","checks":[{"path":["fat_meal_cmax_change_percent"],"equals":-21},{"path":["fat_meal_auc_change_percent"],"equals":13},{"path":["absorption_delay_hours"],"equals":2}]},
+    {"case_id":"D07","checks":[{"path":["route"],"equals":"RESPIRATORY (INHALATION)"},{"path":["routeCode"],"equals":"C38216"},{"path":["active",0,"numerator","value"],"equals":"42"}]},
+    {"case_id":"D08","checks":[{"path":["active_names"],"equals":["LEVODOPA"]},{"path":["inactive_names"],"equals":["DIPALMITOYLPHOSPHATIDYLCHOLINE, DL-","SODIUM CHLORIDE"]}]},
+    {"case_id":"F01","checks":[{"path":["amount"],"equals":"2.57"},{"path":["unit"],"equals":"g"},{"path":["min"],"equals":"1.54"},{"path":["max"],"equals":"3.55"}]},
+    {"case_id":"F02","checks":[{"path":["amount"],"equals":"0.69"},{"path":["median"],"equals":"0.63"},{"path":["unit"],"equals":"mg"}]},
+    {"case_id":"F03","checks":[{"path":["portionId"],"equals":187633},{"path":["gramWeight"],"equals":"76"}],"portion_protein_expected_decimal":"1.9532"},
+    {"case_id":"F04","checks":[{"path":["food_summaries",0,"fdcId"],"equals":746772},{"path":["food_summaries",1,"fdcId"],"equals":746782},{"path":["food_summaries",0,"protein_g"],"equals":"3.38"},{"path":["food_summaries",1,"protein_g"],"equals":"3.27"}],"different_entities":true},
+    {"case_id":"F05","checks":[{"path":["amount"],"equals":"0"},{"path":["loq_field_present"],"equals":false},{"path":["tyramine_item_present"],"equals":false}],"summary_decision":"reported_zero_precision_unverified"},
+    {"case_id":"F06","checks":[{"path":["summary","loq"],"equals":"0.75"},{"path":["sample","subSampleId"],"equals":2257346}],"sample_path":"sample","sample_decision":"lt","complete_samples":"HOLD"},
+    {"case_id":"F07","checks":[{"path":["amount"],"equals":"0.00875"},{"path":["loq"],"equals":"0.01"}],"summary_decision":"reported_summary_point_hold","complete_samples":"HOLD"},
+    {"case_id":"F08","checks":[{"path":["summary","amount"],"equals":"3.619"},{"path":["summary","loq"],"equals":"2.49"},{"path":["summary","median"],"equals":"0"},{"path":["sample","subSampleId"],"equals":2261492},{"path":["sample","loq"],"equals":"2.47"}],"sample_path":"sample","sample_decision":"lt","complete_samples":"HOLD"},
+    {"case_id":"F09","checks":[{"path":["beta_summary","loq"],"equals":"10.3"},{"path":["beta_sample","subSampleId"],"equals":1755817},{"path":["beta_sample","loq"],"equals":"9.91"},{"path":["gamma_summary","amount"],"equals":"1.779"},{"path":["gamma_summary","loq"],"equals":"2.44"}],"sample_path":"beta_sample","sample_decision":"lt","summary_path":"gamma_summary","summary_decision":"reported_summary_point_hold","complete_samples":"HOLD"},
+    {"case_id":"F10","checks":[{"path":["protein_1003_present"],"equals":false},{"path":["fat_1004_present"],"equals":false},{"path":["foodPortions"],"equals":[]}],"absence_decision":"unknown"}
+  ]
+}

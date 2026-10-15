@@ -25,7 +25,25 @@ import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/data/datasources/remote/p0_import_models.dart';
 
-class RecordingCdssDatabase implements CdssDatabase {
+class RecordingCdssDatabase implements CdssDatabase, CdssAtomicWriter {
+  @override
+  Future<T> runAtomicWrite<T>(Future<T> Function() action) async {
+    final before = (jsonDecode(jsonEncode(tables)) as Map).map(
+      (key, rows) => MapEntry(
+        key as String,
+        (rows as List).map((r) => Map<String, Object?>.from(r as Map)).toList(),
+      ),
+    );
+    try {
+      return await action();
+    } catch (_) {
+      tables
+        ..clear()
+        ..addAll(before);
+      rethrow;
+    }
+  }
+
   final Map<String, List<Map<String, Object?>>> tables = {
     'recommendation_audit_log': <Map<String, Object?>>[],
     'region_jurisdiction_map': <Map<String, Object?>>[],
@@ -198,6 +216,10 @@ class RecordingCdssDatabase implements CdssDatabase {
 
   @override
   Future<void> insertIngestionRun(IngestionRunRecord record) async {
+    // Match the primary-key upsert used by both production backends.
+    tables['ingestion_run']?.removeWhere(
+      (row) => row['run_id'] == record.runId,
+    );
     _add('ingestion_run', {
       'run_id': record.runId,
       'source_family': record.sourceFamily,
@@ -367,7 +389,7 @@ void main() {
       expect(output.humanReadableMarkdown, contains('Runtime Decision'));
       expect(
         output.humanReadableMarkdown,
-        contains('Dhivy label food effect reference'),
+        contains('DHIVY oral tablet label: food effect'),
       );
       expect(output.auditLogJsonl, contains('needs_human_review'));
       expect(output.auditLogJsonl, contains('evidence_details'));
@@ -807,6 +829,31 @@ void main() {
     await expectLater(
       service.importBundle(
         const P0ImportBundle(
+          observations: [
+            ObservationRecord(
+              observationId: 'obs_atomic_import',
+              domain: 'food',
+              entityType: 'food_variant',
+              entityKey: 'FOOD_TEST',
+              attributeCode: 'protein_g',
+              valueType: 'numeric',
+              value: QualifiedValue(
+                rawValueText: '10',
+                qualifierKind: QualifierKind.exact,
+                valueNum: 10,
+                low: 10,
+                high: 10,
+              ),
+              unit: 'g',
+              basisType: 'per_100g',
+              basisAmount: 100,
+              scopeHash: 'scope_global',
+              sourceDocId: 'synthetic-copy-source',
+              recordLocator: 'synthetic-row',
+              methodCode: null,
+              extractionConfidence: 1,
+            ),
+          ],
           resolvedFacts: [
             ResolvedFactRecord(
               factId: 'fact_atomic_import',
@@ -1439,91 +1486,94 @@ void main() {
       runtimeRuleEngine: RuntimeRuleEngine(),
     );
 
-    await service.importBundle(
-      const P0ImportBundle(
-        sourceDocuments: [
-          SourceDocumentRecord(
-            sourceDocId: 'doc_fdc_high',
-            sourceFamily: 'FDC',
-            organization: 'USDA',
-            docType: 'food_nutrient',
-            title: 'FDC high confidence',
-            jurisdiction: 'US',
-            originUrl: 'https://example.test/fdc',
-            publishedAt: null,
-            effectiveAt: null,
-            language: 'en',
-            licenseNote: 'test',
-            checksum: 'fdc',
-            sourceStatus: 'active',
-            rawPayload: '{}',
-          ),
-          SourceDocumentRecord(
-            sourceDocId: 'doc_ciqual_low',
-            sourceFamily: 'CIQUAL',
-            organization: 'ANSES',
-            docType: 'food_nutrient',
-            title: 'Ciqual lower confidence',
-            jurisdiction: 'FR',
-            originUrl: 'https://example.test/ciqual',
-            publishedAt: null,
-            effectiveAt: null,
-            language: 'fr',
-            licenseNote: 'test',
-            checksum: 'ciqual',
-            sourceStatus: 'active',
-            rawPayload: '{}',
-          ),
-        ],
-        observations: [
-          ObservationRecord(
-            observationId: 'obs_protein_fdc',
-            domain: 'food',
-            entityType: 'food_variant',
-            entityKey: 'FOOD_TEST#US#FDC#1',
-            attributeCode: 'protein_g',
-            valueType: 'numeric',
-            value: QualifiedValue(
-              rawValueText: '10',
-              qualifierKind: QualifierKind.exact,
-              valueNum: 10,
-              low: 10,
-              high: 10,
+    await expectLater(
+      service.importBundle(
+        const P0ImportBundle(
+          sourceDocuments: [
+            SourceDocumentRecord(
+              sourceDocId: 'doc_fdc_high',
+              sourceFamily: 'FDC',
+              organization: 'USDA',
+              docType: 'food_nutrient',
+              title: 'FDC high confidence',
+              jurisdiction: 'US',
+              originUrl: 'https://example.test/fdc',
+              publishedAt: null,
+              effectiveAt: null,
+              language: 'en',
+              licenseNote: 'test',
+              checksum: 'fdc',
+              sourceStatus: 'active',
+              rawPayload: '{}',
             ),
-            unit: 'g',
-            basisType: 'per_100g',
-            basisAmount: 100,
-            scopeHash: 'scope_food_us',
-            sourceDocId: 'doc_fdc_high',
-            recordLocator: 'protein',
-            methodCode: null,
-            extractionConfidence: 0.98,
-          ),
-          ObservationRecord(
-            observationId: 'obs_protein_ciqual',
-            domain: 'food',
-            entityType: 'food_variant',
-            entityKey: 'FOOD_TEST#US#FDC#1',
-            attributeCode: 'protein_g',
-            valueType: 'numeric',
-            value: QualifiedValue(
-              rawValueText: '2',
-              qualifierKind: QualifierKind.exact,
-              valueNum: 2,
-              low: 2,
-              high: 2,
+            SourceDocumentRecord(
+              sourceDocId: 'doc_ciqual_low',
+              sourceFamily: 'CIQUAL',
+              organization: 'ANSES',
+              docType: 'food_nutrient',
+              title: 'Ciqual lower confidence',
+              jurisdiction: 'FR',
+              originUrl: 'https://example.test/ciqual',
+              publishedAt: null,
+              effectiveAt: null,
+              language: 'fr',
+              licenseNote: 'test',
+              checksum: 'ciqual',
+              sourceStatus: 'active',
+              rawPayload: '{}',
             ),
-            unit: 'g',
-            basisType: 'per_100g',
-            basisAmount: 100,
-            scopeHash: 'scope_food_us',
-            sourceDocId: 'doc_ciqual_low',
-            recordLocator: 'protein',
-            methodCode: null,
-            extractionConfidence: 0.75,
-          ),
-        ],
+          ],
+          observations: [
+            ObservationRecord(
+              observationId: 'obs_protein_fdc',
+              domain: 'food',
+              entityType: 'food_variant',
+              entityKey: 'FOOD_TEST#US#FDC#1',
+              attributeCode: 'protein_g',
+              valueType: 'numeric',
+              value: QualifiedValue(
+                rawValueText: '10',
+                qualifierKind: QualifierKind.exact,
+                valueNum: 10,
+                low: 10,
+                high: 10,
+              ),
+              unit: 'g',
+              basisType: 'per_100g',
+              basisAmount: 100,
+              scopeHash: 'scope_food_us',
+              sourceDocId: 'doc_fdc_high',
+              recordLocator: 'protein',
+              methodCode: null,
+              extractionConfidence: 0.98,
+            ),
+            ObservationRecord(
+              observationId: 'obs_protein_ciqual',
+              domain: 'food',
+              entityType: 'food_variant',
+              entityKey: 'FOOD_TEST#US#FDC#1',
+              attributeCode: 'protein_g',
+              valueType: 'numeric',
+              value: QualifiedValue(
+                rawValueText: '2',
+                qualifierKind: QualifierKind.exact,
+                valueNum: 2,
+                low: 2,
+                high: 2,
+              ),
+              unit: 'g',
+              basisType: 'per_100g',
+              basisAmount: 100,
+              scopeHash: 'scope_food_us',
+              sourceDocId: 'doc_ciqual_low',
+              recordLocator: 'protein',
+              methodCode: null,
+              extractionConfidence: 0.75,
+            ),
+          ],
+        ),
       ),
+      throwsA(isA<CdssImportHeldException>()),
     );
 
     final audits = await db.queryTable('conflict_audit_log');
@@ -2134,11 +2184,11 @@ void main() {
       final queryAudit = projection.queryAudit;
       expect(
         queryAudit['schema_id'],
-        'parkinsum.cdss-food-projection-query-audit/1',
+        'parkinsum.cdss-food-projection-query-audit/4',
       );
       expect(
         queryAudit['read_consistency'],
-        contains('no transaction-scoped snapshot'),
+        'legacy_unverified_sequential_reads',
       );
       final tableReads =
           queryAudit['table_reads'] as List<Map<String, Object?>>;
@@ -2173,8 +2223,9 @@ void main() {
           evidence.observationId: evidence,
       };
 
-      // Existing ranking inputs still use the same last exact numeric row.
-      expect(food.proteinG, 12.0);
+      // Conflicting exact rows remain evidence; neither becomes a point input.
+      expect(food.proteinG, 0.0);
+      expect(food.isNutrientMissing('proteinG'), isTrue);
       expect(food.carbsG, 0.0);
       expect(food.foodPortionEvidence, hasLength(1));
       final portion = food.foodPortionEvidence.single;
@@ -2201,7 +2252,7 @@ void main() {
       );
       expect(
         evidenceById['obs_protein_selected']!.selectedForLegacyPointProjection,
-        isTrue,
+        isFalse,
       );
       expect(
         evidenceById['obs_protein_source_range']!

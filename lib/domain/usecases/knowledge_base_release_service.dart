@@ -66,6 +66,10 @@ class ReleaseReadinessReport {
   final List<Map<String, dynamic>> reviewTicketSummaries;
   final Map<String, int> issueCounts;
 
+  /// A generic operational override is not a source-evidence adjudication.
+  bool get hasSourceImportHold =>
+      blockingIssues.contains('source_import_held_for_review');
+
   const ReleaseReadinessReport({
     this.readinessProfile = 'production_candidate',
     required this.snapshotId,
@@ -449,16 +453,22 @@ class KnowledgeBaseReleaseService {
       readinessProfile: 'production_candidate',
     );
     final override = (overrideReason ?? '').trim();
+    final blocked =
+        readiness.hasSourceImportHold ||
+        (!readiness.isReady && override.isEmpty);
     final humanReadableSummary = _buildReleaseDrillSummary(
       readiness: readiness,
-      publishWouldBeBlocked: !readiness.isReady && override.isEmpty,
+      publishWouldBeBlocked: blocked,
       overrideReason: override.isEmpty ? null : override,
     );
     return ReleaseReadinessDrillReport(
       snapshotId: snapshotId,
       productionCandidateReady: readiness.isReady,
-      publishWouldBeBlocked: !readiness.isReady && override.isEmpty,
-      overrideWouldAllowPublish: !readiness.isReady && override.isNotEmpty,
+      publishWouldBeBlocked: blocked,
+      overrideWouldAllowPublish:
+          !readiness.isReady &&
+          !readiness.hasSourceImportHold &&
+          override.isNotEmpty,
       overrideReason: override.isEmpty ? null : override,
       openReviewTicketCount: readiness.openReviewTicketCount,
       openHighSeverityReviewTicketCount:
@@ -527,6 +537,516 @@ class KnowledgeBaseReleaseService {
     return record;
   }
 
+  /// Records an evidence-bound review action on the existing audit trail.
+  /// This is a candidate decision, not permission to publish. The original
+  /// conflict and ticket remain open until a separately validated promotion.
+  Future<ConflictAuditLogRecord> recordImportConflictReviewDecision({
+    required String ticketId,
+    required String conflictAuditId,
+    required String expectedEvidenceSha256,
+    required String action,
+    required String reviewerReference,
+    required String reason,
+    String? chosenObservationId,
+  }) async {
+    const actions = {
+      'choose_observation',
+      'request_corrected_evidence',
+      'defer',
+    };
+    if (!actions.contains(action) ||
+        reviewerReference.trim().isEmpty ||
+        reason.trim().isEmpty) {
+      throw ArgumentError(
+        'A supported action, reviewer reference and reason are required.',
+      );
+    }
+    final tickets = await listReviewTickets();
+    final matchingTickets = tickets
+        .where((ticket) => ticket.ticketId == ticketId)
+        .toList();
+    if (matchingTickets.length != 1 ||
+        matchingTickets.single.status != 'open') {
+      throw StateError('An open unambiguous review ticket is required.');
+    }
+    final ticket = matchingTickets.single;
+    final evidence = await cdssService.loadHeldImportReviewEvidence(
+      snapshotId: ticket.snapshotId,
+    );
+    if (evidence['input_sha256'] != expectedEvidenceSha256) {
+      throw StateError('The review evidence changed before the decision.');
+    }
+    final payload = evidence['payload'] as Map;
+    final audits = (payload['conflict_audits'] as List)
+        .where((row) => (row as Map)['audit_id'] == conflictAuditId)
+        .toList();
+    if (audits.length != 1) {
+      throw StateError('The original conflict audit is unavailable.');
+    }
+    final audit = audits.single as Map;
+    if (audit['snapshot_id'] != ticket.snapshotId ||
+        audit['run_id'] != payload['run_id'] ||
+        (ticket.runId != null && ticket.runId != audit['run_id']) ||
+        ticket.reasonCode != 'unresolved_conflict' ||
+        ticket.targetType != audit['audit_type'] ||
+        ticket.targetId != audit['target'] ||
+        !(audit['needs_human_review'] == true ||
+            audit['needs_human_review'] == 1)) {
+      throw StateError('The ticket and unresolved conflict do not match.');
+    }
+    Map? chosen;
+    Map? source;
+    if (action == 'choose_observation') {
+      // A numeric preference cannot repair absent history or source/scope
+      // collisions. Those require corrected original evidence.
+      if (audit['audit_type'] != 'FACT_CLUSTER_RESOLUTION' ||
+          audit['decision'] != 'review_required') {
+        throw StateError(
+          'This conflict requires corrected evidence rather than a numeric choice.',
+        );
+      }
+      final rationale = jsonDecode(audit['decision_reason'] as String) as Map;
+      final participantIds = <Object?>{};
+      for (final edge in rationale['comparison_edges'] as List? ?? []) {
+        final row = edge as Map;
+        participantIds.add(row['left_observation_id']);
+        participantIds.add(row['right_observation_id']);
+      }
+      participantIds.add((rationale['accepted'] as Map?)?['observation_id']);
+      if (chosenObservationId == null ||
+          !participantIds.contains(chosenObservationId)) {
+        throw ArgumentError('Choose an original participant in this conflict.');
+      }
+      final historical = payload['incumbent_evidence'] as Map;
+      final candidates = <Map>[
+        ...(payload['observations'] as List).cast<Map>(),
+        ...(historical['observation'] as List).cast<Map>(),
+      ].where((row) => row['observation_id'] == chosenObservationId).toList();
+      if (candidates.isEmpty) {
+        throw StateError('The chosen original evidence is missing.');
+      }
+      chosen = candidates.first;
+      if (candidates.any(
+        (row) =>
+            _importReviewDigest('chosen-observation', row) !=
+            _importReviewDigest('chosen-observation', chosen),
+      )) {
+        throw StateError('The chosen observation identity is ambiguous.');
+      }
+      final low = chosen['low'];
+      final high = chosen['high'];
+      if (low is! num ||
+          high is! num ||
+          !low.isFinite ||
+          !high.isFinite ||
+          low > high ||
+          '${chosen['record_locator'] ?? ''}'.trim().isEmpty ||
+          '${chosen['method_code'] ?? ''}'.trim().isEmpty ||
+          '${chosen['basis_type'] ?? ''}'.trim().isEmpty ||
+          chosen['qualifier_kind'] == 'parsing_uncertainty') {
+        throw StateError(
+          'The chosen quantity needs qualified original evidence.',
+        );
+      }
+      final sources =
+          <Map>[
+                ...(payload['source_documents'] as List).cast<Map>(),
+                ...(historical['source_document'] as List).cast<Map>(),
+              ]
+              .where((row) => row['source_doc_id'] == chosen!['source_doc_id'])
+              .toList();
+      if (sources.isEmpty ||
+          sources.any(
+            (row) =>
+                _importReviewDigest('chosen-source', row) !=
+                _importReviewDigest('chosen-source', sources.first),
+          )) {
+        throw StateError('The chosen source identity is missing or ambiguous.');
+      }
+      source = sources.first;
+      if ('${source['raw_payload'] ?? ''}'.trim().isEmpty ||
+          '${source['checksum'] ?? ''}'.trim().isEmpty) {
+        throw StateError('The chosen source content is incomplete.');
+      }
+    } else if (chosenObservationId != null) {
+      throw ArgumentError(
+        'A deferred or corrected-evidence action cannot select a quantity.',
+      );
+    }
+    final decisionPayload = <String, Object?>{
+      'schema': 'parkinsum.import-conflict-review-decision/1',
+      'ticket_id': ticketId,
+      'conflict_audit_id': conflictAuditId,
+      'snapshot_id': ticket.snapshotId,
+      'run_id': payload['run_id'],
+      'evidence_sha256': expectedEvidenceSha256,
+      'original_audit_sha256': _importReviewDigest(
+        'original-conflict-audit',
+        audit,
+      ),
+      'action': action,
+      'reviewer_reference': reviewerReference.trim(),
+      'reason': reason.trim(),
+      'chosen_observation': chosen,
+      'chosen_source': source,
+      'chosen_observation_sha256': chosen == null
+          ? null
+          : _importReviewDigest('chosen-observation', chosen),
+      'chosen_source_sha256': source == null
+          ? null
+          : _importReviewDigest('chosen-source', source),
+      'activation_authorized': false,
+      'clinical_approval': false,
+    };
+    // Recheck after every asynchronous read, immediately before appending.
+    final rechecked = await cdssService.loadHeldImportReviewEvidence(
+      snapshotId: ticket.snapshotId,
+    );
+    if (rechecked['input_sha256'] != expectedEvidenceSha256) {
+      throw StateError('The review evidence changed.');
+    }
+    final recheckedTickets = (await listReviewTickets())
+        .where((row) => row.ticketId == ticketId)
+        .toList();
+    if (recheckedTickets.length != 1 ||
+        recheckedTickets.single.status != 'open' ||
+        recheckedTickets.single.snapshotId != ticket.snapshotId ||
+        recheckedTickets.single.targetType != ticket.targetType ||
+        recheckedTickets.single.targetId != ticket.targetId ||
+        recheckedTickets.single.runId != ticket.runId) {
+      throw StateError('The review ticket changed before the decision.');
+    }
+    final now = DateTime.now();
+    final record = ConflictAuditLogRecord(
+      auditId: cdssService.identifierFactory.newId('import_review'),
+      snapshotId: ticket.snapshotId,
+      runId: '${payload['run_id']}',
+      auditType: 'IMPORT_CONFLICT_REVIEW_DECISION',
+      target: '${audit['target']}',
+      decision: action,
+      winningRuleIdsJson: '[]',
+      suppressedRuleIdsJson: '[]',
+      sourceDocRefsJson: '${audit['source_doc_refs_json']}',
+      inputHash: _importReviewDigest('import-review-decision', decisionPayload),
+      decisionReason: jsonEncode(decisionPayload),
+      machineActionsJson: '[]',
+      humanMessage: reason.trim(),
+      needsHumanReview: false,
+      createdAt: now,
+    );
+    await database.insertConflictAuditLog(record);
+    // Counts/actions only; raw evidence and reviewer details stay in the audit.
+    // ignore: avoid_print
+    print(
+      '[CDSS] import review decision recorded; action=$action activated=false',
+    );
+    return record;
+  }
+
+  String _importReviewDigest(String domain, Object? payload) =>
+      cdssService.identifierFactory.inputDigest(domain, payload);
+
+  /// All UI evidence comes from one participating read boundary. A typed name
+  /// records a local explanation; it is not reviewer authentication.
+  Future<Map<String, dynamic>> loadImportReviewSession(
+    String snapshotId,
+  ) async {
+    _requireSameAtomicReviewBackend();
+    return (database as CdssAtomicWriter).runAtomicWrite(() async {
+      final evidence = await cdssService.loadHeldImportReviewEvidence(
+        snapshotId: snapshotId,
+      );
+      final payload = evidence['payload'] as Map;
+      final tickets = await listReviewTickets(snapshotId: snapshotId);
+      final historical = payload['incumbent_evidence'] as Map;
+      final observations = <Map>[
+        ...(payload['observations'] as List).cast<Map>(),
+        ...(historical['observation'] as List).cast<Map>(),
+      ];
+      final sources = <Map>[
+        ...(payload['source_documents'] as List).cast<Map>(),
+        ...(historical['source_document'] as List).cast<Map>(),
+      ];
+      final conflicts = <Map<String, Object?>>[];
+      for (final audit in (payload['conflict_audits'] as List).cast<Map>()) {
+        if (audit['needs_human_review'] != true &&
+            audit['needs_human_review'] != 1) {
+          continue;
+        }
+        final rationale = jsonDecode(audit['decision_reason'] as String) as Map;
+        final participants = <String>{};
+        final edges = (rationale['comparison_edges'] as List? ?? [])
+            .cast<Map>();
+        for (final edge in edges) {
+          participants.add('${edge['left_observation_id']}');
+          participants.add('${edge['right_observation_id']}');
+        }
+        final matchingTickets = tickets
+            .where(
+              (t) =>
+                  t.status == 'open' &&
+                  t.reasonCode == 'unresolved_conflict' &&
+                  t.targetType == audit['audit_type'] &&
+                  t.targetId == audit['target'] &&
+                  t.runId == audit['run_id'],
+            )
+            .toList();
+        final candidates = <Map<String, Object?>>[];
+        for (final id in participants.toList()..sort()) {
+          final rows = observations
+              .where((r) => r['observation_id'] == id)
+              .toList();
+          if (rows.isEmpty) continue;
+          final original = rows.first;
+          final linkedSources = sources
+              .where((s) => s['source_doc_id'] == original['source_doc_id'])
+              .toList();
+          candidates.add({
+            'observation': original,
+            'source_documents': linkedSources,
+            'identity_unambiguous': rows.every(
+              (r) =>
+                  _importReviewDigest('chosen-observation', r) ==
+                  _importReviewDigest('chosen-observation', original),
+            ),
+          });
+        }
+        conflicts.add({
+          'audit': audit,
+          'ticket_id': matchingTickets.length == 1
+              ? matchingTickets.single.ticketId
+              : null,
+          'numeric_choice_available':
+              audit['audit_type'] == 'FACT_CLUSTER_RESOLUTION' &&
+              audit['decision'] == 'review_required' &&
+              edges.isNotEmpty &&
+              edges.every((e) => e['numeric_comparable'] == true),
+          'candidates': candidates,
+        });
+      }
+      return {'evidence': evidence, 'conflicts': conflicts};
+    });
+  }
+
+  /// One explicit batch records all choices and captures the post-decision
+  /// preview. Any failed last decision rolls back the entire batch.
+  Future<CdssReviewedImportPreview> recordImportChoicesAndPreview({
+    required String snapshotId,
+    required String expectedEvidenceSha256,
+    required Map<String, String> observationIdsByAudit,
+    required String reviewerReference,
+    required String reason,
+    required bool Function() isSessionCurrent,
+  }) async {
+    _requireSameAtomicReviewBackend();
+    return (database as CdssAtomicWriter).runAtomicWrite(() async {
+      if (!isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      final session = await loadImportReviewSession(snapshotId);
+      final evidence = session['evidence'] as Map;
+      if (evidence['input_sha256'] != expectedEvidenceSha256) {
+        throw StateError('Review evidence changed.');
+      }
+      final conflicts = (session['conflicts'] as List).cast<Map>();
+      if (conflicts.isEmpty ||
+          observationIdsByAudit.length != conflicts.length ||
+          !conflicts.every(
+            (c) => observationIdsByAudit.containsKey(
+              (c['audit'] as Map)['audit_id'],
+            ),
+          )) {
+        throw StateError('Choose one original observation for every conflict.');
+      }
+      final decisions = <String>[];
+      for (final c in conflicts) {
+        if (!isSessionCurrent()) {
+          throw StateError('The local review session changed.');
+        }
+        final auditId = '${(c['audit'] as Map)['audit_id']}';
+        final ticketId = c['ticket_id'];
+        if (ticketId is! String) {
+          throw StateError('The original open ticket is unavailable.');
+        }
+        final decision = await recordImportConflictReviewDecision(
+          ticketId: ticketId,
+          conflictAuditId: auditId,
+          expectedEvidenceSha256: expectedEvidenceSha256,
+          action: 'choose_observation',
+          reviewerReference: reviewerReference,
+          reason: reason,
+          chosenObservationId: observationIdsByAudit[auditId],
+        );
+        decisions.add(decision.auditId);
+      }
+      final preview = await previewReviewedImport(
+        heldSnapshotId: snapshotId,
+        decisionIds: decisions,
+      );
+      if (!isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      return preview;
+    });
+  }
+
+  Future<Map<String, dynamic>> prepareImportReviewSession({
+    required String snapshotId,
+    required bool Function() isSessionCurrent,
+  }) async {
+    _requireSameAtomicReviewBackend();
+    return (database as CdssAtomicWriter).runAtomicWrite(() async {
+      if (!isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      await validateReleaseCandidate(snapshotId);
+      final session = await loadImportReviewSession(snapshotId);
+      if (!isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      return session;
+    });
+  }
+
+  Future<ConflictAuditLogRecord> recordImportReviewActionForSession({
+    required String ticketId,
+    required String conflictAuditId,
+    required String expectedEvidenceSha256,
+    required String action,
+    required String reviewerReference,
+    required String reason,
+    required bool Function() isSessionCurrent,
+  }) async {
+    _requireSameAtomicReviewBackend();
+    return (database as CdssAtomicWriter).runAtomicWrite(() async {
+      if (!isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      final decision = await recordImportConflictReviewDecision(
+        ticketId: ticketId,
+        conflictAuditId: conflictAuditId,
+        expectedEvidenceSha256: expectedEvidenceSha256,
+        action: action,
+        reviewerReference: reviewerReference,
+        reason: reason,
+      );
+      if (!isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      return decision;
+    });
+  }
+
+  void _requireSameAtomicReviewBackend() {
+    _requireSharedReviewBackend();
+    if (database is! CdssAtomicWriter) {
+      throw UnsupportedError('Atomic source review is unavailable.');
+    }
+  }
+
+  Future<CdssReviewedImportPreview> previewReviewedImport({
+    required String heldSnapshotId,
+    required List<String> decisionIds,
+  }) {
+    _requireSharedReviewBackend();
+    return cdssService.previewReviewedImport(
+      heldSnapshotId: heldSnapshotId,
+      decisionIds: decisionIds,
+    );
+  }
+
+  Future<CdssImportReport> activateReviewedImport({
+    required CdssReviewedImportPreview preview,
+    required String confirmationReference,
+    required String confirmationReason,
+  }) {
+    _requireSharedReviewBackend();
+    return cdssService.activateReviewedImport(
+      preview: preview,
+      confirmationReference: confirmationReference,
+      confirmationReason: confirmationReason,
+    );
+  }
+
+  Future<CdssImportReport> activateReviewedImportForSession({
+    required CdssReviewedImportPreview preview,
+    required String confirmationReference,
+    required String confirmationReason,
+    required bool Function() isSessionCurrent,
+  }) {
+    _requireSameAtomicReviewBackend();
+    return cdssService.activateReviewedImport(
+      preview: preview,
+      confirmationReference: confirmationReference,
+      confirmationReason: confirmationReason,
+      isSessionCurrent: isSessionCurrent,
+    );
+  }
+
+  void _requireSharedReviewBackend() {
+    if (!identical(database, cdssService.database)) {
+      throw StateError(
+        'Review and activation must share one catalogue backend.',
+      );
+    }
+  }
+
+  Future<bool> isImportConflictReviewDecisionCurrent(
+    String decisionAuditId,
+  ) async {
+    final records = (await database.queryTable('conflict_audit_log'))
+        .where(
+          (row) =>
+              row['audit_id'] == decisionAuditId &&
+              row['audit_type'] == 'IMPORT_CONFLICT_REVIEW_DECISION',
+        )
+        .toList();
+    if (records.length != 1) return false;
+    try {
+      final row = records.single;
+      final decision = jsonDecode(row['decision_reason'] as String) as Map;
+      if (decision['schema'] != 'parkinsum.import-conflict-review-decision/1' ||
+          decision['activation_authorized'] != false ||
+          decision['clinical_approval'] != false ||
+          row['input_hash'] !=
+              _importReviewDigest('import-review-decision', decision)) {
+        return false;
+      }
+      if (row['snapshot_id'] != decision['snapshot_id'] ||
+          row['run_id'] != decision['run_id'] ||
+          row['decision'] != decision['action']) {
+        return false;
+      }
+      final tickets = (await listReviewTickets())
+          .where((ticket) => ticket.ticketId == decision['ticket_id'])
+          .toList();
+      if (tickets.length != 1 ||
+          tickets.single.status != 'open' ||
+          tickets.single.snapshotId != decision['snapshot_id'] ||
+          tickets.single.reasonCode != 'unresolved_conflict') {
+        return false;
+      }
+      final evidence = await cdssService.loadHeldImportReviewEvidence(
+        snapshotId: '${decision['snapshot_id']}',
+      );
+      if (evidence['input_sha256'] != decision['evidence_sha256']) return false;
+      final payload = evidence['payload'] as Map;
+      final audits = (payload['conflict_audits'] as List)
+          .where(
+            (audit) =>
+                (audit as Map)['audit_id'] == decision['conflict_audit_id'],
+          )
+          .toList();
+      return audits.length == 1 &&
+          tickets.single.targetType == (audits.single as Map)['audit_type'] &&
+          tickets.single.targetId == (audits.single as Map)['target'] &&
+          decision['original_audit_sha256'] ==
+              _importReviewDigest('original-conflict-audit', audits.single);
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<SnapshotDistributionRecord> publishSnapshot({
     required String snapshotId,
     String channel = 'local_stable',
@@ -535,7 +1055,13 @@ class KnowledgeBaseReleaseService {
     await database.initialize();
     final readiness = await validateReleaseCandidate(snapshotId);
     final override = (overrideReason ?? '').trim();
-    if (!readiness.isReady && override.isEmpty) {
+    if (readiness.hasSourceImportHold ||
+        (!readiness.isReady && override.isEmpty)) {
+      // ignore: avoid_print
+      print(
+        '[KnowledgeBaseReleaseService] publish blocked snapshot=$snapshotId '
+        'sourceImportHold=${readiness.hasSourceImportHold}',
+      );
       final now = DateTime.now();
       await database.insertSnapshotDistribution(
         SnapshotDistributionRecord(
@@ -549,7 +1075,12 @@ class KnowledgeBaseReleaseService {
           manifestJson: jsonEncode({
             'snapshot_id': snapshotId,
             'release_readiness': readiness.toJson(),
-            'publish_guard': {'blocked': true, 'override_used': false},
+            'publish_guard': {
+              'blocked': true,
+              'override_used': false,
+              'source_import_hold': readiness.hasSourceImportHold,
+              if (override.isNotEmpty) 'attempted_override_reason': override,
+            },
           }),
           errorMessage:
               'Snapshot $snapshotId is not release-ready: '
@@ -1298,6 +1829,25 @@ class KnowledgeBaseReleaseService {
                   row['needs_human_review'] == true),
         )
         .length;
+    final heldImportCount = ingestionRows
+        .where(
+          (row) =>
+              '${row['snapshot_id'] ?? ''}' == snapshotId &&
+              '${row['status'] ?? ''}' == 'held_for_conflict_review',
+        )
+        .length;
+    final originalSourceHoldCount = conflictRows
+        .where(
+          (row) =>
+              '${row['snapshot_id'] ?? ''}' == snapshotId &&
+              (row['needs_human_review'] == 1 ||
+                  row['needs_human_review'] == true) &&
+              const {
+                'FACT_CLUSTER_RESOLUTION',
+                'IMPORT_EVIDENCE_IDENTITY_HOLD',
+              }.contains('${row['audit_type'] ?? ''}'),
+        )
+        .length;
     final invalidRuleCount = ruleRows.where(_isInvalidRuleRegistryRow).length;
     final crosswalkVariantIds = crosswalkRows
         .where((row) => '${row['status'] ?? 'active'}' == 'active')
@@ -1403,6 +1953,9 @@ class KnowledgeBaseReleaseService {
     if (unresolvedConflicts > 0) {
       issues.add('unresolved_conflicts');
     }
+    if (heldImportCount > 0 || originalSourceHoldCount > 0) {
+      issues.add('source_import_held_for_review');
+    }
     if (failedImportCount > 0) {
       issues.add('failed_imports_for_snapshot');
     }
@@ -1437,6 +1990,8 @@ class KnowledgeBaseReleaseService {
       'invalid_rule_rows': invalidRuleCount,
       'missing_crosswalk_for_active_variants': missingCrosswalkCount,
       'unresolved_conflicts': unresolvedConflicts,
+      'held_source_imports': heldImportCount,
+      'original_source_holds': originalSourceHoldCount,
       'non_durable_artifact_fallback': nonDurableArtifactCount,
       'failed_imports': failedImportCount,
       'resumable_imports': resumableImportCount,

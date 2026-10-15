@@ -18,6 +18,10 @@ class NextMealRecommendationRequest {
   final List<Meal> history;
   final List<DrugDefinition> activeDrugs;
   final List<Intake> intakes;
+
+  /// Selected medication references must remain visible even if their current
+  /// catalogue definition disappeared.
+  final List<String> requiredDrugIds;
   final DateTime now;
   final RecommendationMode mode;
   final bool userConsentedToAi;
@@ -32,6 +36,7 @@ class NextMealRecommendationRequest {
     required this.history,
     required this.activeDrugs,
     this.intakes = const <Intake>[],
+    this.requiredDrugIds = const [],
     required this.now,
     this.mode = RecommendationMode.auto,
     this.userConsentedToAi = false,
@@ -47,6 +52,7 @@ class NextMealRecommendationResult {
   final String decisionPath;
   final List<String> explanations;
   final List<String> gateReasons;
+  final List<String> unresolvedDrugIds;
   final String? templateCountryCode;
   final String? templateMealSlot;
   final String? templateTextureLevel;
@@ -83,6 +89,7 @@ class NextMealRecommendationResult {
     required this.decisionPath,
     required this.explanations,
     this.gateReasons = const <String>[],
+    this.unresolvedDrugIds = const [],
     this.templateCountryCode,
     this.templateMealSlot,
     this.templateTextureLevel,

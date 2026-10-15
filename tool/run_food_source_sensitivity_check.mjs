@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdirSync,existsSync,unlinkSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {captureInputs} from './verification_runtime.mjs';
+import {reviewJoint,reviewHeuristic,SCORE_TOLERANCE} from './food_source_sensitivity_review.mjs';
+const root='test/fixtures/food_research',output='build/food_source_sensitivity';
+const hash=b=>createHash('sha256').update(b).digest('hex'),read=p=>JSON.parse(readFileSync(p));
+const before=captureInputs(process.cwd());
+// Independent reference/domain loaded before invoking the actual producer.
+const expectations=read(`${root}/joint_independent_expectations.json`),domain=read(`${root}/heuristic_domain.json`);
+const fixtureHashes=Object.fromEntries(['six_original_foundation_foods.json','joint_source_domain.json','joint_independent_expectations.json','heuristic_domain.json'].map(f=>[f,hash(readFileSync(`${root}/${f}`))]));
+assert.equal(fixtureHashes['six_original_foundation_foods.json'],expectations.subset_raw_sha256);
+mkdirSync(output,{recursive:true});for(const f of ['actual_vectors.json','latest.json'])if(existsSync(`${output}/${f}`))unlinkSync(`${output}/${f}`);
+execFileSync('dart',['run','tool/run_food_source_sensitivity_vectors.dart'],{stdio:'inherit',timeout:600000});
+const actual=read(`${output}/actual_vectors.json`);assert.equal(actual.schema,'parkinsum.food-source-sensitivity-vectors/1');
+const joint=reviewJoint(expectations,actual.joint),heuristic=reviewHeuristic(domain,actual.heuristic);
+for(const [file,digest] of Object.entries(actual.producer_source_file_sha256))assert.equal(hash(readFileSync(file)),digest);
+const after=captureInputs(process.cwd());assert.equal(before.sha256,after.sha256,'source drift during study');
+const report={schema:'parkinsum.food-source-sensitivity-check/1',pass:true,observed_at_utc:new Date().toISOString(),source_sha256:before.sha256,actual_vectors_sha256:hash(readFileSync(`${output}/actual_vectors.json`)),fixture_sha256:fixtureHashes,producer_source_file_sha256:actual.producer_source_file_sha256,arithmetic_absolute_tolerance:SCORE_TOLERANCE,joint,heuristic,production_defaults_changed:false,not_clinically_calibrated:true,synthetic_context_only:true,boundary:'Source-bound finite matching/portion alternatives and fixed injected heuristic grid; method identities preserved. Available scores do not validate source matching or clinical usefulness. No probability, unseen-domain robustness or activation.'};
+writeFileSync(`${output}/latest.json`,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({pass:true,joint_comparisons:joint.portion_macro_comparisons,heuristic_feature_comparisons:heuristic.feature_comparisons,joint_strata:joint.strata.map(s=>({window:s.stratum,orders:s.distinct_orders.length,reversed:s.reversed_pairs.length})),heuristic_orders:heuristic.strata[0].distinct_orders.length}));

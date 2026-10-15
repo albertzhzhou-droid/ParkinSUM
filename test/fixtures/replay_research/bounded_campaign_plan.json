@@ -1,0 +1,56 @@
+{
+  "frozen_at_utc": "2026-10-01T13:42:21.580649+00:00",
+  "question": "Raw version1 replay envelope conformance, bounded parser fuzz and smallest structural counterexamples; known schema only, future versions rejected without guessing migration. Typed Dart restoration is a separate stronger scope than Node envelope validation.",
+  "original_producer_path": "build/mechanistic_replay_capsule/dart_vectors.json",
+  "original_producer_sha256": "96b68dfe60d5bdb5aa78104ae6582aa219380f0aa41e67865cf4e73e003806f3",
+  "base_raw_sha256": "238743b6dfdca678d5534cd2cacc8c2ec5433d1a7829d1b837aaba14b412c15c",
+  "base_capsule_id": "observatory_mixedReference_replay",
+  "historical_capture_rebased": false,
+  "seeds": [
+    2026100101,
+    2026100102,
+    2026100103,
+    2026100104
+  ],
+  "per_seed_budget": 16,
+  "maximum_raw_bytes": 2097152,
+  "maximum_container_depth": 32,
+  "maximum_total_cases": 72,
+  "expected_reject_families": [
+    "empty_capsule_id",
+    "whitespace_capsule_id",
+    "control_capsule_id",
+    "noncanonical_utc_time",
+    "non_utc_time",
+    "invalid_civil_time",
+    "timezone_authorization",
+    "timezone_extra_key",
+    "timezone_missing_key",
+    "ledger_not_object",
+    "context_not_object",
+    "compositions_not_list",
+    "duplicate_member_escaped",
+    "future_schema",
+    "digest_corruption",
+    "depth_33"
+  ],
+  "expected_accept_families": [
+    "valid_same_body",
+    "root_order_permutation",
+    "whitespace_transport"
+  ],
+  "minimization": "Up to72 structural trials: clear unrelated payload contents in three stages while preserving malformed payload types, rehash for consistency, require original unexpected parity direction and original Dart rejection family. Smallest retained tested candidate only, not a global grammar minimum.",
+  "production_defaults_changed": false,
+  "clinical_qualification": false,
+  "discovery_seeds": [
+    2026100101,
+    2026100102
+  ],
+  "reserved_post_repair_seeds": [
+    2026100103,
+    2026100104
+  ],
+  "seed_contract": "Unsigned xorshift32, Fisher-Yates family order;16 of19 explicit families per seed,8 fixed anchors;72 cases total. Expected accept/reject is declared before runtime observations.",
+  "base_fixture_transport_sha256": "8df2362627a023ca6f99b91be0c93ca9e0be84a03aa5d7bfa69d38f1f715d30a",
+  "base_hash_semantic": "Original canonical JSON text without trailing newline; fixture transport adds exactly one newline and is separately hashed."
+}

@@ -472,16 +472,28 @@ UnifiedRuntimeContext _context(Map<String, dynamic> json) {
   MealRuntimeContext? meal;
   if (json['meal'] != null) {
     final m = _map(json['meal'], 'meal');
-    _keys(m, {
-      'id',
-      'protein_g',
-      'tyramine_mg_est',
-      'high_fat_high_calorie',
-      'item_ids',
-    });
+    _keys(
+      m,
+      {
+        'id',
+        'protein_g',
+        'tyramine_mg_est',
+        'high_fat_high_calorie',
+        'item_ids',
+      },
+      optional: {'protein_evidence_missing'},
+    );
+    final proteinMissing = m['protein_evidence_missing'] == true;
+    if (m.containsKey('protein_evidence_missing') && !proteinMissing ||
+        proteinMissing && m['protein_g'] != null) {
+      throw const FormatException(
+        'Explicit protein missingness must retain a null protein_g.',
+      );
+    }
     meal = MealRuntimeContext(
       id: _text(m['id'], 'meal.id'),
-      totalProteinG: _number(m['protein_g'], 'protein_g'),
+      totalProteinG: proteinMissing ? 0 : _number(m['protein_g'], 'protein_g'),
+      proteinEvidenceMissing: proteinMissing,
       tyramineMgEstimate: _number(m['tyramine_mg_est'], 'tyramine_mg_est'),
       highFatHighCalorie: _boolean(
         m['high_fat_high_calorie'],
@@ -841,8 +853,10 @@ RuntimeDecisionType _decision(Object? value) =>
     );
 
 void _schema(Map<String, dynamic> json) {
-  if (json['schema_version'] is! int ||
-      json['schema_version'] != 1 ||
+  final version = json['schema_version'];
+  if (version is! num ||
+      !version.isFinite ||
+      version != 1 ||
       json['synthetic_only'] != true) {
     throw const FormatException(
       'Only schema version 1 and synthetic_only=true are supported.',

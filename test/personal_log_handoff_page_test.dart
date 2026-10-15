@@ -1,10 +1,13 @@
 import 'dart:async';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/services/personal_log_handoff_document_service.dart';
+import 'package:parkinsum_companion/core/services/personal_log_handoff_html_download.dart'
+    if (dart.library.js_interop) 'package:parkinsum_companion/core/services/personal_log_handoff_html_download_web.dart'
+    as html_download;
 import 'package:parkinsum_companion/core/services/services.dart';
 import 'package:parkinsum_companion/core/state/app_state.dart';
 import 'package:parkinsum_companion/domain/entities/personal_observation.dart';
@@ -13,9 +16,149 @@ import 'package:parkinsum_companion/features/settings/personal_log_handoff_page.
 import 'package:provider/provider.dart';
 
 void main() {
+  for (final invalid in <({String name, Uint8List bytes, String code})>[
+    (name: '../unsafe.html', bytes: Uint8List(1), code: 'invalid_file_name'),
+    (
+      name: 'parkinsum-personal-log-test.html',
+      bytes: Uint8List(0),
+      code: 'invalid_html_bytes',
+    ),
+  ]) {
+    test(
+      'HTML delivery rejects ${invalid.code} before a system action',
+      () async {
+        await expectLater(
+          const SystemPersonalLogHandoffDelivery().shareHtml(
+            bytes: invalid.bytes,
+            fileName: invalid.name,
+            sharePositionOrigin: null,
+            authorize: () => true,
+          ),
+          throwsA(
+            isA<PersonalLogHandoffDeliveryException>().having(
+              (error) => error.code,
+              'code',
+              invalid.code,
+            ),
+          ),
+        );
+      },
+    );
+  }
+  test(
+    'HTML delivery declines an expired lease before a system action',
+    () async {
+      await expectLater(
+        const SystemPersonalLogHandoffDelivery().shareHtml(
+          bytes: Uint8List(1),
+          fileName: 'parkinsum-personal-log-test.html',
+          sharePositionOrigin: null,
+          authorize: () => false,
+        ),
+        throwsA(
+          isA<PersonalLogHandoffDeliveryException>().having(
+            (error) => error.code,
+            'code',
+            'authorization_expired',
+          ),
+        ),
+      );
+    },
+  );
+  test(
+    'browser HTML download rejects initial or changed authorization',
+    () async {
+      for (final firstCheckAccepted in <bool>[false, true]) {
+        var checks = 0;
+        await expectLater(
+          html_download.downloadHtml(
+            bytes: Uint8List(1),
+            fileName: 'parkinsum-personal-log-test.html',
+            authorize: () => ++checks == 1 && firstCheckAccepted,
+          ),
+          throwsA(
+            isA<html_download.HandoffHtmlDownloadException>().having(
+              (error) => error.code,
+              'code',
+              'authorization_expired',
+            ),
+          ),
+        );
+        expect(checks, firstCheckAccepted ? 2 : 1);
+      }
+    },
+    skip: !kIsWeb,
+  );
+  test(
+    'browser HTML download validates filenames and byte budget first',
+    () async {
+      for (final invalid in <({String name, Uint8List bytes, String code})>[
+        (
+          name: '../unsafe.html',
+          bytes: Uint8List(1),
+          code: 'invalid_file_name',
+        ),
+        (
+          name: 'parkinsum-personal-log-test.html',
+          bytes: Uint8List(personalLogHandoffMaxHtmlBytes + 1),
+          code: 'invalid_html_bytes',
+        ),
+      ]) {
+        await expectLater(
+          html_download.downloadHtml(
+            bytes: invalid.bytes,
+            fileName: invalid.name,
+            authorize: () => throw StateError('unexpected_authorization'),
+          ),
+          throwsA(
+            isA<html_download.HandoffHtmlDownloadException>().having(
+              (error) => error.code,
+              'code',
+              invalid.code,
+            ),
+          ),
+        );
+      }
+    },
+    skip: !kIsWeb,
+  );
+
+  testWidgets('page canvas retains every warning character', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: PersonalLogHandoffPageCanvas(
+          page: PersonalLogHandoffDocumentPage(
+            number: 1,
+            lines: <String>[
+              '# Personal log handoff',
+              '## Evidence boundary',
+              '! USER-ENTERED PERSONAL LOG — NOT CLINICALLY VERIFIED',
+              '! Not a medical recommendation.',
+              '! Missing values remain unknown.',
+            ],
+          ),
+          totalPages: 1,
+        ),
+      ),
+    );
+    expect(find.text('Personal log handoff'), findsOneWidget);
+    expect(find.text('Evidence boundary'), findsOneWidget);
+    expect(
+      find.text('USER-ENTERED PERSONAL LOG — NOT CLINICALLY VERIFIED'),
+      findsOneWidget,
+    );
+    expect(find.text('Not a medical recommendation.'), findsOneWidget);
+    expect(find.text('Missing values remain unknown.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'system renderer creates an offline bounded PDF from page canvas',
     (tester) async {
+      // The report page must retain its fixed A4 canvas even on a small view.
+      tester.view.physicalSize = const Size(320, 480);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       late BuildContext renderContext;
       await tester.pumpWidget(
         MaterialApp(
@@ -61,9 +204,95 @@ void main() {
       expect(bytes, isNotNull);
       expect(bytes!.length, lessThan(personalLogHandoffMaxPdfBytes));
       expect(String.fromCharCodes(bytes.take(4)), '%PDF');
+      final pdfText = String.fromCharCodes(bytes);
+      expect(pdfText, matches(RegExp(r'/Width\s+595\b')));
+      expect(pdfText, matches(RegExp(r'/Height\s+842\b')));
+      // A second render exercises disposal of the detached tree and image.
+      final again = await tester.runAsync(
+        () => const SystemPersonalLogHandoffPdfRenderer(
+          pixelRatio: 1,
+        ).render(context: renderContext, artifact: artifact),
+      );
+      expect(String.fromCharCodes(again!.take(4)), '%PDF');
       expect(tester.takeException(), isNull);
     },
   );
+
+  test('failure diagnostics preserve only stable types and source locations', () {
+    final diagnostic = PersonalLogHandoffFailureDiagnostic.capture(
+      stage: PersonalLogHandoffFailureStage.renderPdf,
+      error: const _PrivateFailure(),
+      stackTrace: StackTrace.fromString(
+        '#0 patient_payload token=secret '
+        '(package:parkinsum_companion/core/services/'
+        'personal_log_handoff_document_service.dart:301:12)\n'
+        '#1 patient_payload (https://user:token@example.invalid/'
+        'main.dart.js:457:8)\n'
+        '#2 patient_payload (file:///private/patient_payload.dart:1:2)\n'
+        '#3 patient_payload (package:parkinsum_companion/'
+        'patient_payload.dart:3:4)',
+      ),
+    );
+    expect(diagnostic.failureType, 'Exception');
+    expect(diagnostic.sourceFrames, <String>[
+      'personal_log_handoff_document_service.dart:301:12',
+      'main.dart.js:457:8',
+    ]);
+    expect(
+      diagnostic.logLine,
+      '[PersonalLogHandoff] failed stage=renderPdf type=Exception '
+      'source=personal_log_handoff_document_service.dart:301:12,main.dart.js:457:8',
+    );
+    for (final secret in <String>[
+      'patient_payload',
+      'token',
+      'example.invalid',
+      '/private/',
+    ]) {
+      expect(diagnostic.logLine, isNot(contains(secret)));
+    }
+  });
+
+  testWidgets('renderer failure stays blocked and logs no private message', (
+    tester,
+  ) async {
+    final messages = <String>[];
+    final oldDebugPrint = debugPrint;
+    debugPrint = (message, {wrapWidth}) {
+      if (message != null) messages.add(message);
+    };
+    try {
+      final delivery = _FakeDelivery();
+      final clipboard = _FakeClipboard();
+      await _pumpPage(
+        tester,
+        renderer: _FakeRenderer(
+          failure: const FormatException('private_health_payload'),
+        ),
+        delivery: delivery,
+        clipboard: clipboard,
+      );
+      await _tap(tester, 'handoff-generate');
+      expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
+      expect(find.byKey(const ValueKey('handoff-save-share')), findsNothing);
+      expect(find.byKey(const ValueKey('handoff-error')), findsOneWidget);
+      expect(find.textContaining('format_failed'), findsOneWidget);
+      expect(find.textContaining('private_health_payload'), findsNothing);
+      expect(delivery.printed, isEmpty);
+      expect(delivery.shared, isEmpty);
+      expect(delivery.htmlShared, isEmpty);
+      expect(clipboard.values, isEmpty);
+      expect(
+        messages.join('\n'),
+        contains('failed stage=renderPdf type=FormatException source='),
+      );
+      expect(messages.join('\n'), isNot(contains('private_health_payload')));
+      expect(tester.takeException(), isNull);
+    } finally {
+      // Flutter verifies foundation globals before running addTearDown hooks.
+      debugPrint = oldDebugPrint;
+    }
+  });
 
   testWidgets('preview, copy, print and share use one frozen artifact', (
     tester,
@@ -115,6 +344,49 @@ void main() {
     expect(fixture.state.currentUserId, isNotNull);
     expect(tester.takeException(), isNull);
   });
+
+  for (final code in [
+    'handoff_pdf_font_unavailable',
+    'handoff_pdf_glyph_unavailable',
+  ]) {
+    testWidgets('$code preserves current HTML and disables PDF delivery', (
+      tester,
+    ) async {
+      final renderer = _FakeRenderer(failure: FormatException(code));
+      final delivery = _FakeDelivery();
+      final fixture = await _pumpPage(
+        tester,
+        renderer: renderer,
+        delivery: delivery,
+        clipboard: _FakeClipboard(),
+      );
+      await _tap(tester, 'handoff-generate');
+      expect(
+        find.byKey(const ValueKey('handoff-preview-meta')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<OutlinedButton>(find.byKey(const ValueKey('handoff-print')))
+            .onPressed,
+        isNull,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('handoff-save-share')),
+            )
+            .onPressed,
+        isNull,
+      );
+      await _tap(tester, 'handoff-share-html');
+      expect(delivery.htmlShared, hasLength(1));
+      expect(delivery.printed, isEmpty);
+      expect(delivery.shared, isEmpty);
+      expect(fixture.state.currentUserId, isNotNull);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets(
     'same-id record content change invalidates preview and delivery',
@@ -206,6 +478,118 @@ void main() {
     expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'same UID without an intermediate frame expires delayed renderer',
+    (tester) async {
+      final gate = Completer<void>();
+      final renderer = _FakeRenderer(renderGate: gate);
+      final delivery = _FakeDelivery();
+      final fixture = await _pumpPage(
+        tester,
+        renderer: renderer,
+        delivery: delivery,
+        clipboard: _FakeClipboard(),
+      );
+      await _tapAndPump(tester, 'handoff-generate');
+      expect(renderer.artifacts, hasLength(1));
+
+      await _restartSameOwnerWithoutFrame(fixture, renderer.artifacts.single);
+      gate.complete();
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
+      expect(find.byKey(const ValueKey('handoff-share-html')), findsNothing);
+      expect(delivery.htmlShared, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'same UID without an intermediate frame expires stored preview action',
+    (tester) async {
+      final renderer = _FakeRenderer();
+      final delivery = _FakeDelivery();
+      final fixture = await _pumpPage(
+        tester,
+        renderer: renderer,
+        delivery: delivery,
+        clipboard: _FakeClipboard(),
+      );
+      await _tap(tester, 'handoff-generate');
+      final oldAction = tester
+          .widget<OutlinedButton>(
+            find.byKey(const ValueKey('handoff-share-html')),
+          )
+          .onPressed!;
+
+      await _restartSameOwnerWithoutFrame(fixture, renderer.artifacts.single);
+      // Invoke the previously rendered callback before Provider can rebuild it.
+      oldAction();
+      await tester.pumpAndSettle();
+
+      expect(delivery.htmlStarted.isCompleted, isFalse);
+      expect(delivery.htmlShared, isEmpty);
+      expect(find.byKey(const ValueKey('handoff-preview-meta')), findsNothing);
+
+      // A newly generated artifact and explicit action in the renewed session
+      // remain allowed; only the previous session's authorization was revoked.
+      await _tap(tester, 'handoff-generate');
+      expect(
+        find.byKey(const ValueKey('handoff-preview-meta')),
+        findsOneWidget,
+      );
+      await _tap(tester, 'handoff-share-html');
+      expect(delivery.htmlShared, hasLength(1));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final html in <bool>[false, true]) {
+    testWidgets(
+      'same UID without an intermediate frame expires delayed ${html ? 'HTML download' : 'PDF delivery'}',
+      (tester) async {
+        final gate = Completer<void>();
+        final renderer = _FakeRenderer();
+        final delivery = _FakeDelivery(
+          saveGate: html ? null : gate,
+          htmlGate: html ? gate : null,
+          htmlStatus: PersonalLogHandoffDeliveryStatus.downloadRequested,
+        );
+        final fixture = await _pumpPage(
+          tester,
+          renderer: renderer,
+          delivery: delivery,
+          clipboard: _FakeClipboard(),
+        );
+        await _tap(tester, 'handoff-generate');
+        await _tapAndPump(
+          tester,
+          html ? 'handoff-share-html' : 'handoff-save-share',
+        );
+        expect(
+          (html ? delivery.htmlStarted : delivery.saveStarted).isCompleted,
+          isTrue,
+        );
+
+        await _restartSameOwnerWithoutFrame(fixture, renderer.artifacts.single);
+        gate.complete();
+        await tester.pumpAndSettle();
+
+        expect(delivery.shared, isEmpty);
+        expect(delivery.htmlShared, isEmpty);
+        expect(
+          find.byKey(const ValueKey('handoff-preview-meta')),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('A browser download was requested'),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets('changing a section invalidates generated preview', (
     tester,
@@ -314,12 +698,96 @@ void main() {
     expect(find.text('The system save / share flow completed.'), findsNothing);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('HTML browser download is a request rather than saved success', (
+    tester,
+  ) async {
+    await _pumpPage(
+      tester,
+      renderer: _FakeRenderer(),
+      delivery: _FakeDelivery(
+        htmlStatus: PersonalLogHandoffDeliveryStatus.downloadRequested,
+      ),
+      clipboard: _FakeClipboard(),
+    );
+    await _tap(tester, 'handoff-generate');
+    await _tap(tester, 'handoff-share-html');
+    expect(
+      find.text(
+        'A browser download was requested. Confirm that the file appears in your downloads.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('The system save / share flow completed.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('cancelled HTML share never reports a browser download', (
+    tester,
+  ) async {
+    await _pumpPage(
+      tester,
+      renderer: _FakeRenderer(),
+      delivery: _FakeDelivery(
+        htmlStatus: PersonalLogHandoffDeliveryStatus.cancelled,
+      ),
+      clipboard: _FakeClipboard(),
+    );
+    await _tap(tester, 'handoff-generate');
+    await _tap(tester, 'handoff-share-html');
+    expect(
+      find.text('The action was cancelled; no save or print is claimed.'),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('A browser download was requested'),
+      findsNothing,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 final class _Fixture {
   const _Fixture(this.state);
 
   final AppState state;
+}
+
+Future<void> _restartSameOwnerWithoutFrame(
+  _Fixture fixture,
+  PersonalLogHandoffArtifact artifact,
+) async {
+  final state = fixture.state;
+  final owner = state.currentUserId!;
+  final epoch = state.mealDraftSessionEpoch;
+  await state.signOut();
+  await state.bootstrap();
+  expect(state.currentUserId, owner);
+  expect(state.mealDraftSessionEpoch, greaterThan(epoch));
+  // The persisted content is identical: a source-revision check alone cannot
+  // distinguish the previous session from the new same-owner session.
+  final digest = const PersonalLogHandoffSummaryService().sourceRevisionDigest(
+    snapshot: PersonalLogHandoffSnapshot(
+      ownerScope: owner,
+      profile: state.userProfile,
+      activeDrugIds: state.activeDrugIds,
+      intakes: state.intakes,
+      meals: state.meals,
+      observations: state.observations,
+      medicationCatalog: state.medRepo.allDrugs,
+      foodCatalog: state.foodRepo.allFoods,
+    ),
+    options: PersonalLogHandoffOptions(
+      startDate: DateTime(2026, 7, 20),
+      endDateInclusive: DateTime(2026, 8, 18),
+      sections: PersonalLogHandoffSection.values
+          .where(
+            (section) =>
+                section != PersonalLogHandoffSection.personalObservations,
+          )
+          .toSet(),
+      redaction: PersonalLogHandoffRedaction.standard,
+    ),
+  );
+  expect(digest, artifact.sourceRevisionSha256);
 }
 
 Future<_Fixture> _pumpPage(
@@ -385,6 +853,10 @@ Future<void> _tapAndPump(WidgetTester tester, String key) async {
 }
 
 final class _FakeRenderer implements PersonalLogHandoffRenderer {
+  _FakeRenderer({this.failure, this.renderGate});
+
+  final Object? failure;
+  final Completer<void>? renderGate;
   final Uint8List bytes = Uint8List.fromList(<int>[37, 80, 68, 70, 45, 49]);
   final List<PersonalLogHandoffArtifact> artifacts =
       <PersonalLogHandoffArtifact>[];
@@ -395,8 +867,17 @@ final class _FakeRenderer implements PersonalLogHandoffRenderer {
     required PersonalLogHandoffArtifact artifact,
   }) async {
     artifacts.add(artifact);
+    if (renderGate != null) await renderGate!.future;
+    if (failure case final error?) throw error;
     return bytes;
   }
+}
+
+final class _PrivateFailure implements Exception {
+  const _PrivateFailure();
+
+  @override
+  String toString() => throw StateError('exception messages must not be read');
 }
 
 final class _FakeDelivery implements PersonalLogHandoffDelivery {
@@ -404,11 +885,13 @@ final class _FakeDelivery implements PersonalLogHandoffDelivery {
     this.saveGate,
     this.htmlGate,
     this.saveStatus = PersonalLogHandoffDeliveryStatus.completed,
+    this.htmlStatus = PersonalLogHandoffDeliveryStatus.completed,
   });
 
   final Completer<void>? saveGate;
   final Completer<void>? htmlGate;
   final PersonalLogHandoffDeliveryStatus saveStatus;
+  final PersonalLogHandoffDeliveryStatus htmlStatus;
   final Completer<void> saveStarted = Completer<void>();
   final Completer<void> htmlStarted = Completer<void>();
   final List<String> printed = <String>[];
@@ -455,11 +938,12 @@ final class _FakeDelivery implements PersonalLogHandoffDelivery {
     if (!htmlStarted.isCompleted) htmlStarted.complete();
     if (htmlGate != null) await htmlGate!.future;
     if (!authorize()) throw StateError('authorization_expired');
-    if (saveStatus == PersonalLogHandoffDeliveryStatus.completed) {
+    if (htmlStatus == PersonalLogHandoffDeliveryStatus.completed ||
+        htmlStatus == PersonalLogHandoffDeliveryStatus.downloadRequested) {
       htmlShared.add(fileName);
       htmlBytes.add(bytes);
     }
-    return saveStatus;
+    return htmlStatus;
   }
 }
 

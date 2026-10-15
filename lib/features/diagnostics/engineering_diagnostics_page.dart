@@ -27,7 +27,7 @@ import 'fhir_r5_medication_product_preview_page.dart';
 import 'openfda_label_mention_search_page.dart';
 import 'evidence_source_metadata_search_page.dart';
 
-/// Read-only engineering diagnostics.
+/// Engineering diagnostics with optional owner-scoped local comparison receipts.
 ///
 /// The peripheral governance layer (copy compiler, localization safety lint,
 /// deterministic replay) was previously reachable only through command-line
@@ -43,6 +43,8 @@ import 'evidence_source_metadata_search_page.dart';
 /// Educational prototype only. Engineering checks use synthetic/demo data;
 /// the separate FDA label-text view requires explicit per-session consent.
 /// Nothing on this page is medical advice or calibrated for real care.
+/// The evidence-source page can retain a synthetic candidate comparison receipt;
+/// saving that diagnostic history never changes evidence or runtime activation.
 class EngineeringDiagnosticsPage extends StatefulWidget {
   const EngineeringDiagnosticsPage({super.key});
 
@@ -326,9 +328,19 @@ class _EngineeringDiagnosticsPageState
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => EvidenceSourceMetadataSearchPage(
-                          localeTag: i18n.localeTag,
-                        ),
+                        builder: (_) {
+                          final state = context.read<AppState>();
+                          return EvidenceSourceMetadataSearchPage(
+                            localeTag: i18n.localeTag,
+                            ownerChanges: state,
+                            currentOwner: () => state.currentUserId,
+                            sessionAuthorized: () =>
+                                !state.isAuthBusy &&
+                                state.currentUserId != null &&
+                                state.services.authService.currentUserId ==
+                                    state.currentUserId,
+                          );
+                        },
                       ),
                     ),
                   ),

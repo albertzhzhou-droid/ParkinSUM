@@ -7,7 +7,7 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 | Foods | 20 |
 | Medications | 21 |
 | Source documents | 43 |
-| CDSS rules | 10 |
+| CDSS rules | 12 |
 | Safe-copy templates | 25 |
 | Replay scenarios | 41 |
 | Model assumptions | 24 |

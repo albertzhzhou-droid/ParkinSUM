@@ -6,7 +6,11 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/paper_theme.dart';
-import '../../domain/entities/protein_trend_point.dart';
+import '../../domain/entities/personal_log_view.dart';
+import '../../domain/usecases/personal_log_date_window_resolver.dart';
+import '../../domain/usecases/personal_log_view_projector.dart';
+import '../shared/personal_log_view_controls.dart';
+import '../timeline/timeline_page.dart';
 import '../../domain/entities/timeline_event.dart';
 
 /// Insights — descriptive summaries of the user's own entries.
@@ -19,7 +23,10 @@ import '../../domain/entities/timeline_event.dart';
 /// logged, how protein was spread across meals, and when entries happen.
 /// Every figure is a count or sum of logged entries — no clinical inference.
 class AnalyticsPage extends StatefulWidget {
-  const AnalyticsPage({super.key});
+  const AnalyticsPage({super.key, this.clock, this.initialWindow});
+
+  final DateTime Function()? clock;
+  final PersonalLogDateWindow? initialWindow;
 
   @override
   State<AnalyticsPage> createState() => _AnalyticsPageState();
@@ -27,24 +34,239 @@ class AnalyticsPage extends StatefulWidget {
 
 class _AnalyticsPageState extends State<AnalyticsPage> {
   int _days = 7;
+  PersonalLogDateWindow? _customSelection;
+  String? _scopeOwner;
+  int? _scopeEpoch;
+
+  @override
+  void initState() {
+    super.initState();
+    _customSelection = widget.initialWindow;
+  }
+
+  Future<void> _openRecord(
+    AppState state,
+    TypedLogRecordRef record,
+    PersonalLogDateWindow selection,
+    String? owner,
+    int epoch,
+  ) async {
+    if (owner == null ||
+        state.currentUserId != owner ||
+        state.mealDraftSessionEpoch != epoch ||
+        !mounted) {
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ChangeNotifierProvider.value(
+          value: state,
+          child: TimelinePage(
+            focus: record,
+            initialWindow: selection,
+            expectedOwner: owner,
+            expectedSessionEpoch: epoch,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRecords(
+    AppState state,
+    PersonalLogInsightsProjection projection, {
+    bool future = false,
+  }) async {
+    final owner = state.currentUserId;
+    final epoch = state.mealDraftSessionEpoch;
+    final i18n = context.appI18n;
+    var expired = false;
+    StateSetter? rebuild;
+    bool current() =>
+        !expired &&
+        state.currentUserId == owner &&
+        state.mealDraftSessionEpoch == epoch &&
+        state.userProfile.timezone == projection.window.selection.zoneId;
+    void observe() {
+      if (!current()) expired = true;
+      rebuild?.call(() {});
+    }
+
+    state.addListener(observe);
+    try {
+      final selected = await showDialog<TypedLogRecordRef>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (context, setState) {
+            rebuild = setState;
+            final fresh = current()
+                ? const PersonalLogViewProjector().insights(
+                    window: projection.window,
+                    meals: state.meals,
+                    intakes: state.intakes,
+                    observations: state.observations,
+                    foods: state.foodRepo.allFoods,
+                    medications: state.medRepo.allDrugs,
+                  )
+                : null;
+            final records = future
+                ? fresh?.future ?? <TimelineEvent>[]
+                : fresh?.historical ?? <TimelineEvent>[];
+            final protein = {
+              for (final point in fresh?.protein ?? <LoggedProteinSample>[])
+                point.record: point,
+            };
+            return AlertDialog(
+              title: Text(logViewText(i18n, 'log_view.records')),
+              content: SizedBox(
+                width: 560,
+                height: 400,
+                child: !current()
+                    ? Text(logViewText(i18n, 'log_view.selection_changed'))
+                    : ListView.builder(
+                        itemCount: records.length,
+                        itemBuilder: (_, index) {
+                          final event = records[index];
+                          final ref = TypedLogRecordRef.fromEvent(event);
+                          final sample = protein[ref];
+                          final time = logDisplayTime(
+                            event.time,
+                            projection.window.selection.zoneId,
+                          );
+                          final value = future
+                              ? logViewText(i18n, 'log_view.future')
+                              : sample == null
+                              ? ''
+                              : switch (sample.status) {
+                                  LoggedProteinStatus.known =>
+                                    '${sample.valueG!.toStringAsFixed(1)} g',
+                                  LoggedProteinStatus.unknown => logViewText(
+                                    i18n,
+                                    'log_view.unknown',
+                                  ),
+                                  LoggedProteinStatus.invalid => logViewText(
+                                    i18n,
+                                    'log_view.invalid',
+                                  ),
+                                };
+                          return ListTile(
+                            key: ValueKey('insights-record-${ref.viewKey}'),
+                            title: Text(event.title),
+                            subtitle: Text(
+                              '${LogCivilDate.fromDateTime(time)} ${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} · $value',
+                            ),
+                            onTap: () => Navigator.of(dialogContext).pop(ref),
+                          );
+                        },
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(i18n.tr('common.close')),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+      // The dialog is gone before the pushed record route can mutate state.
+      // Detach its rebuild callback and listener before awaiting that route.
+      rebuild = null;
+      state.removeListener(observe);
+      if (current() && selected != null && mounted) {
+        await _openRecord(
+          state,
+          selected,
+          projection.window.selection,
+          owner,
+          epoch,
+        );
+      }
+    } finally {
+      state.removeListener(observe);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = context.appI18n;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final start = today.subtract(Duration(days: _days - 1));
-    bool inRange(DateTime t) => !t.toLocal().isBefore(start);
-
-    final events = state.timeline.where((e) => inRange(e.time)).toList();
-    final protein = state.proteinTrend.where((p) => inRange(p.time)).toList()
-      ..sort((a, b) => a.time.compareTo(b.time));
-    int count(TimelineEventType type) =>
-        events.where((e) => e.type == type).length;
-    final avgProtein = protein.isEmpty
-        ? null
-        : protein.fold<double>(0, (sum, p) => sum + p.protein) / protein.length;
+    final now = (widget.clock?.call() ?? DateTime.now()).toUtc();
+    if (_scopeEpoch != null &&
+        (_scopeOwner != state.currentUserId ||
+            _scopeEpoch != state.mealDraftSessionEpoch)) {
+      _customSelection = null;
+    }
+    _scopeOwner = state.currentUserId;
+    _scopeEpoch = state.mealDraftSessionEpoch;
+    final selectionOwner = state.currentUserId;
+    final selectionEpoch = state.mealDraftSessionEpoch;
+    final resolver = PersonalLogDateWindowResolver();
+    final zone = state.userProfile.timezone;
+    late final ResolvedLogWindow window;
+    try {
+      final today = resolver.dateAt(now, zone);
+      final selection = _customSelection == null
+          ? PersonalLogDateWindow(
+              start: today.addDays(-_days + 1),
+              endInclusive: today,
+              zoneId: zone,
+            )
+          : PersonalLogDateWindow(
+              start: _customSelection!.start,
+              endInclusive: _customSelection!.endInclusive,
+              zoneId: zone,
+            );
+      window = resolver.resolve(selection, asOf: now);
+    } on FormatException {
+      return Scaffold(
+        appBar: PaperAppBar(title: Text(i18n.tr('insights.title'))),
+        body: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            logViewText(i18n, 'log_view.zone_hold'),
+            key: const ValueKey('insights-zone-hold'),
+          ),
+        ),
+      );
+    }
+    final projection = const PersonalLogViewProjector().insights(
+      window: window,
+      meals: state.meals,
+      intakes: state.intakes,
+      observations: state.observations,
+      foods: state.foodRepo.allFoods,
+      medications: state.medRepo.allDrugs,
+    );
+    final events = projection.historical
+        .map(
+          (event) => TimelineEvent(
+            time: resolver.displayTime(event.time, zone),
+            type: event.type,
+            recordId: event.recordId,
+            entityId: event.entityId,
+            title: event.title,
+            description: event.description,
+          ),
+        )
+        .toList();
+    final protein = projection.knownProtein;
+    final excludedProteinMeals =
+        projection.unknownCount + projection.invalidCount;
+    final proteinCoverage = logViewText(i18n, 'insights.protein_coverage', {
+      'start': '${window.selection.start}',
+      'end': '${window.selection.endInclusive}',
+      'zone': zone,
+      'included': '${protein.length}',
+      'excluded': '$excludedProteinMeals',
+      'unknown': '${projection.unknownCount}',
+      'invalid': '${projection.invalidCount}',
+      'zero': '${projection.reportedZeroCount}',
+    });
+    final avgProtein = projection.knownMeanG;
+    final start = window.selection.start.calendarValue;
+    final calendarDays = window.selection.calendarDays;
 
     return Scaffold(
       appBar: PaperAppBar(
@@ -87,11 +309,50 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                     ),
                   ],
                   selected: {_days},
-                  onSelectionChanged: (value) =>
-                      setState(() => _days = value.first),
+                  onSelectionChanged: (value) => setState(() {
+                    _days = value.first;
+                    _customSelection = null;
+                  }),
+                ),
+                PersonalLogDateButton(
+                  key: const ValueKey('insights-custom-dates'),
+                  zoneId: zone,
+                  selection: window.selection,
+                  maxDays: 366,
+                  onChanged: (selection) {
+                    if (state.currentUserId == selectionOwner &&
+                        state.mealDraftSessionEpoch == selectionEpoch) {
+                      setState(() => _customSelection = selection);
+                    }
+                  },
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+          Text(logViewText(i18n, 'log_view.date_basis', {'zone': zone})),
+          Text(
+            logViewText(i18n, 'insights.future_count', {
+              'count': '${projection.future.length}',
+            }),
+            key: const ValueKey('insights-future-count'),
+          ),
+          Wrap(
+            spacing: 12,
+            children: [
+              OutlinedButton(
+                key: const ValueKey('insights-records'),
+                onPressed: () => _showRecords(state, projection),
+                child: Text(logViewText(i18n, 'log_view.records')),
+              ),
+              if (projection.future.isNotEmpty)
+                OutlinedButton(
+                  key: const ValueKey('insights-future-records'),
+                  onPressed: () =>
+                      _showRecords(state, projection, future: true),
+                  child: Text(logViewText(i18n, 'log_view.future')),
+                ),
+            ],
           ),
           const SizedBox(height: 18),
           PaperReveal(
@@ -101,17 +362,17 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               cells: [
                 (
                   Icons.restaurant_outlined,
-                  '${count(TimelineEventType.meal)}',
+                  '${projection.count(TimelineEventType.meal)}',
                   i18n.tr('insights.meals'),
                 ),
                 (
                   Icons.medication_outlined,
-                  '${count(TimelineEventType.medication)}',
+                  '${projection.count(TimelineEventType.medication)}',
                   i18n.tr('insights.intakes'),
                 ),
                 (
                   Icons.monitor_heart_outlined,
-                  '${count(TimelineEventType.observation)}',
+                  '${projection.count(TimelineEventType.observation)}',
                   i18n.tr('insights.observations'),
                 ),
                 (
@@ -143,7 +404,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       const SizedBox(height: 16),
                       _RhythmChart(
                         start: start,
-                        days: _days,
+                        days: calendarDays,
                         events: events,
                         localeTag: Localizations.localeOf(context).toString(),
                       ),
@@ -167,7 +428,29 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                         subtitle: i18n.tr('insights.protein_subtitle'),
                       ),
                       const SizedBox(height: 16),
-                      _ProteinChart(points: protein, average: avgProtein),
+                      _ProteinChart(
+                        points: protein,
+                        average: avgProtein,
+                        onSelect: (point) => _openRecord(
+                          state,
+                          point.record,
+                          window.selection,
+                          state.currentUserId,
+                          state.mealDraftSessionEpoch,
+                        ),
+                      ),
+                      Text(
+                        logViewText(i18n, 'insights.chart_scope', {
+                          'shown': '${math.min(14, protein.length)}',
+                          'total': '${protein.length}',
+                        }),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        proteinCoverage,
+                        key: const ValueKey('insights-protein-coverage'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 ),
@@ -314,8 +597,12 @@ class _RhythmChart extends StatelessWidget {
       (_) => {for (final type in _order) type: 0},
     );
     for (final event in events) {
-      final t = event.time.toLocal();
-      final index = DateTime(t.year, t.month, t.day).difference(start).inDays;
+      final t = event.time;
+      final index = DateTime.utc(
+        t.year,
+        t.month,
+        t.day,
+      ).difference(start).inDays;
       if (index >= 0 && index < days) {
         perDay[index][event.type] = perDay[index][event.type]! + 1;
       }
@@ -324,7 +611,7 @@ class _RhythmChart extends StatelessWidget {
       for (final day in perDay) day.values.fold(0, (a, b) => a + b),
     ];
     final peak = math.max(1, totals.fold(0, math.max));
-    final labelEvery = days <= 7 ? 1 : 5;
+    final labelEvery = days <= 7 ? 1 : math.max(5, (days / 6).ceil());
     final localizations = MaterialLocalizations.of(context);
     return Semantics(
       label: [
@@ -415,25 +702,34 @@ class _RhythmChart extends StatelessWidget {
 
 /// Protein per logged meal, oldest to newest, with the period average.
 class _ProteinChart extends StatelessWidget {
-  const _ProteinChart({required this.points, required this.average});
+  const _ProteinChart({
+    required this.points,
+    required this.average,
+    required this.onSelect,
+  });
 
-  final List<ProteinTrendPoint> points;
+  final List<LoggedProteinSample> points;
+  final ValueChanged<LoggedProteinSample> onSelect;
   final double? average;
 
   @override
   Widget build(BuildContext context) {
     final i18n = context.appI18n;
-    if (points.isEmpty) return _Empty(text: i18n.tr('insights.empty'));
+    if (points.isEmpty) {
+      return _Empty(text: logViewText(i18n, 'insights.no_known_protein'));
+    }
     final shown = points.length > 14
         ? points.sublist(points.length - 14)
         : points;
     final peak = math.max(
       1.0,
-      shown.fold<double>(0, (m, p) => math.max(m, p.protein)),
+      math.max(
+        average ?? 0,
+        shown.fold<double>(0, (m, p) => math.max(m, p.valueG!)),
+      ),
     );
     return Semantics(
-      label: shown.map((p) => '${p.protein.toStringAsFixed(1)} g').join(', '),
-      excludeSemantics: true,
+      label: shown.map((p) => '${p.valueG!.toStringAsFixed(1)} g').join(', '),
       child: SizedBox(
         height: 150,
         child: LayoutBuilder(
@@ -441,78 +737,99 @@ class _ProteinChart extends StatelessWidget {
             const labelSpace = 20.0;
             final barArea = constraints.maxHeight - labelSpace;
             final avg = average;
-            return Stack(
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+            return SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: math.max(constraints.maxWidth, shown.length * 48.0),
+                height: constraints.maxHeight,
+                child: Stack(
                   children: [
-                    for (final point in shown)
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              SizedBox(
-                                height: barArea,
-                                child: PaperGrowBar(
-                                  factor: math.max(
-                                    2 / barArea,
-                                    point.protein / peak,
-                                  ),
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color: Paper.clay.withValues(alpha: 0.55),
-                                      borderRadius: BorderRadius.circular(3),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        for (final point in shown)
+                          Expanded(
+                            child: InkWell(
+                              key: ValueKey(
+                                'insights-point-${point.record.viewKey}',
+                              ),
+                              onTap: () => onSelect(point),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    SizedBox(
+                                      height: barArea,
+                                      child: PaperGrowBar(
+                                        factor: point.isReportedZero
+                                            ? 0
+                                            : math.max(
+                                                2 / barArea,
+                                                point.valueG! / peak,
+                                              ),
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            color: Paper.clay.withValues(
+                                              alpha: 0.55,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              3,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    SizedBox(
+                                      height: labelSpace,
+                                      child: Center(
+                                        child: Text(
+                                          point.valueG!.toStringAsFixed(0),
+                                          maxLines: 1,
+                                          style: const TextStyle(
+                                            fontFamily: Paper.mono,
+                                            fontSize: 10,
+                                            color: Paper.inkMuted,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              SizedBox(
-                                height: labelSpace,
-                                child: Center(
-                                  child: Text(
-                                    point.protein.toStringAsFixed(0),
-                                    maxLines: 1,
-                                    style: const TextStyle(
-                                      fontFamily: Paper.mono,
-                                      fontSize: 10,
-                                      color: Paper.inkMuted,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
+                      ],
+                    ),
+                    if (avg != null)
+                      AnimatedPositioned(
+                        duration: Paper.motion(context, Paper.motionMedium * 2),
+                        curve: Paper.motionCurve,
+                        left: 0,
+                        right: 0,
+                        top: barArea - barArea * avg / peak,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(height: 1, color: Paper.accent),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '⌀ ${avg.toStringAsFixed(1)} g',
+                              style: const TextStyle(
+                                fontFamily: Paper.mono,
+                                fontSize: 10.5,
+                                color: Paper.accentInk,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
                 ),
-                if (avg != null)
-                  AnimatedPositioned(
-                    duration: Paper.motion(context, Paper.motionMedium * 2),
-                    curve: Paper.motionCurve,
-                    left: 0,
-                    right: 0,
-                    top: barArea - barArea * avg / peak,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Container(height: 1, color: Paper.accent),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '⌀ ${avg.toStringAsFixed(1)} g',
-                          style: const TextStyle(
-                            fontFamily: Paper.mono,
-                            fontSize: 10.5,
-                            color: Paper.accentInk,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+              ),
             );
           },
         ),
@@ -528,7 +845,7 @@ class _DaypartTable extends StatelessWidget {
   final List<TimelineEvent> events;
 
   static int _bucket(DateTime t) {
-    final h = t.toLocal().hour;
+    final h = t.hour;
     if (h >= 5 && h < 11) return 0;
     if (h >= 11 && h < 16) return 1;
     if (h >= 16 && h < 22) return 2;
@@ -652,9 +969,11 @@ class _Legend extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: const TextStyle(fontSize: 12, color: Paper.inkMuted),
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontSize: 12, color: Paper.inkMuted),
+                ),
               ),
             ],
           ),

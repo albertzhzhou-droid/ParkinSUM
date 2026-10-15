@@ -1,0 +1,56 @@
+{
+  "schema": "parkinsum.catalog-search-benchmark-plan/1",
+  "frozen_at_utc": "2026-10-01T05:23:00.568786+00:00",
+  "before_actual_benchmark": true,
+  "seed": 31415926,
+  "sizes": [
+    100,
+    1000,
+    10000,
+    50000
+  ],
+  "warmups": 2,
+  "measured_repeats": 7,
+  "queries": [
+    "c",
+    "ca",
+    "苹",
+    "苹果",
+    "薬",
+    "薬品",
+    "cafe",
+    "atwater",
+    "US",
+    "JP",
+    "unlisted absent",
+    "marker096"
+  ],
+  "limits": [
+    null,
+    20
+  ],
+  "raw_canonical_pairs": [
+    [
+      "Café atwater USDA FDC US",
+      "cafe atwater usda fdc us"
+    ],
+    [
+      "Apple 苹果 CIQUAL FR",
+      "apple 苹果 ciqual fr"
+    ],
+    [
+      "薬品 medicine DAILYMED JP",
+      "薬品 medicine dailymed jp"
+    ],
+    [
+      "Tea 茶 LOCAL_SEED GLOBAL",
+      "tea 茶 local seed global"
+    ],
+    [
+      "Banana 香蕉 USDA FDC US",
+      "banana 香蕉 usda fdc us"
+    ]
+  ],
+  "result_policy": "Exact normalized substring; repository source order; no relevance/scientific rank. Oracle uses predeclared canonical strings, does not call production normalizer.",
+  "measurement_scope": "Plain Dart production index, separate constructor and warm-query durations. Pre-normalized linear scan is a reference cost, not current UI or engine. RSS is process-level only and not a heap estimate. Correctness must pass before considering latency comparable; no threshold or speedup claimed before actual runs."
+}

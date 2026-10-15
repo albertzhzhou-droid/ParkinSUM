@@ -17,6 +17,7 @@ class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
   String _formatDateTime(DateTime value) {
+    value = value.toLocal();
     final mm = value.month.toString().padLeft(2, '0');
     final dd = value.day.toString().padLeft(2, '0');
     final hh = value.hour.toString().padLeft(2, '0');
@@ -322,7 +323,9 @@ class DashboardPage extends StatelessWidget {
       ),
       _KpiCell(
         key: const ValueKey('dashboard-stat-protein'),
-        value: '${state.averageProtein.toStringAsFixed(1)} g',
+        value: state.averageKnownProtein == null
+            ? '—'
+            : '${state.averageKnownProtein!.toStringAsFixed(1)} g',
         label: i18n.tr('dashboard.stat_protein'),
         icon: Icons.egg_alt_outlined,
       ),
@@ -492,7 +495,9 @@ class DashboardPage extends StatelessWidget {
           PaperSectionHeader(
             title: i18n.tr('dashboard.protein_trend'),
             subtitle: i18n.tr('dashboard.average_protein', {
-              'value': state.averageProtein.toStringAsFixed(1),
+              'value':
+                  state.averageKnownProtein?.toStringAsFixed(1) ??
+                  (i18n.languageFamily == 'zh' ? '未知' : 'Unknown'),
             }),
           ),
           const SizedBox(height: 14),

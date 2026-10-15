@@ -223,13 +223,13 @@ final class CredibilityEvidenceExecutionAttestation {
   static const String schema =
       'parkinsum.credibility-evidence-execution-attestation/1';
   static const int schemaVersion = 1;
-  static const String attestationVersion = '2026.09.29-v36';
+  static const String attestationVersion = '2026.10.07-v55';
   static const String expectedManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedConfigurationSha256 =
-      'e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05';
+      'eaca417fdd38ab1179050eb235a09f2d19b9ace0b7ee97fd5e3b1fd3a1a712ab';
   static const String expectedAlgorithmSourceBundleSha256 =
-      '8f05e6ff6ad02ace71b621ea840cb795831d63562ebd91b54ae8139ab999dcc2';
+      '809b12557f1f05c7d6614bad4e38ddd45056cc78f38145259fa5bb7b9abc3c5e';
 
   final String attestationId;
   final String prospectivePlanSha256;
@@ -419,7 +419,7 @@ final class CredibilityEvidenceExecutionAttestation {
           'This attestation covers deterministic synthetic fixtures only. It '
           'does not establish dataset representativeness, scientific or '
           'clinical validity, qualification, regulatory acceptance, or safety. '
-          'The v52 release refresh rebinds this synthetic execution fixture '
+          'The v54 software identity refresh rebinds this synthetic execution fixture '
           'to the release source identity only; retained fixture timestamps do not '
           'attest current-worktree review or evidence coverage.',
     );

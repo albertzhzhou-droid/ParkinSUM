@@ -5,8 +5,10 @@ import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/interaction_result.dart';
 import 'mechanistic_trace_view.dart';
 
-Color interactionSeverityColor(InteractionSeverity severity) {
+Color interactionSeverityColor(InteractionSeverity? severity) {
   switch (severity) {
+    case null:
+      return Colors.blueGrey;
     case InteractionSeverity.low:
       return Colors.green;
     case InteractionSeverity.moderate:
@@ -18,10 +20,12 @@ Color interactionSeverityColor(InteractionSeverity severity) {
 
 String interactionSeverityLabel(
   BuildContext context,
-  InteractionSeverity severity,
+  InteractionSeverity? severity,
 ) {
   final i18n = context.appI18n;
   switch (severity) {
+    case null:
+      return i18n.tr('interaction.unassessed');
     case InteractionSeverity.low:
       return i18n.tr('interaction.low');
     case InteractionSeverity.moderate:
@@ -34,7 +38,12 @@ String interactionSeverityLabel(
 class InteractionSummaryCard extends StatelessWidget {
   final InteractionResult result;
 
-  const InteractionSummaryCard({super.key, required this.result});
+  final bool showEvidenceEntry;
+  const InteractionSummaryCard({
+    super.key,
+    required this.result,
+    this.showEvidenceEntry = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,23 +62,65 @@ class InteractionSummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 6,
             children: [
-              Icon(Icons.shield_outlined, color: accent),
-              const SizedBox(width: 8),
+              Icon(
+                result.hasAssessment
+                    ? Icons.shield_outlined
+                    : Icons.info_outline,
+                color: accent,
+              ),
               Text(
                 interactionSeverityLabel(context, result.overallSeverity),
                 style: TextStyle(color: accent, fontWeight: FontWeight.bold),
               ),
-              const Spacer(),
-              Text(
-                i18n.tr('interaction.score', {'value': '${result.score}'}),
-                style: TextStyle(color: accent, fontWeight: FontWeight.w600),
-              ),
+              if (result.score != null)
+                Text(
+                  i18n.tr('interaction.score', {'value': '${result.score}'}),
+                  style: TextStyle(color: accent, fontWeight: FontWeight.w600),
+                ),
             ],
           ),
           const SizedBox(height: 8),
           Text(copy.interactionSummary(result)),
+          if (showEvidenceEntry)
+            TextButton.icon(
+              key: const Key('interaction-evidence-and-missing'),
+              icon: const Icon(Icons.fact_check_outlined),
+              label: Text(
+                i18n.languageFamily == 'zh'
+                    ? '依据与缺失信息'
+                    : 'Evidence and missing information',
+              ),
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: Text(
+                    i18n.languageFamily == 'zh'
+                        ? '依据与缺失信息'
+                        : 'Evidence and missing information',
+                  ),
+                  content: SizedBox(
+                    width: 560,
+                    child: SingleChildScrollView(
+                      child: InteractionSummaryCard(
+                        result: result,
+                        showEvidenceEntry: false,
+                      ),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      child: Text(i18n.tr('common.close')),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           if (result.scoreFactors.isNotEmpty) ...[
             const SizedBox(height: 10),
             Wrap(

@@ -18,9 +18,9 @@ import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 
 const algorithmDirectEdgeProbeSchema =
-    'parkinsum.algorithm-direct-edge-probe/14';
+    'parkinsum.algorithm-direct-edge-probe/15';
 const algorithmDirectEdgeProbeGenerator =
-    'parkinsum.algorithm-direct-edge-probe-generator/14';
+    'parkinsum.algorithm-direct-edge-probe-generator/15';
 const algorithmDirectEdgeProbeHeld = 'held_pending_full_dependency_closure';
 const _maxRoots = 128;
 const _maxEdges = 250000;
@@ -52,10 +52,13 @@ Future<AlgorithmDirectEdgeProbeReport> runAlgorithmDirectEdgeProbe({
       path.join(root, 'config', 'algorithm_result_root_manifest.json'),
     ).readAsStringSync(),
   );
-  manifest.validateAgainstRegistry({
-    for (final descriptor in AlgorithmRegistry.all)
-      descriptor.id: descriptor.sourcePath,
-  });
+  validateAlgorithmDirectEdgeRootManifest(
+    manifest: manifest,
+    registeredSources: [
+      for (final descriptor in AlgorithmRegistry.all)
+        MapEntry(descriptor.id, descriptor.sourcePath),
+    ],
+  );
   if (manifest.entries.length > _maxRoots) {
     throw StateError('Result-root count exceeds the deterministic probe cap.');
   }
@@ -71,7 +74,9 @@ Future<AlgorithmDirectEdgeProbeReport> runAlgorithmDirectEdgeProbe({
   if (packageJson is! Map<String, Object?> ||
       (packageJson['scripts'] as Map?)?['algorithm:direct-edge-probe'] !=
           'dart --packages=.dart_tool/package_config.json '
-              'tool/run_algorithm_direct_edge_probe.dart') {
+              'tool/run_algorithm_direct_edge_probe.dart && '
+              'node --test tool/algorithm_result_sink_slice.test.mjs && '
+              'node tool/algorithm_result_sink_slice.mjs') {
     environmentHolds.add('declared_probe_entrypoint_mismatch');
   }
   final generatorFile = File(
@@ -557,6 +562,7 @@ Future<AlgorithmDirectEdgeProbeReport> runAlgorithmDirectEdgeProbe({
     libSourceSnapshotSha256: _digestStringMap(libSourceDigests),
     analysisContextCount: contextCount,
     sourceFileCount: libSourceDigests.length,
+    expectedRoots: manifest.entries,
     roots: rootObservations,
     edges: edges,
     declarationEdges: declarationEdges,
@@ -571,6 +577,22 @@ Future<AlgorithmDirectEdgeProbeReport> runAlgorithmDirectEdgeProbe({
     reachabilityHolds: callReachability.holds,
     environmentHoldReasons: environmentHolds,
   );
+}
+
+/// Reconciles independent registry declarations without silently collapsing
+/// duplicate algorithm IDs into a map before validation.
+void validateAlgorithmDirectEdgeRootManifest({
+  required AlgorithmResultRootManifest manifest,
+  required Iterable<MapEntry<String, String>> registeredSources,
+}) {
+  final sources = <String, String>{};
+  for (final entry in registeredSources) {
+    if (sources.containsKey(entry.key)) {
+      throw StateError('Duplicate registry algorithm id: ${entry.key}.');
+    }
+    sources[entry.key] = entry.value;
+  }
+  manifest.validateAgainstRegistry(sources);
 }
 
 /// Collects only resolved method, function-expression, and constructor calls
@@ -1202,6 +1224,7 @@ class AlgorithmDirectEdgeProbeReport {
   final String libSourceSnapshotSha256;
   final int analysisContextCount;
   final int sourceFileCount;
+  final List<AlgorithmResultRootEntry> expectedRoots;
   final List<AlgorithmDirectEdgeRootObservation> roots;
   final List<AlgorithmDirectDependencyEdge> edges;
   final List<AlgorithmDeclarationDependencyEdge> declarationEdges;
@@ -1233,6 +1256,7 @@ class AlgorithmDirectEdgeProbeReport {
     required this.libSourceSnapshotSha256,
     required this.analysisContextCount,
     required this.sourceFileCount,
+    required Iterable<AlgorithmResultRootEntry> expectedRoots,
     required Iterable<AlgorithmDirectEdgeRootObservation> roots,
     required Iterable<AlgorithmDirectDependencyEdge> edges,
     required Iterable<AlgorithmDeclarationDependencyEdge> declarationEdges,
@@ -1248,7 +1272,11 @@ class AlgorithmDirectEdgeProbeReport {
     supportedCallReverseSourceOwnership,
     required Iterable<AlgorithmCallReachabilityHold> reachabilityHolds,
     required Iterable<String> environmentHoldReasons,
-  }) : roots = List.unmodifiable(
+  }) : expectedRoots = List.unmodifiable(
+         [...expectedRoots]
+           ..sort((a, b) => a.algorithmId.compareTo(b.algorithmId)),
+       ),
+       roots = List.unmodifiable(
          [...roots]..sort((a, b) => a.algorithmId.compareTo(b.algorithmId)),
        ),
        edges = List.unmodifiable(
@@ -1325,8 +1353,80 @@ class AlgorithmDirectEdgeProbeReport {
          environmentHoldReasons.toSet().toList()..sort(),
        );
 
+  /// Exact identity mapping, independently of Analyzer success. Counts alone
+  /// cannot detect a duplicate replacing a missing root or swapped bindings.
+  List<String> get rootIdentityHoldReasons {
+    String identity(String algorithmId, String logicalRootId, String uri) =>
+        jsonEncode([algorithmId, logicalRootId, uri]);
+    final reasons = <String>{};
+    if (expectedRoots.isEmpty) reasons.add('expected_roots_empty');
+    if (roots.length != expectedRoots.length) {
+      reasons.add(
+        'root_count_mismatch:${roots.length}:${expectedRoots.length}',
+      );
+    }
+    void checkDuplicates(Iterable<String> values, String label) {
+      final seen = <String>{};
+      for (final value in values) {
+        if (!seen.add(value)) reasons.add('duplicate_$label:$value');
+      }
+    }
+
+    checkDuplicates(
+      expectedRoots.map((root) => root.algorithmId),
+      'expected_algorithm_id',
+    );
+    checkDuplicates(
+      expectedRoots.map((root) => root.logicalRootId),
+      'expected_logical_root_id',
+    );
+    checkDuplicates(
+      expectedRoots.map((root) => root.canonicalPackageUri),
+      'expected_package_uri',
+    );
+    checkDuplicates(
+      roots.map((root) => root.algorithmId),
+      'observed_algorithm_id',
+    );
+    checkDuplicates(
+      roots.map((root) => root.logicalRootId),
+      'observed_logical_root_id',
+    );
+    checkDuplicates(
+      roots.map((root) => root.canonicalPackageUri),
+      'observed_package_uri',
+    );
+    final expected = expectedRoots
+        .map(
+          (root) => identity(
+            root.algorithmId,
+            root.logicalRootId,
+            root.canonicalPackageUri,
+          ),
+        )
+        .toSet();
+    final observed = roots
+        .map(
+          (root) => identity(
+            root.algorithmId,
+            root.logicalRootId,
+            root.canonicalPackageUri,
+          ),
+        )
+        .toSet();
+    for (final missing in expected.difference(observed)) {
+      reasons.add('missing_root_identity:$missing');
+    }
+    for (final unexpected in observed.difference(expected)) {
+      reasons.add('unexpected_root_identity:$unexpected');
+    }
+    return List.unmodifiable(reasons.toList()..sort());
+  }
+
+  bool get rootInventoryReconciled => rootIdentityHoldReasons.isEmpty;
+
   bool get compatibilityAccepted =>
-      roots.length == 63 &&
+      rootInventoryReconciled &&
       roots.every((root) => root.accepted) &&
       environmentHoldReasons.isEmpty;
 
@@ -1347,7 +1447,7 @@ class AlgorithmDirectEdgeProbeReport {
   Map<String, Object?> get canonicalPayload =>
       _canonicalize({
             r'$schema': algorithmDirectEdgeProbeSchema,
-            'schema_version': 14,
+            'schema_version': 15,
             'generator': algorithmDirectEdgeProbeGenerator,
             'probe_state': algorithmDirectEdgeProbeHeld,
             'closure_complete': closureComplete,
@@ -1386,7 +1486,18 @@ class AlgorithmDirectEdgeProbeReport {
             'lib_source_snapshot_sha256': libSourceSnapshotSha256,
             'analysis_context_count': analysisContextCount,
             'source_file_count': sourceFileCount,
-            'expected_root_count': 63,
+            'expected_root_count': expectedRoots.length,
+            'expected_root_identities': expectedRoots
+                .map(
+                  (root) => {
+                    'algorithm_id': root.algorithmId,
+                    'logical_root_id': root.logicalRootId,
+                    'canonical_package_uri': root.canonicalPackageUri,
+                  },
+                )
+                .toList(),
+            'root_inventory_reconciled': rootInventoryReconciled,
+            'root_identity_hold_reasons': rootIdentityHoldReasons,
             'accepted_root_count': acceptedRootCount,
             'accepted_source_unit_count': acceptedSourceUnitCount,
             'source_inventory_reconciled': sourceInventoryReconciled,

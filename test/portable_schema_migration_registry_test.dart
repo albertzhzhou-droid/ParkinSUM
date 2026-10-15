@@ -11,11 +11,11 @@ void main() {
   const packageService = UserPortableDataPackageService();
 
   test(
-    'registry exposes three frozen validators and reviewed migration paths',
+    'registry retains historical validators and exposes compact transport',
     () {
       expect(
         PortableSchemaMigrationRegistry.validators.map((item) => item.version),
-        <int>[2, 3, 4],
+        <int>[2, 3, 4, 5],
       );
       expect(PortableSchemaMigrationRegistry.migrations, hasLength(3));
       expect(PortableSchemaMigrationRegistry.v2ToV3.semanticDiff, hasLength(8));

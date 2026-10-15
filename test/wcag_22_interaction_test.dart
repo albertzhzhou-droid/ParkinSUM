@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/security/account_password_policy.dart';
 import 'package:parkinsum_companion/core/services/data_service.dart';
+import 'package:parkinsum_companion/core/services/services.dart';
 import 'package:parkinsum_companion/core/services/user_logging_reminder_service.dart';
 import 'package:parkinsum_companion/core/state/app_state.dart';
 import 'package:parkinsum_companion/core/theme/paper_theme.dart';
@@ -237,12 +238,24 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
+    // Entry is owner-bound and restores its draft asynchronously. Exercise its
+    // actual form with a ready isolated session rather than an unauthenticated
+    // synchronous page harness.
+    final entryState = AppState(services: Services.createEphemeral());
+    addTearDown(entryState.dispose);
+    await entryState.services.ready;
+    await entryState.bootstrap();
+    await entryState.saveUserProfile(
+      entryState.userProfile.copyWith(displayLocale: 'en-US'),
+    );
     await _pumpA11yPage(
       tester,
       const EntryPage(),
+      appState: entryState,
       textScale: 2,
       logicalSize: const Size(320, 700),
     );
+    await tester.pumpAndSettle();
     expectNoWidgetErrors(reason: 'meal entry broke at 200% text');
     final foodSearch = find.byKey(const ValueKey('entry-food-search'));
     await _tabUntilFocused(tester, foodSearch, maxTabs: 40);
@@ -319,13 +332,14 @@ Future<AppState> _pumpA11yPage(
   Widget page, {
   required double textScale,
   required Size logicalSize,
+  AppState? appState,
 }) async {
   tester.view.physicalSize = logicalSize;
   tester.view.devicePixelRatio = 1;
   tester.platformDispatcher.textScaleFactorTestValue = textScale;
   addTearDown(tester.view.reset);
   addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-  final state = createTestAppState();
+  final state = appState ?? createTestAppState();
   await tester.pumpWidget(
     ChangeNotifierProvider<AppState>.value(
       value: state,

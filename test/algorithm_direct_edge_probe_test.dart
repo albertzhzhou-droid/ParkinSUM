@@ -6,11 +6,198 @@ import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/diagnostic/diagnostic.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/domain/entities/algorithm_dependency_compatibility.dart';
+import 'package:parkinsum_companion/domain/entities/algorithm_result_root_manifest.dart';
+import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
 import 'package:path/path.dart' as path;
 
 import '../tool/algorithm_direct_edge_probe.dart';
 
 void main() {
+  AlgorithmResultRootEntry rootEntry(String id) => AlgorithmResultRootEntry(
+    algorithmId: id,
+    logicalRootId: 'algorithm-root/$id',
+    resultSinkId: 'algorithm-result-sink/$id',
+    sourcePath: 'lib/$id.dart',
+    canonicalPackageUri: 'package:fixture/$id.dart',
+    libraryUri: 'package:fixture/$id.dart',
+    declarationKind: 'library',
+    enclosingDeclaration: null,
+    declarationName: null,
+  );
+
+  AlgorithmDirectEdgeRootObservation rootObservation(
+    AlgorithmResultRootEntry entry, {
+    String? algorithmId,
+    String? logicalRootId,
+    String? canonicalPackageUri,
+  }) => AlgorithmDirectEdgeRootObservation(
+    algorithmId: algorithmId ?? entry.algorithmId,
+    logicalRootId: logicalRootId ?? entry.logicalRootId,
+    canonicalPackageUri: canonicalPackageUri ?? entry.canonicalPackageUri,
+    resultVariant: 'ResolvedUnitResult',
+    sessionConsistent: true,
+    resolvedLibraryUri: canonicalPackageUri ?? entry.canonicalPackageUri,
+    blockingDiagnosticCodes: const [],
+    edgeCount: 0,
+    namespaceEdgeCount: 0,
+    unresolvedCallCount: 0,
+  );
+
+  AlgorithmDirectEdgeProbeReport rootReport(
+    Iterable<AlgorithmResultRootEntry> expectedRoots,
+    Iterable<AlgorithmDirectEdgeRootObservation> observations,
+  ) => AlgorithmDirectEdgeProbeReport(
+    analyzerVersion: algorithmDependencyAnalyzerVersion,
+    analyzerArchiveSha256: algorithmDependencyAnalyzerArchiveSha256,
+    dartVersion: algorithmDependencyReviewedDartVersion,
+    rootManifestSha256: 'a' * 64,
+    lockfileSha256: 'b' * 64,
+    packageConfigSha256: 'c' * 64,
+    packageJsonSha256: 'd' * 64,
+    analysisOptionsSha256: 'e' * 64,
+    generatorSourceSha256: 'f' * 64,
+    runnerSourceSha256: '0' * 64,
+    testSourceSha256: '1' * 64,
+    rootSourceSnapshotSha256: '2' * 64,
+    libSourceSnapshotSha256: '3' * 64,
+    analysisContextCount: 1,
+    sourceFileCount: 0,
+    expectedRoots: expectedRoots,
+    roots: observations,
+    edges: const [],
+    declarationEdges: const [],
+    namespaceEdges: const [],
+    unresolved: const [],
+    sourceUnresolved: const [],
+    sourceUnits: const [],
+    supportedCallReachability: const [],
+    supportedCallReverseReachability: const [],
+    supportedCallReverseSourceOwnership: const [],
+    reachabilityHolds: const [],
+    environmentHoldReasons: const [],
+  );
+
+  test(
+    'root acceptance follows the manifest identity set at any valid size',
+    () {
+      final entries = [rootEntry('first'), rootEntry('second')];
+      final observed = entries.map((entry) => rootObservation(entry)).toList();
+      final report = rootReport(entries, observed);
+      expect(report.compatibilityAccepted, isTrue);
+      expect(report.closureComplete, isFalse);
+      expect(report.rootInventoryReconciled, isTrue);
+      expect(report.rootIdentityHoldReasons, isEmpty);
+      expect(report.canonicalPayload['expected_root_count'], entries.length);
+      expect(report.canonicalPayload['expected_root_identities'], hasLength(2));
+      expect(
+        rootReport(entries.reversed, observed.reversed).canonicalJson,
+        report.canonicalJson,
+      );
+
+      final enlarged = [...entries, rootEntry('third')];
+      expect(
+        rootReport(
+          enlarged,
+          enlarged.map((entry) => rootObservation(entry)),
+        ).compatibilityAccepted,
+        isTrue,
+      );
+      final reduced = [entries.first];
+      expect(
+        rootReport(
+          reduced,
+          reduced.map((entry) => rootObservation(entry)),
+        ).compatibilityAccepted,
+        isTrue,
+      );
+      final current = AlgorithmResultRootManifest.decode(
+        File('config/algorithm_result_root_manifest.json').readAsStringSync(),
+      );
+      final currentReport = rootReport(
+        current.entries,
+        current.entries.map((entry) => rootObservation(entry)),
+      );
+      expect(currentReport.compatibilityAccepted, isTrue);
+      expect(
+        currentReport.canonicalPayload['expected_root_count'],
+        AlgorithmRegistry.all.length,
+      );
+    },
+  );
+
+  test('added, missing, duplicate and swapped observed roots stay held', () {
+    final first = rootEntry('first');
+    final second = rootEntry('second');
+    final third = rootEntry('third');
+    final entries = [first, second];
+    final firstObservation = rootObservation(first);
+    final secondObservation = rootObservation(second);
+    final cases = <String, List<AlgorithmDirectEdgeRootObservation>>{
+      'added': [firstObservation, secondObservation, rootObservation(third)],
+      'missing': [firstObservation],
+      'duplicate_replaces_missing': [firstObservation, firstObservation],
+      'unexpected_replaces_missing': [firstObservation, rootObservation(third)],
+      'swapped_uri': [
+        rootObservation(first, canonicalPackageUri: second.canonicalPackageUri),
+        rootObservation(second, canonicalPackageUri: first.canonicalPackageUri),
+      ],
+      'swapped_logical_root': [
+        rootObservation(first, logicalRootId: second.logicalRootId),
+        rootObservation(second, logicalRootId: first.logicalRootId),
+      ],
+    };
+    for (final entry in cases.entries) {
+      final report = rootReport(entries, entry.value);
+      expect(report.compatibilityAccepted, isFalse, reason: entry.key);
+      expect(report.rootInventoryReconciled, isFalse, reason: entry.key);
+      expect(report.rootIdentityHoldReasons, isNotEmpty, reason: entry.key);
+      expect(
+        report.canonicalPayload['root_identity_hold_reasons'],
+        report.rootIdentityHoldReasons,
+      );
+    }
+    expect(rootReport([], []).compatibilityAccepted, isFalse);
+    expect(
+      rootReport(
+        [first, first],
+        [firstObservation, firstObservation],
+      ).compatibilityAccepted,
+      isFalse,
+    );
+  });
+
+  test(
+    'registry additions, omissions and duplicates cannot silently collapse',
+    () {
+      final entries = [rootEntry('first'), rootEntry('second')];
+      final manifest = AlgorithmResultRootManifest(
+        packageName: 'fixture',
+        entries: entries,
+      );
+      final sources = entries
+          .map((entry) => MapEntry(entry.algorithmId, entry.sourcePath))
+          .toList();
+      validateAlgorithmDirectEdgeRootManifest(
+        manifest: manifest,
+        registeredSources: sources,
+      );
+      for (final changed in [
+        [...sources, const MapEntry('third', 'lib/third.dart')],
+        [sources.first],
+        [...sources, sources.first],
+        [sources.first, const MapEntry('second', 'lib/swapped.dart')],
+      ]) {
+        expect(
+          () => validateAlgorithmDirectEdgeRootManifest(
+            manifest: manifest,
+            registeredSources: changed,
+          ),
+          throwsStateError,
+        );
+      }
+    },
+  );
+
   test(
     'resolves direct calls and constructors while holding dispatch gaps',
     () async {
@@ -1488,6 +1675,7 @@ void partCaller() { PartLeaf(); }
       libSourceSnapshotSha256: '3' * 64,
       analysisContextCount: 1,
       sourceFileCount: 2,
+      expectedRoots: const [],
       roots: const [],
       edges: edges,
       declarationEdges: reverse
@@ -1566,7 +1754,7 @@ void partCaller() { PartLeaf(); }
     expect(forward.compatibilityAccepted, isFalse);
     expect(forward.sourceInventoryReconciled, isTrue);
     expect(forward.acceptedSourceUnitCount, 2);
-    expect(forward.canonicalPayload['schema_version'], 14);
+    expect(forward.canonicalPayload['schema_version'], 15);
     final partOwnership =
         (forward.canonicalPayload['part_ownership'] as List).single
             as Map<String, Object?>;

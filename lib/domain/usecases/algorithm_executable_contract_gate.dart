@@ -349,12 +349,14 @@ final class AlgorithmExecutableContractGate {
         'runtime_rule_support.path_permutation': <String, Object?>{
           'forward_paths': <String>[
             'drug.active_ingredients',
+            'drug.route',
             'meal.protein_g',
             'timestamps.drug_time',
             'timestamps.meal_time',
           ],
           'reversed_paths': <String>[
             'drug.active_ingredients',
+            'drug.route',
             'meal.protein_g',
             'timestamps.drug_time',
             'timestamps.meal_time',

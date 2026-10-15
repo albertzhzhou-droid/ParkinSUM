@@ -716,14 +716,15 @@ class AlgorithmObservatoryService {
       providerId: traceProviderContract.providerId,
       label: 'Aggregate synthetic meal-protein trend',
       inputs: const [
-        '3 fixed synthetic Meal rows; totals use Meal.computeTotals()',
+        '3 fixed known synthetic Meal rows; totals use Meal.knownNutrientTotal(proteinG)',
+        'schema v2 excludes the entire meal for missing or invalid protein; measured zero remains known',
         'effective time precedence: occurredAt → range start → eatenAt',
         'meal IDs, titles, food names, and absolute timestamps omitted',
       ],
       output:
           '${points.length} chronologically sorted point(s); relative series '
           '$offsets; arithmetic mean '
-          '${useCase.averageProtein(meals).toStringAsFixed(1)} g per meal',
+          '${useCase.knownAverageProtein(meals)!.toStringAsFixed(1)} g per included known meal',
       sourceRefs: const [],
       limitation:
           'This calls the production aggregation on fixed synthetic inputs. '

@@ -1,10 +1,39 @@
 import '../../core/models/drug_definition.dart';
 import '../../core/models/food_item.dart';
-import '../../core/utils/qualified_value_parser.dart';
 import '../../core/utils/texture_support.dart';
 import '../../core/db/cdss_database.dart';
+import '../../core/security/cdss_identifier_factory.dart';
+import '../../data/datasources/remote/p0_import_support.dart' show stableHash;
+import '../../core/db/cdss_catalog_snapshot_reader.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
+import 'qualified_nutrient_point_selection.dart';
+
+bool _foodVariantAllowsArithmetic(
+  Map<String, Object?>? variant,
+  Map<String, Object?>? source,
+) {
+  if (variant == null || source == null) return false;
+  final status = variant['status'];
+  if (status == 'active') return true;
+  // Existing importers record their ingestion route in this field. Recognize
+  // only their exact marker and provider pairing; no wildcard or lifecycle
+  // promotion is inferred from an arbitrary "imported" prefix.
+  final family = variant['source_family'];
+  final provider = source['source_family'];
+  return switch (status) {
+    'imported_fdc_json' =>
+      family is String &&
+          FdcFoodBasis.isFdcDataType(family) &&
+          provider == 'FDC',
+    'imported_ciqual_xml' ||
+    'seeded_from_verified_report' => family == 'CIQUAL' && provider == 'CIQUAL',
+    'imported_china_cdc_food_page' =>
+      family == 'CHINA_CDC_FOOD_PLATFORM' &&
+          provider == 'CHINA_CDC_FOOD_PLATFORM',
+    _ => false,
+  };
+}
 
 Map<String, Object?> _queryTableAudit(
   String table,
@@ -98,8 +127,12 @@ class CdssFoodProjectionResult {
 /// - crosswalk 已优先用于 app id 投影；per-jurisdiction 最优 variant 仍由 resolver/runtime 路径处理。
 class CdssCatalogProjectionService {
   final CdssDatabase database;
+  final bool requireConsistentCatalog;
 
-  const CdssCatalogProjectionService({required this.database});
+  const CdssCatalogProjectionService({
+    required this.database,
+    this.requireConsistentCatalog = false,
+  });
 
   Future<List<FoodItem>> projectFoods() async =>
       (await projectFoodsWithAudit()).foods;
@@ -108,12 +141,33 @@ class CdssCatalogProjectionService {
   /// used for this run. Query rows are represented by ordered IDs and digests;
   /// raw payload text is never copied into the audit.
   Future<CdssFoodProjectionResult> projectFoodsWithAudit() async {
-    final variants = await database.queryTable('food_variant');
-    final concepts = await database.queryTable('food_concept');
-    final observations = await database.queryTable('observation');
-    final crosswalks = await database.queryTable('concept_variant_crosswalk');
-    final sourceDocuments = await database.queryTable('source_document');
-    final variantScopes = await database.queryTable('variant_scope');
+    CdssCatalogTableSnapshot? snapshot;
+    if (requireConsistentCatalog || database is CdssCatalogSnapshotReader) {
+      final reader = database;
+      if (reader is! CdssCatalogSnapshotReader) {
+        return _heldCatalog('atomic_catalog_reader_unavailable');
+      }
+      try {
+        final captured = await (reader as CdssCatalogSnapshotReader)
+            .readFoodCatalogSnapshot();
+        captured.toAuditJson(); // Unrepresentable values fail closed, too.
+        if (captured.holds.isNotEmpty) {
+          return _heldCatalog('catalog_reference_or_promotion_hold', captured);
+        } else {
+          snapshot = captured;
+        }
+      } catch (_) {
+        return _heldCatalog('catalog_snapshot_read_failed');
+      }
+    }
+    Future<List<Map<String, Object?>>> read(String table) async =>
+        snapshot?.rows[table] ?? await database.queryTable(table);
+    final variants = await read('food_variant');
+    final concepts = await read('food_concept');
+    final observations = await read('observation');
+    final crosswalks = await read('concept_variant_crosswalk');
+    final sourceDocuments = await read('source_document');
+    final variantScopes = await read('variant_scope');
 
     final conceptById = {
       for (final row in concepts) '${row['food_concept_id']}': row,
@@ -136,24 +190,145 @@ class CdssCatalogProjectionService {
       }
     }
 
-    for (var index = 0; index < observations.length; index++) {
-      final row = observations[index];
-      final entityKey = '${row['entity_key'] ?? ''}';
-      if (entityKey.isEmpty) continue;
-      final qualifierKind = '${row['qualifier_kind'] ?? ''}';
-      if (qualifierKind != QualifierKind.exact.wireValue) continue;
-      final attributeCode = '${row['attribute_code'] ?? ''}';
-      final valueNum = row['value_num'];
-      if (attributeCode.isEmpty || valueNum is! num) continue;
-      nutrientByVariant.putIfAbsent(
-        entityKey,
-        () => <String, double>{},
-      )[attributeCode] = valueNum
-          .toDouble();
-      legacyProjectionRowIndexByVariantAndAttribute.putIfAbsent(
-        entityKey,
-        () => <String, int>{},
-      )[attributeCode] = index;
+    // Recover source basis even for an older stored observation that was
+    // incorrectly labelled edible mass. Keep the original row unchanged.
+    final sourcePayloads = <String, Map>{};
+    for (final source in sourceDocuments) {
+      try {
+        final payload = jsonDecode('${source['raw_payload'] ?? ''}');
+        if (payload is Map) {
+          sourcePayloads['${source['source_doc_id']}'] = payload;
+        }
+      } on FormatException {
+        // Unreadable source fields cannot prove a branded mass basis.
+      }
+    }
+    final qualifiedBasisByVariant = <String, FdcFoodBasis>{};
+    final basisAudit = <Map<String, Object?>>[];
+    final basisSourceIdsByVariant = <String, Set<String>>{};
+    for (final row in observations) {
+      final entity = '${row['entity_key'] ?? ''}';
+      final source = '${row['source_doc_id'] ?? ''}';
+      if (entity.isNotEmpty && source.isNotEmpty) {
+        (basisSourceIdsByVariant[entity] ??= <String>{}).add(source);
+      }
+    }
+    for (final variant in variants) {
+      final family = '${variant['source_family'] ?? ''}';
+      if (!FdcFoodBasis.isFdcDataType(family)) continue;
+      final variantId = '${variant['food_variant_id']}';
+      final foodId = '${variant['source_food_code'] ?? ''}';
+      final linkedSources = basisSourceIdsByVariant[variantId] ?? <String>{};
+      final sourceBases = <FdcFoodBasis>[];
+      for (final sourceId in linkedSources) {
+        final audits = sourcePayloads[sourceId]?['food_basis_evidence'];
+        if (audits is! List) continue;
+        for (final audit in audits.whereType<Map>()) {
+          if ('${audit['fdc_id'] ?? ''}' != foodId) continue;
+          final fields = audit['source_fields'];
+          if (fields is Map && '${fields['fdcId'] ?? ''}' == foodId) {
+            sourceBases.add(FdcFoodBasis.inspect(fields));
+          }
+        }
+      }
+      final fallback = FdcFoodBasis.inspect({
+        'fdcId': foodId,
+        'dataType': family,
+        'description': variant['display_name_local'],
+      });
+      final basis = sourceBases.isEmpty ? fallback : sourceBases.first;
+      final ambiguous = sourceBases.any(
+        (other) => other.basisType != basis.basisType,
+      );
+      final qualified = ambiguous
+          ? FdcFoodBasis(
+              basisType: 'source_basis_unqualified',
+              reason: 'competing_source_bases',
+              sourceFields: basis.sourceFields,
+              requiresQualifiedIdentity: true,
+            )
+          : !fallback.supportsEdibleMassPoint &&
+                fallback.reason == 'explicit_source_description_moisture_basis'
+          ? fallback
+          : basis;
+      if (qualified.requiresQualifiedIdentity) {
+        qualifiedBasisByVariant[variantId] = qualified;
+        basisAudit.add({
+          'variant_id': variantId,
+          ...qualified.toJson(),
+          'qualification_source': sourceBases.isEmpty
+              ? 'retained_variant_source_description'
+              : 'linked_source_fields',
+        });
+      }
+    }
+    final unavailableAttributes = <String, Set<String>>{};
+    if (snapshot != null) {
+      final currentSources = {
+        for (final source in sourceDocuments) source['source_doc_id']: source,
+      };
+      final currentVariants = {
+        for (final variant in variants) variant['food_variant_id']: variant,
+      };
+      for (final observation in observations.where(
+        (r) => r['domain'] == 'food',
+      )) {
+        final source = currentSources[observation['source_doc_id']];
+        final variant = currentVariants[observation['entity_key']];
+        final unavailable =
+            source == null ||
+            source['source_status'] != 'active' ||
+            !_foodVariantAllowsArithmetic(variant, source) ||
+            ['published_at', 'effective_at'].any((key) {
+              final date = source[key];
+              return date != null &&
+                  (date is! num ||
+                      !date.isFinite ||
+                      date > DateTime.now().millisecondsSinceEpoch);
+            });
+        if (unavailable) {
+          (unavailableAttributes['${observation['entity_key']}'] ??= <String>{})
+              .add('${observation['attribute_code']}');
+        }
+      }
+    }
+    final originalSelection = selectQualifiedNutrientPoints(observations);
+    final reviewedSelection = _reviewedFoodPoints(snapshot);
+    final pointSelection = QualifiedNutrientPointSelection(
+      points: {
+        for (final entity in originalSelection.points.entries)
+          entity.key: {
+            for (final attribute in entity.value.entries)
+              if (!(reviewedSelection.blocked[entity.key]?.contains(
+                    attribute.key,
+                  ) ??
+                  false))
+                attribute.key: attribute.value,
+            ...?reviewedSelection.points[entity.key],
+          },
+        for (final entity in reviewedSelection.points.entries)
+          if (!originalSelection.points.containsKey(entity.key))
+            entity.key: entity.value,
+      },
+      observedAttributes: originalSelection.observedAttributes,
+    );
+    for (final entity in pointSelection.points.entries) {
+      if (qualifiedBasisByVariant[entity.key]?.supportsEdibleMassPoint ==
+          false) {
+        continue;
+      }
+      nutrientByVariant[entity.key] = {
+        for (final nutrient in entity.value.entries)
+          if (!(unavailableAttributes[entity.key]?.contains(nutrient.key) ??
+              false))
+            nutrient.key: nutrient.value.value,
+      };
+      legacyProjectionRowIndexByVariantAndAttribute[entity.key] = {
+        for (final nutrient in entity.value.entries)
+          if (!(unavailableAttributes[entity.key]?.contains(nutrient.key) ??
+              false))
+            nutrient.key: nutrient.value.rowIndex,
+      };
     }
 
     final variantIds = variants
@@ -190,8 +365,17 @@ class CdssCatalogProjectionService {
       final evidenceRow = <String, dynamic>{
         for (final entry in row.entries) entry.key: entry.value,
         'selected_for_legacy_point_projection':
+            const {
+              'protein_g',
+              'carbohydrate_g',
+              'fat_g',
+              'fiber_g',
+              'sodium_mg',
+              'energy_kcal',
+              'water_g',
+            }.contains(attributeCode) &&
             legacyProjectionRowIndexByVariantAndAttribute[entityKey]?[attributeCode] ==
-            index,
+                index,
       };
       nutrientEvidenceByVariant
           .putIfAbsent(entityKey, () => <NutrientObservationEvidence>[])
@@ -225,6 +409,7 @@ class CdssCatalogProjectionService {
     };
     final catalogEvidenceByVariant = <String, FoodCatalogProvenanceEvidence>{};
     final foodPortionEvidenceByVariant = <String, List<FoodPortionEvidence>>{};
+    final productsByVariant = <String, List<FoodProductEvidence>>{};
     for (final variantId in variantIds) {
       final linkedSourceIds =
           sourceDocIdsByVariant[variantId] ?? const <String>{};
@@ -333,6 +518,27 @@ class CdssCatalogProjectionService {
           foodPortionEvidenceByVariant[variantId] = portions;
         }
       }
+      for (final sourceDocId in linkedSourceIds) {
+        final products =
+            sourcePayloads[sourceDocId]?['branded_product_details'];
+        if (products is! List) continue;
+        for (final product in products.whereType<Map>()) {
+          final fields = product['source_fields'];
+          if ('${product['fdc_id']}' == sourceFoodId &&
+              fields is Map &&
+              '${fields['fdcId']}' == sourceFoodId &&
+              product['evidence_scope'] ==
+                  'complete_original_branded_food_object') {
+            (productsByVariant[variantId] ??= []).add(
+              FoodProductEvidence(
+                sourceDocId: sourceDocId,
+                sourceFoodId: sourceFoodId,
+                sourceFields: Map<String, Object?>.from(fields),
+              ),
+            );
+          }
+        }
+      }
       if (linkedSourceDocuments.isNotEmpty ||
           linkedScopes.isNotEmpty ||
           linkedCrosswalks.isNotEmpty) {
@@ -422,8 +628,13 @@ class CdssCatalogProjectionService {
             foodPortionEvidence:
                 foodPortionEvidenceByVariant[variantId] ??
                 const <FoodPortionEvidence>[],
+            foodProductEvidence: productsByVariant[variantId] ?? const [],
             catalogProvenanceEvidence: catalogEvidenceByVariant[variantId],
-            basisType: row['basis_type']?.toString(),
+            basisType:
+                qualifiedBasisByVariant[variantId]?.basisType ??
+                row['basis_type']?.toString(),
+            sourceBasisEvidence:
+                qualifiedBasisByVariant[variantId]?.sourceFields,
             // Qualifier is observation-specific; do not label the whole food
             // as exact when individual nutrient records differ or are absent.
             qualifierKind: null,
@@ -431,17 +642,37 @@ class CdssCatalogProjectionService {
         })
         .toList(growable: false);
     final queryAudit = <String, Object?>{
-      'schema_id': 'parkinsum.cdss-food-projection-query-audit/1',
+      'schema_id': 'parkinsum.cdss-food-projection-query-audit/4',
+      'reviewed_nutrient_selection': reviewedSelection.audit,
+      'source_lifecycle_holds': {
+        for (final entry in unavailableAttributes.entries)
+          entry.key: (entry.value.toList()..sort()),
+      },
       'contract_id': 'cdss_catalog_projection_service.projectFoods/1',
       'query_method': 'CdssDatabase.queryTable(tableName)',
       'read_consistency':
-          'six sequential table reads; no transaction-scoped snapshot was requested or verified',
+          snapshot?.consistency ?? 'legacy_unverified_sequential_reads',
+      'catalog_snapshot': snapshot?.toAuditJson(),
+      'strict_candidate_read_required': requireConsistentCatalog,
+      'status': 'projected',
       'query_options': <String, Object?>{
         'where_predicate': 'none; every row in each named table is returned',
         'order_by': 'none; adapter-returned row order is preserved',
         'volatile_fields_excluded_from_row_digest': <String>['_synced_at'],
       },
       'table_reads': <Map<String, Object?>>[
+        if (snapshot != null) ...[
+          _queryTableAudit(
+            'resolved_fact',
+            'fact_id',
+            snapshot.rows['resolved_fact']!,
+          ),
+          _queryTableAudit(
+            'conflict_audit_log',
+            'audit_id',
+            snapshot.rows['conflict_audit_log']!,
+          ),
+        ],
         _queryTableAudit('food_variant', 'food_variant_id', variants),
         _queryTableAudit('food_concept', 'food_concept_id', concepts),
         _queryTableAudit('observation', 'observation_id', observations),
@@ -454,6 +685,11 @@ class CdssCatalogProjectionService {
         _queryTableAudit('variant_scope', 'scope_hash', variantScopes),
       ],
       'selection_contract': <String, Object?>{
+        if (basisAudit.isNotEmpty) 'source_basis_qualification': basisAudit,
+        'numeric_nutrient_unit_basis_contract':
+            'Explicit unit must match the attribute and explicit basis must be per_100g or per_100g_edible_part with amount 100; omitted metadata is retained only for legacy point compatibility, not evidence of a measured basis.',
+        'numeric_nutrient_competing_qualifier_contract':
+            'Any competing primary qualifier withholds the point; only an explicitly attached :sample_range with matching source_min/source_max and bounds enclosing the point is retained as source statistics alongside one exact row.',
         'food_variant_rows':
             'all returned rows become projected candidates; no status, jurisdiction, or applicability filter is applied; output order follows returned rows',
         'food_concepts':
@@ -464,9 +700,9 @@ class CdssCatalogProjectionService {
         'food_crosswalk_projected_id_winner':
             'last eligible row for a variant in returned order; all food-domain links for projected variants remain provenance evidence',
         'numeric_nutrient_filter':
-            "entity_key is non-empty, qualifier_kind == 'exact', attribute_code is non-empty, and value_num is numeric",
+            "entity_key and attribute_code non-empty; qualifier_kind == 'exact'; finite non-negative value; one proven evidence group and one source-document identity for that nutrient",
         'numeric_nutrient_winner':
-            'last qualifying row per entity_key and attribute_code in returned order',
+            'single qualifying evidence group; proven duplicates retain every occurrence; unproven duplicates and incompatible source revisions remain evidence only',
         'nutrient_evidence_filter':
             'all observation rows whose entity_key matches a returned food_variant ID; evidence rows are sorted by serialized content after the legacy selected-row flag is attached',
         'source_and_scope_links':
@@ -480,6 +716,25 @@ class CdssCatalogProjectionService {
       queryAudit: queryAudit,
     );
   }
+
+  CdssFoodProjectionResult _heldCatalog(
+    String reason, [
+    CdssCatalogTableSnapshot? snapshot,
+  ]) => CdssFoodProjectionResult(
+    foods: const [],
+    queryAudit: <String, Object?>{
+      'schema_id': 'parkinsum.cdss-food-projection-query-audit/4',
+      'contract_id': 'cdss_catalog_projection_service.projectFoods/1',
+      'status': 'HOLD',
+      'reason': reason,
+      'read_consistency': snapshot?.consistency ?? 'unavailable',
+      'strict_candidate_read_required': true,
+      'catalog_snapshot': snapshot?.toAuditJson(),
+      'table_reads': const <Map<String, Object?>>[],
+      'fallback_boundary':
+          'No imported candidates are emitted. Caller or built-in inputs retain their separate identities; no imported snapshot is claimed.',
+    },
+  );
 
   Future<List<DrugDefinition>> projectDrugs() async {
     final concepts = await database.queryTable('drug_concept');
@@ -561,9 +816,25 @@ class CdssCatalogProjectionService {
   /// - 直接从 CDSS variant / observation / source_document 读取真实导入值；
   /// - 用于“添加一餐”的信息弹层和目录详情页。
   Future<ProjectedFoodDetail?> projectFoodDetail(FoodItem food) async {
-    final variants = await database.queryTable('food_variant');
-    final observations = await database.queryTable('observation');
-    final sourceDocuments = await database.queryTable('source_document');
+    CdssCatalogTableSnapshot? captured;
+    final reader = database;
+    if (reader is CdssCatalogSnapshotReader) {
+      try {
+        final candidate = await (reader as CdssCatalogSnapshotReader)
+            .readFoodCatalogSnapshot();
+        if (candidate.holds.isNotEmpty) return null;
+        captured = candidate;
+      } catch (_) {
+        if (requireConsistentCatalog) return null;
+      }
+    } else if (requireConsistentCatalog) {
+      return null;
+    }
+    Future<List<Map<String, Object?>>> read(String table) async =>
+        captured?.rows[table] ?? await database.queryTable(table);
+    final variants = await read('food_variant');
+    final observations = await read('observation');
+    final sourceDocuments = await read('source_document');
 
     final matchingVariants = variants
         .where((row) {
@@ -628,7 +899,10 @@ class CdssCatalogProjectionService {
               '${row['external_product_code'] ?? ''}' == drug.sourceProductCode;
           final sameJurisdiction =
               '${row['jurisdiction'] ?? 'GLOBAL'}' == drug.jurisdiction;
-          return sameCode && sameJurisdiction;
+          final sameSource =
+              '${row['regulator'] ?? ''}'.toUpperCase() ==
+              drug.sourceSystem.toUpperCase();
+          return sameCode && sameJurisdiction && sameSource;
         })
         .toList(growable: false);
     if (matchingVariants.isEmpty) return null;
@@ -639,10 +913,29 @@ class CdssCatalogProjectionService {
     final sourceDocById = {
       for (final row in sourceDocuments) '${row['source_doc_id']}': row,
     };
+    final payloadById = {
+      for (final row in sourceDocuments)
+        '${row['source_doc_id']}': _drugDocumentPayload(row),
+    };
 
     return ProjectedDrugDetail(
       drug: drug,
       variantIds: variantIds.toList(growable: false),
+      sourceDocuments: [
+        for (final row in sourceDocuments)
+          if (_selectedProductScopes(
+                payloadById['${row['source_doc_id']}'] ?? const {},
+                variantIds,
+              ).isNotEmpty ||
+              sections.any(
+                (section) =>
+                    variantIds.contains(
+                      '${section['drug_product_variant_id'] ?? ''}',
+                    ) &&
+                    section['source_doc_id'] == row['source_doc_id'],
+              ))
+            ProjectedDrugSourceDocument.fromRow(row, variantIds: variantIds),
+      ],
       sections: sections
           .where(
             (row) =>
@@ -653,6 +946,11 @@ class CdssCatalogProjectionService {
               sectionKey: '${row['section_key'] ?? ''}',
               sectionTitle: '${row['section_title'] ?? ''}',
               sectionText: '${row['section_text'] ?? ''}',
+              applicabilityScope: _drugSectionScope(
+                payloadById['${row['source_doc_id']}'] ?? const {},
+                '${row['drug_product_variant_id'] ?? ''}',
+                '${row['section_key'] ?? ''}',
+              ),
               sourceDocTitle:
                   sourceDocById['${row['source_doc_id'] ?? ''}']?['title']
                       ?.toString(),
@@ -705,8 +1003,27 @@ class CdssCatalogProjectionService {
       try {
         final decoded = jsonDecode(rawPayload);
         if (decoded is! Map) continue;
-        final labelFacts = decoded['label_facts'];
-        if (labelFacts is! List) continue;
+        final List<Object?> scopedFacts;
+        if ((decoded.containsKey('product_scopes') ||
+            decoded.containsKey('product_scope_schema'))) {
+          scopedFacts = [
+            for (final scope in _selectedProductScopes(decoded, variantIds))
+              if (scope['identity_status'] == 'resolved_product_scope' &&
+                  scope['label_facts'] is List)
+                for (final fact in scope['label_facts'] as List)
+                  if (fact is Map &&
+                      scope['section_scopes'] is Map &&
+                      (scope['section_scopes']
+                              as Map)[fact['source_section_key']] ==
+                          'product_explicit')
+                    fact,
+          ];
+        } else {
+          scopedFacts = decoded['label_facts'] is List
+              ? List<Object?>.from(decoded['label_facts'] as List)
+              : const [];
+        }
+        final labelFacts = scopedFacts;
         for (final item in labelFacts.whereType<Map>()) {
           facts.add(
             ProjectedDrugLabelFact(
@@ -771,6 +1088,10 @@ class CdssCatalogProjectionService {
 
   String _attributeLabel(String attributeCode) {
     switch (attributeCode) {
+      case 'energy_atwater_general_kcal':
+        return 'Energy (Atwater General Factors)';
+      case 'energy_atwater_specific_kcal':
+        return 'Energy (Atwater Specific Factors)';
       case 'protein_g':
         return 'Protein';
       case 'carbohydrate_g':
@@ -832,6 +1153,7 @@ class ProjectedDrugDetail {
   final List<String> packagingDescriptions;
   final List<String> mediaLinks;
   final List<ProjectedDrugLabelFact> labelFacts;
+  final List<ProjectedDrugSourceDocument> sourceDocuments;
 
   const ProjectedDrugDetail({
     required this.drug,
@@ -840,7 +1162,125 @@ class ProjectedDrugDetail {
     required this.packagingDescriptions,
     required this.mediaLinks,
     required this.labelFacts,
+    this.sourceDocuments = const [],
   });
+}
+
+Map _drugDocumentPayload(Map<String, Object?> row) {
+  try {
+    final decoded = jsonDecode('${row['raw_payload'] ?? ''}');
+    return decoded is Map ? decoded : const {};
+  } on FormatException {
+    return const {};
+  }
+}
+
+List<Map> _selectedProductScopes(Map payload, Set<String> variantIds) {
+  final scopes = payload['product_scopes'];
+  if (payload['product_scope_schema'] != 'spl-product-scope/1' ||
+      scopes is! Map) {
+    return const [];
+  }
+  return [
+    for (final id in variantIds)
+      if (scopes[id] is Map) scopes[id] as Map,
+  ];
+}
+
+String _drugSectionScope(Map payload, String variantId, String sectionKey) {
+  if (!payload.containsKey('product_scopes') &&
+      !payload.containsKey('product_scope_schema')) {
+    return 'legacy_unspecified';
+  }
+  final selected = _selectedProductScopes(payload, {variantId});
+  if (selected.length != 1 ||
+      selected.single['identity_status'] != 'resolved_product_scope') {
+    return 'hold_product_identity';
+  }
+  final scopes = selected.single['section_scopes'];
+  return scopes is Map
+      ? '${scopes[sectionKey] ?? 'hold_section_scope'}'
+      : 'hold_section_scope';
+}
+
+class ProjectedDrugSourceDocument {
+  const ProjectedDrugSourceDocument({
+    required this.sourceDocId,
+    required this.originUrl,
+    required this.labelVersion,
+    required this.effectiveTime,
+    required this.contentSha256,
+    required this.activeIngredientDetails,
+    this.ingredientClassEvidence = const [],
+    this.productScopeStatus = 'legacy_unspecified',
+  });
+
+  final String sourceDocId;
+  final String originUrl;
+  final String? labelVersion;
+  final String? effectiveTime;
+  final String? contentSha256;
+  final List<Map<String, Object?>> activeIngredientDetails;
+  final List<Map<String, Object?>> ingredientClassEvidence;
+
+  /// Complete source classes, including IACT and unresolved records. Legacy
+  /// documents retain their active-only view without inventing inactive rows.
+  List<Map<String, Object?>> get displayedIngredientEvidence =>
+      ingredientClassEvidence.isNotEmpty
+      ? ingredientClassEvidence
+      : activeIngredientDetails;
+  final String productScopeStatus;
+
+  factory ProjectedDrugSourceDocument.fromRow(
+    Map<String, Object?> row, {
+    Set<String> variantIds = const {},
+  }) {
+    final payload = _drugDocumentPayload(row);
+    final selected = _selectedProductScopes(payload, variantIds);
+    final structured =
+        payload.containsKey('product_scopes') ||
+        payload.containsKey('product_scope_schema');
+    final ingredients = structured
+        ? [
+            for (final scope in selected)
+              if (scope['active_ingredient_details'] is List)
+                ...scope['active_ingredient_details'] as List,
+          ]
+        : payload['active_ingredient_details'];
+    final classes = structured
+        ? [
+            for (final scope in selected)
+              if (scope['ingredient_class_audit'] is List)
+                ...scope['ingredient_class_audit'] as List,
+          ]
+        : payload['ingredient_class_audit'];
+    return ProjectedDrugSourceDocument(
+      sourceDocId: '${row['source_doc_id'] ?? ''}',
+      originUrl: '${row['origin_url'] ?? ''}',
+      labelVersion: payload['version_number']?.toString(),
+      effectiveTime: payload['effective_time']?.toString(),
+      contentSha256: payload['spl_xml_sha256']?.toString(),
+      productScopeStatus: structured
+          ? (selected.length == 1 &&
+                    selected.single['identity_status'] ==
+                        'resolved_product_scope'
+                ? 'resolved_product_scope'
+                : 'hold_product_identity')
+          : 'legacy_unspecified',
+      activeIngredientDetails: ingredients is List
+          ? [
+              for (final item in ingredients.whereType<Map>())
+                {for (final entry in item.entries) '${entry.key}': entry.value},
+            ]
+          : const [],
+      ingredientClassEvidence: classes is List
+          ? [
+              for (final item in classes.whereType<Map>())
+                {for (final entry in item.entries) '${entry.key}': entry.value},
+            ]
+          : const [],
+    );
+  }
 }
 
 class ProjectedDrugSection {
@@ -848,12 +1288,14 @@ class ProjectedDrugSection {
   final String sectionTitle;
   final String sectionText;
   final String? sourceDocTitle;
+  final String applicabilityScope;
 
   const ProjectedDrugSection({
     required this.sectionKey,
     required this.sectionTitle,
     required this.sectionText,
     this.sourceDocTitle,
+    this.applicabilityScope = 'legacy_unspecified',
   });
 }
 
@@ -905,4 +1347,343 @@ DrugTag? inferDrugTag(String genericName) {
   if (lower.contains('peg')) return DrugTag.laxative;
   if (lower.contains('iron')) return DrugTag.mineralSupplement;
   return null;
+}
+
+/// A review is usable only through the complete original packet and the
+/// current participating catalogue capture. Typed names confer no authority.
+({
+  Map<String, Map<String, QualifiedNutrientPoint>> points,
+  Map<String, Set<String>> blocked,
+  List<Map<String, Object?>> audit,
+})
+_reviewedFoodPoints(CdssCatalogTableSnapshot? snapshot) {
+  final points = <String, Map<String, QualifiedNutrientPoint>>{},
+      blocked = <String, Set<String>>{},
+      audit = <Map<String, Object?>>[];
+  if (snapshot == null) return (points: points, blocked: blocked, audit: audit);
+  final rows = snapshot.rows,
+      observations = rows['observation']!,
+      audits = rows['conflict_audit_log']!;
+  final ids = CdssIdentifierFactory();
+  Map<String, Object?> one(List<Map<String, Object?>> candidates) {
+    if (candidates.length != 1) {
+      throw const FormatException('Ambiguous reviewed evidence');
+    }
+    return candidates.single;
+  }
+
+  bool truth(Object? v) => v == true || v == 1;
+  Map<String, Object?> tableRow(Map row) => {
+    for (final entry in row.entries)
+      if (entry.key != '_synced_at') '${entry.key}': entry.value,
+  };
+  String hash(String domain, Object? value) => ids.inputDigest(
+    domain,
+    domain.startsWith('current-') && value is Map ? tableRow(value) : value,
+  );
+  Map payload(Map row) => jsonDecode(row['decision_reason'] as String) as Map;
+  final promoted =
+      rows['engine_snapshot']!.where((r) => r['promoted_at'] is num).toList()
+        ..sort(
+          (a, b) =>
+              (b['promoted_at'] as num).compareTo(a['promoted_at'] as num),
+        );
+  final explicit = rows['resolved_fact']!
+      .where((f) => f['resolution_status'] == 'EXPLICIT_SOURCE_REVIEW')
+      .toList();
+  final groups = <String, List<Map<String, Object?>>>{};
+  for (final f in explicit) {
+    final entity = '${f['entity_key']}', attr = '${f['attribute_code']}';
+    (blocked[entity] ??= <String>{}).add(attr);
+    (groups['$entity|$attr'] ??= []).add(f);
+  }
+  for (final group in groups.values) {
+    final entity = '${group.first['entity_key']}',
+        attr = '${group.first['attribute_code']}';
+    try {
+      if (promoted.isEmpty ||
+          (promoted.length > 1 &&
+              promoted[0]['promoted_at'] == promoted[1]['promoted_at'])) {
+        throw const FormatException(
+          'Current snapshot unavailable or ambiguous',
+        );
+      }
+      final active = promoted.first['snapshot_id'];
+      final fact = one(group.where((f) => f['snapshot_id'] == active).toList());
+      if (!truth(fact['manual_override']) || fact['fact_version'] != active) {
+        throw const FormatException('Reviewed fact not current');
+      }
+      final decision = one(
+        audits
+            .where(
+              (r) =>
+                  r['audit_id'] == fact['resolution_policy_id'] &&
+                  r['audit_type'] == 'IMPORT_CONFLICT_REVIEW_DECISION',
+            )
+            .toList(),
+      );
+      final d = payload(decision);
+      if (d['action'] != 'choose_observation' ||
+          d['activation_authorized'] != false ||
+          d['clinical_approval'] != false ||
+          hash('import-review-decision', d) != decision['input_hash']) {
+        throw const FormatException('Decision integrity unavailable');
+      }
+      final receiptRow = one(
+        audits
+            .where(
+              (r) =>
+                  r['snapshot_id'] == active &&
+                  r['audit_type'] == 'REVIEWED_IMPORT_ACTIVATION',
+            )
+            .toList(),
+      );
+      final receipt = payload(receiptRow);
+      if (receipt['schema'] != 'parkinsum.reviewed-import-activation/1' ||
+          hash('reviewed-import-activation', receipt) !=
+              receiptRow['input_hash'] ||
+          receipt['derived_snapshot_id'] != active ||
+          receipt['derived_run_id'] != receiptRow['run_id'] ||
+          receipt['original_held_snapshot_id'] != d['snapshot_id'] ||
+          !(receipt['review_decision_ids'] as List).contains(
+            decision['audit_id'],
+          ) ||
+          receipt['clinical_approval'] != false ||
+          receipt['original_hold_released'] != false) {
+        throw const FormatException('Activation receipt integrity unavailable');
+      }
+      final run = one(
+        rows['ingestion_run']!
+            .where(
+              (r) =>
+                  r['snapshot_id'] == d['snapshot_id'] &&
+                  r['status'] == 'held_for_conflict_review' &&
+                  r['run_id'] == '${d['run_id']}_promote',
+            )
+            .toList(),
+      );
+      final evidence =
+              (jsonDecode(run['notes_json'] as String)
+                      as Map)['review_evidence']
+                  as Map,
+          p = evidence['payload'] as Map;
+      if (evidence['schema'] != 'parkinsum.held-import-review-evidence/2' ||
+          hash('held-import-review-evidence', p) != evidence['input_sha256'] ||
+          d['evidence_sha256'] != evidence['input_sha256'] ||
+          receipt['original_evidence_sha256'] != evidence['input_sha256']) {
+        throw const FormatException(
+          'Original complete packet integrity unavailable',
+        );
+      }
+      final originalAudit = one(
+        (p['conflict_audits'] as List)
+            .map((r) => Map<String, Object?>.from(r as Map))
+            .where((r) => r['audit_id'] == d['conflict_audit_id'])
+            .toList(),
+      );
+      if (hash('original-conflict-audit', originalAudit) !=
+          d['original_audit_sha256']) {
+        throw const FormatException('Original conflict integrity unavailable');
+      }
+      final derived = one(
+        audits
+            .where(
+              (r) =>
+                  r['audit_type'] == 'FACT_CLUSTER_RESOLUTION' &&
+                  r['decision'] == 'explicit_source_review_choice' &&
+                  r['run_id'] == receipt['derived_run_id'] &&
+                  payload(r)['review_decision_id'] == decision['audit_id'],
+            )
+            .toList(),
+      );
+      final rationale = payload(derived), original = payload(originalAudit);
+      if (derived['input_hash'] != stableHash(jsonEncode(rationale)) ||
+          hash('original-rationale', rationale['original_rationale']) !=
+              hash('original-rationale', original) ||
+          rationale['original_conflict_audit_id'] !=
+              originalAudit['audit_id'] ||
+          rationale['needs_human_review'] != false ||
+          rationale['clinical_approval'] != false) {
+        throw const FormatException(
+          'Original comparison graph integrity unavailable',
+        );
+      }
+      final chosen = Map<String, Object?>.from(d['chosen_observation'] as Map),
+          source = Map<String, Object?>.from(d['chosen_source'] as Map);
+      if (hash('chosen-observation', chosen) !=
+              d['chosen_observation_sha256'] ||
+          hash('chosen-source', source) != d['chosen_source_sha256']) {
+        throw const FormatException(
+          'Selected original evidence integrity unavailable',
+        );
+      }
+      final edges = (original['comparison_edges'] as List).cast<Map>();
+      if (edges.isEmpty || edges.any((e) => e['numeric_comparable'] != true)) {
+        throw const FormatException('Comparison scope unavailable');
+      }
+      final participants = <String>{
+        for (final e in edges) ...[
+          '${e['left_observation_id']}',
+          '${e['right_observation_id']}',
+        ],
+      };
+      if (!participants.contains(chosen['observation_id'])) {
+        throw const FormatException('Chosen evidence not original participant');
+      }
+      final historic = p['incumbent_evidence'] as Map;
+      final originalRows = <Map>[
+        ...(p['observations'] as List).cast<Map>(),
+        ...(historic['observation'] as List).cast<Map>(),
+      ];
+      final originalSources = <Map>[
+        ...(p['source_documents'] as List).cast<Map>(),
+        ...(historic['source_document'] as List).cast<Map>(),
+      ];
+      final originalScopes = <Map>[
+        ...((p['staging_rows'] as Map)['staging_variant_scope'] as List).map(
+          (r) => jsonDecode((r as Map)['payload_json'] as String) as Map,
+        ),
+        ...(historic['variant_scope'] as List).cast<Map>(),
+      ];
+      final live = observations
+          .where(
+            (r) =>
+                r['domain'] == chosen['domain'] &&
+                r['entity_type'] == chosen['entity_type'] &&
+                r['entity_key'] == entity &&
+                r['attribute_code'] == attr,
+          )
+          .toList();
+      if (live.length != participants.length ||
+          live.any((r) => !participants.contains(r['observation_id']))) {
+        throw const FormatException('Current alternatives changed');
+      }
+      for (final row in live) {
+        final originals = originalRows
+            .where((r) => r['observation_id'] == row['observation_id'])
+            .toList();
+        if (originals.isEmpty ||
+            originals.any(
+              (r) =>
+                  hash('current-observation', r) !=
+                  hash('current-observation', row),
+            )) {
+          throw const FormatException('Original alternative changed');
+        }
+        final liveSource = one(
+          rows['source_document']!
+              .where((s) => s['source_doc_id'] == row['source_doc_id'])
+              .toList(),
+        );
+        final originalsSource = originalSources
+            .where((s) => s['source_doc_id'] == row['source_doc_id'])
+            .toList();
+        final raw = liveSource['raw_payload'];
+        if (originalsSource.isEmpty ||
+            originalsSource.any(
+              (s) =>
+                  hash('current-source', s) !=
+                  hash('current-source', liveSource),
+            ) ||
+            liveSource['source_status'] != 'active' ||
+            raw is! String ||
+            raw.trim().isEmpty ||
+            stableHash(raw) != liveSource['checksum'] ||
+            '${liveSource['origin_url'] ?? ''}'.trim().isEmpty) {
+          throw const FormatException('Original source changed or inactive');
+        }
+        for (final key in ['published_at', 'effective_at']) {
+          final date = liveSource[key];
+          if (date != null &&
+              (date is! num ||
+                  !date.isFinite ||
+                  date > DateTime.now().millisecondsSinceEpoch)) {
+            throw const FormatException('Source date unavailable');
+          }
+        }
+        final liveScope = one(
+          rows['variant_scope']!
+              .where((s) => s['scope_hash'] == row['scope_hash'])
+              .toList(),
+        );
+        final originalScope = originalScopes
+            .where((s) => s['scope_hash'] == row['scope_hash'])
+            .toList();
+        if (originalScope.isEmpty ||
+            originalScope.any(
+              (s) =>
+                  hash('current-scope', s) != hash('current-scope', liveScope),
+            )) {
+          throw const FormatException('Original scope changed');
+        }
+      }
+      final currentChosen = one(
+        live
+            .where((r) => r['observation_id'] == chosen['observation_id'])
+            .toList(),
+      );
+      if (hash('chosen-observation', tableRow(currentChosen)) !=
+              d['chosen_observation_sha256'] ||
+          chosen['qualifier_kind'] != 'exact' ||
+          '${chosen['unit'] ?? ''}'.isEmpty ||
+          '${chosen['basis_type'] ?? ''}'.isEmpty ||
+          chosen['basis_amount'] != 100) {
+        throw const FormatException(
+          'Selected point is not eligible for arithmetic',
+        );
+      }
+      for (final key in [
+        'entity_key',
+        'attribute_code',
+        'scope_hash',
+        'qualifier_kind',
+        'value_num',
+        'raw_value_text',
+      ]) {
+        if (fact[key] != chosen[key]) {
+          throw const FormatException('Resolved quantity changed');
+        }
+      }
+      if (fact['chosen_observation_id'] != chosen['observation_id'] ||
+          fact['resolved_low'] != chosen['low'] ||
+          fact['resolved_high'] != chosen['high'] ||
+          fact['resolved_unit'] != chosen['unit']) {
+        throw const FormatException('Resolved bounds or units changed');
+      }
+      final selected = selectQualifiedNutrientPoints([
+        currentChosen,
+      ]).points[entity]?[attr];
+      if (selected == null) {
+        throw const FormatException('Selected point basis unavailable');
+      }
+      final index = observations.indexOf(currentChosen);
+      (points[entity] ??= {})[attr] = QualifiedNutrientPoint(
+        value: selected.value,
+        rowIndex: index,
+        supportingRowIndexes: [index],
+      );
+      audit.add({
+        'entity_key': entity,
+        'attribute_code': attr,
+        'status': 'explicit_original_source_choice',
+        'fact_id': fact['fact_id'],
+        'decision_id': decision['audit_id'],
+        'snapshot_id': active,
+        'observation_id': chosen['observation_id'],
+        'clinical_approval': false,
+        'source_currency_inferred': false,
+      });
+    } catch (e) {
+      audit.add({
+        'entity_key': entity,
+        'attribute_code': attr,
+        'status': 'HOLD',
+        'reason': e is FormatException
+            ? e.message
+            : 'unreadable_reviewed_state',
+        'clinical_approval': false,
+      });
+    }
+  }
+  return (points: points, blocked: blocked, audit: audit);
 }

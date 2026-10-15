@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { emitContractReport } from './fhir_contract_report_output.mjs';
 
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -105,5 +106,5 @@ export function buildFhirR5ActivityDefinitionApplyReport(fixture, fixtureBytes) 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const fixtureBytes = readFileSync(fixturePath);
   const fixture = JSON.parse(fixtureBytes.toString('utf8'));
-  process.stdout.write(`${JSON.stringify(buildFhirR5ActivityDefinitionApplyReport(fixture, fixtureBytes), null, 2)}\n`);
+  emitContractReport(buildFhirR5ActivityDefinitionApplyReport(fixture, fixtureBytes));
 }

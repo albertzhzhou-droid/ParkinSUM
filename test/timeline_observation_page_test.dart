@@ -19,10 +19,45 @@ Future<void> _openObservationEditor(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
-Future<void> _tap(WidgetTester tester, String key) async {
-  await tester.ensureVisible(find.byKey(ValueKey(key)));
+Future<void> _scrollTimelineTo(
+  WidgetTester tester,
+  Finder target, {
+  double delta = 280,
+}) async {
+  final recordList = find.descendant(
+    of: find.byType(TimelinePage),
+    matching: find.byType(ListView),
+  );
+  expect(recordList, findsOneWidget);
+  final recordListElement = tester.element(recordList);
+  final recordScrollable = find.byElementPredicate((element) {
+    if (element.widget is! Scrollable) return false;
+    var belongsToRecordList = false;
+    element.visitAncestorElements((ancestor) {
+      // Editable text inside a record has its own Scrollable. Only the list's
+      // outer Scrollable can navigate the lazy record children.
+      if (ancestor.widget is Scrollable) return false;
+      if (ancestor.widget is ListView) {
+        belongsToRecordList = ancestor == recordListElement;
+        return false;
+      }
+      return true;
+    });
+    return belongsToRecordList;
+  });
+  expect(recordScrollable, findsOneWidget);
+  await tester.scrollUntilVisible(target, delta, scrollable: recordScrollable);
   await tester.pumpAndSettle();
-  await tester.tap(find.byKey(ValueKey(key)));
+}
+
+Future<void> _tap(WidgetTester tester, String key) async {
+  final target = find.byKey(ValueKey(key));
+  if (target.evaluate().isEmpty) {
+    await _scrollTimelineTo(tester, target);
+  }
+  await tester.ensureVisible(target);
+  await tester.pumpAndSettle();
+  await tester.tap(target);
   await tester.pumpAndSettle();
 }
 
@@ -154,11 +189,7 @@ void main() {
     final card = find.byKey(
       const ValueKey('personal-observation-event-ledger-card'),
     );
-    await tester.scrollUntilVisible(
-      card,
-      280,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await _scrollTimelineTo(tester, card);
     expect(card, findsOneWidget);
     final cardCopy = tester
         .widgetList<Text>(
@@ -201,8 +232,35 @@ void main() {
     await _tap(tester, 'observation-save');
     expect(state.observations, hasLength(1));
     final original = state.observations.single;
+    await _scrollTimelineTo(
+      tester,
+      find.byKey(ValueKey('edit-observation-${original.id}')),
+    );
     expect(find.text('Observation · Self-reported'), findsOneWidget);
-    expect(find.text('Stiffness'), findsNWidgets(2));
+    final eventCard = find.byKey(
+      ValueKey('timeline-observation-${original.id}'),
+    );
+    expect(
+      find.descendant(of: eventCard, matching: find.text('Stiffness')),
+      findsOneWidget,
+    );
+    final sequenceRecord = find.byKey(
+      ValueKey('symptom-motor-sequence-record-${original.id}'),
+    );
+    await _scrollTimelineTo(tester, sequenceRecord, delta: -280);
+    expect(
+      find.descendant(
+        of: find.byKey(
+          const ValueKey('symptom-motor-observation-sequence-card'),
+        ),
+        matching: sequenceRecord,
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: sequenceRecord, matching: find.text('Stiffness')),
+      findsOneWidget,
+    );
     await _tap(tester, 'edit-observation-${original.id}');
     await tester.enterText(
       find.byKey(const ValueKey('observation-severity')),
@@ -210,6 +268,10 @@ void main() {
     );
     await _tap(tester, 'observation-save');
     expect(state.observations.single.recordedAt, original.recordedAt);
+    await _scrollTimelineTo(
+      tester,
+      find.byKey(ValueKey('edit-observation-${original.id}')),
+    );
     expect(find.text('Stiffness · 0/10'), findsOneWidget);
     await _tap(tester, 'delete-observation-${original.id}');
     expect(state.observations, isEmpty);

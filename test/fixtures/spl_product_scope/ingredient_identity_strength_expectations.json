@@ -1,0 +1,1860 @@
+{
+  "method": "Independent Python direct namespace-qualified source-field inventory frozen before drug importer changes; no production importer output used.",
+  "frozen_at_utc": "2026-10-02T05:34:23.376702+00:00",
+  "sources": [
+    {
+      "fixture_path": "test/fixtures/spl_product_scope/sinemet.ingredient-fields.xml",
+      "full_response_sha256": "2de4492865e2515258d013536faf9db3ccaa9799905d3a19f03ad22f57f7feff",
+      "products": [
+        {
+          "product_ordinal": 0,
+          "product_code": {
+            "code": "78206-166",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "SINEMET",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "10",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "100",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "STARCH, CORN",
+              "ingredient_code": {
+                "code": "O8232NY3SJ",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "FD&C BLUE NO. 2",
+              "ingredient_code": {
+                "code": "L06K8R7DQK",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        },
+        {
+          "product_ordinal": 1,
+          "product_code": {
+            "code": "78206-168",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "SINEMET",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "25",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "100",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "STARCH, CORN",
+              "ingredient_code": {
+                "code": "O8232NY3SJ",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "D&C YELLOW NO. 10",
+              "ingredient_code": {
+                "code": "35SW5USQ3G",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        },
+        {
+          "product_ordinal": 2,
+          "product_code": {
+            "code": "78206-167",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "SINEMET",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "25",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "250",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "STARCH, CORN",
+              "ingredient_code": {
+                "code": "O8232NY3SJ",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "FD&C BLUE NO. 2",
+              "ingredient_code": {
+                "code": "L06K8R7DQK",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        },
+        {
+          "product_ordinal": 3,
+          "product_code": {
+            "code": "78206-190",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "SINEMET",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "25",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "value": "100",
+                "unit": "mg"
+              },
+              "denominator": {
+                "value": "1",
+                "unit": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "STARCH, CORN",
+              "ingredient_code": {
+                "code": "O8232NY3SJ",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "D&C YELLOW NO. 10",
+              "ingredient_code": {
+                "code": "35SW5USQ3G",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        }
+      ],
+      "fixture_sha256": "f34ac46eb8db37f97409e8c7fdf2fbc2da1bcfadbe892d63cc81c6f27befc2c7"
+    },
+    {
+      "fixture_path": "test/fixtures/spl_product_scope/rytary.ingredient-fields.xml",
+      "full_response_sha256": "ba3b6177beb0280ac46e20dfa932fc4ff27b037e248e78a657cf6b9dbe0fd9fe",
+      "products": [
+        {
+          "product_ordinal": 0,
+          "product_code": {
+            "code": "64896-661",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "RYTARY",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "95"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA HYDRATE",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "23.75"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MANNITOL",
+              "ingredient_code": {
+                "code": "3OWL53L36A",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "TARTARIC ACID",
+              "ingredient_code": {
+                "code": "W4888I119H",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "ETHYLCELLULOSE",
+              "ingredient_code": {
+                "code": "7Z8S9VYZ4B",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 6,
+              "class_code": "IACT",
+              "ingredient_name": "HYPROMELLOSE 2910 (6 MPA.S)",
+              "ingredient_code": {
+                "code": "0WZ8WG20P6",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 7,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM STARCH GLYCOLATE TYPE A POTATO",
+              "ingredient_code": {
+                "code": "5856J3G2A2",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 8,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM LAURYL SULFATE",
+              "ingredient_code": {
+                "code": "368GB5141J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 9,
+              "class_code": "IACT",
+              "ingredient_name": "POVIDONE",
+              "ingredient_code": {
+                "code": "FZ989GH94E",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 10,
+              "class_code": "IACT",
+              "ingredient_name": "TALC",
+              "ingredient_code": {
+                "code": "7SEV7J4R1U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 11,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:1)",
+              "ingredient_code": {
+                "code": "74G4R6TH13",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 12,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:2)",
+              "ingredient_code": {
+                "code": "5KY68S2577",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 13,
+              "class_code": "IACT",
+              "ingredient_name": "TRIETHYL CITRATE",
+              "ingredient_code": {
+                "code": "8Z96QXD6UM",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 14,
+              "class_code": "IACT",
+              "ingredient_name": "CROSCARMELLOSE SODIUM",
+              "ingredient_code": {
+                "code": "M28OL1HH48",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 15,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 16,
+              "class_code": "IACT",
+              "ingredient_name": "GELATIN",
+              "ingredient_code": {
+                "code": "2G86QN327L",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 17,
+              "class_code": "IACT",
+              "ingredient_name": "TITANIUM DIOXIDE",
+              "ingredient_code": {
+                "code": "15FIX9V2JP",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 18,
+              "class_code": "IACT",
+              "ingredient_name": "FD&C BLUE NO. 2",
+              "ingredient_code": {
+                "code": "L06K8R7DQK",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 19,
+              "class_code": "IACT",
+              "ingredient_name": "FERRIC OXIDE YELLOW",
+              "ingredient_code": {
+                "code": "EX438O2MRT",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 20,
+              "class_code": "IACT",
+              "ingredient_name": "BUTYL ALCOHOL",
+              "ingredient_code": {
+                "code": "8PJ61P6TS3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 21,
+              "class_code": "IACT",
+              "ingredient_name": "ALCOHOL",
+              "ingredient_code": {
+                "code": "3K9958V90M",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 22,
+              "class_code": "IACT",
+              "ingredient_name": "ISOPROPYL ALCOHOL",
+              "ingredient_code": {
+                "code": "ND2M416302",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 23,
+              "class_code": "IACT",
+              "ingredient_name": "PROPYLENE GLYCOL",
+              "ingredient_code": {
+                "code": "6DC9Q167V3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 24,
+              "class_code": "IACT",
+              "ingredient_name": "SHELLAC",
+              "ingredient_code": {
+                "code": "46N107B71O",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 25,
+              "class_code": "IACT",
+              "ingredient_name": "AMMONIA",
+              "ingredient_code": {
+                "code": "5138Q19F1X",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        },
+        {
+          "product_ordinal": 1,
+          "product_code": {
+            "code": "64896-662",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "RYTARY",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "145"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA HYDRATE",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "36.25"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MANNITOL",
+              "ingredient_code": {
+                "code": "3OWL53L36A",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "TARTARIC ACID",
+              "ingredient_code": {
+                "code": "W4888I119H",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "ETHYLCELLULOSE",
+              "ingredient_code": {
+                "code": "7Z8S9VYZ4B",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 6,
+              "class_code": "IACT",
+              "ingredient_name": "HYPROMELLOSE 2910 (6 MPA.S)",
+              "ingredient_code": {
+                "code": "0WZ8WG20P6",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 7,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM STARCH GLYCOLATE TYPE A POTATO",
+              "ingredient_code": {
+                "code": "5856J3G2A2",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 8,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM LAURYL SULFATE",
+              "ingredient_code": {
+                "code": "368GB5141J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 9,
+              "class_code": "IACT",
+              "ingredient_name": "POVIDONE",
+              "ingredient_code": {
+                "code": "FZ989GH94E",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 10,
+              "class_code": "IACT",
+              "ingredient_name": "TALC",
+              "ingredient_code": {
+                "code": "7SEV7J4R1U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 11,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:1)",
+              "ingredient_code": {
+                "code": "74G4R6TH13",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 12,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:2)",
+              "ingredient_code": {
+                "code": "5KY68S2577",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 13,
+              "class_code": "IACT",
+              "ingredient_name": "TRIETHYL CITRATE",
+              "ingredient_code": {
+                "code": "8Z96QXD6UM",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 14,
+              "class_code": "IACT",
+              "ingredient_name": "CROSCARMELLOSE SODIUM",
+              "ingredient_code": {
+                "code": "M28OL1HH48",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 15,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 16,
+              "class_code": "IACT",
+              "ingredient_name": "GELATIN",
+              "ingredient_code": {
+                "code": "2G86QN327L",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 17,
+              "class_code": "IACT",
+              "ingredient_name": "TITANIUM DIOXIDE",
+              "ingredient_code": {
+                "code": "15FIX9V2JP",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 18,
+              "class_code": "IACT",
+              "ingredient_name": "FD&C BLUE NO. 2",
+              "ingredient_code": {
+                "code": "L06K8R7DQK",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 19,
+              "class_code": "IACT",
+              "ingredient_name": "FERRIC OXIDE YELLOW",
+              "ingredient_code": {
+                "code": "EX438O2MRT",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 20,
+              "class_code": "IACT",
+              "ingredient_name": "BUTYL ALCOHOL",
+              "ingredient_code": {
+                "code": "8PJ61P6TS3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 21,
+              "class_code": "IACT",
+              "ingredient_name": "ALCOHOL",
+              "ingredient_code": {
+                "code": "3K9958V90M",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 22,
+              "class_code": "IACT",
+              "ingredient_name": "ISOPROPYL ALCOHOL",
+              "ingredient_code": {
+                "code": "ND2M416302",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 23,
+              "class_code": "IACT",
+              "ingredient_name": "PROPYLENE GLYCOL",
+              "ingredient_code": {
+                "code": "6DC9Q167V3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 24,
+              "class_code": "IACT",
+              "ingredient_name": "SHELLAC",
+              "ingredient_code": {
+                "code": "46N107B71O",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 25,
+              "class_code": "IACT",
+              "ingredient_name": "AMMONIA",
+              "ingredient_code": {
+                "code": "5138Q19F1X",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        },
+        {
+          "product_ordinal": 2,
+          "product_code": {
+            "code": "64896-663",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "RYTARY",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "195"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA HYDRATE",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "48.75"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MANNITOL",
+              "ingredient_code": {
+                "code": "3OWL53L36A",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "TARTARIC ACID",
+              "ingredient_code": {
+                "code": "W4888I119H",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "ETHYLCELLULOSE",
+              "ingredient_code": {
+                "code": "7Z8S9VYZ4B",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 6,
+              "class_code": "IACT",
+              "ingredient_name": "HYPROMELLOSE 2910 (6 MPA.S)",
+              "ingredient_code": {
+                "code": "0WZ8WG20P6",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 7,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM STARCH GLYCOLATE TYPE A POTATO",
+              "ingredient_code": {
+                "code": "5856J3G2A2",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 8,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM LAURYL SULFATE",
+              "ingredient_code": {
+                "code": "368GB5141J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 9,
+              "class_code": "IACT",
+              "ingredient_name": "POVIDONE",
+              "ingredient_code": {
+                "code": "FZ989GH94E",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 10,
+              "class_code": "IACT",
+              "ingredient_name": "TALC",
+              "ingredient_code": {
+                "code": "7SEV7J4R1U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 11,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:1)",
+              "ingredient_code": {
+                "code": "74G4R6TH13",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 12,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:2)",
+              "ingredient_code": {
+                "code": "5KY68S2577",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 13,
+              "class_code": "IACT",
+              "ingredient_name": "TRIETHYL CITRATE",
+              "ingredient_code": {
+                "code": "8Z96QXD6UM",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 14,
+              "class_code": "IACT",
+              "ingredient_name": "CROSCARMELLOSE SODIUM",
+              "ingredient_code": {
+                "code": "M28OL1HH48",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 15,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 16,
+              "class_code": "IACT",
+              "ingredient_name": "GELATIN",
+              "ingredient_code": {
+                "code": "2G86QN327L",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 17,
+              "class_code": "IACT",
+              "ingredient_name": "TITANIUM DIOXIDE",
+              "ingredient_code": {
+                "code": "15FIX9V2JP",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 18,
+              "class_code": "IACT",
+              "ingredient_name": "FD&C BLUE NO. 2",
+              "ingredient_code": {
+                "code": "L06K8R7DQK",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 19,
+              "class_code": "IACT",
+              "ingredient_name": "FERRIC OXIDE YELLOW",
+              "ingredient_code": {
+                "code": "EX438O2MRT",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 20,
+              "class_code": "IACT",
+              "ingredient_name": "BUTYL ALCOHOL",
+              "ingredient_code": {
+                "code": "8PJ61P6TS3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 21,
+              "class_code": "IACT",
+              "ingredient_name": "ALCOHOL",
+              "ingredient_code": {
+                "code": "3K9958V90M",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 22,
+              "class_code": "IACT",
+              "ingredient_name": "ISOPROPYL ALCOHOL",
+              "ingredient_code": {
+                "code": "ND2M416302",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 23,
+              "class_code": "IACT",
+              "ingredient_name": "PROPYLENE GLYCOL",
+              "ingredient_code": {
+                "code": "6DC9Q167V3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 24,
+              "class_code": "IACT",
+              "ingredient_name": "SHELLAC",
+              "ingredient_code": {
+                "code": "46N107B71O",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 25,
+              "class_code": "IACT",
+              "ingredient_name": "AMMONIA",
+              "ingredient_code": {
+                "code": "5138Q19F1X",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        },
+        {
+          "product_ordinal": 3,
+          "product_code": {
+            "code": "64896-664",
+            "codeSystem": "2.16.840.1.113883.6.69"
+          },
+          "product_name": "RYTARY",
+          "ingredients": [
+            {
+              "ingredient_ordinal": 0,
+              "class_code": "ACTIB",
+              "ingredient_name": "LEVODOPA",
+              "ingredient_code": {
+                "code": "46627O600J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "245"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "LEVODOPA",
+                  "code": {
+                    "code": "46627O600J",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 1,
+              "class_code": "ACTIM",
+              "ingredient_name": "CARBIDOPA HYDRATE",
+              "ingredient_code": {
+                "code": "MNX7R8C5VO",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": {
+                "unit": "mg",
+                "value": "61.25"
+              },
+              "denominator": {
+                "unit": "1",
+                "value": "1"
+              },
+              "active_moieties": [
+                {
+                  "name": "CARBIDOPA ANHYDROUS",
+                  "code": {
+                    "code": "KR87B45RGH",
+                    "codeSystem": "2.16.840.1.113883.4.9"
+                  }
+                }
+              ]
+            },
+            {
+              "ingredient_ordinal": 2,
+              "class_code": "IACT",
+              "ingredient_name": "MICROCRYSTALLINE CELLULOSE",
+              "ingredient_code": {
+                "code": "OP1R32D61U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 3,
+              "class_code": "IACT",
+              "ingredient_name": "MANNITOL",
+              "ingredient_code": {
+                "code": "3OWL53L36A",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 4,
+              "class_code": "IACT",
+              "ingredient_name": "TARTARIC ACID",
+              "ingredient_code": {
+                "code": "W4888I119H",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 5,
+              "class_code": "IACT",
+              "ingredient_name": "ETHYLCELLULOSE",
+              "ingredient_code": {
+                "code": "7Z8S9VYZ4B",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 6,
+              "class_code": "IACT",
+              "ingredient_name": "HYPROMELLOSE 2910 (6 MPA.S)",
+              "ingredient_code": {
+                "code": "0WZ8WG20P6",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 7,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM STARCH GLYCOLATE TYPE A POTATO",
+              "ingredient_code": {
+                "code": "5856J3G2A2",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 8,
+              "class_code": "IACT",
+              "ingredient_name": "SODIUM LAURYL SULFATE",
+              "ingredient_code": {
+                "code": "368GB5141J",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 9,
+              "class_code": "IACT",
+              "ingredient_name": "POVIDONE",
+              "ingredient_code": {
+                "code": "FZ989GH94E",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 10,
+              "class_code": "IACT",
+              "ingredient_name": "TALC",
+              "ingredient_code": {
+                "code": "7SEV7J4R1U",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 11,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:1)",
+              "ingredient_code": {
+                "code": "74G4R6TH13",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 12,
+              "class_code": "IACT",
+              "ingredient_name": "METHACRYLIC ACID - METHYL METHACRYLATE COPOLYMER (1:2)",
+              "ingredient_code": {
+                "code": "5KY68S2577",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 13,
+              "class_code": "IACT",
+              "ingredient_name": "TRIETHYL CITRATE",
+              "ingredient_code": {
+                "code": "8Z96QXD6UM",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 14,
+              "class_code": "IACT",
+              "ingredient_name": "CROSCARMELLOSE SODIUM",
+              "ingredient_code": {
+                "code": "M28OL1HH48",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 15,
+              "class_code": "IACT",
+              "ingredient_name": "MAGNESIUM STEARATE",
+              "ingredient_code": {
+                "code": "70097M6I30",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 16,
+              "class_code": "IACT",
+              "ingredient_name": "GELATIN",
+              "ingredient_code": {
+                "code": "2G86QN327L",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 17,
+              "class_code": "IACT",
+              "ingredient_name": "TITANIUM DIOXIDE",
+              "ingredient_code": {
+                "code": "15FIX9V2JP",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 18,
+              "class_code": "IACT",
+              "ingredient_name": "FD&C BLUE NO. 2",
+              "ingredient_code": {
+                "code": "L06K8R7DQK",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 19,
+              "class_code": "IACT",
+              "ingredient_name": "FERRIC OXIDE YELLOW",
+              "ingredient_code": {
+                "code": "EX438O2MRT",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 20,
+              "class_code": "IACT",
+              "ingredient_name": "BUTYL ALCOHOL",
+              "ingredient_code": {
+                "code": "8PJ61P6TS3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 21,
+              "class_code": "IACT",
+              "ingredient_name": "ALCOHOL",
+              "ingredient_code": {
+                "code": "3K9958V90M",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 22,
+              "class_code": "IACT",
+              "ingredient_name": "ISOPROPYL ALCOHOL",
+              "ingredient_code": {
+                "code": "ND2M416302",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 23,
+              "class_code": "IACT",
+              "ingredient_name": "PROPYLENE GLYCOL",
+              "ingredient_code": {
+                "code": "6DC9Q167V3",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 24,
+              "class_code": "IACT",
+              "ingredient_name": "SHELLAC",
+              "ingredient_code": {
+                "code": "46N107B71O",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            },
+            {
+              "ingredient_ordinal": 25,
+              "class_code": "IACT",
+              "ingredient_name": "AMMONIA",
+              "ingredient_code": {
+                "code": "5138Q19F1X",
+                "codeSystem": "2.16.840.1.113883.4.9"
+              },
+              "numerator": null,
+              "denominator": null,
+              "active_moieties": []
+            }
+          ]
+        }
+      ],
+      "fixture_sha256": "dd5655bfaddc3331f88c859ced1ab3745dfe4fabe9d37a6b0a85c0a8b8c0454b"
+    }
+  ]
+}

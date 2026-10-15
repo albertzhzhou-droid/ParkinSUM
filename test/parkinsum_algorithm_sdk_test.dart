@@ -594,7 +594,7 @@ void main() {
     final identity = AlgorithmConfigurationIdentity.defaults();
     final manifest = identity.parameterProvenanceManifest;
 
-    expect(manifest.records, hasLength(121));
+    expect(manifest.records, hasLength(123));
     expect(
       manifest.records.map((record) => record.parameterId),
       orderedEquals(
@@ -641,7 +641,7 @@ void main() {
     expect(proteinTrend.algorithmIds, ['protein_trend']);
     expect(
       proteinTrend.formulaId,
-      'protein-trend.effective-time-series-and-mean/1',
+      'protein-trend.complete-meal-effective-time-series-and-mean/2',
     );
     expect(proteinTrend.originalUnit, 'canonical_json');
     expect(proteinTrend.canonicalUnit, 'canonical_json');
@@ -655,7 +655,7 @@ void main() {
     );
     expect(
       proteinTrend.supportedDomain.schemaId,
-      'parkinsum.protein-trend-aggregation/1',
+      'parkinsum.protein-trend-aggregation/2',
     );
     expect(
       identity.configurationCoverageManifest

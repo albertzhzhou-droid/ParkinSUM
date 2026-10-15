@@ -9,7 +9,25 @@ import 'package:parkinsum_companion/domain/usecases/fact_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/knowledge_base_release_service.dart';
 import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
 
-class _BundleRecordingDb implements CdssDatabase {
+class _BundleRecordingDb implements CdssDatabase, CdssAtomicWriter {
+  @override
+  Future<T> runAtomicWrite<T>(Future<T> Function() action) async {
+    final before = (jsonDecode(jsonEncode(tables)) as Map).map(
+      (key, rows) => MapEntry(
+        key as String,
+        (rows as List).map((r) => Map<String, Object?>.from(r as Map)).toList(),
+      ),
+    );
+    try {
+      return await action();
+    } catch (_) {
+      tables
+        ..clear()
+        ..addAll(before);
+      rethrow;
+    }
+  }
+
   final Map<String, List<Map<String, Object?>>> tables = {
     'engine_snapshot': <Map<String, Object?>>[],
     'source_document': <Map<String, Object?>>[],

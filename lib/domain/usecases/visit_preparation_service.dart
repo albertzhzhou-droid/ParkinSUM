@@ -367,7 +367,18 @@ class VisitPreparationService {
           'A mark only records that the account holder looked at this category in the app; it does not prove completeness, accuracy, or clinician reconciliation.',
         ),
       );
-    for (final status in medicationListReviewStatuses) {
+    if (!snapshot.currentSelectionIncluded) {
+      buffer.writeln(
+        tr(
+          '当前用药选择及自查由本次选择省略；不代表没有记录。',
+          'Current selections and self-checks omitted by this report selection; this does not mean none were recorded.',
+        ),
+      );
+    }
+    for (final status
+        in snapshot.currentSelectionIncluded
+            ? medicationListReviewStatuses
+            : const <VisitMedicationListReviewStatus>[]) {
       final markedAt = status.recordedAt;
       buffer.writeln(
         '- ${reviewSectionLabel(status.section)} · ${markedAt == null ? tr('未标记为已查看', 'Not marked as reviewed') : '${tr('本人标记已查看', 'Marked reviewed by account holder')} · ${timestamp(markedAt)}'}',
@@ -386,7 +397,14 @@ class VisitPreparationService {
           'This section summarizes source statements, blocking relationships and integrity findings recorded by report time. It does not prove actual use, prescription validity or clinical reconciliation. A user acknowledgement does not clear a conflict.',
         ),
       );
-    if (includedMedicationAssertionReviews.isEmpty) {
+    if (!snapshot.sourceAssertionsIncluded) {
+      buffer.writeln(
+        tr(
+          '来源陈述未选入本次报告；未在此报告检查来源冲突。',
+          'Source assertions omitted by selection; source conflicts were not checked for this report.',
+        ),
+      );
+    } else if (includedMedicationAssertionReviews.isEmpty) {
       buffer.writeln(
         tr(
           '本次纳入的记录中没有列出来源阻断关系或完整性问题；这不证明历史记录完整或来源已核实。',
@@ -525,7 +543,7 @@ class VisitPreparationService {
         );
       if (latestOutcome == null) {
         buffer.writeln(
-          '  ${tr('讨论结果：', 'Discussion update: ')}${tr('尚无本人记录', 'No owner-reported update recorded')}',
+          '  ${tr('讨论结果：', 'Discussion update: ')}${snapshot.discussionUpdatesIncluded ? tr('尚无本人记录', 'No owner-reported update recorded') : tr('由本次选择省略', 'Omitted by this report selection')}',
         );
       } else {
         buffer.writeln(
@@ -671,7 +689,7 @@ class VisitPreparationService {
         for (final row in current)
           '${row.displayName} [${row.drugId}] · ${tr('请核实', 'Verify')}: ${row.fieldsToConfirm.join(chinese ? '、' : ', ')}',
       ], chinese: chinese);
-    } else {
+    } else if (snapshot.currentSelectionIncluded) {
       agenda.writeln(
         tr(
           '当前没有选中的药品；这不表示本人没有使用药品，请核对完整清单。',
@@ -679,15 +697,33 @@ class VisitPreparationService {
         ),
       );
     }
-    writeAgendaSection(
-      agenda,
-      tr('用药清单自查（本人记录）', 'Medication list self-check (owner-reported)'),
-      [
-        for (final status in medicationListReviewStatuses)
-          '${reviewSectionLabel(status.section)} · ${status.recordedAt == null ? tr('未标记', 'Not marked') : '${tr('已查看', 'Marked reviewed')} ${timestamp(status.recordedAt)}'}',
-      ],
-      chinese: chinese,
-    );
+    if (!snapshot.currentSelectionIncluded) {
+      agenda.writeln(
+        tr(
+          '当前用药选择及自查由本次选择省略；不代表没有记录。',
+          'Current selections and self-checks omitted by this report selection; this does not mean none were recorded.',
+        ),
+      );
+    }
+    if (!snapshot.sourceAssertionsIncluded) {
+      agenda.writeln(
+        tr(
+          '来源陈述未选入本次报告；未在此报告检查来源冲突。',
+          'Source assertions omitted by selection; source conflicts were not checked for this report.',
+        ),
+      );
+    }
+    if (snapshot.currentSelectionIncluded) {
+      writeAgendaSection(
+        agenda,
+        tr('用药清单自查（本人记录）', 'Medication list self-check (owner-reported)'),
+        [
+          for (final status in medicationListReviewStatuses)
+            '${reviewSectionLabel(status.section)} · ${status.recordedAt == null ? tr('未标记', 'Not marked') : '${tr('已查看', 'Marked reviewed')} ${timestamp(status.recordedAt)}'}',
+        ],
+        chinese: chinese,
+      );
+    }
     final sourceReviewCount =
         includedMedicationAssertionReviews.length +
         omittedMedicationAssertionReviewCount;
@@ -716,7 +752,11 @@ class VisitPreparationService {
       ),
       [
         for (final item in medicationDiscussionEntries)
-          '${item.name} · ${_medicationDiscussionCategory(item.category, chinese: chinese)} · ${tr('本人填写成分（未核实）', 'Ingredient as entered (unverified)')}: ${known(item.ingredientLabel)} · ${tr('剂量文字（未解析）', 'Dose text (not parsed)')}: ${known(item.doseAndScheduleText)} · ${tr('所填状态', 'Reported use')}: ${_medicationReportedUse(item.reportedUse, chinese: chinese)} · ${tr('待讨论问题', 'Question')}: ${known(item.question)} · ${tr('本人记录的讨论状态', 'Owner-recorded status')}: ${latestOutcomeByEntry[item.id] == null ? tr('尚无更新', 'No update') : _medicationOutcomeStatus(latestOutcomeByEntry[item.id]!.status, chinese: chinese)}',
+          '${item.name} · ${_medicationDiscussionCategory(item.category, chinese: chinese)} · ${tr('本人填写成分（未核实）', 'Ingredient as entered (unverified)')}: ${known(item.ingredientLabel)} · ${tr('剂量文字（未解析）', 'Dose text (not parsed)')}: ${known(item.doseAndScheduleText)} · ${tr('所填状态', 'Reported use')}: ${_medicationReportedUse(item.reportedUse, chinese: chinese)} · ${tr('待讨论问题', 'Question')}: ${known(item.question)} · ${tr('本人记录的讨论状态', 'Owner-recorded status')}: ${!snapshot.discussionUpdatesIncluded
+              ? tr('由本次选择省略', 'Omitted by this report selection')
+              : latestOutcomeByEntry[item.id] == null
+              ? tr('尚无更新', 'No update')
+              : _medicationOutcomeStatus(latestOutcomeByEntry[item.id]!.status, chinese: chinese)}',
       ],
       chinese: chinese,
     );

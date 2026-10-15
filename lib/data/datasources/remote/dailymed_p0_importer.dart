@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:xml/xml.dart';
 
 import '../../../core/models/drug_definition.dart';
@@ -24,6 +25,8 @@ import 'source_fetch_client.dart';
 ///   可以直接消费更完整的官方标签文本。
 class DailyMedP0Importer {
   static const int maxSplXmlCharacters = 16 * 1024 * 1024;
+  // FDA SPL active ingredient roles are an enumeration, not an ACTI prefix.
+  static const _activeIngredientClasses = {'ACTIB', 'ACTIM', 'ACTIR'};
   final SourceFetchClient fetchClient;
 
   const DailyMedP0Importer({required this.fetchClient});
@@ -79,36 +82,125 @@ class DailyMedP0Importer {
   }) {
     validateSplXmlLength(xml.length);
     final document = XmlDocument.parse(xml);
+    final products = _structuredProducts(document);
+    if (products.isNotEmpty) {
+      return _importStructuredProducts(
+        xml,
+        document,
+        products,
+        ndcs: ndcs,
+        packaging: packaging,
+        media: media,
+      );
+    }
+    if (_declaresUnresolvedProductStructure(document)) {
+      // ignore: avoid_print
+      print('[DailyMed] SPL unresolved product structure; promoted_products=0');
+      final held = _importDocument(
+        document,
+        sourceXml: xml,
+        identityHeld: true,
+      );
+      final source = held.sourceDocuments.single;
+      final payload =
+          Map<String, dynamic>.from(jsonDecode(source.rawPayload) as Map)
+            ..addAll({
+              'product_scope_schema': 'spl-product-scope/1',
+              'product_count': 0,
+              'product_scopes': <String, Object?>{},
+              'identity_status': 'hold_no_resolved_products',
+              'active_ingredient_details': <Object?>[],
+              'label_facts': <Object?>[],
+            });
+      return P0ImportBundle(
+        sourceDocuments: [
+          buildSourceDocumentRecord(
+            sourceDocId: source.sourceDocId,
+            sourceFamily: source.sourceFamily,
+            organization: source.organization,
+            jurisdiction: source.jurisdiction,
+            docType: source.docType,
+            title: source.title,
+            originUrl: source.originUrl,
+            licenseNote: source.licenseNote,
+            language: source.language,
+            effectiveAt: source.effectiveAt,
+            sourceStatus: 'hold_no_resolved_products',
+            rawPayload: stringifyPayload(payload),
+          ),
+        ],
+      );
+    }
+    return _importDocument(
+      document,
+      sourceXml: xml,
+      ndcs: ndcs,
+      packaging: packaging,
+      media: media,
+    );
+  }
+
+  P0ImportBundle _importDocument(
+    XmlDocument document, {
+    required String sourceXml,
+    List<Map<String, dynamic>> ndcs = const [],
+    List<Map<String, dynamic>> packaging = const [],
+    List<Map<String, dynamic>> media = const [],
+    String? productCode,
+    String? productName,
+    bool identityHeld = false,
+    List<_SplSectionEntry>? scopedSections,
+    List<_SplSectionEntry>? factSections,
+  }) {
+    final root = document.rootElement;
+    String? documentAttribute(String name, String attribute) => root.children
+        .whereType<XmlElement>()
+        .where((element) => element.name.local == name)
+        .firstOrNull
+        ?.getAttribute(attribute);
+    final documentId = documentAttribute('id', 'root');
+    final versionNumber = documentAttribute('versionNumber', 'value');
+    final effectiveTime = documentAttribute('effectiveTime', 'value');
+    final contentSha256 = sha256.convert(utf8.encode(sourceXml)).toString();
     final setId =
-        _firstAttr(document, 'setId', 'root') ??
-        _firstAttr(document, 'id', 'root') ??
-        'UNSPECIFIED_SETID';
+        documentAttribute('setId', 'root') ?? documentId ?? 'UNSPECIFIED_SETID';
     final title = _firstText(document, 'title') ?? 'DailyMed SPL';
     final ingredientNames = _ingredientNames(document);
     final genericName = ingredientNames.isEmpty
-        ? title
+        ? (productName ?? title)
         : ingredientNames.join('/');
     final conceptId = buildDrugConceptId(genericName);
+    final externalProductCode = productCode ?? setId;
     final variantId = buildDrugVariantId(
       conceptId: conceptId,
       jurisdiction: 'US',
       sourceSystem: 'DAILYMED',
-      externalProductCode: setId,
+      externalProductCode: externalProductCode,
     );
     // A missing SPL route is not evidence of oral administration. Keep the
     // metadata unknown so the runtime applicability gate abstains instead of
     // authorizing an oral-only model from the product title alone.
-    final route = _firstCodeDisplayName(document, 'routeCode') ?? 'unspecified';
-    final dosageForm =
-        _firstCodeDisplayName(document, 'formCode') ?? 'unspecified';
-    final releaseType = _inferReleaseType(title);
+    final routes = _uniqueCodeDisplayNames(document, 'routeCode');
+    final dosageForms = _uniqueCodeDisplayNames(document, 'formCode');
+    final route = !identityHeld && routes.length == 1
+        ? routes.single
+        : 'unspecified';
+    final dosageForm = !identityHeld && dosageForms.length == 1
+        ? dosageForms.single
+        : 'unspecified';
+    final releaseType = identityHeld
+        ? 'unknown'
+        : _inferReleaseType(
+            productCode == null ? title : dosageForms.join(' '),
+          );
     final sourceDocId = sourceDocumentId(
       sourceSystem: 'DAILYMED',
-      externalKey: setId,
+      externalKey: '$setId:$contentSha256',
     );
-    final allSections = _extractAllSections(document);
-    final sectionSummaries = _extractRelevantSections(allSections);
-    final labelFacts = _extractStructuredLabelFacts(allSections);
+    final allSections = scopedSections ?? _extractAllSections(document);
+    final applicableSections = factSections ?? allSections;
+    final sectionSummaries = _extractRelevantSections(applicableSections);
+    final labelFacts = _extractStructuredLabelFacts(applicableSections);
     final summaryText = sectionSummaries.values
         .where((value) => value.trim().isNotEmpty)
         .join(' ');
@@ -117,7 +209,8 @@ class DailyMedP0Importer {
     for (final section in allSections) {
       if (section.text.trim().isEmpty) continue;
       final record = DrugLabelSectionRecord(
-        sectionId: 'section_${stableHash('$variantId:${section.key}')}',
+        sectionId:
+            'section_${stableHash('$sourceDocId:$variantId:${section.key}')}',
         drugProductVariantId: variantId,
         sourceDocId: sourceDocId,
         sectionKey: section.key,
@@ -181,8 +274,19 @@ class DailyMedP0Importer {
       originUrl: '${P0SourceUrls.dailymedSplXmlBase}/$setId.xml',
       licenseNote: 'UNSPECIFIED',
       language: 'en',
+      effectiveAt: _splEffectiveDate(effectiveTime),
       rawPayload: stringifyPayload({
         'setid': setId,
+        'document_id': documentId,
+        'version_number': versionNumber,
+        'effective_time': effectiveTime,
+        'spl_xml_sha256': contentSha256,
+        'identity_status': documentAttribute('setId', 'root') == null
+            ? 'set_id_missing_document_id_fallback'
+            : 'set_id_present',
+        'routes': routes,
+        'dosage_forms': dosageForms,
+        'active_ingredient_details': _activeIngredientDetails(document),
         'title': title,
         'ingredients': ingredientNames,
         'section_count': allSections.length,
@@ -212,15 +316,15 @@ class DailyMedP0Importer {
 
     final tag = inferDrugTag(genericName);
     final projectedDrug = DrugDefinition(
-      id: 'drug_dailymed_${stableSlug(genericName.toLowerCase())}_$setId',
+      id: 'drug_dailymed_${stableSlug(genericName.toLowerCase())}_$externalProductCode',
       genericName: genericName,
-      brandNames: [title],
+      brandNames: [productName ?? title],
       aliases: ingredientNames,
       tags: [?tag],
       notes: summaryText.isEmpty ? title : summaryText,
       interactionSummary: _buildInteractionSummary(sectionSummaries),
       sourceSystem: 'DAILYMED',
-      sourceProductCode: setId,
+      sourceProductCode: externalProductCode,
       jurisdiction: 'US',
       route: route,
       dosageForm: dosageForm,
@@ -236,7 +340,7 @@ class DailyMedP0Importer {
         externalIdValue: setId,
         jurisdiction: 'US',
         sourceDocId: sourceDocId,
-        appEntityId: setId,
+        appEntityId: externalProductCode,
         confidence: 1.0,
         mappingPayload: {
           'regulator': 'DAILYMED',
@@ -266,7 +370,9 @@ class DailyMedP0Importer {
             ...ImporterAudit.confidenceReason(
               sourceIdentifierType:
                   ImporterAudit.sourceIdTypePackageOrPortionCode,
-              reason: 'NDC value taken verbatim from DailyMed ndcs.json.',
+              reason: productCode == code.codeValue
+                  ? 'Product NDC taken verbatim from the direct SPL product code.'
+                  : 'NDC value taken verbatim from matched DailyMed ndcs.json.',
               promotedFields: const ['ndc'],
               nonPromotedFields: const ['package_description'],
               promotionDecision: 'package_description_kept_as_free_text_only',
@@ -386,12 +492,14 @@ class DailyMedP0Importer {
           drugConceptId: conceptId,
           jurisdiction: 'US',
           regulator: 'DAILYMED',
-          externalProductCode: setId,
+          externalProductCode: externalProductCode,
           route: route,
           dosageForm: dosageForm,
           releaseType: releaseType,
-          labelVersion: 'spl_current',
-          sourceStatus: 'imported_spl',
+          labelVersion: versionNumber == null
+              ? 'spl_version_unknown'
+              : 'spl_version_$versionNumber',
+          sourceStatus: identityHeld ? 'hold_product_identity' : 'imported_spl',
         ),
       ],
       drugLabelSections: labelSections,
@@ -400,6 +508,429 @@ class DailyMedP0Importer {
       drugProductMedias: mediaRows,
       conceptVariantCrosswalks: crosswalks,
       projectedDrugs: [projectedDrug],
+    );
+  }
+
+  // FDA SPL product data (LOINC 48780-1) has direct subject/product wrappers.
+  // Descendant manufacturedProduct/package nodes are not additional products.
+  bool _declaresUnresolvedProductStructure(XmlDocument document) {
+    // This is a rejection detector, not a permissive product parser. A foreign
+    // namespace/code system must never bypass the strict parser into the
+    // document-wide legacy path merely because it cannot be resolved.
+    var productSubjects = 0;
+    for (final element in document.descendants.whereType<XmlElement>()) {
+      if (element.name.local == 'section' &&
+          element.childElements.any(
+            (child) =>
+                child.name.local == 'code' &&
+                child.getAttribute('code') == '48780-1',
+          )) {
+        return true;
+      }
+      if (element.name.local == 'subject' &&
+          element.childElements.any(
+            (wrapper) =>
+                wrapper.name.local == 'manufacturedProduct' &&
+                wrapper.childElements.any(
+                  (core) => core.name.local == 'manufacturedProduct',
+                ),
+          )) {
+        productSubjects++;
+        if (productSubjects > 1) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool _isProductDataSection(XmlElement section) {
+    if (section.name.local != 'section' ||
+        (section.namespaceUri != null &&
+            section.namespaceUri != 'urn:hl7-org:v3')) {
+      return false;
+    }
+    final code = _splChild(section, 'code');
+    return code?.getAttribute('code') == '48780-1' &&
+        code?.getAttribute('codeSystem') == '2.16.840.1.113883.6.1';
+  }
+
+  List<_SplProductScope> _structuredProducts(XmlDocument document) {
+    final namespace = document.rootElement.namespaceUri;
+    if (document.rootElement.name.local != 'document' ||
+        (namespace != null && namespace != 'urn:hl7-org:v3')) {
+      return const [];
+    }
+    final products = <_SplProductScope>[];
+    for (final section in document.descendants.whereType<XmlElement>()) {
+      if (section.name.local != 'section' ||
+          section.namespaceUri != namespace) {
+        continue;
+      }
+      if (!_isProductDataSection(section)) continue;
+      for (final subject in _splChildren(section, 'subject')) {
+        final wrapper = _splChild(subject, 'manufacturedProduct');
+        final product = wrapper == null
+            ? null
+            : _splChild(wrapper, 'manufacturedProduct');
+        if (wrapper == null || product == null) {
+          products.add(
+            _SplProductScope(
+              wrapper: wrapper ?? subject,
+              product: XmlElement(XmlName.parts('manufacturedProduct')),
+              code: null,
+              name: '',
+            ),
+          );
+          continue;
+        }
+        final productCode = _splChild(product, 'code');
+        final ndc = productCode?.getAttribute('code')?.trim();
+        final codeSystem = productCode?.getAttribute('codeSystem');
+        products.add(
+          _SplProductScope(
+            wrapper: wrapper,
+            product: product,
+            code:
+                codeSystem == '2.16.840.1.113883.6.69' &&
+                    ndc != null &&
+                    RegExp(r'^\d{4,5}-\d{3,4}$').hasMatch(ndc)
+                ? ndc
+                : null,
+            name: _splChild(product, 'name')?.innerText.trim() ?? '',
+          ),
+        );
+      }
+    }
+    return products;
+  }
+
+  Iterable<XmlElement> _splChildren(XmlElement element, String name) =>
+      element.children.whereType<XmlElement>().where(
+        (child) =>
+            child.name.local == name &&
+            child.namespaceUri == element.namespaceUri,
+      );
+
+  XmlElement? _splChild(XmlElement element, String name) =>
+      _splChildren(element, name).firstOrNull;
+
+  XmlElement _localCopy(XmlElement element) => XmlElement(
+    XmlName.parts(element.name.local),
+    [
+      for (final attribute in element.attributes)
+        if (attribute.name.prefix == null && attribute.name.local != 'xmlns')
+          XmlAttribute(XmlName.parts(attribute.name.local), attribute.value),
+    ],
+    [
+      for (final child in element.children)
+        if (child is XmlElement && child.namespaceUri == element.namespaceUri)
+          _localCopy(child)
+        else if (child is XmlText)
+          XmlText(child.value),
+    ],
+  );
+
+  P0ImportBundle _importStructuredProducts(
+    String xml,
+    XmlDocument document,
+    List<_SplProductScope> products, {
+    required List<Map<String, dynamic>> ndcs,
+    required List<Map<String, dynamic>> packaging,
+    required List<Map<String, dynamic>> media,
+  }) {
+    final setId =
+        _splChild(document.rootElement, 'setId')?.getAttribute('root') ??
+        _splChild(document.rootElement, 'id')?.getAttribute('root') ??
+        'UNSPECIFIED_SETID';
+    final entries = <_SplSectionEntry>[];
+    final owners = <String, _SplProductScope?>{};
+    var ordinal = 0;
+    for (final node in document.descendants.whereType<XmlElement>()) {
+      if (node.name.local != 'section' ||
+          node.namespaceUri != document.rootElement.namespaceUri) {
+        continue;
+      }
+      final text = _splChild(node, 'text')?.innerText.trim() ?? '';
+      final title =
+          _splChild(node, 'title')?.innerText.trim() ??
+          'Section ${ordinal + 1}';
+      final code =
+          _splChild(node, 'code')?.getAttribute('code') ??
+          node.getAttribute('ID');
+      final entry = _SplSectionEntry(
+        key:
+            '${_buildSectionKey(title: title, index: ordinal, code: code)}_SPL_$ordinal',
+        title: title,
+        text: text,
+        ordinal: ordinal++,
+        rawCode: code,
+      );
+      // Never fold child sections into a parent's text.
+      if (text.isEmpty) {
+        continue;
+      }
+      _SplProductScope? owner;
+      var parent = node.parent;
+      while (parent != null) {
+        owner = products
+            .where((product) => identical(product.wrapper, parent))
+            .firstOrNull;
+        if (owner != null) break;
+        parent = parent.parent;
+      }
+      entries.add(entry);
+      owners[entry.key] = owner;
+    }
+    var merged = const P0ImportBundle();
+    final scopes = <String, Object?>{};
+    final usedNdcs = <Map<String, dynamic>>{};
+    final usedPackaging = <Map<String, dynamic>>{};
+    final usedMedia = <Map<String, dynamic>>{};
+    final productDataSectionCount = document.descendants
+        .whereType<XmlElement>()
+        .where(_isProductDataSection)
+        .length;
+    for (var index = 0; index < products.length; index++) {
+      final product = products[index];
+      final ingredients = _splChildren(product.product, 'ingredient').toList();
+      final activeIngredients = ingredients
+          .where(
+            (ingredient) => _activeIngredientClasses.contains(
+              ingredient.getAttribute('classCode'),
+            ),
+          )
+          .toList();
+      final evidenceReasons = <String>[
+        if (productDataSectionCount != 1)
+          'ambiguous_product_data_section_count',
+        if (product.code == null) 'product_ndc_missing_or_invalid',
+        if (product.code != null &&
+            products.where((peer) => peer.code == product.code).length != 1)
+          'duplicate_product_ndc',
+        if (product.name.isEmpty) 'product_name_missing',
+        if (ingredients.any(
+          (ingredient) =>
+              !_activeIngredientClasses.contains(
+                ingredient.getAttribute('classCode'),
+              ) &&
+              ingredient.getAttribute('classCode') != 'IACT',
+        ))
+          'ingredient_class_missing_or_unsupported',
+        if (activeIngredients.isEmpty ||
+            activeIngredients.any(
+              (ingredient) =>
+                  (_splChild(
+                            _splChild(ingredient, 'ingredientSubstance') ??
+                                ingredient,
+                            'name',
+                          )?.innerText.trim() ??
+                          '')
+                      .isEmpty,
+            ))
+          'active_ingredient_identity_missing',
+      ];
+      final held = evidenceReasons.isNotEmpty;
+      final identity = held
+          ? '$setId:unresolved_product_$index'
+          : product.code!;
+      bool matches(Map<String, dynamic> row) {
+        if (held) return false;
+        final value =
+            '${row['product_ndc'] ?? row['product_code'] ?? row['ndc'] ?? row['ndc11'] ?? row['package_ndc'] ?? ''}';
+        return value == product.code ||
+            (RegExp(r'^\d{4,5}-\d{3,4}-\d{1,2}$').hasMatch(value) &&
+                value.substring(0, value.lastIndexOf('-')) == product.code);
+      }
+
+      final productNdcs = <Map<String, dynamic>>[
+        if (!held) {'ndc': product.code},
+        ...ndcs
+            .where(matches)
+            .where(
+              (row) =>
+                  '${row['ndc'] ?? row['ndc11'] ?? row['package_ndc'] ?? ''}' !=
+                  product.code,
+            ),
+      ];
+      final productPackaging = packaging.where(matches).toList();
+      final productMedia = media.where(matches).toList();
+      usedNdcs.addAll(productNdcs);
+      usedPackaging.addAll(productPackaging);
+      usedMedia.addAll(productMedia);
+      final localChildren = <XmlNode>[
+        for (final child
+            in document.rootElement.children.whereType<XmlElement>())
+          if (const {
+                'id',
+                'setId',
+                'versionNumber',
+                'effectiveTime',
+                'title',
+              }.contains(child.name.local) &&
+              child.namespaceUri == document.rootElement.namespaceUri)
+            _localCopy(child),
+        for (final child in product.product.children.whereType<XmlElement>())
+          if (const {'ingredient', 'formCode'}.contains(child.name.local) &&
+              child.namespaceUri == product.product.namespaceUri &&
+              (child.name.local != 'ingredient' ||
+                  _activeIngredientClasses.contains(
+                    child.getAttribute('classCode'),
+                  )))
+            _localCopy(child),
+        for (final consumed in _splChildren(product.wrapper, 'consumedIn'))
+          for (final administration in _splChildren(
+            consumed,
+            'substanceAdministration',
+          ))
+            for (final route in _splChildren(administration, 'routeCode'))
+              _localCopy(route),
+      ];
+      final selectedEntries = entries
+          .where(
+            (entry) =>
+                owners[entry.key] == null ||
+                identical(owners[entry.key], product),
+          )
+          .toList();
+      final explicitEntries = held
+          ? <_SplSectionEntry>[]
+          : entries
+                .where((entry) => identical(owners[entry.key], product))
+                .toList();
+      final bundle = _importDocument(
+        XmlDocument([XmlElement(XmlName.parts('document'), [], localChildren)]),
+        sourceXml: xml,
+        productCode: identity,
+        productName: product.name,
+        identityHeld: held,
+        scopedSections: selectedEntries,
+        factSections: explicitEntries,
+        ndcs: productNdcs,
+        packaging: productPackaging,
+        media: productMedia,
+      );
+      final variantId = bundle.drugProductVariants.single.drugProductVariantId;
+      final payload =
+          jsonDecode(bundle.sourceDocuments.single.rawPayload) as Map;
+      scopes[variantId] = {
+        'product_ordinal': index,
+        'product_code': product.code,
+        'product_code_system': '2.16.840.1.113883.6.69',
+        'hold_reasons': evidenceReasons,
+        'identity_status': held
+            ? 'hold_product_identity'
+            : 'resolved_product_scope',
+        'product_name': product.name,
+        'routes': payload['routes'],
+        'dosage_forms': payload['dosage_forms'],
+        'route_code_details': [
+          for (final consumed in _splChildren(product.wrapper, 'consumedIn'))
+            for (final administration in _splChildren(
+              consumed,
+              'substanceAdministration',
+            ))
+              for (final route in _splChildren(administration, 'routeCode'))
+                {
+                  for (final attribute in route.attributes)
+                    attribute.name.local: attribute.value,
+                },
+        ],
+        'dosage_form_code_details': [
+          for (final form in _splChildren(product.product, 'formCode'))
+            {
+              for (final attribute in form.attributes)
+                attribute.name.local: attribute.value,
+            },
+        ],
+        'active_ingredient_details': activeIngredients
+            .map(_ingredientDetail)
+            .toList(growable: false),
+        'ingredient_class_audit': [
+          for (final ingredient in ingredients)
+            {
+              ..._ingredientDetail(ingredient),
+              'classification':
+                  _activeIngredientClasses.contains(
+                    ingredient.getAttribute('classCode'),
+                  )
+                  ? 'active'
+                  : ingredient.getAttribute('classCode') == 'IACT'
+                  ? 'inactive'
+                  : 'unresolved',
+              'status': 'source_class_code_only',
+            },
+        ],
+        'label_facts': payload['label_facts'],
+        'section_scopes': {
+          for (final entry in selectedEntries)
+            entry.key: identical(owners[entry.key], product)
+                ? 'product_explicit'
+                : 'document_shared_unverified',
+        },
+        'strength_status': 'label_ratio_only_not_administered_dose',
+      };
+      merged = merged.merge(bundle);
+    }
+    final base = merged.sourceDocuments.first;
+    final payload = Map<String, dynamic>.from(
+      jsonDecode(base.rawPayload) as Map,
+    );
+    payload.addAll({
+      'product_scope_schema': 'spl-product-scope/1',
+      'product_count': products.length,
+      'product_data_section_count': productDataSectionCount,
+      'product_scopes': scopes,
+      'active_ingredient_details': <Object?>[],
+      'ingredients': <Object?>[],
+      'routes': <Object?>[],
+      'dosage_forms': <Object?>[],
+      'label_facts': <Object?>[],
+      'sections': <String, Object?>{},
+      'section_count': entries.length,
+      'section_titles': entries.map((entry) => entry.title).toList(),
+      'document_shared_label_facts': _extractStructuredLabelFacts(
+        entries.where((entry) => owners[entry.key] == null).toList(),
+      ),
+      'unassigned_external_metadata': {
+        'ndcs': ndcs.where((row) => !usedNdcs.contains(row)).toList(),
+        'packaging': packaging
+            .where((row) => !usedPackaging.contains(row))
+            .toList(),
+        'media': media.where((row) => !usedMedia.contains(row)).toList(),
+      },
+    });
+    final source = buildSourceDocumentRecord(
+      sourceDocId: base.sourceDocId,
+      sourceFamily: base.sourceFamily,
+      organization: base.organization,
+      jurisdiction: base.jurisdiction,
+      docType: base.docType,
+      title: base.title,
+      originUrl: base.originUrl,
+      licenseNote: base.licenseNote,
+      language: base.language,
+      effectiveAt: base.effectiveAt,
+      rawPayload: stringifyPayload(payload),
+    );
+    final concepts = {
+      for (final concept in merged.drugConcepts) concept.drugConceptId: concept,
+    };
+    // Counts only: public catalog diagnostics, never raw XML or personal data.
+    // ignore: avoid_print
+    print(
+      '[DailyMed] SPL products=${products.length}; held=${merged.drugProductVariants.where((variant) => variant.sourceStatus.startsWith('hold_')).length}',
+    );
+    return P0ImportBundle(
+      sourceDocuments: [source],
+      drugConcepts: concepts.values.toList(),
+      drugProductVariants: merged.drugProductVariants,
+      drugLabelSections: merged.drugLabelSections,
+      drugProductCodes: merged.drugProductCodes,
+      drugProductPackagings: merged.drugProductPackagings,
+      drugProductMedias: merged.drugProductMedias,
+      conceptVariantCrosswalks: merged.conceptVariantCrosswalks,
+      projectedDrugs: merged.projectedDrugs,
     );
   }
 
@@ -438,25 +969,147 @@ class DailyMedP0Importer {
         : node?.innerText.trim();
   }
 
-  String? _firstAttr(XmlDocument document, String tag, String attr) {
-    final node = document.findAllElements(tag).firstOrNull;
-    return node?.getAttribute(attr);
+  List<String> _uniqueCodeDisplayNames(XmlDocument document, String tag) =>
+      document
+          .findAllElements(tag)
+          .map((element) => element.getAttribute('displayName')?.trim() ?? '')
+          .where((value) => value.isNotEmpty)
+          .toSet()
+          .toList()
+        ..sort();
+
+  DateTime? _splEffectiveDate(String? raw) {
+    if (raw == null ||
+        !RegExp(r'^\d{8}(?:\d{2}){0,3}(?:[+-]\d{4})?$').hasMatch(raw)) {
+      return null;
+    }
+    final year = int.parse(raw.substring(0, 4));
+    final month = int.parse(raw.substring(4, 6));
+    final day = int.parse(raw.substring(6, 8));
+    final date = DateTime.utc(year, month, day);
+    return date.year == year && date.month == month && date.day == day
+        ? date
+        : null;
   }
 
-  String? _firstCodeDisplayName(XmlDocument document, String tag) {
-    final node = document.findAllElements(tag).firstOrNull;
-    return node?.getAttribute('displayName');
+  Iterable<XmlElement> _activeIngredients(XmlDocument document) =>
+      document.findAllElements('ingredient').where((element) {
+        final code = element.getAttribute('classCode');
+        // Unclassified flat legacy fixtures retain their existing compatibility
+        // path; structured products have the explicit completeness gate above.
+        return code == null || _activeIngredientClasses.contains(code);
+      });
+
+  List<Map<String, Object?>> _activeIngredientDetails(XmlDocument document) =>
+      _activeIngredients(
+        document,
+      ).map(_ingredientDetail).toList(growable: false);
+
+  Map<String, Object?> _substanceIdentity(XmlElement substance) {
+    final codes = _splChildren(substance, 'code').toList();
+    final names = _splChildren(substance, 'name').toList();
+    return {
+      'name': names.length == 1 ? names.single.innerText.trim() : null,
+      'substance_code': codes.length == 1
+          ? codes.single.getAttribute('code')
+          : null,
+      'code_system': codes.length == 1
+          ? codes.single.getAttribute('codeSystem')
+          : null,
+    };
+  }
+
+  Map<String, Object?> _ingredientDetail(XmlElement ingredient) {
+    final substances = _splChildren(ingredient, 'ingredientSubstance').toList();
+    final substance = substances.length == 1 ? substances.single : null;
+    final identity = _substanceIdentity(substance ?? ingredient);
+    final moieties = <Map<String, Object?>>[
+      if (substance != null)
+        for (final relation in _splChildren(substance, 'activeMoiety'))
+          for (final moiety in _splChildren(relation, 'activeMoiety'))
+            _substanceIdentity(moiety),
+    ];
+    final references = <Map<String, Object?>>[
+      if (substance != null)
+        for (final relation in _splChildren(substance, 'asEquivalentSubstance'))
+          for (final reference in _splChildren(relation, 'definingSubstance'))
+            _substanceIdentity(reference),
+    ];
+    Map<String, String> attributes(XmlElement node) => {
+      for (final attribute in node.attributes)
+        if (attribute.name.prefix == null)
+          attribute.name.local: attribute.value,
+    };
+    final quantities = _splChildren(ingredient, 'quantity').toList();
+    final quantity = quantities.length == 1 ? quantities.single : null;
+    final numerators = quantity == null
+        ? <XmlElement>[]
+        : _splChildren(quantity, 'numerator').toList();
+    final denominators = quantity == null
+        ? <XmlElement>[]
+        : _splChildren(quantity, 'denominator').toList();
+    final numerator = numerators.length == 1 ? numerators.single : null;
+    final denominator = denominators.length == 1 ? denominators.single : null;
+    final classCode = ingredient.getAttribute('classCode');
+    final basis = switch (classCode) {
+      'ACTIB' => 'active_ingredient',
+      'ACTIM' => 'active_moiety',
+      'ACTIR' => 'reference_ingredient',
+      'IACT' => 'not_an_active_ingredient_strength',
+      _ => 'unknown_source_class',
+    };
+    final basisSubstances = switch (classCode) {
+      'ACTIB' => [identity],
+      'ACTIM' => moieties,
+      'ACTIR' => references,
+      _ => <Map<String, Object?>>[],
+    };
+    final codedBasis =
+        basisSubstances.length == 1 &&
+        '${basisSubstances.single['substance_code'] ?? ''}'.trim().isNotEmpty &&
+        '${basisSubstances.single['code_system'] ?? ''}'.trim().isNotEmpty &&
+        '${basisSubstances.single['name'] ?? ''}'.trim().isNotEmpty;
+    return {
+      'class_code': classCode, ...identity,
+      'numerator_value': numerator?.getAttribute('value'),
+      'numerator_unit': numerator?.getAttribute('unit'),
+      'denominator_value': denominator?.getAttribute('value'),
+      'denominator_unit': denominator?.getAttribute('unit'),
+      'active_moieties': moieties, 'reference_ingredients': references,
+      'strength_basis': basis, 'strength_basis_substances': basisSubstances,
+      'strength_basis_resolution_status': classCode == 'IACT'
+          ? 'not_applicable'
+          : codedBasis
+          ? 'unique_coded_source_reference'
+          : 'missing_or_ambiguous_source_reference',
+      'ingredient_substance_count': substances.length,
+      'quantity_evidence': [
+        for (final row in quantities)
+          {
+            'numerators': [
+              for (final node in _splChildren(row, 'numerator'))
+                attributes(node),
+            ],
+            'denominators': [
+              for (final node in _splChildren(row, 'denominator'))
+                attributes(node),
+            ],
+          },
+      ],
+      // A label ratio and its chemical basis are source evidence. This never
+      // produces an administered dose, a mass conversion or an equivalence.
+      'promotion_status': 'source_strength_evidence_only',
+    };
   }
 
   List<String> _ingredientNames(XmlDocument document) {
     final names = <String>{};
-    for (final node in document.findAllElements('ingredient')) {
-      for (final name in node.findAllElements('name')) {
-        final text = name.innerText.trim();
-        if (text.isNotEmpty) {
-          names.add(text);
-        }
-      }
+    for (final node in _activeIngredients(document)) {
+      final substance = _splChild(node, 'ingredientSubstance');
+      final text = substance == null
+          ? _directChildText(node, 'name')
+          : _directChildText(substance, 'name');
+      if (text != null && text.isNotEmpty) names.add(text);
     }
     return names.toList(growable: false);
   }
@@ -479,7 +1132,13 @@ class DailyMedP0Importer {
         continue;
       }
       final rawCode =
-          section.getAttribute('ID') ?? section.getAttribute('code');
+          section.children
+              .whereType<XmlElement>()
+              .where((element) => element.name.local == 'code')
+              .firstOrNull
+              ?.getAttribute('code') ??
+          section.getAttribute('ID') ??
+          section.getAttribute('code');
       final key = _buildSectionKey(title: title, index: ordinal, code: rawCode);
       sections.add(
         _SplSectionEntry(
@@ -750,6 +1409,19 @@ class DailyMedP0Importer {
     if (normalized.length <= 220) return normalized;
     return '${normalized.substring(0, 220)}...';
   }
+}
+
+class _SplProductScope {
+  const _SplProductScope({
+    required this.wrapper,
+    required this.product,
+    required this.code,
+    required this.name,
+  });
+  final XmlElement wrapper;
+  final XmlElement product;
+  final String? code;
+  final String name;
 }
 
 class _SplSectionEntry {

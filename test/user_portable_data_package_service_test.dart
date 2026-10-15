@@ -895,7 +895,7 @@ void main() {
       snapshot: _snapshot(),
       generatedAt: generatedAt,
     );
-    final newer = _root(artifact.prettyJson)..['schemaVersion'] = 5;
+    final newer = _root(artifact.prettyJson)..['schemaVersion'] = 6;
     final newerPreview = service.inspect(
       packageJson: jsonEncode(newer),
       currentUserScope: _scope,

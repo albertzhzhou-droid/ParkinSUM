@@ -34,7 +34,7 @@ Map<String, dynamic> _withLocalizedMessages(Map<String, dynamic> rule) {
 const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
   {
     'rule_id': 'pd.ldopa.protein.window.v1',
-    'version': '1.0.0',
+    'version': '1.1.0',
     'status': 'active',
     'rule_type': 'temporal_rule',
     'priority_band': 70,
@@ -51,6 +51,9 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
             'path': 'drug.active_ingredients',
             'values': ['levodopa'],
           },
+        },
+        {
+          'cmp': {'path': 'drug.route', 'op': 'eq', 'value': 'oral'},
         },
         {
           'cmp': {'path': 'meal.protein_g', 'op': 'gte', 'value': 10},
@@ -76,6 +79,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
           'params': {
             'preferred_before_meal_min': 60,
             'preferred_after_meal_min': 120,
+            'protein_threshold_g': 10,
             'note': 'operational_default_unspecified_by_label',
           },
         },
@@ -95,7 +99,7 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
   },
   {
     'rule_id': 'pd.ldopa.iron.v1',
-    'version': '1.0.0',
+    'version': '1.1.0',
     'status': 'active',
     'rule_type': 'temporal_rule',
     'priority_band': 80,
@@ -112,6 +116,9 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
             'path': 'drug.active_ingredients',
             'values': ['levodopa'],
           },
+        },
+        {
+          'cmp': {'path': 'drug.route', 'op': 'eq', 'value': 'oral'},
         },
         {
           'in': {
@@ -137,7 +144,10 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
       'actions': [
         {
           'type': 'separate_by_time',
-          'params': {'min_separation_minutes': 120},
+          'params': {
+            'min_separation_minutes': 120,
+            'note': 'operational_default_unspecified_by_label',
+          },
         },
         {
           'type': 'emit_machine_tag',
@@ -150,6 +160,141 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
       'evidence_level': 'official_label',
       'source_refs': ['dailymed-carbidopa-levodopa-iron'],
       'effective_from': '2024-01-01',
+      'effective_to': null,
+    },
+  },
+  {
+    'rule_id': 'pd.ldopa.oral.scope.withheld.v1',
+    'version': '1.0.0',
+    'status': 'active',
+    'rule_type': 'escalation_rule',
+    'priority_band': 90,
+    'specificity_band': 90,
+    'jurisdiction': ['*'],
+    'applies_to': {
+      'subject_types': ['drug_admin', 'meal', 'coevent'],
+      'target_selector': {'target': 'levodopa-oral-absorption-scope'},
+    },
+    'when': {
+      'all': [
+        {
+          'in': {
+            'path': 'drug.active_ingredients',
+            'values': ['levodopa'],
+          },
+        },
+        {
+          'not': {
+            'cmp': {'path': 'drug.route', 'op': 'eq', 'value': 'oral'},
+          },
+        },
+        {
+          'any': [
+            {
+              'exists': {'path': 'meal.id'},
+            },
+            {
+              'exists': {'path': 'coevent.substance_tags'},
+            },
+          ],
+        },
+      ],
+    },
+    'then': {
+      'decision': 'REQUIRE_REVIEW',
+      'severity': 'unknown',
+      'messages': {
+        'zh': '当前蛋白与铁盐吸收规则需要明确的口服途径。途径缺失或属于其他途径时，这两项结果暂不计算；不能由未触发警示判断安全。',
+        'en':
+            'The protein and iron-salt absorption rules require an explicit oral route. These results are withheld for a missing or other route; an absent warning does not establish safety.',
+      },
+      'actions': [
+        {
+          'type': 'withhold_rule_evaluation',
+          'params': {
+            'rule_ids': ['pd.ldopa.protein.window.v1', 'pd.ldopa.iron.v1'],
+            'reason': 'oral_route_required_or_outside_scope',
+            'required_route': 'oral',
+          },
+        },
+        {
+          'type': 'emit_machine_tag',
+          'params': {'tag': 'levodopa_oral_absorption_withheld'},
+        },
+      ],
+      'output_tags': ['levodopa_oral_absorption_withheld'],
+    },
+    'provenance': {
+      'evidence_level': 'engineering_scope_boundary',
+      'source_refs': [
+        'fda-dhivy-high-protein',
+        'dailymed-carbidopa-levodopa-iron',
+      ],
+      'effective_from': '2026-09-29',
+      'effective_to': null,
+    },
+  },
+  {
+    'rule_id': 'pd.ldopa.protein.missing.withheld.v1',
+    'version': '1.0.0',
+    'status': 'active',
+    'rule_type': 'escalation_rule',
+    'priority_band': 90,
+    'specificity_band': 95,
+    'jurisdiction': ['*'],
+    'applies_to': {
+      'subject_types': ['drug_admin', 'meal'],
+      'target_selector': {'target': 'drug-meal'},
+    },
+    'when': {
+      'all': [
+        {
+          'in': {
+            'path': 'drug.active_ingredients',
+            'values': ['levodopa'],
+          },
+        },
+        {
+          'cmp': {'path': 'drug.route', 'op': 'eq', 'value': 'oral'},
+        },
+        {
+          'exists': {'path': 'meal.id'},
+        },
+        {
+          'not': {
+            'exists': {'path': 'meal.protein_g'},
+          },
+        },
+      ],
+    },
+    'then': {
+      'decision': 'REQUIRE_REVIEW',
+      'severity': 'unknown',
+      'messages': {
+        'zh': '该餐至少一项蛋白信息缺失，不能按零克计算。左旋多巴与餐食蛋白的结果暂不计算，请补充来源或保留未知。',
+        'en':
+            'Protein evidence is missing for at least one meal item and cannot be treated as zero. The levodopa-protein result is withheld; add the source information or retain it as unknown.',
+      },
+      'actions': [
+        {
+          'type': 'withhold_rule_evaluation',
+          'params': {
+            'rule_ids': ['pd.ldopa.protein.window.v1'],
+            'reason': 'meal_protein_evidence_missing',
+            'missing_fields': ['meal_protein'],
+          },
+        },
+        {
+          'type': 'emit_machine_tag',
+          'params': {'tag': 'levodopa_protein_evidence_withheld'},
+        },
+      ],
+      'output_tags': ['levodopa_protein_evidence_withheld'],
+    },
+    'provenance': {
+      'evidence_level': 'engineering_missingness_boundary',
+      'source_refs': ['fda-dhivy-high-protein'],
+      'effective_from': '2026-09-29',
       'effective_to': null,
     },
   },

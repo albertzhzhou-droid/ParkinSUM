@@ -151,7 +151,13 @@ class NextMealRecommendationOrchestrator {
     // metadata for both ranking surfaces.
     final projection = await projectionService.projectFoodsWithAudit();
     final projectedFoods = projection.foods;
-    final builtInP0FallbackUsed = candidateFoods.isEmpty;
+    // A live caller repository may already contain legacy imported rows.
+    // On a strict catalogue HOLD none of those rows can bypass the frozen
+    // read contract by re-entering through the caller list.
+    final strictCatalogHold =
+        projection.queryAudit['strict_candidate_read_required'] == true &&
+        projection.queryAudit['status'] == 'HOLD';
+    final builtInP0FallbackUsed = candidateFoods.isEmpty || strictCatalogHold;
     final inputCandidates = builtInP0FallbackUsed
         ? buildP0FoodCatalog()
         : candidateFoods;
@@ -171,6 +177,37 @@ class NextMealRecommendationOrchestrator {
       dietProfileRegion: request.userProfile.dietProfileRegion,
       tieBreakPolicy: conservativeRecommender.parameters.tieBreakPolicy,
     );
+    final resolvedIds = request.activeDrugs.map((drug) => drug.id).toSet();
+    final unresolvedIds = <String>{
+      ...request.requiredDrugIds,
+      ...request.intakes.map((intake) => intake.drugId),
+    }.difference(resolvedIds).toList()..sort();
+    if (unresolvedIds.isNotEmpty) {
+      final i18n = AppI18n.fromLocaleTag(request.userProfile.displayLocale);
+      developer.log(
+        'recommend:unassessed unresolvedMedicationCount=${unresolvedIds.length}',
+        name: 'NextMealRecommendationOrchestrator',
+      );
+      return NextMealRecommendationResult(
+        recommendations: const [],
+        candidateSetSnapshot: candidateSetSnapshot,
+        aiUsed: false,
+        decisionPath: 'unassessed_medication_context',
+        explanations: [i18n.tr('interaction.review_medication')],
+        gateReasons: [
+          i18n.tr('interaction.unresolved_medication', {
+            'count': '${unresolvedIds.length}',
+          }),
+        ],
+        unresolvedDrugIds: List.unmodifiable(unresolvedIds),
+        rankerEligibility: const RankerEligibility(
+          mechanisticPrimaryEligible: false,
+          rankerUsed: 'withheld_unresolved_medication',
+          rankerEligibilityReasons: [],
+          fallbackReasons: ['unresolved_medication_identity'],
+        ),
+      );
+    }
     final base = await _recommendCore(
       request: request,
       mergedCandidates: mergedCandidates,

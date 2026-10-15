@@ -1,0 +1,218 @@
+{
+  "method": "Independent manual expected table checked against separate Python ElementTree direct HL7 product structure inventory; no production importer output consumed.",
+  "frozen_independently_before_production_change": "2026-09-30T16:12:45.118251+00:00",
+  "cases": [
+    {
+      "label": "sinemet",
+      "fixture_path": "test/fixtures/spl_product_scope/sinemet.product-fields.xml",
+      "fixture_excerpt_sha256": "47864901b0c679c959bf360c0959f7fe9d12b499842e28b15fed0d62932f19ad",
+      "full_response_sha256": "2de4492865e2515258d013536faf9db3ccaa9799905d3a19f03ad22f57f7feff",
+      "source_url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/9b17b028-964a-473c-823d-81423535bd66.xml",
+      "representation": "Minimal source-field excerpt; no narrative or packaging; excerpt SHA differs from complete response SHA.",
+      "expected_products": [
+        {
+          "source_label": "sinemet",
+          "raw_sha256": "2de4492865e2515258d013536faf9db3ccaa9799905d3a19f03ad22f57f7feff",
+          "product_ndc": "78206-166",
+          "label_name": "SINEMET",
+          "route": "ORAL",
+          "form": "TABLET",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "100",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA",
+              "numerator": "10",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        },
+        {
+          "source_label": "sinemet",
+          "raw_sha256": "2de4492865e2515258d013536faf9db3ccaa9799905d3a19f03ad22f57f7feff",
+          "product_ndc": "78206-168",
+          "label_name": "SINEMET",
+          "route": "ORAL",
+          "form": "TABLET",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "100",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA",
+              "numerator": "25",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        },
+        {
+          "source_label": "sinemet",
+          "raw_sha256": "2de4492865e2515258d013536faf9db3ccaa9799905d3a19f03ad22f57f7feff",
+          "product_ndc": "78206-167",
+          "label_name": "SINEMET",
+          "route": "ORAL",
+          "form": "TABLET",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "250",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA",
+              "numerator": "25",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        },
+        {
+          "source_label": "sinemet",
+          "raw_sha256": "2de4492865e2515258d013536faf9db3ccaa9799905d3a19f03ad22f57f7feff",
+          "product_ndc": "78206-190",
+          "label_name": "SINEMET",
+          "route": "ORAL",
+          "form": "TABLET",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "100",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA",
+              "numerator": "25",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "rytary",
+      "fixture_path": "test/fixtures/spl_product_scope/rytary.product-fields.xml",
+      "fixture_excerpt_sha256": "54503db26dab46cd3c292115423234f815eb56a31c48cb90ce63963826505e79",
+      "full_response_sha256": "ba3b6177beb0280ac46e20dfa932fc4ff27b037e248e78a657cf6b9dbe0fd9fe",
+      "source_url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/6c1f7cd4-de56-45c1-a734-5e77b4aeb6f7.xml",
+      "representation": "Minimal source-field excerpt; no narrative or packaging; excerpt SHA differs from complete response SHA.",
+      "expected_products": [
+        {
+          "source_label": "rytary",
+          "raw_sha256": "ba3b6177beb0280ac46e20dfa932fc4ff27b037e248e78a657cf6b9dbe0fd9fe",
+          "product_ndc": "64896-661",
+          "label_name": "RYTARY",
+          "route": "ORAL",
+          "form": "CAPSULE, EXTENDED RELEASE",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "95",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA HYDRATE",
+              "numerator": "23.75",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        },
+        {
+          "source_label": "rytary",
+          "raw_sha256": "ba3b6177beb0280ac46e20dfa932fc4ff27b037e248e78a657cf6b9dbe0fd9fe",
+          "product_ndc": "64896-662",
+          "label_name": "RYTARY",
+          "route": "ORAL",
+          "form": "CAPSULE, EXTENDED RELEASE",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "145",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA HYDRATE",
+              "numerator": "36.25",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        },
+        {
+          "source_label": "rytary",
+          "raw_sha256": "ba3b6177beb0280ac46e20dfa932fc4ff27b037e248e78a657cf6b9dbe0fd9fe",
+          "product_ndc": "64896-663",
+          "label_name": "RYTARY",
+          "route": "ORAL",
+          "form": "CAPSULE, EXTENDED RELEASE",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "195",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA HYDRATE",
+              "numerator": "48.75",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        },
+        {
+          "source_label": "rytary",
+          "raw_sha256": "ba3b6177beb0280ac46e20dfa932fc4ff27b037e248e78a657cf6b9dbe0fd9fe",
+          "product_ndc": "64896-664",
+          "label_name": "RYTARY",
+          "route": "ORAL",
+          "form": "CAPSULE, EXTENDED RELEASE",
+          "strengths": [
+            {
+              "name": "LEVODOPA",
+              "numerator": "245",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            },
+            {
+              "name": "CARBIDOPA HYDRATE",
+              "numerator": "61.25",
+              "unit": "mg",
+              "denominator": "1",
+              "denominator_unit": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

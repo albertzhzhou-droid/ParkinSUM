@@ -1,0 +1,220 @@
+{
+  "schema": "parkinsum.public-source-field-corpus/1",
+  "synthetic": false,
+  "representation": "extracted_field_excerpt",
+  "observed_on": "2026-09-30",
+  "acquisition_limit": "FDC DEMO_KEY returned HTTP429 during additional sample-lineage requests; requests stopped, no retry or quota bypass",
+  "raw_response_sha256": null,
+  "complete_raw_responses_saved": false,
+  "whole_dataset_downloaded": false,
+  "production_generated_expectations": false,
+  "full_sample_mean_checks": "HOLD",
+  "sources": [
+    {
+      "source_id": "dhivy",
+      "family": "spl",
+      "origin_url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/39d79ade-8ee0-40ba-9fdd-13045b8ddbdf.xml",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "setId": "39d79ade-8ee0-40ba-9fdd-13045b8ddbdf",
+        "versionNumber": "14",
+        "effectiveTime": "20260821"
+      },
+      "license_scope": "structured factual fields and minimal verification facts; no blanket CC0 assertion; source attribution retained"
+    },
+    {
+      "source_id": "sinemet",
+      "family": "spl",
+      "origin_url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/9b17b028-964a-473c-823d-81423535bd66.xml",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "setId": "9b17b028-964a-473c-823d-81423535bd66",
+        "versionNumber": "6",
+        "effectiveTime": "20260801"
+      },
+      "license_scope": "structured factual fields and minimal verification facts; no blanket CC0 assertion; source attribution retained"
+    },
+    {
+      "source_id": "rytary",
+      "family": "spl",
+      "origin_url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/6c1f7cd4-de56-45c1-a734-5e77b4aeb6f7.xml",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "setId": "6c1f7cd4-de56-45c1-a734-5e77b4aeb6f7",
+        "versionNumber": "26",
+        "effectiveTime": "20260326"
+      },
+      "license_scope": "structured factual fields and minimal verification facts; no blanket CC0 assertion; source attribution retained"
+    },
+    {
+      "source_id": "inbrija",
+      "family": "spl",
+      "origin_url": "https://dailymed.nlm.nih.gov/dailymed/services/v2/spls/077c0f39-a3a2-4b2b-a184-09131889dcfb.xml",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "setId": "077c0f39-a3a2-4b2b-a184-09131889dcfb",
+        "versionNumber": "2",
+        "effectiveTime": "20260720"
+      },
+      "license_scope": "structured factual fields and minimal verification facts; no blanket CC0 assertion; source attribution retained"
+    },
+    {
+      "source_id": "broccoli",
+      "family": "fdc",
+      "origin_url": "https://api.nal.usda.gov/fdc/v1/food/747447",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "fdcId": 747447,
+        "dataType": "Foundation",
+        "description": "Broccoli, raw",
+        "publicationDate": "12/16/2019"
+      },
+      "license_scope": "USDA CC0; source attribution retained"
+    },
+    {
+      "source_id": "lowfat_milk",
+      "family": "fdc",
+      "origin_url": "https://api.nal.usda.gov/fdc/v1/food/746772",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "fdcId": 746772,
+        "dataType": "Foundation",
+        "description": "Milk, lowfat, fluid, 1% milkfat, with added vitamin A and vitamin D",
+        "publicationDate": "12/16/2019"
+      },
+      "license_scope": "USDA CC0; source attribution retained"
+    },
+    {
+      "source_id": "whole_milk",
+      "family": "fdc",
+      "origin_url": "https://api.nal.usda.gov/fdc/v1/food/746782",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "fdcId": 746782,
+        "dataType": "Foundation",
+        "description": "Milk, whole, 3.25% milkfat, with added vitamin D",
+        "publicationDate": "12/16/2019"
+      },
+      "license_scope": "USDA CC0; source attribution retained"
+    },
+    {
+      "source_id": "oat_milk",
+      "family": "fdc",
+      "origin_url": "https://api.nal.usda.gov/fdc/v1/food/2257046",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "fdcId": 2257046,
+        "dataType": "Foundation",
+        "description": "Oat milk, unsweetened, plain, refrigerated",
+        "publicationDate": "4/28/2022"
+      },
+      "license_scope": "USDA CC0; source attribution retained"
+    },
+    {
+      "source_id": "oat_flour",
+      "family": "fdc",
+      "origin_url": "https://api.nal.usda.gov/fdc/v1/food/2261421",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "fdcId": 2261421,
+        "dataType": "Foundation",
+        "description": "Flour, oat, whole grain",
+        "publicationDate": "4/28/2022"
+      },
+      "license_scope": "USDA CC0; source attribution retained"
+    },
+    {
+      "source_id": "olive_oil",
+      "family": "fdc",
+      "origin_url": "https://api.nal.usda.gov/fdc/v1/food/1750351",
+      "acquisition_method": "bounded urllib GET into memory; selected fields inspected independently of production importer",
+      "observed_on": "2026-09-30",
+      "observed_time_precision": "day_only; exact request timestamp not retained",
+      "representation": "extracted_field_excerpt",
+      "raw_response_sha256": null,
+      "complete_raw_response_saved": false,
+      "complete_samples_verified": false,
+      "dataset_snapshot_release": null,
+      "identity_fields": {
+        "fdcId": 1750351,
+        "dataType": "Foundation",
+        "description": "Oil, olive, extra light",
+        "publicationDate": "4/28/2021"
+      },
+      "license_scope": "USDA CC0; source attribution retained"
+    }
+  ],
+  "case_count": 18,
+  "spl_cases": 8,
+  "fdc_cases": 10,
+  "source_semantics_references": [
+    "https://fdc.nal.usda.gov/Foundation_Foods_Documentation/",
+    "https://fdc.nal.usda.gov/help/",
+    "https://fdc.nal.usda.gov/api-guide/",
+    "https://dailymed.nlm.nih.gov/dailymed/app-support-web-services.cfm",
+    "https://www.nlm.nih.gov/web_policies.html#copyright"
+  ]
+}

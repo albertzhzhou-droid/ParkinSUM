@@ -6,11 +6,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:crypto/crypto.dart';
-import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../domain/entities/user_logging_reminder.dart';
 import 'data_service.dart';
+import 'pinned_timezone_rules_service.dart';
 import 'reminder_activation_inbox.dart';
 import 'reminder_activation_store_factory.dart';
 import 'reminder_notification_capability_matrix.dart';
@@ -722,7 +722,7 @@ class LocalReminderNotificationGateway
   }
 
   Future<void> _performInitialization() async {
-    tz_data.initializeTimeZones();
+    await pinnedTimezoneRulesService.initializeForApp();
     await _plugin.initialize(
       settings: const InitializationSettings(
         android: AndroidInitializationSettings('@mipmap/ic_launcher'),
