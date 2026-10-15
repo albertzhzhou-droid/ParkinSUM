@@ -3,6 +3,7 @@ import '../../domain/usecases/food_composition_interdependency_model.dart';
 import '../models/food_item.dart';
 import '../utils/texture_support.dart';
 import 'reference_food_composition_table.dart';
+import 'reference_food_nutrient_profiles.dart';
 
 /// Catalog projection of the USDA SR Legacy reference subset.
 ///
@@ -12,12 +13,17 @@ import 'reference_food_composition_table.dart';
 ///   when fibre is unreported the carbohydrate stays unknown.
 /// - Every unreported field is listed in `missingNutrientFields`; the
 ///   non-nullable getters keep 0 only for legacy display.
+/// - Water, the amino-acid profile (with FDC derivation provenance) and the
+///   portion records come from the official FoodData Central 2025-04-24
+///   rows of the same food. Portions are evidence only; they never select a
+///   serving or rescale a value.
 List<FoodItem> buildReferenceFoodCatalog() => referenceFoodCompositionRows
     .map(referenceRowToFoodItem)
     .toList(growable: false);
 
 FoodItem referenceRowToFoodItem(ReferenceFoodCompositionRow row) {
   final availableCarbohydrate = availableCarbohydrateOf(row);
+  final waterG = referenceWaterG(row.fdcId);
   return FoodItem(
     id: row.appFoodId,
     name: row.nameZh,
@@ -37,6 +43,9 @@ FoodItem referenceRowToFoodItem(ReferenceFoodCompositionRow row) {
     fiberG: row.fiberG ?? 0,
     sodiumMg: row.sodiumMg ?? 0,
     energyKcal: row.energyKcal,
+    waterG: waterG,
+    aminoAcidProfile: referenceAminoAcidProfile(row.fdcId),
+    foodPortionEvidence: referencePortionEvidence(row.fdcId),
     missingNutrientFields: {
       if (row.proteinG == null) 'proteinG',
       if (availableCarbohydrate == null) 'carbsG',
@@ -44,7 +53,7 @@ FoodItem referenceRowToFoodItem(ReferenceFoodCompositionRow row) {
       if (row.fiberG == null) 'fiberG',
       if (row.sodiumMg == null) 'sodiumMg',
       if (row.energyKcal == null) 'energyKcal',
-      'waterG',
+      if (waterG == null) 'waterG',
     },
     basisType: 'per_100g',
     preparationState: row.preparationState,

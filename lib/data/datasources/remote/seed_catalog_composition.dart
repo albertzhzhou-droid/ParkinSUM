@@ -1,13 +1,17 @@
+import '../../../core/constants/reference_food_nutrient_profiles.dart';
 import '../../../core/constants/seed_food_composition_table.dart';
 import '../../../core/models/food_item.dart';
+import '../../../domain/entities/seed_food_composition.dart';
 
 /// Projects a built-in seed catalog food with nutrient values copied from
 /// its USDA FoodData Central record ([seedFoodCompositions]).
 ///
 /// A seed food with no authoritative record keeps its name, aliases and
 /// texture for search and logging, but every nutrient is marked unknown in
-/// [FoodItem.missingNutrientFields]; no value is estimated. Educational
-/// prototype; values describe foods, not people.
+/// [FoodItem.missingNutrientFields]; no value is estimated. An SR Legacy
+/// match also carries water, the amino-acid profile and portion records from
+/// the official FoodData Central 2025-04-24 rows of the same record.
+/// Educational prototype; values describe foods, not people.
 FoodItem projectSeedCatalogFood({
   required String id,
   required String name,
@@ -53,6 +57,10 @@ FoodItem projectSeedCatalogFood({
     );
   }
   final available = composition.availableCarbohydrateG;
+  final srLegacy = composition.source == SeedCompositionSource.srLegacy2018;
+  final waterG =
+      composition.waterG ??
+      (srLegacy ? referenceWaterG(composition.fdcId) : null);
   final proxyNote = composition.note == null ? '' : ' ${composition.note}';
   return FoodItem(
     id: id,
@@ -74,7 +82,13 @@ FoodItem projectSeedCatalogFood({
     fiberG: composition.fiberG ?? 0,
     sodiumMg: composition.sodiumMg ?? 0,
     energyKcal: composition.energyKcal,
-    waterG: composition.waterG,
+    waterG: waterG,
+    aminoAcidProfile: srLegacy
+        ? referenceAminoAcidProfile(composition.fdcId)
+        : null,
+    foodPortionEvidence: srLegacy
+        ? referencePortionEvidence(composition.fdcId)
+        : const [],
     missingNutrientFields: {
       if (composition.proteinG == null) 'proteinG',
       if (available == null) 'carbsG',
@@ -82,7 +96,7 @@ FoodItem projectSeedCatalogFood({
       if (composition.fiberG == null) 'fiberG',
       if (composition.sodiumMg == null) 'sodiumMg',
       if (composition.energyKcal == null) 'energyKcal',
-      if (composition.waterG == null) 'waterG',
+      if (waterG == null) 'waterG',
     },
   );
 }

@@ -289,6 +289,14 @@ Residual risks:
   RxNorm dose forms; three medications (safinamide, the generic iron entry
   and levodopa/benserazide) remain unverified with a reason.
   Identity data never implies a dose or schedule.
+- Iteration 3 (2026-10-15) cross-checked all 6,033 earlier SR Legacy values
+  against the official FoodData Central 2025-04-24 rows: all match. The 280
+  SR Legacy foods now carry their full official nutrient rows, with
+  derivation codes, sample counts and ranges, plus portion gram weights.
+  Fourteen identity findings remain. They are inconsistencies inside the
+  source records (for example, milk sugars reported as lactose monohydrate),
+  are pinned in tests and are never corrected. Amino-acid profiles now feed
+  the LNAA layer for these foods; values describe sampled foods, not people.
 - The FoodData Central 2025-04-24 nutrient definitions and conversion factors
   are pinned; a later FDC release can renumber or redefine nutrients and
   needs a re-pin. One food-specific energy factor (coconut oil) disagrees

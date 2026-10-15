@@ -52,15 +52,15 @@ final class AlgorithmRelationDomainSamplingAttestation {
   static const String expectedSamplerSha256 =
       '8976b0d51f0f3326ece0584971b25e40e0087345824fbe35a72d2bc2605625bb';
   static const String expectedProductionAnchorReportSha256 =
-      'de2e069ac9465ca0e35c5b7e19a10308112b17a4055703c7b3e6c62b4a39d9d1';
+      '1d0612fee2559c8d5af5823f72c7bee1e060c8580cbe4f3996408e1d4f407b7c';
   static const String expectedProductionExecutionReportSha256 =
-      '2f02e7958c741d27b007ca896f7777c0f3277fb37ec33916b4014b85c788f76e';
+      '95d2a4c3e0d30184466d39f7ee87a46afa4817f5f1c138e4bd1d3bd52c985fa6';
   static const String expectedProductionExecutionRunnerSha256 =
       '4e90aabe4009155d201e37408a1ce5d7128adb0130e320abfd0b1e1bfe20a946';
   static const String expectedProductionExecutorSha256 =
       '53736be40aee320f7e805b6449e680f4b65afdd06d69785ec91f1f9806c4f0f8';
   static const String expectedReportSha256 =
-      'a51b4db9ddbe5f0697886691b2a68d2fc83cebfac58d638381fde780dd97dfa3';
+      '8609e07e740eba35c059b8265a60b9b0da2ea02baa22eb9af99841f94c964e32';
 
   static const String generatorId =
       'parkinsum.xorshift32.relation-production-v2';

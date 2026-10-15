@@ -401,6 +401,7 @@ class FdcP0Importer {
       );
 
       final nutrientMap = <String, String>{};
+      final derivationCodes = <String, String>{};
       for (final nutrientRow
           in (food['foodNutrients'] as List<dynamic>? ?? const [])) {
         final map = nutrientRow as Map<String, dynamic>;
@@ -446,6 +447,7 @@ class FdcP0Importer {
         final derivation = _nestedRecord(map['foodNutrientDerivation']);
         final nutrientSource = _nestedRecord(map['foodNutrientSource']);
         final methodCode = _nonEmptyString(derivation?['code']);
+        if (methodCode != null) derivationCodes[attributeCode] = methodCode;
         final sourceCode = _nonEmptyString(nutrientSource?['code']);
         final dataPoints = _nullableInt(
           map['dataPoints'] ?? map['data_points'],
@@ -758,6 +760,7 @@ class FdcP0Importer {
           values: exactSourceValues,
           nitrogenToProteinFactor: proteinFactor,
           calorieFactors: calorieFactors,
+          derivationCodes: derivationCodes,
         ),
       );
       if (identityAudit.checksRun.isNotEmpty) {
@@ -765,6 +768,8 @@ class FdcP0Importer {
           'fdc_id': fdcId,
           'data_type': dataType,
           'checks_run': identityAudit.checksRun,
+          if (identityAudit.checksSkipped.isNotEmpty)
+            'checks_skipped': identityAudit.checksSkipped,
           'findings': [
             for (final finding in identityAudit.findings) finding.toJson(),
           ],
