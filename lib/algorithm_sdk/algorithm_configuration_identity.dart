@@ -52,7 +52,10 @@ final class AlgorithmConfigurationIdentity {
   // v54 binds the composition identity audit (food-specific energy factors,
   // proximate closure and part-within-whole checks) and the expanded FDC
   // importer sources. Engine scores and severities are unchanged.
-  static const String defaultVersion = '2026.10.08-v54';
+  // v55 makes the proximate-closure identity provenance-aware: it is tested
+  // only when FDC reports carbohydrate as calculated by difference, and is
+  // recorded as skipped when the source assumed or imputed it.
+  static const String defaultVersion = '2026.10.15-v55';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -60,7 +63,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'a4dfcae4d9bb7e47a0d9a6a3451835847c79850af947f0dca0415e4cd5a75bd0';
+      'fc6f546f227504a33cc5c00e59fc9772501fdf1477ab9e53a9e6b47ef8f263d0';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -93,7 +96,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
         '79c01e3d8de22b7660ba16d917682f28a1447d7e867af09f84651cfd878c05cf',
     'lib/domain/usecases/food_composition_interdependency_model.dart':
-        '5efcccb9b2e9fff12082609fea62ca23f2b6d5f4f1cdc3120c64430e54c7d614',
+        'c5159c191900108f08c2114890659c3bcbbb4893a0a86a2ad402553eb87ac656',
     'lib/domain/usecases/protein_distribution_model.dart':
         '9ab6035545b0dc2d6d462112a7c2d42f900bb24a9b6ecd7b9a42b7fbcfa2f881',
     'lib/domain/usecases/next_meal_scoring_parameters.dart':

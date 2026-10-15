@@ -140,7 +140,20 @@ void main() {
     expect(banana.energyKcal, 89.0);
     expect(banana.sodiumMg, 1.0);
     expect(banana.sourceFoodCode, '173944');
-    expect(banana.missingNutrientFields, {'waterG'});
+    // Water, amino acids and portions come from the official FDC 2025 rows
+    // of the same record (food_nutrient.csv rows 1817955 and 1817958;
+    // food_portion.csv rows 93511-93518).
+    expect(banana.missingNutrientFields, isEmpty);
+    expect(banana.waterG, 74.91);
+    expect(banana.aminoAcidProfile!.leucine, 0.068);
+    expect(
+      banana.aminoAcidProfile!.derivations['leucine']!.derivationCode,
+      'A',
+    );
+    expect(
+      banana.foodPortionEvidence.map((p) => '${p.modifier} ${p.gramWeight}'),
+      contains('medium (7" to 7-7/8" long) 118.0'),
+    );
     final tempeh = foods['food_ref_usda_174272']!;
     expect(tempeh.missingNutrientFields, containsAll(['fiberG', 'carbsG']));
     final milk = foods['food_ref_usda_171265']!;

@@ -361,3 +361,103 @@ read through the Hugging Face connector from these public mirrors:
 The checks above detect transcription and join errors. They cannot detect an
 upstream value that is wrong but internally consistent. Re-verify against
 the official distributions before any use beyond this prototype.
+
+## 9. Iteration 3 (2026-10-15) — official full profiles and a fidelity audit
+
+### 9.1 What was added
+
+The SR Legacy values used so far came through a third-party pivot of SR
+Legacy 2018 that carried only 19 nutrients. This iteration reads the
+official FoodData Central full download (release 2025-04-24) directly.
+
+- **Nutrient rows.** For all 280 SR Legacy foods the app uses (224 reference,
+  116 seed, 60 shared), every `food_nutrient.csv` row is committed verbatim:
+  26,995 rows covering 148 nutrients.
+  - Each row keeps its amount, number of data points, derivation code and,
+    where reported, min/max/median.
+  - Coverage: 11,688 values have data points > 0, 6,882 carry a min/max
+    range, and every food reports water.
+  - 241 foods report amino acids, 229 of them all 18.
+  - The generated table carries the 15,856 rows the app maps: the 59
+    nutrient definitions plus 18 amino acids.
+- **Portions.** 788 household-measure gram weights for 277 of the foods; the
+  other 3 have none in the source.
+- **Derivation codes.** The complete table, 80 rows.
+
+### 9.2 Fidelity check of the earlier data
+
+Every value already committed was compared with the official rows. That is
+3,991 reference values and 2,042 seed values (6,033 in total):
+
+- All 6,033 match exactly.
+- Every blank corresponds to a nutrient the official record does not report.
+
+The mirror introduced no transcription error. The check is now a test.
+
+### 9.3 What the catalogs gain
+
+Reference foods, and seed foods matched to SR Legacy, now carry:
+
+- **Water** from the official row.
+- **An amino-acid profile.** It is built by the same extractor the FDC
+  importer uses and includes per-amino-acid derivation provenance, so the
+  LNAA layer can use actual fields instead of the protein-source proxy for
+  these foods.
+- **Portion records,** as evidence only: a portion never selects a serving
+  or rescales a value.
+
+FNDDS-matched seed foods are unchanged.
+
+### 9.4 Provenance-aware closure
+
+With full profiles the composition identity audit ran 2,624 checks across the
+280 foods. The first run raised 27 proximate-closure mismatches. 19 of them,
+and 32 records overall, carry carbohydrate derivation `Z` ("Assumed zero").
+USDA did not compute carbohydrate by difference for those animal foods, so
+water + protein + fat + ash need not sum to 100 g.
+
+The closure identity now runs only when carbohydrate is calculated by
+difference (`NC`) or its derivation is unreported. Other codes record the
+check as skipped with a reason, not as a finding. Across the 280 foods:
+
+- the check ran 236 times;
+- it was skipped 44 times (32 assumed zero, 12 imputed or other);
+- 4 genuine mismatches remain.
+
+The FDC importer now passes derivation codes to the audit, so imported
+records are handled the same way.
+
+### 9.5 Remaining findings: inconsistencies inside the source
+
+Every value equals the official row, so these 14 findings describe the
+records themselves. They are pinned in
+`test/reference_food_nutrient_profile_test.dart` and are never corrected.
+
+| Finding | Foods | Explanation |
+| --- | --- | --- |
+| Sugars exceed carbohydrate by difference | Whole, 2% and nonfat milk | The excess is about 5.3%, the mass ratio of lactose monohydrate to anhydrous lactose (360.3 / 342.3). This is consistent with sugars reported as the monohydrate. |
+| Sugars + starch + fibre exceed carbohydrate by difference | Brown rice (cooked), cashews, oats (cooked), blackberries | Independent analyses whose sum exceeds the difference value. |
+| Closure mismatch with calculated carbohydrate | Coconut oil, turkey liver, unsalted butter, fish roe | Components disagree with the stored carbohydrate by 0.6–1.7 g. |
+| Energy residual | Cider vinegar | About 5 g of acetic acid is outside the proximates (Section 2). |
+| RAE below its components | Pork loin, raw | RAE 0 while β-carotene is reported. |
+| Fatty-acid classes exceed total lipid | Navy beans, cooked | 0.73 g vs 0.62 g. |
+
+### 9.6 Amino acids versus protein
+
+Across 185 foods with all 18 amino acids and at least 1 g protein, the amino
+acid sum ranges from 0.43 to 1.21 times protein (median 0.96). Low ratios
+come from low-protein plant foods with non-protein nitrogen. The spread is
+too wide for an identity, so no check is added. Protein is never derived
+from amino acids or the other way round.
+
+### 9.7 Retrieval
+
+All files come from the Hugging Face mirror
+`yvfu/FoodData_Central_csv_2025-04-24`.
+
+- `food_nutrient.csv` (1.77 GB) was read in 55 KB windows. A food's rows were
+  kept only when its whole block lay inside one window with another food on
+  both sides.
+- The 47 foods that appeared in two windows had byte-identical copies.
+- The portion rows come from one contiguous byte range covering the entire
+  SR Legacy portion block (14,449 rows).

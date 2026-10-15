@@ -9136,3 +9136,58 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Restore the four attestation pins, the lockfile and the privacy-contract pin and review note from `63aee4c`. Note that this re-exposes the Node advisories.
 - Remove the 13 appended RxNorm lines and regenerate the table. Restore the six unverified entries and the five placeholder codes, the test expectations, the goldens, the docs, and remove this entry.
 - Preserve every unrelated file.
+
+## 2026-10-15 — FOOD-FIDELITY-20261015 — Official full nutrient profiles and provenance-aware identities
+
+### Baseline and scope
+
+- Branch `claude/modest-knuth-rl15va`, fast-forwarded to merged `main` (`af7ef69`, merge of PR #142). This entry covers the uncommitted changes in this iteration only and preserves all unrelated files.
+- Algorithm configuration identity advances `2026.10.08-v54` → `2026.10.15-v55`. Configuration SHA-256 `e2a18594d3a825ad0fe21e5f82996e31036a0f0498cb9d8faed85f517bbdd346`; previous-configuration fixture `015760753c03d758720fb9c7abe452db750109b298df0cd276dd8157eca9f59c`; registered-source bundle `fc6f546f227504a33cc5c00e59fc9772501fdf1477ab9e53a9e6b47ef8f263d0`. CoU ledger `2026.10.15-v42`, prospective plan `2026.10.15-v40`, and evidence attestation `2026.10.15-v39` are mechanically rebound; none adds evidence, review, or qualification. The relation-oracle and sampling attestation report digests are re-pinned because their reports bind the configuration identity. No persisted schema version changes.
+
+### Changes
+
+- **Official FDC rows.** Added verbatim USDA FoodData Central 2025-04-24 data for all 280 SR Legacy reference and seed foods:
+  - `food_nutrient.csv` rows: 26,995 rows, 148 nutrients, with data points, derivation ids and ranges;
+  - `food_portion.csv` rows: 788;
+  - the complete `food_nutrient_derivation.csv`.
+
+  Added a generator, the generated table `lib/core/constants/reference_food_nutrient_profile_table.dart` (15,856 mapped rows), the entity file `lib/domain/entities/reference_food_nutrient_profile.dart`, and lookups in `lib/core/constants/reference_food_nutrient_profiles.dart`.
+- **Fidelity cross-check.** All 6,033 SR Legacy values committed earlier through the third-party mirror equal the official rows, and every blank is a nutrient the source omits. This is now a test.
+- **Catalog projection.** Reference foods and SR-matched seed foods carry:
+  - official water;
+  - an amino-acid profile built by the importer's extractor, with derivation provenance;
+  - portion evidence.
+
+  Portions never select servings or rescale values.
+- **Provenance-aware closure.** `auditCompositionIdentities` tests proximate closure only when carbohydrate by difference is calculated (`NC`) or its derivation is unreported. Otherwise the check is recorded in `checksSkipped` with a reason. The FDC importer passes derivation codes and reports `checks_skipped`.
+
+  Across the 280 official profiles, 37 raw findings fall to 14. Each is a documented inconsistency inside the source record; for example, milk sugars are about 5.3% above carbohydrate, which matches lactose monohydrate. They are pinned in the test and never corrected.
+- **Changed files:**
+  - Model and importer: `lib/domain/usecases/food_composition_interdependency_model.dart`, `lib/data/datasources/remote/{fdc_p0_importer,seed_catalog_composition}.dart`.
+  - Catalog: `lib/core/constants/{reference_food_catalog,reference_food_nutrient_profiles,reference_food_nutrient_profile_table}.dart`.
+  - Entities: `lib/domain/entities/{reference_food_nutrient_profile,context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation,algorithm_contract_independent_oracle_attestation,algorithm_relation_domain_sampling_attestation}.dart`.
+  - Identity: `lib/algorithm_sdk/algorithm_configuration_identity.dart`, `lib/domain/usecases/algorithm_configuration_change_impact_service.dart`.
+  - Config: `config/{algorithm_surface_allowlist,source_access_registry,complete_app_upgrade_queue}.json`.
+  - Tooling: `tool/{reference_food_nutrient_profile_codegen,generate_reference_food_nutrient_profile_table}.dart`, `tool/data/fdc_2025-04-24/`.
+  - Tests and goldens: `test/reference_food_nutrient_profile_test.dart` (new), `test/{reference_food_composition_table,fdc_current_release_importer}_test.dart`, `test/goldens/mechanistic_replay.md`.
+  - Docs: the research note (Section 9), `docs/known_risks.md` R14, and this timeline.
+
+### Verification and remaining boundaries
+
+- The new profile test checks:
+  - the SHA-256 digests;
+  - field-by-field equality of the generated table with the source rows;
+  - the 6,033-value cross-check;
+  - the amino-acid numbers against `nutrient.csv`;
+  - the exact set of 14 findings, with closure run 236 times and skipped 44.
+- The updated reference and importer tests, the coverage, goldens and trace-manifest tests, and the relation-oracle and sampling gates pass. The full suite and `npm run verify:all` results are recorded below.
+- The amino-acid sum ranges from 0.43 to 1.21 times protein, so no amino-acid identity is asserted.
+- Data came through the Hugging Face mirror of the official download, because the USDA host is blocked here. Every byte is copied unchanged; checks catch transcription and join errors, not an upstream value that is wrong but internally consistent.
+- Nothing here is dietary, medication or timing advice.
+
+### Surgical rollback
+
+- Remove the new table, lookups, entity, generator files, the three new `tool/data/fdc_2025-04-24/` files and the new test.
+- Revert the catalog projections, the closure change and the importer derivation passthrough.
+- Restore identity `2026.10.08-v54` with its digests, the CoU v41/plan v39/attestation v38 pins, the relation attestation report pins, the queue sentence, the goldens, the README, registry and allowlist lines, research Section 9, the R14 paragraph, and this entry.
+- Preserve every unrelated file.
