@@ -84,7 +84,10 @@ final class AlgorithmConfigurationIdentity {
   // v74 integrates the public Claude food-composition/interdependency and FDC
   // baseline with the local storage, source-evidence and review boundaries.
   // It supersedes both branch identities; historical receipts remain unchanged.
-  static const String defaultVersion = '2026.10.15-v74';
+  // v75 integrates Claude PR147 source-bound nutrient profiles and records
+  // proximate closure only for source-calculated by-difference carbohydrate.
+  // Assumed or imputed carbohydrate retains an explicit skipped-audit reason.
+  static const String defaultVersion = '2026.10.15-v75';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -92,7 +95,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'a1bc7573047ca427ef08a9274f533c87d018b7e224ff89a8004e7a08e58e8783';
+      'e84b4c40fd28e4e14ee6123c19e383265e789c5943cc84a7f235f676680479a1';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -125,7 +128,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
         '79c01e3d8de22b7660ba16d917682f28a1447d7e867af09f84651cfd878c05cf',
     'lib/domain/usecases/food_composition_interdependency_model.dart':
-        '5efcccb9b2e9fff12082609fea62ca23f2b6d5f4f1cdc3120c64430e54c7d614',
+        'c5159c191900108f08c2114890659c3bcbbb4893a0a86a2ad402553eb87ac656',
     'lib/domain/usecases/protein_distribution_model.dart':
         '9ab6035545b0dc2d6d462112a7c2d42f900bb24a9b6ecd7b9a42b7fbcfa2f881',
     'lib/domain/usecases/next_meal_scoring_parameters.dart':

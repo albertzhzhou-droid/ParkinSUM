@@ -962,6 +962,9 @@ class AlgorithmRegistry {
       visualization: AlgorithmVisualization.provenanceGraph,
       sourcePath: 'lib/data/datasources/remote/etl_ingestion_pipeline.dart',
       additionalSourcePaths: [
+        'lib/core/constants/reference_food_nutrient_profile_table.dart',
+        'lib/core/constants/reference_food_nutrient_profiles.dart',
+        'lib/domain/entities/reference_food_nutrient_profile.dart',
         'lib/core/utils/qualified_value_parser.dart',
         'lib/data/datasources/remote/china_cdc_food_platform_importer.dart',
         'lib/data/datasources/remote/ciqual_p0_importer.dart',

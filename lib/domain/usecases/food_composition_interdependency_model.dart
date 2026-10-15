@@ -535,14 +535,29 @@ final class FoodCompositionIdentityInput {
   final double? nitrogenToProteinFactor;
   final FoodSpecificCalorieFactors? calorieFactors;
 
+  /// FDC derivation code per attribute code (`food_nutrient_derivation.csv`
+  /// `code`, e.g. `NC` "Calculated", `Z` "Assumed zero"), when reported.
+  /// An identity that only holds for a calculated value is skipped when the
+  /// source says the value was assumed or imputed instead.
+  final Map<String, String> derivationCodes;
+
   const FoodCompositionIdentityInput({
     required this.recordId,
     required this.description,
     required this.values,
     this.nitrogenToProteinFactor,
     this.calorieFactors,
+    this.derivationCodes = const {},
   });
 }
+
+/// FDC derivation code meaning "Calculated". Carbohydrate by difference
+/// carries it when it was computed as 100 − (water + protein + fat + ash).
+const fdcDerivationCodeCalculated = 'NC';
+
+/// FDC derivation code meaning "Assumed zero (insignificant amount or not
+/// naturally occurring in a food)".
+const fdcDerivationCodeAssumedZero = 'Z';
 
 final class CompositionIdentityAudit {
   final String recordId;
@@ -550,6 +565,10 @@ final class CompositionIdentityAudit {
   /// Identity checks that had enough data to run.
   final List<String> checksRun;
   final List<NutrientIdentityFinding> findings;
+
+  /// Checks that had the data but do not apply to this record, with the
+  /// reason (for example, carbohydrate assumed zero rather than calculated).
+  final Map<String, String> checksSkipped;
 
   /// Energy reconciliation with general factors, when it could run.
   final EnergyReconciliation? generalEnergy;
@@ -559,6 +578,7 @@ final class CompositionIdentityAudit {
     required this.checksRun,
     required this.findings,
     required this.generalEnergy,
+    this.checksSkipped = const {},
   });
 
   bool get isConsistent => findings.isEmpty;
@@ -566,6 +586,7 @@ final class CompositionIdentityAudit {
   Map<String, Object?> toJson() => {
     'record_id': recordId,
     'checks_run': checksRun,
+    if (checksSkipped.isNotEmpty) 'checks_skipped': checksSkipped,
     'findings': [for (final finding in findings) finding.toJson()],
     if (generalEnergy != null) 'general_energy': generalEnergy!.toJson(),
   };
@@ -599,6 +620,7 @@ CompositionIdentityAudit auditCompositionIdentities(
 ) {
   final v = input.values;
   final checks = <String>[];
+  final skipped = <String, String>{};
   final findings = <NutrientIdentityFinding>[];
   String fmt(double value) => value.toStringAsFixed(2);
 
@@ -713,11 +735,31 @@ CompositionIdentityAudit auditCompositionIdentities(
   final water = v['water_g'];
   final fat = v['fat_g'];
   final ash = v['ash_g'];
+  // The closure is an identity only when carbohydrate was calculated by
+  // difference. USDA records an assumed-zero or imputed carbohydrate for many
+  // animal foods; there the sum need not reach 100 g and is not tested.
+  final carbohydrateDerivation =
+      input.derivationCodes['carbohydrate_by_difference_g'];
+  final closureApplies =
+      carbohydrateDerivation == null ||
+      carbohydrateDerivation == fdcDerivationCodeCalculated;
   if (water != null &&
       protein != null &&
       fat != null &&
       ash != null &&
-      byDifference != null) {
+      byDifference != null &&
+      !closureApplies) {
+    skipped['proximate_closure'] =
+        carbohydrateDerivation == fdcDerivationCodeAssumedZero
+        ? 'carbohydrate_assumed_zero'
+        : 'carbohydrate_not_calculated_by_difference:$carbohydrateDerivation';
+  }
+  if (water != null &&
+      protein != null &&
+      fat != null &&
+      ash != null &&
+      byDifference != null &&
+      closureApplies) {
     checks.add('proximate_closure');
     final total =
         water + protein + fat + ash + byDifference + (v['alcohol_g'] ?? 0.0);
@@ -855,6 +897,7 @@ CompositionIdentityAudit auditCompositionIdentities(
     checksRun: List.unmodifiable(checks),
     findings: List.unmodifiable(findings),
     generalEnergy: generalEnergy,
+    checksSkipped: Map.unmodifiable(skipped),
   );
 }
 

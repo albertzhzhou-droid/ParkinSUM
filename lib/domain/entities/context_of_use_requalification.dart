@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.15-v61';
+  static const String ledgerVersion = '2026.10.15-v62';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'bb7ce2ed3bbfbeaffdeff0ee7a24a054a6495b97247cc838f13c5e454bfe34fd';
+  static const String historicalV74ConfigurationSha256 =
       'c0a34a359397ce0405474b1ca006067e58ecc7f0b7a13d65ca03c4df92ba5d40';
   static const String historicalV73ConfigurationSha256 =
       'eaca417fdd38ab1179050eb235a09f2d19b9ace0b7ee97fd5e3b1fd3a1a712ab';
@@ -1081,7 +1083,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           personalRecordCapacityCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV74ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           personalRecordCapacityCandidateRecord.evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1119,6 +1121,52 @@ final class ContextOfUseRequalificationLedger {
           'authenticated approval, release signature or production acceptance. '
           'All required evidence holds and blocked promotion remain in force.',
     );
+    final provenanceAwareNutritionCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 24,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          publicNutritionIntegrationCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          publicNutritionIntegrationCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256: publicNutritionIntegrationCandidateRecord
+          .evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256: publicNutritionIntegrationCandidateRecord
+          .evidenceSynthesisRegistrySha256,
+      semanticDiffSha256:
+          publicNutritionIntegrationCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          publicNutritionIntegrationCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          publicNutritionIntegrationCandidateRecord.affectedPredicateIds,
+      changeClasses: publicNutritionIntegrationCandidateRecord.changeClasses,
+      modelRisk: publicNutritionIntegrationCandidateRecord.modelRisk,
+      questionOfInterest:
+          publicNutritionIntegrationCandidateRecord.questionOfInterest,
+      contextOfUse: publicNutritionIntegrationCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-15T22:58:24.903Z',
+      releaseArtifact:
+          'unreleased-worktree:claude-reference-profile-integration-v75',
+      evidenceDecisions:
+          publicNutritionIntegrationCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v75 candidate integrates Claude PR147 from public main '
+          'cb24f6eea06517cdb8ea3c2a0b42a4beb2f96c71, whose separate '
+          '2026.10.15-v55 configuration was '
+          'e2a18594d3a825ad0fe21e5f82996e31036a0f0498cb9d8faed85f517bbdd346. '
+          'It binds provenance-aware composition audit behavior and retains '
+          'the source-bound reference nutrient profiles, local unknown-value, '
+          'LOQ, ambiguity and held-review boundaries. All twenty-three prior '
+          'records remain exact. Prior branch tests and inherited synthetic '
+          'decisions do not qualify this merged source or supply new review, '
+          'scientific validity, clinical calibration, authenticated approval, '
+          'release signature or production acceptance. All evidence holds '
+          'and blocked promotion remain in force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1149,6 +1197,7 @@ final class ContextOfUseRequalificationLedger {
         ordinaryImportStatusCandidateRecord,
         personalRecordCapacityCandidateRecord,
         publicNutritionIntegrationCandidateRecord,
+        provenanceAwareNutritionCandidateRecord,
       ],
     );
   }

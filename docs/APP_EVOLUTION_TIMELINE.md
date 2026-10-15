@@ -9538,3 +9538,68 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Hosted CI and targeted repairs: the initial run passed format/analysis and Node preflight. Its full Flutter suite reported 3121 passes, 1 failure and 2 skips; the sole failure was an outdated notification-capability lockfile SHA, now refreshed from the actual unchanged `pubspec.lock` with the notification package version/archive unchanged and 12/12 focused tests passing. Governance passed 53/55 gates: `source_access` lacked the already-used internal `src.synthetic.gastric.identifiability` fixture ID (added as fixture-only, all 137 existing source records unchanged; actual gate now 138 sources / 0 blockers and tests 29/29). `committed_goldens` actually passed 7/7 tests, but the GitHub-default reporter did not satisfy the strict completion parser; explicitly selecting `expanded` now passes the same GitHub-environment gate and original validator, with runner tests 24/24. No golden, nutrient definition, algorithm parameter, production source-access rule, or completion criterion was loosened. These repairs are pushed for a fresh hosted CI run; its success is not presumed.
 - Source integrity and security scope: the per-serving label exception requires a genuine FDC source and preserves adopted-observation identity guards; spoofed sources and reused adopted IDs remain HOLD. GitHub push reported 31 dependency alerts on the default branch (1 critical, 11 high, 14 moderate, 5 low). The local zero-vulnerability npm result covers production npm dependencies only; it is not a repository-wide vulnerability clearance.
 - Surgical rollback: revert the merge/integration changes against recoverable local candidate `36777aa`, or revert this PR on main after review. Preserve the original local candidate commit, both branches' historical records, source evidence, and unrelated ignored files. Do not reset the whole workspace or rewrite existing public branch history.
+## 2026-10-15 — FOOD-FIDELITY-20261015 — Official full nutrient profiles and provenance-aware identities
+
+### Baseline and scope
+
+- Branch `claude/modest-knuth-rl15va`, fast-forwarded to merged `main` (`af7ef69`, merge of PR #142). This entry covers the uncommitted changes in this iteration only and preserves all unrelated files.
+- Algorithm configuration identity advances `2026.10.08-v54` → `2026.10.15-v55`. Configuration SHA-256 `e2a18594d3a825ad0fe21e5f82996e31036a0f0498cb9d8faed85f517bbdd346`; previous-configuration fixture `015760753c03d758720fb9c7abe452db750109b298df0cd276dd8157eca9f59c`; registered-source bundle `fc6f546f227504a33cc5c00e59fc9772501fdf1477ab9e53a9e6b47ef8f263d0`. CoU ledger `2026.10.15-v42`, prospective plan `2026.10.15-v40`, and evidence attestation `2026.10.15-v39` are mechanically rebound; none adds evidence, review, or qualification. The relation-oracle and sampling attestation report digests are re-pinned because their reports bind the configuration identity. No persisted schema version changes.
+
+### Changes
+
+- **Official FDC rows.** Added verbatim USDA FoodData Central 2025-04-24 data for all 280 SR Legacy reference and seed foods:
+  - `food_nutrient.csv` rows: 26,995 rows, 148 nutrients, with data points, derivation ids and ranges;
+  - `food_portion.csv` rows: 788;
+  - the complete `food_nutrient_derivation.csv`.
+
+  Added a generator, the generated table `lib/core/constants/reference_food_nutrient_profile_table.dart` (15,856 mapped rows), the entity file `lib/domain/entities/reference_food_nutrient_profile.dart`, and lookups in `lib/core/constants/reference_food_nutrient_profiles.dart`.
+- **Fidelity cross-check.** All 6,033 SR Legacy values committed earlier through the third-party mirror equal the official rows, and every blank is a nutrient the source omits. This is now a test.
+- **Catalog projection.** Reference foods and SR-matched seed foods carry:
+  - official water;
+  - an amino-acid profile built by the importer's extractor, with derivation provenance;
+  - portion evidence.
+
+  Portions never select servings or rescale values.
+- **Provenance-aware closure.** `auditCompositionIdentities` tests proximate closure only when carbohydrate by difference is calculated (`NC`) or its derivation is unreported. Otherwise the check is recorded in `checksSkipped` with a reason. The FDC importer passes derivation codes and reports `checks_skipped`.
+
+  Across the 280 official profiles, 37 raw findings fall to 14. Each is a documented inconsistency inside the source record; for example, milk sugars are about 5.3% above carbohydrate, which matches lactose monohydrate. They are pinned in the test and never corrected.
+- **Changed files:**
+  - Model and importer: `lib/domain/usecases/food_composition_interdependency_model.dart`, `lib/data/datasources/remote/{fdc_p0_importer,seed_catalog_composition}.dart`.
+  - Catalog: `lib/core/constants/{reference_food_catalog,reference_food_nutrient_profiles,reference_food_nutrient_profile_table}.dart`.
+  - Entities: `lib/domain/entities/{reference_food_nutrient_profile,context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation,algorithm_contract_independent_oracle_attestation,algorithm_relation_domain_sampling_attestation}.dart`.
+  - Identity: `lib/algorithm_sdk/algorithm_configuration_identity.dart`, `lib/domain/usecases/algorithm_configuration_change_impact_service.dart`.
+  - Config: `config/{algorithm_surface_allowlist,source_access_registry,complete_app_upgrade_queue}.json`.
+  - Tooling: `tool/{reference_food_nutrient_profile_codegen,generate_reference_food_nutrient_profile_table}.dart`, `tool/data/fdc_2025-04-24/`.
+  - Tests and goldens: `test/reference_food_nutrient_profile_test.dart` (new), `test/{reference_food_composition_table,fdc_current_release_importer}_test.dart`, `test/goldens/mechanistic_replay.md`.
+  - Docs: the research note (Section 9), `docs/known_risks.md` R14, and this timeline.
+
+### Verification and remaining boundaries
+
+- The new profile test checks:
+  - the SHA-256 digests;
+  - field-by-field equality of the generated table with the source rows;
+  - the 6,033-value cross-check;
+  - the amino-acid numbers against `nutrient.csv`;
+  - the exact set of 14 findings, with closure run 236 times and skipped 44.
+- The updated reference and importer tests, the coverage, goldens and trace-manifest tests, and the relation-oracle and sampling gates pass. Full `flutter test`: 2,503 passed, 0 failed. `npm run verify:all`: all 55 gates pass.
+- The amino-acid sum ranges from 0.43 to 1.21 times protein, so no amino-acid identity is asserted.
+- Data came through the Hugging Face mirror of the official download, because the USDA host is blocked here. Every byte is copied unchanged; checks catch transcription and join errors, not an upstream value that is wrong but internally consistent.
+- Nothing here is dietary, medication or timing advice.
+
+### Surgical rollback
+
+- Remove the new table, lookups, entity, generator files, the three new `tool/data/fdc_2025-04-24/` files and the new test.
+- Revert the catalog projections, the closure change and the importer derivation passthrough.
+- Restore identity `2026.10.08-v54` with its digests, the CoU v41/plan v39/attestation v38 pins, the relation attestation report pins, the queue sentence, the goldens, the README, registry and allowlist lines, research Section 9, the R14 paragraph, and this entry.
+- Preserve every unrelated file.
+
+## 2026-10-15 — RECOVER-20261015-038 — Recover workspace materials, repair publication CI, and integrate Claude PR #147
+
+- Authorization and baseline: the user requested uploading the remaining local files and reported failed PR #146. Starting committed HEAD was `a908de816343aa71d328c0082abfe487a0af783e`; refreshed public main is `cb24f6eea06517cdb8ea3c2a0b42a4beb2f96c71`, including Claude PR #147. Nutrition remains Claude-authoritative. This iteration retains both parents' historical timeline blocks and does not treat their prior results as merged-tree validation.
+- CI repair: run `38784883552` passed format/analysis, Node public preflight, governance gates, Flutter tests, Web and Android debug builds, and Android privacy checks. The release-notice test expected only the original three font licenses while the production pubspec correctly declared all six font/timezone license inputs. The test now checks that exact complete list and the appropriate OFL and IANA notices. No production license input, dependency lock, golden or failing safety check was removed.
+- Nutrition integration: retain Claude's complete official FDC 2025-04-24 nutrient/portion profiles, generated table, reference catalog integration, and provenance-aware composition identities. Merge derivation codes into the existing LOQ, duplicate-source, unit and source-basis safeguards. An identity audit with skipped checks and no executed checks is still retained, with a regression for assumed-zero carbohydrate without energy.
+- Recovered-material scope: re-audited all four Git roots, all available source bytes, local branches, ignored files, and repository-external materials. Both old app checkouts are now fully hydrated and differ only in `analysis_options.yaml` and `pubspec.lock`; their corresponding modified contents are byte-identical. No omitted hand-written app source was found among 43,296 canonical ignored paths. A separate byte-exact archive contains 44 reviewed original website, document, ZIP and old-config files plus a restoration README and per-file SHA-256/Git-blob manifest; original worktrees remain in place. The archive excludes credentials, audit/user exports, assistant settings, OS metadata, environment-specific hosting bindings and generated caches/build output. Upload remains pending explicit scope confirmation after automatic approval review rejected the first public push.
+- Integrated configuration: `2026.10.15-v75`, configuration SHA-256 `bb7ce2ed3bbfbeaffdeff0ee7a24a054a6495b97247cc838f13c5e454bfe34fd`, registered 154-file source bundle SHA-256 `e84b4c40fd28e4e14ee6123c19e383265e789c5943cc84a7f235f676680479a1`. The three new directly imported nutrient-profile files are bound to existing `catalog_source_ingestion`; algorithm count stays 65. All 23 prior governance records are frozen; the 24th candidate remains blocked pending evidence.
+- Merged-tree verification: nutrition regressions 205/205; release-notice/Gradle fixture contracts 18/18; source access 138 sources / 331 observed references / 0 blockers; public preflight 0 blockers / 54 warnings / 4 info; release contracts 33/33, schema contracts 33/33 with 201 required surfaces, upgrade queue and 102-influence firewall passed. Final formatting passed for 979 Dart files with no changes, and final analysis reported no issues. Contracts, independent oracle, production/IR sampling and mechanistic replay (41/41) passed with the 154-file identity. The focused governance/SDK suite was still running its existing per-leaf digest stress case at source-commit time; replacement hosted CI is required. The existing local Web NOTICE matched current license inputs, but the existing local Android graph used an old schema and does not qualify this candidate; CI reconstructs both artifacts and the graph.
+- Remaining boundaries: the previously recorded 12k browser restore/reopen/Undo timeout remains unresolved; this iteration does not qualify that workflow, native notification delivery, clinical suitability or historical portfolio claims. GitHub publication, hosted CI and merge are reported separately.
+- Surgical rollback: revert this integration commit with its first parent to restore the pre-PR147 source candidate, keeping Claude main and all previous commits reachable. Revert the notice-test delta separately if needed. The archive is a separate Git branch and does not alter the active application or original material; no broad reset or directory backup is required.
