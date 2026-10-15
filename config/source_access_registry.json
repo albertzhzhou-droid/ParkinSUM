@@ -1,6 +1,6 @@
 {
   "registry_type": "source_access_registry",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "not_clinically_calibrated": true,
   "not_legal_advice": true,
   "not_license_clearance": true,
@@ -3743,6 +3743,41 @@
       "bibliography_refs": [],
       "last_policy_reviewed": "2026-05-30",
       "notes": "App seed catalog + prototype heuristic placeholder."
+    },
+    {
+      "source_id": "src.synthetic.gastric.identifiability",
+      "display_name": "ParkinSUM manufactured gastric identifiability finite-grid vectors",
+      "owner": "ParkinSUM research test harness",
+      "jurisdiction": "-",
+      "source_family": "synthetic_fixture",
+      "data_domain": "synthetic",
+      "access_method": "generated_fixture",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "implemented_fixture_tested",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": false,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "All inputs are manufactured on frozen coarse and fine parameter grids; no person, instrument, external dataset, or measurement is represented.",
+        "Actual model-generated vectors are compared with separate independent finite-grid calculations; agreement does not establish continuous identifiability, biological validity, or clinical calibration.",
+        "Synthetic series cannot authorize a fit: priorFixedOnly remains required, with no production default or scoring change."
+      ],
+      "documentation_refs": [
+        "docs/GASTRIC_IDENTIFIABILITY_RESEARCH_2026-10-01.md",
+        "tool/run_gastric_identifiability_vectors.dart",
+        "config/gastric_identifiability_coarse_plan.json",
+        "config/gastric_identifiability_fine_plan.json"
+      ],
+      "bibliography_refs": [],
+      "last_policy_reviewed": "2026-10-15",
+      "notes": "Registers the existing internally generated fixture identity only; no live access, external license clearance, mechanism evidence, or production-use authorization."
     },
     {
       "source_id": "src.synthetic.gastric.structural.fixture",

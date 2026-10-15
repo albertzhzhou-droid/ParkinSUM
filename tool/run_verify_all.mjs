@@ -69,7 +69,9 @@ export const GATES = [
   { id: 'evidence_synthesis', script: 'evidence:synthesis', what: 'Claim evidence contradiction and synthesis adjudication' },
 ];
 
-export const GOLDEN_GATE = { id: 'committed_goldens', what: 'Committed golden drift check (cross-commit)', command: 'flutter', args: ['test', 'test/goldens_test.dart'] };
+// Pin the reporter: GitHub Actions otherwise selects a different summary format
+// from the strict Flutter completion contract used below.
+export const GOLDEN_GATE = { id: 'committed_goldens', what: 'Committed golden drift check (cross-commit)', command: 'flutter', args: ['test', '--reporter=expanded', 'test/goldens_test.dart'] };
 
 export function defaultGates(skipGoldens = false) {
   return (skipGoldens ? GATES : [...GATES, GOLDEN_GATE]).map((gate) => {

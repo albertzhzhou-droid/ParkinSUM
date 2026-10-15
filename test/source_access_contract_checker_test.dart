@@ -78,6 +78,54 @@ void main() {
     expect(run(record()).findings, isEmpty);
   });
 
+  test('actual gastric identifiability vectors stay fixture-only sources', () {
+    const generator = 'tool/run_gastric_identifiability_vectors.dart';
+    final sourceIds =
+        RegExp(r'''["'](src\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)["']''')
+            .allMatches(File(generator).readAsStringSync())
+            .map((match) => match.group(1)!)
+            .toSet();
+    expect(sourceIds, contains('src.synthetic.gastric.identifiability'));
+    final registry = _loadRegistry();
+    for (final id in sourceIds) {
+      final source = registry.records[id];
+      expect(source, isNotNull, reason: id);
+      expect(source!.sourceFamily, 'synthetic_fixture', reason: id);
+      expect(source.accessMethod, 'generated_fixture', reason: id);
+      expect(source.isFixtureOnly, isTrue, reason: id);
+      expect(source.allowedForFixture, isTrue, reason: id);
+      expect(source.allowedForLiveSmoke, isFalse, reason: id);
+      expect(source.allowedForProduction, isFalse, reason: id);
+      expect(source.allowedForPublicDemo, isFalse, reason: id);
+      expect(source.canSupportMechanismEvidenceAlone, isFalse, reason: id);
+      expect(source.canSupportIdentityOrCoding, isFalse, reason: id);
+      expect(source.canSupportSourceQualityScoring, isFalse, reason: id);
+      expect(source.documentationRefs, contains(generator), reason: id);
+      expect(
+        checker
+            .check(
+              contract: registry,
+              references: [
+                ref(id, file: generator, usage: SourceUsageType.fixture),
+              ],
+            )
+            .pass,
+        isTrue,
+      );
+      for (final usage in [
+        SourceUsageType.production,
+        SourceUsageType.mechanismEvidence,
+      ]) {
+        final report = checker.check(
+          contract: registry,
+          references: [ref(id, file: generator, usage: usage)],
+        );
+        expect(report.pass, isFalse, reason: '$id: $usage');
+        expect(report.blockerCount, greaterThan(0), reason: '$id: $usage');
+      }
+    }
+  });
+
   test('unknown source ID in code context is blocker', () {
     final report = checker.check(
       contract: SourceAccessContract(records: {'src.example': record()}),
