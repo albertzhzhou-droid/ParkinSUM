@@ -9180,7 +9180,7 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   - the 6,033-value cross-check;
   - the amino-acid numbers against `nutrient.csv`;
   - the exact set of 14 findings, with closure run 236 times and skipped 44.
-- The updated reference and importer tests, the coverage, goldens and trace-manifest tests, and the relation-oracle and sampling gates pass. The full suite and `npm run verify:all` results are recorded below.
+- The updated reference and importer tests, the coverage, goldens and trace-manifest tests, and the relation-oracle and sampling gates pass. Full `flutter test`: 2,503 passed, 0 failed. `npm run verify:all`: all 55 gates pass.
 - The amino-acid sum ranges from 0.43 to 1.21 times protein, so no amino-acid identity is asserted.
 - Data came through the Hugging Face mirror of the official download, because the USDA host is blocked here. Every byte is copied unchanged; checks catch transcription and join errors, not an upstream value that is wrong but internally consistent.
 - Nothing here is dietary, medication or timing advice.
