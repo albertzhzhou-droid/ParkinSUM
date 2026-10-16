@@ -49,6 +49,14 @@ out of the public source tree and secret-scanning alerts, but they remain
 extractable from the built app. Keep each key restricted to the required
 Firebase APIs and its intended browser/app surface.
 
+Earlier commits tracked concrete client keys in `lib/firebase_options.dart` and
+`macos/Runner/GoogleService-Info.plist`. Those values remain in public git
+history, so removing them from the current tree does not close GitHub
+secret-scanning alerts. Delete or regenerate each historical key in Google Cloud
+Console (APIs & Services > Credentials), supply the replacement only through
+`--dart-define`, and then close the alerts as revoked. Rewriting history does
+not un-publish a key that was already public.
+
 ## DDoS And Injection Posture
 
 - Firebase Hosting serves static assets behind Google's edge. Repository-level
