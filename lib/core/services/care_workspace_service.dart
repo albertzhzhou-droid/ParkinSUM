@@ -307,23 +307,33 @@ final class CareWorkspaceService {
     CareWorkspaceSnapshot Function(CareWorkspaceSnapshot) transform, {
     required bool Function() authorize,
   }) {
-    return _enqueue(() async {
-      if (!authorize()) throw StateError('care_workspace_session_changed');
-      final current = await _read(owner);
-      if (!authorize()) throw StateError('care_workspace_session_changed');
-      final next = transform(current);
-      if (next.ownerScope != owner) {
-        throw StateError('care_workspace_owner_changed');
+    return _enqueue(() {
+      Future<CareWorkspaceSnapshot> mutation() async {
+        if (!authorize()) throw StateError('care_workspace_session_changed');
+        final current = await _read(owner);
+        if (!authorize()) throw StateError('care_workspace_session_changed');
+        final next = transform(current);
+        if (next.ownerScope != owner) {
+          throw StateError('care_workspace_owner_changed');
+        }
+        final raw = jsonEncode(next.toJson());
+        if (utf8.encode(raw).length > careWorkspaceMaxBytes) {
+          throw StateError('care_workspace_capacity_reached');
+        }
+        if (!authorize()) throw StateError('care_workspace_session_changed');
+        if (raw == jsonEncode(current.toJson())) return current;
+        await store.write(owner, raw, authorize: authorize);
+        if (!authorize()) throw StateError('care_workspace_session_changed');
+        return next;
       }
-      final raw = jsonEncode(next.toJson());
-      if (utf8.encode(raw).length > careWorkspaceMaxBytes) {
-        throw StateError('care_workspace_capacity_reached');
-      }
-      if (!authorize()) throw StateError('care_workspace_session_changed');
-      if (raw == jsonEncode(current.toJson())) return current;
-      await store.write(owner, raw, authorize: authorize);
-      if (!authorize()) throw StateError('care_workspace_session_changed');
-      return next;
+
+      final target = store;
+      return target is CoordinatedCareWorkspaceStore
+          ? (target as CoordinatedCareWorkspaceStore).coordinateMutation(
+              owner,
+              mutation,
+            )
+          : mutation();
     });
   }
 

@@ -5,6 +5,7 @@ import '../models/food_item.dart';
 import '../models/intake.dart';
 import '../models/meal.dart';
 import '../models/user_profile.dart';
+import '../models/user_preference_write_scope.dart';
 import '../models/recoverable_user_event.dart';
 import 'app_database.dart';
 import 'recoverable_user_event_store.dart';
@@ -16,7 +17,11 @@ import '../../domain/entities/mechanistic_replay_capsule.dart';
 /// production storage without touching an installed user's SQLite database,
 /// shared preferences, or cloud account. Every read returns a defensive copy
 /// so callers cannot mutate durable state without a corresponding save.
-class InMemoryAppDatabase implements AppDatabase, RecoverableUserEventStore {
+class InMemoryAppDatabase
+    implements
+        AppDatabase,
+        RecoverableUserEventStore,
+        ScopedUserPreferenceStore {
   bool _onboarded = false;
   UserProfile _profile = UserProfile.defaults();
   List<String> _activeDrugIds = <String>[];
@@ -133,6 +138,24 @@ class InMemoryAppDatabase implements AppDatabase, RecoverableUserEventStore {
   @override
   Future<void> saveUserProfile(UserProfile profile) async {
     _profile = profile;
+  }
+
+  @override
+  Future<void> saveUserProfileForSession(
+    UserProfile profile, {
+    required UserPreferenceWriteScope scope,
+  }) async {
+    scope.requireProfileOwner(profile);
+    await saveUserProfile(profile);
+  }
+
+  @override
+  Future<void> saveActiveDrugIdsForSession(
+    List<String> ids, {
+    required UserPreferenceWriteScope scope,
+  }) async {
+    scope.requireCurrent();
+    await saveActiveDrugIds(List<String>.unmodifiable(ids));
   }
 
   @override

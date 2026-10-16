@@ -1,0 +1,1065 @@
+{
+  "schema": "parkinsum.gastric-high-precision-domain-corpus/1",
+  "representation": "manufactured_calculation_inputs",
+  "seed": 20260930,
+  "tolerance_decimal": "0.000000000005",
+  "tolerance_scale": "max(1, abs(independent_expected))",
+  "scientific_qualification": "HOLD",
+  "clinical_calibration": "HOLD",
+  "domain": {
+    "integer_minutes": [
+      0,
+      10080
+    ],
+    "positive_time_scales": [
+      "0.000001",
+      "1000000"
+    ],
+    "lag_minutes": [
+      "0",
+      "1440"
+    ],
+    "shape": [
+      "0.05",
+      "8"
+    ],
+    "siegel_k": [
+      "0.000000001",
+      "4"
+    ],
+    "volume": [
+      "0",
+      "2000"
+    ],
+    "kappa": [
+      "0",
+      "2"
+    ],
+    "fractions": [
+      "0",
+      "1"
+    ],
+    "components": [
+      1,
+      4
+    ],
+    "component_sum_tolerance": "0.000000000001",
+    "predeclared_exclusion": "Siegel: t>0, beta<1 and k*t<1e-6 remains HOLD; cancellation diagnostic only"
+  },
+  "cases": [
+    {
+      "case_id": "component_lag_boundary",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "1",
+        "production.a.lag": "30",
+        "production.a.half": "45"
+      },
+      "minutes": [
+        0,
+        29,
+        30,
+        31,
+        75,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "1",
+        "30": "1",
+        "75": "0.5"
+      }
+    },
+    {
+      "case_id": "component_zero_weight",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "0",
+        "production.a.lag": "1440",
+        "production.a.half": "0.000001",
+        "production.b.fraction": "1",
+        "production.b.lag": "0",
+        "production.b.half": "60"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "1",
+        "60": "0.5"
+      }
+    },
+    {
+      "case_id": "component_fast_limit",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "1",
+        "production.a.lag": "0",
+        "production.a.half": "0.000001"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "component_slow_limit",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "1",
+        "production.a.lag": "0",
+        "production.a.half": "1000000"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "elashoff_half_anchor",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "60",
+        "elashoff.beta": "1"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "1",
+        "60": "0.5"
+      }
+    },
+    {
+      "case_id": "elashoff_fast_shape_limit",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "0.000001",
+        "elashoff.beta": "8"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "elashoff_slow_shape_limit",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "1000000",
+        "elashoff.beta": "0.05"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "siegel_exponential_degenerate",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.01",
+        "siegel.beta": "1"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "1"
+      }
+    },
+    {
+      "case_id": "siegel_cancellation_boundary",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.000001",
+        "siegel.beta": "0.05"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "siegel_fast_limit",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "4",
+        "siegel.beta": "8"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "lag_before_at_after",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "30",
+        "lag_exp.half": "45"
+      },
+      "minutes": [
+        0,
+        29,
+        30,
+        31,
+        75,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "30": "1",
+        "75": "0.5"
+      }
+    },
+    {
+      "case_id": "lag_max_boundary",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "1440",
+        "lag_exp.half": "0.000001"
+      },
+      "minutes": [
+        0,
+        1439,
+        1440,
+        1441,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "1440": "1"
+      }
+    },
+    {
+      "case_id": "volume_zero_degenerate",
+      "kind": "linearExponentialVolume",
+      "parameters": {
+        "linexp.v0": "0",
+        "linexp.kappa": "2",
+        "linexp.time": "0.000001"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "0",
+        "1": "0",
+        "10080": "0"
+      }
+    },
+    {
+      "case_id": "volume_max_initial",
+      "kind": "linearExponentialVolume",
+      "parameters": {
+        "linexp.v0": "2000",
+        "linexp.kappa": "2",
+        "linexp.time": "1000000"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "2000"
+      }
+    },
+    {
+      "case_id": "weibull_zero_mix",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "0",
+        "double_weibull.eta1": "60",
+        "double_weibull.beta1": "1",
+        "double_weibull.eta2": "0.000001",
+        "double_weibull.beta2": "8"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported",
+      "analytic_anchors": {
+        "0": "1"
+      }
+    },
+    {
+      "case_id": "weibull_one_mix",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "1",
+        "double_weibull.eta1": "0.000001",
+        "double_weibull.beta1": "8",
+        "double_weibull.eta2": "1000000",
+        "double_weibull.beta2": "0.05"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_00",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "0.554",
+        "production.a.lag": "71",
+        "production.a.half": "282",
+        "production.b.fraction": "0.446",
+        "production.b.lag": "0",
+        "production.b.half": "182"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_01",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "225",
+        "elashoff.beta": "2.25"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_02",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.174",
+        "siegel.beta": "3.54"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_03",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "0",
+        "lag_exp.half": "736"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_04",
+      "kind": "linearExponentialVolume",
+      "parameters": {
+        "linexp.v0": "861",
+        "linexp.kappa": "0.5",
+        "linexp.time": "84"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_05",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "0.563",
+        "double_weibull.eta1": "395",
+        "double_weibull.beta1": "4.62",
+        "double_weibull.eta2": "447",
+        "double_weibull.beta2": "1"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_06",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "0.842",
+        "production.a.lag": "85",
+        "production.a.half": "814",
+        "production.b.fraction": "0.158",
+        "production.b.lag": "0",
+        "production.b.half": "762"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_07",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "669",
+        "elashoff.beta": "2.11"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_08",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.528",
+        "siegel.beta": "5.18"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_09",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "68",
+        "lag_exp.half": "764"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_10",
+      "kind": "linearExponentialVolume",
+      "parameters": {
+        "linexp.v0": "344",
+        "linexp.kappa": "0.5",
+        "linexp.time": "472"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_11",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "0.519",
+        "double_weibull.eta1": "863",
+        "double_weibull.beta1": "1.94",
+        "double_weibull.eta2": "11",
+        "double_weibull.beta2": "1"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_12",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "0.533",
+        "production.a.lag": "50",
+        "production.a.half": "258",
+        "production.b.fraction": "0.467",
+        "production.b.lag": "0",
+        "production.b.half": "894"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_13",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "593",
+        "elashoff.beta": "1.52"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_14",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.460",
+        "siegel.beta": "6.43"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_15",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "4",
+        "lag_exp.half": "88"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_16",
+      "kind": "linearExponentialVolume",
+      "parameters": {
+        "linexp.v0": "602",
+        "linexp.kappa": "0.5",
+        "linexp.time": "588"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_17",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "0.856",
+        "double_weibull.eta1": "291",
+        "double_weibull.beta1": "7.42",
+        "double_weibull.eta2": "743",
+        "double_weibull.beta2": "1"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_18",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "0.657",
+        "production.a.lag": "35",
+        "production.a.half": "438",
+        "production.b.fraction": "0.343",
+        "production.b.lag": "0",
+        "production.b.half": "962"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_19",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "117",
+        "elashoff.beta": "6.07"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_20",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.790",
+        "siegel.beta": "1.48"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_21",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "78",
+        "lag_exp.half": "468"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_22",
+      "kind": "linearExponentialVolume",
+      "parameters": {
+        "linexp.v0": "759",
+        "linexp.kappa": "0.5",
+        "linexp.time": "512"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "seeded_23",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "0.191",
+        "double_weibull.eta1": "855",
+        "double_weibull.beta1": "3.06",
+        "double_weibull.eta2": "99",
+        "double_weibull.beta2": "1"
+      },
+      "minutes": [
+        0,
+        1,
+        10,
+        30,
+        60,
+        120,
+        480,
+        10080
+      ],
+      "expected_status": "supported"
+    },
+    {
+      "case_id": "siegel_small_x_diagnostic",
+      "kind": "siegelModifiedPowerExponential",
+      "parameters": {
+        "siegel.k": "0.000000001",
+        "siegel.beta": "0.05"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "siegel_cancellation_domain",
+      "diagnostic_only": true
+    },
+    {
+      "case_id": "zero_denominator",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "0",
+        "elashoff.beta": "1"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "parameter_domain",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "negative_shape",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "60",
+        "elashoff.beta": "-1"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "parameter_domain",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "missing_parameter",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "60"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "parameter_domain",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "unknown_parameter",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "60",
+        "elashoff.beta": "1",
+        "unknown": "1"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "parameter_identity",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "non_finite_parameter",
+      "kind": "elashoffPowerExponential",
+      "parameters": {
+        "elashoff.t50": "NaN",
+        "elashoff.beta": "1"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "finite_decimal_required",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "future_structure",
+      "kind": "unregisteredStructure",
+      "parameters": {},
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "unsupported_structure",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "fractional_minute",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "0",
+        "lag_exp.half": "60"
+      },
+      "minutes": [
+        0.5
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "time_domain",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "negative_minute",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "0",
+        "lag_exp.half": "60"
+      },
+      "minutes": [
+        -1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "time_domain",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "outside_time_domain",
+      "kind": "explicitLagExponential",
+      "parameters": {
+        "lag_exp.lag": "0",
+        "lag_exp.half": "60"
+      },
+      "minutes": [
+        10081
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "time_domain",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "invalid_component_weights",
+      "kind": "productionComponentLagExponential",
+      "parameters": {
+        "production.a.fraction": "0.5",
+        "production.a.lag": "30",
+        "production.a.half": "45"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "component_weights",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "empty_components",
+      "kind": "productionComponentLagExponential",
+      "parameters": {},
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "component_identity",
+      "diagnostic_only": false
+    },
+    {
+      "case_id": "outside_mix_domain",
+      "kind": "doubleWeibullPellet",
+      "parameters": {
+        "double_weibull.h": "1.1",
+        "double_weibull.eta1": "60",
+        "double_weibull.beta1": "1",
+        "double_weibull.eta2": "120",
+        "double_weibull.beta2": "1"
+      },
+      "minutes": [
+        1
+      ],
+      "expected_status": "HOLD",
+      "expected_hold_reason": "parameter_domain",
+      "diagnostic_only": false
+    }
+  ]
+}

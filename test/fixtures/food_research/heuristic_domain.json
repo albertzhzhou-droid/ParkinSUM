@@ -1,0 +1,845 @@
+{
+  "schema": "parkinsum.fixed-heuristic-study-domain/1",
+  "frozen_at_utc": "2026-10-01T12:46:55.897805+00:00",
+  "maximum_cases": 128,
+  "foods": [
+    {
+      "id": "p00",
+      "protein_g": "0",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p01",
+      "protein_g": "10",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p02",
+      "protein_g": "14.999999",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p03",
+      "protein_g": "15",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p04",
+      "protein_g": "15.000001",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p05",
+      "protein_g": "19.999999",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p06",
+      "protein_g": "20",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p07",
+      "protein_g": "20.000001",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p08",
+      "protein_g": "24.999999",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p09",
+      "protein_g": "25",
+      "fiber_g": "0"
+    },
+    {
+      "id": "p10",
+      "protein_g": "25.000001",
+      "fiber_g": "0"
+    },
+    {
+      "id": "f00",
+      "protein_g": "15",
+      "fiber_g": "1.999999"
+    },
+    {
+      "id": "f01",
+      "protein_g": "15",
+      "fiber_g": "2"
+    },
+    {
+      "id": "f02",
+      "protein_g": "15",
+      "fiber_g": "2.000001"
+    },
+    {
+      "id": "f03",
+      "protein_g": "15",
+      "fiber_g": "3.999999"
+    },
+    {
+      "id": "f04",
+      "protein_g": "15",
+      "fiber_g": "4"
+    },
+    {
+      "id": "f05",
+      "protein_g": "15",
+      "fiber_g": "4.000001"
+    },
+    {
+      "id": "tie_a",
+      "protein_g": "10",
+      "fiber_g": "0"
+    },
+    {
+      "id": "tie_b",
+      "protein_g": "10",
+      "fiber_g": "0"
+    }
+  ],
+  "cases": [
+    {
+      "id": "safety.1_fiber0_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber0_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber.02_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.1_fiber.3_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".1",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber0_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber.02_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.4_fiber.3_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".4",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber0_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": "0",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber.02_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".02",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution12_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution12_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution12_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "12",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution15_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution15_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution15_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "15",
+        "warning_protein_g": "25"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution18_warning15",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "15"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution18_warning20",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "20"
+      }
+    },
+    {
+      "id": "safety.7_fiber.3_caution18_warning25",
+      "parameters": {
+        "safety_weight": ".7",
+        "fiber_weight": ".3",
+        "caution_protein_g": "18",
+        "warning_protein_g": "25"
+      }
+    }
+  ],
+  "food_basis": "per_100g_edible_part",
+  "context": "Synthetic levodopa-tagged drug; history empty; category other; FDC + code + US source metadata; defaults US/unrestricted. Missing timing retained, not mechanistic availability.",
+  "reporting_candidate_limit_override": 19,
+  "top_k": [
+    1,
+    3,
+    5
+  ],
+  "tie_absolute_tolerance": "1e-9",
+  "score_tolerance": "1e-9",
+  "production_defaults_changed": false,
+  "clinical_correctness_claim": false
+}

@@ -68,7 +68,7 @@ void main() {
     );
     final fact = ResolvedFactRecord(
       factId: 'fact_2',
-      entityKey: 'APPLE_RAW_WITH_SKIN#US#FDC#1',
+      entityKey: observation.entityKey,
       attributeCode: 'protein_g',
       scopeHash: 'scope_us_raw',
       resolutionStatus: 'resolved',

@@ -1,0 +1,789 @@
+{
+  "schema": "parkinsum.timezone-python-reference/1",
+  "frozen_at_utc": "2026-10-01T15:14:57.603223+00:00",
+  "manual_2026e_comparisons": [
+    {
+      "id": "toronto_unique",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-01-15T17:30:00.000Z",
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "toronto_gap",
+      "independent_python": {
+        "accepted": false
+      }
+    },
+    {
+      "id": "toronto_fold_reject",
+      "independent_python": {
+        "accepted": false
+      }
+    },
+    {
+      "id": "toronto_fold_earlier",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-11-01T05:30:00.000Z",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "toronto_fold_later",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-11-01T06:30:00.000Z",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "toronto_fold_wrong_offset",
+      "independent_python": {
+        "accepted": false
+      }
+    },
+    {
+      "id": "winnipeg_reject_fold",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-11-01T06:30:00.000Z",
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "winnipeg_old_later_offset",
+      "independent_python": {
+        "accepted": false
+      }
+    },
+    {
+      "id": "winnipeg_earlier",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-11-01T06:30:00.000Z",
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "vancouver_reject_fold",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-11-01T08:30:00.000Z",
+        "ambiguous": false
+      }
+    },
+    {
+      "id": "vancouver_old_later_offset",
+      "independent_python": {
+        "accepted": false
+      }
+    },
+    {
+      "id": "paris_gap",
+      "independent_python": {
+        "accepted": false
+      }
+    },
+    {
+      "id": "sydney_fold_earlier",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-04-04T15:30:00.000Z",
+        "ambiguous": true
+      }
+    },
+    {
+      "id": "sydney_fold_later",
+      "independent_python": {
+        "accepted": true,
+        "utc": "2026-04-04T16:30:00.000Z",
+        "ambiguous": true
+      }
+    }
+  ],
+  "utc_points": [
+    {
+      "id": "s31415926_0",
+      "seed": 31415926,
+      "zone": "Australia/Sydney",
+      "utc": "2026-06-09T11:16:19.000Z",
+      "epoch_millis": 1781003779000,
+      "expected_civil": [
+        2026,
+        6,
+        9,
+        21,
+        16,
+        19
+      ],
+      "expected_offset_minutes": 600,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s31415926_1",
+      "seed": 31415926,
+      "zone": "America/Toronto",
+      "utc": "2026-02-25T01:41:40.000Z",
+      "epoch_millis": 1771983700000,
+      "expected_civil": [
+        2026,
+        2,
+        24,
+        20,
+        41,
+        40
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s31415926_2",
+      "seed": 31415926,
+      "zone": "Europe/Paris",
+      "utc": "2026-02-12T09:19:39.000Z",
+      "epoch_millis": 1770887979000,
+      "expected_civil": [
+        2026,
+        2,
+        12,
+        10,
+        19,
+        39
+      ],
+      "expected_offset_minutes": 60,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    },
+    {
+      "id": "s31415926_3",
+      "seed": 31415926,
+      "zone": "Australia/Sydney",
+      "utc": "2026-04-04T18:53:56.000Z",
+      "epoch_millis": 1775328836000,
+      "expected_civil": [
+        2026,
+        4,
+        5,
+        4,
+        53,
+        56
+      ],
+      "expected_offset_minutes": 600,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s31415926_4",
+      "seed": 31415926,
+      "zone": "Australia/Sydney",
+      "utc": "2026-12-08T16:47:20.000Z",
+      "epoch_millis": 1796748440000,
+      "expected_civil": [
+        2026,
+        12,
+        9,
+        3,
+        47,
+        20
+      ],
+      "expected_offset_minutes": 660,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s31415926_5",
+      "seed": 31415926,
+      "zone": "America/Vancouver",
+      "utc": "2026-12-14T01:36:09.000Z",
+      "epoch_millis": 1797212169000,
+      "expected_civil": [
+        2026,
+        12,
+        13,
+        18,
+        36,
+        9
+      ],
+      "expected_offset_minutes": -420,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s31415926_6",
+      "seed": 31415926,
+      "zone": "America/Vancouver",
+      "utc": "2026-09-19T04:36:37.000Z",
+      "epoch_millis": 1789792597000,
+      "expected_civil": [
+        2026,
+        9,
+        18,
+        21,
+        36,
+        37
+      ],
+      "expected_offset_minutes": -420,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s31415926_7",
+      "seed": 31415926,
+      "zone": "America/Toronto",
+      "utc": "2026-03-22T13:16:46.000Z",
+      "epoch_millis": 1774185406000,
+      "expected_civil": [
+        2026,
+        3,
+        22,
+        9,
+        16,
+        46
+      ],
+      "expected_offset_minutes": -240,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s31415926_8",
+      "seed": 31415926,
+      "zone": "America/Vancouver",
+      "utc": "2026-03-05T04:24:26.000Z",
+      "epoch_millis": 1772684666000,
+      "expected_civil": [
+        2026,
+        3,
+        4,
+        20,
+        24,
+        26
+      ],
+      "expected_offset_minutes": -480,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s31415926_9",
+      "seed": 31415926,
+      "zone": "Europe/Paris",
+      "utc": "2026-06-24T05:08:42.000Z",
+      "epoch_millis": 1782277722000,
+      "expected_civil": [
+        2026,
+        6,
+        24,
+        7,
+        8,
+        42
+      ],
+      "expected_offset_minutes": 120,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    },
+    {
+      "id": "s31415926_10",
+      "seed": 31415926,
+      "zone": "America/Toronto",
+      "utc": "2026-08-23T21:45:31.000Z",
+      "epoch_millis": 1787521531000,
+      "expected_civil": [
+        2026,
+        8,
+        23,
+        17,
+        45,
+        31
+      ],
+      "expected_offset_minutes": -240,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s31415926_11",
+      "seed": 31415926,
+      "zone": "Australia/Sydney",
+      "utc": "2026-11-18T10:42:52.000Z",
+      "epoch_millis": 1794998572000,
+      "expected_civil": [
+        2026,
+        11,
+        18,
+        21,
+        42,
+        52
+      ],
+      "expected_offset_minutes": 660,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s31415926_12",
+      "seed": 31415926,
+      "zone": "America/Winnipeg",
+      "utc": "2026-09-27T23:23:19.000Z",
+      "epoch_millis": 1790551399000,
+      "expected_civil": [
+        2026,
+        9,
+        27,
+        18,
+        23,
+        19
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "dfb6709cc7c91681f6758cac8e882846929f068f8bfb071a2131229b09e59f82"
+    },
+    {
+      "id": "s31415926_13",
+      "seed": 31415926,
+      "zone": "America/Toronto",
+      "utc": "2026-12-02T08:37:43.000Z",
+      "epoch_millis": 1796200663000,
+      "expected_civil": [
+        2026,
+        12,
+        2,
+        3,
+        37,
+        43
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s31415926_14",
+      "seed": 31415926,
+      "zone": "America/Winnipeg",
+      "utc": "2026-04-28T09:35:52.000Z",
+      "epoch_millis": 1777368952000,
+      "expected_civil": [
+        2026,
+        4,
+        28,
+        4,
+        35,
+        52
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "dfb6709cc7c91681f6758cac8e882846929f068f8bfb071a2131229b09e59f82"
+    },
+    {
+      "id": "s31415926_15",
+      "seed": 31415926,
+      "zone": "America/Vancouver",
+      "utc": "2026-05-05T08:55:11.000Z",
+      "epoch_millis": 1777971311000,
+      "expected_civil": [
+        2026,
+        5,
+        5,
+        1,
+        55,
+        11
+      ],
+      "expected_offset_minutes": -420,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s31415926_16",
+      "seed": 31415926,
+      "zone": "Australia/Sydney",
+      "utc": "2026-09-26T21:59:17.000Z",
+      "epoch_millis": 1790459957000,
+      "expected_civil": [
+        2026,
+        9,
+        27,
+        7,
+        59,
+        17
+      ],
+      "expected_offset_minutes": 600,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s31415926_17",
+      "seed": 31415926,
+      "zone": "America/Winnipeg",
+      "utc": "2026-07-18T04:45:55.000Z",
+      "epoch_millis": 1784349955000,
+      "expected_civil": [
+        2026,
+        7,
+        17,
+        23,
+        45,
+        55
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "dfb6709cc7c91681f6758cac8e882846929f068f8bfb071a2131229b09e59f82"
+    },
+    {
+      "id": "s31415926_18",
+      "seed": 31415926,
+      "zone": "America/Winnipeg",
+      "utc": "2026-12-22T01:24:10.000Z",
+      "epoch_millis": 1797902650000,
+      "expected_civil": [
+        2026,
+        12,
+        21,
+        20,
+        24,
+        10
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "dfb6709cc7c91681f6758cac8e882846929f068f8bfb071a2131229b09e59f82"
+    },
+    {
+      "id": "s31415926_19",
+      "seed": 31415926,
+      "zone": "America/Vancouver",
+      "utc": "2026-10-14T10:17:16.000Z",
+      "epoch_millis": 1791973036000,
+      "expected_civil": [
+        2026,
+        10,
+        14,
+        3,
+        17,
+        16
+      ],
+      "expected_offset_minutes": -420,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s27182818_0",
+      "seed": 27182818,
+      "zone": "Australia/Sydney",
+      "utc": "2026-08-23T14:48:46.000Z",
+      "epoch_millis": 1787496526000,
+      "expected_civil": [
+        2026,
+        8,
+        24,
+        0,
+        48,
+        46
+      ],
+      "expected_offset_minutes": 600,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s27182818_1",
+      "seed": 27182818,
+      "zone": "America/Toronto",
+      "utc": "2026-03-29T02:17:47.000Z",
+      "epoch_millis": 1774750667000,
+      "expected_civil": [
+        2026,
+        3,
+        28,
+        22,
+        17,
+        47
+      ],
+      "expected_offset_minutes": -240,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s27182818_2",
+      "seed": 27182818,
+      "zone": "Australia/Sydney",
+      "utc": "2026-02-24T21:53:13.000Z",
+      "epoch_millis": 1771969993000,
+      "expected_civil": [
+        2026,
+        2,
+        25,
+        8,
+        53,
+        13
+      ],
+      "expected_offset_minutes": 660,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s27182818_3",
+      "seed": 27182818,
+      "zone": "Europe/Paris",
+      "utc": "2026-08-14T20:25:10.000Z",
+      "epoch_millis": 1786739110000,
+      "expected_civil": [
+        2026,
+        8,
+        14,
+        22,
+        25,
+        10
+      ],
+      "expected_offset_minutes": 120,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    },
+    {
+      "id": "s27182818_4",
+      "seed": 27182818,
+      "zone": "Europe/Paris",
+      "utc": "2026-11-13T03:08:05.000Z",
+      "epoch_millis": 1794539285000,
+      "expected_civil": [
+        2026,
+        11,
+        13,
+        4,
+        8,
+        5
+      ],
+      "expected_offset_minutes": 60,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    },
+    {
+      "id": "s27182818_5",
+      "seed": 27182818,
+      "zone": "America/Vancouver",
+      "utc": "2026-11-23T10:17:32.000Z",
+      "epoch_millis": 1795429052000,
+      "expected_civil": [
+        2026,
+        11,
+        23,
+        3,
+        17,
+        32
+      ],
+      "expected_offset_minutes": -420,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s27182818_6",
+      "seed": 27182818,
+      "zone": "Australia/Sydney",
+      "utc": "2026-07-31T03:24:30.000Z",
+      "epoch_millis": 1785468270000,
+      "expected_civil": [
+        2026,
+        7,
+        31,
+        13,
+        24,
+        30
+      ],
+      "expected_offset_minutes": 600,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s27182818_7",
+      "seed": 27182818,
+      "zone": "Australia/Sydney",
+      "utc": "2026-03-02T06:02:20.000Z",
+      "epoch_millis": 1772431340000,
+      "expected_civil": [
+        2026,
+        3,
+        2,
+        17,
+        2,
+        20
+      ],
+      "expected_offset_minutes": 660,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s27182818_8",
+      "seed": 27182818,
+      "zone": "Europe/Paris",
+      "utc": "2026-10-28T14:13:23.000Z",
+      "epoch_millis": 1793196803000,
+      "expected_civil": [
+        2026,
+        10,
+        28,
+        15,
+        13,
+        23
+      ],
+      "expected_offset_minutes": 60,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    },
+    {
+      "id": "s27182818_9",
+      "seed": 27182818,
+      "zone": "America/Vancouver",
+      "utc": "2026-08-15T02:32:20.000Z",
+      "epoch_millis": 1786761140000,
+      "expected_civil": [
+        2026,
+        8,
+        14,
+        19,
+        32,
+        20
+      ],
+      "expected_offset_minutes": -420,
+      "compiled_tzif_sha256": "14587c369b1970cefa9afe2574a4447733d311868160cdd1052f0a17e8901f9d"
+    },
+    {
+      "id": "s27182818_10",
+      "seed": 27182818,
+      "zone": "America/Winnipeg",
+      "utc": "2026-12-31T09:04:42.000Z",
+      "epoch_millis": 1798707882000,
+      "expected_civil": [
+        2026,
+        12,
+        31,
+        4,
+        4,
+        42
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "dfb6709cc7c91681f6758cac8e882846929f068f8bfb071a2131229b09e59f82"
+    },
+    {
+      "id": "s27182818_11",
+      "seed": 27182818,
+      "zone": "Australia/Sydney",
+      "utc": "2026-07-09T00:48:25.000Z",
+      "epoch_millis": 1783558105000,
+      "expected_civil": [
+        2026,
+        7,
+        9,
+        10,
+        48,
+        25
+      ],
+      "expected_offset_minutes": 600,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s27182818_12",
+      "seed": 27182818,
+      "zone": "America/Winnipeg",
+      "utc": "2026-07-01T12:17:45.000Z",
+      "epoch_millis": 1782908265000,
+      "expected_civil": [
+        2026,
+        7,
+        1,
+        7,
+        17,
+        45
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "dfb6709cc7c91681f6758cac8e882846929f068f8bfb071a2131229b09e59f82"
+    },
+    {
+      "id": "s27182818_13",
+      "seed": 27182818,
+      "zone": "America/Toronto",
+      "utc": "2026-01-01T16:04:35.000Z",
+      "epoch_millis": 1767283475000,
+      "expected_civil": [
+        2026,
+        1,
+        1,
+        11,
+        4,
+        35
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s27182818_14",
+      "seed": 27182818,
+      "zone": "Australia/Sydney",
+      "utc": "2026-01-24T17:59:07.000Z",
+      "epoch_millis": 1769277547000,
+      "expected_civil": [
+        2026,
+        1,
+        25,
+        4,
+        59,
+        7
+      ],
+      "expected_offset_minutes": 660,
+      "compiled_tzif_sha256": "fe18d15bc9995cf4e74051c73acbab7dcb201b2773a83dad9ca05ae61f67bb80"
+    },
+    {
+      "id": "s27182818_15",
+      "seed": 27182818,
+      "zone": "America/Toronto",
+      "utc": "2026-01-23T06:46:57.000Z",
+      "epoch_millis": 1769150817000,
+      "expected_civil": [
+        2026,
+        1,
+        23,
+        1,
+        46,
+        57
+      ],
+      "expected_offset_minutes": -300,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s27182818_16",
+      "seed": 27182818,
+      "zone": "America/Toronto",
+      "utc": "2026-05-12T02:01:15.000Z",
+      "epoch_millis": 1778551275000,
+      "expected_civil": [
+        2026,
+        5,
+        11,
+        22,
+        1,
+        15
+      ],
+      "expected_offset_minutes": -240,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s27182818_17",
+      "seed": 27182818,
+      "zone": "America/Toronto",
+      "utc": "2026-03-29T04:39:38.000Z",
+      "epoch_millis": 1774759178000,
+      "expected_civil": [
+        2026,
+        3,
+        29,
+        0,
+        39,
+        38
+      ],
+      "expected_offset_minutes": -240,
+      "compiled_tzif_sha256": "abc00d37a1f60fac00a166ff5ccb64b9eb9cf9a7e199730000b25d5832fece5a"
+    },
+    {
+      "id": "s27182818_18",
+      "seed": 27182818,
+      "zone": "Europe/Paris",
+      "utc": "2026-12-21T05:20:40.000Z",
+      "epoch_millis": 1797830440000,
+      "expected_civil": [
+        2026,
+        12,
+        21,
+        6,
+        20,
+        40
+      ],
+      "expected_offset_minutes": 60,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    },
+    {
+      "id": "s27182818_19",
+      "seed": 27182818,
+      "zone": "Europe/Paris",
+      "utc": "2026-11-28T11:12:54.000Z",
+      "epoch_millis": 1795864374000,
+      "expected_civil": [
+        2026,
+        11,
+        28,
+        12,
+        12,
+        54
+      ],
+      "expected_offset_minutes": 60,
+      "compiled_tzif_sha256": "c61ed21a7e872194d8dbb54cb33aba97344522143c4eb95cf44c5844eee900a1"
+    }
+  ],
+  "scope": "Standard Python zoneinfo reads compiled TZIF independently from Dart binary codec. Forty fixed UTC projections across five zones; not all-zone qualification."
+}

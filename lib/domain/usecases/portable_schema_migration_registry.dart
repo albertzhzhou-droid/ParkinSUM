@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../entities/portable_schema_migration.dart';
+import 'portable_data_compact_transport_service.dart';
 
 /// Frozen, executable registry for the portable package versions that this
 /// build can read. It runs in addition to the full package semantic validator:
@@ -10,6 +11,8 @@ abstract final class PortableSchemaMigrationRegistry {
   static const String format = 'parkinsum_user_portable_data_package';
   static const String canonicalization = 'sorted-key-json-v1';
   static const int currentVersion = 4;
+  static const int compactTransportVersion =
+      userPortableDataCompactSchemaVersion;
 
   static const List<String> _filePaths = <String>[
     'profile.json',
@@ -23,6 +26,10 @@ abstract final class PortableSchemaMigrationRegistry {
   static const List<String> _v4FilePaths = <String>[
     ..._filePaths,
     'observations.json',
+  ];
+  static const List<String> _v5FilePaths = <String>[
+    ..._v4FilePaths,
+    userPortableDataFoodItemSnapshotsPath,
   ];
   static const List<String> _v4ObservationContainerFields = <String>[
     'availability',
@@ -236,6 +243,46 @@ abstract final class PortableSchemaMigrationRegistry {
     },
   );
 
+  /// Schema 5 is an optional compact encoding, not a reinterpretation or
+  /// migration of historical user facts. Small exports continue to use v4.
+  static const PortableSchemaValidatorDescriptor
+  v5 = PortableSchemaValidatorDescriptor(
+    version: compactTransportVersion,
+    schemaUri: 'urn:parkinsum:schema:user-portable-data-package:5',
+    validatorVersion: 1,
+    structuralContract: <String, Object?>{
+      ..._commonStructure,
+      r'$id': 'urn:parkinsum:schema:user-portable-data-package:5',
+      'schemaVersion': compactTransportVersion,
+      'filePaths': _v5FilePaths,
+      'reminderFields': _v3ReminderFields,
+      'observationContainerFields': _v4ObservationContainerFields,
+      'observationRecordFields': _v4ObservationRecordFields,
+      'foodItemSnapshotFields': <String>['snapshotId', 'snapshot'],
+      'mealItemReferenceFields': <String>['snapshotId', 'quantity'],
+      'snapshotIdentity':
+          'SHA-256 of complete sorted-key-json-v1 captured item except quantity',
+      'snapshotOrder':
+          'strict ascending identity; duplicates and unused entries rejected',
+      'wireNodeBudget': 500000,
+      'logicalEmbeddedFileNodeBudget': userPortableDataMaxLogicalFileNodes,
+      'logicalEmbeddedFileCanonicalByteBudget':
+          userPortableDataMaxLogicalFileBytes,
+      'logicalEnvelopeDepthBudget': userPortableDataMaxLogicalDepth,
+    },
+    semanticPolicy: <String, Object?>{
+      ..._commonSemanticPolicy,
+      'schemaVersion': compactTransportVersion,
+      'scope': _v4ScopeBoundary,
+      'foodItemSnapshots':
+          'Complete captured evidence is shared only when all canonical values agree; food ID alone never authorizes sharing. Quantities remain per record. Bounded shallow views preserve null, zero, raw compatibility values and source provenance.',
+      'expansion':
+          'All reference uses are measured before resolving any record; wire parsing limits remain unchanged and semantic fanout has independent node, canonical byte and depth limits.',
+      'localRestore':
+          'same-owner explicit confirmation, before-state binding and lossless same-schema semantic re-export remain required; reminders and observations remain held',
+    },
+  );
+
   static const List<PortableSchemaSemanticDiff> _v2ToV3Diff =
       <PortableSchemaSemanticDiff>[
         PortableSchemaSemanticDiff(
@@ -391,13 +438,19 @@ abstract final class PortableSchemaMigrationRegistry {
   );
 
   static List<PortableSchemaValidatorDescriptor> get validators =>
-      const <PortableSchemaValidatorDescriptor>[v2, v3, v4];
+      const <PortableSchemaValidatorDescriptor>[v2, v3, v4, v5];
 
   static List<PortableSchemaMigrationDescriptor> get migrations =>
       const <PortableSchemaMigrationDescriptor>[v2ToV3, v3ToV4, v2ToV4];
 
   static List<String> filePathsForVersion(int version) =>
-      List<String>.unmodifiable(version >= 4 ? _v4FilePaths : _filePaths);
+      List<String>.unmodifiable(
+        version == compactTransportVersion
+            ? _v5FilePaths
+            : version >= 4
+            ? _v4FilePaths
+            : _filePaths,
+      );
 
   static String scopeForVersion(int version) =>
       version >= 4 ? _v4ScopeBoundary : _scopeBoundary;
@@ -478,7 +531,8 @@ abstract final class PortableSchemaMigrationRegistry {
       );
     }
 
-    if (source.version == currentVersion) {
+    if (source.version == currentVersion ||
+        source.version == compactTransportVersion) {
       final output = _cloneMap(sourceDocument);
       final receipt = _receipt(
         sourceJson: sourceJson,
@@ -490,7 +544,9 @@ abstract final class PortableSchemaMigrationRegistry {
           'parkinsum-portable-no-migration-required-v1',
         ),
         semanticDiffSha256: portableCanonicalSha256(const <Object?>[]),
-        decision: 'not_required_current_schema',
+        decision: source.version == compactTransportVersion
+            ? 'not_required_compact_transport'
+            : 'not_required_current_schema',
         warnings: const <String>[],
         heldFields: const <String>['durable_import'],
       );
@@ -605,12 +661,20 @@ abstract final class PortableSchemaMigrationRegistry {
     required List<String> warnings,
     required List<String> heldFields,
   }) {
+    final sourceCanonical = portableCanonicalJson(sourceDocument);
+    final outputCanonical = portableCanonicalJson(outputDocument);
+    final sourceCanonicalSha256 = portableSha256(sourceCanonical);
+    // A validated, cloned no-migration document has identical canonical bytes.
+    // Reuse its digest only after comparing the complete canonical strings.
+    final outputCanonicalSha256 = outputCanonical == sourceCanonical
+        ? sourceCanonicalSha256
+        : portableSha256(outputCanonical);
     final withoutDigest = PortableSchemaMigrationReceipt(
       sourceVersion: source.version,
       targetVersion: target.version,
       sourceBytesSha256: portableSha256(sourceJson),
-      sourceCanonicalSha256: portableCanonicalSha256(sourceDocument),
-      outputCanonicalSha256: portableCanonicalSha256(outputDocument),
+      sourceCanonicalSha256: sourceCanonicalSha256,
+      outputCanonicalSha256: outputCanonicalSha256,
       sourceValidatorIdentity: source.validatorIdentity,
       targetValidatorIdentity: target.validatorIdentity,
       migrationIdentity: migrationIdentity,

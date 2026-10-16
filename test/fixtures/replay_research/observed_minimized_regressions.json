@@ -1,0 +1,146 @@
+{
+  "schema": "parkinsum.replay-capsule-fuzz-inputs/1",
+  "source": "Actual prechange20 disagreements after59 bounded structural trials; historical body retained, not current software capture.",
+  "cases": [
+    {
+      "id": "s2026100101_0_compositions_not_list",
+      "family": "compositions_not_list",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"d88a6f0f7c4214abf0efcecb141c693b2f4a84a4fceeed8c697b33827b0e2743\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":{},\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "b7083709d8aa3038d4198dc6120f4d66ef181f716ceea806c9e37b6b3addf302"
+    },
+    {
+      "id": "s2026100101_1_timezone_extra_key",
+      "family": "timezone_extra_key",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"995b2dc92f1da94ce634e6936d9bdd89c565898551f590d497aaa7ceca4cda99\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_2026100101\":false,\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "54af37ab149f77f4f853b2df263d605e3f391f8371cd296776c4c93a7a6d60a9"
+    },
+    {
+      "id": "s2026100101_2_whitespace_capsule_id",
+      "family": "whitespace_capsule_id",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"unsafe 2026100101\",\"capsule_sha256\":\"d8736f49eb4aabfe5c9bf5062cea24ee156532169e2ad709067359e6579dcb14\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "b13ec5990f81c5990b9c01bd6a190631a0a06f4f3d731f2838e1a1abc6cabd1a"
+    },
+    {
+      "id": "s2026100101_3_timezone_missing_key",
+      "family": "timezone_missing_key",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"88af5d008fae5f03da2ac531631ca38b02bb059f0b60552a631abb9e079e8c34\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "847b2d98e38fb2752f4b442a0f40e7ace9bbba9395237d99ec0b80aac35db28e"
+    },
+    {
+      "id": "s2026100101_4_context_not_object",
+      "family": "context_not_object",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"420712846566e2d100b35fd6819b561328b6bb1846998c7ecf952a74a04e97d9\",\"context\":null,\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "377fd893e3e336ab5fe40cfe31c3fdce168433b32806d6f8fa22dd21d1ddf97b"
+    },
+    {
+      "id": "s2026100101_8_empty_capsule_id",
+      "family": "empty_capsule_id",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"\",\"capsule_sha256\":\"9523a645ad6725c7c9ca5b72d729f1863d771584e83a462456011f776d1e5a01\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "569858327b9a08f77d4dda01c3ca7783a81851a1cd556a4bf8d3c3c9b4ed8ab3"
+    },
+    {
+      "id": "s2026100101_9_noncanonical_utc_time",
+      "family": "noncanonical_utc_time",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"6b45c083f5557fe23674ff5f622bd2be7d2a4c1bb2b88e564aa641910653583f\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "b41b26fa3218c061cc61cab3fd146bdfb8021afcadb3dbe0a79bd0ac7cd39405"
+    },
+    {
+      "id": "s2026100101_10_non_utc_time",
+      "family": "non_utc_time",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"a9ad732ff947457f5007ba31e305407988343f563cf8a3e6cd3d2efafbf1366f\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000+00:00\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "895d771a2e6b4a6adfe985cb7a08e725eb0aa7795bf54f07a1b9a98f876e8c5a"
+    },
+    {
+      "id": "s2026100101_11_control_capsule_id",
+      "family": "control_capsule_id",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"unsafe\\n2026100101\",\"capsule_sha256\":\"1349a3bb6718f145f15d20ba320d1cb83cdb4a7696dd41291f6b1caf8504906a\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "6d21709d02d34d1ea8e21d30724813a03c923824c6f3e6a4ca3ad50e5e80e107"
+    },
+    {
+      "id": "s2026100101_14_invalid_civil_time",
+      "family": "invalid_civil_time",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"20f658860c63d441527d0db9536d6940bb7c2e8b1984e6de057628ed9c7b7f30\",\"context\":{},\"generated_at_utc\":\"2026-02-30T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "8d6ed02ffb3b6a5484a6ca54810efba2a9b045dfb1e6b94395ef29ccc4e9f261"
+    },
+    {
+      "id": "s2026100102_1_ledger_not_object",
+      "family": "ledger_not_object",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"5be8212ac283be535252a17edda10809788532d7363a59442370c8cc3d1db84b\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":[],\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "9d958f7413dbc3e9e264dd19da293ffccf886ab6e643c0f03ee68b30648f682d"
+    },
+    {
+      "id": "s2026100102_3_noncanonical_utc_time",
+      "family": "noncanonical_utc_time",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"6b45c083f5557fe23674ff5f622bd2be7d2a4c1bb2b88e564aa641910653583f\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "b41b26fa3218c061cc61cab3fd146bdfb8021afcadb3dbe0a79bd0ac7cd39405"
+    },
+    {
+      "id": "s2026100102_4_timezone_authorization",
+      "family": "timezone_authorization",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"4ea3f08dca52ab900f7735be1bab5cb1b57ea439d2e4abddf560499f8d1f39a5\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":true,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "271061e1430b356ae9bab409f1dfd29e8b3f8532752b86ac6f244d09fa075e58"
+    },
+    {
+      "id": "s2026100102_5_timezone_missing_key",
+      "family": "timezone_missing_key",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"88af5d008fae5f03da2ac531631ca38b02bb059f0b60552a631abb9e079e8c34\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "847b2d98e38fb2752f4b442a0f40e7ace9bbba9395237d99ec0b80aac35db28e"
+    },
+    {
+      "id": "s2026100102_8_whitespace_capsule_id",
+      "family": "whitespace_capsule_id",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"unsafe 2026100102\",\"capsule_sha256\":\"7542fcfd67f0edd78af01b6ba69db339d49cb782614d895848d8e14a93311403\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "f05ad99b2b8777cbc74bc38887f20d0ffd454cd2d45e32af7bfb49014bca39e8"
+    },
+    {
+      "id": "s2026100102_9_non_utc_time",
+      "family": "non_utc_time",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"a9ad732ff947457f5007ba31e305407988343f563cf8a3e6cd3d2efafbf1366f\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000+00:00\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "895d771a2e6b4a6adfe985cb7a08e725eb0aa7795bf54f07a1b9a98f876e8c5a"
+    },
+    {
+      "id": "s2026100102_10_timezone_extra_key",
+      "family": "timezone_extra_key",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"7798688258b2f8fb829467d9c7fc06791eeb33aa8a6ee09a82c36a9b1d0d00cf\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_2026100102\":false,\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "ad1526304f9fbe6d4488d01677f572d11abb005f10fa0101f88722f2baf814ea"
+    },
+    {
+      "id": "s2026100102_13_compositions_not_list",
+      "family": "compositions_not_list",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"d88a6f0f7c4214abf0efcecb141c693b2f4a84a4fceeed8c697b33827b0e2743\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":{},\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "b7083709d8aa3038d4198dc6120f4d66ef181f716ceea806c9e37b6b3addf302"
+    },
+    {
+      "id": "s2026100102_14_control_capsule_id",
+      "family": "control_capsule_id",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"unsafe\\n2026100102\",\"capsule_sha256\":\"567527dc9bffb2ba95a6c9357919fda31fd8b9f639f852a9de9386afe4c18b8b\",\"context\":{},\"generated_at_utc\":\"2026-01-01T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "55f10eeb98954462b981d3de7af710d8e09d81606d2ca2c0e740481f58b94888"
+    },
+    {
+      "id": "s2026100102_15_invalid_civil_time",
+      "family": "invalid_civil_time",
+      "expected_accepted": false,
+      "raw_json": "{\"canonicalization_profile\":\"parkinsum.jcs-safe-lossless-scalars/1\",\"capsule_id\":\"observatory_mixedReference_replay\",\"capsule_sha256\":\"20f658860c63d441527d0db9536d6940bb7c2e8b1984e6de057628ed9c7b7f30\",\"context\":{},\"generated_at_utc\":\"2026-02-30T08:00:00.000Z\",\"ledger\":{},\"meal_compositions\":[],\"schema\":\"parkinsum.mechanistic-replay-capsule/1\",\"schema_version\":1,\"timezone_contract\":{\"boundary\":\"The current engine consumes historical UTC minutes. Event-specific offsets survive in the embedded ledger, but no IANA zone, tzdb release, DST fold or future civil-time intent is fabricated.\",\"engine_time_representation\":\"utc_epoch_minute\",\"future_civil_time_authorized\":false,\"iana_zone_id\":null,\"ledger_time_representation\":\"offset_timestamp_plus_utc_instant\",\"timestamp_semantic\":\"historical_event_instant\",\"tzdb_version\":null}}",
+      "raw_sha256": "8d6ed02ffb3b6a5484a6ca54810efba2a9b045dfb1e6b94395ef29ccc4e9f261"
+    }
+  ]
+}

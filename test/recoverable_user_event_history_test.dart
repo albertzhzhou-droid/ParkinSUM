@@ -178,7 +178,7 @@ void main() {
         final aggregate =
             jsonDecode(prefs.getString('db.user_state.v1')!)
                 as Map<String, dynamic>;
-        expect(aggregate['schemaVersion'], 2);
+        expect(aggregate['schemaVersion'], 3);
         expect(aggregate['meals'], isEmpty);
         expect(aggregate['eventHistory'], hasLength(1));
       },

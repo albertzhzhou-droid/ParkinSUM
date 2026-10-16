@@ -49,7 +49,9 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
         proteinSource: proteinSource,
         // Prefer the actual amino-acid profile when present; null → the LNAA
         // layer falls back to the protein-source proxy.
-        aminoAcidProfile: item.aminoAcidProfile,
+        aminoAcidProfile: item.supportsEdibleMassPoint
+            ? item.aminoAcidProfile
+            : null,
       ),
     ],
   );
@@ -101,7 +103,9 @@ FoodComponent mealItemToFoodComponent(
   // portions and invalid profile values also fail closed. A true zero-gram
   // serving scales present fields to true zero rather than retaining 100 g.
   final sourceAminoAcidProfile = catalogMatch?.aminoAcidProfile;
-  final aminoAcidProfile = sourceAminoAcidProfile?.basis == 'per_100g'
+  final aminoAcidProfile =
+      catalogMatch?.supportsEdibleMassPoint != false &&
+          sourceAminoAcidProfile?.basis == 'per_100g'
       ? sourceAminoAcidProfile?.scaledToGrams(portionGrams)
       : null;
 
@@ -110,14 +114,24 @@ FoodComponent mealItemToFoodComponent(
     category: item.foodCategory.name,
   );
 
+  double? presentLoggedNutrient(String field, double value) {
+    if (item.missingNutrientFields.contains(field) ||
+        catalogMatch?.isNutrientMissing(field) == true ||
+        !value.isFinite ||
+        value < 0) {
+      return null;
+    }
+    return value;
+  }
+
   return FoodComponent(
     id: componentId,
     name: item.foodName,
     physicalForm: physicalForm,
-    proteinGrams: item.proteinG,
-    fatGrams: item.fatG,
-    fiberGrams: item.fiberG,
-    carbohydrateGrams: item.carbsG,
+    proteinGrams: presentLoggedNutrient('proteinG', item.proteinG),
+    fatGrams: presentLoggedNutrient('fatG', item.fatG),
+    fiberGrams: presentLoggedNutrient('fiberG', item.fiberG),
+    carbohydrateGrams: presentLoggedNutrient('carbsG', item.carbsG),
     calories: calories,
     portionGrams: portionGrams,
     sourceDocId: catalogMatch?.sourceSystem ?? 'meal_history',

@@ -283,6 +283,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
     required List<DrugDefinition> activeDrugs,
     required List<Intake> intakes,
   }) async {
+    if (!result.hasAssessment) return result;
     if (!userProfile.hasCurrentLocalAiConsent) return result;
     final availability = await probe(userProfile: userProfile);
     if (!availability.available) return result;
@@ -327,7 +328,7 @@ class LocalAiRecommendationAdapter implements LocalResponsePolisher {
       'Use plain language in ${userProfile.displayLocale}.',
       'The CDSS already decided the score, severity, evidence, and actions. Keep them unchanged.',
       'Do not invent diagnosis, dosing instructions, foods, drugs, or evidence.',
-      'Risk gradient: score ${result.score}, severity ${result.overallSeverity.name}.',
+      'Risk gradient: score ${result.score}, severity ${result.overallSeverity!.name}.',
       'Meal JSON: ${jsonEncode(meal.toJson())}',
       'Active drugs: ${jsonEncode(activeDrugs.map((drug) => {'id': drug.id, 'generic_name': drug.genericName}).toList(growable: false))}',
       // Copy polishing does not need a dose source. Supplying the full Intake

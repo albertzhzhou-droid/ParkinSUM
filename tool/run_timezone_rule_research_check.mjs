@@ -1,0 +1,17 @@
+import assert from'node:assert/strict';
+import{readFileSync,writeFileSync,mkdirSync,existsSync,unlinkSync}from'node:fs';
+import{execFileSync}from'node:child_process';
+import{captureInputs}from'./verification_runtime.mjs';
+import{sha}from'./replay_capsule_fuzz_domain.mjs';
+import{reviewTimezoneResearch}from'./timezone_rule_research_review.mjs';
+const fixture='test/fixtures/timezone_research/',output='build/timezone_rule_research';
+const read=p=>JSON.parse(readFileSync(p)),domainPath=fixture+'manual_expected_before_compilation.json',referencePath=fixture+'independent_python_expected_before_dart.json',manifestPath='assets/timezone/iana_2026e_manifest.json';
+const before=captureInputs(process.cwd()),domain=read(domainPath),reference=read(referencePath),manifest=read(manifestPath);
+assert.equal(sha(readFileSync(manifest.asset_path)),manifest.asset_sha256);
+mkdirSync(output,{recursive:true});for(const f of ['actual_vectors.json','latest.json'])if(existsSync(`${output}/${f}`))unlinkSync(`${output}/${f}`);
+execFileSync('dart',['run','tool/run_timezone_rule_research_vectors.dart',domainPath,referencePath,manifest.asset_path,output+'/actual_vectors.json'],{stdio:'inherit',timeout:600000});
+const actual=read(output+'/actual_vectors.json'),review=reviewTimezoneResearch(domain,reference,actual,manifest);
+for(const[file,digest]of Object.entries(actual.source_sha256))assert.equal(sha(readFileSync(file)),digest);
+const after=captureInputs(process.cwd());assert.equal(before.sha256,after.sha256);
+const report={schema:'parkinsum.timezone-rule-research-check/1',pass:true,source_sha256:before.sha256,observed_at_utc:new Date().toISOString(),actual_vectors_sha256:sha(readFileSync(output+'/actual_vectors.json')),fixture_sha256:Object.fromEntries([domainPath,referencePath,manifestPath].map(f=>[f,sha(readFileSync(f))])),source_sha256_by_file:actual.source_sha256,...review,tzdb_release:'2026e',artifact_sha256:manifest.asset_sha256,supported_interval:manifest.supported_instants_utc,source_archive_sha256:manifest.archive_sha256,boundary:'Actual pinned offline rules in a finite independently declared calendar/UTC domain. Historical2025c receipts remain historical; display zone and UTC instant are distinct. No all-zone legal/OS/device detection, live clock manipulation, reminder delivery or clinical scheduling qualification.'};
+writeFileSync(output+'/latest.json',JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({pass:true,civil_comparisons:review.civil_comparisons,independent_utc_projections:review.independent_utc_projections,changed_interpretations:review.changed_interpretations}));

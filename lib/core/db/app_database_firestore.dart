@@ -10,6 +10,7 @@ import '../models/intake.dart';
 import '../models/meal.dart';
 import '../models/recoverable_user_event.dart';
 import '../models/user_profile.dart';
+import '../models/user_preference_write_scope.dart';
 import '../../domain/entities/mechanistic_replay_capsule.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
@@ -30,7 +31,11 @@ import 'recoverable_user_event_store.dart';
 /// users/{uid}/intakes/{intakeId}
 /// users/{uid}/mechanistic_replay_capsules/{capsuleSha256}
 /// users/{uid}/active_drugs/{drugId}
-class FirestoreAppDatabase implements AppDatabase, RecoverableUserEventStore {
+class FirestoreAppDatabase
+    implements
+        AppDatabase,
+        RecoverableUserEventStore,
+        ScopedUserPreferenceStore {
   final AuthService authService;
   final FirebaseFirestore? _providedFirestore;
   final bool seedCatalogOnInitialize;
@@ -253,6 +258,63 @@ class FirestoreAppDatabase implements AppDatabase, RecoverableUserEventStore {
   }
 
   @override
+  Future<void> saveActiveDrugIdsForSession(
+    List<String> ids, {
+    required UserPreferenceWriteScope scope,
+  }) async {
+    scope.requireCurrent();
+    final selected = List<String>.unmodifiable(ids);
+    final uid = await _requireUid();
+    scope.requireCurrent();
+    if (uid != scope.ownerUid) throw const UserPreferenceWriteScopeChanged();
+    final paths = FirebaseUserDataPaths(scope.ownerUid);
+    final rows = firestore.collection(paths.collection('active_drugs'));
+    final snapshot = await rows.get();
+    scope.requireCurrent();
+    final plan = planFirestoreCollectionSync(
+      existing: {for (final doc in snapshot.docs) doc.id: doc.data()},
+      desired: {
+        for (final id in selected) id: <String, dynamic>{'id': id},
+      },
+    );
+    if (plan.isEmpty) return;
+    // One atomic batch, including each original append-only history row.
+    // Reject oversized selections before writing rather than commit a prefix.
+    if ((plan.removals.length + plan.upserts.length) * 2 > 500) {
+      throw UnsupportedError(
+        'Atomic medication selection exceeds the write budget.',
+      );
+    }
+    final history = firestore.collection(paths.collection('record_history'));
+    final batch = firestore.batch();
+    for (final id in plan.removals) {
+      batch.delete(rows.doc(id));
+      batch.set(history.doc(), {
+        'schema_version': 1,
+        'collection': 'active_drugs',
+        'record_id': id,
+        'operation': 'delete',
+        'created_at': FieldValue.serverTimestamp(),
+      });
+    }
+    for (final entry in plan.upserts.entries) {
+      batch.set(rows.doc(entry.key), entry.value);
+      batch.set(history.doc(), {
+        'schema_version': 1,
+        'collection': 'active_drugs',
+        'record_id': entry.key,
+        'operation': 'set',
+        'created_at': FieldValue.serverTimestamp(),
+      });
+    }
+    scope.requireCurrent();
+    if (authService.currentUserId != scope.ownerUid) {
+      throw const UserPreferenceWriteScopeChanged();
+    }
+    await batch.commit();
+  }
+
+  @override
   Future<void> saveIntakes(List<Intake> intakes) async {
     final rows = await _userRows('intakes');
     await _syncRows('intakes', rows, {
@@ -363,6 +425,28 @@ class FirestoreAppDatabase implements AppDatabase, RecoverableUserEventStore {
       FirebaseUserDataPaths(uid).collection('profile'),
     );
     await rows.doc('current').set(profile.copyWith(patientId: uid).toJson());
+  }
+
+  @override
+  Future<void> saveUserProfileForSession(
+    UserProfile profile, {
+    required UserPreferenceWriteScope scope,
+  }) async {
+    scope.requireProfileOwner(profile);
+    final uid = await _requireUid();
+    scope.requireCurrent();
+    if (uid != scope.ownerUid || profile.patientId != scope.ownerUid) {
+      throw const UserPreferenceWriteScopeChanged();
+    }
+    final rows = firestore.collection(
+      FirebaseUserDataPaths(scope.ownerUid).collection('profile'),
+    );
+    final encoded = profile.toJson();
+    scope.requireCurrent();
+    if (authService.currentUserId != scope.ownerUid) {
+      throw const UserPreferenceWriteScopeChanged();
+    }
+    await rows.doc('current').set(encoded);
   }
 
   Future<void> _syncRows(

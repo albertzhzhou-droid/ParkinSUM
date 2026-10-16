@@ -608,8 +608,16 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('replay identity only'), findsOneWidget);
+    // This checks the rendered manifest summary; independent configuration
+    // tests pin the accepted parameter identities and counts.
+    final parameterRecordCount = AlgorithmConfigurationIdentity.defaults()
+        .parameterProvenanceManifest
+        .records
+        .length;
     expect(
-      find.textContaining('121 result-affecting parameter/structure records'),
+      find.textContaining(
+        '$parameterRecordCount result-affecting parameter/structure records',
+      ),
       findsOneWidget,
     );
     final legacyRecords = AlgorithmConfigurationIdentity.defaults()

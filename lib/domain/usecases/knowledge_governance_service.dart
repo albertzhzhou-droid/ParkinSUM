@@ -17,7 +17,7 @@ const knowledgeGovernanceDocumentKey =
     'parkinsum.knowledge_governance.v1.document';
 const knowledgeGovernanceAnchorKey = 'parkinsum.knowledge_governance.v1.anchor';
 const knowledgePrototypeBaselineDigest =
-    '9593e5557ac4f2fcaa532e32d1a52edd7a24c4c8654c4e94e610dfd9e9995efb';
+    'a42839ece070e0d2dd65d132a7fc0e66ce3cf3e93a9e45460b04402f6e5edfc4';
 
 typedef _KnowledgeSnapshot = ({
   KnowledgeGovernanceState state,

@@ -124,7 +124,7 @@ void _runCheck() {
     currentDoseOwnerScope: _doseScope,
     currentScopeKind: _scopeKind,
   );
-  final future = _clone(v4Document)..['schemaVersion'] = 5;
+  final future = _clone(v4Document)..['schemaVersion'] = 6;
   final futureAssessment = PortableSchemaMigrationRegistry.assess(
     sourceJson: portableCanonicalJson(future),
     sourceDocument: future,

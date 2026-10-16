@@ -4,21 +4,41 @@ on:
   push:
     branches:
       - main
-  # Every pull request, not just those targeting main: restricting this to
-  # `branches: [main]` meant stacked PRs (base = another feature branch) ran
-  # no tests, analysis, or governance gates at all. Matches the trigger the
-  # public-release-preflight workflow already uses.
+  # Every pull request, including stacked branches, receives required checks.
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
+  quick-checks:
+    name: Format and analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.0'
+          cache: true
+      - run: flutter pub get
+      - name: Check Dart formatting
+        run: dart format --output=none --set-exit-if-changed lib test tool
+      - name: Analyze Flutter project
+        run: flutter analyze
+
   flutter:
     name: Flutter checks
     runs-on: ubuntu-latest
+    needs: quick-checks
+    if: ${{ always() }}
 
     steps:
+      - name: Require successful format and analysis
+        env:
+          QUICK_CHECK_RESULT: ${{ needs.quick-checks.result }}
+        run: test "$QUICK_CHECK_RESULT" = success
+
       - name: Check out repository
         uses: actions/checkout@v7
 
@@ -39,21 +59,8 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
-      # CI should report formatting drift without rewriting files in the runner.
-      # Scoped to source dirs: `dart format .` ignores analysis_options'
-      # analyzer excludes, so a stray build/ directory (platform SourcePackages,
-      # generated example code) would be formatted and fail the check.
-      - name: Check Dart formatting
-        run: dart format --output=none --set-exit-if-changed lib test tool
-
-      - name: Analyze Flutter project
-        run: flutter analyze
-
       - name: Run Flutter tests
-        run: flutter test
-
-      - name: Verify initialized-user algorithm journey
-        run: flutter test test/registered_user_algorithm_journey_test.dart
+        run: flutter test --concurrency=2
 
       - name: Build local-mode Web release
         run: flutter build web --release --dart-define=PARKINSUM_BACKEND=local
@@ -233,3 +240,19 @@ jobs:
           name: verify-all-report
           path: build/verify_all/
           if-no-files-found: warn
+
+  preflight:
+    # Preserve the required main-branch context and its GitHub Actions source.
+    name: preflight
+    runs-on: ubuntu-latest
+    needs: [quick-checks, flutter, node-preflight, governance-gates]
+    if: ${{ always() }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: Require every prerequisite to succeed
+        env:
+          PARKINSUM_CI_JOB_RESULTS: ${{ toJSON(needs) }}
+        run: node tool/ci_required_status_gate.mjs

@@ -90,46 +90,43 @@ void main() {
     }
   });
 
-  test(
-    'protein trend trace runs the production use case on synthetic meals',
-    () {
-      for (final scenario in ObservatoryScenario.values) {
-        final node = service
-            .build(scenario)
-            .explanationTree
-            .children
-            .singleWhere((candidate) => candidate.id == 'protein_trend');
-        final encoded = jsonEncode(node.toJson());
+  test('protein trend trace runs the production use case on synthetic meals', () {
+    for (final scenario in ObservatoryScenario.values) {
+      final node = service
+          .build(scenario)
+          .explanationTree
+          .children
+          .singleWhere((candidate) => candidate.id == 'protein_trend');
+      final encoded = jsonEncode(node.toJson());
 
-        expect(node.algorithmId, 'protein_trend');
-        expect(
-          node.providerId,
-          AlgorithmObservatoryService.traceProviderContract.providerId,
-        );
-        expect(
-          node.output,
-          '3 chronologically sorted point(s); relative series '
-          '0d:10.0g → 1d:20.0g → 2d:30.0g; arithmetic mean 20.0 g per meal',
-        );
-        expect(
-          node.inputs,
-          contains(
-            'effective time precedence: occurredAt → range start → eatenAt',
-          ),
-        );
-        expect(node.sourceRefs, isEmpty);
-        expect(node.limitation, contains('fixed synthetic inputs'));
-        for (final withheldValue in const [
-          'synthetic:protein-trend',
-          'Synthetic protein trend fixture',
-          'synthetic fixture item',
-          '2026-01-01',
-        ]) {
-          expect(encoded, isNot(contains(withheldValue)));
-        }
+      expect(node.algorithmId, 'protein_trend');
+      expect(
+        node.providerId,
+        AlgorithmObservatoryService.traceProviderContract.providerId,
+      );
+      expect(
+        node.output,
+        '3 chronologically sorted point(s); relative series '
+        '0d:10.0g → 1d:20.0g → 2d:30.0g; arithmetic mean 20.0 g per included known meal',
+      );
+      expect(
+        node.inputs,
+        contains(
+          'effective time precedence: occurredAt → range start → eatenAt',
+        ),
+      );
+      expect(node.sourceRefs, isEmpty);
+      expect(node.limitation, contains('fixed synthetic inputs'));
+      for (final withheldValue in const [
+        'synthetic:protein-trend',
+        'Synthetic protein trend fixture',
+        'synthetic fixture item',
+        '2026-01-01',
+      ]) {
+        expect(encoded, isNot(contains(withheldValue)));
       }
-    },
-  );
+    }
+  });
 
   test(
     'dose parser trace runs fixed syntax cases without exposing text or values',

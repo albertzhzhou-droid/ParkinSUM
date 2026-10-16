@@ -4,6 +4,7 @@
     "triggered": true,
     "triggered_conditions": [
       "drug.active_ingredients",
+      "drug.route",
       "meal.protein_g",
       "timestamps.drug_time",
       "timestamps.meal_time"
@@ -11,6 +12,7 @@
     "user_facing_decision": "educational caution shown",
     "input_fields_used": [
       "drug.active_ingredients",
+      "drug.route",
       "meal.protein_g",
       "timestamps.drug_time",
       "timestamps.meal_time"
@@ -35,6 +37,7 @@
     "user_facing_decision": "no modeled interaction",
     "input_fields_used": [
       "drug.active_ingredients",
+      "drug.route",
       "coevent.substance_tags",
       "timestamps.drug_time",
       "timestamps.coevent_time"
@@ -48,6 +51,55 @@
     "missing_or_uncertain_inputs": [],
     "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
     "confidence_note": "moderate — educational only (evidence=official_label)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.ldopa.oral.scope.withheld.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.active_ingredients",
+      "drug.route",
+      "meal.id",
+      "coevent.substance_tags"
+    ],
+    "source_refs": [
+      "fda-dhivy-high-protein",
+      "dailymed-carbidopa-levodopa-iron"
+    ],
+    "provenance_summary": "Declared evidence level \"engineering_scope_boundary\" (active) with 2 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "insufficient",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "low — educational only (evidence=engineering_scope_boundary)",
+    "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
+    "copy_source": "rule_engine:not_shown",
+    "output_type": "educationalInfo"
+  },
+  {
+    "rule_id": "pd.ldopa.protein.missing.withheld.v1",
+    "triggered": false,
+    "triggered_conditions": [],
+    "user_facing_decision": "no modeled interaction",
+    "input_fields_used": [
+      "drug.active_ingredients",
+      "drug.route",
+      "meal.id",
+      "meal.protein_g"
+    ],
+    "source_refs": [
+      "fda-dhivy-high-protein"
+    ],
+    "provenance_summary": "Declared evidence level \"engineering_missingness_boundary\" (active) with 1 source reference(s). Not calibrated for real care.",
+    "evidence_strength": "insufficient",
+    "limitation_text": "This rule did not match the synthetic demo inputs. Review with a qualified clinician before making decisions.",
+    "missing_or_uncertain_inputs": [],
+    "safety_boundary": "Do not change medication, diet, or timing based on this app. Review with a qualified clinician before making health decisions.",
+    "confidence_note": "low — educational only (evidence=engineering_missingness_boundary)",
     "not_advice_text": "This is an educational prototype output. It is not medical advice and must not be used to make medication, dietary, or timing decisions.",
     "copy_source": "rule_engine:not_shown",
     "output_type": "educationalInfo"

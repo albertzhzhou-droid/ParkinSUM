@@ -37,6 +37,7 @@ class P0IngestionCheckpoint {
   static const failedBeforeFetch = 'failed_before_fetch';
   static const failedBeforeParse = 'failed_before_parse';
   static const failedBeforePromote = 'failed_before_promote';
+  static const conflictReviewRequired = 'conflict_review_required';
 }
 
 /// 描述一个 import 任务的可重放输入。
@@ -357,7 +358,9 @@ class P0IngestionOrchestrator {
       sourcePaths: sourcePaths,
     );
     var bundle = const P0ImportBundle();
-    for (final report in reports.where((item) => item.bundle != null)) {
+    for (final report in reports.where(
+      (item) => item.succeeded && item.bundle != null,
+    )) {
       bundle = bundle.merge(report.bundle!);
     }
     return bundle;
@@ -743,6 +746,33 @@ class P0IngestionOrchestrator {
         _completedReports[baseRunId] = report;
         _pendingBundles.remove(baseRunId);
         return report;
+      } on CdssImportHeldException catch (error) {
+        await _writeRun(
+          baseRunId: baseRunId,
+          attempt: attempt,
+          stage: 'promote',
+          status: 'held_for_conflict_review',
+          checkpoint: P0IngestionCheckpoint.conflictReviewRequired,
+          descriptor: describe(),
+          extra: {
+            'error_message': '$error',
+            'retained_staging_run_id': error.runId,
+            'staging_snapshot_id': error.stagingSnapshotId,
+            'next_action': 'manual_conflict_review',
+            'parsed_bundle_cached': true,
+          },
+          completed: true,
+        );
+        return P0OfflineImportStepReport(
+          sourceKey: descriptor.sourceKey,
+          sourceLabel: descriptor.sourceLabel,
+          succeeded: false,
+          bundle: bundle,
+          errorMessage: '$error',
+          attempts: attempt,
+          checkpoint: P0IngestionCheckpoint.conflictReviewRequired,
+          resumeToken: baseRunId,
+        );
       } catch (error) {
         lastError = error;
         await _writeRun(

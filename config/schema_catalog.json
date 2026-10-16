@@ -621,8 +621,8 @@
       "id": "parkinsum.food-composition-candidate-set-snapshot",
       "surfaceKind": "runtime-contract",
       "versionStatus": "versioned",
-      "currentVersion": 5,
-      "compatibility": "Schema v5 binds ordered caller or built-in P0 inputs, projected local records, merged FoodItem content, merge collisions, jurisdiction context, merge policy and tie-break into an in-memory result snapshot with a canonical SHA-256. It adds a local projection query audit for the six queryTable reads, including table names, no-WHERE/no-ORDER-BY query shape, adapter-returned record IDs and order, row counts, canonical row-set digests, and implemented selection and last-wins rules; only the volatile _synced_at field is excluded from row hashes. The reads remain sequential and are not transaction-scoped, and caller query and filters are not captured. Projected foods retain available per-nutrient observation IDs and evidence plus linked source-document ownership, license notes, source metadata and payload-text SHA-256, linked preparation/sampling scope, and recorded concept/variant crosswalk evidence. FDC source-reported foodPortions fields are projected as separate FoodPortionEvidence with source document and food identifiers; the original complete raw payload text is not copied into candidate records. The existing registry checksum is retained as supplied and the payload digest identifies only persisted raw-payload UTF-8 text after ingestion, not a complete catalog release. Non-exact nutrient rows and portion records are evidence only and do not alter legacy ranking. Crosswalk confidence is recorded metadata, not validated match accuracy. The snapshot reports unavailable upstream catalog release, caller-side query/filters, selected serving, validated food matching and nutrient conversion, sample counts and quantitative measurement uncertainty. It is not a catalog freeze, does not establish rank stability and is not a persisted record.",
+      "currentVersion": 6,
+      "compatibility": "v6 captures the v2 projection query audit and strict candidate snapshot status alongside the ordered caller/built-in/projected merge identities. Native atomic reads may capture a local transaction digest; unsupported/inconsistent strict reads emit no imported candidates. Independent caller/built-in inputs are explicitly separate from any imported snapshot. Full upstream release, validated matching and clinical calibration remain unavailable.",
       "source": "lib/domain/entities/food_composition_candidate_set_snapshot.dart",
       "versionEvidence": [
         {
@@ -647,13 +647,16 @@
       "id": "parkinsum.cdss-food-projection-query-audit",
       "surfaceKind": "runtime-contract",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Schema v1 records the six sequential CdssDatabase.queryTable operations used by food projection, their no-WHERE/no-ORDER-BY shape, returned primary-key IDs and order, row counts, content hashes and exact implemented food selection and last-wins filters. Table hashes exclude only volatile _synced_at fields. Reads are not transaction-scoped and do not establish an atomic database snapshot; caller-side query/filters and upstream catalog release identity remain unavailable. Raw row payloads are hashed but are not copied into the audit.",
+      "currentVersion": 4,
+      "compatibility": "Current optional ten-table capture plus original complete held packet/decision/activation/graph and all current alternatives/source/scope checks. Only an exact eligible selected quantity reaches edible-mass arithmetic; changed or missing review evidence remains unknown. Every alternative is retained, and original Branded product objects survive projection/cache without conversion. Legacy sequential reads do not qualify reviewed selections. Exact existing FDC, CIQUAL and China CDC ingestion markers are accepted only with their recorded provider-family pairing and active nonfuture source; retired, unknown or mismatched markers remain unavailable. Recognizing local ingestion does not infer upstream currentness. Version 3 remains readable historical captured audit evidence; current producers emit version 4.",
       "source": "lib/domain/usecases/cdss_catalog_projection_service.dart",
       "versionEvidence": [
         {
           "kind": "schema-uri"
         }
+      ],
+      "acceptedLegacyVersions": [
+        3
       ]
     },
     {
@@ -1402,7 +1405,7 @@
         3,
         4
       ],
-      "compatibility": "Schema v5 adds bounded account-owner self-reported medication-list review marks for current selections, over-the-counter medicines, vitamins/supplements, and stopped/uncertain-use items; each mark is category-unique, owner-bound and time-stamped, and means only that the owner marked the category as reviewed. It does not establish completeness, accuracy, clinician review, or a medication change, and is not a rule input. Schema v4 retains its bounded append-only owner-reported discussion-outcome history; schema v3 retains user-entered ingredient labels; text matching remains exact/case/space-only and never infers ingredient identity, duplicate therapy, or interaction. Schema-v1 through v4 workspaces load read-only and migrate on the next successful change; earlier versions receive no inferred review marks. Strict keys, entry references, owner bindings, unique IDs/sections, bounded payloads and fail-closed handling remain. The account-local workspace stays outside portable-data backups and provides no cloud caregiver access or clinician verification.",
+      "compatibility": "Schema v5 adds bounded account-owner self-reported medication-list review marks for current selections, over-the-counter medicines, vitamins/supplements, and stopped/uncertain-use items; each mark is category-unique, owner-bound and time-stamped, and means only that the owner marked the category as reviewed. It does not establish completeness, accuracy, clinician review, or a medication change, and is not a rule input. Schema v4 retains its bounded append-only owner-reported discussion-outcome history; schema v3 retains user-entered ingredient labels; text matching remains exact/case/space-only and never infers ingredient identity, duplicate therapy, or interaction. Schema-v1 through v4 workspaces load read-only and migrate on the next successful change; earlier versions receive no inferred review marks. Strict keys, entry references, owner bindings, unique IDs/sections, bounded payloads and fail-closed handling remain. The account-local workspace is exportable through the separate version1 Care-only portable envelope; ordinary version4 user-data packages do not provide full Care history. Same-owner one-document Care restoration is separate from user-state/reminder writes and provides no cloud caregiver access or clinician verification.",
       "source": "lib/core/services/care_workspace_service.dart",
       "versionEvidence": [
         {
@@ -1599,7 +1602,7 @@
         2,
         3
       ],
-      "compatibility": "Schema v4 retains the v3 envelope, dose-truth and reminder contracts, adds a current local owner-entered observation snapshot, and explicitly excludes raw recorder IDs while preserving recorded values, notes, source, timestamps, timezone, status, unit and posture. Unknown and not-measured values remain distinct from measurements; migrated v2/v3 packages are marked unavailable_in_source_schema rather than presented as empty histories. Schema v2 reminder presentation receives frozen minimal-English defaults. Versions 2 and 3 are readable through deterministic preview-only migrations; schema v1 remains unsupported. Inspection performs no permission request, native scheduling, persistence, network operation or durable import write. The artifact contains sensitive health information and remains unsigned and unencrypted.",
+      "compatibility": "Schema v4 retains the v3 envelope, dose-truth and reminder contracts, adds a current local owner-entered observation snapshot, and explicitly excludes raw recorder IDs while preserving recorded values, notes, source, timestamps, timezone, status, unit and posture. Unknown and not-measured values remain distinct from measurements; migrated v2/v3 packages are marked unavailable_in_source_schema rather than presented as empty histories. Schema v2 reminder presentation receives frozen minimal-English defaults. Versions 2 and 3 are readable through deterministic preview-only migrations; schema v1 remains unsupported. Inspection performs no permission request, native scheduling, persistence, network operation or durable import write. The artifact contains sensitive health information and remains unsigned and unencrypted. An optional schema-v5 compact wire envelope uses the same v4 logical fields and a ninth complete food-item snapshot file keyed by the whole evidence checksum, with exact quantity references. Small exports remain v4; v4 node-budget overflow may use v5 while keeping the original 500000-node, 32-MiB and depth-24 wire guards. A separate 1200000-node, 32-MiB canonical logical-file and depth-24 expansion budget is checked before record views. Unknown, dangling, duplicate, unused or checksum-drifted snapshots reject. Current default/migration target remains v4; schema-v5 is a supported transport, not a v2/v3 migration target.",
       "source": "lib/domain/usecases/user_portable_data_package_service.dart",
       "versionEvidence": [
         {
@@ -1613,7 +1616,7 @@
       "surfaceKind": "runtime-contract",
       "versionStatus": "versioned",
       "currentVersion": 1,
-      "compatibility": "The accepted v2/v3/v4 schema URIs, exact versioned file inventories, envelope and reminder-field projections, v4 observation container/record fields, structural-contract digests, semantic-policy digests, validator identities, v2-to-v3, v3-to-v4 and composed v2-to-v4 preview migrations, preservation invariants and registry digest are frozen together. V3-to-v4 adds an explicit unavailable observation marker and updates scope/exclusion metadata without inferring an empty history. Unknown, missing, mixed-version, integrity-drifted or unsupported inputs fail closed. JSON Schema structure remains distinct from ParkinSUM cross-field semantics and sorted-key-json-v1 remains distinct from RFC 8785/JCS.",
+      "compatibility": "The accepted v2/v3/v4 schema URIs, exact versioned file inventories, envelope and reminder-field projections, v4 observation container/record fields, structural-contract digests, semantic-policy digests, validator identities, v2-to-v3, v3-to-v4 and composed v2-to-v4 preview migrations, preservation invariants and registry digest are frozen together. V3-to-v4 adds an explicit unavailable observation marker and updates scope/exclusion metadata without inferring an empty history. Unknown, missing, mixed-version, integrity-drifted or unsupported inputs fail closed. JSON Schema structure remains distinct from ParkinSUM cross-field semantics and sorted-key-json-v1 remains distinct from RFC 8785/JCS. Optional v5 compact transport is read through its exact nine-file descriptor; it does not change the default v4 migration target or the original v2/v3/v4 descriptors.",
       "source": "lib/domain/entities/portable_schema_migration.dart",
       "versionEvidence": [
         {
@@ -2139,8 +2142,8 @@
       "id": "parkinsum.app-database-native",
       "surfaceKind": "database-schema",
       "versionStatus": "versioned",
-      "currentVersion": 11,
-      "compatibility": "SQLite schema v11 adds a digest-keyed immutable mechanistic replay capsule table; v10 adds the nullable medication-reconciliation JSON envelope and v9 adds dose confirmation. Capsule reads strictly re-parse canonical bytes and verify digest identity. Older rows remain readable with absent evidence rather than invented confirmation. onUpgrade statements govern supported transitions; catalog presence does not prove every historical migration path.",
+      "currentVersion": 12,
+      "compatibility": "SQLite schema v12 preserves per-meal-item missing nutrient fields; v11 adds a digest-keyed immutable mechanistic replay capsule table. Versions 11 and earlier migrate absent markers to an empty set without guessing historical missingness. Current unknown markers survive roundtrip. The upgrade test exercises the supported v11 transition; this does not prove every legacy migration path.",
       "source": "lib/core/db/app_database_native.dart",
       "versionEvidence": [
         {
@@ -2153,8 +2156,8 @@
       "id": "parkinsum.app-database-web-user-state",
       "surfaceKind": "persisted-envelope",
       "versionStatus": "versioned",
-      "currentVersion": 2,
-      "compatibility": "The consolidated envelope migrated from version 1 to version 2 by adding meals and recoverable event history to one atomic value. The historical db.user_state.v1 storage key is deliberately stable and is not the envelope schema authority.",
+      "currentVersion": 3,
+      "compatibility": "The v3 aggregate remains readable with versions 1 and 2. Production Web persistence uses the separately versioned IndexedDB envelope with exact original legacy witnesses, read-write transaction completion and complete read-back; explicit test stores retain the legacy seam. Same-origin participating writers hold the existing Web Lock. Owner-bound local portable restore receipts, selections, profile, meals and intakes share one aggregate. Changed legacy keys, stale expected state, failed migration markers, unsupported coordination or malformed data reject without automatic fallback. A surviving marker prevents stale legacy resurrection after authoritative database loss. A strict durability hint and transaction completion do not prove OS-kill, storage eviction, physical-device or clinical durability.",
       "source": "lib/core/db/app_database_web.dart",
       "versionEvidence": [
         {
@@ -2172,7 +2175,7 @@
       "currentVersion": null,
       "compatibility": "SharedPreferences record sets outside web user-state have no global database version or atomic migration contract.",
       "source": "lib/core/db/app_database_web.dart",
-      "surfaceMarker": "class WebAppDatabase implements AppDatabase",
+      "surfaceMarker": "class WebAppDatabase",
       "versionEvidence": []
     },
     {
@@ -2182,7 +2185,7 @@
       "currentVersion": null,
       "compatibility": "Firestore collections use record-level fields and rules, not one deployed database schema version.",
       "source": "lib/core/db/app_database_firestore.dart",
-      "surfaceMarker": "class FirestoreAppDatabase implements AppDatabase",
+      "surfaceMarker": "class FirestoreAppDatabase\n    implements\n        AppDatabase,\n        RecoverableUserEventStore,\n        ScopedUserPreferenceStore {",
       "versionEvidence": []
     },
     {
@@ -2204,9 +2207,9 @@
       "surfaceKind": "persisted-boundary",
       "versionStatus": "unversioned",
       "currentVersion": null,
-      "compatibility": "SharedPreferences JSON arrays have no global schema envelope, transaction equivalence, or migration version.",
+      "compatibility": "Historical SharedPreferences table keys remain intact. Current writes migrate and commit through the separate version-1 complete catalogue document; these historical keys are not an atomic active catalogue.",
       "source": "lib/core/db/cdss_database_web.dart",
-      "surfaceMarker": "class WebCdssDatabase implements CdssDatabase",
+      "surfaceMarker": "implements CdssDatabase, CdssAtomicWriter, CdssCatalogSnapshotReader",
       "versionEvidence": []
     },
     {
@@ -2436,8 +2439,8 @@
       "id": "parkinsum.protein-trend-aggregation",
       "surfaceKind": "runtime-contract",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Version 1 records ascending Meal.effectiveOccurredAt ordering, grams per meal from computeTotals, and arithmetic mean with zero for an empty list. It is a local descriptive aggregation, not a clinical adequacy or outcome claim.",
+      "currentVersion": 2,
+      "compatibility": "Version 2 preserves ascending Meal.effectiveOccurredAt ordering and known numerical sums, but excludes a whole meal if any item has captured or current-catalog missing protein, invalid protein or quantity, overflow, or no items. Measured zero remains known. The UI mean uses only included meals and is null when none qualify; the legacy double API retains an empty zero sentinel for compatibility and is not a displayed observation. Analytics reports included and excluded meal counts for the selected local-day occurrence-time window. This is descriptive logging, not clinical adequacy or an outcome claim.",
       "source": "lib/domain/usecases/get_protein_trend_usecase.dart",
       "versionEvidence": [
         {
@@ -2482,6 +2485,472 @@
         {
           "kind": "dart-int-constant",
           "symbol": "ruleTestSuiteCheckpointSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.meal-draft",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Owner-scoped input drafts only. Unknown fields or future schema reject; stable new event ID supports idempotent save. Time and quantity require confirmation. Results and previews are not carried from history.",
+      "source": "lib/core/models/meal_draft.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.owner-meal-draft",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "A SHA-256 owner binding wraps the input-only meal draft. Future versions, unknown envelope fields and mismatched owners reject. Writes require the originating account session; the digest is a routing identity, not encryption or issuer authentication.",
+      "source": "lib/core/services/meal_draft_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.evidence-currency-candidate-comparison",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Offline candidate review only. Compare baseline and candidate with the same evidence-currency gate; owner-scoped append-only bounded receipts retain historical evidence snapshots. No candidate activates runtime rules. Unknown or corrupted receipts reject.",
+      "source": "lib/domain/usecases/evidence_currency_candidate_comparison.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.public-source-field-corpus",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Minimum official public field excerpts, exact locators, acquisition boundary and distinct field hashes; full response unavailable and complete-sample checks withheld.",
+      "source": "tool/public_source_small_corpus_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.public-source-field-excerpts",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Short source field excerpts with source IDs; never a full raw response or full catalogue release.",
+      "source": "tool/public_source_small_corpus_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.public-source-field-expectations",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Pre-production manually derived expectations and decimal arithmetic; not a production-generated gold set.",
+      "source": "tool/public_source_small_corpus_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.public-source-field-oracle-check",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Independent Node BigInt decimal and structural field checks; full-sample mean and clinical validation remain HOLD.",
+      "source": "tool/public_source_small_corpus_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cdss-catalog-table-snapshot",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Ten immutable table sets captured in one SQLite transaction or complete Web state document; source, scope, completed promotion, original packet, review decision and receipt bindings remain separate from upstream currency, authentication and clinical permission.",
+      "source": "lib/core/db/cdss_catalog_snapshot_reader.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.verification-suite-report",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "55 original gate identities, explicit producer contracts, bounded logs, input identity and resumable per-gate receipts. HOLD predicates remain governed by each producer, never a clinical qualification.",
+      "source": "tool/run_verify_all.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.verification-checkpoint",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Atomically replaced per-gate execution state; resume reuses only successful exact input/command/output identities. Interrupted, failed, missing or stale outputs are not passing.",
+      "source": "tool/run_verify_all.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.upgrade-delivery-index",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Local source/tool/fixture/locks identity, validated supervised build and verification receipts, artifact hashes and per-capture screenshot provenance. Historical or stale evidence stays explicitly historical or stale.",
+      "source": "tool/generate_upgrade_delivery_index.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.web-build-receipt",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Supervised explicit release target, source before/after, toolchain/environment/command, execution status and artifact hashes. A probe target does not attest lib/main.dart; source drift invalidates the receipt.",
+      "source": "tool/generate_upgrade_delivery_index.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.nutrient-evidence-adjudication-check",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Independent-source excerpt preconditions and actual production selector/importer/projection/checker cases; software evidence only with explicit incomplete sample/zero semantics.",
+      "source": "tool/nutrient_evidence_adjudication_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cdss-catalog-sqlite-snapshot-check",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Independent actual SQLite WAL whole-old/whole-new interleavings, autocommit mixed-view counterexample and rollback. Driver is Python sqlite3, not a native Flutter plugin or device.",
+      "source": "tool/cdss_catalog_sqlite_snapshot_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-high-precision-domain-corpus",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Predeclared manufactured parameter/time domain, fixed seeds and explicit excluded cancellation diagnostic. Not biological calibration or a source-derived clinical support interval.",
+      "source": "tool/gastric_high_precision_reference_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-high-precision-domain-vectors",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Production calculation vectors with exact declared parameters, seed, source/configuration identities and withheld unsupported combinations. Independent decimal oracle never generates production values.",
+      "source": "tool/gastric_high_precision_reference_check.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.personal-log-view-release-benchmark",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "compatibility": "Schema v2 distinguishes ephemeral Timeline and guarded disposable persistent Web experiments, all-page controls and retained incomplete samples. Successful distributions require two warmups and seven measured operations; budget/validation holds never become passing percentiles. Source, operator environment and actual build require external same-source W31 binding. Historical v1 memory-only reports are not restamped as v2. No browser/OS cold restart, cross-tab lock, mobile energy or clinical qualification.",
+      "source": "lib/main_personal_log_view_benchmark.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-persistent-benchmark",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Engineering-only source-bound marker for an initially empty disposable origin. Existing unmarked preferences, foreign/stale source markers, nondefault profiles and records are refused. Exact marker and owner checks do not provide cross-tab locking, source authentication or clinical qualification. Ordinary app entry does not create this marker.",
+      "source": "lib/engineering/personal_log_persistent_benchmark.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.formal-app-journey",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Operator-observed lib/main.dart release journey bound to the current full source inventory, build ID and actual main.dart.js bytes. Only explicitly observed synthetic local-storage checks qualify; tab re-open does not prove OS/process kill, multi-tab or physical-device persistence.",
+      "source": "tool/generate_upgrade_delivery_index.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-gastric-identifiability-plan",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Frozen synthetic two-model finite-grid sampling experiment with independent manufactured points, complete retained sets and actual Dart values. Unsupported schema/domain, drift, truncated vectors and relaxed synthetic-fit authorization reject. Grid uniqueness is not continuous identifiability or clinical calibration; deterministic disturbance is not a probability model.",
+      "source": "tool/gastric_identifiability_experiment.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.synthetic-gastric-identifiability-fine-grid-plan",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Frozen synthetic two-model finite-grid sampling experiment with independent manufactured points, complete retained sets and actual Dart values. Unsupported schema/domain, drift, truncated vectors and relaxed synthetic-fit authorization reject. Grid uniqueness is not continuous identifiability or clinical calibration; deterministic disturbance is not a probability model.",
+      "source": "tool/gastric_identifiability_experiment.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-identifiability-vectors",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Frozen synthetic two-model finite-grid sampling experiment with independent manufactured points, complete retained sets and actual Dart values. Unsupported schema/domain, drift, truncated vectors and relaxed synthetic-fit authorization reject. Grid uniqueness is not continuous identifiability or clinical calibration; deterministic disturbance is not a probability model.",
+      "source": "tool/gastric_identifiability_experiment.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.gastric-identifiability-check",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Frozen synthetic two-model finite-grid sampling experiment with independent manufactured points, complete retained sets and actual Dart values. Unsupported schema/domain, drift, truncated vectors and relaxed synthetic-fit authorization reject. Grid uniqueness is not continuous identifiability or clinical calibration; deterministic disturbance is not a probability model.",
+      "source": "tool/gastric_identifiability_experiment.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.catalog-search-benchmark-plan",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Fixed synthetic direct-index benchmark with declared raw/canonical text, seed, four sizes, two actual warmups and seven raw measurements. Full source-ordered result hashes are independently regenerated. Constructor single observations and process RSS do not establish release UI latency, isolated heap or clinical ranking.",
+      "source": "tool/catalog_search_benchmark_review.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.catalog-search-benchmark",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Fixed synthetic direct-index benchmark with declared raw/canonical text, seed, four sizes, two actual warmups and seven raw measurements. Full source-ordered result hashes are independently regenerated. Constructor single observations and process RSS do not establish release UI latency, isolated heap or clinical ranking.",
+      "source": "tool/catalog_search_benchmark_review.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.catalog-search-benchmark-independent-review",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Fixed synthetic direct-index benchmark with declared raw/canonical text, seed, four sizes, two actual warmups and seven raw measurements. Full source-ordered result hashes are independently regenerated. Constructor single observations and process RSS do not establish release UI latency, isolated heap or clinical ranking.",
+      "source": "tool/catalog_search_benchmark_review.mjs",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.care-portable-data-package",
+      "surfaceKind": "public-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "acceptedLegacyVersions": [],
+      "compatibility": "Separate Care-only same-owner envelope; captured empty remains distinct from Care unavailable in ordinary user-package versions2/3/4. Strict bounded duplicate-aware JSON, exact fields, unsigned integrity digest and existing workspace/ledger validation preserve IDs, references, unknowns and owner binding. Structured actor/recorder fields use package_owner transport roles and are rebound only to the same owner; user text and stable linkable digests remain. Merge rejects same-identity content conflicts, compares the preview source, and writes only one Care document; no cross-store partial success, reminder activation, encryption, signature, cross-tab CAS, durable receipt or clinical claim.",
+      "source": "lib/core/services/care_portable_data_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "carePortableDataSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.cdss-web-state",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "One complete local Web catalogue document containing every catalogue, staging, history, audit and activation table. Participating writers serialize within an isolate and hold an exclusive same-origin Web Lock across reload, validation and one-key commit. Legacy table keys remain intact; migration checks the complete legacy input state. Rejected writes preserve committed rows; an exact persisted candidate can recover a lost acknowledgment. Invalid documents and unsupported origin coordination reject writes. This is not SQLite, cross-device sync, uncooperative-writer protection, a complete upstream release, browser OS-kill durability or clinical validation.",
+      "source": "lib/core/db/cdss_database_web.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.held-import-review-evidence",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 2,
+      "acceptedLegacyVersions": [
+        1
+      ],
+      "compatibility": "Version 2 retains every original catalogue resource and projection in addition to source, staging, observations, original conflict audits and incumbent evidence. Version 1 remains historical advisory evidence. Complete packet digests and current bound-state checks must match; neither packet nor advisory decisions authorize activation or release.",
+      "source": "lib/domain/usecases/clinical_decision_support_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri",
+          "anchor": "    final evidence = {\n      'schema': 'parkinsum.held-import-review-evidence/2'",
+          "endAnchor": "    Future<void> saveHold"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.import-conflict-review-decision",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "acceptedLegacyVersions": [],
+      "compatibility": "An append-only local advisory decision binds one open ticket, a complete held packet, original comparison graph and chosen original quantity identity. Stale, missing, changed or ambiguous evidence cannot yield a current numeric decision. It supplies no authenticated reviewer authority, activation, publication or clinical approval.",
+      "source": "lib/domain/usecases/knowledge_base_release_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reviewed-import-preview",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "acceptedLegacyVersions": [],
+      "compatibility": "Read-only local preview binds the whole defined catalogue state, original complete held packet, explicit current choices and original quantities. Any intervening participating mutation requires another preview. It does not grant clinical permission, upstream currency, publication or authenticated reviewer authority.",
+      "source": "lib/domain/usecases/clinical_decision_support_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.reviewed-import-activation",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "acceptedLegacyVersions": [],
+      "compatibility": "An immutable receipt for a new atomic derived local snapshot. Original source holds, packets, staging, audits and decisions remain historical. Original quantities and complete comparison graphs are retained; every review choice and confirmation is bound to current state. Deferred actions, incomplete v1 packets, ambiguous evidence, lifecycle/content mismatch and incompatible scope remain blocked. Receipt failure rolls back the complete database mutation. This is not upstream currency, reviewer authentication, independent human approval or clinical permission.",
+      "source": "lib/domain/usecases/clinical_decision_support_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.food-product-evidence",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Complete original provider objects linked to source document and food code, deeply immutable and preserved through cache. Nested and unknown source fields remain original; no density, ingredient quantity, reformulation, currency or clinical qualification inferred.",
+      "source": "lib/core/models/food_item.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.indexeddb-user-state",
+      "surfaceKind": "persisted-envelope",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Exact five-field envelope binds complete original six-key legacy values and digest to a complete nullable aggregate document and digest. Migration commits original evidence before a bounded marker permits writes. Compare-and-put and transaction completion provide browser transaction evidence; marker or legacy mismatch fails closed, with no quota fallback or inference of OS-kill durability. User-state aggregate version remains separately v3.",
+      "source": "lib/core/db/web_user_state_store_indexeddb.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.user-portable-data-compact-transport",
+      "surfaceKind": "nested-public-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 5,
+      "compatibility": "Optional v5 transport for the v4 logical package. Whole food-item evidence is checksum keyed and shared; quantities remain per meal. Ordered complete snapshots, exact references and separate pre-expansion budgets are enforced after the unchanged wire guard. No reconciliation, evidence promotion, authentication or clinical qualification is inferred.",
+      "source": "lib/domain/usecases/portable_data_compact_transport_service.dart",
+      "versionEvidence": [
+        {
+          "kind": "dart-int-constant",
+          "symbol": "userPortableDataCompactSchemaVersion"
         }
       ]
     }

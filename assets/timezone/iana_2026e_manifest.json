@@ -1,0 +1,74 @@
+{
+  "schema": "parkinsum.pinned-timezone-artifact/1",
+  "tzdb_release": "2026e",
+  "source_url": "https://data.iana.org/time-zones/releases/tzdata2026e.tar.gz",
+  "archive_sha256": "b26882805f26aac59d5b222978e6580484b834ccdc98be89df2f05a6dc53a652",
+  "archive_bytes": 481989,
+  "selected_source_members": {
+    "africa": {
+      "bytes": 58273,
+      "sha256": "f2851d4be4a4925cbdc9d56e10d780bccadb89d6ffb9aed78c3e35f97c200aed"
+    },
+    "antarctica": {
+      "bytes": 14080,
+      "sha256": "e410ad71c9450828c592d21419301d41ac79ce50159fd0ac2d6c5031cb6bdfe6"
+    },
+    "asia": {
+      "bytes": 193525,
+      "sha256": "02b69728085f6b0c999da70de2f1f9a2d8952b533a450d53bb41e03eb7d0e92e"
+    },
+    "australasia": {
+      "bytes": 98595,
+      "sha256": "846ba455578e3e0f9eb850f05be3cc06d02ff51bbe4b726f755be9dc765f16c9"
+    },
+    "europe": {
+      "bytes": 188472,
+      "sha256": "fec11bf6c6bd0619a8777bbdaa2ecd184fde291cb4b97efa87d334c7145ba3c2"
+    },
+    "northamerica": {
+      "bytes": 183813,
+      "sha256": "c0c5da0dc337444d80709cf9f8d8011719b789df160ce107a5c38c90e73dc54c"
+    },
+    "southamerica": {
+      "bytes": 95484,
+      "sha256": "13be56a242da3c1a4a6d12050e5fd48b1753c8c1dc237cbc2edb40eac636be7f"
+    },
+    "etcetera": {
+      "bytes": 3124,
+      "sha256": "7281f095b42c13c4ae36b8bcba884e81dbb38127221fc1d9805c4dbf852487db"
+    },
+    "backward": {
+      "bytes": 14051,
+      "sha256": "b8296b9ef1ece72d813878132c0f17e2c52b26af6004eeb9c37d049b64cd9401"
+    },
+    "version": {
+      "bytes": 6,
+      "sha256": "af35b79aa1b21f258217dc39db156c783db83fd78afd095c5426061993877063"
+    },
+    "LICENSE": {
+      "bytes": 252,
+      "sha256": "0613408568889f5739e5ae252b722a2659c02002839ad970a63dc5e9174b27cf"
+    }
+  },
+  "compiler_version": "zic(tzcode)2022g",
+  "compiler_binary_sha256": "f6a37e71845e33c6be8cbfa00c09468a91d44dbb03103435660b118890aecea6",
+  "compiler_arguments": [
+    "-b",
+    "fat",
+    "-r",
+    "@-2208988800/@4102444800"
+  ],
+  "codec_package": "timezone/0.11.1",
+  "asset_path": "assets/timezone/iana_2026e_1900_2100.tzf",
+  "asset_bytes": 661152,
+  "asset_sha256": "fc3e41d604ce68e0da3f19339d02a8682ea2fedb54748fc45ab9340832a78d3a",
+  "zone_count": 597,
+  "supported_instants_utc": [
+    "1900-01-01T00:00:00.000Z",
+    "2100-01-01T00:00:00.000Z"
+  ],
+  "license": "IANA selected data/zone files public domain; package code remains unmodified locked BSD-2-Clause dependency.",
+  "independent_reference_scope": "14 civil cases across both releases,40 seeded UTC projections across5zones. All597 source table identities retained in original compiler receipt; not all-zone validation.",
+  "currency": "Fixed2026e current at retrieval2026-10-01; later rule changes require new review.",
+  "source_limits": "IANA2026e contains temporary Canadian abbreviation hacks and northwestern Ontario uncertainty. Rule/data identity is not jurisdictional legal assurance, device timezone detection or clinical scheduling authority."
+}

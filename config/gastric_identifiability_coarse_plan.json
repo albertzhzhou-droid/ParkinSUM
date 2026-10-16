@@ -1,0 +1,191 @@
+{
+  "schema": "parkinsum.synthetic-gastric-identifiability-plan/1",
+  "frozen_at_utc": "2026-10-01T05:35:45.038046+00:00",
+  "before_actual_grid_evaluation": true,
+  "seed": 31415926,
+  "models": [
+    {
+      "id": "gastric.shadow.elashoff_power_exponential.v1",
+      "equation": "R(t)=exp(-ln(2)*(t/T50)^beta)",
+      "grid": {
+        "t50": [
+          60,
+          90,
+          120,
+          150,
+          180
+        ],
+        "beta": [
+          0.5,
+          1,
+          1.5,
+          2,
+          2.5,
+          3
+        ]
+      },
+      "truth": {
+        "t50": 120,
+        "beta": 1.5
+      },
+      "schedules": [
+        {
+          "id": "zero_only",
+          "minutes": [
+            0
+          ],
+          "noise_amplitude": 0,
+          "exact_expected_candidate_count": 30,
+          "meaning": "No parameter information at t=0."
+        },
+        {
+          "id": "midpoint_only",
+          "minutes": [
+            0,
+            120
+          ],
+          "noise_amplitude": 0,
+          "exact_expected_candidate_count": 6,
+          "meaning": "All beta values have R(T50)=0.5; beta not identifiable."
+        },
+        {
+          "id": "spread_noiseless",
+          "minutes": [
+            0,
+            30,
+            60,
+            120,
+            180,
+            240
+          ],
+          "noise_amplitude": 0,
+          "exact_expected_candidate_count": 1,
+          "meaning": "Unique within the declared finite grid, not global or clinical identifiability."
+        },
+        {
+          "id": "spread_bounded_perturbation",
+          "minutes": [
+            0,
+            30,
+            60,
+            120,
+            180,
+            240
+          ],
+          "noise_amplitude": 0.03,
+          "exact_expected_candidate_count": null,
+          "meaning": "Report retained grid set and failures; deterministic disturbance is not a probability model."
+        }
+      ]
+    },
+    {
+      "id": "gastric.shadow.explicit_lag_exponential.v1",
+      "equation": "R(t)=t<=L ? 1 : exp(-ln(2)*(t-L)/half)",
+      "grid": {
+        "lag": [
+          0,
+          15,
+          30,
+          45,
+          60
+        ],
+        "half": [
+          30,
+          60,
+          90,
+          120,
+          150
+        ]
+      },
+      "truth": {
+        "lag": 30,
+        "half": 90
+      },
+      "schedules": [
+        {
+          "id": "zero_only",
+          "minutes": [
+            0
+          ],
+          "noise_amplitude": 0,
+          "exact_expected_candidate_count": 25,
+          "meaning": "No parameter information at t=0."
+        },
+        {
+          "id": "prelag_plateau",
+          "minutes": [
+            0,
+            5,
+            10
+          ],
+          "noise_amplitude": 0,
+          "exact_expected_candidate_count": 20,
+          "meaning": "All grid lag>=15 match regardless of half-time."
+        },
+        {
+          "id": "spread_noiseless",
+          "minutes": [
+            0,
+            30,
+            60,
+            120,
+            180,
+            240
+          ],
+          "noise_amplitude": 0,
+          "exact_expected_candidate_count": 1,
+          "meaning": "Unique within this declared finite grid."
+        },
+        {
+          "id": "spread_bounded_perturbation",
+          "minutes": [
+            0,
+            30,
+            60,
+            120,
+            180,
+            240
+          ],
+          "noise_amplitude": 0.03,
+          "exact_expected_candidate_count": null,
+          "meaning": "Report candidate region; this is not a patient interval."
+        }
+      ]
+    }
+  ],
+  "error_policy": {
+    "noiseless_max_absolute_error": 1e-12,
+    "perturbed_max_absolute_error": 0.03,
+    "retain_all_grid_candidates_within_bound": true,
+    "no_optimizer_or_multistart_claim": true,
+    "clip_perturbation_to_fraction": [
+      0,
+      1
+    ]
+  },
+  "additional_failure_design": [
+    {
+      "id": "off_grid_truth",
+      "elashoff_truth": {
+        "t50": 127,
+        "beta": 1.37
+      },
+      "lag_exp_truth": {
+        "lag": 37,
+        "half": 83
+      },
+      "schedule": [
+        0,
+        30,
+        60,
+        120,
+        180,
+        240
+      ],
+      "error_bound": 1e-12,
+      "expected_exact_fit_count": 0,
+      "meaning": "A finite grid may fail to include the manufactured truth; record failure instead of claiming recovery."
+    }
+  ],
+  "boundary": "Synthetic manufactured observations and bounded finite-grid recoverability only. Production parameters, scores, authorization and real calibration HOLD unchanged. Node independent evaluator and subsequent actual Dart structure outputs must be distinguished."
+}

@@ -1,0 +1,707 @@
+{
+  "schema": "parkinsum.upgrade-planning-queue/1",
+  "planning_only": true,
+  "created_on": "2026-09-29",
+  "timezone": "America/Toronto",
+  "authoritative_upgrade_queue_unchanged": true,
+  "estimated_execution_window_wall_hours": {
+    "min": 12,
+    "max": 18,
+    "guarantee": false
+  },
+  "work_budget_note": "Agent-hour estimates are rough independent work budgets, not elapsed-time promises. Core is a priority pool, not an all-or-nothing release scope. No padding, repeated passing tests or waiting to meet a duration target.",
+  "runtime_scheduling": "Honor depends_on; conditionally_recheck_after invalidates QA only when that package is included and changed after the check. Shared-file ownership and build locks are separate serial constraints. Actual declared input fingerprints always govern evidence invalidation; conditional package lists are non-exhaustive reminders, never allowlists permitting reuse after unlisted changes. Freeze feature intake at the planned end minus 4–5 hours; a 12-hour window enters final QA at hour 7–8.",
+  "baseline": {
+    "local_head": "b07c55a952a58f47f1a34835ecd07b712ddad792",
+    "public_main": "197519a297e6d5883dbf75dd3b0d9d55b978cfbc",
+    "working_tree": "active concurrent uncommitted implementation; must be resampled before execution"
+  },
+  "packages": [
+    {
+      "id": "W00",
+      "title": "接收动态工作树与文件所有权",
+      "lane": "integration",
+      "tier": "core",
+      "depends_on": [],
+      "planning_effort_agent_hours": {
+        "min": 0.5,
+        "max": 1
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "刷新GitHub/HEAD/dirty/ignored边界；对正在工作的文件只读接收；记录基线及负责人",
+      "acceptance": "所有后续包有唯一写入边界；既有未提交修改原样保留"
+    },
+    {
+      "id": "W01",
+      "title": "现有录餐、草稿与合成旅程验收",
+      "lane": "product",
+      "tier": "core",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 1,
+        "max": 3
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "复用正在实现的草稿、份量、复用和synthetic journey；补真正遗漏的行为",
+      "acceptance": "新建/编辑/放弃/中断/失败/账户切换/两编辑器竞争一致；不重复保存或继承旧结论"
+    },
+    {
+      "id": "W02",
+      "title": "验证运行器超时、中断与恢复",
+      "lane": "engineering",
+      "tier": "core",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 3
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "扩展run_verify_all，逐gate日志、超时、检查点及来源身份绑定",
+      "acceptance": "超时/缺工具/断进程/无报告不记通过；恢复仅复用输入身份仍一致的gate"
+    },
+    {
+      "id": "W03",
+      "title": "Insights缺失值与时间窗口投影",
+      "lane": "product",
+      "tier": "core",
+      "depends_on": [
+        "W01"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "新增独立投影：已知/未知/真实零、分母、未来记录、双边日期范围；图表回原记录",
+      "acceptance": "独立期望验证边界；自选日期正确；记录修改后刷新；不推出疗效或漏服判断"
+    },
+    {
+      "id": "W04",
+      "title": "Timeline搜索、筛选与定位",
+      "lane": "product",
+      "tier": "core",
+      "depends_on": [
+        "W01"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 3
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "在已有虚拟列表/近邻索引上增加日期、类型、名称、来源筛选",
+      "acceptance": "10k合成记录可筛选定位；编辑/删除/恢复后计数同步；原记录及近邻语义不变"
+    },
+    {
+      "id": "W05",
+      "title": "目录检索基准及实测优化",
+      "lane": "product",
+      "tier": "extension",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "测试多语言别名、来源、辖区及大目录查询；仅优化实际瓶颈",
+      "acceptance": "稳定查询结果；revision改变使缓存失效；不改变科学排序含义"
+    },
+    {
+      "id": "W06",
+      "title": "Care到访前报告的连续工作流",
+      "lane": "product",
+      "tier": "core",
+      "depends_on": [
+        "W01"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "复用讨论、自查、观察选择和handoff；统一显式选择、日期和删敏预览",
+      "acceptance": "agenda/预览/交付语义一致；源或owner变化使预览失效；不静默附带未选记录"
+    },
+    {
+      "id": "W07",
+      "title": "可搜索多语言长报告",
+      "lane": "product",
+      "tier": "extension",
+      "depends_on": [
+        "W06"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "先补HTML语言、方向与阅读顺序，再验证文本PDF方案与字体覆盖",
+      "acceptance": "中英与RTL测试、分页/字体缺失/取消/缓存清理明确；未独立验证不宣称PDF/UA"
+    },
+    {
+      "id": "W08",
+      "title": "当前受限本地恢复的真实持久化验收",
+      "lane": "integration",
+      "tier": "core",
+      "depends_on": [
+        "W00",
+        "W01"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "先验收当前profile/drugs/intakes/meals范围；观察与提醒hold保留",
+      "acceptance": "预览过期拒绝；失败前后状态一致；确认丢失可读回；真实重启后幂等"
+    },
+    {
+      "id": "W09",
+      "title": "观察与Care便携包覆盖及恢复首片",
+      "lane": "integration",
+      "tier": "extension",
+      "depends_on": [
+        "W08"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 4,
+        "max": 7
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "先做覆盖表、版本迁移及no-write往返；再实现单一受支持存储的原子恢复",
+      "acceptance": "旧版不可用不等于空；跨存储不能保证原子性则禁止部分成功；提醒不自动激活"
+    },
+    {
+      "id": "W10",
+      "title": "偏好、档案与药物选择的先落盘后显示",
+      "lane": "integration",
+      "tier": "extension",
+      "depends_on": [
+        "W08"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "复用现有operation ID/CAS/幂等协议，逐个补齐普通mutation域",
+      "acceptance": "失效owner、失败、重试、冷启动一致；失败不能在UI伪装保存成功"
+    },
+    {
+      "id": "W11",
+      "title": "Web多标签冲突与存储可用性",
+      "lane": "integration",
+      "tier": "extension",
+      "depends_on": [
+        "W08",
+        "W10"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "明确多标签写冲突、陈旧提示、刷新与存储配额失败策略",
+      "acceptance": "两个隔离标签的并发/离线/重启用真实存储验收；不夸大底层事务保证"
+    },
+    {
+      "id": "W12",
+      "title": "新增关键流程无障碍与语言工程检查",
+      "lane": "product",
+      "tier": "core",
+      "depends_on": [
+        "W01",
+        "W08"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "复用既有reflow/semantics测试，补新弹层、错误、焦点、窄屏和语言布局",
+      "acceptance": "200%文本/键盘/焦点回归通过；机器语言检查与人工母语/真机读屏明确分开",
+      "conditionally_recheck_after": [
+        "W03",
+        "W04",
+        "W06",
+        "W07",
+        "W09",
+        "W10",
+        "W11"
+      ]
+    },
+    {
+      "id": "W13",
+      "title": "发布版长数据性能基线",
+      "lane": "engineering",
+      "tier": "core",
+      "depends_on": [
+        "W31"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "100/1000/10000条合成数据测启动、搜索、时间线、报告与恢复；选最多两个瓶颈优化",
+      "acceptance": "相同模式/硬件/数据前后对照可追溯；含重复次数和分布；优化后重走受影响旅程",
+      "conditionally_recheck_after": [
+        "W01",
+        "W03",
+        "W04",
+        "W05",
+        "W06",
+        "W07",
+        "W08",
+        "W09",
+        "W10",
+        "W11",
+        "W12",
+        "W14",
+        "W15",
+        "W16",
+        "W18",
+        "W27",
+        "W28",
+        "W32",
+        "W33"
+      ]
+    },
+    {
+      "id": "W14",
+      "title": "重复与冲突营养证据裁决",
+      "lane": "research",
+      "tier": "core",
+      "depends_on": [
+        "W17"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 4,
+        "max": 6
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "承接LOQ/单位修复，处理同营养项的重复来源、冲突数值及可比较条件",
+      "acceptance": "重排输入结果不变；真重复可合并；不兼容证据保留冲突；缺失与测量零不混淆"
+    },
+    {
+      "id": "W15",
+      "title": "多产品SPL分段与证据归属",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W17"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 4,
+        "max": 6
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "在已有版本/成分证据处理上按产品分离route/form/ingredient/section",
+      "acceptance": "同文档不同产品不串联；歧义明确hold；标签强度不变成实际服用量"
+    },
+    {
+      "id": "W16",
+      "title": "候选目录与跨表一致性快照",
+      "lane": "research",
+      "tier": "core",
+      "depends_on": [
+        "W08",
+        "W14"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "冻结食物、成分、份量、来源的候选集合，检测孤立引用和目录版本变化",
+      "acceptance": "同snapshot回放一致；悬空/跨版本引用不进入可用候选；变化影响可枚举"
+    },
+    {
+      "id": "W17",
+      "title": "小型公开来源语料独立核对",
+      "lane": "research",
+      "tier": "core",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "选少量合法公开FDC/SPL片段，保存出处和内容身份；期望与生产实现独立",
+      "acceptance": "手工/独立oracle期望可追溯；覆盖数值/缺失/歧义；合成语料与真实公开来源分开"
+    },
+    {
+      "id": "W18",
+      "title": "份量与匹配替代的联合情景不确定性",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W16",
+        "W17"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "扩展现有protein/fiber有限枚举到合法份量与匹配替代组合，声明相关性",
+      "acceptance": "合法组合上界明确；稳定/不稳定排序可回放；不生成概率或临床置信度"
+    },
+    {
+      "id": "W19",
+      "title": "启发式参数敏感性与排序稳定性实验",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W16",
+        "W17"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 4,
+        "max": 6
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "冻结权重/阈值研究网格与输入，比较top-k变化、并列与不充分上下文",
+      "acceptance": "不改变生产默认参数；报告输入域和反例；参数稳定不等于临床正确"
+    },
+    {
+      "id": "W20",
+      "title": "扩展已有高精度数值参考的适用域",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "复用现有Node BigInt高精度oracle，扩大参数域、极限与退化条件",
+      "acceptance": "误差阈值预定；独立reference与生产公式不是相互调用；记录最坏误差与失败例"
+    },
+    {
+      "id": "W21",
+      "title": "胃模型可辨识性与采样设计实验",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W20"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 5,
+        "max": 7
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "限定两类既有shadow model，用合成已知参数研究采样时间/噪声与参数混淆",
+      "acceptance": "先冻结问题/种子/边界；报告不可辨识与失败拟合；不得解除真实校准HOLD"
+    },
+    {
+      "id": "W22",
+      "title": "变形关系独立贡献与语义分支覆盖",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W16",
+        "W20"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "测relation边际检出/误报、生成器drift和最小反例，区分不同semantic branches",
+      "acceptance": "新测试必须检出具体缺陷；变异存活显式报告；不把descriptor数量当路径覆盖"
+    },
+    {
+      "id": "W23",
+      "title": "三个结果sink的有界依赖切片",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 4,
+        "max": 6
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "在已修root核对上选明确sink，导出有限局部依赖和未解析边",
+      "acceptance": "精确声明sink和语言子集；callback/dispatch/platform未解析仍hold；不宣称完整闭包"
+    },
+    {
+      "id": "W24",
+      "title": "时间规则版本与DST回放",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W01"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 4,
+        "max": 6
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "测试不存在/重复本地时间、zone改变、时钟回拨与版本元数据",
+      "acceptance": "UTC事实与本地显示分开；缺timezone证据不补猜；模拟回放不等于真机时区验收"
+    },
+    {
+      "id": "W25",
+      "title": "Replay迁移、差异fuzz与语料最小化",
+      "lane": "research",
+      "tier": "core",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "先接收当前限制/异常测试；仅扩展未覆盖跨运行时差异、版本迁移和持久反例",
+      "acceptance": "有界seed/budget；未来版本/重复成员/深度/损坏均明确拒绝；保存最小失败样例"
+    },
+    {
+      "id": "W26",
+      "title": "证据候选比较与历史回执持久化",
+      "lane": "research",
+      "tier": "extension",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "复用正在实现的候选panel/comparison，补审阅前后状态和历史快照",
+      "acceptance": "网络失败不提升证据；旧结果引用旧snapshot；候选更新不自动改运行时规则"
+    },
+    {
+      "id": "W27",
+      "title": "派生结果失效与来源关联",
+      "lane": "integration",
+      "tier": "extension",
+      "depends_on": [
+        "W08",
+        "W16"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 2,
+        "max": 4
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "枚举餐/来源/规则/owner变更对解释、报告、预览的失效关系",
+      "acceptance": "旧artifact清楚标记失效；误用旧结果的负例失败；不会删除原始记录"
+    },
+    {
+      "id": "W28",
+      "title": "小批次依赖与工具链身份核对",
+      "lane": "engineering",
+      "tier": "core",
+      "depends_on": [
+        "W00"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 1.5,
+        "max": 3
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "接收当前lockfile修复；逐批复核兼容性与隐私影响，重建绑定证据",
+      "acceptance": "开发/生产告警分开；不以更新hash替代审查；目标变更检查通过"
+    },
+    {
+      "id": "W29",
+      "title": "CI分层及重复完整测试收敛",
+      "lane": "engineering",
+      "tier": "extension",
+      "depends_on": [
+        "W02",
+        "W28"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 1,
+        "max": 2
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "快速检查/完整回归/构建分层，审阅重复suite；保留受保护检查身份",
+      "acceptance": "未失去既有gate/negative/golden；缓存命中不得伪装新测试；workflow可审阅"
+    },
+    {
+      "id": "W30",
+      "title": "扩展当前交付证据索引",
+      "lane": "engineering",
+      "tier": "core",
+      "depends_on": [
+        "W02",
+        "W28"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 1.5,
+        "max": 3
+      },
+      "observed_baseline": "existing_inflight",
+      "status": "proposed",
+      "scope": "继续使用generate_upgrade_delivery_index，补源码、工具、报告、参数与产物身份",
+      "acceptance": "任一绑定改变使相关旧结果失效；缺证据可见；无个人记录或private日志公开"
+    },
+    {
+      "id": "W31",
+      "title": "正式入口与真实存储的发布版旅程",
+      "lane": "engineering",
+      "tier": "core",
+      "depends_on": [
+        "W01",
+        "W08",
+        "W30"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 4
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "独立release Web与隔离浏览器，记录/修改/关闭重开/恢复/报告/重置",
+      "acceptance": "不用ephemeral仓库替代持久化；artifact身份一致；冷启动和失败恢复有证据",
+      "conditionally_recheck_after": [
+        "W03",
+        "W04",
+        "W05",
+        "W06",
+        "W07",
+        "W09",
+        "W10",
+        "W11",
+        "W12",
+        "W27",
+        "W13"
+      ]
+    },
+    {
+      "id": "W32",
+      "title": "Android工具链和通知有限验收",
+      "lane": "engineering",
+      "tier": "extension",
+      "depends_on": [
+        "W28",
+        "W31"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "先核实现有版本，再按官方兼容表决定必要升级；单独构建窗口",
+      "acceptance": "构建/manifest/受支持旅程通过；模拟器登记与可见送达/真机分开"
+    },
+    {
+      "id": "W33",
+      "title": "Apple包管理与生命周期迁移",
+      "lane": "engineering",
+      "tier": "extension",
+      "depends_on": [
+        "W28",
+        "W31"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 6
+      },
+      "observed_baseline": "extend_existing",
+      "status": "proposed",
+      "scope": "先确认插件SwiftPM能力，再分开处理包管理和UIScene生命周期",
+      "acceptance": "干净构建/冷启动/恢复/重复激活通过；外部插件未支持不强移除旧路径"
+    },
+    {
+      "id": "W34",
+      "title": "冻结候选、完整验收与交接",
+      "lane": "integration",
+      "tier": "core",
+      "depends_on": [
+        "W12",
+        "W13",
+        "W31"
+      ],
+      "planning_effort_agent_hours": {
+        "min": 3,
+        "max": 5
+      },
+      "observed_baseline": "new_slice",
+      "status": "proposed",
+      "scope": "停止加功能，整合实际完成包、重建绑定报告、完整suite/build/browser及证据；验收范围仅含本窗口实际接纳的工作包，未完core包保留后续",
+      "acceptance": "所有宣称完成的包有当前身份的证据；未完成/受阻单列；不因时长到了宣称全部完成",
+      "conditionally_recheck_after": [
+        "W01",
+        "W03",
+        "W04",
+        "W05",
+        "W06",
+        "W07",
+        "W08",
+        "W09",
+        "W10",
+        "W11",
+        "W12",
+        "W13",
+        "W14",
+        "W15",
+        "W16",
+        "W17",
+        "W18",
+        "W19",
+        "W20",
+        "W21",
+        "W22",
+        "W23",
+        "W24",
+        "W25",
+        "W26",
+        "W27",
+        "W28",
+        "W29",
+        "W30",
+        "W31",
+        "W32",
+        "W33"
+      ]
+    }
+  ]
+}

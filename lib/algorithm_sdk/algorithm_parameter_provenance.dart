@@ -1074,13 +1074,14 @@ final class AlgorithmParameterProvenanceManifest {
         algorithmIds: const ['protein_trend'],
         displayName: 'Protein-trend time, value, ordering and mean contract',
         semanticId: 'analytics.protein_trend.aggregation_contract',
-        formulaId: 'protein-trend.effective-time-series-and-mean/1',
+        formulaId:
+            'protein-trend.complete-meal-effective-time-series-and-mean/2',
         originalUnit: 'canonical_json',
         canonicalUnit: 'canonical_json',
         originalValue: GetProteinTrendUseCase.configurationIdentity,
         canonicalValue: GetProteinTrendUseCase.configurationIdentity,
         supportedDomain: AlgorithmParameterSupport.schema(
-          'parkinsum.protein-trend-aggregation/1',
+          'parkinsum.protein-trend-aggregation/2',
         ),
         transformId: 'identity-json/1',
         provenanceStatus: AlgorithmParameterProvenanceStatus.prototypeHeuristic,

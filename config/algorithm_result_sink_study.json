@@ -1,0 +1,11 @@
+{
+  "protocol": "bounded-result-sink-study-v1",
+  "sink_scope": "Named method return computation and accepted direct call dependencies; no backward dataflow or complete closure claim",
+  "budgets": {"maximum_depth": 4, "maximum_declarations": 2000, "maximum_edges": 20000},
+  "sinks": [
+    {"id": "meal_conflict_score", "declaration": "package:parkinsum_companion/domain/usecases/database_backed_meal_check_usecase.dart#CLASS:_MealConflictScoringModel/METHOD:score", "result": "_MealConflictScoreResult.score and factors"},
+    {"id": "food_recommendation_ranking", "declaration": "package:parkinsum_companion/domain/usecases/get_food_recommendations_usecase.dart#CLASS:GetFoodRecommendationsUseCase/METHOD:call", "result": "List<FoodRecommendation> including bounded score and feature snapshot"},
+    {"id": "known_protein_mean", "declaration": "package:parkinsum_companion/domain/usecases/get_protein_trend_usecase.dart#CLASS:GetProteinTrendUseCase/METHOD:knownAverageProtein", "result": "double? known mean with missing input exclusion"}
+  ],
+  "unsupported": ["open-world dispatch target completeness", "callback invocation completeness", "dynamic calls", "platform and plugin implementation closure", "property/index read and write dataflow", "arbitrary external repository writes", "semantic branch execution coverage"]
+}

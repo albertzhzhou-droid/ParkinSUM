@@ -11,6 +11,7 @@ import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/medication_product_pack.dart';
 import '../../core/models/user_profile.dart';
+import '../../core/models/portable_data_restore.dart';
 import '../../core/constants/profile_options.dart';
 import '../../core/services/reminder_notification_privacy_policy.dart';
 import '../entities/dose_expression.dart';
@@ -23,6 +24,7 @@ import '../entities/user_logging_reminder.dart';
 import 'administration_dose_confirmation_coordinator.dart';
 import 'dosage_note_parser.dart';
 import 'portable_schema_migration_registry.dart';
+import 'portable_data_compact_transport_service.dart';
 
 const userPortableDataPackageFormat = 'parkinsum_user_portable_data_package';
 const userPortableDataPackageSchemaVersion = 4;
@@ -37,6 +39,31 @@ const userPortableDataMaxNumberTokenChars = 128;
 const userPortableDataMaxMapFields = 128;
 const userPortableDataMaxJsonNodes = 500000;
 const userPortableDataMaxTotalRecords = 185000;
+
+/// Shared strict lexical/structural reader for local portable envelopes.
+/// Reuses the production limits, including escaped duplicate-member checks;
+/// it performs no package semantic validation or persistence.
+Object? decodeBoundedPortableJson(
+  String source, {
+  int maxBytes = userPortableDataMaxPackageBytes,
+}) {
+  if (maxBytes <= 0 ||
+      maxBytes > userPortableDataMaxPackageBytes ||
+      source.length > maxBytes ||
+      utf8.encode(source).length > maxBytes) {
+    throw const FormatException('portable_json_byte_budget_exceeded');
+  }
+  final lexical = UserPortableDataPackageService._jsonLexicalBudgetFinding(
+    source,
+  );
+  if (lexical != null) throw FormatException(lexical);
+  final decoded = jsonDecode(source);
+  final structural = UserPortableDataPackageService._decodedBudgetFinding(
+    decoded,
+  );
+  if (structural != null) throw FormatException(structural);
+  return decoded;
+}
 
 const Set<String> _userPortableDataScopeKinds = <String>{
   'firebase_authenticated_account',
@@ -289,6 +316,7 @@ class UserPortableDataPackageService {
   UserPortableDataPackageArtifact create({
     required UserPortableDataSnapshot snapshot,
     required DateTime generatedAt,
+    bool preferCompactTransport = false,
   }) {
     if (maxPackageBytes <= 0) {
       throw StateError('Portable package byte budget must be positive.');
@@ -417,21 +445,24 @@ class UserPortableDataPackageService {
       );
     }
 
-    final fileSummaries = <UserPortableDataFileSummary>[
-      for (final path in userPortableDataFilePaths)
-        UserPortableDataFileSummary(
-          path: path,
-          sha256: _sha256(_canonicalJson(files[path])),
-          recordCount: _recordCount(files[path]),
-        ),
+    // A SHA-256 hex digest always occupies one 64-byte string node. Use that
+    // exact budget shape until the final wire representation is selected, so
+    // compact exports do not hash and then discard the expanded schema-4 files.
+    const pendingSha256 =
+        '0000000000000000000000000000000000000000000000000000000000000000';
+    var outputFiles = files;
+    var outputSchemaVersion = userPortableDataPackageSchemaVersion;
+    var outputFilePaths = userPortableDataFilePaths;
+    List<Object?> budgetFileSummaries() => <Object?>[
+      for (final path in outputFilePaths)
+        <String, Object?>{
+          'path': path,
+          'sha256': pendingSha256,
+          'recordCount': _recordCount(outputFiles[path]),
+        },
     ];
-    final contentSha256 = _sha256(_canonicalJson(files));
-    final packageId = _sha256(
-      'parkinsum-portable-package-v$userPortableDataPackageSchemaVersion|'
-      '$ownerScopeSha256|$contentSha256',
-    );
     final manifest = <String, Object?>{
-      'packageId': packageId,
+      'packageId': pendingSha256,
       'createdAt': generatedUtc.toIso8601String(),
       'producer': 'parkinsum_companion',
       'ownerScope': <String, Object?>{
@@ -444,17 +475,10 @@ class UserPortableDataPackageService {
       'integrity': <String, Object?>{
         'algorithm': 'SHA-256',
         'canonicalization': userPortableDataCanonicalization,
-        'contentSha256': contentSha256,
+        'contentSha256': pendingSha256,
         'signatureStatus': 'unsigned',
       },
-      'files': <Object?>[
-        for (final file in fileSummaries)
-          <String, Object?>{
-            'path': file.path,
-            'sha256': file.sha256,
-            'recordCount': file.recordCount,
-          },
-      ],
+      'files': budgetFileSummaries(),
       'privacyBoundary': <String, Object?>{
         'encryption': 'none',
         'containsSensitiveUserData': true,
@@ -471,10 +495,49 @@ class UserPortableDataPackageService {
       'files': files,
     };
     _validateJsonValue(document, r'$');
-    final outputBudgetFinding = _decodedBudgetFinding(document);
+    var outputBudgetFinding = _decodedBudgetFinding(document);
+    // Preserve the existing schema-4 bytes for ordinary packages. Only its
+    // node-capacity refusal authorizes the schema-defined compact encoding;
+    // strings, depth, fields and all other guards still fail closed.
+    if (preferCompactTransport ||
+        outputBudgetFinding ==
+            'The package exceeds the $userPortableDataMaxJsonNodes-node JSON budget.') {
+      outputFiles = PortableDataCompactTransportService.encode(files);
+      outputSchemaVersion = userPortableDataCompactSchemaVersion;
+      outputFilePaths = PortableSchemaMigrationRegistry.filePathsForVersion(
+        outputSchemaVersion,
+      );
+      manifest['files'] = budgetFileSummaries();
+      document['schemaVersion'] = outputSchemaVersion;
+      document['files'] = outputFiles;
+      outputBudgetFinding = _decodedBudgetFinding(document);
+    }
     if (outputBudgetFinding != null) {
       throw FormatException(outputBudgetFinding);
     }
+    final fileSummaries = <UserPortableDataFileSummary>[
+      for (final path in outputFilePaths)
+        UserPortableDataFileSummary(
+          path: path,
+          sha256: _sha256(_canonicalJson(outputFiles[path])),
+          recordCount: _recordCount(outputFiles[path]),
+        ),
+    ];
+    final contentSha256 = _sha256(_canonicalJson(outputFiles));
+    final packageId = _sha256(
+      'parkinsum-portable-package-v$outputSchemaVersion|'
+      '$ownerScopeSha256|$contentSha256',
+    );
+    manifest['packageId'] = packageId;
+    (manifest['integrity'] as Map)['contentSha256'] = contentSha256;
+    manifest['files'] = <Object?>[
+      for (final file in fileSummaries)
+        <String, Object?>{
+          'path': file.path,
+          'sha256': file.sha256,
+          'recordCount': file.recordCount,
+        },
+    ];
     final sortedDocument = _sortJson(document) as Map<String, Object?>;
     final canonicalJson = jsonEncode(sortedDocument);
     final prettyJson = const JsonEncoder.withIndent(
@@ -583,6 +646,7 @@ class UserPortableDataPackageService {
       schemaVersion = rawVersion is int ? rawVersion : null;
       if (schemaVersion == null ||
           schemaVersion != userPortableDataPackageSchemaVersion &&
+              schemaVersion != userPortableDataCompactSchemaVersion &&
               !userPortableDataLegacyReadableVersions.contains(schemaVersion)) {
         findings.add(
           schemaVersion == null
@@ -837,15 +901,21 @@ class UserPortableDataPackageService {
         }
       }
 
+      // Wire integrity is verified above. The additional expansion guard
+      // counts every reference before constructing shallow semantic views.
+      final semanticFiles =
+          schemaVersion == userPortableDataCompactSchemaVersion
+          ? PortableDataCompactTransportService.resolve(files).files
+          : files;
       _validateKnownFileShapes(
-        files,
+        semanticFiles,
         findings,
         unsupportedFields,
         schemaVersion: schemaVersion,
         doseOwnerScope: expectedDoseOwnerScope,
         observedAt: DateTime.parse(manifest['createdAt'] as String),
       );
-      _validateKnownIdentifiers(files, findings);
+      _validateKnownIdentifiers(semanticFiles, findings);
       if (findings.isNotEmpty) {
         return result(UserPortableDataPreviewStatus.corrupt);
       }
@@ -977,6 +1047,173 @@ class UserPortableDataPackageService {
       },
     });
     return _previewFromTransfer(raw);
+  }
+
+  /// Current-schema Web restore projection. The semantic re-export must match
+  /// every source file before any persistence capability may accept it.
+  /// Cross-store reminders and observations deliberately have no partial path.
+  PortableDataRestorePayload prepareLocalRestore({
+    required String packageJson,
+    required String currentUserScope,
+    required String currentDoseOwnerScope,
+    required String currentScopeKind,
+    required PortableDataRestoreState currentState,
+    required Iterable<FoodItem> foodCatalog,
+    required Iterable<DrugDefinition> medicationCatalog,
+  }) {
+    if (currentScopeKind != 'local_device_account') {
+      throw StateError('portable_restore_local_owner_required');
+    }
+    final currentProfile = currentState.profile;
+    if (currentProfile.patientId != currentDoseOwnerScope &&
+        (currentProfile.patientId != 'local_user' ||
+            currentState.recordIds.values.any((ids) => ids.isNotEmpty))) {
+      throw StateError('portable_restore_persisted_owner_mismatch');
+    }
+    final preview = inspect(
+      packageJson: packageJson,
+      currentUserScope: currentUserScope,
+      currentDoseOwnerScope: currentDoseOwnerScope,
+      currentScopeKind: currentScopeKind,
+      existingRecordIds: currentState.recordIds,
+    );
+    if (preview.status != UserPortableDataPreviewStatus.ready ||
+        (preview.schemaVersion != userPortableDataPackageSchemaVersion &&
+            preview.schemaVersion != userPortableDataCompactSchemaVersion) ||
+        preview.conflictCount != 0) {
+      throw StateError('portable_restore_package_or_record_conflict');
+    }
+    final root = Map<String, Object?>.from(jsonDecode(packageJson) as Map);
+    final wireFiles = Map<String, Object?>.from(root['files'] as Map);
+    final files = root['schemaVersion'] == userPortableDataCompactSchemaVersion
+        ? PortableDataCompactTransportService.resolve(wireFiles).files
+        : wireFiles;
+    if ((files['reminders.json'] as List).isNotEmpty ||
+        ((files['observations.json'] as Map)['records'] as List).isNotEmpty) {
+      throw StateError('portable_restore_cross_store_records_held');
+    }
+    final profile = Map<String, Object?>.from(files['profile.json'] as Map);
+    final preferences = Map<String, Object?>.from(
+      files['preferences.json'] as Map,
+    );
+    final localAi = Map<String, Object?>.from(preferences['localAi'] as Map);
+    // Current-device grants, consent receipts, endpoints, and raw identity are
+    // retained. An exported source boolean cannot authorize a target feature.
+    final restoredProfile = UserProfile.fromJson({
+      ...currentProfile.toJson(),
+      'patientId': currentDoseOwnerScope,
+      'registrationRegion': profile['registrationRegion'],
+      'displayLocale': profile['displayLocale'],
+      'dietProfileRegion': profile['dietProfileRegion'],
+      'timezone': profile['timezone'],
+      'contentJurisdictionOverride': preferences['contentJurisdictionOverride'],
+      'swallowingTextureMode': preferences['swallowingTextureMode'],
+      'localAiProviderPreference': localAi['providerPreference'],
+      'localAiModel': localAi['generalModel'],
+      'localAiMedicalModel': localAi['medicalReviewModel'],
+      'localAiTimeoutMs': localAi['timeoutMs'],
+    });
+    final intakes = (files['intakes.json'] as List)
+        .map((raw) {
+          final intake = _portableIntakeFromRow(
+            Map<String, Object?>.from(raw as Map),
+          );
+          // Exercise the actual persistence reader, including its conservative
+          // normalization. A literal zero or quarantined digest must not be lost.
+          return Intake.fromJson(Map<String, dynamic>.from(intake.toJson()));
+        })
+        .toList(growable: false);
+    final meals = (files['meals.json'] as List)
+        .map((raw) {
+          final row = raw as Map;
+          final time = row['time'] as Map;
+          final context = row['context'] as Map;
+          return Meal.fromJson({
+            'id': row['id'],
+            'title': row['title'],
+            ...Map<String, dynamic>.from(time)
+              ..remove('source')
+              ..remove('precision'),
+            'timeSource': time['source'],
+            'timePrecision': time['precision'],
+            ...Map<String, dynamic>.from(context),
+            'items': [
+              for (final rawItem in row['items'] as List)
+                () {
+                  final item = rawItem as Map;
+                  final nutrients = item['nutrientsPer100g'] as Map;
+                  return <String, dynamic>{
+                    'foodId': item['foodId'],
+                    'foodName': item['foodName'],
+                    'foodCategory': item['foodCategory'],
+                    'quantityFactor':
+                        (item['quantity'] as Map)['factorPer100g'],
+                    'foodTags': item['foodTags'],
+                    if (nutrients.values.any(
+                      (raw) => (raw as Map)['missing'] == true,
+                    ))
+                      'missingNutrientFields': [
+                        for (final entry in const {
+                          'protein': 'proteinG',
+                          'carbs': 'carbsG',
+                          'fat': 'fatG',
+                          'fiber': 'fiberG',
+                          'sodium': 'sodiumMg',
+                        }.entries)
+                          if ((nutrients[entry.key] as Map)['missing'] == true)
+                            entry.value,
+                      ],
+                    for (final entry in const {
+                      'protein': 'proteinPer100g',
+                      'carbs': 'carbsPer100g',
+                      'fat': 'fatPer100g',
+                      'fiber': 'fiberPer100g',
+                      'sodium': 'sodiumPer100g',
+                    }.entries)
+                      entry.value:
+                          (nutrients[entry.key]
+                              as Map)['rawCompatibilityValue'],
+                  };
+                }(),
+            ],
+          });
+        })
+        .toList(growable: false);
+    final activeIds = (files['medication_selections.json'] as List)
+        .where((raw) => (raw as Map)['activeAtExport'] == true)
+        .map((raw) => (raw as Map)['id'] as String)
+        .toList(growable: false);
+    final generatedAt = DateTime.parse(
+      (root['manifest'] as Map)['createdAt'] as String,
+    );
+    final reexport = create(
+      snapshot: UserPortableDataSnapshot(
+        userScope: currentUserScope,
+        doseOwnerScope: currentDoseOwnerScope,
+        scopeKind: currentScopeKind,
+        profile: restoredProfile,
+        activeDrugIds: activeIds,
+        intakes: intakes,
+        meals: meals,
+        medicationCatalog: medicationCatalog,
+        foodCatalog: foodCatalog,
+        reminders: const [],
+      ),
+      generatedAt: generatedAt,
+      preferCompactTransport:
+          root['schemaVersion'] == userPortableDataCompactSchemaVersion,
+    );
+    final reexportFiles = reexport.document['files'];
+    if (portableRestoreCanonicalJson(reexportFiles) !=
+        portableRestoreCanonicalJson(wireFiles)) {
+      throw StateError('portable_restore_lossless_projection_held');
+    }
+    return PortableDataRestorePayload(
+      profile: restoredProfile,
+      activeDrugIds: activeIds,
+      intakes: intakes,
+      meals: meals,
+    );
   }
 
   static Map<String, Object?> _profile(UserProfile profile) =>
@@ -1218,16 +1455,20 @@ class UserPortableDataPackageService {
       double rawCompatibilityValue,
       String unit,
     ) {
-      final explicitlyMissing = food?.isNutrientMissing(field);
+      // The captured meal snapshot remains unknown even if a later catalogue
+      // supplies a value. A missing catalogue cannot erase a captured marker.
+      final explicitlyMissing = item.isNutrientMissing(field)
+          ? true
+          : food?.isNutrientMissing(field);
       return <String, Object?>{
         'value': explicitlyMissing == true ? null : rawCompatibilityValue,
         'unit': unit,
         'missing': explicitlyMissing,
         'rawCompatibilityValue': rawCompatibilityValue,
-        'status': food == null
-            ? 'legacy_snapshot_missingness_unavailable'
-            : explicitlyMissing == true
+        'status': explicitlyMissing == true
             ? 'source_missing_not_zero'
+            : food == null
+            ? 'legacy_snapshot_missingness_unavailable'
             : 'catalog_snapshot_value',
       };
     }
@@ -3716,7 +3957,8 @@ class UserPortableDataPackageService {
       }
       for (final nutrient
           in nutrientMaps.values.whereType<Map<String, Object?>>()) {
-        if (nutrient['status'] != 'legacy_snapshot_missingness_unavailable') {
+        if (nutrient['status'] != 'legacy_snapshot_missingness_unavailable' &&
+            nutrient['status'] != 'source_missing_not_zero') {
           _invalid(findings, '$path.nutrientsPer100g');
           break;
         }
@@ -3814,10 +4056,12 @@ class UserPortableDataPackageService {
         final nutrient = nutrientMaps[entry.key];
         if (nutrient == null) continue;
         final shouldBeMissing = missing.contains(entry.value);
-        if (shouldBeMissing != (nutrient['missing'] == true) ||
+        final snapshotMissing = nutrient['missing'] == true;
+        if ((shouldBeMissing && !snapshotMissing) ||
             (shouldBeMissing &&
                 nutrient['status'] != 'source_missing_not_zero') ||
             (!shouldBeMissing &&
+                !snapshotMissing &&
                 nutrient['status'] != 'catalog_snapshot_value')) {
           _invalid(findings, '$path.nutrientsPer100g.${entry.key}.missing');
         }
@@ -4963,11 +5207,16 @@ class _PortableJsonPreflightParser {
     final tokenStart = _index;
     _expect(0x22);
     var sourceBytes = 0;
+    var hasEscapes = false;
     while (_index < source.length) {
       final unit = source.codeUnitAt(_index);
       if (unit == 0x22) {
         _index += 1;
         if (!decode) return null;
+        // The scan has already checked every character, Unicode scalar and
+        // string-byte limit. An unescaped key is its literal source slice;
+        // escaped keys still use JSON decoding before duplicate detection.
+        if (!hasEscapes) return source.substring(tokenStart + 1, _index - 1);
         try {
           final decoded = jsonDecode(source.substring(tokenStart, _index));
           if (decoded is! String) _syntaxFailure();
@@ -4978,6 +5227,7 @@ class _PortableJsonPreflightParser {
       }
       if (unit < 0x20) _syntaxFailure();
       if (unit == 0x5c) {
+        hasEscapes = true;
         sourceBytes += 1;
         _index += 1;
         if (_index >= source.length) _syntaxFailure();

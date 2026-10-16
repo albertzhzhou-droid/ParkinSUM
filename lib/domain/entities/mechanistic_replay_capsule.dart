@@ -23,6 +23,12 @@ const String mechanisticReplayCrossRuntimeConformanceSchema =
     'parkinsum.mechanistic-replay-cross-runtime-conformance/1';
 const int mechanisticReplayCrossRuntimeConformanceSchemaVersion = 1;
 
+/// Transport limits, independent of numeric/profile schema. These are checked
+/// before decoding so duplicate members cannot disappear via last-value-wins.
+const int mechanisticReplayMaxJsonBytes = 2 * 1024 * 1024;
+const int mechanisticReplayMaxJsonContainerDepth = 32;
+const int mechanisticReplayArchiveMaxJsonBytes = 16 * 1024 * 1024;
+
 const String _numberMarker = r'$parkinsum_number';
 const int _maxSafeInteger = 9007199254740991;
 
@@ -165,6 +171,16 @@ final class MechanisticReplayCapsule {
       throw const FormatException('Replay capsule digest mismatch.');
     }
     return capsule;
+  }
+
+  /// The raw serialized input boundary. Callers receiving bytes/text must use
+  /// this entry point; fromJson is for already structured trusted input only.
+  factory MechanisticReplayCapsule.fromJsonString(String raw) {
+    _checkReplayJsonTransport(raw);
+    final decoded = jsonDecode(raw);
+    return MechanisticReplayCapsule.fromJson(
+      _asObjectMap(decoded, 'replay capsule'),
+    );
   }
 
   Map<String, Object?> _bodyJson() => <String, Object?>{
@@ -932,4 +948,79 @@ String _canonicalJson(Object? value) {
     return jsonEncode(value);
   }
   throw ArgumentError('Unsupported canonical JSON value: ${value.runtimeType}');
+}
+
+/// Legacy local archives contain an array of capsule objects. Check the whole
+/// raw text before decoding so member collisions cannot disappear in the
+/// archive's initial JSON parse. Each capsule also retains its own limits.
+List<MechanisticReplayCapsule> mechanisticReplayCapsulesFromJsonString(
+  String raw,
+) {
+  _checkReplayJsonTransport(
+    raw,
+    maxBytes: mechanisticReplayArchiveMaxJsonBytes,
+    maxContainerDepth: mechanisticReplayMaxJsonContainerDepth + 1,
+  );
+  final decoded = jsonDecode(raw);
+  if (decoded is! List) {
+    throw const FormatException('Stored replay capsule set is malformed.');
+  }
+  return decoded
+      .map(
+        (value) => MechanisticReplayCapsule.fromJsonString(jsonEncode(value)),
+      )
+      .toList(growable: false);
+}
+
+void _checkReplayJsonTransport(
+  String raw, {
+  int maxBytes = mechanisticReplayMaxJsonBytes,
+  int maxContainerDepth = mechanisticReplayMaxJsonContainerDepth,
+}) {
+  if (raw.length > maxBytes || utf8.encode(raw).length > maxBytes) {
+    throw const FormatException('replay_json_byte_limit');
+  }
+  final members = <Set<String>?>[];
+  final expectingKey = <bool>[];
+  for (var index = 0; index < raw.length; index++) {
+    final code = raw.codeUnitAt(index);
+    if (code == 34) {
+      final start = index;
+      var closed = false;
+      while (++index < raw.length) {
+        if (raw.codeUnitAt(index) == 92) {
+          index++;
+        } else if (raw.codeUnitAt(index) == 34) {
+          closed = true;
+          break;
+        }
+      }
+      if (!closed) throw const FormatException('replay_json_unclosed_string');
+      if (members.isNotEmpty && expectingKey.last) {
+        final key = jsonDecode(raw.substring(start, index + 1));
+        if (key is! String || !members.last!.add(key)) {
+          throw const FormatException('replay_json_duplicate_member');
+        }
+        expectingKey[expectingKey.length - 1] = false;
+      }
+    } else if (code == 123 || code == 91) {
+      members.add(code == 123 ? <String>{} : null);
+      expectingKey.add(code == 123);
+      if (members.length > maxContainerDepth) {
+        throw const FormatException('replay_json_depth_limit');
+      }
+    } else if (code == 125 || code == 93) {
+      if (members.isEmpty || (code == 125) != (members.last != null)) {
+        throw const FormatException('replay_json_container_mismatch');
+      }
+      members.removeLast();
+      expectingKey.removeLast();
+    } else if (code == 44 && members.isNotEmpty && members.last != null) {
+      expectingKey[expectingKey.length - 1] = true;
+    }
+  }
+  if (members.isNotEmpty) {
+    throw const FormatException('replay_json_unclosed_container');
+  }
+  // Grammar validation remains with jsonDecode, after the bounded scan.
 }

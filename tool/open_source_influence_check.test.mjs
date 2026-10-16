@@ -67,13 +67,13 @@ test('committed inventory covers every documented influence and release path', (
   assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
   assert.equal(inventory.$schema, 'https://parkinsum.app/schemas/open-source-influence-inventory/v7');
   assert.equal(inventory.schemaVersion, 7);
-  assert.equal(inventory.influences.length, 99);
+  assert.equal(inventory.influences.length, 102);
   assert.equal(inventory.influences.filter((entry) => entry.transferStatus === 'concept_only').length, 89);
   assert.equal(inventory.releaseBoundary.developmentToolInfluenceIds.length, 5);
   assert.ok(inventory.influences.every((entry) => Array.isArray(entry.artifactLicenseEvidence)));
   assert.equal(
     inventory.influences.filter((entry) => entry.licenseStatus === 'unresolved').length,
-    15,
+    14,
   );
   assert.equal(inventory.review.legalApproval, 'not_requested_no_release_distribution');
   assert.ok(!inventory.discovery.excludedRepositories.includes(
@@ -87,8 +87,8 @@ test('committed inventory covers every documented influence and release path', (
   const assetLicenseHolds = inventory.influences.flatMap((entry) =>
     entry.artifactLicenseEvidence.map((evidence) => ({ entry, evidence })),
   );
-  assert.equal(assetLicenseHolds.length, 60);
-  assert.equal(new Set(assetLicenseHolds.map(({ entry }) => entry.id)).size, 38);
+  assert.equal(assetLicenseHolds.length, 61);
+  assert.equal(new Set(assetLicenseHolds.map(({ entry }) => entry.id)).size, 39);
   assert.equal(assetLicenseHolds.filter(({ evidence }) => evidence.licenseStatus === 'unresolved').length, 58);
   assert.ok(assetLicenseHolds.filter(({ evidence }) => evidence.licenseStatus === 'unresolved').every(({ evidence }) =>
     evidence.licenseStatus === 'unresolved' &&
@@ -106,7 +106,7 @@ test('committed inventory covers every documented influence and release path', (
     observed.sourceRepositories.filter((repository) =>
       repository.startsWith('github.com/'),
     ).length,
-    96,
+    99,
   );
   assert.equal(
     observed.sourceRepositories.filter((repository) =>
@@ -574,7 +574,7 @@ test('committed inventory covers every documented influence and release path', (
     inventory.influences
       .filter((entry) => ['copied', 'derived', 'linked', 'vendored'].includes(entry.transferStatus))
       .map((entry) => entry.id),
-    ['adobe_source_serif_font_assets', 'flutter_framework', 'flutter_local_notifications', 'share_plus', 'vercel_geist_font_assets'],
+    ['adobe_source_serif_font_assets', 'dart_pdf_printing', 'flutter_framework', 'flutter_local_notifications', 'flutter_packages_shared_preferences', 'google_fonts_collection_reference', 'share_plus', 'vercel_geist_font_assets'],
   );
   assert.deepEqual(
     inventory.releaseBoundary.developmentToolInfluenceIds,
@@ -582,8 +582,35 @@ test('committed inventory covers every documented influence and release path', (
   );
   assert.deepEqual(
     Object.keys(inventory.releaseBoundary.linkedVersionEvidence),
-    ['flutter_framework', 'flutter_local_notifications', 'share_plus', 'adobe_source_serif_font_assets', 'vercel_geist_font_assets', 'cqframework_cql_exec_fhir_reference', 'cqframework_cql_execution_reference', 'cqframework_cql_reference', 'google_cql_engine_reference', 'google_fhir_go_reference'],
+    ['flutter_framework', 'flutter_local_notifications', 'share_plus', 'adobe_source_serif_font_assets', 'vercel_geist_font_assets', 'cqframework_cql_exec_fhir_reference', 'cqframework_cql_execution_reference', 'cqframework_cql_reference', 'google_cql_engine_reference', 'google_fhir_go_reference', 'google_fonts_collection_reference', 'dart_pdf_printing', 'flutter_packages_shared_preferences'],
   );
+});
+
+test('existing Web preferences dependency retains its exact package pin and scoped license evidence', () => {
+  const { inventory, observed } = fixture();
+  const entry = inventory.influences.find((candidate) => candidate.id === 'flutter_packages_shared_preferences');
+  assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
+  assert.equal(entry.officialUrl, 'https://github.com/flutter/packages');
+  assert.equal(entry.pinnedCommit, 'cb4fb13e19756cbbcb523bc33fbf7b7a5923e787');
+  assert.equal(entry.transferStatus, 'linked');
+  assert.equal(entry.declaredSpdx, 'BSD-3-Clause');
+  assert.equal(entry.repositoryDetectedSpdx, 'NOASSERTION');
+  assert.equal(entry.licenseStatus, 'declared_not_machine_detected');
+  assert.deepEqual(entry.localPaths, ['pubspec.lock', 'pubspec.yaml']);
+  assert.deepEqual(entry.obligations, ['dependency_lock', 'generated_license_bundle', 'license_notice']);
+  assert.deepEqual(entry.artifactLicenseEvidence, []);
+  assert.deepEqual(inventory.releaseBoundary.linkedVersionEvidence[entry.id], {
+    version: '2.4.3',
+    versionSource: 'pubspec.lock',
+    sourceRevision: entry.pinnedCommit,
+  });
+  assert.match(readFileSync('pubspec.lock', 'utf8'), /shared_preferences_web:[\s\S]*?sha256: c49bd060261c9a3f0ff445892695d6212ff603ef3115edbb448509d407600019[\s\S]*?version: "2\.4\.3"/);
+  assert.match(entry.reviewedConcepts.join(' '), /does not pin every package/);
+  assert.match(entry.reviewedConcepts.join(' '), /Repository-wide machine license detection.*were not established/);
+  assert.match(entry.reviewedConcepts.join(' '), /no new dependency, storage durability guarantee, legal approval or clinical qualification/);
+  assert.ok(!inventory.discovery.excludedRepositories.includes('github.com/flutter/packages'));
+  entry.licenseStatus = 'machine_detected';
+  assert.ok(codes(inventory, observed).includes('false_machine_detection'));
 });
 
 test('CQF CQL JVM reference is linked only to locked development tooling', () => {
@@ -797,10 +824,18 @@ test('font source pins, internal versions, and transferred paths stay explicit',
   assert.equal(vercel.artifactLicenseEvidence[0].declaredSpdx, 'OFL-1.1');
   assert.deepEqual(vercel.localPaths, vercel.artifactLicenseEvidence[0].localPaths);
   assert.ok(vercel.obligations.includes('reserved_font_name_resolution'));
-  assert.deepEqual(googleFonts.localPaths, []);
-  assert.equal(googleFonts.declaredSpdx, 'NOASSERTION');
-  assert.equal(googleFonts.licenseStatus, 'unresolved');
-  assert.equal(googleFonts.transferStatus, 'concept_only');
+  assert.equal(googleFonts.pinnedCommit, '9710da1eacb3be272583c3224dcb70f9da6eadbb');
+  assert.equal(googleFonts.declaredSpdx, 'OFL-1.1');
+  assert.equal(googleFonts.repositoryDetectedSpdx, 'NOASSERTION');
+  assert.equal(googleFonts.licenseStatus, 'declared_not_machine_detected');
+  assert.equal(googleFonts.transferStatus, 'derived');
+  assert.deepEqual(googleFonts.localPaths, googleFonts.artifactLicenseEvidence[0].localPaths);
+  assert.equal(googleFonts.localPaths.length, 4);
+  for (const family of ['ParkinSUMReportSC', 'ParkinSUMReportArabic']) {
+    const fontPath = `assets/fonts/${family}-Regular.ttf`;
+    assert.deepEqual([...new Set(sfntNameValues(fontPath, 1))], [family]);
+    assert.deepEqual([...new Set(sfntNameValues(fontPath, 6))], [`${family}-Regular`]);
+  }
 
   const pubspec = readFileSync('pubspec.yaml', 'utf8');
   assert.match(pubspec, /Geist 1\.800; Geist Mono 1\.701/);
@@ -826,6 +861,27 @@ test('font source pins, internal versions, and transferred paths stay explicit',
     assert.ok(sfntNameValues(relativePath, 0).some((value) => value.includes('Reserved Font Name')));
   }
   assert.match(readFileSync('assets/fonts/OFL-SourceSerif4.txt', 'utf8'), /with Reserved Font Name 'Source'/);
+});
+
+test('report font family permission does not become a collection license', () => {
+  const { inventory, observed } = fixture();
+  const family = inventory.influences.find(entry => entry.id === 'google_fonts_collection_reference');
+  family.licenseStatus = 'machine_detected';
+  assert.ok(validateInfluenceInventory(inventory, observed).length > 0);
+});
+
+test('PDF linkage and Arabic copyright reference retain separate transfer scopes', () => {
+  const { inventory, observed } = fixture();
+  assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
+  const pdf = inventory.influences.find(entry => entry.id === 'dart_pdf_printing');
+  assert.equal(pdf.pinnedCommit, '0833cd2fc8cf3e62b0228732e81402afca5cc542');
+  assert.equal(pdf.transferStatus, 'linked');
+  assert.equal(inventory.releaseBoundary.linkedVersionEvidence[pdf.id].version, '3.13.0');
+  const reference = inventory.influences.find(entry => entry.id === 'noto_arabic_copyright_reference');
+  assert.equal(reference.transferStatus, 'concept_only');
+  assert.deepEqual(reference.localPaths, []);
+  reference.distributionAuthorized = true;
+  assert.ok(codes(inventory, observed).includes('concept_only_boundary_violation'));
 });
 
 test('every transferred font path is scoped and reserved-name review stays required', () => {
@@ -866,14 +922,14 @@ test('every transferred font path is scoped and reserved-name review stays requi
 test('each transferred font and license file has one pinned file-level record', () => {
   const { inventory, observed } = fixture();
   const records = inventory.assetFileLicenseEvidence;
-  assert.equal(records.length, 14);
+  assert.equal(records.length, 18);
   assert.deepEqual(
     records.map((record) => record.assetPath),
     [...records.map((record) => record.assetPath)].sort((left, right) =>
       left.localeCompare(right),
     ),
   );
-  assert.equal(new Set(records.map((record) => record.assetPath)).size, 14);
+  assert.equal(new Set(records.map((record) => record.assetPath)).size, 18);
   assert.ok(records.every((record) => /^[0-9a-f]{64}$/.test(record.assetSha256)));
   assert.ok(records.every((record) => record.artifactType === 'font_asset'));
   assert.ok(records.every((record) => record.pinnedCommit.length === 40));

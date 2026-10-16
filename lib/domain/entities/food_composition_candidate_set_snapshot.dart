@@ -9,7 +9,7 @@ import '../../core/models/food_item.dart';
 /// provenance and merge behavior; it is not an upstream catalog release.
 class FoodCompositionCandidateSetSnapshot {
   static const String schemaId =
-      'parkinsum.food-composition-candidate-set-snapshot/5';
+      'parkinsum.food-composition-candidate-set-snapshot/6';
   static const String mergePolicyId =
       'caller_or_p0_then_projected_last_write_wins_v1';
 
@@ -21,7 +21,7 @@ class FoodCompositionCandidateSetSnapshot {
     'catalog_license':
         'linked_source_document_license_note_retained_when_present',
     'catalog_release_or_snapshot':
-        'not_captured;_payload_sha256_identifies_only_persisted_raw_payload_text_after_ingestion',
+        'local_transaction_identity_when_available;_payload_sha256_identifies_only_persisted_raw_payload_text_after_ingestion;_upstream_full_release_identity_not_captured;_strict_unavailable_reads_withhold_imported_candidates',
     'catalog_data_type':
         'source_document_data_tier_and_doc_type_retained_when_present;_not_a_catalog_release_identity',
     'brand': 'linked_variant_scope_brand_retained_when_present',
@@ -131,8 +131,14 @@ class FoodCompositionCandidateSetSnapshot {
         'caller_input':
             'ordered FoodItem list supplied at the orchestrator API boundary',
         'caller_query_and_filters_captured': false,
+        'caller_input_used':
+            !(projectionQueryAudit['strict_candidate_read_required'] == true &&
+                projectionQueryAudit['status'] == 'HOLD'),
         'fallback_policy': builtInP0FallbackUsed
-            ? 'caller list empty; buildP0FoodCatalog supplied the captured fallback list'
+            ? (projectionQueryAudit['strict_candidate_read_required'] == true &&
+                      projectionQueryAudit['status'] == 'HOLD'
+                  ? 'strict catalogue HOLD; caller imported rows withheld; separately captured buildP0FoodCatalog fallback only'
+                  : 'caller list empty; buildP0FoodCatalog supplied the captured fallback list')
             : 'not used because caller list was non-empty',
         'projection_query_audit_schema_id': projectionQueryAudit['schema_id'],
       },
@@ -147,9 +153,10 @@ class FoodCompositionCandidateSetSnapshot {
       'merged_candidate_records': _recordsSortedById(mergedRecords),
       'upstream_scope': <String, Object?>{
         'catalog_query_captured': false,
-        'local_projection_query_audit_captured':
-            projectionQueryAudit['schema_id'] ==
-            'parkinsum.cdss-food-projection-query-audit/1',
+        'local_projection_query_audit_captured': const {
+          'parkinsum.cdss-food-projection-query-audit/3',
+          'parkinsum.cdss-food-projection-query-audit/4',
+        }.contains(projectionQueryAudit['schema_id']),
         'caller_candidate_selection_query_captured': false,
         'catalog_release_captured': false,
         'query_and_filter_boundary':

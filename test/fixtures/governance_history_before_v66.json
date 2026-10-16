@@ -1,0 +1,1952 @@
+{
+  "records": [
+    {
+      "sequence": 1,
+      "change_kind": "initial_governed_baseline",
+      "previous_manifest_sha256": null,
+      "previous_configuration_sha256": "d00e4d7ec8a5a91e2bf6b7abe53af20ecc1459cddd12aee3f8f6370b5cb0f0ba",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "repository-maintainers",
+      "recorded_at_utc": "2026-08-18T00:00:00.000Z",
+      "release_artifact": "unreleased-worktree:agent/complete-app-upgrade-20260818",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "Implementation and calculation verification do not establish scientific validation, model qualification, regulatory review, or external approval. The changed capability remains unpromoted. The v52 release refresh binds the current configuration and evidence-synthesis registry identities only; retained synthetic fixture timestamps do not attest current-worktree review or evidence coverage.",
+      "record_sha256": "b8b6484c3b3a33d893878907db537fa29fbc4e0c6eb844ba8a5fe772fe346ae0"
+    },
+    {
+      "sequence": 2,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "31f0386b09f243fdc5bc275af3e6c4c33fbdedd77d648c71b1a168530d921642",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "repository-maintainers",
+      "recorded_at_utc": "2026-09-29T00:00:00.000Z",
+      "release_artifact": "unreleased-worktree:next-upgrade-v53-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v53 candidate rebind records exact software identity only. The prior v52 record is retained unchanged, and the full conservative initial-baseline evidence requirements remain open. Inherited engineering fixture decisions and the fixed synthetic timestamp do not attest a new external review, current-worktree evidence coverage, scientific validation, model qualification, regulatory review or approval. No missing evidence or release HOLD is cleared.",
+      "record_sha256": "b2993ef5f2308e192e4a73b92f80ee14612063df88591ea11147caf668845aa2"
+    },
+    {
+      "sequence": 3,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "31f0386b09f243fdc5bc275af3e6c4c33fbdedd77d648c71b1a168530d921642",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "f2bf313f8b955efebd3f1ff1eaf1791783648b440ad96fddf54d190f198b7d42",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-09-30T05:41:12.503Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v54-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v54 local software candidate adds strict food-catalogue transaction/HOLD behavior, proven nutrient-evidence deduplication and display-only date projections. Both v52 and v53 records remain unchanged. This event binds software identity; inherited synthetic engineering decisions do not establish new external review, scientific validity, clinical calibration or approval. All open evidence requirements and release holds remain blocked.",
+      "record_sha256": "3bebb51fb02349ce3f9db89826f453f4fddb163fb383ec3641a312b793ce6e52"
+    },
+    {
+      "sequence": 4,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "f2bf313f8b955efebd3f1ff1eaf1791783648b440ad96fddf54d190f198b7d42",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "0a664d1ab3ed070b65c5bbdb3612ba4433428ad681422b338c5f813ed8c2740d",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-09-30T19:17:10.000Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v55-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v55 software candidate isolates SPL product identity, source strength ratios and explicitly owned evidence. Shared narrative remains unassigned. App caches expose only completed checks for exact current inputs; missing checks present no numeric score. All three earlier records and their decisions remain unchanged. Actual engineering counterexamples and source-field comparisons do not establish scientific validation, clinical calibration, independent review or approval. Open evidence requirements and release holds remain blocked.",
+      "record_sha256": "7537fd6d52b7a46ccfc801ee4078af3063838b8e94e4f27bd8d8b07158397a2f"
+    },
+    {
+      "sequence": 5,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "0a664d1ab3ed070b65c5bbdb3612ba4433428ad681422b338c5f813ed8c2740d",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "2d6030490162c52b16f609e5ec27d8d3ce98bd25977454966ed9615394b55a55",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-09-30T23:42:09.709Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v56-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v56 candidate requires exact SPL active-ingredient classes and retains unknown roles as source-only HOLD. Four historical records remain unchanged. Frozen synthetic counterexamples verify software behavior only; no scientific validation, clinical calibration, independent review, approval or missing evidence hold is cleared.",
+      "record_sha256": "192a5e0694f6f99c08c531d24c45536575e1d2630932d1911e8e4d458c95c86e"
+    },
+    {
+      "sequence": 6,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "2d6030490162c52b16f609e5ec27d8d3ce98bd25977454966ed9615394b55a55",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "f53b161810c90f8950ec2232dba34c912d78a34e7e8209429de08c0c05cc54e3",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T00:25:57.757Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v57-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v57 candidate preserves unresolved saved or selected medication references as unassessed input. Scores, severity, simulation traces, recommendation order and AI requests are withheld for that incomplete context. The result contract is source-bound. Five historical records remain unchanged. Independent synthetic counterexamples establish software behavior only; numerical model parameters, scientific validation, clinical calibration, independent review, approval and all missing evidence holds are unchanged.",
+      "record_sha256": "38ec4437d564fc29bfa76ea06de19fcb3496969562e193e8ceabcbb516ca0862"
+    },
+    {
+      "sequence": 7,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "f53b161810c90f8950ec2232dba34c912d78a34e7e8209429de08c0c05cc54e3",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "58fcad8b624b5f53c6be47796847f3e7a82b23862f8afc2a6562c3c1939f68ac",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T04:44:00.956Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v58-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v58 candidate retains distinct source-reported USDA Atwater methods, conversion factors and original publication strings. Method-specific energy is not selected for generic energy arithmetic; factors trigger no new energy or protein calculation. Official archive null slots are retained as metadata, not fabricated foods. Six historical records remain unchanged. Source-field comparisons and software tests do not establish source truth, scientific validation, clinical calibration, independent approval or catalogue promotion. All missing evidence and release holds remain blocked.",
+      "record_sha256": "f3956907bd3a8c3e7366fbdebff6c42288077c5345c753b56278c7d8585a0b5f"
+    },
+    {
+      "sequence": 8,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "58fcad8b624b5f53c6be47796847f3e7a82b23862f8afc2a6562c3c1939f68ac",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "966197e7ebba8d4d3370ff7c46e3cc4f1064e2a25e18fe79e8577df116fda920",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T07:10:55.926Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v59-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v59 candidate repairs short multilingual catalog substrings and source-ordered limits. Source/revision queries retain their scientific-rank boundary. Two existing shadow-model families are compared with manufactured finite-grid sampling; wider equivalent parameter sets and off-grid recovery failures remain visible, synthetic fitting remains held and no production physiological parameter is changed. Seven historical records remain exact. CI layering retains required coverage and the protected preflight identity. Software checks and source-bound timing do not establish independent approval, continuous identifiability, clinical calibration or deployment. All missing qualification evidence remains blocked.",
+      "record_sha256": "288d50058d686d80b384f7765e8594feea4bb2e5cd5d2bde74054596c27a74cf"
+    },
+    {
+      "sequence": 9,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "966197e7ebba8d4d3370ff7c46e3cc4f1064e2a25e18fe79e8577df116fda920",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "6a31cb3854b8c49f1748d6125b2d754e7d5d99063ff9a27c8a9327d02b7377dc",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T08:40:33.806Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v60-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v60 candidate guards preference persistence by owner and session epoch. Pre-dispatch rejection differs from acknowledged writes for a previous session; dispatched platform writes are not claimed to be cancelled. Real temporary SQLite rollback tests and offline Firestore call-shape tests establish their stated software scope only. Eight historical records and 22 numerical implementation fingerprints remain exact. No cross-tab compare-and-swap, real cloud qualification, native lifecycle qualification, clinical calibration, independent approval or release is established. All missing qualification evidence remains blocked.",
+      "record_sha256": "ea0fd31ab95056be8b8e72667d75c6e581cb2d2a6aff52a8cf6010d926c4b219"
+    },
+    {
+      "sequence": 10,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "6a31cb3854b8c49f1748d6125b2d754e7d5d99063ff9a27c8a9327d02b7377dc",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "57c9393375e967f1c91c1e8361af2792e474c7bb565b2b0c375304c1c7940acb",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T11:36:24Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v61-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v61 candidate coordinates participating same-origin Web writes with exclusive Web Locks, reloads the aggregate inside each lock and rejects stale source witnesses. Other-tab storage events invalidate derived results and require explicit reload. Same-process native coordination does not establish cross-process transactions. Older or nonparticipating writers remain outside this protocol; accepted platform writes are not claimed to be cancelled. Nine historical records and 22 numerical implementation fingerprints remain exact. These software boundaries do not establish real cloud qualification, native lifecycle qualification, clinical calibration, independent approval or release. All missing qualification evidence remains blocked.",
+      "record_sha256": "902fc543a2c0aa2502a42215e02cc74c07450030f7e25d4d1dbdd1f1182b0344"
+    },
+    {
+      "sequence": 11,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "57c9393375e967f1c91c1e8361af2792e474c7bb565b2b0c375304c1c7940acb",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "d98910fa013aab4c69d3b96f74ffd6e9cda4467aec3ce39d2884c2bc178aeef3",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T13:08:36.508142Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v62-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v62 candidate separates source-identified carbohydrate by difference from summation and conventional total dietary fiber from the AOAC 2011.25 quantity. Supplied ID and number must agree; names cannot collapse distinct methods or repair conflicting identifiers. Six original public food objects support finite source-bound portions and explicitly manufactured alternative groups. Fixed injected heuristic weights and thresholds expose ties, top-K changes and pair reversals without changing production defaults. Original insufficient-context runs and source-content identity changes remain preserved. Ten historical records and all 22 numerical implementation fingerprints remain exact. This software research does not validate source matching, clinical usefulness, physiological calibration, independent approval or release; qualification remains blocked.",
+      "record_sha256": "976f533097ef5269292064aae5fc7d7dc2e5c1e095871959058f52486fc73111"
+    },
+    {
+      "sequence": 12,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "d98910fa013aab4c69d3b96f74ffd6e9cda4467aec3ce39d2884c2bc178aeef3",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "110c498e780ceceb457a97dc4840b27270a40968a92693e78831544bcbee2266",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-01T16:39:24.252684Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v63-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v63 candidate binds an exact offline IANA2026e artifact and immutable source snapshot to explicit calendar projection. The compiled interval is1900inclusive through2100exclusive; unsupported interpretations reject. Old2025c civil intent and whole receipts are retained rather than relabeled. Fixed14civil cases across both releases and40independent UTC projections verify their finite domain only; injected clock rollback differs from host clock manipulation. Actual source/table identity does not establish current device-zone detection, all-zone legal accuracy, native reminder delivery or clinical scheduling authority. Eleven historical governance records and all22numerical implementation fingerprints remain exact. No scientific or human qualification, independent approval, clinical calibration or release is granted; missing evidence remains blocked.",
+      "record_sha256": "ce6f9128adb08f3ff833795d6e37525e62a83276574a16450fbea2362ed48e61"
+    },
+    {
+      "sequence": 13,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "110c498e780ceceb457a97dc4840b27270a40968a92693e78831544bcbee2266",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "a723a09fd0672358a043ffa2ef3341b6f10ea1f4ac3ee98dfc42f5c5d7ec304e",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-02T05:23:14.895824Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v64-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v64 candidate compares every eligible observation pair within a compatible cluster, distinguishes source-row duplicates from same-document contradictions and preserves differing measurement methods. It retains 62 source-identified FDC quantities, including 49 newly structured quantities, with microgram spelling normalization only. Source values, method-specific forms, censoring and audit provenance remain separate; no nutrient equivalence, density conversion, clinical threshold or dosage recommendation is introduced. The existing Foundation basis contract requires further qualification for dry-matter and branded volume contexts. Twelve historical records and all 22 numerical implementation fingerprints remain exact. Software counterexamples and finite archive field comparisons do not establish source truth, complete conflict workflow, scientific validation, clinical calibration, independent approval, catalogue promotion or release. All missing qualification evidence remains blocked.",
+      "record_sha256": "5875285b343dc8b3eb779bd6ad531ee9d14265c397344dfc009f4454dc1586be"
+    },
+    {
+      "sequence": 14,
+      "change_kind": "software_identity_candidate_rebind",
+      "previous_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "previous_configuration_sha256": "a723a09fd0672358a043ffa2ef3341b6f10ea1f4ac3ee98dfc42f5c5d7ec304e",
+      "current_manifest_sha256": "3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7",
+      "current_configuration_sha256": "148c3f53ec7f4b579e1f4a69070737349bcc1fb1afa9d2b1350b7c68abbc241b",
+      "evidence_currency_registry_sha256": "63ad0dd1543186d67d47499966ca4fa292c13ba7bfcab750813055e901d94c2e",
+      "evidence_synthesis_registry_sha256": "3c64c10bc76d1307bf7bdaf16abf8e33b21028929c369cf660cb6296f3f9292c",
+      "semantic_diff_sha256": "1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937",
+      "affected_provider_ids": [
+        "amino_acid_competition",
+        "gastric_emptying",
+        "levodopa_absorption_opportunity",
+        "meal_composition_normalizer",
+        "mechanistic_candidate_scorer",
+        "mechanistic_conflict"
+      ],
+      "affected_predicate_ids": [
+        "meal.protein_evidence",
+        "meal.structured_composition",
+        "medication.active_components",
+        "medication.dosage_form",
+        "medication.explicit_dose",
+        "medication.release_type",
+        "medication.route",
+        "provider.upstream_availability",
+        "timeline.dose_time_meal_context",
+        "timeline.identity_integrity"
+      ],
+      "change_classes": [
+        "configurationIdentity",
+        "contextOfUse",
+        "evidenceBase",
+        "fedState",
+        "initialGovernedBaseline",
+        "observable",
+        "population",
+        "predicateContract",
+        "productIdentity",
+        "providerGraph",
+        "questionOfInterest",
+        "reviewState",
+        "schemaOrIdentity",
+        "terminology"
+      ],
+      "model_risk": "critical",
+      "question_of_interest": "For a synthetic or structurally verified narrow IR carbidopa/levodopa context, what unitless timing-overlap trace does the current engineering model produce?",
+      "context_of_use": "Read-only educational sensitivity and explanation trace. The output must not prescribe timing, dose, diet, treatment, or reorder production recommendations.",
+      "author": "automated-local-software-integration",
+      "recorded_at_utc": "2026-10-02T06:27:38.245432Z",
+      "release_artifact": "unreleased-worktree:mega-upgrade-v65-candidate",
+      "evidence_decisions": [
+        {
+          "kind": "calculationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "artifact.mechanistic_numerical_oracle.v1",
+            "artifact.mechanistic_replay.v3"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Manufactured vectors and replay verify reviewed calculations only; they do not establish scientific validity."
+        },
+        {
+          "kind": "externalApproval",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim approval, clearance, certification, or clinical qualification by an external authority."
+        },
+        {
+          "kind": "humanFactors",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No intended-user comprehension or misuse study establishes safe interpretation of the trace."
+        },
+        {
+          "kind": "implementationVerification",
+          "status": "complete",
+          "evidence_ids": [
+            "gate.flutter_analyze",
+            "gate.flutter_test",
+            "gate.verify_all"
+          ],
+          "reviewer": "repository-maintainers",
+          "reviewed_at_utc": "2026-08-18T00:00:00.000Z",
+          "boundary": "Static analysis and automated tests verify implementation behavior; they do not validate biological truth."
+        },
+        {
+          "kind": "independentReview",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No independent domain reviewer has approved evidence relevance or adequacy for promotion."
+        },
+        {
+          "kind": "modelQualification",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No platform or model qualification exists for a clinical context of use, population, or product family."
+        },
+        {
+          "kind": "regulatoryReview",
+          "status": "notRequired",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "The repository does not claim a regulatory submission or review."
+        },
+        {
+          "kind": "scientificValidation",
+          "status": "missing",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "No prospective patient-level biological or clinical validation supports the timing-overlap proxy."
+        },
+        {
+          "kind": "uncertaintyAssessment",
+          "status": "planned",
+          "evidence_ids": [],
+          "reviewer": null,
+          "reviewed_at_utc": null,
+          "boundary": "Structural alternatives, parameter uncertainty, and applicability uncertainty remain incomplete."
+        }
+      ],
+      "release_disposition": "blockedPendingEvidence",
+      "approval_signature": null,
+      "decision_boundary": "The v65 candidate recovers incumbent observations before full cluster comparison, preserves manual choices and holds unresolved imports before live catalogue, label or snapshot activation. Incoming source content, scope dimensions and fact payloads cannot silently reuse inconsistent identities. Extended nutrients remain source evidence unless they actually feed a legacy numeric field. SPL active ingredients, active moieties, reference ingredients, inactive ingredient codes and strength denominators are preserved as source evidence without administered-dose conversion or chemical equivalence. Finite synthetic counterexamples and independent official source-field comparisons do not establish complete reviewer closure, concurrent backend transactionality, global catalogue truth, full label semantics or clinical scheduling authority. All thirteen historical records, all twenty-two numerical implementation fingerprints and numerical parameter objects remain exact. No clinical calibration, human approval, catalogue promotion or release is granted; qualification evidence remains blocked.",
+      "record_sha256": "002970f7305a737ced08c41f9ac4d40174ba57f1e9b32107c9916ba72614e5b2"
+    }
+  ],
+  "record_sha256": [
+    "b8b6484c3b3a33d893878907db537fa29fbc4e0c6eb844ba8a5fe772fe346ae0",
+    "b2993ef5f2308e192e4a73b92f80ee14612063df88591ea11147caf668845aa2",
+    "3bebb51fb02349ce3f9db89826f453f4fddb163fb383ec3641a312b793ce6e52",
+    "7537fd6d52b7a46ccfc801ee4078af3063838b8e94e4f27bd8d8b07158397a2f",
+    "192a5e0694f6f99c08c531d24c45536575e1d2630932d1911e8e4d458c95c86e",
+    "38ec4437d564fc29bfa76ea06de19fcb3496969562e193e8ceabcbb516ca0862",
+    "f3956907bd3a8c3e7366fbdebff6c42288077c5345c753b56278c7d8585a0b5f",
+    "288d50058d686d80b384f7765e8594feea4bb2e5cd5d2bde74054596c27a74cf",
+    "ea0fd31ab95056be8b8e72667d75c6e581cb2d2a6aff52a8cf6010d926c4b219",
+    "902fc543a2c0aa2502a42215e02cc74c07450030f7e25d4d1dbdd1f1182b0344",
+    "976f533097ef5269292064aae5fc7d7dc2e5c1e095871959058f52486fc73111",
+    "ce6f9128adb08f3ff833795d6e37525e62a83276574a16450fbea2362ed48e61",
+    "5875285b343dc8b3eb779bd6ad531ee9d14265c397344dfc009f4454dc1586be",
+    "002970f7305a737ced08c41f9ac4d40174ba57f1e9b32107c9916ba72614e5b2"
+  ]
+}

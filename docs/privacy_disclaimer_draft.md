@@ -73,6 +73,17 @@ The app also stores shared reference data, such as catalog rows, source
 documents, rule records, and locale text. Shared reference data should not
 contain user-private clinical records.
 
+Normal local use can retain an owner-scoped meal draft, a same-owner Web
+restore receipt containing the original package and prior user-state snapshot,
+and evidence-currency candidate review receipts. These local records may
+contain or reveal sensitive health-related activity. Owner-digest storage keys
+and integrity hashes are not encryption or an anonymity guarantee. The
+isolated synthetic meal trial uses temporary memory for its meals/drafts;
+ordinary records and saved diagnostics have separate persistence scopes.
+These additions do not add Firebase uploads in the inspected implementation.
+Signing out or undoing a restore is not deletion of all retained local data;
+see the longer [privacy policy draft](privacy_policy_draft.md).
+
 ## User Data Practices to Confirm Before Public Release
 
 Before public release, confirm and document:

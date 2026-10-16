@@ -1,0 +1,1630 @@
+{
+  "protocol": "bounded-compiled-relation-contribution-v1",
+  "campaign_id": "v71_current_source_033",
+  "recorded_at_utc": "2026-10-02T17:39:50.734Z",
+  "plan": {
+    "frozen_at_utc": "2026-10-02T17:35:55.056781+00:00",
+    "seeds": [
+      1,
+      17,
+      104729,
+      2147483647
+    ],
+    "partitions": [
+      "normal",
+      "boundary",
+      "adversarial"
+    ],
+    "relations": [
+      "runtime_rule_support.path_permutation",
+      "catalog_resolution.input_permutation",
+      "source_authority.jurisdiction_order",
+      "runtime_rule_engine.jurisdiction_and_units",
+      "rule_registry_compiler.schema_rejection",
+      "fact_conflict.order_and_scope",
+      "recommendation_orchestrator.deterministic_fallback",
+      "local_ai_adapter.consent_endpoint_whitelist"
+    ],
+    "mutations": [
+      {
+        "id": "catalog_empty_query_accepted",
+        "path": "lib/domain/usecases/catalog_resolution_engine.dart",
+        "old": "status: CatalogResolutionStatus.invalid,",
+        "new": "status: CatalogResolutionStatus.resolved,",
+        "class": "expected_kill",
+        "target_relation": "catalog_resolution.input_permutation",
+        "original_file_sha256": "7ec3bdf42860485c878473d1ecc7394642580c831d698c15ea6703d21f381eb1",
+        "mutant_file_sha256": "df8a14f9316cdc93d3d49913b8d56f73c36dfd9d33fa28719812a38b9f8e224b"
+      },
+      {
+        "id": "synthetic_override_enabled",
+        "path": "lib/domain/usecases/source_authority_scorer.dart",
+        "old": "  ) => false;",
+        "new": "  ) => true;",
+        "class": "expected_kill",
+        "target_relation": "source_authority.jurisdiction_order",
+        "original_file_sha256": "6bf0ae4479e512ca75eed423ddb19188122b511dd8a4d43d3dc6e8d8b20014f1",
+        "mutant_file_sha256": "e7ad17487b1d99d82c9820d468675fa0c583ec3eee5b7b5b9e08413bd943d863"
+      },
+      {
+        "id": "fact_scope_collapsed",
+        "path": "lib/domain/usecases/fact_conflict_engine.dart",
+        "old": ".where((fact) => fact.scopeHash == observation.scopeHash)",
+        "new": ".where((fact) => true)",
+        "class": "expected_kill",
+        "target_relation": "fact_conflict.order_and_scope",
+        "original_file_sha256": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c",
+        "mutant_file_sha256": "e711278276e93061bd240c839e4adf2bf112e89c935ecf000d8108408591989c"
+      },
+      {
+        "id": "equivalent_constant_control",
+        "path": "lib/domain/usecases/source_authority_scorer.dart",
+        "old": "  ) => false;",
+        "new": "  ) => !true;",
+        "class": "equivalent_control",
+        "target_relation": null,
+        "original_file_sha256": "6bf0ae4479e512ca75eed423ddb19188122b511dd8a4d43d3dc6e8d8b20014f1",
+        "mutant_file_sha256": "f6ad8469cd6fc8dc99d4ba0944b8fdb7be114ca1a5b6b550a1880e3d7d94b5c8"
+      },
+      {
+        "id": "cluster_empty_status_unobserved",
+        "path": "lib/domain/usecases/fact_conflict_engine.dart",
+        "old": "status: 'empty_cluster',",
+        "new": "status: 'synthetic_fault_empty_cluster',",
+        "class": "unobserved_in_declared_generator",
+        "target_relation": null,
+        "original_file_sha256": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c",
+        "mutant_file_sha256": "258ca3ddca421c1af0769529107db2a4f125ee6e25ae04bd4e5f138ecf2df86e"
+      },
+      {
+        "id": "contradiction_reason_survivor",
+        "path": "lib/domain/usecases/fact_conflict_engine.dart",
+        "old": "'At least one comparable incumbent contradicts the observation.'",
+        "new": "'Synthetic faulty explanation: values were equal.'",
+        "class": "semantic_survivor",
+        "target_relation": null,
+        "original_file_sha256": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c",
+        "mutant_file_sha256": "6415f93b0817fa06a4bf8472ac18473b0f1a1b511e303e5a24c96ab687b56496"
+      }
+    ],
+    "minimal_scope_trials": [
+      "one_fact_different_scope",
+      "zero_fact_different_scope",
+      "one_fact_same_scope",
+      "equal_value_different_scope",
+      "unrelated_entity"
+    ],
+    "bounded_mutation_scope": "One exact source hunk compiled in place per run, complete original source restored after each; not IR mutations; full production rollout or exhaustive branch coverage not claimed.",
+    "false_positive_reference": "Known valid baseline paired executions and equivalent source control; finite count only; missing/malformed remain precondition HOLD.",
+    "campaign_id": "v71_current_source_033"
+  },
+  "plan_sha256": "45dd1ac8217257dfb4be9b88a3c129a89d7e798fdf0ab1db276cf6ff1c786a13",
+  "producer_sha256": "a9355902dc02955716135bf294bc7d6165dc491781d280ab32d5518c5562653f",
+  "original_source_sha256": {
+    "lib/domain/usecases/catalog_resolution_engine.dart": "7ec3bdf42860485c878473d1ecc7394642580c831d698c15ea6703d21f381eb1",
+    "lib/domain/usecases/source_authority_scorer.dart": "6bf0ae4479e512ca75eed423ddb19188122b511dd8a4d43d3dc6e8d8b20014f1",
+    "lib/domain/usecases/fact_conflict_engine.dart": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c"
+  },
+  "baseline_case_sha256": "5376f6a67de52c23e82367eaf39c94f223d31aeb6a7203c68e05aa4f303a0471",
+  "baseline_minimal_scope_trials": [
+    {
+      "id": "one_fact_different_scope",
+      "fact_count": 1,
+      "observation_value": "10",
+      "observation_scope": "scope.b",
+      "classification": "coexistVariant",
+      "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+      "needs_manual_review": false
+    },
+    {
+      "id": "zero_fact_different_scope",
+      "fact_count": 0,
+      "observation_value": "10",
+      "observation_scope": "scope.b",
+      "classification": "variation",
+      "reason": "No existing facts for this key; treat as first candidate fact.",
+      "needs_manual_review": false
+    },
+    {
+      "id": "one_fact_same_scope",
+      "fact_count": 1,
+      "observation_value": "10",
+      "observation_scope": "scope.a",
+      "classification": "contradiction",
+      "reason": "At least one comparable incumbent contradicts the observation.",
+      "needs_manual_review": true
+    },
+    {
+      "id": "equal_value_different_scope",
+      "fact_count": 1,
+      "observation_value": "1",
+      "observation_scope": "scope.b",
+      "classification": "coexistVariant",
+      "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+      "needs_manual_review": false
+    },
+    {
+      "id": "unrelated_entity",
+      "fact_count": 1,
+      "observation_value": "10",
+      "observation_scope": "scope.b",
+      "classification": "variation",
+      "reason": "No existing facts for this key; treat as first candidate fact.",
+      "needs_manual_review": false
+    }
+  ],
+  "baseline_empty_cluster_auxiliary": {
+    "status": "empty_cluster",
+    "explanation": "No observations were available for this cluster."
+  },
+  "mutations": [
+    {
+      "mutation": {
+        "id": "catalog_empty_query_accepted",
+        "path": "lib/domain/usecases/catalog_resolution_engine.dart",
+        "old": "status: CatalogResolutionStatus.invalid,",
+        "new": "status: CatalogResolutionStatus.resolved,",
+        "class": "expected_kill",
+        "target_relation": "catalog_resolution.input_permutation",
+        "original_file_sha256": "7ec3bdf42860485c878473d1ecc7394642580c831d698c15ea6703d21f381eb1",
+        "mutant_file_sha256": "df8a14f9316cdc93d3d49913b8d56f73c36dfd9d33fa28719812a38b9f8e224b"
+      },
+      "actual_full_observation_sha256": "48cff48168be91df4d7d441df3a99fd5a21390a752583ffb38f1acf4dbc6b871",
+      "actual_changed_paired_cases": 12,
+      "baseline_witness": {
+        "relation_id": "catalog_resolution.input_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "query": "Alpha meal 270369",
+          "food_ids": [
+            "synthetic.food.alpha.270369",
+            "synthetic.food.beta.270369",
+            "synthetic.food.gamma.270369"
+          ]
+        },
+        "follow_up_input": {
+          "query": "Alpha meal 270369",
+          "food_ids": [
+            "synthetic.food.gamma.270369",
+            "synthetic.food.beta.270369",
+            "synthetic.food.alpha.270369"
+          ],
+          "empty_query": "   "
+        },
+        "source_output": {
+          "top_candidate_id": "food:synthetic.food.alpha.270369",
+          "status": "resolved"
+        },
+        "follow_up_output": {
+          "top_candidate_id": "food:synthetic.food.alpha.270369",
+          "status": "resolved",
+          "empty_query_status": "invalid"
+        },
+        "relation_observation": {
+          "forward_top_candidate_id": "food:synthetic.food.alpha.270369",
+          "reversed_top_candidate_id": "food:synthetic.food.alpha.270369",
+          "forward_status": "resolved",
+          "reversed_status": "resolved",
+          "permutation_preserved": true,
+          "empty_query_status": "invalid"
+        },
+        "source_api_invocation_count": 1,
+        "follow_up_api_invocation_count": 2
+      },
+      "mutant_witness": {
+        "relation_id": "catalog_resolution.input_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "query": "Alpha meal 270369",
+          "food_ids": [
+            "synthetic.food.alpha.270369",
+            "synthetic.food.beta.270369",
+            "synthetic.food.gamma.270369"
+          ]
+        },
+        "follow_up_input": {
+          "query": "Alpha meal 270369",
+          "food_ids": [
+            "synthetic.food.gamma.270369",
+            "synthetic.food.beta.270369",
+            "synthetic.food.alpha.270369"
+          ],
+          "empty_query": "   "
+        },
+        "source_output": {
+          "top_candidate_id": "food:synthetic.food.alpha.270369",
+          "status": "resolved"
+        },
+        "follow_up_output": {
+          "top_candidate_id": "food:synthetic.food.alpha.270369",
+          "status": "resolved",
+          "empty_query_status": "resolved"
+        },
+        "relation_observation": {
+          "forward_top_candidate_id": "food:synthetic.food.alpha.270369",
+          "reversed_top_candidate_id": "food:synthetic.food.alpha.270369",
+          "forward_status": "resolved",
+          "reversed_status": "resolved",
+          "permutation_preserved": true,
+          "empty_query_status": "resolved"
+        },
+        "source_api_invocation_count": 1,
+        "follow_up_api_invocation_count": 2
+      },
+      "auxiliary_trials": [
+        {
+          "id": "one_fact_different_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "zero_fact_different_scope",
+          "fact_count": 0,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "one_fact_same_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.a",
+          "classification": "contradiction",
+          "reason": "At least one comparable incumbent contradicts the observation.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "equal_value_different_scope",
+          "fact_count": 1,
+          "observation_value": "1",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "unrelated_entity",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        }
+      ],
+      "empty_cluster_auxiliary": {
+        "status": "empty_cluster",
+        "explanation": "No observations were available for this cluster."
+      },
+      "actual_compiled": true,
+      "ir_only_mutation": false
+    },
+    {
+      "mutation": {
+        "id": "synthetic_override_enabled",
+        "path": "lib/domain/usecases/source_authority_scorer.dart",
+        "old": "  ) => false;",
+        "new": "  ) => true;",
+        "class": "expected_kill",
+        "target_relation": "source_authority.jurisdiction_order",
+        "original_file_sha256": "6bf0ae4479e512ca75eed423ddb19188122b511dd8a4d43d3dc6e8d8b20014f1",
+        "mutant_file_sha256": "e7ad17487b1d99d82c9820d468675fa0c583ec3eee5b7b5b9e08413bd943d863"
+      },
+      "actual_full_observation_sha256": "e4d1dd8faaa1e731f05f0ed45f85341892b5a7bc75714235282a77fc9bc733c4",
+      "actual_changed_paired_cases": 12,
+      "baseline_witness": {
+        "relation_id": "source_authority.jurisdiction_order",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "source_ids": [
+            "synthetic.official.us.270369",
+            "synthetic.official.foreign.270369",
+            "synthetic.seed.us.270369"
+          ],
+          "jurisdiction_chain": [
+            "US",
+            "GLOBAL"
+          ]
+        },
+        "follow_up_input": {
+          "source_ids": [
+            "synthetic.seed.us.270369",
+            "synthetic.official.foreign.270369",
+            "synthetic.official.us.270369"
+          ],
+          "jurisdiction_chain": [
+            "US",
+            "GLOBAL"
+          ]
+        },
+        "source_output": {
+          "scores": {
+            "synthetic.official.us.270369": 1,
+            "synthetic.official.foreign.270369": 0.6,
+            "synthetic.seed.us.270369": 0.1
+          }
+        },
+        "follow_up_output": {
+          "scores": {
+            "synthetic.seed.us.270369": 0.1,
+            "synthetic.official.foreign.270369": 0.6,
+            "synthetic.official.us.270369": 1
+          }
+        },
+        "relation_observation": {
+          "official_exact_score": 1,
+          "official_foreign_score": 0.6,
+          "synthetic_score": 0.1,
+          "strict_order": true,
+          "seed_override": false,
+          "cross_jurisdiction_conflict": "differentJurisdictionConflict"
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 5
+      },
+      "mutant_witness": {
+        "relation_id": "source_authority.jurisdiction_order",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "source_ids": [
+            "synthetic.official.us.270369",
+            "synthetic.official.foreign.270369",
+            "synthetic.seed.us.270369"
+          ],
+          "jurisdiction_chain": [
+            "US",
+            "GLOBAL"
+          ]
+        },
+        "follow_up_input": {
+          "source_ids": [
+            "synthetic.seed.us.270369",
+            "synthetic.official.foreign.270369",
+            "synthetic.official.us.270369"
+          ],
+          "jurisdiction_chain": [
+            "US",
+            "GLOBAL"
+          ]
+        },
+        "source_output": {
+          "scores": {
+            "synthetic.official.us.270369": 1,
+            "synthetic.official.foreign.270369": 0.6,
+            "synthetic.seed.us.270369": 0.1
+          }
+        },
+        "follow_up_output": {
+          "scores": {
+            "synthetic.seed.us.270369": 0.1,
+            "synthetic.official.foreign.270369": 0.6,
+            "synthetic.official.us.270369": 1
+          }
+        },
+        "relation_observation": {
+          "official_exact_score": 1,
+          "official_foreign_score": 0.6,
+          "synthetic_score": 0.1,
+          "strict_order": true,
+          "seed_override": true,
+          "cross_jurisdiction_conflict": "differentJurisdictionConflict"
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 5
+      },
+      "auxiliary_trials": [
+        {
+          "id": "one_fact_different_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "zero_fact_different_scope",
+          "fact_count": 0,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "one_fact_same_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.a",
+          "classification": "contradiction",
+          "reason": "At least one comparable incumbent contradicts the observation.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "equal_value_different_scope",
+          "fact_count": 1,
+          "observation_value": "1",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "unrelated_entity",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        }
+      ],
+      "empty_cluster_auxiliary": {
+        "status": "empty_cluster",
+        "explanation": "No observations were available for this cluster."
+      },
+      "actual_compiled": true,
+      "ir_only_mutation": false
+    },
+    {
+      "mutation": {
+        "id": "fact_scope_collapsed",
+        "path": "lib/domain/usecases/fact_conflict_engine.dart",
+        "old": ".where((fact) => fact.scopeHash == observation.scopeHash)",
+        "new": ".where((fact) => true)",
+        "class": "expected_kill",
+        "target_relation": "fact_conflict.order_and_scope",
+        "original_file_sha256": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c",
+        "mutant_file_sha256": "e711278276e93061bd240c839e4adf2bf112e89c935ecf000d8108408591989c"
+      },
+      "actual_full_observation_sha256": "018ad9fecfafe9d680cf3bcdf68f1880fff02ca8149517c8d321d90f5c6cc841",
+      "actual_changed_paired_cases": 12,
+      "baseline_witness": {
+        "relation_id": "fact_conflict.order_and_scope",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "observation_id": "synthetic.observation.scope.synthetic.270369",
+          "fact_ids": [
+            "fact.unrelated.270369",
+            "fact.conflicting.270369"
+          ]
+        },
+        "follow_up_input": {
+          "observation_id": "synthetic.observation.scope.synthetic.270369",
+          "fact_ids": [
+            "fact.conflicting.270369",
+            "fact.unrelated.270369"
+          ],
+          "alternate_scope": "scope.alternate.270369"
+        },
+        "source_output": {
+          "classification": "contradiction"
+        },
+        "follow_up_output": {
+          "classification": "contradiction",
+          "different_scope": "coexistVariant"
+        },
+        "relation_observation": {
+          "forward": "contradiction",
+          "reversed": "contradiction",
+          "permutation_preserved": true,
+          "different_scope": "coexistVariant"
+        },
+        "source_api_invocation_count": 1,
+        "follow_up_api_invocation_count": 2
+      },
+      "mutant_witness": {
+        "relation_id": "fact_conflict.order_and_scope",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "observation_id": "synthetic.observation.scope.synthetic.270369",
+          "fact_ids": [
+            "fact.unrelated.270369",
+            "fact.conflicting.270369"
+          ]
+        },
+        "follow_up_input": {
+          "observation_id": "synthetic.observation.scope.synthetic.270369",
+          "fact_ids": [
+            "fact.conflicting.270369",
+            "fact.unrelated.270369"
+          ],
+          "alternate_scope": "scope.alternate.270369"
+        },
+        "source_output": {
+          "classification": "contradiction"
+        },
+        "follow_up_output": {
+          "classification": "contradiction",
+          "different_scope": "contradiction"
+        },
+        "relation_observation": {
+          "forward": "contradiction",
+          "reversed": "contradiction",
+          "permutation_preserved": true,
+          "different_scope": "contradiction"
+        },
+        "source_api_invocation_count": 1,
+        "follow_up_api_invocation_count": 2
+      },
+      "auxiliary_trials": [
+        {
+          "id": "one_fact_different_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "contradiction",
+          "reason": "At least one comparable incumbent contradicts the observation.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "zero_fact_different_scope",
+          "fact_count": 0,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "one_fact_same_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.a",
+          "classification": "contradiction",
+          "reason": "At least one comparable incumbent contradicts the observation.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "equal_value_different_scope",
+          "fact_count": 1,
+          "observation_value": "1",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "All usable comparable incumbent intervals overlap.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "unrelated_entity",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        }
+      ],
+      "empty_cluster_auxiliary": {
+        "status": "empty_cluster",
+        "explanation": "No observations were available for this cluster."
+      },
+      "actual_compiled": true,
+      "ir_only_mutation": false
+    },
+    {
+      "mutation": {
+        "id": "equivalent_constant_control",
+        "path": "lib/domain/usecases/source_authority_scorer.dart",
+        "old": "  ) => false;",
+        "new": "  ) => !true;",
+        "class": "equivalent_control",
+        "target_relation": null,
+        "original_file_sha256": "6bf0ae4479e512ca75eed423ddb19188122b511dd8a4d43d3dc6e8d8b20014f1",
+        "mutant_file_sha256": "f6ad8469cd6fc8dc99d4ba0944b8fdb7be114ca1a5b6b550a1880e3d7d94b5c8"
+      },
+      "actual_full_observation_sha256": "f697a6ef524cd5736eac9adcd8d26c77fe407d787d11697720ff529a19bcef98",
+      "actual_changed_paired_cases": 0,
+      "baseline_witness": {
+        "relation_id": "runtime_rule_support.path_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "when": {
+            "all": [
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "follow_up_input": {
+          "when": {
+            "all": [
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "source_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "follow_up_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "relation_observation": {
+          "forward_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "reversed_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "permutation_preserved": true,
+          "forward_missing_fields": [
+            "meal_time",
+            "time"
+          ],
+          "reversed_missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 3
+      },
+      "mutant_witness": {
+        "relation_id": "runtime_rule_support.path_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "when": {
+            "all": [
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "follow_up_input": {
+          "when": {
+            "all": [
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "source_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "follow_up_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "relation_observation": {
+          "forward_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "reversed_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "permutation_preserved": true,
+          "forward_missing_fields": [
+            "meal_time",
+            "time"
+          ],
+          "reversed_missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 3
+      },
+      "auxiliary_trials": [
+        {
+          "id": "one_fact_different_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "zero_fact_different_scope",
+          "fact_count": 0,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "one_fact_same_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.a",
+          "classification": "contradiction",
+          "reason": "At least one comparable incumbent contradicts the observation.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "equal_value_different_scope",
+          "fact_count": 1,
+          "observation_value": "1",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "unrelated_entity",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        }
+      ],
+      "empty_cluster_auxiliary": {
+        "status": "empty_cluster",
+        "explanation": "No observations were available for this cluster."
+      },
+      "actual_compiled": true,
+      "ir_only_mutation": false
+    },
+    {
+      "mutation": {
+        "id": "cluster_empty_status_unobserved",
+        "path": "lib/domain/usecases/fact_conflict_engine.dart",
+        "old": "status: 'empty_cluster',",
+        "new": "status: 'synthetic_fault_empty_cluster',",
+        "class": "unobserved_in_declared_generator",
+        "target_relation": null,
+        "original_file_sha256": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c",
+        "mutant_file_sha256": "258ca3ddca421c1af0769529107db2a4f125ee6e25ae04bd4e5f138ecf2df86e"
+      },
+      "actual_full_observation_sha256": "81a81ab9046f87852d56b42ff3c0c8ff11433d9d81b1682ef4a9ce670006142d",
+      "actual_changed_paired_cases": 0,
+      "baseline_witness": {
+        "relation_id": "runtime_rule_support.path_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "when": {
+            "all": [
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "follow_up_input": {
+          "when": {
+            "all": [
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "source_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "follow_up_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "relation_observation": {
+          "forward_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "reversed_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "permutation_preserved": true,
+          "forward_missing_fields": [
+            "meal_time",
+            "time"
+          ],
+          "reversed_missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 3
+      },
+      "mutant_witness": {
+        "relation_id": "runtime_rule_support.path_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "when": {
+            "all": [
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "follow_up_input": {
+          "when": {
+            "all": [
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "source_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "follow_up_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "relation_observation": {
+          "forward_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "reversed_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "permutation_preserved": true,
+          "forward_missing_fields": [
+            "meal_time",
+            "time"
+          ],
+          "reversed_missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 3
+      },
+      "auxiliary_trials": [
+        {
+          "id": "one_fact_different_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "zero_fact_different_scope",
+          "fact_count": 0,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "one_fact_same_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.a",
+          "classification": "contradiction",
+          "reason": "At least one comparable incumbent contradicts the observation.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "equal_value_different_scope",
+          "fact_count": 1,
+          "observation_value": "1",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "unrelated_entity",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        }
+      ],
+      "empty_cluster_auxiliary": {
+        "status": "synthetic_fault_empty_cluster",
+        "explanation": "No observations were available for this cluster."
+      },
+      "actual_compiled": true,
+      "ir_only_mutation": false
+    },
+    {
+      "mutation": {
+        "id": "contradiction_reason_survivor",
+        "path": "lib/domain/usecases/fact_conflict_engine.dart",
+        "old": "'At least one comparable incumbent contradicts the observation.'",
+        "new": "'Synthetic faulty explanation: values were equal.'",
+        "class": "semantic_survivor",
+        "target_relation": null,
+        "original_file_sha256": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c",
+        "mutant_file_sha256": "6415f93b0817fa06a4bf8472ac18473b0f1a1b511e303e5a24c96ab687b56496"
+      },
+      "actual_full_observation_sha256": "ed1e685548e69ee46223b999b2f405726ff82620e69f9843ee80d02a45552e6c",
+      "actual_changed_paired_cases": 0,
+      "baseline_witness": {
+        "relation_id": "runtime_rule_support.path_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "when": {
+            "all": [
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "follow_up_input": {
+          "when": {
+            "all": [
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "source_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "follow_up_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "relation_observation": {
+          "forward_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "reversed_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "permutation_preserved": true,
+          "forward_missing_fields": [
+            "meal_time",
+            "time"
+          ],
+          "reversed_missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 3
+      },
+      "mutant_witness": {
+        "relation_id": "runtime_rule_support.path_permutation",
+        "partition": "normal",
+        "seed": 1,
+        "source_input": {
+          "when": {
+            "all": [
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "follow_up_input": {
+          "when": {
+            "all": [
+              {
+                "in": {
+                  "path": "drug.active_ingredients",
+                  "values": [
+                    "levodopa"
+                  ]
+                }
+              },
+              {
+                "between": {
+                  "left_path": "timestamps.drug_time",
+                  "right_path": "timestamps.meal_time",
+                  "unit": "minutes",
+                  "low": -60,
+                  "high": 120
+                }
+              },
+              {
+                "cmp": {
+                  "path": "meal.protein_g",
+                  "op": "gte",
+                  "value": 10
+                }
+              },
+              {
+                "cmp": {
+                  "path": "drug.route",
+                  "op": "eq",
+                  "value": "oral"
+                }
+              }
+            ]
+          },
+          "daily_dose_mg": null
+        },
+        "source_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "follow_up_output": {
+          "paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "relation_observation": {
+          "forward_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "reversed_paths": [
+            "drug.active_ingredients",
+            "drug.route",
+            "meal.protein_g",
+            "timestamps.drug_time",
+            "timestamps.meal_time"
+          ],
+          "permutation_preserved": true,
+          "forward_missing_fields": [
+            "meal_time",
+            "time"
+          ],
+          "reversed_missing_fields": [
+            "meal_time",
+            "time"
+          ]
+        },
+        "source_api_invocation_count": 3,
+        "follow_up_api_invocation_count": 3
+      },
+      "auxiliary_trials": [
+        {
+          "id": "one_fact_different_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "zero_fact_different_scope",
+          "fact_count": 0,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "one_fact_same_scope",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.a",
+          "classification": "contradiction",
+          "reason": "Synthetic faulty explanation: values were equal.",
+          "needs_manual_review": true
+        },
+        {
+          "id": "equal_value_different_scope",
+          "fact_count": 1,
+          "observation_value": "1",
+          "observation_scope": "scope.b",
+          "classification": "coexistVariant",
+          "reason": "Observation belongs to a different comparable scope and should co-exist as a variant.",
+          "needs_manual_review": false
+        },
+        {
+          "id": "unrelated_entity",
+          "fact_count": 1,
+          "observation_value": "10",
+          "observation_scope": "scope.b",
+          "classification": "variation",
+          "reason": "No existing facts for this key; treat as first candidate fact.",
+          "needs_manual_review": false
+        }
+      ],
+      "empty_cluster_auxiliary": {
+        "status": "empty_cluster",
+        "explanation": "No observations were available for this cluster."
+      },
+      "actual_compiled": true,
+      "ir_only_mutation": false
+    }
+  ],
+  "full_actual_logs_scope": "Complete eight newly compiled executions in local ignored build/algorithm_relation_contribution/v71_*_033.json and corresponding actual logs; compressed witnesses do not replace full observations.",
+  "all_original_sources_restored_exact": true,
+  "global_branch_coverage": false,
+  "clinical_error_rate_estimated": false,
+  "retained_historical_fixture": {
+    "path": "test/fixtures/relation_compiled_contribution_witnesses_v1.json",
+    "sha256": "e65b99ab82184cd11cf4c2b491921b6dad364e2fe25702389bc6b92e8ebca227"
+  }
+}

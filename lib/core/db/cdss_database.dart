@@ -14,6 +14,13 @@ String requireValidCdssTableName(String table) {
   return table;
 }
 
+/// A complete participating mutation, including history and activation markers.
+/// The action must await all work. An error leaves the committed state intact.
+/// Implementations must not substitute sequential writes for this capability.
+abstract interface class CdssAtomicWriter {
+  Future<T> runAtomicWrite<T>(Future<T> Function() action);
+}
+
 abstract class CdssDatabase {
   Future<void> initialize();
 

@@ -16,10 +16,12 @@ import 'firebase_user_data_paths.dart';
 /// rules keep meal/intake context isolated by Firebase Auth uid.
 class UserClinicalAuditService {
   final AuthService authService;
+  final bool allowPersistence;
   final FirebaseFirestore? _providedFirestore;
 
   UserClinicalAuditService({
     required this.authService,
+    this.allowPersistence = true,
     FirebaseFirestore? firestore,
   }) : _providedFirestore = firestore;
 
@@ -33,7 +35,7 @@ class UserClinicalAuditService {
     required List<String> activeDrugIds,
     required List<Intake> intakes,
   }) async {
-    if (!FirebaseBackend.enabled) return;
+    if (!allowPersistence || !FirebaseBackend.enabled) return;
     final uid = authService.currentUserId;
     if (uid == null) return;
     await FirebaseBackend.ensureInitialized();
@@ -62,7 +64,7 @@ class UserClinicalAuditService {
     required List<String> gateReasons,
     required bool aiUsed,
   }) async {
-    if (!FirebaseBackend.enabled) return;
+    if (!allowPersistence || !FirebaseBackend.enabled) return;
     final uid = authService.currentUserId;
     if (uid == null) return;
     await FirebaseBackend.ensureInitialized();
@@ -113,7 +115,8 @@ class UserClinicalAuditService {
       'meal': meal.toJson(),
       'result': result.toJson(),
       'score': result.score,
-      'severity': result.overallSeverity.name,
+      'severity': result.overallSeverity?.name,
+      'assessment_status': result.status.name,
       'generated_at': result.generatedAt.toIso8601String(),
     };
   }

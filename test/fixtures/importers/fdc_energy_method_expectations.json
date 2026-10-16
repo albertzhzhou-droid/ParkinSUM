@@ -1,0 +1,35 @@
+{
+  "schema": "parkinsum.fdc-energy-method-source-expectations/1",
+  "frozen_at_utc": "2026-10-01T04:24:08.915301+00:00",
+  "scope": "Manually specified source identity and withholding cases; not generated from importer output.",
+  "official_source_expectations_sha256": "93d9dd32663208eb2ec848e38794772d62218a2e21ca3bebf8d403cc041c847d",
+  "method_fields": [
+    {
+      "nutrient_id": 2047,
+      "nutrient_number": "957",
+      "source_amount": 61.8,
+      "method": "atwater_general_factors",
+      "unit": "kcal"
+    },
+    {
+      "nutrient_id": 2048,
+      "nutrient_number": "958",
+      "source_amount": 55.6,
+      "method": "atwater_specific_factors",
+      "unit": "kcal"
+    }
+  ],
+  "negative_cases": [
+    "Different methods remain distinct even when their numbers are equal.",
+    "ID 2047 with number 958 and ID 2048 with number 957 are held, never guessed from the display name.",
+    "An unknown nutrient ID with number 957 is held when the supplied identifiers disagree.",
+    "The kcal methods reported with unit kJ are not converted or projected.",
+    "An energy method identified only by its display name is not promoted.",
+    "Ambiguous or conflicting rows of one method withhold that method's resolved point; the other method is retained independently.",
+    "Conversion factors never become nutrient amounts or authorize new energy/protein calculations.",
+    "The food publication string is retained without an inferred timezone, freshness or effective date.",
+    "CSV factor joins with an ambiguous food owner are held and retain raw rows."
+  ],
+  "legacy_policy": "Method-specific rows do not populate the generic energyKcal field. A separately supplied legacy Energy 208 row retains its existing policy.",
+  "review": "Frozen before production changes; official original archive and complete object remain available as ignored acquisition evidence."
+}

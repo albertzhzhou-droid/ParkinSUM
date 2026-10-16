@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../core/i18n/app_i18n_context.dart';
 import '../core/services/services.dart';
+import '../core/services/origin_storage_coordination.dart';
 import '../core/services/user_logging_reminder_service.dart';
 import '../core/state/app_state.dart';
 import '../core/theme/paper_theme.dart';
@@ -20,6 +21,7 @@ import '../features/main_shell/main_tab_route.dart';
 import '../features/entry/entry_page.dart';
 import '../features/reminders/reminder_center_page.dart';
 import '../features/timeline/timeline_page.dart';
+import '../features/shared/local_storage_stale_page.dart';
 import 'account_owned_route_registry.dart';
 import 'bootstrap_attempt_controller.dart';
 import 'bootstrap_gate.dart';
@@ -491,7 +493,14 @@ class _ParkinSUMMaterialAppState extends State<_ParkinSUMMaterialApp>
         theme: Paper.themeData(),
         builder: (context, child) {
           return FocusVisibilityGuard(
-            child: PaperBackground(child: child ?? const SizedBox.shrink()),
+            child: PaperBackground(
+              child: state.isLocalStorageStale
+                  ? LocalStorageStalePage(
+                      localeTag: state.userProfile.displayLocale,
+                      onReload: reloadAfterExternalLocalDataChange,
+                    )
+                  : child ?? const SizedBox.shrink(),
+            ),
           );
         },
       ),

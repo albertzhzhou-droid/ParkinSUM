@@ -964,6 +964,22 @@ test('transitive result dependency closure remains conservative and fail closed'
   assert.equal(item.effort, 5);
   assert.equal(item.score, 10);
   assert.deepEqual(item.dependencies, ['algorithm_atlas_visual_contract']);
+  assert.match(item.currentGap, /Current local schema-v15 prerequisite slice/);
+  assert.match(item.currentGap, /exact dynamic manifest\/registry\/observed root identity sets/);
+  assert.match(item.currentGap, /algorithm ID, logical root ID and canonical package URI/);
+  assert.match(item.currentGap, /rejects missing, duplicate, unexpected or swapped identities/);
+  assert.match(item.currentGap, /rather than assuming a hardcoded root count/);
+  assert.match(item.currentGap, /current compiled registry and reviewed root manifest contain 65 roots/);
+  for (const artifact of [
+    'build/algorithm_direct_edge_probe/latest.json',
+    'build/algorithm_dependency_compatibility/latest.json',
+    'build/algorithm_trace_surface/latest.json',
+  ]) {
+    assert.ok(item.currentGap.includes(artifact), `missing current artifact: ${artifact}`);
+  }
+  assert.match(item.currentGap, /not a historical digest as the current candidate identity/);
+  assert.match(item.currentGap, /complete_for_declared_local_scope is not claimed/);
+  assert.match(item.currentGap, /Historical local schema-v14 Analyzer preview/);
   assert.match(
     item.currentGap,
     /schema-v14 Analyzer preview: two consecutive declared full-library runs produced the same canonical report SHA-256/i,
@@ -1110,7 +1126,7 @@ test('transitive result dependency closure remains conservative and fail closed'
     JSON.parse(fs.readFileSync('package.json', 'utf8')).scripts[
       'algorithm:direct-edge-probe'
     ],
-    'dart --packages=.dart_tool/package_config.json tool/run_algorithm_direct_edge_probe.dart',
+    'dart --packages=.dart_tool/package_config.json tool/run_algorithm_direct_edge_probe.dart && node --test tool/algorithm_result_sink_slice.test.mjs && node tool/algorithm_result_sink_slice.mjs',
   );
   assert.deepEqual(identity.dependencies, [
     'mechanistic_model_invariant_and_unit_gate',
@@ -1410,16 +1426,16 @@ test('complete-model queue preserves provenance, event, and dataset lineage', ()
     assert.ok(configContract.includes(term), `missing provenance gate: ${term}`);
   }
   assert.match(config.currentGap, /algorithm-configuration schema v6/i);
-  assert.match(config.currentGap, /119 deterministic parameter\/provenance records/i);
-  assert.match(config.currentGap, /sixteen algorithms have at least one explicit field\/provider record/i);
-  assert.match(config.currentGap, /47 truthfully remain source-bundle-only/i);
+  assert.match(config.currentGap, /123 deterministic parameter\/provenance records/i);
+  assert.match(config.currentGap, /seventeen algorithms have at least one explicit field\/provider record/i);
+  assert.match(config.currentGap, /48 truthfully remain source-bundle-only/i);
   assert.match(config.currentGap, /dose-expression parser has one explicit prototype-heuristic record/i);
   assert.match(config.currentGap, /protein_trend provider.*aggregation contract/i);
   assert.match(
     config.currentGap,
     /Gastric emptying and levodopa absorption opportunity each have a fail-closed declared-scope completeness witness/i,
   );
-  assert.match(config.currentGap, /61 algorithms lack a reviewed complete-per-field witness/i);
+  assert.match(config.currentGap, /63 algorithms lack a reviewed complete-per-field witness/i);
   assert.equal(changeImpact.status, 'shipped');
   assert.equal(changeImpact.priority, 'P0');
   assert.ok(changeImpact.dependencies.includes(config.id));
@@ -1494,6 +1510,11 @@ test('complete-model queue preserves provenance, event, and dataset lineage', ()
   assert.equal(losslessReplay.status, 'research_required');
   assert.equal(losslessReplay.score, 20);
   assert.ok(losslessReplay.dependencies.includes(ledger.id));
+  assert.match(losslessReplay.currentGap, /raw JSON entry point.*UTF-8.*2 MiB.*depth beyond 32/);
+  assert.match(losslessReplay.currentGap, /duplicate members including escaped-equivalent keys inside nested objects and arrays/);
+  assert.match(losslessReplay.currentGap, /Three valid synthetic capsules and eight malformed transport cases/);
+  assert.match(losslessReplay.currentGap, /trusted-input compatibility path.*cannot recover duplicate-member evidence/);
+  assert.match(losslessReplay.currentGap, /finite strict-raw slice is not a full migration\/fuzz corpus/);
   assert.match(
     [losslessReplay.currentGap, ...losslessReplay.acceptanceCriteria].join(' '),
     /lossless|cross-runtime|no lossy migration/i,
@@ -2430,6 +2451,12 @@ test('next-wave applicability, oracle, terminology, privacy, and durability gate
     /successful results now carry a schema-v1 content-addressed receipt/,
   );
   assert.match(evidenceCurrency.currentGap, /receipt is unsigned/);
+  assert.match(evidenceCurrency.currentGap, /same explicit UTC time using the existing gate/);
+  assert.match(evidenceCurrency.currentGap, /full historical snapshots.*owner-digest preference archive/);
+  assert.match(evidenceCurrency.currentGap, /fixed synthetic candidate, not a discovered real retraction/);
+  assert.match(evidenceCurrency.currentGap, /same-UID and A-to-B-to-A transitions/);
+  assert.match(evidenceCurrency.currentGap, /reject new writes without evicting history/);
+  assert.match(evidenceCurrency.currentGap, /no candidate activation, live refresh, runtime registry mutation/);
   assert.match(
     evidenceCurrency.acceptanceCriteria.join(' '),
     /expression-of-concern/,
@@ -2492,10 +2519,10 @@ test('next-wave applicability, oracle, terminology, privacy, and durability gate
   assert.match(invariant.currentGap, /23 digest-bound checks/i);
   assert.match(invariant.currentGap, /schema-v2/i);
   assert.match(invariant.currentGap, /relabelled probe cannot manufacture coverage/i);
-  assert.match(invariant.currentGap, /22-of-63/i);
-  assert.match(invariant.currentGap, /41 not covered/i);
-  assert.match(invariant.currentGap, /30-of-63/i);
-  assert.match(invariant.currentGap, /33 uncovered/i);
+  assert.match(invariant.currentGap, /22-of-65/i);
+  assert.match(invariant.currentGap, /43 not covered/i);
+  assert.match(invariant.currentGap, /30-of-65/i);
+  assert.match(invariant.currentGap, /35 uncovered/i);
   assert.match(invariant.currentGap, /FDC amino-acid extraction probe/i);
   assert.match(invariant.currentGap, /absent or unknown units/i);
   assert.match(invariant.currentGap, /catalog-candidate projection/i);
@@ -2810,6 +2837,15 @@ test('complete-app user ownership queue keeps recovery, handoff, consent, suppor
   assert.ok(portable.dependencies.includes('encrypted_backup_restore_drill'));
   assert.ok(portable.dependencies.includes('offline_conflict_awareness'));
   assert.match(portable.currentGap, /separate package-scoped privacy projection/);
+  assert.match(portable.currentGap, /same-owner, single-window Web restore slice/);
+  assert.match(portable.currentGap, /strict current-v4 no-write inspection precedes explicit confirmation/);
+  assert.match(portable.currentGap, /auth-session generation, source bytes and complete current-state digest/);
+  assert.match(portable.currentGap, /immutable recoverable history are retained.*tombstone history also conflict/);
+  assert.match(portable.currentGap, /same-UID logout\/bootstrap invalidate old inspection or confirmation authority/);
+  assert.match(portable.currentGap, /Nonempty observation\/reminder packages.*non-lossless.*refused/);
+  assert.match(portable.currentGap, /Notification permission, reminder activation and AI consent are never imported/);
+  assert.match(portable.currentGap, /v4 excludes care discussions, follow-up outcomes, self-checks, drafts and replay\/currency receipts/);
+  assert.match(portable.currentGap, /does not satisfy full-package cross-store.*native\/Firebase.*physical crash/);
   assert.equal(portableIdentityProjection.status, 'research_required');
   assert.equal(portableIdentityProjection.priority, 'P1');
   assert.equal(portableIdentityProjection.score, 20);
@@ -3175,7 +3211,9 @@ test('next-wave algorithm, notification, time, egress, and response research sta
   assert.match(liveCoverage.currentGap, /protein_trend/);
   assert.match(liveCoverage.currentGap, /dosage_note_parser/);
   assert.match(liveCoverage.currentGap, /protein_distribution/);
-  assert.match(liveCoverage.currentGap, /49 static-only contracts/i);
+  assert.match(liveCoverage.currentGap, /all 65 registered algorithms/i);
+  assert.match(liveCoverage.currentGap, /14\/65 production traces/i);
+  assert.match(liveCoverage.currentGap, /51 static-only contracts/i);
   const independentContracts = requiredItem(
     queue,
     'algorithm_contract_relation_independence_and_cross_runtime_oracle',
@@ -3194,8 +3232,8 @@ test('next-wave algorithm, notification, time, egress, and response research sta
   );
   assert.equal(executable.status, 'shipped');
   assert.equal(executable.score, 30);
-  assert.match(executable.currentGap, /30-of-63/);
-  assert.match(executable.currentGap, /33 explicit gaps/);
+  assert.match(executable.currentGap, /30-of-65/);
+  assert.match(executable.currentGap, /35 explicit gaps/);
   assert.match(executable.currentGap, /catalog-candidate projection/);
   assert.match(executable.currentGap, /order-dependent fact-conflict defect/);
   assert.match(executable.acceptanceCriteria.join(' '), /30-of-63/);

@@ -16,6 +16,10 @@ import '../../core/state/persisted_list_mutation.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/personal_observation.dart';
 import '../../domain/entities/timeline_event.dart';
+import '../../domain/entities/personal_log_view.dart';
+import '../../domain/usecases/personal_log_date_window_resolver.dart';
+import '../../domain/usecases/personal_log_view_projector.dart';
+import '../shared/personal_log_view_controls.dart';
 import '../../domain/usecases/fhir_r4_blood_pressure_mapper.dart';
 import '../../domain/usecases/fhir_r4_blood_pressure_collection_mapper.dart';
 import '../../domain/usecases/fhir_r4_symptom_motor_observation_mapper.dart';
@@ -88,8 +92,109 @@ Future<void> openObservationEditor(
   }
 }
 
-class TimelinePage extends StatelessWidget {
-  const TimelinePage({super.key});
+class TimelinePage extends StatefulWidget {
+  // Bound cold scrollbar seeks without fixing row heights or clipping large
+  // text. Filtering, typed focus and nearest neighbours still use all records.
+  static const recordWindowSize = 200;
+  const TimelinePage({
+    super.key,
+    this.focus,
+    this.initialWindow,
+    this.expectedOwner,
+    this.expectedSessionEpoch,
+  });
+  final TypedLogRecordRef? focus;
+  final PersonalLogDateWindow? initialWindow;
+  final String? expectedOwner;
+  final int? expectedSessionEpoch;
+  @override
+  State<TimelinePage> createState() => _TimelinePageState();
+}
+
+class _TimelinePageState extends State<TimelinePage> {
+  final _nameController = TextEditingController();
+  AppState? _boundState;
+  String? _scopeOwner;
+  int? _scopeEpoch;
+  TypedLogRecordRef? _focus;
+  PersonalLogDateWindow? _selection;
+  TimelineEventType? _type;
+  String? _source;
+  bool _focusExpired = false;
+  int _pageIndex = 0;
+  int _filterRevision = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _focus = widget.focus;
+    _selection = widget.initialWindow;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_boundState != null) return;
+    _boundState = context.read<AppState>();
+    _scopeOwner = widget.expectedOwner ?? _boundState!.currentUserId;
+    _scopeEpoch =
+        widget.expectedSessionEpoch ?? _boundState!.mealDraftSessionEpoch;
+    _boundState!.addListener(_observeViewScope);
+    _observeViewScope();
+  }
+
+  void _observeViewScope() {
+    final state = _boundState;
+    if (state == null ||
+        !mounted ||
+        (_scopeOwner == state.currentUserId &&
+            _scopeEpoch == state.mealDraftSessionEpoch)) {
+      return;
+    }
+    setState(() {
+      _focus = null;
+      _selection = null;
+      _type = null;
+      _source = null;
+      _nameController.clear();
+      _focusExpired = true;
+      _pageIndex = 0;
+      _filterRevision++;
+      _scopeOwner = state.currentUserId;
+      _scopeEpoch = state.mealDraftSessionEpoch;
+    });
+  }
+
+  @override
+  void dispose() {
+    _boundState?.removeListener(_observeViewScope);
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  void _clearFilters() => setState(() {
+    _pageIndex = 0;
+    _filterRevision++;
+    _selection = null;
+    _type = null;
+    _source = null;
+    _nameController.clear();
+  });
+
+  DateTime _viewTime(DateTime time) {
+    try {
+      return logDisplayTime(time, _boundState!.userProfile.timezone);
+    } on FormatException {
+      return time.toUtc();
+    }
+  }
+
+  String _viewDate(DateTime time) =>
+      LogCivilDate.fromDateTime(_viewTime(time)).toString();
+  String _viewTimestamp(DateTime time) {
+    final t = _viewTime(time);
+    return '${LogCivilDate.fromDateTime(t)} ${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')} ${t.timeZoneName}';
+  }
 
   Future<void> _deleteMeal(BuildContext context, String mealId) async {
     final state = context.read<AppState>();
@@ -726,13 +831,6 @@ class TimelinePage extends StatelessWidget {
     return '$mm/$dd $hh:$min';
   }
 
-  String _formatDate(DateTime value) {
-    final yyyy = value.year.toString().padLeft(4, '0');
-    final mm = value.month.toString().padLeft(2, '0');
-    final dd = value.day.toString().padLeft(2, '0');
-    return '$yyyy-$mm-$dd';
-  }
-
   String _formatTimeDistance(AppI18n i18n, DateTime left, DateTime right) {
     final minutes = left.difference(right).inMinutes;
     final absMinutes = minutes.abs();
@@ -779,19 +877,28 @@ class TimelinePage extends StatelessWidget {
     TimelineLookupIndex lookup,
     Meal meal,
   ) {
-    final totals = meal.computeTotals();
+    String nutrient(String field) =>
+        meal
+            .knownNutrientTotal(field, catalog: state.foodRepo.allFoods)
+            ?.toStringAsFixed(1) ??
+        (i18n.languageFamily == 'zh' ? '未知' : 'Unknown');
     final result = state.cachedMealCheck(meal);
     final nearestIntake = lookup.nearestIntakeForMeal(meal);
     final parts = <String>[
       i18n.tr('timeline.meal_macro_line', {
-        'protein': totals.totalProteinG.toStringAsFixed(1),
-        'carbs': totals.totalCarbsG.toStringAsFixed(1),
-        'fat': totals.totalFatG.toStringAsFixed(1),
+        'protein': nutrient('proteinG'),
+        'carbs': nutrient('carbsG'),
+        'fat': nutrient('fatG'),
       }),
-      i18n.tr('timeline.conflict_line', {
-        'severity': i18n.severityLabel(result.overallSeverity.name),
-        'score': '${result.score}',
-      }),
+      if (result == null)
+        i18n.tr('timeline.conflict_pending')
+      else if (!result.hasAssessment)
+        i18n.tr('interaction.unassessed')
+      else
+        i18n.tr('timeline.conflict_line', {
+          'severity': i18n.severityLabel(result.overallSeverity!.name),
+          'score': '${result.score}',
+        }),
       _mealContextSummary(i18n, meal),
       if (meal.timePrecision == 'interval' &&
           meal.occurredRangeStart != null &&
@@ -1342,17 +1449,72 @@ class TimelinePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
     final i18n = context.appI18n;
-    final events = state.timeline;
+    final fullEvents = state.timeline;
     final owner = state.currentUserId;
+    final epoch = state.mealDraftSessionEpoch;
+    final resolver = PersonalLogDateWindowResolver();
+    final zone = state.userProfile.timezone;
+    var zoneAvailable = true;
+    ResolvedLogWindow? window;
+    String? windowError;
+    try {
+      resolver.location(zone);
+      if (_selection != null) {
+        window = resolver.resolve(
+          PersonalLogDateWindow(
+            start: _selection!.start,
+            endInclusive: _selection!.endInclusive,
+            zoneId: zone,
+          ),
+          asOf: DateTime.now(),
+        );
+      }
+    } on FormatException {
+      zoneAvailable = false;
+      windowError = logViewText(i18n, 'log_view.zone_hold');
+    }
+    final query = TimelineViewQuery(
+      window: window,
+      name: _nameController.text,
+      types: _type == null ? {} : {_type!},
+      sources: _source == null ? {} : {_source!},
+    );
+    final view = const PersonalLogViewProjector().timeline(
+      fullEvents: fullEvents,
+      meals: state.meals,
+      intakes: state.intakes,
+      observations: state.observations,
+      foods: state.foodRepo.allFoods,
+      medications: state.medRepo.allDrugs,
+      query: query,
+      focus: _focus,
+    );
+    final visibleEvents = _selection != null && windowError != null
+        ? <TimelineEvent>[]
+        : view.visible;
+    final pageCount = visibleEvents.isEmpty
+        ? 1
+        : (visibleEvents.length + TimelinePage.recordWindowSize - 1) ~/
+              TimelinePage.recordWindowSize;
+    final pageIndex = _pageIndex.clamp(0, pageCount - 1);
+    final pageStart = pageIndex * TimelinePage.recordWindowSize;
+    final pageEnd = (pageStart + TimelinePage.recordWindowSize).clamp(
+      0,
+      visibleEvents.length,
+    );
+    final events = visibleEvents.sublist(pageStart, pageEnd);
+    final showSummaries =
+        !query.isFiltered && _focus == null && _selection == null;
     final observations = {for (final item in state.observations) item.id: item};
     final bloodPressureTrend = BloodPressureTrendProjection.fromObservations(
       state.observations,
     );
-    final hasBloodPressureTrend = bloodPressureTrend.observations.isNotEmpty;
+    final hasBloodPressureTrend =
+        showSummaries && bloodPressureTrend.observations.isNotEmpty;
     final symptomMotorSequence =
         SymptomMotorObservationProjection.fromObservations(state.observations);
     final hasSymptomMotorSequence =
-        symptomMotorSequence.observations.isNotEmpty;
+        showSummaries && symptomMotorSequence.observations.isNotEmpty;
     final observationLedger = owner == null
         ? null
         : const PersonalObservationEventLedgerProjector().project(
@@ -1360,7 +1522,8 @@ class TimelinePage extends StatelessWidget {
             ownerId: owner,
             synthetic: false,
           );
-    final hasObservationLedger = observationLedger?.events.isNotEmpty ?? false;
+    final hasObservationLedger =
+        showSummaries && (observationLedger?.events.isNotEmpty ?? false);
     final combinedFhirObservations = <PersonalObservation>[
       ...bloodPressureTrend.observations,
       ...symptomMotorSequence.observations,
@@ -1372,7 +1535,7 @@ class TimelinePage extends StatelessWidget {
     final summaryCardCount =
         (hasBloodPressureTrend ? 1 : 0) + (hasSymptomMotorSequence ? 1 : 0);
     final lookup = TimelineLookupIndex(
-      events: events,
+      events: fullEvents,
       meals: state.meals,
       intakes: state.intakes,
     );
@@ -1412,7 +1575,172 @@ class TimelinePage extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Flexible(
+                flex: 2,
+                child: SingleChildScrollView(
+                  key: const ValueKey('timeline-filter-scroll'),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: insets.left),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TimelineViewControls(
+                          i18n: i18n,
+                          nameController: _nameController,
+                          type: _type,
+                          source: _source,
+                          sourceFacets: [
+                            ...view.sources,
+                            if (_source != null &&
+                                !view.sources.any((f) => f.id == _source))
+                              TimelineSourceFacet(
+                                id: _source!,
+                                value: 'unconfirmed',
+                                isCurrentCatalog: false,
+                                isUnconfirmed: true,
+                              ),
+                          ],
+                          onNameChanged: (_) => setState(() {
+                            _pageIndex = 0;
+                            _filterRevision++;
+                          }),
+                          onTypeChanged: (type) => setState(() {
+                            _type = type;
+                            _pageIndex = 0;
+                            _filterRevision++;
+                          }),
+                          onSourceChanged: (source) => setState(() {
+                            _source = source;
+                            _pageIndex = 0;
+                            _filterRevision++;
+                          }),
+                          onClear: _clearFilters,
+                          dateButton: PersonalLogDateButton(
+                            key: const ValueKey('timeline-custom-dates'),
+                            zoneId: zone,
+                            selection: _selection,
+                            enabled: zoneAvailable,
+                            onChanged: (selection) {
+                              if (state.currentUserId == owner &&
+                                  state.mealDraftSessionEpoch == epoch) {
+                                setState(() {
+                                  _selection = selection;
+                                  _pageIndex = 0;
+                                  _filterRevision++;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        Text(
+                          logViewText(i18n, 'log_view.count', {
+                            'matched':
+                                '${_selection != null && windowError != null ? 0 : view.filtered.length}',
+                            'total': '${fullEvents.length}',
+                            'shown': '${events.length}',
+                          }),
+                          key: const ValueKey('timeline-view-count'),
+                        ),
+                        if (pageCount > 1)
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            children: [
+                              IconButton(
+                                key: const ValueKey(
+                                  'timeline-previous-records',
+                                ),
+                                tooltip: logViewText(
+                                  i18n,
+                                  'log_view.previous_records',
+                                ),
+                                onPressed: pageIndex == 0
+                                    ? null
+                                    : () => setState(
+                                        () => _pageIndex = pageIndex - 1,
+                                      ),
+                                icon: const Icon(Icons.chevron_left),
+                              ),
+                              Text(
+                                logViewText(i18n, 'log_view.page', {
+                                  'page': '${pageIndex + 1}',
+                                  'pages': '$pageCount',
+                                  'start': '${pageStart + 1}',
+                                  'end': '$pageEnd',
+                                }),
+                                key: const ValueKey('timeline-record-page'),
+                              ),
+                              IconButton(
+                                key: const ValueKey('timeline-next-records'),
+                                tooltip: logViewText(
+                                  i18n,
+                                  'log_view.next_records',
+                                ),
+                                onPressed: pageIndex + 1 == pageCount
+                                    ? null
+                                    : () => setState(
+                                        () => _pageIndex = pageIndex + 1,
+                                      ),
+                                icon: const Icon(Icons.chevron_right),
+                              ),
+                            ],
+                          ),
+                        Text(
+                          windowError ??
+                              logViewText(i18n, 'log_view.date_basis', {
+                                'zone': zone,
+                              }),
+                        ),
+                        if (_focusExpired)
+                          Text(
+                            logViewText(i18n, 'log_view.expired'),
+                            key: const ValueKey('timeline-focus-expired'),
+                          ),
+                        if (_focus != null) ...[
+                          Text(
+                            logViewText(i18n, switch (view.focusStatus) {
+                              TimelineFocusStatus.unavailable =>
+                                'log_view.unavailable',
+                              TimelineFocusStatus.ambiguous =>
+                                'log_view.ambiguous',
+                              TimelineFocusStatus.hiddenByFilters =>
+                                'log_view.hidden',
+                              _ => 'log_view.focused',
+                            }),
+                            key: const ValueKey('timeline-focus-status'),
+                          ),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              TextButton(
+                                key: const ValueKey('timeline-clear-focus'),
+                                onPressed: () => setState(() {
+                                  _focus = null;
+                                  _pageIndex = 0;
+                                  _filterRevision++;
+                                }),
+                                child: Text(
+                                  logViewText(i18n, 'log_view.clear_focus'),
+                                ),
+                              ),
+                              if (view.focusStatus ==
+                                  TimelineFocusStatus.hiddenByFilters)
+                                TextButton(
+                                  onPressed: _clearFilters,
+                                  child: Text(
+                                    logViewText(i18n, 'log_view.clear_filters'),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               Expanded(
+                flex: 3,
                 child:
                     events.isEmpty &&
                         summaryCardCount == 0 &&
@@ -1426,12 +1754,14 @@ class TimelinePage extends StatelessWidget {
                               const PaperOrnament(width: 160),
                               const SizedBox(height: 14),
                               Text(
-                                switch (i18n.languageFamily) {
-                                  'zh' => '尚无餐食、服药或观察记录',
-                                  'en' =>
-                                    'No meals, medication intakes or observations yet',
-                                  _ => i18n.tr('timeline.empty'),
-                                },
+                                query.isFiltered || _focus != null
+                                    ? logViewText(i18n, 'log_view.no_matches')
+                                    : switch (i18n.languageFamily) {
+                                        'zh' => '尚无餐食、服药或观察记录',
+                                        'en' =>
+                                          'No meals, medication intakes or observations yet',
+                                        _ => i18n.tr('timeline.empty'),
+                                      },
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontFamily: Paper.serif,
@@ -1445,6 +1775,9 @@ class TimelinePage extends StatelessWidget {
                         ),
                       )
                     : ListView.separated(
+                        key: ValueKey(
+                          'timeline-record-window-$pageIndex-$_filterRevision-${_focus?.viewKey ?? 'all'}',
+                        ),
                         padding: insets,
                         itemCount:
                             events.length +
@@ -1513,8 +1846,8 @@ class TimelinePage extends StatelessWidget {
                           final event = events[eventIndex];
                           final previous = eventIndex == 0
                               ? null
-                              : _formatDate(events[eventIndex - 1].time);
-                          final current = _formatDate(event.time);
+                              : _viewDate(events[eventIndex - 1].time);
+                          final current = _viewDate(event.time);
                           final showHeader = previous != current;
                           final meal = event.type == TimelineEventType.meal
                               ? lookup.mealForEvent(event)
@@ -1529,6 +1862,9 @@ class TimelinePage extends StatelessWidget {
                               : null;
 
                           return Column(
+                            key: ValueKey(
+                              'timeline-record-${TypedLogRecordRef.fromEvent(event).viewKey}',
+                            ),
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (showHeader) ...[
@@ -1554,7 +1890,10 @@ class TimelinePage extends StatelessWidget {
                                 )
                               else
                                 Card(
-                                  child: ListTile(
+                                  child: _TimelineRecordTile(
+                                    actionsKey: ValueKey(
+                                      'timeline-row-actions-${TypedLogRecordRef.fromEvent(event).viewKey}',
+                                    ),
                                     leading: CircleAvatar(
                                       backgroundColor: _timelineColor(
                                         event.type,
@@ -1581,7 +1920,16 @@ class TimelinePage extends StatelessWidget {
                                       children: [
                                         Text(
                                           [
-                                            _formatDateTime(event.time),
+                                            _viewTimestamp(event.time),
+                                            if (view.unconfirmed.contains(
+                                              TypedLogRecordRef.fromEvent(
+                                                event,
+                                              ),
+                                            ))
+                                              logViewText(
+                                                i18n,
+                                                'log_view.source_unconfirmed',
+                                              ),
                                             if (meal != null)
                                               _mealSubtitle(
                                                 state,
@@ -1688,6 +2036,26 @@ class TimelinePage extends StatelessWidget {
                                                   ),
                                                 ),
                                           ),
+                                        if (meal != null)
+                                          IconButton(
+                                            key: ValueKey(
+                                              'reuse-meal-${meal.id}',
+                                            ),
+                                            tooltip: i18n.languageFamily == 'zh'
+                                                ? '复用为新餐草稿'
+                                                : 'Reuse as a new meal draft',
+                                            icon: const Icon(
+                                              Icons.copy_outlined,
+                                            ),
+                                            onPressed: () =>
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) => EntryPage(
+                                                      reuseMeal: meal,
+                                                    ),
+                                                  ),
+                                                ),
+                                          ),
                                         IconButton(
                                           tooltip: i18n.tr('dashboard.edit'),
                                           icon: const Icon(Icons.edit_outlined),
@@ -1772,6 +2140,60 @@ class TimelinePage extends StatelessWidget {
         return Icons.edit_note_outlined;
     }
   }
+}
+
+/// Keep original actions and content together without letting action buttons
+/// consume the text column on a narrow timeline card.
+class _TimelineRecordTile extends StatelessWidget {
+  const _TimelineRecordTile({
+    required this.actionsKey,
+    required this.leading,
+    required this.title,
+    required this.subtitle,
+    required this.trailing,
+    required this.isThreeLine,
+    this.onTap,
+  });
+
+  final Key actionsKey;
+  final Widget leading;
+  final Widget title;
+  final Widget subtitle;
+  final Wrap trailing;
+  final bool isThreeLine;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final narrow = constraints.maxWidth < 600;
+      final content = ListTile(
+        leading: leading,
+        title: title,
+        subtitle: subtitle,
+        isThreeLine: isThreeLine,
+        trailing: narrow ? null : trailing,
+        onTap: onTap,
+      );
+      if (!narrow) {
+        return content;
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          content,
+          Padding(
+            key: actionsKey,
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: trailing,
+            ),
+          ),
+        ],
+      );
+    },
+  );
 }
 
 class IntakeEditorPage extends StatefulWidget {
@@ -1922,16 +2344,21 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
     });
   }
 
+  String? _selectedMedicationId(Iterable<DrugDefinition> medications) {
+    if (medications.any((drug) => drug.id == _drugId)) return _drugId;
+    // An existing reference cannot be replaced by a catalogue default.
+    if (widget.isEditing ||
+        widget.requireExplicitMedicationSelection ||
+        medications.isEmpty) {
+      return null;
+    }
+    return medications.first.id;
+  }
+
   Future<void> _save() async {
     final i18n = context.appI18n;
     final medications = context.read<AppState>().medRepo.allDrugs;
-    final drugId = medications.any((drug) => drug.id == _drugId)
-        ? _drugId
-        : widget.requireExplicitMedicationSelection
-        ? null
-        : medications.isEmpty
-        ? null
-        : medications.first.id;
+    final drugId = _selectedMedicationId(medications);
     if (_isSaving) return;
     if (drugId == null || drugId.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2026,13 +2453,7 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
     final i18n = context.appI18n;
     final medications = state.medRepo.allDrugs;
     final activeIds = state.activeDrugs.map((drug) => drug.id).toSet();
-    final selectedDrugId = medications.any((drug) => drug.id == _drugId)
-        ? _drugId
-        : widget.requireExplicitMedicationSelection
-        ? null
-        : medications.isEmpty
-        ? null
-        : medications.first.id;
+    final selectedDrugId = _selectedMedicationId(medications);
 
     return Scaffold(
       appBar: PaperAppBar(
@@ -2084,8 +2505,13 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
                     isExpanded: true,
                     decoration: InputDecoration(
                       labelText: i18n.tr('timeline.medication'),
-                      helperText: i18n.tr(
-                        'reminders.explicit_medication_selection',
+                      helper: Text(
+                        i18n.tr(
+                          widget.isEditing
+                              ? 'timeline.unresolved_medication_selection'
+                              : 'reminders.explicit_medication_selection',
+                        ),
+                        softWrap: true,
                       ),
                     ),
                     items: [

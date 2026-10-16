@@ -16,9 +16,8 @@ void main() {
       context: snapshot.context,
       mealCompositionsById: {snapshot.composition.id: snapshot.composition},
     );
-    final parsed = MechanisticReplayCapsule.fromJson(
-      (jsonDecode(capsule.canonicalJson) as Map<String, dynamic>)
-          .cast<String, Object?>(),
+    final parsed = MechanisticReplayCapsule.fromJsonString(
+      capsule.canonicalJson,
     );
     final restored = parsed.restore(
       expectedConfigurationSha256: snapshot.configurationIdentity.sha256Digest,
@@ -81,6 +80,78 @@ void main() {
   }
   if (!versionMutationBlocked) failures.add('version_mutation_survived');
 
+  final referenceRaw = vectors.first['canonical_json']! as String;
+  final futureRaw = Map<String, Object?>.from(reference)
+    ..['schema_version'] = 2;
+  final digestRaw = Map<String, Object?>.from(reference)
+    ..['capsule_sha256'] = '0' * 64;
+  final anomalySpecs = <(String, String, String)>[
+    (
+      'duplicate_root',
+      referenceRaw.replaceFirst(
+        '{',
+        '{"capsule_id":${jsonEncode(reference['capsule_id'])},',
+      ),
+      'duplicate_member',
+    ),
+    (
+      'duplicate_escaped_nested',
+      referenceRaw.replaceFirst(
+        '"context":{',
+        '"context":{"extra":true,"ex\\u0074ra":false,',
+      ),
+      'duplicate_member',
+    ),
+    (
+      'duplicate_in_array',
+      '{"items":[{"a":1,"\\u0061":1}]}',
+      'duplicate_member',
+    ),
+    (
+      'depth_over_limit',
+      '${'[' * (mechanisticReplayMaxJsonContainerDepth + 1)}0${']' * (mechanisticReplayMaxJsonContainerDepth + 1)}',
+      'depth_limit',
+    ),
+    (
+      'utf8_over_byte_limit',
+      '"${'餐' * (mechanisticReplayMaxJsonBytes ~/ 3 + 1)}"',
+      'byte_limit',
+    ),
+    ('future_schema', jsonEncode(futureRaw), 'schema'),
+    ('corrupt_digest', jsonEncode(digestRaw), 'digest'),
+    (
+      'truncated_container',
+      referenceRaw.substring(0, referenceRaw.length - 1),
+      'invalid_json',
+    ),
+  ];
+  final rawAnomalies = <Map<String, Object?>>[];
+  final rawAnomalyResults = <String, Object?>{};
+  for (final (id, raw, expectedReason) in anomalySpecs) {
+    var rejected = false;
+    var actualReason = 'accepted';
+    try {
+      MechanisticReplayCapsule.fromJsonString(raw);
+    } on FormatException catch (error) {
+      actualReason = switch (error.message) {
+        'replay_json_duplicate_member' => 'duplicate_member',
+        'replay_json_depth_limit' => 'depth_limit',
+        'replay_json_byte_limit' => 'byte_limit',
+        'Unsupported replay capsule schema.' => 'schema',
+        'Replay capsule digest mismatch.' => 'digest',
+        _ => 'invalid_json',
+      };
+      rejected = actualReason == expectedReason;
+    }
+    if (!rejected) failures.add('raw_anomaly:$id:$actualReason');
+    rawAnomalyResults[id] = rejected;
+    rawAnomalies.add({
+      'id': id,
+      'raw_json': raw,
+      'expected_reason': expectedReason,
+    });
+  }
+
   final output = <String, Object?>{
     'schema': mechanisticReplayCrossRuntimeVectorsSchema,
     'schema_version': mechanisticReplayCrossRuntimeVectorsSchemaVersion,
@@ -88,6 +159,8 @@ void main() {
     'failures': failures,
     'vector_count': vectors.length,
     'vectors': vectors,
+    'raw_json_anomalies': rawAnomalies,
+    'dart_raw_json_anomaly_results': rawAnomalyResults,
     'dart_mutation_results': <String, Object?>{
       'digest_mutation_blocked': digestMutationBlocked,
       'unknown_root_field_blocked': unknownFieldBlocked,

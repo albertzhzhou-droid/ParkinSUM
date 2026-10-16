@@ -1,0 +1,264 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ns0:document xmlns:ns0="urn:hl7-org:v3"><ns0:id root="60aaac4b-58e7-485c-9f27-95fcc35b5c48" />
+   <ns0:setId root="9b17b028-964a-473c-823d-81423535bd66" />
+   <ns0:versionNumber value="6" />
+   <ns0:effectiveTime value="20260801" />
+   <ns0:title>SINEMET<ns0:sup>®</ns0:sup>
+      <ns0:br />(carbidopa and levodopa)<ns0:br />Tablets</ns0:title>
+   <ns0:component><ns0:structuredBody><ns0:component><ns0:section><ns0:code code="48780-1" codeSystem="2.16.840.1.113883.6.1" /><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="78206-166" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>SINEMET</ns0:name>
+                        <ns0:formCode code="C42998" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="TABLET" />
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator value="10" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator value="100" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="OP1R32D61U" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MICROCRYSTALLINE CELLULOSE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="70097M6I30" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MAGNESIUM STEARATE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="O8232NY3SJ" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>STARCH, CORN</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="L06K8R7DQK" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>FD&amp;C BLUE NO. 2</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="ORAL" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="78206-168" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>SINEMET</ns0:name>
+                        <ns0:formCode code="C42998" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="TABLET" />
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator value="25" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator value="100" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="OP1R32D61U" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MICROCRYSTALLINE CELLULOSE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="70097M6I30" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MAGNESIUM STEARATE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="O8232NY3SJ" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>STARCH, CORN</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="35SW5USQ3G" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>D&amp;C YELLOW NO. 10</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="ORAL" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="78206-167" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>SINEMET</ns0:name>
+                        <ns0:formCode code="C42998" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="TABLET" />
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator value="25" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator value="250" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="OP1R32D61U" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MICROCRYSTALLINE CELLULOSE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="70097M6I30" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MAGNESIUM STEARATE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="O8232NY3SJ" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>STARCH, CORN</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="L06K8R7DQK" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>FD&amp;C BLUE NO. 2</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="ORAL" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="78206-190" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>SINEMET</ns0:name>
+                        <ns0:formCode code="C42998" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="TABLET" />
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator value="25" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator value="100" unit="mg" />
+                              <ns0:denominator value="1" unit="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="OP1R32D61U" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MICROCRYSTALLINE CELLULOSE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="70097M6I30" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>MAGNESIUM STEARATE</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="O8232NY3SJ" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>STARCH, CORN</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="IACT">
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="35SW5USQ3G" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>D&amp;C YELLOW NO. 10</ns0:name>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" codeSystem="2.16.840.1.113883.3.26.1.1" displayName="ORAL" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject></ns0:section></ns0:component></ns0:structuredBody></ns0:component></ns0:document>

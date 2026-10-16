@@ -1,0 +1,333 @@
+{
+  "schema": "parkinsum.joint-source-scenario-study/1",
+  "frozen_at_utc": "2026-10-01T12:46:55.897805+00:00",
+  "source_archive_sha256": "186e988ec542e913f51ef62b86a47758e8cdd0d1dc3889e7b055581f3c09c77a",
+  "source_member_sha256": "27d1fe3fd89edfbe528ed915da5619320e1d004d4594603a1b19bdb1511590cc",
+  "subset_raw_sha256": "f7a3ffd8b421586d024f2b2254bfd98b5755c98948840106bed4222c135a3f18",
+  "source_url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-04-30.zip",
+  "groups": [
+    {
+      "candidate_id": "hummus",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "321358:0",
+          "fdc_id": "321358",
+          "original_food_portion_index": 0,
+          "portion_id": 118804,
+          "portion_grams": "33.9",
+          "expected_per_portion": {
+            "protein_g": "2.49165",
+            "fiber_g": "1.8306",
+            "fat_g": "5.7969",
+            "carbohydrate_g": "5.0511",
+            "energy_kcal": "77.631"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "321358:1",
+          "fdc_id": "321358",
+          "original_food_portion_index": 1,
+          "portion_id": 312701,
+          "portion_grams": "30.0",
+          "expected_per_portion": {
+            "protein_g": "2.205",
+            "fiber_g": "1.62",
+            "fat_g": "5.13",
+            "carbohydrate_g": "4.47",
+            "energy_kcal": "68.7"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        }
+      ]
+    },
+    {
+      "candidate_id": "almonds",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "323294:0",
+          "fdc_id": "323294",
+          "original_food_portion_index": 0,
+          "portion_id": 119012,
+          "portion_grams": "135.0",
+          "expected_per_portion": {
+            "protein_g": "27.54",
+            "fiber_g": "14.85",
+            "fat_g": "78.03",
+            "carbohydrate_g": "21.87",
+            "energy_kcal": "837.0"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "323294:1",
+          "fdc_id": "323294",
+          "original_food_portion_index": 1,
+          "portion_id": 312717,
+          "portion_grams": "30.0",
+          "expected_per_portion": {
+            "protein_g": "6.12",
+            "fiber_g": "3.30",
+            "fat_g": "17.34",
+            "carbohydrate_g": "4.86",
+            "energy_kcal": "186.0"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        }
+      ]
+    },
+    {
+      "candidate_id": "banana",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "1105073:0",
+          "fdc_id": "1105073",
+          "original_food_portion_index": 0,
+          "portion_id": 267488,
+          "portion_grams": "110.0",
+          "expected_per_portion": {
+            "protein_g": "0.803",
+            "fiber_g": "1.87",
+            "fat_g": "0.242",
+            "carbohydrate_g": "22.11",
+            "energy_kcal": "93.50"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "1105073:1",
+          "fdc_id": "1105073",
+          "original_food_portion_index": 1,
+          "portion_id": 312673,
+          "portion_grams": "140.0",
+          "expected_per_portion": {
+            "protein_g": "1.022",
+            "fiber_g": "2.38",
+            "fat_g": "0.308",
+            "carbohydrate_g": "28.14",
+            "energy_kcal": "119.00"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "1105314:0",
+          "fdc_id": "1105314",
+          "original_food_portion_index": 0,
+          "portion_id": 267795,
+          "portion_grams": "115.0",
+          "expected_per_portion": {
+            "protein_g": "0.851",
+            "fiber_g": "1.955",
+            "fat_g": "0.3335",
+            "carbohydrate_g": "26.45",
+            "energy_kcal": "111.55"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "1105314:1",
+          "fdc_id": "1105314",
+          "original_food_portion_index": 1,
+          "portion_id": 312674,
+          "portion_grams": "140.0",
+          "expected_per_portion": {
+            "protein_g": "1.036",
+            "fiber_g": "2.38",
+            "fat_g": "0.406",
+            "carbohydrate_g": "32.20",
+            "energy_kcal": "135.80"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        }
+      ]
+    },
+    {
+      "candidate_id": "onion",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "790577:0",
+          "fdc_id": "790577",
+          "original_food_portion_index": 0,
+          "portion_id": 234609,
+          "portion_grams": "197.0",
+          "expected_per_portion": {
+            "protein_g": "1.8518",
+            "fiber_g": "4.334",
+            "fat_g": "0.197",
+            "carbohydrate_g": "19.5621",
+            "energy_kcal": "86.68"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "790577:1",
+          "fdc_id": "790577",
+          "original_food_portion_index": 1,
+          "portion_id": 312813,
+          "portion_grams": "85.0",
+          "expected_per_portion": {
+            "protein_g": "0.799",
+            "fiber_g": "1.87",
+            "fat_g": "0.085",
+            "carbohydrate_g": "8.4405",
+            "energy_kcal": "37.40"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "790646:0",
+          "fdc_id": "790646",
+          "original_food_portion_index": 0,
+          "portion_id": 234698,
+          "portion_grams": "143.0",
+          "expected_per_portion": {
+            "protein_g": "1.1869",
+            "fiber_g": "2.717",
+            "fat_g": "0.0715",
+            "carbohydrate_g": "12.3123",
+            "energy_kcal": "54.34"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        },
+        {
+          "option_id": "790646:1",
+          "fdc_id": "790646",
+          "original_food_portion_index": 1,
+          "portion_id": 312814,
+          "portion_grams": "85.0",
+          "expected_per_portion": {
+            "protein_g": "0.7055",
+            "fiber_g": "1.615",
+            "fat_g": "0.0425",
+            "carbohydrate_g": "7.3185",
+            "energy_kcal": "32.30"
+          },
+          "original_nutrient_ids": {
+            "protein_g": 1003,
+            "fiber_g": 1079,
+            "fat_g": 1004,
+            "carbohydrate_g": 1005,
+            "energy_kcal": 1008
+          }
+        }
+      ]
+    }
+  ],
+  "legal_joint_combinations": 64,
+  "maximum_joint_combinations": 128,
+  "windows": [
+    {
+      "id": "early",
+      "start_minute": 30,
+      "end_minute": 90
+    },
+    {
+      "id": "late",
+      "start_minute": 180,
+      "end_minute": 240
+    }
+  ],
+  "time_origin_utc": "2026-08-19T08:00:00.000Z",
+  "evidence_as_of_utc": "2026-08-19T00:00:00.000Z",
+  "manufactured_inputs": {
+    "medication_context": "synthetic oral immediate-release levodopa 100mg label, not an administration assertion",
+    "physical_form": "solid declared for the modeling experiment; not measured from FDC",
+    "candidate_groups": "explicit alternatives for research; not diet equivalence, automatic matches or validated matching accuracy"
+  },
+  "required_behavior": {
+    "reject_foreign_portion": "no cross-food gram-weight transplantation",
+    "reject_unreviewed_matching": "withheld alternative group",
+    "budget_overflow": "whole study held before any evaluation",
+    "input_permutation": "canonical scenario IDs and unchanged outputs",
+    "exact_portion_arithmetic": "compare all five macro means with independent Decimal values",
+    "ranking": "report every order, ties and top-K difference; retain stable pairs and observed reversals, never declare unseen-domain robustness"
+  },
+  "probabilities": null,
+  "clinical_confidence": null,
+  "activation": false,
+  "independent_expected_component_values_generated_without_production_execution": true,
+  "extends_original_expectations_sha256": "c79a1c7f6292f821df7b7666628c04fd1d7b135952cf8c81fa9cb0dd2216f1aa",
+  "declared_prototype_correction": "Add exact carbidopa + levodopa context required by existing applicability policy; retain original insufficient run. No source medication assertion.",
+  "additional_method_expectations": {
+    "1050/205.2": "carbohydrate_by_summation_g",
+    "2033/293": "fiber_aoac_2011_25_g"
+  },
+  "extends_v2_sha256": "67c53f2dc18d7cd54413a96f7997acc3922d8fe5214778cc72979922861996bb",
+  "synthetic_base_meal": {
+    "fdc_id": "321358",
+    "original_food_portion_index": 1,
+    "portion_id": 312701,
+    "minute_offset": -10
+  },
+  "declared_context_correction": "Source-bound hummus 30g as synthetic recorded dose-time meal 10min before exact oral immediate carbidopa/levodopa context; no real administration or fasting assertion."
+}

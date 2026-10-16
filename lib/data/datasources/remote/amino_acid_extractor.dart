@@ -162,12 +162,18 @@ class AminoAcidExtractor {
       }
 
       final amount = _finiteNonNegativeAmount(raw['amount']);
+      final rawLoq = raw['loq'] ?? raw['limitOfQuantification'];
+      final loq = _finiteNonNegativeAmount(rawLoq);
+      final heldLoq =
+          rawLoq != null &&
+          rawLoq.toString().trim().isNotEmpty &&
+          (loq == null || loq > 0);
       final unitName = (nutrient['unitName'] ?? '')
           .toString()
           .trim()
           .toLowerCase();
       final normalized = amount == null ? null : _toGrams(amount, unitName);
-      if (normalized == null) {
+      if (normalized == null || heldLoq) {
         // Missing/non-numeric/non-finite/negative amount or a missing/unknown
         // unit is a typed missing value. Never write the raw number into a
         // profile whose declared unit is grams.

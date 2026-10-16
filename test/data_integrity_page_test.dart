@@ -25,10 +25,19 @@ void main() {
   testWidgets(
     'catalog diff is a local preview and clears after input changes',
     (tester) async {
+      final preparedState = await tester.runAsync(() async {
+        final services = Services.createEphemeral();
+        await services.ready;
+        final state = AppState(services: services);
+        await state.bootstrap();
+        return state;
+      });
+      if (preparedState == null) throw StateError('Fixture unavailable');
+      addTearDown(preparedState.dispose);
       final state = await pumpFeaturePage(
         tester,
         const DataIntegrityPage(),
-        state: AppState(services: Services.createEphemeral()),
+        state: preparedState,
       );
       final originalMedicationCount = state.medRepo.allDrugs.length;
       final catalogPanel = find.byKey(const Key('catalog-version-diff-panel'));
@@ -90,7 +99,10 @@ void main() {
         findsOneWidget,
       );
 
-      await state.setActiveDrugIds(<String>[state.medRepo.allDrugs.first.id]);
+      final selectionResult = await tester.runAsync(
+        () => state.setActiveDrugIds(<String>[state.medRepo.allDrugs.first.id]),
+      );
+      expect(selectionResult!.wasCommitted, isTrue);
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('catalog-version-diff-impact-result')),
@@ -102,14 +114,17 @@ void main() {
       await tester.tap(medicationImpactAction);
       await tester.pumpAndSettle();
 
-      await state.addIntake(
-        Intake(
-          id: 'synthetic-impact-state-change',
-          drugId: state.medRepo.allDrugs.first.id,
-          takenAt: DateTime.utc(2026),
-          dosageNote: '',
+      final intakeResult = await tester.runAsync(
+        () => state.addIntake(
+          Intake(
+            id: 'synthetic-impact-state-change',
+            drugId: state.medRepo.allDrugs.first.id,
+            takenAt: DateTime.utc(2026),
+            dosageNote: '',
+          ),
         ),
       );
+      expect(intakeResult!.wasCommitted, isTrue);
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('catalog-version-diff-impact-result')),

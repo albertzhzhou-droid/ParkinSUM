@@ -115,7 +115,7 @@ void main() {
     });
 
     test(
-      'schema v11 stores the exact replay capsule by content digest',
+      'schema v12 retains the exact replay capsule by content digest',
       () async {
         final capsule = AlgorithmObservatoryService()
             .build(ObservatoryScenario.mixedReference)
@@ -146,19 +146,74 @@ void main() {
           'SELECT capsule_sha256, canonical_json, generated_at_utc '
           'FROM mechanistic_replay_capsules',
         );
-        final restored = MechanisticReplayCapsule.fromJson(
-          Map<String, Object?>.from(
-            jsonDecode(rows.single['canonical_json'] as String) as Map,
-          ),
+        final restored = nativeMechanisticReplayCapsuleFromSqliteRow(
+          rows.single,
         );
 
-        expect(nativeAppDatabaseSchemaVersion, 11);
+        expect(nativeAppDatabaseSchemaVersion, 12);
         final version = await _runSqlite(databasePath, 'PRAGMA user_version');
-        expect(version.stdout.toString().trim(), '11');
+        expect(
+          version.stdout.toString().trim(),
+          '$nativeAppDatabaseSchemaVersion',
+        );
         expect(rows.single['capsule_sha256'], capsule.capsuleSha256);
         expect(rows.single['generated_at_utc'], capsule.generatedAtUtc);
         expect(restored.canonicalJson, capsule.canonicalJson);
         expect(restored.capsuleSha256, capsule.capsuleSha256);
+      },
+    );
+
+    test(
+      'native row ingress rejects duplicate text even when last-wins would preserve its hash',
+      () async {
+        final capsule = AlgorithmObservatoryService()
+            .build(ObservatoryScenario.mixedReference)
+            .replayCapsule;
+        final duplicate = capsule.canonicalJson.replaceFirst(
+          '{',
+          '{"capsule_\\u0069d":"${capsule.capsuleId}",',
+        );
+        expect(
+          MechanisticReplayCapsule.fromJson(
+            Map<String, Object?>.from(jsonDecode(duplicate) as Map),
+          ).capsuleSha256,
+          capsule.capsuleSha256,
+        );
+        await _runSqlite(
+          databasePath,
+          nativeMechanisticReplayCapsulesCreateTableSql,
+        );
+        final row = <String, Object?>{
+          'capsule_sha256': capsule.capsuleSha256,
+          'canonical_json': duplicate,
+          'generated_at_utc': capsule.generatedAtUtc,
+        };
+        final insert = await _runSqlite(
+          databasePath,
+          _insert('mechanistic_replay_capsules', row),
+        );
+        expect(insert.exitCode, 0);
+        final stored = (await _query(
+          databasePath,
+          'SELECT * FROM mechanistic_replay_capsules',
+        )).single;
+        expect(
+          () => nativeMechanisticReplayCapsuleFromSqliteRow(stored),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'duplicate',
+              'replay_json_duplicate_member',
+            ),
+          ),
+        );
+        expect(
+          (await _query(
+            databasePath,
+            'SELECT canonical_json FROM mechanistic_replay_capsules',
+          )).single['canonical_json'],
+          duplicate,
+        );
       },
     );
 

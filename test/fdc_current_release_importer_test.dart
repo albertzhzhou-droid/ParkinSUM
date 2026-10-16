@@ -172,32 +172,38 @@ void main() {
       ...row,
       'foodNutrientDerivation': {'code': code},
     };
-    final bundle = importer.importFoods([
-      {
-        'fdcId': 173686,
-        'description': 'Fish, salmon, Atlantic, wild, raw',
-        'dataType': 'SR Legacy',
-        'foodNutrients': [
-          nutrient(1051, '255', 'Water', 'G', 68.5),
-          nutrient(1003, '203', 'Protein', 'G', 19.84),
-          nutrient(1004, '204', 'Total lipid (fat)', 'G', 6.34),
-          nutrient(1007, '207', 'Ash', 'G', 2.54),
-          derived(
-            nutrient(1005, '205', 'Carbohydrate, by difference', 'G', 0.0),
-            'Z',
-          ),
-          derived(nutrient(1008, '208', 'Energy', 'KCAL', 142.0), 'NC'),
-        ],
-      },
-    ], sourceLabel: 'assumed_zero_fixture');
-    final audit =
-        (payload(bundle)['composition_identity_audit'] as List).single
-            as Map<String, dynamic>;
-    expect(audit['checks_run'], isNot(contains('proximate_closure')));
-    expect(audit['checks_skipped'], {
-      'proximate_closure': 'carbohydrate_assumed_zero',
-    });
-    expect(audit['findings'], isEmpty);
+    for (final includeEnergy in [false, true]) {
+      final bundle = importer.importFoods([
+        {
+          'fdcId': 173686,
+          'description': 'Fish, salmon, Atlantic, wild, raw',
+          'dataType': 'SR Legacy',
+          'foodNutrients': [
+            nutrient(1051, '255', 'Water', 'G', 68.5),
+            nutrient(1003, '203', 'Protein', 'G', 19.84),
+            nutrient(1004, '204', 'Total lipid (fat)', 'G', 6.34),
+            nutrient(1007, '207', 'Ash', 'G', 2.54),
+            derived(
+              nutrient(1005, '205', 'Carbohydrate, by difference', 'G', 0.0),
+              'Z',
+            ),
+            if (includeEnergy)
+              derived(nutrient(1008, '208', 'Energy', 'KCAL', 142.0), 'NC'),
+          ],
+        },
+      ], sourceLabel: 'assumed_zero_fixture');
+      final audit =
+          (payload(bundle)['composition_identity_audit'] as List).single
+              as Map<String, dynamic>;
+      expect(audit['checks_run'], isNot(contains('proximate_closure')));
+      expect(audit['checks_skipped'], {
+        'proximate_closure': 'carbohydrate_assumed_zero',
+      });
+      expect(audit['findings'], isEmpty);
+      if (!includeEnergy) {
+        expect(audit['checks_run'], isEmpty);
+      }
+    }
   });
 
   test('a value in the wrong unit is rejected, not converted', () {

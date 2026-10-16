@@ -188,7 +188,7 @@ void main() {
     );
     expect(
       oneReportedWeight.toJson()['schema_id'],
-      'parkinsum.food-composition-candidate-set-snapshot/5',
+      'parkinsum.food-composition-candidate-set-snapshot/6',
     );
     expect((record['foodPortionEvidence'] as List).single['gram_weight'], 91.0);
   });
@@ -198,7 +198,7 @@ void main() {
       caller: <FoodItem>[food('food_a')],
       merged: <FoodItem>[food('food_a')],
       projectionQueryAudit: const <String, Object?>{
-        'schema_id': 'parkinsum.cdss-food-projection-query-audit/1',
+        'schema_id': 'parkinsum.cdss-food-projection-query-audit/2',
         'table_reads': <Object?>[
           <String, Object?>{
             'table': 'food_variant',
@@ -212,7 +212,7 @@ void main() {
       caller: <FoodItem>[food('food_a')],
       merged: <FoodItem>[food('food_a')],
       projectionQueryAudit: const <String, Object?>{
-        'schema_id': 'parkinsum.cdss-food-projection-query-audit/1',
+        'schema_id': 'parkinsum.cdss-food-projection-query-audit/2',
         'table_reads': <Object?>[
           <String, Object?>{
             'table': 'food_variant',
@@ -226,7 +226,7 @@ void main() {
       caller: <FoodItem>[food('food_a')],
       merged: <FoodItem>[food('food_a')],
       projectionQueryAudit: const <String, Object?>{
-        'schema_id': 'parkinsum.cdss-food-projection-query-audit/1',
+        'schema_id': 'parkinsum.cdss-food-projection-query-audit/2',
         'table_reads': <Object?>[
           <String, Object?>{
             'table': 'food_variant',
