@@ -1,0 +1,338 @@
+{
+  "schema": "parkinsum.timezone-manual-expected/1",
+  "frozen_at_utc": "2026-10-01T15:13:04.925565+00:00",
+  "source_derivation": "IANA2026e northamerica Zone/Canada/Winn/Toronto/Vanc fields; european/sydney existing rule boundaries. UTC values computed by explicit declared offsets; no Dart execution used.",
+  "rows": [
+    {
+      "id": "toronto_unique",
+      "zone": "America/Toronto",
+      "civil": [
+        2026,
+        1,
+        15,
+        12,
+        30
+      ],
+      "offset_minutes": -300,
+      "fold_choice": "reject",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-01-15T17:30:00.000Z",
+          "ambiguous": false
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-01-15T17:30:00.000Z",
+          "ambiguous": false
+        }
+      }
+    },
+    {
+      "id": "toronto_gap",
+      "zone": "America/Toronto",
+      "civil": [
+        2026,
+        3,
+        8,
+        2,
+        30
+      ],
+      "offset_minutes": -300,
+      "fold_choice": "reject",
+      "expected": {
+        "2025c": {
+          "accepted": false
+        },
+        "2026e": {
+          "accepted": false
+        }
+      }
+    },
+    {
+      "id": "toronto_fold_reject",
+      "zone": "America/Toronto",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -240,
+      "fold_choice": "reject",
+      "expected": {
+        "2025c": {
+          "accepted": false
+        },
+        "2026e": {
+          "accepted": false
+        }
+      }
+    },
+    {
+      "id": "toronto_fold_earlier",
+      "zone": "America/Toronto",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -240,
+      "fold_choice": "earlier",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-11-01T05:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-11-01T05:30:00.000Z",
+          "ambiguous": true
+        }
+      }
+    },
+    {
+      "id": "toronto_fold_later",
+      "zone": "America/Toronto",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -300,
+      "fold_choice": "later",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-11-01T06:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-11-01T06:30:00.000Z",
+          "ambiguous": true
+        }
+      }
+    },
+    {
+      "id": "toronto_fold_wrong_offset",
+      "zone": "America/Toronto",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -300,
+      "fold_choice": "earlier",
+      "expected": {
+        "2025c": {
+          "accepted": false
+        },
+        "2026e": {
+          "accepted": false
+        }
+      }
+    },
+    {
+      "id": "winnipeg_reject_fold",
+      "zone": "America/Winnipeg",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -300,
+      "fold_choice": "reject",
+      "expected": {
+        "2025c": {
+          "accepted": false
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-11-01T06:30:00.000Z",
+          "ambiguous": false
+        }
+      }
+    },
+    {
+      "id": "winnipeg_old_later_offset",
+      "zone": "America/Winnipeg",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -360,
+      "fold_choice": "later",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-11-01T07:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": false
+        }
+      }
+    },
+    {
+      "id": "winnipeg_earlier",
+      "zone": "America/Winnipeg",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -300,
+      "fold_choice": "earlier",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-11-01T06:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-11-01T06:30:00.000Z",
+          "ambiguous": false
+        }
+      }
+    },
+    {
+      "id": "vancouver_reject_fold",
+      "zone": "America/Vancouver",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -420,
+      "fold_choice": "reject",
+      "expected": {
+        "2025c": {
+          "accepted": false
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-11-01T08:30:00.000Z",
+          "ambiguous": false
+        }
+      }
+    },
+    {
+      "id": "vancouver_old_later_offset",
+      "zone": "America/Vancouver",
+      "civil": [
+        2026,
+        11,
+        1,
+        1,
+        30
+      ],
+      "offset_minutes": -480,
+      "fold_choice": "later",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-11-01T09:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": false
+        }
+      }
+    },
+    {
+      "id": "paris_gap",
+      "zone": "Europe/Paris",
+      "civil": [
+        2026,
+        3,
+        29,
+        2,
+        30
+      ],
+      "offset_minutes": 60,
+      "fold_choice": "reject",
+      "expected": {
+        "2025c": {
+          "accepted": false
+        },
+        "2026e": {
+          "accepted": false
+        }
+      }
+    },
+    {
+      "id": "sydney_fold_earlier",
+      "zone": "Australia/Sydney",
+      "civil": [
+        2026,
+        4,
+        5,
+        2,
+        30
+      ],
+      "offset_minutes": 660,
+      "fold_choice": "earlier",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-04-04T15:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-04-04T15:30:00.000Z",
+          "ambiguous": true
+        }
+      }
+    },
+    {
+      "id": "sydney_fold_later",
+      "zone": "Australia/Sydney",
+      "civil": [
+        2026,
+        4,
+        5,
+        2,
+        30
+      ],
+      "offset_minutes": 600,
+      "fold_choice": "later",
+      "expected": {
+        "2025c": {
+          "accepted": true,
+          "utc": "2026-04-04T16:30:00.000Z",
+          "ambiguous": true
+        },
+        "2026e": {
+          "accepted": true,
+          "utc": "2026-04-04T16:30:00.000Z",
+          "ambiguous": true
+        }
+      }
+    }
+  ],
+  "independent_python_utc_seeds": [
+    31415926,
+    27182818
+  ],
+  "independent_utc_sample_count_per_seed": 20
+}

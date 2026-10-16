@@ -20,6 +20,51 @@ void main() {
       'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 
   test(
+    'web archive rejects duplicate JSON members before last-value-wins and preserves raw history',
+    () async {
+      final capsule = _capsule(_fixture(), configurationSha);
+      final raw = capsule.canonicalJson;
+      for (final duplicate in [
+        raw.replaceFirst('{', '{"capsule_id":"${capsule.capsuleId}",'),
+        raw.replaceFirst('{', '{"capsule_\\u0069d":"${capsule.capsuleId}",'),
+      ]) {
+        // The old decoder would retain the same final payload and valid hash.
+        expect(
+          MechanisticReplayCapsule.fromJson(
+            Map<String, Object?>.from(jsonDecode(duplicate) as Map),
+          ).capsuleSha256,
+          capsule.capsuleSha256,
+        );
+        final archive = '[$duplicate]';
+        SharedPreferences.setMockInitialValues({
+          'db.mechanistic_replay_capsules.v1': archive,
+        });
+        final database = WebAppDatabase();
+        await expectLater(
+          database.loadMechanisticReplayCapsules(),
+          throwsA(
+            isA<FormatException>().having(
+              (e) => e.message,
+              'duplicate',
+              'replay_json_duplicate_member',
+            ),
+          ),
+        );
+        await expectLater(
+          database.saveMechanisticReplayCapsule(capsule),
+          throwsFormatException,
+        );
+        expect(
+          (await SharedPreferences.getInstance()).getString(
+            'db.mechanistic_replay_capsules.v1',
+          ),
+          archive,
+        );
+      }
+    },
+  );
+
+  test(
     'rich engine input survives an exact self-contained replay round trip',
     () {
       final fixture = _fixture();
@@ -41,9 +86,8 @@ void main() {
         mealCompositionsById: fixture.compositions,
       );
 
-      final parsed = MechanisticReplayCapsule.fromJson(
-        (jsonDecode(capsule.canonicalJson) as Map<String, dynamic>)
-            .cast<String, Object?>(),
+      final parsed = MechanisticReplayCapsule.fromJsonString(
+        capsule.canonicalJson,
       );
       final restored = parsed.restore(
         expectedConfigurationSha256: configurationSha,
@@ -83,6 +127,108 @@ void main() {
 
     expect(reparsed.canonicalJson, capsule.canonicalJson);
     expect(reparsed.capsuleSha256, capsule.capsuleSha256);
+  });
+
+  test('raw replay rejects duplicate root and escaped nested member names', () {
+    final capsule = _capsule(_fixture(), configurationSha);
+    final raw = capsule.canonicalJson;
+    final cases = [
+      raw.replaceFirst('{', '{"capsule_id":"${capsule.capsuleId}",'),
+      raw.replaceFirst(
+        '"context":{',
+        '"context":{"discarded":true,"discar\\u0064ed":false,',
+      ),
+      '{"array":[{"a":1,"\\u0061":1}]}',
+    ];
+    for (final duplicate in cases) {
+      expect(
+        () => MechanisticReplayCapsule.fromJsonString(duplicate),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'reason',
+            'replay_json_duplicate_member',
+          ),
+        ),
+      );
+    }
+  });
+
+  test(
+    'raw replay transport applies container depth and UTF-8 byte limits before decoding',
+    () {
+      final depth = mechanisticReplayMaxJsonContainerDepth + 1;
+      final deep = '${'[' * depth}0${']' * depth}';
+      expect(
+        () => MechanisticReplayCapsule.fromJsonString(deep),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'reason',
+            'replay_json_depth_limit',
+          ),
+        ),
+      );
+      final oversized = '"${'餐' * (mechanisticReplayMaxJsonBytes ~/ 3 + 1)}"';
+      expect(oversized.length, lessThan(mechanisticReplayMaxJsonBytes));
+      expect(
+        () => MechanisticReplayCapsule.fromJsonString(oversized),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'reason',
+            'replay_json_byte_limit',
+          ),
+        ),
+      );
+      // Exactly at each ceiling the transport scan succeeds, then the capsule
+      // root schema independently rejects the intentionally non-capsule input.
+      final atByteLimit = '${' ' * (mechanisticReplayMaxJsonBytes - 2)}{}';
+      expect(
+        () => MechanisticReplayCapsule.fromJsonString(atByteLimit),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'schema rejection',
+            contains('keys mismatch'),
+          ),
+        ),
+      );
+      final atDepthLimit =
+          '${'[' * mechanisticReplayMaxJsonContainerDepth}0${']' * mechanisticReplayMaxJsonContainerDepth}';
+      expect(
+        () => MechanisticReplayCapsule.fromJsonString(atDepthLimit),
+        throwsA(
+          isA<FormatException>().having(
+            (error) => error.message,
+            'schema rejection',
+            contains('must be an object'),
+          ),
+        ),
+      );
+    },
+  );
+
+  test('future replay schema remains rejected without implicit migration', () {
+    final capsule = _capsule(_fixture(), configurationSha);
+    final future = Map<String, Object?>.from(capsule.toJson())
+      ..['schema_version'] = 2;
+    expect(
+      () => MechanisticReplayCapsule.fromJsonString(jsonEncode(future)),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'reason',
+          'Unsupported replay capsule schema.',
+        ),
+      ),
+    );
+    expect(
+      () => MechanisticReplayCapsule.fromJsonString(
+        capsule.canonicalJson.substring(0, capsule.canonicalJson.length - 1),
+      ),
+      throwsFormatException,
+    );
   });
 
   test('digest, unknown-field, and configuration drift fail closed', () {

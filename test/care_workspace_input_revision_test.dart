@@ -41,7 +41,7 @@ void main() {
       );
       expect((await state.addMeal(meal)).wasCommitted, isTrue);
       expect(
-        state.cachedMealCheck(meal).followupPrompts,
+        state.cachedMealCheck(meal)!.followupPrompts,
         isNotEmpty,
         reason: 'The original medication context must produce real prompts.',
       );
@@ -56,7 +56,7 @@ void main() {
       await pendingRead.started.future.timeout(const Duration(seconds: 5));
       try {
         expect((await state.setActiveDrugIds([])).wasCommitted, isTrue);
-        final currentResult = state.cachedMealCheck(meal);
+        final currentResult = state.cachedMealCheck(meal)!;
         expect(currentResult.followupPrompts, isEmpty);
         expect(state.followups(), isEmpty);
         final persistedAfterUpdate =

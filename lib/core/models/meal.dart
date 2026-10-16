@@ -12,6 +12,12 @@ class MealItem {
   // 扩展标签（例如 high_tyramine），方便规则引擎识别
   final List<String> foodTags;
 
+  /// Missingness captured when logging the food survives catalogue removal.
+  /// Legacy records cannot reconstruct absent provenance, so retain their
+  /// existing empty marker rather than inventing an observed-zero claim.
+  final Set<String> missingNutrientFields;
+  bool isNutrientMissing(String field) => missingNutrientFields.contains(field);
+
   // 用于计算的营养数据（每100g）
   final double proteinPer100g;
   final double carbsPer100g;
@@ -25,6 +31,7 @@ class MealItem {
     required this.foodCategory,
     required this.quantityFactor,
     required this.foodTags,
+    this.missingNutrientFields = const {},
     required this.proteinPer100g,
     required this.carbsPer100g,
     required this.fatPer100g,
@@ -44,6 +51,9 @@ class MealItem {
       foodCategory: food.category,
       quantityFactor: quantityFactor,
       foodTags: foodTags ?? const [],
+      missingNutrientFields: Set<String>.unmodifiable(
+        food.missingNutrientFields,
+      ),
       proteinPer100g: food.proteinG,
       carbsPer100g: food.carbsG,
       fatPer100g: food.fatG,
@@ -67,6 +77,7 @@ class MealItem {
     FoodCategory? foodCategory,
     double? quantityFactor,
     List<String>? foodTags,
+    Set<String>? missingNutrientFields,
     double? proteinPer100g,
     double? carbsPer100g,
     double? fatPer100g,
@@ -79,6 +90,8 @@ class MealItem {
       foodCategory: foodCategory ?? this.foodCategory,
       quantityFactor: quantityFactor ?? this.quantityFactor,
       foodTags: foodTags ?? this.foodTags,
+      missingNutrientFields:
+          missingNutrientFields ?? this.missingNutrientFields,
       proteinPer100g: proteinPer100g ?? this.proteinPer100g,
       carbsPer100g: carbsPer100g ?? this.carbsPer100g,
       fatPer100g: fatPer100g ?? this.fatPer100g,
@@ -93,6 +106,8 @@ class MealItem {
     'foodCategory': foodCategory.name,
     'quantityFactor': quantityFactor,
     'foodTags': foodTags,
+    if (missingNutrientFields.isNotEmpty)
+      'missingNutrientFields': (missingNutrientFields.toList()..sort()),
     'proteinPer100g': proteinPer100g,
     'carbsPer100g': carbsPer100g,
     'fatPer100g': fatPer100g,
@@ -116,6 +131,10 @@ class MealItem {
       foodTags: (json['foodTags'] as List<dynamic>? ?? const [])
           .map((e) => e.toString())
           .toList(),
+      missingNutrientFields:
+          (json['missingNutrientFields'] as List<dynamic>? ?? const [])
+              .map((field) => field.toString())
+              .toSet(),
       proteinPer100g: (json['proteinPer100g'] as num?)?.toDouble() ?? 0,
       carbsPer100g: (json['carbsPer100g'] as num?)?.toDouble() ?? 0,
       fatPer100g: (json['fatPer100g'] as num?)?.toDouble() ?? 0,
@@ -223,6 +242,45 @@ class Meal {
   }
 
   /// 计算合计（用于规则引擎）
+  /// A numeric sum only when every logged item has known, valid evidence for
+  /// this nutrient. Current catalog missingness can additionally hold a point;
+  /// catalog absence does not erase an explicitly captured legacy value.
+  double? knownNutrientTotal(
+    String field, {
+    List<FoodItem> catalog = const [],
+  }) {
+    if (items.isEmpty) return null;
+    final catalogById = {for (final food in catalog) food.id: food};
+    var total = 0.0;
+    for (final item in items) {
+      final per100g = switch (field) {
+        'proteinG' => item.proteinPer100g,
+        'carbsG' => item.carbsPer100g,
+        'fatG' => item.fatPer100g,
+        'fiberG' => item.fiberPer100g,
+        'sodiumMg' => item.sodiumPer100g,
+        _ => throw ArgumentError.value(
+          field,
+          'field',
+          'Unsupported logged nutrient',
+        ),
+      };
+      if (item.isNutrientMissing(field) ||
+          catalogById[item.foodId]?.isNutrientMissing(field) == true ||
+          !per100g.isFinite ||
+          per100g < 0 ||
+          !item.quantityFactor.isFinite ||
+          item.quantityFactor <= 0) {
+        return null;
+      }
+      final contribution = per100g * item.quantityFactor;
+      if (!contribution.isFinite) return null;
+      total += contribution;
+      if (!total.isFinite) return null;
+    }
+    return total;
+  }
+
   MealTotals computeTotals() {
     double p = 0, c = 0, f = 0, fi = 0, s = 0;
     for (final it in items) {

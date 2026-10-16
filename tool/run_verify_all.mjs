@@ -1,31 +1,18 @@
 #!/usr/bin/env node
-// Runs every deterministic governance gate plus the committed-golden drift
-// check, and composes the results into build/verify_all/latest.{json,md}.
-//
-// Usage:
-//   npm run verify:all              # all gates, non-zero exit on any blocker
-//   npm run verify:all -- --list    # print the gate list and exit 0
-//   npm run verify:all -- --skip-goldens
-//
-// Why this exists: the gates were previously reachable only as ~10 separate CI
-// steps. There was no single command a reviewer could run and no composed
-// output — just a green check and scattered logs. Every gate here is offline,
-// synthetic-data only, and exits non-zero on a blocker, so this is a real
-// ratchet rather than a summary.
-//
-// The composed report is timestamp-free, matching the other artifacts in this
-// repo, so regenerated reports diff cleanly. A gate that did not run is
-// recorded as `missing_artifact` — never as a pass.
-//
-// Educational/research prototype. Synthetic data only. Not medical advice.
+// The existing 55 offline gates, now with owned child supervision and explicit
+// producer contracts. Interrupted, absent, stale or malformed evidence cannot
+// become a pass. Console-only checks are described as console contracts.
+import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { outputDeclaration, reportPasses } from './verification_output_contracts.mjs';
+import { atomicJson, artifactIdentity, captureInputs, collectToolchain, declaredEnvironment, digestObject, localPath, supervise } from './verification_runtime.mjs';
 
-import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
-
-const MISSING = 'missing_artifact';
-
-/** Every gate runs offline against synthetic fixtures. */
-const GATES = [
+export const VERIFY_REPORT_SCHEMA_VERSION = 2;
+export const VERIFY_REPORT_SCHEMA = 'parkinsum.verification-suite-report/2';
+export const VERIFY_CHECKPOINT_SCHEMA = 'parkinsum.verification-checkpoint/2';
+export const GATES = [
   { id: 'copy_compile', script: 'copy:compile', what: 'Explanation copy compiles (0 blocker)' },
   { id: 'localization_lint', script: 'localization:lint', what: 'Localization safety lint (full i18n dictionary)' },
   { id: 'dose_expression_grammar', script: 'dose:grammar', what: 'Dose-expression grammar differential conformance (Dart + JavaScript)' },
@@ -38,7 +25,7 @@ const GATES = [
   { id: 'mechanistic_replay', script: 'mechanistic:replay', what: 'Mechanistic replay' },
   { id: 'mechanistic_invariants', script: 'mechanistic:invariants', what: 'Mathematical invariant, unit, dose-input, and visible coverage gate' },
   { id: 'mechanistic_ledger_authorization', script: 'mechanistic:ledger-authorization', what: 'Exact production-input ledger binding and fail-closed mutation gate' },
-  { id: 'mechanistic_lossless_replay', script: 'mechanistic:lossless-replay', what: 'Lossless mechanistic replay capsule and independent cross-runtime canonicalization' },
+  { id: 'mechanistic_lossless_replay', script: 'mechanistic:lossless-replay', what: 'Lossless replay envelopes, independent cross-runtime canonicalization and pinned rule/history/DST conformance' },
   { id: 'portable_schema_migration', script: 'portable:schema-migration', what: 'Frozen portable-schema validators, deterministic migration receipts, and independent cross-runtime conformance' },
   { id: 'portable_schema_fuzz', script: 'portable:schema-fuzz', what: 'Fixed-seed portable-schema parser differential campaign and corpus-level privacy-reviewed synthetic regression corpus' },
   { id: 'algorithm_dependency_compatibility', script: 'algorithm:dependency-compatibility', what: 'Exact analyzer lock, stable 65-root identity, session consistency, and fail-closed compatibility HOLD gate' },
@@ -82,128 +69,206 @@ const GATES = [
   { id: 'evidence_synthesis', script: 'evidence:synthesis', what: 'Claim evidence contradiction and synthesis adjudication' },
 ];
 
-/**
- * The cross-commit drift ratchet. Listing `verify:all` as "all gates" while
- * skipping the goldens would be precisely the kind of overclaim these checks
- * exist to prevent, so it runs by default.
- */
-const GOLDEN_GATE = {
-  id: 'committed_goldens',
-  what: 'Committed golden drift check (cross-commit)',
-  command: 'flutter',
-  args: ['test', 'test/goldens_test.dart'],
-};
+// Pin the reporter: GitHub Actions otherwise selects a different summary format
+// from the strict Flutter completion contract used below.
+export const GOLDEN_GATE = { id: 'committed_goldens', what: 'Committed golden drift check (cross-commit)', command: 'flutter', args: ['test', '--reporter=expanded', 'test/goldens_test.dart'] };
 
-const argv = process.argv.slice(2);
-const skipGoldens = argv.includes('--skip-goldens');
-
-if (argv.includes('--list')) {
-  for (const gate of GATES) console.log(`${gate.id}\tnpm run ${gate.script}`);
-  if (!skipGoldens) console.log(`${GOLDEN_GATE.id}\tflutter test test/goldens_test.dart`);
-  process.exit(0);
+export function defaultGates(skipGoldens = false) {
+  return (skipGoldens ? GATES : [...GATES, GOLDEN_GATE]).map((gate) => {
+    const declaration = outputDeclaration(gate.id);
+    const args = gate.args ?? ['run', '--silent', gate.script];
+    return { ...gate, command: gate.command ?? 'npm', args: declaration.reportArgument ? [...args, '--', declaration.reportArgument] : args, output: declaration };
+  });
 }
 
-/** Runs one gate, capturing its status without letting a crash pass as success. */
-function runGate(gate) {
-  const command = gate.command ?? 'npm';
-  const args = gate.args ?? ['run', '--silent', gate.script];
-  const result = spawnSync(command, args, { encoding: 'utf8' });
+function validGate(gate) {
+  if (!/^[a-z0-9_]+$/.test(gate.id) || typeof gate.command !== 'string' || !Array.isArray(gate.args) || gate.args.some((arg) => typeof arg !== 'string')) throw new Error('Invalid gate command identity');
+  if (!['json_files', 'console_test', 'metadata_console'].includes(gate.output?.mode) || !Array.isArray(gate.output.reports)) throw new Error(`Gate lacks an explicit output mode: ${gate.id}`);
+  if (gate.output.mode === 'json_files' && !gate.output.reports.length) throw new Error(`Gate has no declared producer: ${gate.id}`);
+  if (Object.hasOwn(gate.output, 'completion') && (!gate.output.completion || gate.output.mode !== 'console_test' || gate.output.completion.protocol !== 'flutter_test_summary_v1' || !Number.isSafeInteger(gate.output.completion.minimum_passed) || gate.output.completion.minimum_passed <= 0)) throw new Error(`Unsupported console completion contract: ${gate.id}`);
+  for (const report of gate.output.reports) if (!/^build\/[a-zA-Z0-9_./-]+\.json$/.test(report.path) || report.path.split('/').includes('..')) throw new Error('Unsafe report declaration');
+}
 
-  // A spawn that never produced an exit status did not pass — it did not run.
-  if (result.error || result.status === null) {
-    return {
-      id: gate.id,
-      what: gate.what,
-      status: MISSING,
-      exit_code: null,
-      detail: result.error ? String(result.error.message) : 'no exit status',
-    };
+export function validateConsoleCompletion(cwd, gate, execution, logPath) {
+  if (!gate.output.completion) return null;
+  if (execution?.log_truncated !== false) return { passed: false, reason: 'console_log_incomplete' };
+  const text = readFileSync(localPath(cwd, logPath), 'utf8').replace(/\x1b\[[0-?]*[ -/]*[@-~]/g, '');
+  const summaries = [...text.matchAll(/(?:\d+:)+\d+\s+\+(\d+)(?:\s+~(\d+))?(?:\s+-(\d+))?:/g)];
+  if (summaries.some(row => Number(row[3] ?? 0) !== 0)) return { passed: false, reason: 'console_reported_test_failure' };
+  if (!text.includes('All tests passed!') || !summaries.length) return { passed: false, reason: 'console_test_completion_missing' };
+  const last = summaries.at(-1);
+  const counts = { passed: Number(last[1]), skipped: Number(last[2] ?? 0), failed: Number(last[3] ?? 0) };
+  if (counts.passed < gate.output.completion.minimum_passed || counts.skipped !== 0) return { passed: false, reason: 'console_test_count_incomplete', counts };
+  return { passed: true, reason: null, counts };
+}
+
+export function gateIdentity(gate, source, toolchain, environment, options) {
+  return digestObject({ source_sha256: source.sha256, toolchain, environment, command: gate.command, args: gate.args, output: gate.output,
+    timeout_ms: options.timeoutMs, cleanup_grace_ms: options.cleanupGraceMs, max_log_bytes: options.maxLogBytes });
+}
+
+export function validateReports(cwd, gate) {
+  return gate.output.reports.map((contract) => {
+    const artifact = artifactIdentity(cwd, contract.path);
+    if (artifact.bytes > 32 * 1024 * 1024) throw new Error(`Oversized report: ${contract.path}`);
+    const value = JSON.parse(readFileSync(localPath(cwd, contract.path), 'utf8'));
+    if (!reportPasses(value, contract)) throw new Error(`Report failed its declared predicate/schema: ${contract.path}`);
+    if (contract.predicate === 'fhir_structure') {
+      const stem = gate.id;
+      const fixture = `test/fixtures/${stem}.json`;
+      const fixtureBytes = readFileSync(localPath(cwd, fixture));
+      // Content identity is checked independently of the producer's status.
+      if (value.fixtureSha256 !== (awaitlessSha(fixtureBytes))) throw new Error('FHIR fixture identity mismatch');
+    }
+    return artifact;
+  });
+}
+
+// Kept outside report adapters so fixture hashes do not depend on a producer.
+import { sha256 as awaitlessSha } from './verification_runtime.mjs';
+
+export function reusable(cwd, previous, gate, inputSha256) {
+  if (!previous || previous.status !== 'pass' || previous.input_identity_sha256 !== inputSha256 || previous.output_mode !== gate.output.mode) return false;
+  try {
+    if (gate.output.completion) {
+      if (artifactIdentity(cwd, previous.log_path).sha256 !== previous.log_artifact?.sha256 || validateConsoleCompletion(cwd, gate, previous.execution, previous.log_path)?.passed !== true) return false;
+    }
+    const current = validateReports(cwd, gate);
+    return current.length === previous.artifacts?.length && current.every((artifact, index) => artifact.sha256 === previous.artifacts[index].sha256 && artifact.path === previous.artifacts[index].path);
+  } catch { return false; }
+}
+
+export async function runVerification({ cwd = process.cwd(), gates = defaultGates(), sourceFiles, toolchain, environment = declaredEnvironment(),
+  timeoutMs = 900000, cleanupGraceMs = 1000, maxLogBytes = 1024 * 1024, resumePath, attachSignals = true, signal, onCheckpoint } = {}) {
+  if (!gates.length || new Set(gates.map((gate) => gate.id)).size !== gates.length) throw new Error('Gate inventory is empty or duplicated');
+  gates.forEach(validGate);
+  for (const [name, number] of Object.entries({ timeoutMs, cleanupGraceMs, maxLogBytes })) if (!Number.isSafeInteger(number) || number <= 0) throw new Error(`Invalid ${name}`);
+  const source = captureInputs(cwd, sourceFiles);
+  const runId = randomUUID();
+  const runDirectory = `build/verify_all/runs/${runId}`;
+  const checkpointPath = `${runDirectory}/checkpoint.json`;
+  let prior = null;
+  if (resumePath) {
+    if (!/^build\/verify_all\/runs\/[a-f0-9-]+\/checkpoint\.json$/.test(resumePath)) throw new Error('Resume requires an explicit local checkpoint path');
+    prior = JSON.parse(readFileSync(localPath(cwd, resumePath), 'utf8'));
+    if (prior.schema !== VERIFY_CHECKPOINT_SCHEMA || !Array.isArray(prior.gates)) throw new Error('Unsupported resume checkpoint');
   }
-
-  const output = `${result.stdout ?? ''}${result.stderr ?? ''}`.trim();
-  const lines = output.split('\n').filter((line) => line.trim().length > 0);
-  return {
-    id: gate.id,
-    what: gate.what,
-    status: result.status === 0 ? 'pass' : 'FAILED',
-    exit_code: result.status,
-    // Last meaningful line only: enough to identify the failure without
-    // pasting an entire gate log into a committed report.
-    detail: lines.length > 0 ? lines[lines.length - 1] : '(no output)',
+  const controller = new AbortController();
+  const externalAbort = () => controller.abort(signal.reason ?? 'interrupted');
+  signal?.addEventListener('abort', externalAbort, { once: true });
+  if (signal?.aborted) externalAbort();
+  const sigint = () => controller.abort('SIGINT');
+  const sigterm = () => controller.abort('SIGTERM');
+  if (attachSignals) { process.on('SIGINT', sigint); process.on('SIGTERM', sigterm); }
+  const results = gates.map((gate) => ({ id: gate.id, what: gate.what ?? gate.id, status: 'not_run', reason: 'pending', output_mode: gate.output.mode, artifacts: [] }));
+  let toolchainError = null;
+  const capturedToolchain = toolchain ?? await collectToolchain(cwd, controller.signal).catch((error) => { toolchainError = error.message; return null; });
+  const options = { timeoutMs, cleanupGraceMs, maxLogBytes };
+  const checkpoint = () => ({ schema: VERIFY_CHECKPOINT_SCHEMA, schema_version: 2, run_id: runId, resumed_from_run_id: prior?.run_id ?? null,
+    source, toolchain: capturedToolchain, environment, options, inventory: gates.map((gate) => ({ id: gate.id, command: gate.command, args: gate.args, output: gate.output })),
+    interrupted: controller.signal.aborted, interruption: controller.signal.reason ?? null, toolchain_error: toolchainError, gates: results });
+  const save = () => {
+    const value = checkpoint();
+    atomicJson(localPath(cwd, checkpointPath), value);
+    atomicJson(localPath(cwd, 'build/verify_all/latest_checkpoint.json'), { schema: 'parkinsum.verification-checkpoint-pointer/1', run_id: runId, path: checkpointPath });
+    onCheckpoint?.(value);
   };
+  const sourceUnchanged = () => {
+    try { return captureInputs(cwd, sourceFiles).sha256 === source.sha256; }
+    catch { return false; }
+  };
+  try {
+    save();
+    for (let index = 0; index < gates.length; index += 1) {
+      const gate = gates[index];
+      const result = results[index];
+      if (controller.signal.aborted || toolchainError) { result.reason = toolchainError ? 'toolchain_unavailable' : 'interrupted_before_execution'; continue; }
+      if (!sourceUnchanged()) { result.reason = 'source_changed_before_execution'; controller.abort('source_changed'); continue; }
+      const inputIdentity = gateIdentity(gate, source, capturedToolchain, environment, options);
+      result.input_identity_sha256 = inputIdentity;
+      const previous = prior?.gates.find((entry) => entry.id === gate.id);
+      if (reusable(cwd, previous, gate, inputIdentity)) {
+        Object.assign(result, { ...previous, reused_from_run_id: prior.run_id, detail: 'Reused only after identical declared input/toolchain/command/output and artifact validation.' });
+        save();
+        continue;
+      }
+      if (previous) result.previous_result_reused = false;
+      // Remove only the exact declared generated JSON files. A pre-existing pass
+      // can never satisfy a producer which exits without writing this run.
+      try {
+        for (const contract of gate.output.reports) {
+          const target = localPath(cwd, contract.path);
+          if (existsSync(target)) unlinkSync(target);
+        }
+        result.status = 'running';
+        result.reason = null;
+        result.log_path = `${runDirectory}/${gate.id}.log`;
+        save();
+        const execution = await supervise(gate.command, gate.args, { cwd, logPath: localPath(cwd, result.log_path), ...options, signal: controller.signal });
+        result.execution = execution;
+        result.log_artifact = artifactIdentity(cwd, result.log_path);
+        result.status = execution.spawn_error ? 'missing_tool' : execution.termination ? (execution.termination === 'timeout' ? 'timeout' : 'interrupted') : execution.exit_code === 0 ? 'pass' : 'failed';
+        result.reason = execution.spawn_error?.code ?? execution.termination ?? (execution.exit_code === 0 ? null : 'nonzero_exit');
+        if (!sourceUnchanged()) { result.status = 'source_changed'; result.reason = 'source_changed_during_execution'; controller.abort('source_changed'); }
+        if (result.status === 'pass') {
+          result.completion_validation = validateConsoleCompletion(cwd, gate, execution, result.log_path);
+          if (result.completion_validation?.passed === false) { result.status = 'failed'; result.reason = result.completion_validation.reason; }
+        }
+        if (result.status === 'pass') {
+          try { result.artifacts = validateReports(cwd, gate); }
+          catch (error) { result.status = 'missing_or_invalid_report'; result.reason = error.message; }
+        }
+      } catch (error) {
+        result.status = 'runner_error'; result.reason = error.message; controller.abort('runner_error');
+      }
+      result.detail = gate.output.mode === 'json_files' ? 'Declared producer reports required and validated.' : 'Console contract only; no producer machine report is claimed.';
+      save();
+    }
+    // Later gates may regenerate shared outputs. Any incompatible overwrite
+    // invalidates the earlier result before composing the final evidence.
+    for (let index = 0; index < gates.length; index += 1) {
+      const result = results[index];
+      if (result.status === 'pass' && !reusable(cwd, result, gates[index], result.input_identity_sha256)) { result.status = 'artifact_changed'; result.reason = 'producer_artifact_changed_after_gate'; }
+    }
+    if (!sourceUnchanged()) {
+      for (const result of results) if (result.status === 'pass') { result.status = 'source_changed'; result.reason = 'source_changed_before_summary'; }
+    }
+    save();
+    const report = { $schema: VERIFY_REPORT_SCHEMA, report_type: 'parkinsum_verify_all', schema_version: VERIFY_REPORT_SCHEMA_VERSION, run_id: runId, checkpoint_path: checkpointPath, checkpoint_sha256: artifactIdentity(cwd, checkpointPath).sha256,
+      input_identity_sha256: digestObject({ source, toolchain: capturedToolchain, environment, inventory: checkpoint().inventory, options }),
+      source, toolchain: capturedToolchain, environment, options, inventory: checkpoint().inventory,
+      gate_count: results.length, pass: results.every((result) => result.status === 'pass'), failed_gate_ids: results.filter((result) => result.status !== 'pass').map((result) => result.id),
+      goldens_included: gates.some((gate) => gate.id === 'committed_goldens'), interrupted: controller.signal.aborted,
+      interruption: controller.signal.reason ?? null, toolchain_error: toolchainError, gates: results,
+      not_clinically_calibrated: true, synthetic_demo_data_only: true, no_medical_advice: true,
+      boundary: 'Offline synthetic engineering/console contract verification only. Legitimate HOLDs remain; no clinical qualification, independent scientific review, deployment or approval is implied.' };
+    atomicJson(localPath(cwd, `${runDirectory}/report.json`), report);
+    atomicJson(localPath(cwd, 'build/verify_all/latest.json'), report);
+    writeFileSync(localPath(cwd, 'build/verify_all/latest.md'), [
+      '# Verification summary', '', `Run: ${runId}`, `Declared gates: ${report.gate_count}. Complete pass: ${report.pass}.`,
+      `Checkpoint: ${checkpointPath}`, '', '| Gate | Output mode | Status |', '| --- | --- | --- |',
+      ...results.map((result) => `| ${result.id} | ${result.output_mode} | ${result.status} |`), '', report.boundary, '',
+    ].join('\n'));
+    return report;
+  } finally {
+    signal?.removeEventListener('abort', externalAbort);
+    if (attachSignals) { process.off('SIGINT', sigint); process.off('SIGTERM', sigterm); }
+  }
 }
 
-const gatesToRun = skipGoldens ? GATES : [...GATES, GOLDEN_GATE];
-const results = [];
-for (const gate of gatesToRun) {
-  process.stdout.write(`• ${gate.what} … `);
-  const result = runGate(gate);
-  results.push(result);
-  console.log(result.status);
+export async function main(argv = process.argv.slice(2)) {
+  const known = /^(--list|--skip-goldens|--resume(?:=.+)?|--gate-timeout-ms=\d+|--cleanup-grace-ms=\d+|--max-log-bytes=\d+)$/;
+  if (argv.some((arg) => !known.test(arg))) throw new Error('Unknown verification argument');
+  const gates = defaultGates(argv.includes('--skip-goldens'));
+  if (argv.includes('--list')) { for (const gate of gates) console.log(`${gate.id}\t${gate.command} ${gate.args.join(' ')}\t${gate.output.mode}`); return; }
+  const numeric = (name, fallback) => Number(argv.find((arg) => arg.startsWith(`--${name}=`))?.split('=')[1] ?? fallback);
+  const resume = argv.find((arg) => arg.startsWith('--resume'));
+  const resumePath = resume === '--resume' ? JSON.parse(readFileSync('build/verify_all/latest_checkpoint.json', 'utf8')).path : resume?.slice('--resume='.length);
+  const printed = new Map();
+  const report = await runVerification({ gates, resumePath, timeoutMs: numeric('gate-timeout-ms', 900000), cleanupGraceMs: numeric('cleanup-grace-ms', 1000), maxLogBytes: numeric('max-log-bytes', 1048576),
+    onCheckpoint: (checkpoint) => { for (const gate of checkpoint.gates) if (!['not_run', 'running'].includes(gate.status) && printed.get(gate.id) !== gate.status) { printed.set(gate.id, gate.status); process.stdout.write(`${gate.id}: ${gate.status}\n`); } } });
+  console.log(`${report.pass ? 'All gates passed' : 'Verification incomplete/failed'}: ${report.gate_count} declared gates. Report: build/verify_all/latest.json`);
+  process.exitCode = report.pass ? 0 : report.interruption === 'SIGINT' ? 130 : report.interruption === 'SIGTERM' ? 143 : 1;
 }
 
-const failed = results.filter((r) => r.status !== 'pass');
-const pass = failed.length === 0;
-
-const report = {
-  report_type: 'parkinsum_verify_all',
-  // Deliberately timestamp-free so regenerated reports diff cleanly.
-  gate_count: results.length,
-  pass,
-  failed_gate_ids: failed.map((r) => r.id),
-  goldens_included: !skipGoldens,
-  gates: results,
-  not_clinically_calibrated: true,
-  synthetic_demo_data_only: true,
-  no_medical_advice: true,
-  safety_boundary:
-    'Do not change medication, diet, or timing based on this app. Review ' +
-    'with a qualified clinician before making health decisions.',
-  not_advice_text:
-    'This is an educational prototype output. It is not medical advice and ' +
-    'must not be used to make medication, dietary, or timing decisions.',
-};
-
-const markdown = [
-  '# Verification summary',
-  '',
-  'Every gate below is deterministic, offline, and runs on synthetic/demo data',
-  'only. This is an educational prototype and is not calibrated for real care.',
-  '',
-  `**Result:** ${pass ? 'all gates passed' : `${failed.length} gate(s) failed`}`,
-  `**Goldens included:** ${skipGoldens ? 'no (--skip-goldens)' : 'yes'}`,
-  '',
-  '| Gate | Status | Detail |',
-  '| --- | --- | --- |',
-  ...results.map(
-    (r) => `| ${r.what} | ${r.status} | ${String(r.detail).replaceAll('|', '\\|')} |`,
-  ),
-  '',
-  '## Reproduce',
-  '',
-  '```bash',
-  'npm run verify:all',
-  '```',
-  '',
-  '## Safety boundary',
-  '',
-  report.safety_boundary,
-  '',
-  report.not_advice_text,
-  '',
-].join('\n');
-
-mkdirSync('build/verify_all', { recursive: true });
-writeFileSync('build/verify_all/latest.json', `${JSON.stringify(report, null, 2)}\n`);
-writeFileSync('build/verify_all/latest.md', markdown);
-
-console.log('');
-console.log(
-  pass
-    ? `All ${results.length} gates passed.`
-    : `${failed.length} of ${results.length} gates failed: ${failed.map((r) => r.id).join(', ')}`,
-);
-console.log('Report: build/verify_all/latest.json');
-console.log('Report: build/verify_all/latest.md');
-
-process.exit(pass ? 0 : 1);
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main().catch((error) => { console.error(error.message); process.exitCode = 1; });

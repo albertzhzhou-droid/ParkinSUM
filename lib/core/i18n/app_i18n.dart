@@ -1,4 +1,5 @@
 import 'app_i18n_full_translations.dart';
+import 'app_i18n_log_view_translations.dart';
 
 /// Lightweight in-app localization layer.
 ///
@@ -106,6 +107,8 @@ class AppI18n {
   /// UI 不应直接暴露 `conservative_safety_gate` 这类实现细节。
   String recommendationPathLabel(String path) {
     switch (path) {
+      case 'unassessed_medication_context':
+        return tr('interaction.unassessed');
       case 'hybrid_local_ai':
         return tr('recommend.path.hybrid_local_ai');
       case 'conservative_safety_gate':
@@ -1454,6 +1457,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         '此摘要仅整理你记录的用药和进餐信息；个人观察需单独选择后才会包含。摘要未经临床核验，不是病历、诊断、治疗计划或建议。未知值不会被补成 0。',
     'handoff.raster_limit':
         'PDF 使用与本页相同的离线字体回退进行图像化渲染；内容与预览一致，但 PDF 文字目前不可搜索，也不是带标签的无障碍 PDF。',
+    'handoff.text_limit':
+        'PDF 使用离线字体保留可搜索文字及预览分页。已验证的文字范围包含中文、英文与有限阿拉伯文；遇到未覆盖字符或字体不可用时停止生成，可选择 HTML。此 PDF 未获得带标签无障碍或 PDF/UA 验证。',
     'handoff.html_boundary':
         '另可生成离线 HTML 文件，文字可选择，并保留标题和列表结构。它不是带标签 PDF；语言标记、读屏软件表现和双向文本仍需在目标设备上验证。系统分享结果不证明接收方已保存或收到文件。',
     'handoff.configure': '选择范围、章节与脱敏级别',
@@ -1647,7 +1652,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'portable.unencrypted_body':
         '数据包可能包含进餐、用药、剂量说明和提醒文字。请只保存到你控制的位置；SHA-256 可以发现内容变化，但不能加密或隐藏内容。',
     'portable.boundary':
-        '此功能只生成用户可读 JSON 和无写入导入预检，不会删除账户、恢复数据或证明法规合规。本地账户绑定使用保存在本设备的随机令牌，因此换设备后可能无法验证。',
+        '此功能生成用户可读 JSON；导入预检不会写入数据。Web 本地账户可明确确认受限范围恢复，具体范围见预检结果。完整数据恢复、跨设备导入和法规合规尚未验证。本地账户绑定使用本设备随机令牌。',
     'portable.fuzz_title': '可携带 Schema 差分测试边界',
     'portable.fuzz_summary':
         '生成器 v1 · {seeds} 个固定种子 · {partitions} 个词法/语义分区 · {cases} 个纳入语料库级隐私审查的合成回归样例 · {runtimes} 个运行时。',
@@ -1808,6 +1813,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis':
         '引擎已将本餐与 {drugCount} 个激活药品进行检查。最高评估严重度为 {severity}，加权分数为 {score}/100。',
     'mealcheck.analysis_protein': '当前食物列表估算的本餐蛋白约为 {protein} g。',
+    'mealcheck.analysis_protein_unknown':
+        '本餐蛋白信息不完整或来源存在歧义，无法给出确定总量；蛋白数值与时序评分暂不计算。',
     'mealcheck.analysis_highfat': '当前运行时启发式还将这顿饭判定为相对高脂/高热量。',
     'mealcheck.analysis_scoring': '本次分数由加权因素组成：{factors}。',
     'mealcheck.analysis_dbfacts':
@@ -3262,6 +3269,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'This summary organizes your medication and meal records. Personal observations are included only if you select that section. The summary is not clinically verified and is not a medical record, diagnosis, treatment plan, or recommendation. Unknown values are never filled with zero.',
     'handoff.raster_limit':
         'The PDF uses the same offline font fallback and rasterized pages shown here. Content matches the preview, but PDF text is not yet searchable and this is not a tagged accessible PDF.',
+    'handoff.text_limit':
+        'The PDF keeps searchable text and the preview pagination using offline fonts. Verified text includes Chinese, English and finite Arabic examples. Uncovered characters or unavailable fonts stop generation; HTML remains available. Tagged accessibility and PDF/UA conformance have not been verified.',
     'handoff.html_boundary':
         'An offline HTML file is also available with selectable text and heading/list structure. It is not a tagged PDF; language tags, screen-reader behavior, and bidirectional text still need target-device review. A system share result does not prove that a recipient received or saved the file.',
     'handoff.configure': 'Choose range, sections, and redaction',
@@ -3501,7 +3510,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'portable.unencrypted_body':
         'The package may contain meals, medication logs, dose notes, and reminder text. Save it only somewhere you control. SHA-256 detects changes; it does not encrypt or hide the content.',
     'portable.boundary':
-        'This feature creates user-readable JSON and a no-write import preview. It does not delete an account, restore data, or certify legal compliance. Local-account binding uses a random token kept on this device, so another device may not validate it.',
+        'This feature creates user-readable JSON. Import preview writes no data. A local Web account can explicitly confirm a limited restore; the preview shows its scope. Full restoration, cross-device import, and legal compliance are unverified. Local-account binding uses a random token kept on this device.',
     'portable.fuzz_title': 'Portable-schema differential test boundary',
     'portable.fuzz_summary':
         'Generator v1 · {seeds} fixed seeds · {partitions} lexical/semantic partitions · {cases} synthetic regression cases under corpus-level privacy review · {runtimes} runtimes.',
@@ -3694,6 +3703,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'The engine checked this meal against {drugCount} active medication(s). The highest evaluated severity was {severity}, with a score of {score}/100.',
     'mealcheck.analysis_protein':
         'Estimated meal protein from the current item list was about {protein} g.',
+    'mealcheck.analysis_protein_unknown':
+        'Meal protein is unknown because information is incomplete or ambiguous; protein amount and timing score modifiers are withheld.',
     'mealcheck.analysis_highfat':
         'The current operational heuristic also flagged this meal as relatively high fat/high calorie.',
     'mealcheck.analysis_scoring':
@@ -4751,6 +4762,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Le moteur a verifie ce repas par rapport a {drugCount} medicament(s) actif(s). Le niveau de severite le plus eleve evalue etait {severity}, avec un score de {score}/100.',
     'mealcheck.analysis_protein':
         'La quantite de proteines estimee a partir de la liste actuelle des aliments etait denviron {protein} g.',
+    'mealcheck.analysis_protein_unknown':
+        'Les proteines du repas sont inconnues : informations incompletes ou ambigues. Les facteurs de score de quantite et de temps sont suspendus.',
     'mealcheck.analysis_highfat':
         'Lheuristique operationnelle actuelle a aussi classe ce repas comme relativement riche en lipides / calories.',
     'mealcheck.analysis_scoring':
@@ -5733,6 +5746,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis':
         'この食事は {drugCount} 件の有効薬に対して評価されました。最も高い評価重症度は {severity} で、スコアは {score}/100 です。',
     'mealcheck.analysis_protein': '現在の食品一覧から推定された食事たんぱく質量は約 {protein} g でした。',
+    'mealcheck.analysis_protein_unknown':
+        '情報が不足しているか曖昧なため、食事のたんぱく質量は不明です。量と時系列のスコア要因は計算を保留します。',
     'mealcheck.analysis_highfat':
         '現在の運用ヒューリスティックでは、この食事は比較的高脂肪・高カロリーでもあると判定されました。',
     'mealcheck.analysis_scoring': 'スコアは次の重み付き要因から構成されます：{factors}。',
@@ -6006,8 +6021,44 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
       ...entry.value,
       ...?kFoodCatalogProvenanceUiTranslations[entry.key],
       ...?kFoodCandidateSnapshotUiTranslations[entry.key],
+      ...?_drugIngredientSourceTranslations[entry.key],
+      'detail.food_basis_unavailable':
+          _foodBasisUnavailableTranslations[entry.key] ??
+          _foodBasisUnavailableTranslations['en']!,
       ...?_replayCapsuleSaveTranslations[entry.key],
+      ...(entry.key == 'zh'
+          ? kPersonalLogViewChinese
+          : kPersonalLogViewEnglish),
+      ...(entry.key == 'zh'
+          ? kInteractionReviewChinese
+          : kInteractionReviewEnglish),
     },
+};
+
+const _foodBasisUnavailableTranslations = <String, String>{
+  'zh': '当前来源数值不能直接用于食用份量计算；原始数值仍可在来源详情查看。',
+  'en':
+      'These source values cannot currently be used for portion calculations. You can still view the original values in source details.',
+  'fr':
+      'Ces valeurs ne peuvent pas actuellement servir au calcul des portions. Les valeurs originales restent consultables dans les détails de la source.',
+  'ja': 'この出典の数値は現在、食べる分量の計算には使用できません。元の数値は出典の詳細で確認できます。',
+  'ko': '현재 이 출처의 수치는 섭취량 계산에 사용할 수 없습니다. 원래 수치는 출처 상세 정보에서 확인할 수 있습니다.',
+  'hi':
+      'इन स्रोत मानों का अभी भोजन की मात्रा की गणना में उपयोग नहीं किया जा सकता। मूल मान स्रोत के विवरण में देखे जा सकते हैं।',
+  'es':
+      'Estos valores de la fuente no pueden utilizarse actualmente para calcular porciones. Los valores originales siguen disponibles en los detalles de la fuente.',
+  'vi':
+      'Hiện không thể dùng các giá trị này để tính khẩu phần. Bạn vẫn có thể xem giá trị gốc trong chi tiết nguồn.',
+  'th':
+      'ขณะนี้ยังใช้ค่าจากแหล่งข้อมูลนี้คำนวณปริมาณอาหารที่รับประทานไม่ได้ สามารถดูค่าเดิมได้ในรายละเอียดแหล่งข้อมูล',
+  'id':
+      'Nilai sumber ini belum dapat digunakan untuk menghitung porsi. Nilai asli tetap dapat dilihat dalam rincian sumber.',
+  'ru':
+      'Эти значения пока нельзя использовать для расчёта порций. Исходные значения доступны в сведениях об источнике.',
+  'pl':
+      'Tych wartości źródłowych nie można obecnie używać do obliczania porcji. Oryginalne wartości są dostępne w szczegółach źródła.',
+  'ar':
+      'لا يمكن حاليًا استخدام هذه القيم لحساب كمية الطعام المتناولة. يمكنك الاطلاع على القيم الأصلية في تفاصيل المصدر.',
 };
 
 const Map<String, Map<String, String>> _replayCapsuleSaveTranslations = {
@@ -6238,4 +6289,198 @@ const Map<String, String> _zhMedicationSummaryByGeneric = {
   'peg3350': '当前硬规则主要聚焦于吞咽场景下与淀粉型增稠剂的不相容。',
   'carbidopalevodopaentacapone': '应沿用其他含左旋多巴治疗的蛋白时间窗与铁剂错峰注意。',
   'levodopabenserazide': '应沿用其他含左旋多巴制剂的高蛋白与铁剂错峰注意。',
+};
+
+const _drugIngredientSourceTranslations = <String, Map<String, String>>{
+  'en': {
+    'detail.ingredient_identity': 'Source identity',
+    'detail.ingredient_class': 'Source classification',
+    'detail.ingredient_active': 'Active ingredient',
+    'detail.ingredient_inactive': 'Inactive ingredient',
+    'detail.ingredient_unresolved': 'Unresolved classification',
+    'detail.ingredient_basis': 'Strength basis',
+    'detail.ingredient_active_ingredient': 'Ingredient itself',
+    'detail.ingredient_active_moiety': 'Active moiety',
+    'detail.ingredient_reference_ingredient': 'Reference ingredient',
+    'detail.ingredient_quantity': 'Original quantity fields',
+    'detail.ingredient_code_system': 'Code system',
+    'detail.ingredient_basis_missing':
+        'Strength reference not uniquely identified',
+  },
+  'zh': {
+    'detail.ingredient_identity': '来源成分身份',
+    'detail.ingredient_class': '来源分类',
+    'detail.ingredient_active': '活性成分',
+    'detail.ingredient_inactive': '非活性成分',
+    'detail.ingredient_unresolved': '分类待确认',
+    'detail.ingredient_basis': '强度基准',
+    'detail.ingredient_active_ingredient': '成分本身',
+    'detail.ingredient_active_moiety': '活性基团',
+    'detail.ingredient_reference_ingredient': '参考成分',
+    'detail.ingredient_quantity': '原始数量字段',
+    'detail.ingredient_code_system': '编码系统',
+    'detail.ingredient_basis_missing': '强度参考成分未唯一确定',
+  },
+  'fr': {
+    'detail.ingredient_identity': 'Identité dans la source',
+    'detail.ingredient_class': 'Classification de la source',
+    'detail.ingredient_active': 'Principe actif',
+    'detail.ingredient_inactive': 'Ingrédient inactif',
+    'detail.ingredient_unresolved': 'Classification indéterminée',
+    'detail.ingredient_basis': 'Base du dosage',
+    'detail.ingredient_active_ingredient': 'Ingrédient lui-même',
+    'detail.ingredient_active_moiety': 'Fraction active',
+    'detail.ingredient_reference_ingredient': 'Ingrédient de référence',
+    'detail.ingredient_quantity': 'Champs de quantité originaux',
+    'detail.ingredient_code_system': 'Système de codes',
+    'detail.ingredient_basis_missing':
+        'Référence du dosage non identifiée de façon unique',
+  },
+  'ja': {
+    'detail.ingredient_identity': '出典の成分識別情報',
+    'detail.ingredient_class': '出典の分類',
+    'detail.ingredient_active': '有効成分',
+    'detail.ingredient_inactive': '非活性成分',
+    'detail.ingredient_unresolved': '分類未確定',
+    'detail.ingredient_basis': '含量の基準',
+    'detail.ingredient_active_ingredient': '成分自体',
+    'detail.ingredient_active_moiety': '活性部分',
+    'detail.ingredient_reference_ingredient': '参照成分',
+    'detail.ingredient_quantity': '元の数量項目',
+    'detail.ingredient_code_system': 'コード体系',
+    'detail.ingredient_basis_missing': '含量の参照成分を一意に特定できません',
+  },
+  'ko': {
+    'detail.ingredient_identity': '출처의 성분 식별 정보',
+    'detail.ingredient_class': '출처 분류',
+    'detail.ingredient_active': '유효 성분',
+    'detail.ingredient_inactive': '비활성 성분',
+    'detail.ingredient_unresolved': '미확정 분류',
+    'detail.ingredient_basis': '함량 기준',
+    'detail.ingredient_active_ingredient': '성분 자체',
+    'detail.ingredient_active_moiety': '활성 부분',
+    'detail.ingredient_reference_ingredient': '참조 성분',
+    'detail.ingredient_quantity': '원본 수량 항목',
+    'detail.ingredient_code_system': '코드 체계',
+    'detail.ingredient_basis_missing': '함량 참조 성분이 유일하게 확인되지 않음',
+  },
+  'hi': {
+    'detail.ingredient_identity': 'स्रोत में घटक की पहचान',
+    'detail.ingredient_class': 'स्रोत वर्गीकरण',
+    'detail.ingredient_active': 'सक्रिय घटक',
+    'detail.ingredient_inactive': 'निष्क्रिय घटक',
+    'detail.ingredient_unresolved': 'अनिर्धारित वर्गीकरण',
+    'detail.ingredient_basis': 'सांद्रता का आधार',
+    'detail.ingredient_active_ingredient': 'घटक स्वयं',
+    'detail.ingredient_active_moiety': 'सक्रिय अंश',
+    'detail.ingredient_reference_ingredient': 'संदर्भ घटक',
+    'detail.ingredient_quantity': 'मूल मात्रा फ़ील्ड',
+    'detail.ingredient_code_system': 'कोड प्रणाली',
+    'detail.ingredient_basis_missing':
+        'सांद्रता का संदर्भ विशिष्ट रूप से पहचाना नहीं गया',
+  },
+  'es': {
+    'detail.ingredient_identity': 'Identidad en la fuente',
+    'detail.ingredient_class': 'Clasificación de la fuente',
+    'detail.ingredient_active': 'Ingrediente activo',
+    'detail.ingredient_inactive': 'Ingrediente inactivo',
+    'detail.ingredient_unresolved': 'Clasificación sin resolver',
+    'detail.ingredient_basis': 'Base de la concentración',
+    'detail.ingredient_active_ingredient': 'El propio ingrediente',
+    'detail.ingredient_active_moiety': 'Fracción activa',
+    'detail.ingredient_reference_ingredient': 'Ingrediente de referencia',
+    'detail.ingredient_quantity': 'Campos de cantidad originales',
+    'detail.ingredient_code_system': 'Sistema de códigos',
+    'detail.ingredient_basis_missing':
+        'Referencia de concentración no identificada de forma única',
+  },
+  'vi': {
+    'detail.ingredient_identity': 'Danh tính thành phần từ nguồn',
+    'detail.ingredient_class': 'Phân loại từ nguồn',
+    'detail.ingredient_active': 'Thành phần hoạt tính',
+    'detail.ingredient_inactive': 'Thành phần không hoạt tính',
+    'detail.ingredient_unresolved': 'Phân loại chưa xác định',
+    'detail.ingredient_basis': 'Cơ sở hàm lượng',
+    'detail.ingredient_active_ingredient': 'Bản thân thành phần',
+    'detail.ingredient_active_moiety': 'Phần hoạt tính',
+    'detail.ingredient_reference_ingredient': 'Thành phần tham chiếu',
+    'detail.ingredient_quantity': 'Trường lượng gốc',
+    'detail.ingredient_code_system': 'Hệ thống mã',
+    'detail.ingredient_basis_missing':
+        'Chưa xác định duy nhất thành phần tham chiếu hàm lượng',
+  },
+  'th': {
+    'detail.ingredient_identity': 'ข้อมูลระบุส่วนประกอบจากแหล่งข้อมูล',
+    'detail.ingredient_class': 'การจำแนกจากแหล่งข้อมูล',
+    'detail.ingredient_active': 'ส่วนประกอบออกฤทธิ์',
+    'detail.ingredient_inactive': 'ส่วนประกอบไม่ออกฤทธิ์',
+    'detail.ingredient_unresolved': 'ยังไม่ยืนยันการจำแนก',
+    'detail.ingredient_basis': 'ฐานของความแรง',
+    'detail.ingredient_active_ingredient': 'ตัวส่วนประกอบ',
+    'detail.ingredient_active_moiety': 'ส่วนที่ออกฤทธิ์',
+    'detail.ingredient_reference_ingredient': 'ส่วนประกอบอ้างอิง',
+    'detail.ingredient_quantity': 'ช่องปริมาณต้นฉบับ',
+    'detail.ingredient_code_system': 'ระบบรหัส',
+    'detail.ingredient_basis_missing':
+        'ยังระบุส่วนประกอบอ้างอิงความแรงได้ไม่ชัดเจน',
+  },
+  'id': {
+    'detail.ingredient_identity': 'Identitas bahan dari sumber',
+    'detail.ingredient_class': 'Klasifikasi sumber',
+    'detail.ingredient_active': 'Bahan aktif',
+    'detail.ingredient_inactive': 'Bahan tidak aktif',
+    'detail.ingredient_unresolved': 'Klasifikasi belum ditentukan',
+    'detail.ingredient_basis': 'Dasar kekuatan',
+    'detail.ingredient_active_ingredient': 'Bahan itu sendiri',
+    'detail.ingredient_active_moiety': 'Bagian aktif',
+    'detail.ingredient_reference_ingredient': 'Bahan referensi',
+    'detail.ingredient_quantity': 'Kolom jumlah asli',
+    'detail.ingredient_code_system': 'Sistem kode',
+    'detail.ingredient_basis_missing':
+        'Referensi kekuatan belum teridentifikasi secara unik',
+  },
+  'ru': {
+    'detail.ingredient_identity': 'Идентификация вещества в источнике',
+    'detail.ingredient_class': 'Классификация в источнике',
+    'detail.ingredient_active': 'Активный ингредиент',
+    'detail.ingredient_inactive': 'Неактивный ингредиент',
+    'detail.ingredient_unresolved': 'Классификация не определена',
+    'detail.ingredient_basis': 'Основа указанного содержания',
+    'detail.ingredient_active_ingredient': 'Сам ингредиент',
+    'detail.ingredient_active_moiety': 'Активная часть',
+    'detail.ingredient_reference_ingredient': 'Референтный ингредиент',
+    'detail.ingredient_quantity': 'Исходные поля количества',
+    'detail.ingredient_code_system': 'Система кодов',
+    'detail.ingredient_basis_missing':
+        'Референтное вещество содержания не определено однозначно',
+  },
+  'pl': {
+    'detail.ingredient_identity': 'Identyfikacja składnika w źródle',
+    'detail.ingredient_class': 'Klasyfikacja w źródle',
+    'detail.ingredient_active': 'Składnik aktywny',
+    'detail.ingredient_inactive': 'Składnik nieaktywny',
+    'detail.ingredient_unresolved': 'Klasyfikacja nieustalona',
+    'detail.ingredient_basis': 'Podstawa mocy',
+    'detail.ingredient_active_ingredient': 'Sam składnik',
+    'detail.ingredient_active_moiety': 'Część aktywna',
+    'detail.ingredient_reference_ingredient': 'Składnik odniesienia',
+    'detail.ingredient_quantity': 'Oryginalne pola ilości',
+    'detail.ingredient_code_system': 'System kodów',
+    'detail.ingredient_basis_missing':
+        'Składnik odniesienia mocy nie został jednoznacznie określony',
+  },
+  'ar': {
+    'detail.ingredient_identity': 'هوية المكوّن في المصدر',
+    'detail.ingredient_class': 'تصنيف المصدر',
+    'detail.ingredient_active': 'مكوّن فعال',
+    'detail.ingredient_inactive': 'مكوّن غير فعال',
+    'detail.ingredient_unresolved': 'تصنيف غير محسوم',
+    'detail.ingredient_basis': 'أساس التركيز',
+    'detail.ingredient_active_ingredient': 'المكوّن نفسه',
+    'detail.ingredient_active_moiety': 'الجزء الفعال',
+    'detail.ingredient_reference_ingredient': 'المكوّن المرجعي',
+    'detail.ingredient_quantity': 'حقول الكمية الأصلية',
+    'detail.ingredient_code_system': 'نظام الرموز',
+    'detail.ingredient_basis_missing': 'لم تُحدّد هوية مرجع التركيز بشكل فريد',
+  },
 };

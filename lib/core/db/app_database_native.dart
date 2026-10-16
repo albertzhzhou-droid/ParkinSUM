@@ -10,12 +10,19 @@ import '../models/intake.dart';
 import '../models/meal.dart';
 import '../models/recoverable_user_event.dart';
 import '../models/user_profile.dart';
+import '../models/user_preference_write_scope.dart';
 import '../../data/models/interaction_rule_record.dart';
 import 'app_database.dart';
 import 'recoverable_user_event_store.dart';
 import '../../domain/entities/mechanistic_replay_capsule.dart';
 
-const int nativeAppDatabaseSchemaVersion = 11;
+const int nativeAppDatabaseSchemaVersion = 12;
+
+const String nativeMealItemsCreateTableSql =
+    "CREATE TABLE meal_items (id TEXT PRIMARY KEY, meal_id TEXT NOT NULL, food_id TEXT NOT NULL, food_name TEXT NOT NULL, category TEXT NOT NULL, quantity REAL NOT NULL, protein REAL NOT NULL, carbs REAL NOT NULL, fat REAL NOT NULL, fiber REAL NOT NULL, sodium REAL NOT NULL, tags TEXT NOT NULL, missing_nutrients TEXT NOT NULL DEFAULT '[]')";
+
+const String nativeMealItemSchemaV12MigrationStatement =
+    "ALTER TABLE meal_items ADD COLUMN missing_nutrients TEXT NOT NULL DEFAULT '[]'";
 
 const String nativeMechanisticReplayCapsulesCreateTableSql =
     'CREATE TABLE mechanistic_replay_capsules ('
@@ -24,6 +31,21 @@ const String nativeMechanisticReplayCapsulesCreateTableSql =
     'generated_at_utc TEXT NOT NULL)';
 const String _nativeOnboardingOperationKey = 'onboarding_operation_id_v1';
 const String _nativeOnboardingStageKey = 'onboarding_stage_v1';
+
+MechanisticReplayCapsule nativeMechanisticReplayCapsuleFromSqliteRow(
+  Map<String, Object?> row,
+) {
+  final raw = row['canonical_json'];
+  if (raw is! String) {
+    throw const FormatException('Stored replay capsule is malformed.');
+  }
+  final capsule = MechanisticReplayCapsule.fromJsonString(raw);
+  if (capsule.capsuleSha256 != row['capsule_sha256'] ||
+      capsule.generatedAtUtc != row['generated_at_utc']) {
+    throw const FormatException('Stored replay capsule identity drifted.');
+  }
+  return capsule;
+}
 
 const String nativeIntakesCreateTableSql = '''
 CREATE TABLE intakes (
@@ -341,7 +363,31 @@ int? _nativeMealItemOrdinal(Map<String, Object?> row) {
   }
 }
 
-MealItem _nativeMealItemFromRow(Map<String, Object?> row) {
+Map<String, Object?> nativeMealItemToSqliteRow(
+  MealItem item, {
+  required String mealId,
+  required int ordinal,
+}) => {
+  'id': nativeMealItemStorageId(
+    mealId: mealId,
+    foodId: item.foodId,
+    ordinal: ordinal,
+  ),
+  'meal_id': mealId,
+  'food_id': item.foodId,
+  'food_name': item.foodName,
+  'category': item.foodCategory.name,
+  'quantity': item.quantityFactor,
+  'protein': item.proteinPer100g,
+  'carbs': item.carbsPer100g,
+  'fat': item.fatPer100g,
+  'fiber': item.fiberPer100g,
+  'sodium': item.sodiumPer100g,
+  'tags': jsonEncode(item.foodTags),
+  'missing_nutrients': jsonEncode(item.missingNutrientFields.toList()..sort()),
+};
+
+MealItem nativeMealItemFromSqliteRow(Map<String, Object?> row) {
   final categoryName = row['category'] as String;
   final category = FoodCategory.values.firstWhere(
     (value) => value.name == categoryName,
@@ -355,6 +401,10 @@ MealItem _nativeMealItemFromRow(Map<String, Object?> row) {
     foodTags: (jsonDecode(row['tags'] as String) as List<dynamic>)
         .map((value) => value.toString())
         .toList(growable: false),
+    missingNutrientFields:
+        (jsonDecode((row['missing_nutrients'] as String?) ?? '[]') as List)
+            .map((field) => field.toString())
+            .toSet(),
     proteinPer100g: (row['protein'] as num).toDouble(),
     carbsPer100g: (row['carbs'] as num).toDouble(),
     fatPer100g: (row['fat'] as num).toDouble(),
@@ -421,7 +471,9 @@ Meal _nativeMealFromRows(
     enteralFeedProteinGPerDay: (row['enteral_feed_protein_g_per_day'] as num?)
         ?.toDouble(),
     title: row['title'] as String,
-    items: matchingItems.map(_nativeMealItemFromRow).toList(growable: false),
+    items: matchingItems
+        .map(nativeMealItemFromSqliteRow)
+        .toList(growable: false),
   );
 }
 
@@ -447,32 +499,32 @@ Future<void> _insertNativeMeal(DatabaseExecutor database, Meal meal) async {
   });
   for (var ordinal = 0; ordinal < meal.items.length; ordinal++) {
     final item = meal.items[ordinal];
-    await database.insert('meal_items', <String, Object?>{
-      'id': nativeMealItemStorageId(
-        mealId: meal.id,
-        foodId: item.foodId,
-        ordinal: ordinal,
-      ),
-      'meal_id': meal.id,
-      'food_id': item.foodId,
-      'food_name': item.foodName,
-      'category': item.foodCategory.name,
-      'quantity': item.quantityFactor,
-      'protein': item.proteinPer100g,
-      'carbs': item.carbsPer100g,
-      'fat': item.fatPer100g,
-      'fiber': item.fiberPer100g,
-      'sodium': item.sodiumPer100g,
-      'tags': jsonEncode(item.foodTags),
-    });
+    await database.insert(
+      'meal_items',
+      nativeMealItemToSqliteRow(item, mealId: meal.id, ordinal: ordinal),
+    );
   }
 }
 
-class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
+class NativeAppDatabase
+    implements
+        AppDatabase,
+        RecoverableUserEventStore,
+        ScopedUserPreferenceStore {
+  NativeAppDatabase({Future<Database> Function()? databaseOpener})
+    : _databaseOpener = databaseOpener;
+
+  /// A bounded store seam for temporary-database transaction verification.
+  /// Default application storage continues to use the platform database.
+  final Future<Database> Function()? _databaseOpener;
   Database? _database;
 
   Future<Database> _open() async {
     if (_database != null) return _database!;
+    final opener = _databaseOpener;
+    if (opener != null) {
+      return _database = await opener();
+    }
 
     final databasesPath = await getDatabasesPath();
     final path = p.join(databasesPath, 'parkinsum_companion.db');
@@ -487,9 +539,7 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
         await db.execute(
           'CREATE TABLE meals (id TEXT PRIMARY KEY, title TEXT NOT NULL, eaten_at INTEGER NOT NULL, recorded_at INTEGER, occurred_at INTEGER, occurred_range_start INTEGER, occurred_range_end INTEGER, time_source TEXT, time_precision TEXT, next_meal_window_start INTEGER, next_meal_window_end INTEGER, coevent_time INTEGER, coevent_substance_tags TEXT NOT NULL DEFAULT \'[]\', thickener_type TEXT, enteral_feed_mode TEXT, enteral_feed_formula TEXT, enteral_feed_protein_g_per_day REAL)',
         );
-        await db.execute(
-          'CREATE TABLE meal_items (id TEXT PRIMARY KEY, meal_id TEXT NOT NULL, food_id TEXT NOT NULL, food_name TEXT NOT NULL, category TEXT NOT NULL, quantity REAL NOT NULL, protein REAL NOT NULL, carbs REAL NOT NULL, fat REAL NOT NULL, fiber REAL NOT NULL, sodium REAL NOT NULL, tags TEXT NOT NULL)',
-        );
+        await db.execute(nativeMealItemsCreateTableSql);
         await db.execute(nativeIntakesCreateTableSql);
         await db.execute(nativeFoodsCreateTableSql);
         await db.execute(
@@ -620,6 +670,9 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
         }
         if (oldVersion < 11) {
           await db.execute(nativeMechanisticReplayCapsulesCreateTableSql);
+        }
+        if (oldVersion < 12) {
+          await db.execute(nativeMealItemSchemaV12MigrationStatement);
         }
       },
     );
@@ -786,6 +839,25 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
   }
 
   @override
+  Future<void> saveUserProfileForSession(
+    UserProfile profile, {
+    required UserPreferenceWriteScope scope,
+  }) async {
+    scope.requireProfileOwner(profile);
+    final encoded = jsonEncode(profile.toJson());
+    final db = await _open();
+    scope.requireCurrent();
+    await db.transaction((transaction) async {
+      scope.requireCurrent();
+      await transaction.insert('app_meta', {
+        'key': 'user_profile',
+        'value': encoded,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+      scope.requireCurrent();
+    });
+  }
+
+  @override
   Future<List<String>> loadActiveDrugIds() async {
     final db = await _open();
     final rows = await db.query('active_drugs');
@@ -800,6 +872,26 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
       batch.insert('active_drugs', {'id': id});
     }
     await batch.commit(noResult: true);
+  }
+
+  @override
+  Future<void> saveActiveDrugIdsForSession(
+    List<String> ids, {
+    required UserPreferenceWriteScope scope,
+  }) async {
+    scope.requireCurrent();
+    final snapshot = List<String>.unmodifiable(ids);
+    final db = await _open();
+    scope.requireCurrent();
+    await db.transaction((transaction) async {
+      scope.requireCurrent();
+      await transaction.delete('active_drugs');
+      for (final id in snapshot) {
+        scope.requireCurrent();
+        await transaction.insert('active_drugs', {'id': id});
+      }
+      scope.requireCurrent();
+    });
   }
 
   @override
@@ -843,24 +935,10 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
 
       for (var ordinal = 0; ordinal < meal.items.length; ordinal++) {
         final item = meal.items[ordinal];
-        batch.insert('meal_items', {
-          'id': nativeMealItemStorageId(
-            mealId: meal.id,
-            foodId: item.foodId,
-            ordinal: ordinal,
-          ),
-          'meal_id': meal.id,
-          'food_id': item.foodId,
-          'food_name': item.foodName,
-          'category': item.foodCategory.name,
-          'quantity': item.quantityFactor,
-          'protein': item.proteinPer100g,
-          'carbs': item.carbsPer100g,
-          'fat': item.fatPer100g,
-          'fiber': item.fiberPer100g,
-          'sodium': item.sodiumPer100g,
-          'tags': jsonEncode(item.foodTags),
-        });
+        batch.insert(
+          'meal_items',
+          nativeMealItemToSqliteRow(item, mealId: meal.id, ordinal: ordinal),
+        );
       }
     }
 
@@ -920,20 +998,7 @@ class NativeAppDatabase implements AppDatabase, RecoverableUserEventStore {
       orderBy: 'generated_at_utc DESC, capsule_sha256 ASC',
     );
     return rows
-        .map((row) {
-          final capsule = MechanisticReplayCapsule.fromJson(
-            Map<String, Object?>.from(
-              jsonDecode(row['canonical_json'] as String) as Map,
-            ),
-          );
-          if (capsule.capsuleSha256 != row['capsule_sha256'] ||
-              capsule.generatedAtUtc != row['generated_at_utc']) {
-            throw const FormatException(
-              'Stored replay capsule identity drifted.',
-            );
-          }
-          return capsule;
-        })
+        .map(nativeMechanisticReplayCapsuleFromSqliteRow)
         .toList(growable: false);
   }
 

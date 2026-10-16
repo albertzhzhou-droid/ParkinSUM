@@ -1,5 +1,102 @@
 import '../../domain/entities/amino_acid_profile.dart';
 
+/// Source basis is separate from the nutrient unit: g of protein can be
+/// reported per 100 g dry matter or per 100 mL product. No density, moisture
+/// or serving conversion is inferred by this classification.
+final class FdcFoodBasis {
+  const FdcFoodBasis({
+    required this.basisType,
+    required this.reason,
+    required this.sourceFields,
+    required this.requiresQualifiedIdentity,
+  });
+
+  final String basisType;
+  final String reason;
+  final Map<String, Object?> sourceFields;
+  final bool requiresQualifiedIdentity;
+  bool get supportsEdibleMassPoint => basisType == 'per_100g_edible_part';
+
+  static bool isFdcDataType(String input) => const {
+    'foundation',
+    'foundation_food',
+    'branded',
+    'branded_food',
+    'sr legacy',
+    'sr_legacy_food',
+    'survey (fndds)',
+    'survey_fndds_food',
+    'fdc',
+  }.contains(input.trim().toLowerCase());
+
+  factory FdcFoodBasis.inspect(Map food) {
+    final dataType = '${food['dataType'] ?? ''}'.trim().toLowerCase();
+    final description = '${food['description'] ?? ''}';
+    final fields = <String, Object?>{
+      for (final key in const [
+        'fdcId',
+        'description',
+        'dataType',
+        'servingSize',
+        'servingSizeUnit',
+        'householdServingFullText',
+        'labelNutrients',
+      ])
+        if (food.containsKey(key)) key: food[key],
+    };
+    final moisture = RegExp(
+      r'\(\s*(\d+(?:\.\d+)?)\s*%\s+moisture\s*\)',
+      caseSensitive: false,
+    ).firstMatch(description);
+    if ((dataType == 'foundation' || dataType == 'foundation_food') &&
+        moisture != null) {
+      final zero = RegExp(r'^0(?:\.0+)?$').hasMatch(moisture.group(1)!);
+      return FdcFoodBasis(
+        basisType: zero
+            ? 'per_100g_dry_matter'
+            : 'per_100g_moisture_standardized',
+        reason: 'explicit_source_description_moisture_basis',
+        sourceFields: fields,
+        requiresQualifiedIdentity: true,
+      );
+    }
+    if (dataType == 'branded' || dataType == 'branded_food') {
+      final unit = '${food['servingSizeUnit'] ?? ''}'.trim().toLowerCase();
+      return FdcFoodBasis(
+        basisType: unit == 'g'
+            ? 'per_100g_edible_part'
+            : unit == 'ml'
+            ? 'per_100ml_product'
+            : 'source_basis_unqualified',
+        reason: unit == 'g' || unit == 'ml'
+            ? 'documented_branded_100_unit_basis_from_source_unit'
+            : 'branded_source_unit_missing_or_unsupported',
+        sourceFields: fields,
+        requiresQualifiedIdentity: true,
+      );
+    }
+    return FdcFoodBasis(
+      basisType: 'per_100g_edible_part',
+      reason: 'documented_nonbranded_mass_contract',
+      sourceFields: fields,
+      requiresQualifiedIdentity: false,
+    );
+  }
+
+  Map<String, Object?> toJson() => {
+    'fdc_id': sourceFields['fdcId'],
+    'basis_type': basisType,
+    'basis_amount': supportsEdibleMassPoint || basisType.startsWith('per_100')
+        ? 100
+        : null,
+    'legacy_edible_mass_point_eligible': supportsEdibleMassPoint,
+    'reason': reason,
+    'source_fields': sourceFields,
+    'quantity_conversion_applied': false,
+    'parser_basis_contract': 'fdc_source_basis_v1',
+  };
+}
+
 /// 食物类别：用于 UI 和规则判断（可扩展）
 enum FoodCategory {
   protein,
@@ -68,6 +165,9 @@ class FoodItem {
   /// to rescale nutrient values or ranking inputs.
   final List<FoodPortionEvidence> foodPortionEvidence;
 
+  /// Complete original provider objects. No ingredient, density or label conversion.
+  final List<FoodProductEvidence> foodProductEvidence;
+
   /// Linked source documents, concept/variant mappings and scope metadata for
   /// database-projected foods. Caller-provided items may have no such record.
   final FoodCatalogProvenanceEvidence? catalogProvenanceEvidence;
@@ -78,6 +178,10 @@ class FoodItem {
   final String? basisType;
   final String? preparationState;
   final String? qualifierKind;
+
+  /// Original FDC basis fields bound to sourceFoodCode. Kept separately from
+  /// legacy basis labels so old branded caches cannot assert gram eligibility.
+  final Map<String, Object?>? sourceBasisEvidence;
 
   FoodItem({
     required this.id,
@@ -95,17 +199,126 @@ class FoodItem {
     required this.fatG,
     required this.fiberG,
     required this.sodiumMg,
-    this.missingNutrientFields = const <String>{},
+    Set<String> missingNutrientFields = const <String>{},
     this.energyKcal,
     this.waterG,
     this.aminoAcidProfile,
     this.nutrientObservationEvidence = const <NutrientObservationEvidence>[],
     this.foodPortionEvidence = const <FoodPortionEvidence>[],
+    List<FoodProductEvidence> foodProductEvidence =
+        const <FoodProductEvidence>[],
     this.catalogProvenanceEvidence,
     this.basisType,
     this.preparationState,
     this.qualifierKind,
-  });
+    Map<String, Object?>? sourceBasisEvidence,
+  }) : sourceBasisEvidence = sourceBasisEvidence == null
+           ? null
+           : _freezeBasisFields(sourceBasisEvidence),
+       foodProductEvidence = List<FoodProductEvidence>.unmodifiable(
+         foodProductEvidence,
+       ),
+       missingNutrientFields =
+           _supportsEdibleMassSourcePoint(
+             basis: basisType,
+             system: sourceSystem,
+             name: name,
+             description: description,
+             code: sourceFoodCode,
+             evidence: sourceBasisEvidence,
+           )
+           ? missingNutrientFields
+           : Set<String>.unmodifiable({
+               ...missingNutrientFields,
+               'proteinG',
+               'carbsG',
+               'fatG',
+               'fiberG',
+               'sodiumMg',
+               'energyKcal',
+               'waterG',
+             });
+
+  /// Absent legacy metadata retains compatibility; an explicit non-mass basis
+  /// never authorizes an edible-weight calculation.
+  static bool supportsEdibleMassBasis(String? basis) =>
+      basis == null ||
+      basis.trim().isEmpty ||
+      basis == 'per_100g' ||
+      basis == 'per_100g_edible_part';
+  bool get supportsEdibleMassPoint => _supportsEdibleMassSourcePoint(
+    basis: basisType,
+    system: sourceSystem,
+    name: name,
+    description: description,
+    code: sourceFoodCode,
+    evidence: sourceBasisEvidence,
+  );
+
+  static bool _supportsEdibleMassSourcePoint({
+    required String? basis,
+    required String system,
+    required String name,
+    required String description,
+    required String? code,
+    required Map<String, Object?>? evidence,
+  }) {
+    if (!supportsEdibleMassBasis(basis)) return false;
+    final family = system.trim().toLowerCase();
+    final branded = family == 'branded' || family == 'branded_food';
+    final foundation = const {
+      'foundation',
+      'foundation_food',
+      'fdc',
+      'usda_fdc',
+    }.contains(family);
+    if (foundation &&
+        !FdcFoodBasis.inspect({
+          'dataType': 'Foundation',
+          'description': '$name\n$description',
+        }).supportsEdibleMassPoint) {
+      return false;
+    }
+    if (branded && evidence == null) return false;
+    if (evidence != null) {
+      final sourceId = evidence['fdcId'];
+      final dataType = evidence['dataType'];
+      if ((sourceId is! String && sourceId is! num) ||
+          code == null ||
+          code.trim().isEmpty ||
+          '$sourceId' != code ||
+          dataType is! String ||
+          !FdcFoodBasis.isFdcDataType(dataType)) {
+        return false;
+      }
+      final evidenceFamily = dataType.trim().toLowerCase();
+      String canonicalFamily(String value) => switch (value) {
+        'foundation_food' => 'foundation',
+        'branded_food' => 'branded',
+        'sr_legacy_food' => 'sr legacy',
+        'survey_fndds_food' => 'survey (fndds)',
+        'usda_fdc' => 'fdc',
+        _ => value,
+      };
+      if (canonicalFamily(family) != 'fdc' &&
+          canonicalFamily(family) != canonicalFamily(evidenceFamily)) {
+        return false;
+      }
+      return FdcFoodBasis.inspect(evidence).supportsEdibleMassPoint;
+    }
+    return true;
+  }
+
+  static Map<String, Object?> _freezeBasisFields(Map<String, Object?> fields) {
+    Object? freeze(Object? value) => switch (value) {
+      Map() => Map<String, Object?>.unmodifiable({
+        for (final entry in value.entries) '${entry.key}': freeze(entry.value),
+      }),
+      List() => List<Object?>.unmodifiable(value.map(freeze)),
+      _ => value,
+    };
+    return freeze(fields) as Map<String, Object?>;
+  }
 
   /// True when the named nutrient field has no source data (unknown, not 0).
   bool isNutrientMissing(String field) => missingNutrientFields.contains(field);
@@ -149,10 +362,15 @@ class FoodItem {
     'foodPortionEvidence': foodPortionEvidence
         .map((evidence) => evidence.toJson())
         .toList(growable: false),
+    if (foodProductEvidence.isNotEmpty)
+      'foodProductEvidence': foodProductEvidence
+          .map((e) => e.toJson())
+          .toList(growable: false),
     'catalogProvenanceEvidence': catalogProvenanceEvidence?.toJson(),
     'basisType': basisType,
     'preparationState': preparationState,
     'qualifierKind': qualifierKind,
+    if (sourceBasisEvidence != null) 'sourceBasisEvidence': sourceBasisEvidence,
   };
 
   static FoodItem fromJson(Map<String, dynamic> json) {
@@ -210,6 +428,16 @@ class FoodItem {
       basisType: json['basisType'] as String?,
       preparationState: json['preparationState'] as String?,
       qualifierKind: json['qualifierKind'] as String?,
+      foodProductEvidence: (json['foodProductEvidence'] as List? ?? [])
+          .map(
+            (e) => FoodProductEvidence.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ),
+          )
+          .toList(growable: false),
+      sourceBasisEvidence: json['sourceBasisEvidence'] is Map
+          ? Map<String, Object?>.from(json['sourceBasisEvidence'] as Map)
+          : null,
     );
   }
 }
@@ -740,4 +968,38 @@ double? _evidenceDouble(Object? value) =>
 int? _evidenceInt(Object? value) {
   if (value is DateTime) return value.millisecondsSinceEpoch;
   return value is num ? value.toInt() : null;
+}
+
+/// Original source content, not a standardized edible-mass quantity.
+final class FoodProductEvidence {
+  static const schemaId = 'parkinsum.food-product-evidence/1';
+  FoodProductEvidence({
+    required this.sourceDocId,
+    required this.sourceFoodId,
+    required Map<String, Object?> sourceFields,
+  }) : sourceFields = FoodItem._freezeBasisFields(sourceFields);
+  final String sourceDocId;
+  final String sourceFoodId;
+  final Map<String, Object?> sourceFields;
+  factory FoodProductEvidence.fromJson(Map<String, dynamic> json) {
+    if (json['schema_id'] != schemaId ||
+        json['source_doc_id'] is! String ||
+        json['source_food_id'] is! String ||
+        json['source_fields'] is! Map) {
+      throw const FormatException('Invalid original product evidence.');
+    }
+    return FoodProductEvidence(
+      sourceDocId: json['source_doc_id'] as String,
+      sourceFoodId: json['source_food_id'] as String,
+      sourceFields: Map<String, Object?>.from(json['source_fields'] as Map),
+    );
+  }
+  Map<String, Object?> toJson() => {
+    'schema_id': schemaId,
+    'source_doc_id': sourceDocId,
+    'source_food_id': sourceFoodId,
+    'source_fields': sourceFields,
+    'quantity_conversion_applied': false,
+    'source_currency_inferred': false,
+  };
 }

@@ -210,8 +210,10 @@ class _MedicationPageState extends State<MedicationPage> {
     } else {
       next.remove(drugId);
     }
+    final sessionEpoch = state.preferenceMutationSessionEpoch;
     final result = await state.setActiveDrugIds(next.toList());
     if (!context.mounted) return;
+    if (sessionEpoch != state.preferenceMutationSessionEpoch) return;
     if (result.status == ActiveDrugSelectionCommitStatus.persistenceFailed ||
         result.status ==
             ActiveDrugSelectionCommitStatus.committedWithRefreshFailure) {

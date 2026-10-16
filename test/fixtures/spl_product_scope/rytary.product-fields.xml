@@ -1,0 +1,168 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ns0:document xmlns:ns0="urn:hl7-org:v3"><ns0:id root="ef3fe5ab-c753-409b-a5f3-b55e3eefd070" />
+   <ns0:setId root="6c1f7cd4-de56-45c1-a734-5e77b4aeb6f7" />
+   <ns0:versionNumber value="26" />
+   <ns0:effectiveTime value="20260326" />
+   <ns0:title>These highlights do not include all the information needed to use RYTARY safely and effectively. See full prescribing information for RYTARY.<ns0:br />
+      <ns0:br />RYTARY (carbidopa and levodopa) extended-release capsules, for oral use<ns0:br />Initial U.S. Approval: 1975</ns0:title>
+   <ns0:component><ns0:structuredBody><ns0:component><ns0:section><ns0:code code="48780-1" codeSystem="2.16.840.1.113883.6.1" /><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="64896-661" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>RYTARY</ns0:name>
+                        <ns0:formCode code="C42916" displayName="CAPSULE, EXTENDED RELEASE" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="95" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="23.75" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA HYDRATE</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" displayName="ORAL" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="64896-662" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>RYTARY</ns0:name>
+                        <ns0:formCode code="C42916" displayName="CAPSULE, EXTENDED RELEASE" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="145" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="36.25" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA HYDRATE</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" displayName="ORAL" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="64896-663" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>RYTARY</ns0:name>
+                        <ns0:formCode code="C42916" displayName="CAPSULE, EXTENDED RELEASE" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="195" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="48.75" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA HYDRATE</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" displayName="ORAL" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject><ns0:subject><ns0:manufacturedProduct><ns0:manufacturedProduct><ns0:code code="64896-664" codeSystem="2.16.840.1.113883.6.69" />
+                        <ns0:name>RYTARY</ns0:name>
+                        <ns0:formCode code="C42916" displayName="CAPSULE, EXTENDED RELEASE" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        <ns0:ingredient classCode="ACTIB">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="245" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>LEVODOPA</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="46627O600J" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>LEVODOPA</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        <ns0:ingredient classCode="ACTIM">
+                           <ns0:quantity>
+                              <ns0:numerator unit="mg" value="61.25" />
+                              <ns0:denominator unit="1" value="1" />
+                           </ns0:quantity>
+                           <ns0:ingredientSubstance>
+                              <ns0:code code="MNX7R8C5VO" codeSystem="2.16.840.1.113883.4.9" />
+                              <ns0:name>CARBIDOPA HYDRATE</ns0:name>
+                              <ns0:activeMoiety>
+                                 <ns0:activeMoiety>
+                                    <ns0:code code="KR87B45RGH" codeSystem="2.16.840.1.113883.4.9" />
+                                    <ns0:name>CARBIDOPA ANHYDROUS</ns0:name>
+                                 </ns0:activeMoiety>
+                              </ns0:activeMoiety>
+                           </ns0:ingredientSubstance>
+                        </ns0:ingredient>
+                        </ns0:manufacturedProduct><ns0:consumedIn>
+                        <ns0:substanceAdministration>
+                           <ns0:routeCode code="C38288" displayName="ORAL" codeSystem="2.16.840.1.113883.3.26.1.1" />
+                        </ns0:substanceAdministration>
+                     </ns0:consumedIn>
+                  </ns0:manufacturedProduct></ns0:subject></ns0:section></ns0:component></ns0:structuredBody></ns0:component></ns0:document>

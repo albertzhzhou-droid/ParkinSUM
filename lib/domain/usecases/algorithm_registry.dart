@@ -210,6 +210,9 @@ class AlgorithmRegistry {
       visualization: AlgorithmVisualization.provenanceGraph,
       sourcePath: 'lib/domain/entities/mechanistic_replay_capsule.dart',
       additionalSourcePaths: [
+        'lib/core/db/app_database.dart',
+        'lib/core/db/app_database_native.dart',
+        'lib/core/db/app_database_web.dart',
         'lib/domain/usecases/mechanistic_replay_capsule_service.dart',
         'lib/domain/usecases/mechanistic_event_ledger_authorization.dart',
       ],
@@ -408,6 +411,10 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.decide,
       visualization: AlgorithmVisualization.decisionFlow,
       sourcePath: 'lib/domain/usecases/database_backed_meal_check_usecase.dart',
+      additionalSourcePaths: <String>[
+        'lib/core/models/interaction_result.dart',
+        'lib/domain/usecases/qualified_nutrient_point_selection.dart',
+      ],
       userVisibleImpact:
           'Combines catalog facts, deterministic rules, and mechanistic trace.',
       inputs: 'Meal, medication, catalog snapshot, and rules',
@@ -557,11 +564,18 @@ class AlgorithmRegistry {
       additionalSourcePaths: [
         'lib/core/models/meal.dart',
         'lib/domain/entities/protein_trend_point.dart',
+        'lib/domain/entities/personal_log_view.dart',
+        'lib/domain/usecases/personal_log_date_window_resolver.dart',
+        'lib/domain/usecases/pinned_timezone_rules.dart',
+        'lib/domain/usecases/timezone_local_time_resolver.dart',
+        'lib/domain/usecases/personal_log_view_projector.dart',
       ],
       userVisibleImpact:
-          'Aggregates logged meal protein into the analytics trend.',
-      inputs: 'Stored meals with nutrient totals',
-      outputs: 'Time-ordered protein series',
+          'Aggregates complete known meal protein into the analytics trend; unknown meals are counted separately.',
+      inputs:
+          'Stored meal protein values, captured missingness and current catalog missingness',
+      outputs:
+          'Time-ordered complete numeric protein points and nullable known-meal mean',
       hasLiveTrace: true,
       traceProviderId: AlgorithmTraceProviderIds.productionObservatorySnapshot,
       limitation: 'Descriptive aggregation, not intake adequacy assessment.',
@@ -641,7 +655,9 @@ class AlgorithmRegistry {
       visualization: AlgorithmVisualization.provenanceGraph,
       sourcePath: 'lib/domain/usecases/cdss_catalog_projection_service.dart',
       additionalSourcePaths: <String>[
+        'lib/domain/usecases/qualified_nutrient_point_selection.dart',
         'lib/domain/entities/food_composition_candidate_set_snapshot.dart',
+        'lib/core/db/cdss_catalog_snapshot_reader.dart',
       ],
       userVisibleImpact:
           'Projects versioned evidence into user-facing catalog details.',
@@ -823,16 +839,17 @@ class AlgorithmRegistry {
           'lib/domain/usecases/food_portion_composition_projection_service.dart',
       additionalSourcePaths: [
         'lib/domain/entities/food_portion_composition_projection.dart',
+        'lib/domain/usecases/entry_food_portion_preview_service.dart',
       ],
       userVisibleImpact:
-          'Declares the standalone nutrient-preview calculation for one explicitly bound FDC source portion; no app UI currently calls this service.',
+          'Shows an opt-in source-bound FDC Foundation portion preview during meal entry, including explicit withheld reasons.',
       inputs:
           'Candidate snapshot, source-bound nutrient evidence, and source portion mass',
       outputs:
           'Per-portion nutrient amount and source-sample bounds, or an explicit hold',
       hasLiveTrace: false,
       limitation:
-          'Standalone tested preview service with no app UI wiring. It does not select a serving, modify foods, change recommendation order, or establish dietary advice.',
+          'The user confirms source grams separately. The preview does not overwrite per-100g composition, select an appropriate serving, change recommendation order, or establish dietary advice.',
     ),
     AlgorithmDescriptor(
       id: 'medication_catalog_search',
@@ -947,6 +964,9 @@ class AlgorithmRegistry {
       visualization: AlgorithmVisualization.provenanceGraph,
       sourcePath: 'lib/data/datasources/remote/etl_ingestion_pipeline.dart',
       additionalSourcePaths: [
+        'lib/core/constants/reference_food_nutrient_profile_table.dart',
+        'lib/core/constants/reference_food_nutrient_profiles.dart',
+        'lib/domain/entities/reference_food_nutrient_profile.dart',
         'lib/core/utils/qualified_value_parser.dart',
         'lib/data/datasources/remote/china_cdc_food_platform_importer.dart',
         'lib/data/datasources/remote/ciqual_p0_importer.dart',
@@ -957,6 +977,7 @@ class AlgorithmRegistry {
         'lib/data/datasources/remote/fao_fbdg_p1_importer.dart',
         'lib/data/datasources/remote/fdc_nutrient_definitions.dart',
         'lib/data/datasources/remote/fdc_p0_importer.dart',
+        'lib/data/datasources/remote/fdc_nutrient_identity.dart',
         'lib/data/datasources/remote/health_canada_din_product_importer.dart',
         'lib/data/datasources/remote/health_canada_dpd_p0_importer.dart',
         'lib/data/datasources/remote/importer_audit.dart',

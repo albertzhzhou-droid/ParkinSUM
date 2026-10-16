@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 /// Immutable n-gram index for catalog type-ahead search.
 ///
 /// Candidate lookup uses an inverted index; the final `contains` check keeps
@@ -7,51 +5,50 @@ import 'dart:collection';
 class CatalogSearchIndex<T> {
   final List<T> _items;
   final List<String> _normalizedText;
-  final Map<String, Set<int>> _postings;
+  final Map<String, List<int>> _postings;
 
   CatalogSearchIndex({
     required Iterable<T> items,
     required String Function(T item) searchableText,
   }) : _items = List<T>.unmodifiable(items),
        _normalizedText = <String>[],
-       _postings = <String, Set<int>>{} {
+       _postings = <String, List<int>>{} {
     for (var index = 0; index < _items.length; index++) {
       final text = normalizeCatalogSearchText(searchableText(_items[index]));
       _normalizedText.add(text);
-      for (final gram in _grams(text)) {
-        (_postings[gram] ??= <int>{}).add(index);
+      for (var width = 1; width <= 3; width++) {
+        for (final gram in _grams(text, width: width)) {
+          (_postings[gram] ??= <int>[]).add(index);
+        }
       }
     }
   }
 
   List<T> search(String query, {int? limit}) {
+    if (limit != null && limit < 0) {
+      throw RangeError.value(limit, 'limit', 'Must be nonnegative.');
+    }
+    if (limit == 0) return List<T>.unmodifiable(const []);
     final normalized = normalizeCatalogSearchText(query);
     if (normalized.isEmpty) {
       return List<T>.unmodifiable(limit == null ? _items : _items.take(limit));
     }
 
-    final queryGrams = _grams(normalized).toList(growable: false)
-      ..sort((a, b) {
-        final size = (_postings[a]?.length ?? 0).compareTo(
-          _postings[b]?.length ?? 0,
-        );
-        return size != 0 ? size : a.compareTo(b);
-      });
-    if (queryGrams.isEmpty) return List<T>.empty(growable: false);
-
-    Set<int>? candidates;
-    for (final gram in queryGrams) {
+    // Postings are appended once per item in source order. Any exact substring
+    // must occur in every query gram, so its smallest posting contains all true
+    // matches. Verify the complete substring there and stop at the requested
+    // limit without allocating intersections or sorting the whole candidate set.
+    List<int>? candidates;
+    for (final gram in _grams(normalized)) {
       final posting = _postings[gram];
       if (posting == null) return List<T>.empty(growable: false);
-      candidates = candidates == null
-          ? Set<int>.from(posting)
-          : candidates.intersection(posting);
-      if (candidates.isEmpty) return List<T>.empty(growable: false);
+      if (candidates == null || posting.length < candidates.length) {
+        candidates = posting;
+      }
     }
-
-    final ordered = SplayTreeSet<int>.from(candidates!);
+    if (candidates == null) return List<T>.empty(growable: false);
     final results = <T>[];
-    for (final index in ordered) {
+    for (final index in candidates) {
       if (_normalizedText[index].contains(normalized)) {
         results.add(_items[index]);
         if (limit != null && results.length >= limit) break;
@@ -84,13 +81,13 @@ String normalizeCatalogSearchText(String value) {
   return buffer.toString().trim();
 }
 
-Iterable<String> _grams(String value) sync* {
+Iterable<String> _grams(String value, {int? width}) sync* {
   if (value.isEmpty) return;
   final runes = value.runes.toList(growable: false);
-  final width = runes.length < 3 ? runes.length : 3;
+  final gramWidth = width ?? (runes.length < 3 ? runes.length : 3);
   final emitted = <String>{};
-  for (var index = 0; index <= runes.length - width; index++) {
-    final gram = String.fromCharCodes(runes.sublist(index, index + width));
+  for (var index = 0; index <= runes.length - gramWidth; index++) {
+    final gram = String.fromCharCodes(runes.sublist(index, index + gramWidth));
     if (emitted.add(gram)) yield gram;
   }
 }

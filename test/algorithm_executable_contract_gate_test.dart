@@ -9,6 +9,27 @@ import 'package:parkinsum_companion/domain/usecases/mechanistic_model_verificati
 void main() {
   const gate = AlgorithmExecutableContractGate();
 
+  test(
+    'protein rule dependency contract includes its explicit oral route gate',
+    () async {
+      final report = await gate.run();
+      final observation =
+          report.observationPayloads['runtime_rule_support.path_permutation']!;
+      const expectedPaths = [
+        'drug.active_ingredients',
+        'drug.route',
+        'meal.protein_g',
+        'timestamps.drug_time',
+        'timestamps.meal_time',
+      ];
+      expect(observation['forward_paths'], expectedPaths);
+      expect(observation['reversed_paths'], expectedPaths);
+      expect(observation['forward_missing_fields'], ['meal_time', 'time']);
+      expect(observation['reversed_missing_fields'], ['meal_time', 'time']);
+      expect(observation['permutation_preserved'], isTrue);
+    },
+  );
+
   test('first-wave report passes eight production API contracts', () async {
     final report = await gate.run();
 

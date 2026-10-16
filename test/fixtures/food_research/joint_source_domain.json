@@ -1,0 +1,130 @@
+{
+  "schema": "parkinsum.joint-source-scenario-study/1",
+  "source_archive_sha256": "186e988ec542e913f51ef62b86a47758e8cdd0d1dc3889e7b055581f3c09c77a",
+  "source_member_sha256": "27d1fe3fd89edfbe528ed915da5619320e1d004d4594603a1b19bdb1511590cc",
+  "subset_raw_sha256": "f7a3ffd8b421586d024f2b2254bfd98b5755c98948840106bed4222c135a3f18",
+  "maximum_joint_combinations": 128,
+  "windows": [
+    {
+      "id": "early",
+      "start_minute": 30,
+      "end_minute": 90
+    },
+    {
+      "id": "late",
+      "start_minute": 180,
+      "end_minute": 240
+    }
+  ],
+  "time_origin_utc": "2026-08-19T08:00:00.000Z",
+  "evidence_as_of_utc": "2026-08-19T00:00:00.000Z",
+  "manufactured_inputs": {
+    "medication_context": "Synthetic exact oral immediate carbidopa + levodopa, nominal levodopa100mg; source-bound synthetic dose-time meal. No administration assertion.",
+    "physical_form": "solid declared for the modeling experiment; not measured from FDC",
+    "candidate_groups": "explicit alternatives for research; not diet equivalence, automatic matches or validated matching accuracy"
+  },
+  "groups": [
+    {
+      "candidate_id": "hummus",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "321358:0",
+          "fdc_id": "321358",
+          "original_food_portion_index": 0,
+          "portion_id": 118804
+        },
+        {
+          "option_id": "321358:1",
+          "fdc_id": "321358",
+          "original_food_portion_index": 1,
+          "portion_id": 312701
+        }
+      ]
+    },
+    {
+      "candidate_id": "almonds",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "323294:0",
+          "fdc_id": "323294",
+          "original_food_portion_index": 0,
+          "portion_id": 119012
+        },
+        {
+          "option_id": "323294:1",
+          "fdc_id": "323294",
+          "original_food_portion_index": 1,
+          "portion_id": 312717
+        }
+      ]
+    },
+    {
+      "candidate_id": "banana",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "1105073:0",
+          "fdc_id": "1105073",
+          "original_food_portion_index": 0,
+          "portion_id": 267488
+        },
+        {
+          "option_id": "1105073:1",
+          "fdc_id": "1105073",
+          "original_food_portion_index": 1,
+          "portion_id": 312673
+        },
+        {
+          "option_id": "1105314:0",
+          "fdc_id": "1105314",
+          "original_food_portion_index": 0,
+          "portion_id": 267795
+        },
+        {
+          "option_id": "1105314:1",
+          "fdc_id": "1105314",
+          "original_food_portion_index": 1,
+          "portion_id": 312674
+        }
+      ]
+    },
+    {
+      "candidate_id": "onion",
+      "matching_status": "explicit_research_alternatives_not_validated_catalog_equivalence",
+      "options": [
+        {
+          "option_id": "790577:0",
+          "fdc_id": "790577",
+          "original_food_portion_index": 0,
+          "portion_id": 234609
+        },
+        {
+          "option_id": "790577:1",
+          "fdc_id": "790577",
+          "original_food_portion_index": 1,
+          "portion_id": 312813
+        },
+        {
+          "option_id": "790646:0",
+          "fdc_id": "790646",
+          "original_food_portion_index": 0,
+          "portion_id": 234698
+        },
+        {
+          "option_id": "790646:1",
+          "fdc_id": "790646",
+          "original_food_portion_index": 1,
+          "portion_id": 312814
+        }
+      ]
+    }
+  ],
+  "synthetic_base_meal": {
+    "fdc_id": "321358",
+    "original_food_portion_index": 1,
+    "portion_id": 312701,
+    "minute_offset": -10
+  }
+}

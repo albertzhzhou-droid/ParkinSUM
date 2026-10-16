@@ -4,6 +4,7 @@ import '../models/drug_definition.dart';
 import '../models/intake.dart';
 import '../models/meal.dart';
 import '../models/user_profile.dart';
+import '../models/user_preference_write_scope.dart';
 import '../models/recoverable_user_event.dart';
 import 'atomic_onboarding_commit_coordinator.dart';
 
@@ -22,8 +23,23 @@ class UserDataService {
   Future<bool> loadOnboarded() => repository.loadOnboarded();
   Future<void> saveOnboarded(bool value) => repository.saveOnboarded(value);
   Future<UserProfile> loadUserProfile() => repository.loadUserProfile();
-  Future<void> saveUserProfile(UserProfile profile) =>
-      repository.saveUserProfile(profile);
+  Future<void> saveUserProfile(
+    UserProfile profile, {
+    UserPreferenceWriteScope? scope,
+  }) {
+    if (scope == null) return repository.saveUserProfile(profile);
+    scope.requireCurrent();
+    final store = repository;
+    if (store is! ScopedUserPreferenceStore) {
+      throw UnsupportedError(
+        'Session-scoped preference storage is unavailable.',
+      );
+    }
+    return (store as ScopedUserPreferenceStore).saveUserProfileForSession(
+      profile,
+      scope: scope,
+    );
+  }
 
   Future<AtomicOnboardingCommit> commitOnboarding({
     required UserProfile profile,
@@ -36,8 +52,23 @@ class UserDataService {
   );
 
   Future<List<String>> loadActiveDrugIds() => repository.loadActiveDrugIds();
-  Future<void> saveActiveDrugIds(List<String> ids) =>
-      repository.saveActiveDrugIds(ids);
+  Future<void> saveActiveDrugIds(
+    List<String> ids, {
+    UserPreferenceWriteScope? scope,
+  }) {
+    if (scope == null) return repository.saveActiveDrugIds(ids);
+    scope.requireCurrent();
+    final store = repository;
+    if (store is! ScopedUserPreferenceStore) {
+      throw UnsupportedError(
+        'Session-scoped preference storage is unavailable.',
+      );
+    }
+    return (store as ScopedUserPreferenceStore).saveActiveDrugIdsForSession(
+      ids,
+      scope: scope,
+    );
+  }
 
   Future<List<String>> loadActiveDrugIdsCompat() =>
       repository.loadActiveDrugIds();

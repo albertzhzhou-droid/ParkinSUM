@@ -478,9 +478,12 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
       recordedAt: DateTime.now().toUtc(),
       source: 'settings',
     );
+    final sessionEpoch = state.preferenceMutationSessionEpoch;
     try {
       final result = await state.saveUserProfile(nextProfile);
       if (!mounted) return;
+      if (sessionEpoch != state.preferenceMutationSessionEpoch) return;
+      if (!result.appliesToCurrentSession) return;
       final message =
           result.status ==
               PersistedValueMutationStatus.committedWithRefreshFailure
@@ -491,6 +494,7 @@ class _SettingsCapabilityPageState extends State<SettingsCapabilityPage> {
       ).showSnackBar(SnackBar(content: Text(message)));
     } catch (error) {
       if (!mounted) return;
+      if (sessionEpoch != state.preferenceMutationSessionEpoch) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(i18n.tr('settings.save_failed', {'error': '$error'})),

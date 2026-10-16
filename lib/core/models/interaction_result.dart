@@ -1,7 +1,7 @@
 import '../../domain/entities/decision_support_followup.dart';
 
 /// 交互检查总体状态
-enum InteractionStatus { ok, warning }
+enum InteractionStatus { ok, warning, unassessed }
 
 /// 严重程度（用于 UI 标色/排序）
 enum InteractionSeverity { low, moderate, high }
@@ -161,8 +161,12 @@ class InteractionResult {
   final List<String> dataNotes;
   final List<InteractionIssue> issues;
   final DateTime generatedAt;
-  final int score;
+
+  /// Null means the supplied context cannot be assessed. It is never zero risk.
+  final int? score;
   final List<InteractionScoreFactor> scoreFactors;
+  final List<String> assessmentReasons;
+  final List<String> unresolvedDrugIds;
 
   /// Deterministic mechanistic time-axis simulation trace, when one was
   /// computed for this run. Stored as a JSON map (rather than the typed
@@ -184,8 +188,24 @@ class InteractionResult {
     required this.generatedAt,
     required this.score,
     this.scoreFactors = const <InteractionScoreFactor>[],
+    this.assessmentReasons = const [],
+    this.unresolvedDrugIds = const [],
     this.mechanisticTraceJson,
-  });
+  }) {
+    if (status == InteractionStatus.unassessed) {
+      if (score != null ||
+          scoreFactors.isNotEmpty ||
+          mechanisticTraceJson != null) {
+        throw ArgumentError(
+          'An unassessed result cannot carry a score or trace.',
+        );
+      }
+    } else if (score == null) {
+      throw ArgumentError('An assessed result requires an explicit score.');
+    }
+  }
+
+  bool get hasAssessment => status != InteractionStatus.unassessed;
 
   InteractionResult copyWith({
     String? mealId,
@@ -200,6 +220,8 @@ class InteractionResult {
     DateTime? generatedAt,
     int? score,
     List<InteractionScoreFactor>? scoreFactors,
+    List<String>? assessmentReasons,
+    List<String>? unresolvedDrugIds,
     Map<String, dynamic>? mechanisticTraceJson,
   }) {
     return InteractionResult(
@@ -215,6 +237,8 @@ class InteractionResult {
       generatedAt: generatedAt ?? this.generatedAt,
       score: score ?? this.score,
       scoreFactors: scoreFactors ?? this.scoreFactors,
+      assessmentReasons: assessmentReasons ?? this.assessmentReasons,
+      unresolvedDrugIds: unresolvedDrugIds ?? this.unresolvedDrugIds,
       mechanisticTraceJson: mechanisticTraceJson ?? this.mechanisticTraceJson,
     );
   }
@@ -238,9 +262,11 @@ class InteractionResult {
     );
   }
 
-  InteractionSeverity get overallSeverity {
-    if (score >= 70) return InteractionSeverity.high;
-    if (score >= 30) return InteractionSeverity.moderate;
+  InteractionSeverity? get overallSeverity {
+    final assessedScore = score;
+    if (!hasAssessment || assessedScore == null) return null;
+    if (assessedScore >= 70) return InteractionSeverity.high;
+    if (assessedScore >= 30) return InteractionSeverity.moderate;
     return InteractionSeverity.low;
   }
 
@@ -256,14 +282,16 @@ class InteractionResult {
     'generatedAt': generatedAt.toIso8601String(),
     'score': score,
     'scoreFactors': scoreFactors.map((item) => item.toJson()).toList(),
+    if (assessmentReasons.isNotEmpty) 'assessmentReasons': assessmentReasons,
+    if (unresolvedDrugIds.isNotEmpty) 'unresolvedDrugIds': unresolvedDrugIds,
     if (mechanisticTraceJson != null) 'mechanisticTrace': mechanisticTraceJson,
   };
 
   static InteractionResult fromJson(Map<String, dynamic> json) {
-    final statusName = (json['status'] as String?) ?? InteractionStatus.ok.name;
+    final statusName = json['status'] as String?;
     final status = InteractionStatus.values.firstWhere(
       (s) => s.name == statusName,
-      orElse: () => InteractionStatus.ok,
+      orElse: () => throw FormatException('Unknown interaction status.'),
     );
 
     return InteractionResult(
@@ -284,13 +312,21 @@ class InteractionResult {
           .map((e) => InteractionIssue.fromJson(e as Map<String, dynamic>))
           .toList(),
       generatedAt: DateTime.parse(json['generatedAt'] as String),
-      score: (json['score'] as num?)?.toInt() ?? 0,
+      score: (json['score'] as num?)?.toInt(),
       scoreFactors: (json['scoreFactors'] as List<dynamic>? ?? const [])
           .map(
             (item) =>
                 InteractionScoreFactor.fromJson(item as Map<String, dynamic>),
           )
           .toList(),
+      assessmentReasons:
+          (json['assessmentReasons'] as List<dynamic>? ?? const [])
+              .map((item) => item as String)
+              .toList(),
+      unresolvedDrugIds:
+          (json['unresolvedDrugIds'] as List<dynamic>? ?? const [])
+              .map((item) => item as String)
+              .toList(),
       mechanisticTraceJson: json['mechanisticTrace'] is Map
           ? Map<String, dynamic>.from(json['mechanisticTrace'] as Map)
           : null,

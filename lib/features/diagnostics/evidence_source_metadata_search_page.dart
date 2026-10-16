@@ -6,6 +6,7 @@ import '../../domain/entities/cdss_records.dart';
 import '../../domain/entities/evidence_currency.dart';
 import '../../domain/usecases/evidence_source_currency_lookup.dart';
 import '../../domain/usecases/evidence_source_metadata_search.dart';
+import 'evidence_currency_candidate_panel.dart';
 
 /// Searches only the locally registered evidence-source metadata.
 ///
@@ -18,12 +19,18 @@ class EvidenceSourceMetadataSearchPage extends StatefulWidget {
     this.sources,
     this.currencyRegistry,
     this.asOfUtc,
+    this.currentOwner,
+    this.ownerChanges,
+    this.sessionAuthorized,
   });
 
   final String localeTag;
   final Iterable<SourceDocumentRecord>? sources;
   final EvidenceCurrencyRegistry? currencyRegistry;
   final DateTime? asOfUtc;
+  final String? Function()? currentOwner;
+  final Listenable? ownerChanges;
+  final bool Function()? sessionAuthorized;
 
   @override
   State<EvidenceSourceMetadataSearchPage> createState() =>
@@ -35,6 +42,7 @@ class _EvidenceSourceMetadataSearchPageState
   final TextEditingController _query = TextEditingController();
   late final EvidenceSourceMetadataSearch _search;
   late final EvidenceSourceCurrencyLookupService _currencyLookup;
+  late final DateTime _asOfUtc;
   late final int _sourceCount;
   List<EvidenceSourceMetadataSearchHit> _hits =
       const <EvidenceSourceMetadataSearchHit>[];
@@ -50,9 +58,10 @@ class _EvidenceSourceMetadataSearchPageState
     );
     _sourceCount = sources.length;
     _search = EvidenceSourceMetadataSearch(sources: sources);
+    _asOfUtc = widget.asOfUtc ?? DateTime.now().toUtc();
     _currencyLookup = EvidenceSourceCurrencyLookupService(
       registry: widget.currencyRegistry ?? EvidenceCurrencyRegistry.current,
-      asOfUtc: widget.asOfUtc ?? DateTime.now().toUtc(),
+      asOfUtc: _asOfUtc,
     );
   }
 
@@ -180,6 +189,16 @@ class _EvidenceSourceMetadataSearchPageState
               if (index + 1 < _hits.length) const SizedBox(height: 8),
             ],
           ],
+          const SizedBox(height: 16),
+          EvidenceCurrencyCandidatePanel(
+            localeTag: widget.localeTag,
+            registry:
+                widget.currencyRegistry ?? EvidenceCurrencyRegistry.current,
+            asOfUtc: _asOfUtc,
+            currentOwner: widget.currentOwner,
+            ownerChanges: widget.ownerChanges,
+            sessionAuthorized: widget.sessionAuthorized,
+          ),
         ],
       ),
     );

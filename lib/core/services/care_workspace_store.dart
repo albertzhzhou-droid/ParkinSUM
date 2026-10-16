@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'origin_storage_coordination.dart';
 
 const careWorkspaceDocumentMaxBytes = 8 * 1024 * 1024;
 
@@ -21,6 +22,15 @@ abstract interface class CareWorkspaceStore {
   });
 }
 
+/// Optional capability enclosing the entire read/validate/write mutation.
+/// Taking a lock only around write would leave stale reads unprotected.
+abstract interface class CoordinatedCareWorkspaceStore {
+  Future<T> coordinateMutation<T>(
+    String ownerScope,
+    Future<T> Function() mutation,
+  );
+}
+
 String careWorkspaceStorageKey(String ownerScope) {
   if (ownerScope.trim().isEmpty ||
       ownerScope.length > 512 ||
@@ -31,7 +41,13 @@ String careWorkspaceStorageKey(String ownerScope) {
   return 'parkinsum.care_workspace.v1.$digest';
 }
 
-final class LocalCareWorkspaceStore implements CareWorkspaceStore {
+final class LocalCareWorkspaceStore
+    implements CareWorkspaceStore, CoordinatedCareWorkspaceStore {
+  @override
+  Future<T> coordinateMutation<T>(
+    String ownerScope,
+    Future<T> Function() mutation,
+  ) => withOriginStorageLock(careWorkspaceStorageKey(ownerScope), mutation);
   @override
   Future<String?> read(String ownerScope) async {
     final key = careWorkspaceStorageKey(ownerScope);

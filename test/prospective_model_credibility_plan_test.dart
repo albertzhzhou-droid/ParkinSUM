@@ -18,6 +18,10 @@ void main() {
 
     expect(plan.integrityVerified, isTrue);
     expect(plan.integrityReasons, isEmpty);
+    expect(
+      plan.configurationSha256,
+      '51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d',
+    );
     expect(plan.goals, hasLength(CredibilityFactor.values.length));
     expect(
       plan.prospectiveDecision.disposition,
@@ -51,6 +55,30 @@ void main() {
         reason: goal.factor.name,
       );
     }
+  });
+
+  test('historical software identity cannot authorize a current study', () {
+    final plan = ProspectiveModelCredibilityPlan.current(
+      manifest: MechanisticApplicabilityManifest.current,
+      configurationSha256:
+          'e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05',
+    );
+
+    expect(
+      plan.integrityReasons,
+      contains('plan.configuration_identity_mismatch'),
+    );
+    expect(plan.integrityVerified, isFalse);
+    expect(plan.canExecuteGovernedStudy, isFalse);
+    expect(plan.canPromoteResearchTraceOnly, isFalse);
+    expect(
+      plan.prospectiveDecision.disposition,
+      CredibilityAdequacyDisposition.blocked,
+    );
+    expect(
+      plan.postStudyDecision.disposition,
+      CredibilityAdequacyDisposition.notAssessed,
+    );
   });
 
   test('an executed pass without result evidence fails integrity', () {

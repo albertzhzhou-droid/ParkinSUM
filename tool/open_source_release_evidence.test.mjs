@@ -244,20 +244,27 @@ function withFixture(run) {
   }
 }
 
-test('root Pubspec declares each bundled font license as a Flutter NOTICE input', () => {
+test('root Pubspec declares every bundled font and timezone license as a Flutter NOTICE input', () => {
   const pubspec = readFileSync('pubspec.yaml', 'utf8');
   const paths = parseFlutterAdditionalLicensePaths(pubspec, 'parkinsum_companion');
-  assert.deepEqual(paths, [
+  const timezoneLicense = 'assets/timezone/LICENSE-IANA.txt';
+  const fontLicenses = [
     'assets/fonts/OFL-Geist.txt',
     'assets/fonts/OFL-GeistMono.txt',
     'assets/fonts/OFL-SourceSerif4.txt',
-  ]);
-  for (const relativePath of paths) {
+    'assets/fonts/OFL-ParkinSUMReportSC.txt',
+    'assets/fonts/OFL-ParkinSUMReportArabic.txt',
+  ];
+  assert.deepEqual(paths, [timezoneLicense, ...fontLicenses]);
+  for (const relativePath of fontLicenses) {
     assert.match(
       readFileSync(relativePath, 'utf8'),
       /SIL OPEN FONT LICENSE Version 1\.1/,
     );
   }
+  const timezoneNotice = readFileSync(timezoneLicense, 'utf8');
+  assert.match(timezoneNotice, /all files in the tz code and data[^]*are in the public domain\./);
+  assert.match(timezoneNotice, /use the BSD 3-clause license\./);
 });
 
 function crc32(bytes) {

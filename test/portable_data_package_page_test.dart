@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/db/app_database.dart';
+import 'package:parkinsum_companion/core/db/app_database_web.dart';
+import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/services/data_service.dart';
 import 'package:parkinsum_companion/core/services/portable_data_export_sink.dart';
 import 'package:parkinsum_companion/core/services/portable_data_owner_scope_service.dart';
@@ -63,6 +66,148 @@ void main() {
         afterSuccess,
         reason: 'a nonthrowing dropped write must not advance the witness',
       );
+    },
+  );
+
+  testWidgets(
+    'Web restore requires confirmation, refreshes records, and permits exact undo',
+    (tester) async {
+      final database = WebAppDatabase();
+      final fixture = await _pumpPortablePage(
+        tester,
+        clipboard: _FakeClipboard(),
+        appDatabase: database,
+        seedReminders: false,
+      );
+      final owner = await const _FixedOwnerResolver().resolve(
+        rawScope: fixture.state.currentUserId!,
+        scopeKind: 'local_device_account',
+      );
+      final package = const UserPortableDataPackageService().create(
+        snapshot: UserPortableDataSnapshot(
+          userScope: owner.effectiveOpaqueScope,
+          doseOwnerScope: fixture.state.currentUserId!,
+          scopeKind: 'local_device_account',
+          profile: fixture.state.userProfile,
+          activeDrugIds: const [],
+          intakes: const [],
+          meals: [
+            Meal(
+              id: 'incoming_web',
+              title: 'Synthetic incoming meal',
+              eatenAt: _fixedNow(),
+              items: [
+                MealItem.fromFood(
+                  food: fixture.state.foodRepo.allFoods.first,
+                  quantityFactor: 1,
+                ),
+              ],
+            ),
+          ],
+          medicationCatalog: fixture.state.medRepo.allDrugs,
+          foodCatalog: fixture.state.foodRepo.allFoods,
+          reminders: const [],
+        ),
+        generatedAt: _fixedNow(),
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('portable-import-json')),
+        package.prettyJson,
+      );
+      await _tapKey(tester, 'portable-inspect');
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('portable-export-exclusions')),
+        findsOneWidget,
+      );
+      await _tapKey(tester, 'portable-restore');
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('portable-restore-confirm')),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(await database.loadMeals(), isEmpty);
+      // A logout and fresh local session can return the same UID without a
+      // widget frame. The displayed dialog cannot retain that old authority.
+      await _tapKey(tester, 'portable-restore');
+      await tester.pumpAndSettle();
+      final originalOwner = fixture.state.currentUserId;
+      final originalSession = fixture.state.mealDraftSessionEpoch;
+      await fixture.state.signOut();
+      await fixture.state.bootstrap();
+      expect(fixture.state.currentUserId, originalOwner);
+      expect(fixture.state.mealDraftSessionEpoch, greaterThan(originalSession));
+      await tester.tap(find.byKey(const ValueKey('portable-restore-confirm')));
+      await tester.pumpAndSettle();
+      expect(await database.loadMeals(), isEmpty);
+      expect(
+        find.byKey(const ValueKey('portable-preview-status')),
+        findsNothing,
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('portable-import-json')),
+        package.prettyJson,
+      );
+      await _tapKey(tester, 'portable-inspect');
+      await tester.pumpAndSettle();
+      await _tapKey(tester, 'portable-restore');
+      await tester.pumpAndSettle();
+      await _tapKey(tester, 'portable-restore-confirm');
+      await tester.pumpAndSettle();
+      expect(fixture.state.meals.single.id, 'incoming_web');
+      expect(
+        find.byKey(const ValueKey('portable-restore-complete')),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      final reentered = await _pumpPortablePage(
+        tester,
+        clipboard: _FakeClipboard(),
+        appDatabase: WebAppDatabase(),
+        seedReminders: false,
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('portable-restore-rollback')),
+        findsOneWidget,
+      );
+      await _tapKey(tester, 'portable-restore-rollback');
+      await tester.pumpAndSettle();
+      expect(reentered.state.meals, isEmpty);
+      expect(await database.loadMeals(), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'same-UID logout and bootstrap without a frame revoke a pending inspection',
+    (tester) async {
+      final service = _DelayedInspectPackageService();
+      final fixture = await _pumpPortablePage(
+        tester,
+        clipboard: _FakeClipboard(),
+        packageService: service,
+      );
+      await _generate(tester);
+      await _tapKey(tester, 'portable-use-generated');
+      service.delayNextInspection();
+      await _tapKey(tester, 'portable-inspect');
+      expect(service.started.isCompleted, isTrue);
+      final originalOwner = fixture.state.currentUserId;
+      final originalSession = fixture.state.mealDraftSessionEpoch;
+      await fixture.state.signOut();
+      await fixture.state.bootstrap();
+      expect(fixture.state.currentUserId, originalOwner);
+      expect(fixture.state.mealDraftSessionEpoch, greaterThan(originalSession));
+      service.releaseInspection();
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('portable-preview-status')),
+        findsNothing,
+      );
+      expect(_importText(tester), isEmpty);
     },
   );
 
@@ -550,8 +695,10 @@ Future<_PageFixture> _pumpPortablePage(
   PortableDataOwnerScopeResolver? ownerScopeResolver,
   int? inputByteBudget,
   UserPortableDataPackageService? packageService,
+  AppDatabase? appDatabase,
+  bool seedReminders = true,
 }) async {
-  final services = Services.createEphemeral();
+  final services = Services.createEphemeral(appDatabase: appDatabase);
   await services.ready;
   await services.userDataService.saveOnboarded(true);
   final state = AppState(services: services);
@@ -566,17 +713,22 @@ Future<_PageFixture> _pumpPortablePage(
 
   final storage = _MemoryDataService();
   final reminders = UserLoggingReminderRepository(storage: storage);
-  await reminders.save(state.currentUserId!, const <UserLoggingReminder>[
-    UserLoggingReminder(
-      id: 'reminder_export_fixture',
-      kind: UserLoggingReminderKind.mealLog,
-      label: 'Private fixture label',
-      minuteOfDay: 720,
-      weekdays: <int>{1, 3},
-      enabled: true,
-      activationToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-    ),
-  ]);
+  await reminders.save(
+    state.currentUserId!,
+    seedReminders
+        ? const <UserLoggingReminder>[
+            UserLoggingReminder(
+              id: 'reminder_export_fixture',
+              kind: UserLoggingReminderKind.mealLog,
+              label: 'Private fixture label',
+              minuteOfDay: 720,
+              weekdays: <int>{1, 3},
+              enabled: true,
+              activationToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+            ),
+          ]
+        : const [],
+  );
 
   tester.view.physicalSize = const Size(1170, 2532);
   tester.view.devicePixelRatio = 1;

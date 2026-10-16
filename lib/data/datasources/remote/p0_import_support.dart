@@ -59,6 +59,9 @@ String buildDrugVariantId({
 String buildScopeHash(String seed) => 'scope_${stableHash(seed)}';
 
 String unitForAttributeCode(String attributeCode) {
+  if (attributeCode.endsWith('_kcal')) return 'kcal';
+  if (attributeCode.endsWith('_kj')) return 'kJ';
+  if (attributeCode.endsWith('_iu')) return 'IU';
   if (attributeCode.endsWith('_mg')) return 'mg';
   if (attributeCode.endsWith('_ug')) return 'ug';
   return 'g';

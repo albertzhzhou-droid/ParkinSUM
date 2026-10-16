@@ -34,6 +34,7 @@ import 'mechanistic_replay_capsule_service.dart';
 import 'medication_entry_validator.dart';
 import 'time_axis_builder.dart';
 import 'variant_resolver.dart';
+import 'qualified_nutrient_point_selection.dart';
 
 /// Adapts the legacy meal-entry flow to the newer database-backed CDSS pipeline.
 ///
@@ -112,8 +113,36 @@ class DatabaseBackedMealCheckUseCase {
     required List<DrugDefinition> activeDrugs,
     required List<Intake> intakes,
     required UserProfile userProfile,
+    Iterable<String> requiredDrugIds = const [],
     DateTime? now,
   }) async {
+    // Resolve the entire supplied medication context before returning any
+    // categorical or numeric result, including a historical-window shortcut.
+    final resolvedIds = activeDrugs.map((drug) => drug.id).toSet();
+    final unresolvedIds = <String>{
+      ...requiredDrugIds,
+      ...intakes.map((intake) => intake.drugId),
+    }.difference(resolvedIds).toList()..sort();
+    if (unresolvedIds.isNotEmpty) {
+      final i18n = AppI18n.fromLocaleTag(userProfile.displayLocale);
+      developer.log(
+        'mealCheck:unassessed unresolvedMedicationCount=${unresolvedIds.length}',
+        name: 'DatabaseBackedMealCheckUseCase',
+      );
+      return InteractionResult(
+        mealId: meal.id,
+        status: InteractionStatus.unassessed,
+        summary: i18n.tr('interaction.unresolved_medication', {
+          'count': '${unresolvedIds.length}',
+        }),
+        nextActions: [i18n.tr('interaction.review_medication')],
+        assessmentReasons: const ['unresolved_medication_identity'],
+        unresolvedDrugIds: List.unmodifiable(unresolvedIds),
+        issues: const [],
+        generatedAt: now ?? meal.recordedAt,
+        score: null,
+      );
+    }
     final base = await _callCore(
       meal: meal,
       activeDrugs: activeDrugs,
@@ -262,6 +291,7 @@ class DatabaseBackedMealCheckUseCase {
         meal: MealRuntimeContext(
           id: meal.id,
           totalProteinG: mealMetrics.totalProteinG,
+          proteinEvidenceMissing: mealMetrics.proteinEvidenceMissing,
           tyramineMgEstimate: _estimateTyramine(meal),
           highFatHighCalorie: mealMetrics.highFatHighCalorie,
           itemIds: resolvedFoods
@@ -424,9 +454,11 @@ class DatabaseBackedMealCheckUseCase {
         'severity': i18n.severityLabel(_severityWireValue(highestSeverity)),
         'score': '$score',
       }),
-      i18n.tr('mealcheck.analysis_protein', {
-        'protein': mealMetrics.totalProteinG.toStringAsFixed(1),
-      }),
+      mealMetrics.proteinEvidenceMissing
+          ? i18n.tr('mealcheck.analysis_protein_unknown')
+          : i18n.tr('mealcheck.analysis_protein', {
+              'protein': mealMetrics.totalProteinG.toStringAsFixed(1),
+            }),
     ];
 
     if (mealMetrics.highFatHighCalorie) {
@@ -687,6 +719,11 @@ class DatabaseBackedMealCheckUseCase {
     // 普通餐的运行时食药冲突活跃窗设为 4 小时；高蛋白、高脂/高热量或较大餐延长，
     // 但硬上限为 8 小时，防止“24 小时前的餐次仍导致当前高风险”这类过期告警。
     var activeWindow = const Duration(hours: 4);
+    if (mealMetrics.proteinEvidenceMissing ||
+        mealMetrics.otherMacroEvidenceMissing) {
+      // Unknown nutrition cannot justify shortening the operational time window.
+      activeWindow = const Duration(hours: 8);
+    }
     if (mealMetrics.totalProteinG >= 15) {
       activeWindow += const Duration(minutes: 90);
     }
@@ -715,56 +752,63 @@ class DatabaseBackedMealCheckUseCase {
     required Meal meal,
     required List<ResolvedFoodVariant> resolvedFoods,
   }) async {
-    // 当前只读取 qualifier=exact 的 observation 来重算餐级营养。
-    // 未完成：还没有把 range / lt / trace 等区间值纳入餐级聚合逻辑。
+    // Reuse catalogue selection. Present but ambiguous/censored facts withhold
+    // arithmetic and must not silently fall back to a cached point number.
     final rows = await clinicalDecisionSupportService.database.queryTable(
       'observation',
     );
-    final exactByVariant = <String, Map<String, double>>{};
-
-    for (final row in rows) {
-      final entityKey = row['entity_key']?.toString();
-      final attributeCode = row['attribute_code']?.toString();
-      final qualifierKind = row['qualifier_kind']?.toString();
-      final valueNum = row['value_num'];
-      if (entityKey == null ||
-          attributeCode == null ||
-          qualifierKind != 'exact' ||
-          valueNum is! num) {
-        continue;
-      }
-      exactByVariant.putIfAbsent(
-        entityKey,
-        () => <String, double>{},
-      )[attributeCode] = valueNum
-          .toDouble();
-    }
+    final selected = selectQualifiedNutrientPoints(rows);
 
     var totalProteinG = 0.0;
     var totalCarbsG = 0.0;
     var totalFatG = 0.0;
     var usedDatabaseFacts = false;
+    var proteinEvidenceMissing = false;
+    var otherMacroEvidenceMissing = false;
 
     for (var index = 0; index < meal.items.length; index++) {
       final item = meal.items[index];
       final variantId = resolvedFoods[index].selectedVariantId;
-      final nutrients = exactByVariant[variantId];
-
-      final proteinPer100g = nutrients?['protein_g'] ?? item.proteinPer100g;
-      final carbsPer100g = nutrients?['carbohydrate_g'] ?? item.carbsPer100g;
-      final fatPer100g = nutrients?['fat_g'] ?? item.fatPer100g;
-
-      // 只要数据库里至少命中一个关键营养素，就认为该项已部分采用数据库真实值。
-      if (nutrients != null &&
-          (nutrients.containsKey('protein_g') ||
-              nutrients.containsKey('carbohydrate_g') ||
-              nutrients.containsKey('fat_g'))) {
-        usedDatabaseFacts = true;
+      final nutrients = selected.points[variantId];
+      final capturedFood = foodRepository.getById(item.foodId);
+      double? point(String attribute, String field, double fallback) {
+        if (item.isNutrientMissing(field) ||
+            capturedFood?.isNutrientMissing(field) == true ||
+            !item.quantityFactor.isFinite ||
+            item.quantityFactor <= 0) {
+          return null;
+        }
+        final value = nutrients?[attribute]?.value;
+        if (value != null) {
+          if (!(value * item.quantityFactor).isFinite) return null;
+          usedDatabaseFacts = true;
+          return value;
+        }
+        if (selected.hasEvidence(variantId, attribute)) return null;
+        return fallback.isFinite &&
+                fallback >= 0 &&
+                (fallback * item.quantityFactor).isFinite
+            ? fallback
+            : null;
       }
 
-      totalProteinG += proteinPer100g * item.quantityFactor;
-      totalCarbsG += carbsPer100g * item.quantityFactor;
-      totalFatG += fatPer100g * item.quantityFactor;
+      final protein = point('protein_g', 'proteinG', item.proteinPer100g);
+      final carbs = point('carbohydrate_g', 'carbsG', item.carbsPer100g);
+      final fat = point('fat_g', 'fatG', item.fatPer100g);
+      if (protein == null) proteinEvidenceMissing = true;
+      if (carbs == null || fat == null) otherMacroEvidenceMissing = true;
+      if (protein != null) totalProteinG += protein * item.quantityFactor;
+      if (carbs != null) totalCarbsG += carbs * item.quantityFactor;
+      if (fat != null) totalFatG += fat * item.quantityFactor;
+    }
+    if (!totalProteinG.isFinite) {
+      proteinEvidenceMissing = true;
+      totalProteinG = 0;
+    }
+    if (!totalCarbsG.isFinite || !totalFatG.isFinite) {
+      otherMacroEvidenceMissing = true;
+      totalCarbsG = totalCarbsG.isFinite ? totalCarbsG : 0;
+      totalFatG = totalFatG.isFinite ? totalFatG : 0;
     }
 
     return _MealMetrics(
@@ -772,8 +816,13 @@ class DatabaseBackedMealCheckUseCase {
       totalCarbsG: totalCarbsG,
       totalFatG: totalFatG,
       highFatHighCalorie:
-          totalFatG >= 20 && (totalCarbsG + totalProteinG + totalFatG) >= 40,
+          !proteinEvidenceMissing &&
+          !otherMacroEvidenceMissing &&
+          totalFatG >= 20 &&
+          (totalCarbsG + totalProteinG + totalFatG) >= 40,
       usedDatabaseFacts: usedDatabaseFacts,
+      proteinEvidenceMissing: proteinEvidenceMissing,
+      otherMacroEvidenceMissing: otherMacroEvidenceMissing,
     );
   }
 
@@ -969,6 +1018,8 @@ class _MealMetrics {
   final double totalFatG;
   final bool highFatHighCalorie;
   final bool usedDatabaseFacts;
+  final bool proteinEvidenceMissing;
+  final bool otherMacroEvidenceMissing;
 
   const _MealMetrics({
     required this.totalProteinG,
@@ -976,6 +1027,8 @@ class _MealMetrics {
     required this.totalFatG,
     required this.highFatHighCalorie,
     required this.usedDatabaseFacts,
+    required this.proteinEvidenceMissing,
+    required this.otherMacroEvidenceMissing,
   });
 }
 
@@ -1029,11 +1082,12 @@ class _MealConflictScoringModel {
     );
 
     for (final input in inputs) {
-      if (!_isLevodopaLike(input)) {
+      if (!_isLevodopaLike(input) || input.resolvedDrug.route != 'oral') {
         continue;
       }
       final protein = input.mealMetrics.totalProteinG;
-      if (protein >= NutritionRules.proteinInterferenceThresholdG) {
+      if (!input.mealMetrics.proteinEvidenceMissing &&
+          protein >= NutritionRules.proteinInterferenceThresholdG) {
         final excess = protein - NutritionRules.proteinInterferenceThresholdG;
         _addFactor(
           factors,

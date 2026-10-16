@@ -11,6 +11,8 @@ import '../entities/dose_expression.dart';
 import '../entities/personal_observation.dart';
 import 'administration_dose_confirmation_coordinator.dart';
 import 'dosage_note_parser.dart';
+import '../entities/visit_preparation.dart';
+import '../entities/visit_report_selection.dart';
 
 const personalLogHandoffFormat = 'parkinsum_personal_log_handoff';
 const personalLogHandoffSchemaVersion = 3;
@@ -192,6 +194,106 @@ final class PersonalLogHandoffSummaryService {
 
   final AdministrationDoseConfirmationCoordinator? _doseConfirmationCoordinator;
   final DosageNoteParser? _dosageNoteParser;
+
+  /// Exports exactly one selected, frozen visit report and its agenda.
+  /// Caller rechecks the ephemeral source lease before each delivery action.
+  PersonalLogHandoffArtifact createVisitPreparation({
+    required VisitPreparationReport report,
+    required VisitReportSelection selection,
+    required VisitPreparationSourceLease sourceLease,
+    required String localeTag,
+  }) {
+    final chinese = localeTag.startsWith('zh');
+    String tr(String zh, String en) => chinese ? zh : en;
+    final language = chinese ? 'zh-Hans' : 'en';
+    final ownerBinding = _sha256(
+      'parkinsum-visit-owner-v1|${sourceLease.owner}',
+    );
+    final sourceRevision = _sha256(
+      'parkinsum-visit-source-v1|'
+      '${sourceLease.sourceRevision}|${sourceLease.sessionEpoch}|'
+      '${_canonicalJson(selection.toJson())}|$language',
+    );
+    final counts = <String, int>{
+      'selectedIntakeEvidence': selection.intakeIds.length,
+      'observations': report.observations.length,
+      'questions': selection.questionNoteIds.length,
+      'medicationDiscussionEntries': report.medicationDiscussionEntries.length,
+      'followups': report.discussionItems.length,
+    };
+    final lines = <String>[
+      '# ${tr('ParkinSUM 访前记录与问题', 'ParkinSUM visit records and questions')}',
+      '! ${tr('本人记录，未经临床核实；不提供诊断、处方或治疗建议。', 'Owner-entered records, not clinically verified; no diagnosis, prescription or treatment advice.')}',
+      '${tr('日期范围', 'Date range')}: ${selection.window.start} — ${selection.window.endInclusive}',
+      '${tr('声明时区', 'Declared timezone')}: ${selection.window.zoneId}',
+      '${tr('自由文字附注', 'Attached free-text details')}: ${selection.includeRecordNotes ? tr('选入', 'included') : tr('省略', 'omitted')}',
+      '${tr('当前选择及自查', 'Current selections and self-checks')}: ${selection.includeCurrentMedications ? tr('选入', 'included') : tr('省略', 'omitted')}',
+      '${tr('来源陈述', 'Source assertions')}: ${selection.includeSourceAssertions ? tr('选入', 'included') : tr('省略，未在此报告检查', 'omitted; not checked for this report')}',
+      '${tr('讨论更新', 'Discussion updates')}: ${selection.includeDiscussionUpdates ? tr('选入', 'included') : tr('省略', 'omitted')}',
+      '${tr('所选摄入证据', 'Selected intake evidence')}: ${selection.intakeIds.length}. ${tr('清单按每种药品的最近所选记录摘要，不推断当前用药。', 'The checklist summarizes the latest selected record per medicine; it does not infer current use.')}',
+      tr(
+        '未选记录保留在本地，不附入报告。',
+        'Unselected records remain local and are not attached.',
+      ),
+      '## ${tr('讨论提纲', 'Discussion agenda')}',
+      ...report.agendaText.split('\n'),
+      '## ${tr('所选记录清单', 'Selected-record checklist')}',
+      ...report.plainText.split('\n'),
+    ];
+    final blocks = _documentBlocks(lines);
+    final pages = _paginate(lines.expand(_wrapLine).toList());
+    final plainText = pages.expand((page) => page.lines).join('\n').trimRight();
+    if (utf8.encode(plainText).length > personalLogHandoffMaxPlainTextBytes) {
+      throw const FormatException('handoff_plain_text_budget_exceeded');
+    }
+    final semantic = <String, Object?>{
+      'format': personalLogHandoffFormat,
+      'schemaVersion': personalLogHandoffSchemaVersion,
+      'reportKind': 'visit_preparation',
+      'generatedAtUtc': report.generatedAt.toUtc().toIso8601String(),
+      'selection': selection.toJson(),
+      'recordCounts': counts,
+      'document': <String, Object?>{
+        'format': 'parkinsum_personal_log_semantic_document',
+        'schemaVersion': personalLogHandoffDocumentSchemaVersion,
+        'language': language,
+        'direction': 'auto',
+        'blocks': blocks.map((block) => block.toJson()).toList(),
+      },
+      'sourceRevisionSha256': sourceRevision,
+      'ownerBindingSha256': ownerBinding,
+      'boundary': const <String, Object?>{
+        'userEnteredPersonalLog': true,
+        'clinicallyVerified': false,
+        'recommendation': false,
+        'missingValuesImputed': false,
+      },
+    };
+    final contentSha = _sha256(
+      'parkinsum-visit-content-v1|'
+      '${_canonicalJson(semantic)}|$plainText',
+    );
+    final artifactId = _sha256(
+      'parkinsum-visit-artifact-v1|'
+      '$ownerBinding|$sourceRevision|$contentSha',
+    );
+    return PersonalLogHandoffArtifact(
+      artifactId: artifactId,
+      ownerBindingSha256: ownerBinding,
+      sourceRevisionSha256: sourceRevision,
+      contentSha256: contentSha,
+      fileName:
+          'parkinsum-personal-log-visit-${artifactId.substring(0, 12)}.pdf',
+      plainText: plainText,
+      documentBlocks: blocks,
+      pages: List.unmodifiable(pages),
+      recordCounts: Map.unmodifiable(counts),
+      unsupportedFields: const [],
+      semanticDocument: Map.unmodifiable(
+        _sortJson(semantic) as Map<String, Object?>,
+      ),
+    );
+  }
 
   String sourceRevisionDigest({
     required PersonalLogHandoffSnapshot snapshot,

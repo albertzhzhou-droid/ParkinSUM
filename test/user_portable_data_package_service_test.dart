@@ -895,7 +895,7 @@ void main() {
       snapshot: _snapshot(),
       generatedAt: generatedAt,
     );
-    final newer = _root(artifact.prettyJson)..['schemaVersion'] = 5;
+    final newer = _root(artifact.prettyJson)..['schemaVersion'] = 6;
     final newerPreview = service.inspect(
       packageJson: jsonEncode(newer),
       currentUserScope: _scope,
@@ -1212,23 +1212,48 @@ void main() {
     expect(preview.findings.single, isNot(contains(privateSentinel)));
   });
 
+  test('literal and escaped JSON keys decode identically', () {
+    for (final (literal, escaped) in const <(String, String)>[
+      (
+        '{"outer":{"name":"value"},"plain":0}',
+        r'{"out\u0065r":{"\u006eame":"value"},"\u0070lain":0}',
+      ),
+      ('{"餐":1}', r'{"\u9910":1}'),
+      ('{"🚀":true}', r'{"\ud83d\ude80":true}'),
+      ('{"":null}', '{"":null}'),
+    ]) {
+      final expected = jsonDecode(literal);
+      expect(decodeBoundedPortableJson(literal), expected);
+      expect(decodeBoundedPortableJson(escaped), expected);
+    }
+  });
+
   test('duplicate JSON keys are rejected before document decoding', () {
-    var decodeCalls = 0;
-    final guarded = UserPortableDataPackageService(
-      decodeJson: (source) {
-        decodeCalls += 1;
-        return jsonDecode(source);
-      },
-    );
-    final preview = guarded.inspect(
-      packageJson: '{"format":"a","\\u0066ormat":"b"}',
-      currentUserScope: _scope,
-      currentDoseOwnerScope: _scope,
-      currentScopeKind: _scopeKind,
-    );
-    expect(preview.status, UserPortableDataPreviewStatus.corrupt);
-    expect(preview.findings.single, contains('Duplicate JSON object keys'));
-    expect(decodeCalls, 0);
+    for (final source in const <String>[
+      '{"format":"a","format":"b"}',
+      r'{"format":"a","\u0066ormat":"b"}',
+      r'{"\u0066ormat":"a","format":"b"}',
+      r'{"outer":{"餐":1,"\u9910":2}}',
+      r'{"🚀":1,"\ud83d\ude80":2}',
+      '{"":1,"":2}',
+    ]) {
+      var decodeCalls = 0;
+      final guarded = UserPortableDataPackageService(
+        decodeJson: (source) {
+          decodeCalls += 1;
+          return jsonDecode(source);
+        },
+      );
+      final preview = guarded.inspect(
+        packageJson: source,
+        currentUserScope: _scope,
+        currentDoseOwnerScope: _scope,
+        currentScopeKind: _scopeKind,
+      );
+      expect(preview.status, UserPortableDataPreviewStatus.corrupt);
+      expect(preview.findings.single, contains('Duplicate JSON object keys'));
+      expect(decodeCalls, 0);
+    }
   });
 
   test('non-interoperable Unicode is rejected before document decoding', () {
@@ -1238,6 +1263,9 @@ void main() {
       r'{"value":"\ufdd0"}',
       r'{"value":"\ud83f\udffe"}',
       '{"value":"${String.fromCharCode(0xd800)}"}',
+      r'{"\ud800":0}',
+      r'{"\ufdd0":0}',
+      '{"${String.fromCharCode(0xd800)}":0}',
     ]) {
       var decodeCalls = 0;
       final guarded = UserPortableDataPackageService(

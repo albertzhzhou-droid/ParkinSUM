@@ -218,11 +218,11 @@ final class CredibilityAdequacyDecision {
 final class ProspectiveModelCredibilityPlan {
   static const String schema = 'parkinsum.prospective-model-credibility-plan/1';
   static const int schemaVersion = 1;
-  static const String planVersion = '2026.10.15-v41';
+  static const String planVersion = '2026.10.15-v60';
   static const String expectedManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedConfigurationSha256 =
-      '017ec5bdecd3b0799b0824a9e41cf16ccea41d7013756c1b60f2c00e907a49b4';
+      '51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d';
 
   final String planId;
   final String releaseArtifact;
@@ -329,7 +329,7 @@ final class ProspectiveModelCredibilityPlan {
         phase: CredibilityAdequacyPhase.prospective,
         disposition: CredibilityAdequacyDisposition.blocked,
         rationale:
-            'Engineering verification is planned and partly executed, but scientific validation, applicability, uncertainty, use-error, human-factors, and independent evidence goals are not prospectively sufficient. The v52 release refresh binds the current source identity only; retained synthetic fixture timestamps do not attest current-worktree review or evidence coverage.',
+            'Engineering verification is planned and partly executed, but scientific validation, applicability, uncertainty, use-error, human-factors, and independent evidence goals are not prospectively sufficient. The v76 browser performance software identity refresh binds the current source identity only; retained synthetic fixture timestamps do not attest current-worktree review or evidence coverage.',
         reviewer: 'repository-maintainers',
         decidedAtUtc: '2026-08-18T00:05:00.000Z',
         planSha256: _sha256(

@@ -1,0 +1,69 @@
+{
+  "schema": "parkinsum.timezone-rules-research-plan/1",
+  "frozen_at_utc": "2026-10-01T15:10:04.905754+00:00",
+  "question": "Pin actual2026e source and binary rules; compare old2025c and new2026e gap/fold/unique behavior, preserve historical receipts, display-zone change and civil/UTC invariance. No device timezone invention or automatic future-medication authorization.",
+  "source_url": "https://data.iana.org/time-zones/releases/tzdata2026e.tar.gz",
+  "archive_sha256": "b26882805f26aac59d5b222978e6580484b834ccdc98be89df2f05a6dc53a652",
+  "archive_bytes": 481989,
+  "selected_source_members": {
+    "africa": {
+      "bytes": 58273,
+      "sha256": "f2851d4be4a4925cbdc9d56e10d780bccadb89d6ffb9aed78c3e35f97c200aed"
+    },
+    "antarctica": {
+      "bytes": 14080,
+      "sha256": "e410ad71c9450828c592d21419301d41ac79ce50159fd0ac2d6c5031cb6bdfe6"
+    },
+    "asia": {
+      "bytes": 193525,
+      "sha256": "02b69728085f6b0c999da70de2f1f9a2d8952b533a450d53bb41e03eb7d0e92e"
+    },
+    "australasia": {
+      "bytes": 98595,
+      "sha256": "846ba455578e3e0f9eb850f05be3cc06d02ff51bbe4b726f755be9dc765f16c9"
+    },
+    "europe": {
+      "bytes": 188472,
+      "sha256": "fec11bf6c6bd0619a8777bbdaa2ecd184fde291cb4b97efa87d334c7145ba3c2"
+    },
+    "northamerica": {
+      "bytes": 183813,
+      "sha256": "c0c5da0dc337444d80709cf9f8d8011719b789df160ce107a5c38c90e73dc54c"
+    },
+    "southamerica": {
+      "bytes": 95484,
+      "sha256": "13be56a242da3c1a4a6d12050e5fd48b1753c8c1dc237cbc2edb40eac636be7f"
+    },
+    "etcetera": {
+      "bytes": 3124,
+      "sha256": "7281f095b42c13c4ae36b8bcba884e81dbb38127221fc1d9805c4dbf852487db"
+    },
+    "backward": {
+      "bytes": 14051,
+      "sha256": "b8296b9ef1ece72d813878132c0f17e2c52b26af6004eeb9c37d049b64cd9401"
+    },
+    "version": {
+      "bytes": 6,
+      "sha256": "af35b79aa1b21f258217dc39db156c783db83fd78afd095c5426061993877063"
+    },
+    "LICENSE": {
+      "bytes": 252,
+      "sha256": "0613408568889f5739e5ae252b722a2659c02002839ad970a63dc5e9174b27cf"
+    }
+  },
+  "compile_profile": [
+    "zic",
+    "-b",
+    "fat",
+    "-r",
+    "@-2208988800/@4102444800"
+  ],
+  "supported_instants_utc": [
+    "1900-01-01T00:00:00.000Z",
+    "2100-01-01T00:00:00.000Z"
+  ],
+  "range_semantic": "Start inclusive,end exclusive; pinned resolver rejects outside. Global display/reminder qualification separately guarded; finite actual probes not all-zone verification.",
+  "independent_reference": "Python zoneinfo loads actual compiled TZIF, separate from Dart package codec; manual IANA-derived civil expectations frozen before compiler/runtime observation.",
+  "production_parameters_changed": false,
+  "source_currency_semantic": "Fixed2026e current at research retrieval; later policy/database changes require new review, no perpetual-current claim."
+}

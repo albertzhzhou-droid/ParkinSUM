@@ -26,6 +26,20 @@ const filePaths = [
   'audit_links.json',
 ];
 const v4FilePaths = [...filePaths, 'observations.json'];
+const v5FilePaths = [...v4FilePaths, 'food_item_snapshots.json'];
+const compactSnapshotFields = [
+  'foodId', 'foodName', 'foodCategory', 'foodTags',
+  'nutrientsPer100g', 'catalogProvenance',
+];
+const compactMealFields = [
+  'id', 'title', 'time', 'context', 'items', 'computedTotalsStatus',
+];
+export const portableCompactLimits = Object.freeze({
+  logicalFileNodes: 1200000,
+  logicalFileBytes: 33554432,
+  logicalEnvelopeDepth: 24,
+  snapshots: 25000,
+});
 const rootFields = ['files', 'format', 'manifest', 'schemaVersion'];
 const v2ReminderFields = [
   'activationTokenStatus',
@@ -302,7 +316,8 @@ function isCanonicalUtcTimestamp(value) {
 
 function reseal(root) {
   const files = root.files;
-  const paths = root.schemaVersion >= 4 ? v4FilePaths : filePaths;
+  const paths = root.schemaVersion === 5 ? v5FilePaths
+    : root.schemaVersion >= 4 ? v4FilePaths : filePaths;
   const contentSha = canonicalDigest(files);
   root.manifest.integrity.contentSha256 = contentSha;
   root.manifest.files = paths.map((filePath) => ({
@@ -318,8 +333,9 @@ function reseal(root) {
 }
 
 export function validateEnvelope(document, version) {
-  if (![2, 3, 4].includes(version)) throw new Error('unsupported_schema');
-  const paths = version >= 4 ? v4FilePaths : filePaths;
+  if (![2, 3, 4, 5].includes(version)) throw new Error('unsupported_schema');
+  const paths = version === 5 ? v5FilePaths
+    : version >= 4 ? v4FilePaths : filePaths;
   exactKeys(document, rootFields, 'root');
   if (
     document.format !== 'parkinsum_user_portable_data_package' ||
@@ -457,7 +473,146 @@ export function validateEnvelope(document, version) {
   if (document.manifest.packageId !== expectedPackageId) {
     throw new Error('package_identity_drift');
   }
+  if (version === 5) resolveCompactPortableFiles(document.files);
   return true;
+}
+
+function requireCompactBudget(nodes, bytes) {
+  if (nodes > portableCompactLimits.logicalFileNodes) {
+    throw new Error('portable_compact_logical_node_budget');
+  }
+  if (bytes > portableCompactLimits.logicalFileBytes) {
+    throw new Error('portable_compact_logical_byte_budget');
+  }
+}
+
+function compactMeasure(value, parent = null, key = null, traversalDepth = 1) {
+  if (traversalDepth > portableCompactLimits.logicalEnvelopeDepth) {
+    throw new Error('portable_compact_logical_depth_budget');
+  }
+  if (value && typeof value === 'object') {
+    const array = Array.isArray(value);
+    const entries = array ? [...value.entries()] : Object.entries(value);
+    let nodes = 1;
+    let bytes = 2 + Math.max(0, entries.length - 1);
+    let depth = 1;
+    for (const [childKey, child] of entries) {
+      const measure = compactMeasure(child, value, childKey, traversalDepth + 1);
+      nodes += measure.nodes;
+      bytes += measure.bytes;
+      if (!array) bytes += Buffer.byteLength(JSON.stringify(childKey), 'utf8') + 1;
+      depth = Math.max(depth, measure.depth + 1);
+      requireCompactBudget(nodes, bytes);
+    }
+    return { nodes, bytes, depth };
+  }
+  return {
+    nodes: 1,
+    bytes: Buffer.byteLength(canonicalizeValue(value, parent, key), 'utf8'),
+    depth: 1,
+  };
+}
+
+function freezeCompactJson(value) {
+  if (!value || typeof value !== 'object') return value;
+  const result = Array.isArray(value)
+    ? value.map(freezeCompactJson)
+    : Object.fromEntries(Object.entries(value).map(([key, child]) => [key, freezeCompactJson(child)]));
+  copyNumberTokenMetadata(value, result);
+  return Object.freeze(result);
+}
+
+/// Independent schema-5 reference/expansion contract. The caller must first
+/// run the unchanged bounded lexical parser; this is not a clinical validator.
+export function resolveCompactPortableFiles(wireFiles) {
+  const entries = wireFiles['food_item_snapshots.json'];
+  const meals = wireFiles['meals.json'];
+  if (!Array.isArray(entries) || !Array.isArray(meals)) {
+    throw new Error('portable_compact_invalid_rows');
+  }
+  if (entries.length > portableCompactLimits.snapshots) {
+    throw new Error('portable_compact_snapshot_record_budget');
+  }
+  const snapshots = new Map();
+  const measures = new Map();
+  let lastId = null;
+  for (const entry of entries) {
+    exactKeys(entry, ['snapshotId', 'snapshot'], 'compact_snapshot');
+    const id = entry.snapshotId;
+    if (!isSha256(id) || (lastId !== null && lastId >= id)) {
+      throw new Error('portable_compact_snapshot_id_or_order');
+    }
+    exactKeys(entry.snapshot, compactSnapshotFields, 'compact_snapshot_content');
+    const measure = compactMeasure(entry.snapshot);
+    if (measure.depth + 5 > portableCompactLimits.logicalEnvelopeDepth) {
+      throw new Error('portable_compact_logical_depth_budget');
+    }
+    if (canonicalDigest(entry.snapshot) !== id) {
+      throw new Error('portable_compact_snapshot_checksum');
+    }
+    snapshots.set(id, freezeCompactJson(entry.snapshot));
+    measures.set(id, measure);
+    lastId = id;
+  }
+  const base = { ...wireFiles, 'meals.json': [] };
+  delete base['food_item_snapshots.json'];
+  const baseMeasure = compactMeasure(base);
+  let nodes = baseMeasure.nodes;
+  let bytes = baseMeasure.bytes;
+  if (baseMeasure.depth + 1 > portableCompactLimits.logicalEnvelopeDepth) {
+    throw new Error('portable_compact_logical_depth_budget');
+  }
+  requireCompactBudget(nodes, bytes);
+  const used = new Set();
+  for (const [mealIndex, meal] of meals.entries()) {
+    exactKeys(meal, compactMealFields, 'compact_meal');
+    if (!Array.isArray(meal.items)) throw new Error('portable_compact_invalid_rows');
+    const mealBase = compactMeasure({ ...meal, items: [] });
+    if (mealBase.depth + 3 > portableCompactLimits.logicalEnvelopeDepth) {
+      throw new Error('portable_compact_logical_depth_budget');
+    }
+    nodes += mealBase.nodes;
+    bytes += mealBase.bytes + (mealIndex === 0 ? 0 : 1);
+    requireCompactBudget(nodes, bytes);
+    for (const [itemIndex, item] of meal.items.entries()) {
+      exactKeys(item, ['snapshotId', 'quantity'], 'compact_item_reference');
+      const snapshotMeasure = measures.get(item.snapshotId);
+      if (!snapshotMeasure) throw new Error('portable_compact_snapshot_reference');
+      exactKeys(item.quantity, ['factorPer100g', 'grams'], 'compact_quantity');
+      const quantityMeasure = compactMeasure(item.quantity);
+      if (quantityMeasure.depth + 6 > portableCompactLimits.logicalEnvelopeDepth) {
+        throw new Error('portable_compact_logical_depth_budget');
+      }
+      nodes += snapshotMeasure.nodes + quantityMeasure.nodes;
+      bytes += snapshotMeasure.bytes + quantityMeasure.bytes + 12 + (itemIndex === 0 ? 0 : 1);
+      requireCompactBudget(nodes, bytes);
+      used.add(item.snapshotId);
+    }
+  }
+  if (used.size !== snapshots.size) throw new Error('portable_compact_unused_snapshot');
+  const logicalMeals = meals.map((meal) => Object.freeze({
+    ...meal,
+    items: Object.freeze(meal.items.map((item) => Object.freeze({
+      ...snapshots.get(item.snapshotId),
+      quantity: freezeCompactJson(item.quantity),
+    }))),
+  }));
+  return {
+    files: Object.freeze({ ...base, 'meals.json': Object.freeze(logicalMeals) }),
+    logicalNodeCount: nodes,
+    logicalCanonicalBytes: bytes,
+  };
+}
+
+export function validateCompactPortableSource(source) {
+  if (typeof source !== 'string' || source.length > 33554432 ||
+      Buffer.byteLength(source, 'utf8') > 33554432) {
+    throw new Error('portable_json_byte_budget_exceeded');
+  }
+  const document = parseJsonRejectingDuplicates(source);
+  if (document.schemaVersion !== 5) throw new Error('unsupported_compact_schema');
+  validateEnvelope(document, 5);
+  return document;
 }
 
 export function migrateV2ToV3(source) {
@@ -1026,7 +1181,7 @@ export function runConformance(vectors) {
   const mixed = cloneJsonPreservingNumberTokens(v2.sourceDocument);
   mixed.files['reminders.json'][0].notificationPrivacyMode = 'minimal';
   const future = cloneJsonPreservingNumberTokens(v2.sourceDocument);
-  future.schemaVersion = 5;
+  future.schemaVersion = 6;
   const duplicate = v2.sourceJson.replace(
     '"schemaVersion":2',
     '"schemaVersion":2,"schemaVersion":2',

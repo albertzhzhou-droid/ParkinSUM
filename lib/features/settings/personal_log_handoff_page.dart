@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/i18n/app_i18n.dart';
 import '../../core/services/personal_log_handoff_document_service.dart';
+import '../../core/services/personal_log_handoff_text_pdf_renderer.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/usecases/personal_log_handoff_summary_service.dart';
@@ -27,17 +28,22 @@ final class SystemPersonalLogHandoffClipboard
 }
 
 final class _HandoffLease {
-  const _HandoffLease({required this.ownerScope, required this.epoch});
+  const _HandoffLease({
+    required this.ownerScope,
+    required this.epoch,
+    required this.sessionEpoch,
+  });
 
   final String ownerScope;
   final int epoch;
+  final int sessionEpoch;
 }
 
 class PersonalLogHandoffPage extends StatefulWidget {
   const PersonalLogHandoffPage({
     super.key,
     this.summaryService = const PersonalLogHandoffSummaryService(),
-    this.renderer = const SystemPersonalLogHandoffPdfRenderer(),
+    this.renderer = const SystemPersonalLogHandoffTextPdfRenderer(),
     this.htmlSerializer = const PersonalLogHandoffHtmlSerializer(),
     this.delivery = const SystemPersonalLogHandoffDelivery(),
     this.clipboard = const SystemPersonalLogHandoffClipboard(),
@@ -68,11 +74,13 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
   PersonalLogHandoffArtifact? _artifact;
   Uint8List? _pdfBytes;
   int? _artifactEpoch;
+  int? _artifactSessionEpoch;
   int _previewPage = 0;
   bool _busy = false;
   String? _errorCode;
   bool _hasObservedScope = false;
   String? _observedScope;
+  int? _observedSessionEpoch;
   int _scopeEpoch = 0;
 
   DateTime get _now => (widget.now ?? DateTime.now)();
@@ -88,14 +96,18 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final scope = context.read<AppState>().currentUserId;
+    final state = context.read<AppState>();
+    final scope = state.currentUserId;
+    final sessionEpoch = state.mealDraftSessionEpoch;
     if (!_hasObservedScope) {
       _hasObservedScope = true;
       _observedScope = scope;
+      _observedSessionEpoch = sessionEpoch;
       return;
     }
-    if (_observedScope != scope) {
+    if (_observedScope != scope || _observedSessionEpoch != sessionEpoch) {
       _observedScope = scope;
+      _observedSessionEpoch = sessionEpoch;
       _scopeEpoch += 1;
       _clearArtifact();
     }
@@ -127,7 +139,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
                       const SizedBox(height: 12),
                       _errorCard(i18n),
                     ],
-                    if (artifact != null && _pdfBytes != null) ...[
+                    if (artifact != null) ...[
                       const SizedBox(height: 16),
                       _previewCard(context, state, artifact, i18n),
                     ],
@@ -162,7 +174,7 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
         Text(i18n.tr('handoff.boundary_body')),
         const SizedBox(height: 8),
         Text(
-          i18n.tr('handoff.raster_limit'),
+          i18n.tr('handoff.text_limit'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
@@ -399,13 +411,17 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
               ),
               OutlinedButton.icon(
                 key: const ValueKey('handoff-print'),
-                onPressed: _busy ? null : () => _print(state, artifact),
+                onPressed: _busy || _pdfBytes == null
+                    ? null
+                    : () => _print(state, artifact),
                 icon: const Icon(Icons.print_outlined),
                 label: Text(i18n.tr('handoff.print')),
               ),
               FilledButton.icon(
                 key: const ValueKey('handoff-save-share'),
-                onPressed: _busy ? null : () => _saveOrShare(state, artifact),
+                onPressed: _busy || _pdfBytes == null
+                    ? null
+                    : () => _saveOrShare(state, artifact),
                 icon: const Icon(Icons.save_alt_outlined),
                 label: Text(i18n.tr('handoff.save_share')),
               ),
@@ -519,19 +535,36 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
       _errorCode = null;
       _clearArtifact();
     });
+    var stage = PersonalLogHandoffFailureStage.snapshot;
     try {
       final options = _options();
       final snapshot = _snapshot(state, lease.ownerScope);
+      stage = PersonalLogHandoffFailureStage.summary;
       final artifact = widget.summaryService.create(
         snapshot: snapshot,
         options: options,
         generatedAt: _now,
       );
-      final pdf = await widget.renderer.render(
-        context: context,
-        artifact: artifact,
-      );
+      stage = PersonalLogHandoffFailureStage.renderPdf;
+      Uint8List? pdf;
+      String? fontError;
+      try {
+        pdf = await widget.renderer.render(
+          context: context,
+          artifact: artifact,
+        );
+      } on FormatException catch (error, stackTrace) {
+        if (!const {
+          'handoff_pdf_font_unavailable',
+          'handoff_pdf_glyph_unavailable',
+        }.contains(error.message)) {
+          rethrow;
+        }
+        _logFailure(stage, error, stackTrace);
+        fontError = error.message;
+      }
       if (!mounted || !_isLeaseCurrent(lease)) return;
+      stage = PersonalLogHandoffFailureStage.validateRevision;
       final currentDigest = widget.summaryService.sourceRevisionDigest(
         snapshot: _snapshot(context.read<AppState>(), lease.ownerScope),
         options: options,
@@ -543,10 +576,13 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
         _artifact = artifact;
         _pdfBytes = pdf;
         _artifactEpoch = lease.epoch;
+        _artifactSessionEpoch = lease.sessionEpoch;
         _previewPage = 0;
+        _errorCode = fontError;
       });
       _debug('generated', artifact);
-    } catch (error) {
+    } catch (error, stackTrace) {
+      _logFailure(stage, error, stackTrace);
       if (!mounted) return;
       setState(() {
         _clearArtifact();
@@ -650,6 +686,13 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
         );
         return;
       }
+      if (result == PersonalLogHandoffDeliveryStatus.downloadRequested) {
+        _debug('html_download_requested', artifact);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(i18n.tr('portable.download_requested'))),
+        );
+        return;
+      }
       if (result == PersonalLogHandoffDeliveryStatus.unavailable) {
         _debug('delivery_unavailable', artifact);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -661,7 +704,8 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(i18n.tr('handoff.delivery.$successCode'))),
       );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      _logFailure(PersonalLogHandoffFailureStage.delivery, error, stackTrace);
       if (!mounted) return;
       setState(() => _errorCode = _safeErrorCode(error));
     } finally {
@@ -673,9 +717,9 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     final artifact = _artifact;
     final scope = state.currentUserId;
     if (artifact == null ||
-        _pdfBytes == null ||
         scope == null ||
         _artifactEpoch != _scopeEpoch ||
+        _artifactSessionEpoch != state.mealDraftSessionEpoch ||
         scope != _observedScope) {
       return null;
     }
@@ -714,16 +758,22 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
         scope.trim().isEmpty ||
         !_hasObservedScope ||
         scope != _observedScope ||
+        state.mealDraftSessionEpoch != _observedSessionEpoch ||
         state.isAuthBusy) {
       return null;
     }
-    return _HandoffLease(ownerScope: scope, epoch: _scopeEpoch);
+    return _HandoffLease(
+      ownerScope: scope,
+      epoch: _scopeEpoch,
+      sessionEpoch: state.mealDraftSessionEpoch,
+    );
   }
 
   bool _isLeaseCurrent(_HandoffLease lease) =>
       mounted &&
       lease.epoch == _scopeEpoch &&
       lease.ownerScope == _observedScope &&
+      lease.sessionEpoch == context.read<AppState>().mealDraftSessionEpoch &&
       !context.read<AppState>().isAuthBusy &&
       context.read<AppState>().currentUserId == lease.ownerScope;
 
@@ -731,7 +781,9 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     _HandoffLease lease,
     PersonalLogHandoffArtifact artifact,
   ) {
-    if (!_isLeaseCurrent(lease) || !identical(_artifact, artifact)) {
+    if (!_isLeaseCurrent(lease) ||
+        _artifactSessionEpoch != lease.sessionEpoch ||
+        !identical(_artifact, artifact)) {
       return false;
     }
     try {
@@ -768,22 +820,83 @@ class _PersonalLogHandoffPageState extends State<PersonalLogHandoffPage> {
     _artifact = null;
     _pdfBytes = null;
     _artifactEpoch = null;
+    _artifactSessionEpoch = null;
     _previewPage = 0;
     if (errorCode != null) _errorCode = errorCode;
   }
 
   String _safeErrorCode(Object error) {
-    if (error is FormatException) {
-      final message = error.message.toString();
-      return RegExp(r'^[a-z0-9_:.-]{1,96}$').hasMatch(message)
-          ? message
-          : 'format_failed';
+    if (error is PersonalLogHandoffRenderException) {
+      return 'handoff_pdf_render_failed';
     }
-    if (error is PersonalLogHandoffDeliveryException) return error.code;
-    if (error is StateError && '$error'.contains('source_revision_changed')) {
+    if (error is FormatException) {
+      final code = error.message.split(':').first;
+      const codes = <String>{
+        'handoff_document_blocks_missing',
+        'handoff_html_byte_budget_exceeded',
+        'handoff_pdf_pixel_ratio_invalid',
+        'handoff_pdf_context_disposed',
+        'handoff_pdf_render_timeout',
+        'handoff_pdf_byte_budget_exceeded',
+        'handoff_pdf_font_unavailable',
+        'handoff_pdf_glyph_unavailable',
+        'handoff_pdf_text_page_budget_exceeded',
+        'handoff_document_language_invalid',
+        'handoff_plain_text_budget_exceeded',
+        'handoff_owner_missing',
+        'handoff_sections_empty',
+        'handoff_range_reversed',
+        'handoff_range_budget_exceeded',
+        'handoff_duplicate_medication_id',
+        'handoff_duplicate_food_id',
+        'handoff_duplicate_intake_id',
+        'handoff_duplicate_meal_id',
+        'handoff_duplicate_observation_id',
+        'handoff_record_budget_exceeded',
+        'handoff_page_budget_exceeded',
+        'handoff_invalid_identifier',
+        'handoff_invalid_text',
+        'handoff_invalid_dose',
+        'handoff_invalid_meal_number',
+        'handoff_invalid_food_number',
+        'handoff_nonfinite',
+        'handoff_nonfinite_json',
+      };
+      return codes.contains(code) ? code : 'format_failed';
+    }
+    if (error is PersonalLogHandoffDeliveryException) {
+      const codes = <String>{
+        'authorization_expired',
+        'print_failed',
+        'save_share_failed',
+        'html_share_failed',
+        'html_download_failed',
+        'html_download_unavailable',
+        'invalid_file_name',
+        'invalid_pdf_bytes',
+        'invalid_html_bytes',
+      };
+      return codes.contains(error.code) ? error.code : 'operation_failed';
+    }
+    if (error is StateError && error.message == 'source_revision_changed') {
       return 'source_revision_changed';
     }
     return 'operation_failed';
+  }
+
+  void _logFailure(
+    PersonalLogHandoffFailureStage stage,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    final diagnostic = error is PersonalLogHandoffRenderException
+        ? error.diagnostic
+        : PersonalLogHandoffFailureDiagnostic.capture(
+            stage: stage,
+            error: error,
+            stackTrace: stackTrace,
+          );
+    debugPrint(diagnostic.logLine);
   }
 
   void _debug(String operation, PersonalLogHandoffArtifact artifact) {

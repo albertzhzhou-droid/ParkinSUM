@@ -30,6 +30,58 @@ void main() {
     },
   );
 
+  test('integer-valued schema numbers preserve portable identities', () {
+    for (final version in <num>[1, 1.0]) {
+      final ruleJson = rules.toJson()..['schema_version'] = version;
+      final caseJson = seed.toJson()..['schema_version'] = version;
+      for (final restored in [
+        RuleTestRuleSet.fromJson(ruleJson),
+        RuleTestRuleSet.decode(jsonEncode(ruleJson)),
+      ]) {
+        expect(restored.contentDigest, rules.contentDigest);
+        expect(restored.binding.matches(rules.binding), isTrue);
+        expect(restored.toJson(), rules.toJson());
+        expect(restored.encode(), startsWith('{"schema_version":1,'));
+      }
+      for (final restored in [
+        RuleTestCase.fromJson(caseJson),
+        RuleTestCase.decode(jsonEncode(caseJson)),
+      ]) {
+        expect(restored.caseDigest, seed.caseDigest);
+        expect(restored.inputDigest, seed.inputDigest);
+        expect(restored.toJson(), seed.toJson());
+        expect(restored.encode(), startsWith('{"schema_version":1,'));
+      }
+    }
+  });
+
+  test('schema versions reject wrong types, fractions and future values', () {
+    for (final version in <Object?>[
+      true,
+      false,
+      '1',
+      null,
+      1.1,
+      2,
+      double.nan,
+      double.infinity,
+    ]) {
+      expect(
+        () => RuleTestRuleSet.fromJson(
+          rules.toJson()..['schema_version'] = version,
+        ),
+        throwsFormatException,
+        reason: 'rule package schema version $version',
+      );
+      expect(
+        () =>
+            RuleTestCase.fromJson(seed.toJson()..['schema_version'] = version),
+        throwsFormatException,
+        reason: 'case schema version $version',
+      );
+    }
+  });
+
   test('same version with changed content has a different binding', () {
     final raw = _raw(rules);
     (raw.first['then'] as Map)['severity'] = 'changed-severity';
@@ -167,7 +219,24 @@ void main() {
         isNot(ruleTestJsonDigest('test', 0)),
       );
       final raw = _raw(rules);
-      raw.first['when']['all'][1]['cmp']['value'] = 10.0;
+      final proteinRule = raw.singleWhere(
+        (rule) => rule['rule_id'] == 'pd.ldopa.protein.window.v1',
+      );
+      final comparisons = (proteinRule['when']['all'] as List)
+          .map((condition) => (condition as Map)['cmp'])
+          .whereType<Map>()
+          .toList();
+      final proteinComparison = comparisons.singleWhere(
+        (comparison) => comparison['path'] == 'meal.protein_g',
+      );
+      expect(proteinComparison['value'], 10);
+      proteinComparison['value'] = 10.0;
+      expect(
+        comparisons.singleWhere(
+          (comparison) => comparison['path'] == 'drug.route',
+        )['value'],
+        'oral',
+      );
       final equal = RuleTestRuleSet(
         source: rules.source,
         bundleVersion: rules.bundleVersion,
@@ -180,6 +249,26 @@ void main() {
       );
     },
   );
+
+  test('route semantic changes have a different portable rule binding', () {
+    final raw = _raw(rules);
+    final proteinRule = raw.singleWhere(
+      (rule) => rule['rule_id'] == 'pd.ldopa.protein.window.v1',
+    );
+    final routeComparison = (proteinRule['when']['all'] as List)
+        .map((condition) => (condition as Map)['cmp'])
+        .whereType<Map>()
+        .singleWhere((comparison) => comparison['path'] == 'drug.route');
+    expect(routeComparison['value'], 'oral');
+    routeComparison['value'] = 10.0;
+    final changed = RuleTestRuleSet(
+      source: rules.source,
+      bundleVersion: rules.bundleVersion,
+      rawRules: raw,
+    );
+    expect(changed.contentDigest, isNot(rules.contentDigest));
+    expect(changed.binding.matches(seed.binding), isFalse);
+  });
 
   test('portable profile matches independently checked VM and web vectors', () {
     const domain = 'independent-portability-vector';
@@ -395,7 +484,7 @@ void main() {
   test('unknown keys, wrong types and a real patient identifier reject', () {
     final mutations = <void Function(Map<String, dynamic>)>[
       (j) => j['unknown'] = 1,
-      (j) => j['schema_version'] = 1.0,
+      (j) => j['schema_version'] = 1.1,
       (j) => j['synthetic_only'] = false,
       (j) => j['context']['user_profile']['patient_id'] = 'patient_42',
       (j) => j['context']['drug']['dose_units'] = 'mg',

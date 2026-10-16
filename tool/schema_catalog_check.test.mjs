@@ -20,6 +20,27 @@ function schemaById(catalog, id) {
   return schema;
 }
 
+test('reviewed food projection versions retain original product evidence and atomic capture boundaries', () => {
+  const { catalog } = baseline();
+  const product = schemaById(catalog, 'parkinsum.food-product-evidence');
+  assert.equal(product.currentVersion, 1);
+  assert.equal(product.source, 'lib/core/models/food_item.dart');
+  assert.match(product.compatibility, /Nested and unknown source fields remain original/);
+  assert.match(product.compatibility, /no density, ingredient quantity, reformulation/);
+  const snapshot = schemaById(catalog, 'parkinsum.cdss-catalog-table-snapshot');
+  assert.equal(snapshot.currentVersion, 2);
+  assert.match(snapshot.compatibility, /Ten immutable table sets captured in one SQLite transaction or complete Web state document/);
+  const queryAudit = schemaById(catalog, 'parkinsum.cdss-food-projection-query-audit');
+  assert.equal(queryAudit.currentVersion, 4);
+  assert.match(queryAudit.compatibility, /changed or missing review evidence remains unknown/);
+  assert.match(queryAudit.compatibility, /Legacy sequential reads do not qualify reviewed selections/);
+  for (const id of [product.id, snapshot.id, queryAudit.id]) {
+    const changed = structuredClone(catalog);
+    schemaById(changed, id).currentVersion += 1;
+    assert.ok(validateSchemaCatalog(changed).some((failure) => failure.includes(id)), id);
+  }
+});
+
 test('committed catalog covers every required and discovered schema surface', () => {
   const { catalog, failures } = baseline();
   assert.deepEqual(failures, []);
@@ -40,7 +61,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.match(followupLedger.compatibility, /unclassified/);
   assert.match(followupLedger.compatibility, /migrate to v3/);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
-  assert.equal(catalog.schemas.length, 166);
+  assert.equal(catalog.schemas.length, 201);
   const catalogChangeDiff = schemaById(
     catalog,
     'parkinsum.catalog-version-change-diff',
@@ -247,26 +268,20 @@ test('committed catalog covers every required and discovered schema surface', ()
     catalog,
     'parkinsum.food-composition-candidate-set-snapshot',
   );
-  assert.equal(candidateSnapshot.currentVersion, 5);
+  assert.equal(candidateSnapshot.currentVersion, 6);
   assert.equal(candidateSnapshot.surfaceKind, 'runtime-contract');
-  assert.match(candidateSnapshot.compatibility, /canonical SHA-256/i);
-  assert.match(candidateSnapshot.compatibility, /per-nutrient observation IDs/i);
-  assert.match(candidateSnapshot.compatibility, /non-exact nutrient rows and portion records are evidence only/i);
-  assert.match(candidateSnapshot.compatibility, /local projection query audit/i);
-  assert.match(candidateSnapshot.compatibility, /caller query and filters are not captured/i);
-  assert.match(candidateSnapshot.compatibility, /not a catalog freeze/i);
-  assert.match(candidateSnapshot.compatibility, /is not a persisted record/i);
+  assert.match(candidateSnapshot.compatibility, /strict candidate snapshot/i);
+  assert.match(candidateSnapshot.compatibility, /upstream release/i);
+  assert.match(candidateSnapshot.compatibility, /separate from any imported snapshot/i);
   const foodProjectionQueryAudit = schemaById(
-    catalog,
-    'parkinsum.cdss-food-projection-query-audit',
-  );
-  assert.equal(foodProjectionQueryAudit.currentVersion, 1);
-  assert.match(foodProjectionQueryAudit.compatibility, /no-WHERE\/no-ORDER-BY/i);
-  assert.match(foodProjectionQueryAudit.compatibility, /not transaction-scoped/i);
+    catalog, 'parkinsum.cdss-food-projection-query-audit');
+  assert.equal(foodProjectionQueryAudit.currentVersion, 4);
+  assert.match(foodProjectionQueryAudit.compatibility, /ten-table capture/i);
+  assert.match(foodProjectionQueryAudit.compatibility, /Legacy sequential reads do not qualify reviewed selections/i);
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned')
       .length,
-    160,
+    195,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned')
@@ -650,6 +665,17 @@ test('committed catalog covers every required and discovered schema surface', ()
   );
 });
 
+test('Care portable envelope remains a mandatory version1 source-bound surface', () => {
+  const {catalog} = baseline();
+  const entry = schemaById(catalog, 'parkinsum.care-portable-data-package');
+  assert.equal(entry.source, 'lib/core/services/care_portable_data_service.dart');
+  assert.equal(entry.currentVersion, 1);
+  const missing = structuredClone(catalog);
+  missing.schemas = missing.schemas.filter(s => s.id !== entry.id);
+  const failures = validateSchemaCatalog(missing);
+  assert.ok(failures.some(f => f.includes('required schema surface is missing: parkinsum.care-portable-data-package')));
+});
+
 test('mechanistic event ledger v3 versions supplemental measurement dimensions', () => {
   const { catalog } = baseline();
   const schema = schemaById(catalog, 'parkinsum.mechanistic-event-ledger');
@@ -662,6 +688,19 @@ test('mechanistic event ledger v3 versions supplemental measurement dimensions',
   assert.match(schema.compatibility, /do not extend.*or enter.*calculations/i);
 });
 
+test('benchmark report v2 and disposable marker have separate explicit source bindings', () => {
+  const { catalog, failures } = baseline();
+  const report = schemaById(catalog, 'parkinsum.personal-log-view-release-benchmark');
+  const marker = schemaById(catalog, 'parkinsum.synthetic-persistent-benchmark');
+  assert.equal(report.currentVersion, 2);
+  assert.equal(marker.currentVersion, 1);
+  assert.equal(marker.surfaceKind, 'persisted-envelope');
+  assert.equal(marker.source, 'lib/engineering/personal_log_persistent_benchmark.dart');
+  assert.match(report.compatibility, /retained incomplete samples/);
+  assert.match(marker.compatibility, /cross-tab locking/);
+  assert.ok(!failures.some(failure => failure.includes('benchmark')), failures.join('\n'));
+});
+
 test('owner observation audit schema stays supplemental to engine input identity', () => {
   const { catalog } = baseline();
   const schema = schemaById(
@@ -669,7 +708,7 @@ test('owner observation audit schema stays supplemental to engine input identity
     'parkinsum.personal-observation-event-ledger',
   );
   assert.equal(schema.currentVersion, 2);
-  assert.equal(catalog.schemas.length, 166);
+  assert.equal(catalog.schemas.length, 201);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
   assert.equal(
     schema.source,
@@ -708,10 +747,10 @@ test('open-source influence inventory schema v7 matches its source and catalog p
 test('open-source drift decision and ledger schemas are versioned governance artifacts', () => {
   const { catalog, failures } = baseline();
   const source = readFileSync('tool/open_source_drift_decision_ledger.mjs', 'utf8');
-  assert.equal(catalog.schemas.length, 166);
+  assert.equal(catalog.schemas.length, 201);
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned').length,
-    160,
+    195,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned').length,
@@ -731,16 +770,52 @@ test('open-source drift decision and ledger schemas are versioned governance art
   }
 });
 
-test('native app database schema v11 catalogs immutable replay persistence', () => {
+test('IndexedDB envelope and compact transport retain separate storage and logical-package identities', () => {
+  const { catalog, failures } = baseline();
+  assert.deepEqual(failures, []);
+  const envelope = schemaById(catalog, 'parkinsum.indexeddb-user-state');
+  assert.equal(envelope.currentVersion, 1);
+  assert.equal(envelope.surfaceKind, 'persisted-envelope');
+  assert.equal(envelope.source, 'lib/core/db/web_user_state_store_indexeddb.dart');
+  assert.match(envelope.compatibility, /Exact five-field envelope.*original six-key legacy values/);
+  assert.match(envelope.compatibility, /marker or legacy mismatch fails closed/);
+  assert.match(envelope.compatibility, /no quota fallback or inference of OS-kill durability/);
+  assert.match(envelope.compatibility, /aggregate version remains separately v3/);
+
+  const compact = schemaById(catalog, 'parkinsum.user-portable-data-compact-transport');
+  assert.equal(compact.currentVersion, 5);
+  assert.equal(compact.surfaceKind, 'nested-public-contract');
+  assert.equal(compact.source, 'lib/domain/usecases/portable_data_compact_transport_service.dart');
+  assert.match(compact.compatibility, /Optional v5 transport for the v4 logical package/);
+  assert.match(compact.compatibility, /Whole food-item evidence is checksum keyed and shared; quantities remain per meal/);
+  assert.match(compact.compatibility, /separate pre-expansion budgets/);
+  assert.match(compact.compatibility, /No reconciliation, evidence promotion, authentication or clinical qualification/);
+  for (const id of [envelope.id, compact.id]) {
+    assert.ok(requiredSchemaSurfaces.some((required) => required.id === id));
+    const changed = structuredClone(catalog);
+    schemaById(changed, id).currentVersion += 1;
+    assert.ok(validateSchemaCatalog(changed).some((failure) => failure.includes(id)), id);
+    const missing = structuredClone(catalog);
+    missing.schemas = missing.schemas.filter((schema) => schema.id !== id);
+    assert.ok(
+      validateSchemaCatalog(missing).includes(`required schema surface is missing: ${id}`),
+      id,
+    );
+  }
+});
+
+test('native app database schema v12 retains replay and captured nutrient missingness', () => {
   const { catalog, failures } = baseline();
   const id = 'parkinsum.app-database-native';
   const schema = schemaById(catalog, id);
   const source = readFileSync('lib/core/db/app_database_native.dart', 'utf8');
-  assert.equal(schema.currentVersion, 11);
+  assert.equal(schema.currentVersion, 12);
   assert.match(schema.compatibility, /digest-keyed immutable mechanistic replay capsule table/);
-  assert.match(source, /nativeAppDatabaseSchemaVersion = 11/);
+  assert.match(source, /nativeAppDatabaseSchemaVersion = 12/);
   assert.match(source, /if \(oldVersion < 11\)/);
   assert.match(source, /nativeMechanisticReplayCapsulesCreateTableSql/);
+  assert.match(source, /if \(oldVersion < 12\)/);
+  assert.match(source, /missing_nutrients/);
   assert.ok(!failures.some((failure) => failure.includes(id)), failures.join('\n'));
 });
 
@@ -1189,4 +1264,23 @@ test('unsupported catalog versions and malformed schema collections fail without
       failure.includes('schemas must be a non-empty array'),
     ),
   );
+});
+
+
+test('gastric finite-grid plans, actual vectors and independent report have explicit schema scope', () => {
+  const { catalog, failures } = baseline();
+  for (const id of [
+    'parkinsum.synthetic-gastric-identifiability-plan',
+    'parkinsum.synthetic-gastric-identifiability-fine-grid-plan',
+    'parkinsum.gastric-identifiability-vectors',
+    'parkinsum.gastric-identifiability-check',
+  ]) {
+    const schema = schemaById(catalog, id);
+    assert.equal(schema.currentVersion, 1);
+    assert.equal(schema.source, 'tool/gastric_identifiability_experiment.mjs');
+    assert.equal(schema.surfaceKind, 'governance-artifact');
+    assert.match(schema.compatibility, /not continuous identifiability or clinical calibration/);
+    assert.match(schema.compatibility, /truncated vectors/);
+    assert.ok(!failures.some(failure => failure.includes(id)), failures.join('\n'));
+  }
 });

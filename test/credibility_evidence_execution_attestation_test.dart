@@ -25,6 +25,64 @@ void main() {
   }
 
   test(
+    'synthetic fixture pins exact v77 software identity without qualification',
+    () {
+      const expectedConfiguration =
+          '51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d';
+      const expectedSourceBundle =
+          '7f5c10e6db1a457b71e2c37e6f5fde35114251996d44d73450fb2dc30906783a';
+      final fixture = current();
+
+      expect(AlgorithmConfigurationIdentity.defaultVersion, '2026.10.15-v77');
+      expect(fixture.configurationSha256, expectedConfiguration);
+      expect(fixture.algorithmSourceBundleSha256, expectedSourceBundle);
+      expect(
+        CredibilityEvidenceExecutionAttestation.expectedConfigurationSha256,
+        expectedConfiguration,
+      );
+      expect(
+        CredibilityEvidenceExecutionAttestation
+            .expectedAlgorithmSourceBundleSha256,
+        expectedSourceBundle,
+      );
+      expect(fixture.integrityReasons, isEmpty);
+      expect(fixture.independentReviewer, isNull);
+      expect(fixture.independentReviewArtifactIds, isEmpty);
+      expect(verifier.verify(fixture).canSupportScientificCredibility, isFalse);
+    },
+  );
+
+  test('historical v52 software identities remain rejected independently', () {
+    final fixture = current();
+    final mutations = <String, CredibilityEvidenceExecutionAttestation>{
+      'attestation.configuration_identity_mismatch':
+          CredibilityEvidenceExecutionAttestation.syntheticCurrent(
+            prospectivePlanSha256: fixture.prospectivePlanSha256,
+            manifestSha256: fixture.manifestSha256,
+            configurationSha256:
+                'e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05',
+            algorithmSourceBundleSha256: fixture.algorithmSourceBundleSha256,
+          ),
+      'attestation.algorithm_source_bundle_identity_mismatch':
+          CredibilityEvidenceExecutionAttestation.syntheticCurrent(
+            prospectivePlanSha256: fixture.prospectivePlanSha256,
+            manifestSha256: fixture.manifestSha256,
+            configurationSha256: fixture.configurationSha256,
+            algorithmSourceBundleSha256:
+                '8f05e6ff6ad02ace71b621ea840cb795831d63562ebd91b54ae8139ab999dcc2',
+          ),
+    };
+
+    for (final mutation in mutations.entries) {
+      expect(mutation.value.integrityReasons, [mutation.key]);
+      final assessment = verifier.verify(mutation.value);
+      expect(assessment.integrityVerified, isFalse);
+      expect(assessment.status, EvidenceIndependenceStatus.unknown);
+      expect(assessment.canSupportScientificCredibility, isFalse);
+    }
+  });
+
+  test(
     'synthetic execution is mechanically observed but cannot qualify data',
     () {
       final assessment = verifier.verify(current());

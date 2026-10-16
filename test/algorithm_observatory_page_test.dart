@@ -608,10 +608,17 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('replay identity only'), findsOneWidget);
+    // This checks the rendered manifest summary; independent configuration
+    // tests pin the accepted parameter identities and counts.
+    final parameterRecordCount = AlgorithmConfigurationIdentity.defaults()
+        .parameterProvenanceManifest
+        .records
+        .length;
     expect(
       find.textContaining(
-        '142 result-affecting parameter/structure records · '
-        '120 prototype-heuristic · 22 literature-derived · 0 fitted.',
+        '$parameterRecordCount result-affecting parameter/structure records · '
+        '${parameterRecordCount - 22} prototype-heuristic · '
+        '22 literature-derived · 0 fitted.',
       ),
       findsOneWidget,
     );

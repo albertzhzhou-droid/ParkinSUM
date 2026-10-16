@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
+import 'source_import_review_page.dart';
 
 /// 本地 P0 导入页：
 /// - 允许用户指定 ZIP 或目录路径；
@@ -607,6 +608,50 @@ class _ImportPageState extends State<ImportPage> {
               ),
             ),
           const SizedBox(height: 12),
+          for (final snapshotId
+              in state.reviewTickets
+                  .where(
+                    (t) =>
+                        t.reasonCode == 'unresolved_conflict' &&
+                        t.status == 'open',
+                  )
+                  .map((t) => t.snapshotId)
+                  .toSet())
+            OutlinedButton.icon(
+              icon: const Icon(Icons.fact_check_outlined),
+              label: Text(
+                i18n.languageFamily == 'zh'
+                    ? '复核来源差异'
+                    : 'Review source differences',
+              ),
+              onPressed: state.isRunningSnapshotOperation
+                  ? null
+                  : () {
+                      final owner = state.currentUserId;
+                      final epoch = state.preferenceMutationSessionEpoch;
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => SourceImportReviewPage(
+                            snapshotId: snapshotId,
+                            releaseService:
+                                state.services.knowledgeBaseReleaseService,
+                            localeTag: state.userProfile.displayLocale,
+                            sessionChanges: state,
+                            isSessionCurrent: () =>
+                                owner != null &&
+                                state.currentUserId == owner &&
+                                state.services.authService.currentUserId ==
+                                    owner &&
+                                state.preferenceMutationSessionEpoch == epoch,
+                            onActivated: () async {
+                              await state.bootstrap();
+                              await state.refreshCdssOpsOverview();
+                            },
+                          ),
+                        ),
+                      );
+                    },
+            ),
           if (state.reviewTickets.isNotEmpty)
             Card(
               child: Padding(

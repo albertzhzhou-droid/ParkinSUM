@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import '../entities/meal_composition.dart';
 import '../entities/mechanistic_event_ledger.dart';
 import '../entities/mechanistic_replay_capsule.dart';
@@ -50,9 +48,8 @@ final class MechanisticReplayCapsuleService
       context: context,
       mealCompositionsById: mealCompositionsById,
     );
-    final parsed = MechanisticReplayCapsule.fromJson(
-      (jsonDecode(captured.canonicalJson) as Map<String, dynamic>)
-          .cast<String, Object?>(),
+    final parsed = MechanisticReplayCapsule.fromJsonString(
+      captured.canonicalJson,
     );
     final restored = parsed.restore(
       expectedConfigurationSha256: expectedConfigurationSha256,

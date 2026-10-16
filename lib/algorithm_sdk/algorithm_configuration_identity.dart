@@ -45,17 +45,54 @@ final class AlgorithmConfigurationIdentity {
   // v51 adds the standalone synthetic dose-parser trace to the observatory.
   // v52 gates mechanistic traces on an exact evidence-currency assessment and
   // binds each result to the reviewed snapshot, as-of time, and provider set.
-  // v53 adds the food-composition interdependency layer to the mechanistic
-  // conflict engine (food-borne L-dopa presence, dry/cooked ambiguity and
-  // energy-identity findings). It can add drivers and uncertainty and cap
-  // confidence; it never changes the interaction score.
-  // v54 binds the composition identity audit (food-specific energy factors,
-  // proximate closure and part-within-whole checks) and the expanded FDC
-  // importer sources. Engine scores and severities are unchanged.
-  // v55 makes the proximate-closure identity provenance-aware: it is tested
-  // only when FDC reports carbohydrate as calculated by difference, and is
-  // recorded as skipped when the source assumed or imputed it.
-  static const String defaultVersion = '2026.10.15-v56';
+  // v53 binds route-qualified oral rules, explicit protein missingness,
+  // comparable fact conflicts, source-ambiguous food projections, and the
+  // schema-v2 complete-meal protein trend with explicit missingness exclusions.
+  // v54 binds proven nutrient deduplication, source-summary LOQ holds,
+  // explicit personal-log date projections and strict atomic food candidate reads.
+  // v55 binds SPL product-scoped identity and evidence projection. Completed
+  // app checks additionally require exact current inputs; an unassessed cache
+  // entry no longer invokes the legacy engine or presents an invented score.
+  // v56 requires exact FDA active-ingredient classes and holds structured
+  // products with unresolved ingredient roles. Numerical parameters and
+  // clinical qualification holds are unchanged.
+  // v57 withholds scores, traces and recommendation ranking for unresolved
+  // medication references and binds the result contract to the source manifest.
+  // v58 retains USDA's distinct Atwater methods and source conversion factors;
+  // unselected methods never populate generic legacy energy arithmetic.
+  // v59 repairs short multilingual catalog queries and source-ordered limits.
+  // Manufactured sampling experiments leave physiological parameters unchanged.
+  // v60 guards preference persistence by owner and session epoch.
+  // Already dispatched writes are not claimed to be cancelled.
+  // v61 coordinates participating Web storage writers and rechecks persisted
+  // source content; numerical implementations and parameters remain unchanged.
+  // v62 separates source-identified carbohydrate and fiber quantities.
+  // v63 binds immutable source-pinned timezone rules to calendar projection.
+  // Historical receipts retain their original rule version and civil intent.
+  // v65 binds incumbent history and import activation holds, accurate legacy
+  // projection flags and source-specific SPL strength bases.
+  // v67 qualifies source dry matter, moisture and branded volume bases before
+  // edible-weight use, including retained legacy catalogue rows and meals.
+  // v68 binds source-qualified legacy caches, immutable held resource packets
+  // and source holds that an operational publish override cannot bypass.
+  // v69 binds complete atomic local imports and original Branded product objects.
+  // v70 binds explicit source-review choices to a complete state preview and
+  // one derived atomic activation; original held evidence remains historical.
+  // v71 carries explicit original review choices through the current catalogue and product details.
+  // v72 distinguishes exact provider-paired ingestion markers from lifecycle holds.
+  // v73 binds the personal-record storage adapter without changing numerical parameters.
+  // v74 integrates the public Claude food-composition/interdependency and FDC
+  // baseline with the local storage, source-evidence and review boundaries.
+  // It supersedes both branch identities; historical receipts remain unchanged.
+  // v75 integrates Claude PR147 source-bound nutrient profiles and records
+  // proximate closure only for source-calculated by-difference carbohydrate.
+  // Assumed or imputed carbohydrate retains an explicit skipped-audit reason.
+  // v76 binds exact-string digest reuse in the Web personal-record adapter.
+  // Canonical bytes, persistence checks and clinical calculations are unchanged.
+  // v77 calibrates the LNAA competition reference fraction and protein-source
+  // load factors on official FDC SR Legacy amino-acid composition; modeled
+  // competition pressure changes, and load-to-pressure stays a heuristic.
+  static const String defaultVersion = '2026.10.15-v77';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -63,7 +100,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'c0fbc9a25e2beffa7dd8b99f3483a08cefb369c69c3b3f8da061ad3fd175f85a';
+      '7f5c10e6db1a457b71e2c37e6f5fde35114251996d44d73450fb2dc30906783a';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -114,7 +151,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/runtime_rule_support.dart':
         '704566d904c9ab2bbfe01d841a84486d16d5eb89e80cd4a2411312a80a3de504',
     'lib/core/constants/baseline_cdss_rules.dart':
-        'b2af81ac45371e8186fc073a2fc2d91fa2615a7fb08cdfc9c7ccad0409ac1fba',
+        'f8082d6c9eda26ad8f79d5db6a04ee5edc9da7013558625c7422c02771860647',
     'lib/core/analysis/nutrition_rules.dart':
         '658a20a20000e7ff6ca1af0d8392ffd7582f8129771f4879f749089d8ac11a75',
     'lib/core/analysis/interaction_engine.dart':

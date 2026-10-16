@@ -94,17 +94,35 @@ class MealPage extends StatelessWidget {
               separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (_, i) {
                 final meal = state.meals[i];
-                final totals = meal.computeTotals();
+                String nutrient(String field) {
+                  final value = meal.knownNutrientTotal(
+                    field,
+                    catalog: state.foodRepo.allFoods,
+                  );
+                  return value == null
+                      ? (i18n.languageFamily == 'zh' ? '未知' : 'Unknown')
+                      : '${value.toStringAsFixed(1)}g';
+                }
+
                 final result = context.read<AppState>().cachedMealCheck(meal);
-                final accent = interactionSeverityColor(result.overallSeverity);
+                final accent = result == null
+                    ? Theme.of(context).colorScheme.onSurfaceVariant
+                    : interactionSeverityColor(result.overallSeverity);
+                final checkSummary = result == null
+                    ? i18n.tr('timeline.conflict_pending')
+                    : !result.hasAssessment
+                    ? i18n.tr('interaction.unassessed')
+                    : i18n.tr('interaction.score', {
+                        'value': '${result.score}',
+                      });
 
                 return ListTile(
                   title: Text(meal.title),
                   subtitle: Text(
-                    'P=${totals.totalProteinG.toStringAsFixed(1)}g '
-                    'C=${totals.totalCarbsG.toStringAsFixed(1)}g '
-                    'F=${totals.totalFatG.toStringAsFixed(1)}g '
-                    '· ${i18n.tr('interaction.score', {'value': '${result.score}'})}',
+                    'P=${nutrient('proteinG')} '
+                    'C=${nutrient('carbsG')} '
+                    'F=${nutrient('fatG')} '
+                    '· $checkSummary',
                   ),
                   leading: CircleAvatar(
                     backgroundColor: accent.withValues(alpha: 0.12),
@@ -114,6 +132,19 @@ class MealPage extends StatelessWidget {
                   trailing: Wrap(
                     spacing: 4,
                     children: [
+                      IconButton(
+                        key: ValueKey('reuse-meal-${meal.id}'),
+                        tooltip: i18n.languageFamily == 'zh'
+                            ? '复用为新餐草稿'
+                            : 'Reuse as a new meal draft',
+                        icon: const Icon(Icons.copy_outlined),
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EntryPage(reuseMeal: meal),
+                          ),
+                        ),
+                      ),
                       IconButton(
                         tooltip: i18n.tr('dashboard.edit'),
                         icon: const Icon(Icons.edit_outlined),

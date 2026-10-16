@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/algorithm_sdk/algorithm_configuration_identity.dart';
@@ -91,6 +92,393 @@ void main() {
       decisions[CouEvidenceKind.externalApproval],
       CouEvidenceStatus.notRequired,
     );
+  });
+
+  test(
+    'v77 candidate retains all twenty-five historical blocked records without new approval',
+    () {
+      final ledger = currentLedger();
+      final historical = ledger.records.first;
+      final candidate = ledger.latest;
+
+      expect(ledger.records, hasLength(26));
+      expect(historical.sequence, 1);
+      expect(historical.changeKind, 'initial_governed_baseline');
+      expect(
+        historical.currentConfigurationSha256,
+        'e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05',
+      );
+      expect(historical.recordedAtUtc, '2026-08-18T00:00:00.000Z');
+      expect(historical.decisionBoundary, contains('v52 release refresh'));
+      expect(candidate.sequence, 26);
+      expect(
+        ledger.records[1].currentConfigurationSha256,
+        ContextOfUseRequalificationLedger.historicalV53ConfigurationSha256,
+      );
+      expect(
+        ledger.records[1].releaseArtifact,
+        'unreleased-worktree:next-upgrade-v53-candidate',
+      );
+      expect(candidate.changeKind, 'software_identity_candidate_rebind');
+      expect(ledger.records.take(10).map((r) => r.recordSha256).toList(), [
+        'b8b6484c3b3a33d893878907db537fa29fbc4e0c6eb844ba8a5fe772fe346ae0',
+        'b2993ef5f2308e192e4a73b92f80ee14612063df88591ea11147caf668845aa2',
+        '3bebb51fb02349ce3f9db89826f453f4fddb163fb383ec3641a312b793ce6e52',
+        '7537fd6d52b7a46ccfc801ee4078af3063838b8e94e4f27bd8d8b07158397a2f',
+        '192a5e0694f6f99c08c531d24c45536575e1d2630932d1911e8e4d458c95c86e',
+        '38ec4437d564fc29bfa76ea06de19fcb3496969562e193e8ceabcbb516ca0862',
+        'f3956907bd3a8c3e7366fbdebff6c42288077c5345c753b56278c7d8585a0b5f',
+        '288d50058d686d80b384f7765e8594feea4bb2e5cd5d2bde74054596c27a74cf',
+        'ea0fd31ab95056be8b8e72667d75c6e581cb2d2a6aff52a8cf6010d926c4b219',
+        '902fc543a2c0aa2502a42215e02cc74c07450030f7e25d4d1dbdd1f1182b0344',
+      ], reason: 'Exact prior records were frozen before this forward rebind.');
+      expect(
+        candidate.previousConfigurationSha256,
+        ledger.records[24].currentConfigurationSha256,
+      );
+      expect(
+        candidate.currentConfigurationSha256,
+        AlgorithmConfigurationIdentity.defaults().sha256Digest,
+      );
+      expect(candidate.evidenceDecisions, historical.evidenceDecisions);
+      expect(candidate.approvalSignature, isNull);
+      expect(
+        candidate.releaseDisposition,
+        CouReleaseDisposition.blockedPendingEvidence,
+      );
+      expect(ledger.canPromoteResearchTraceOnly, isFalse);
+    },
+  );
+
+  test(
+    'all ten entire historical JSON records remain equal to the pre-execution freeze',
+    () {
+      final frozen =
+          jsonDecode(
+                File(
+                  'test/fixtures/governance_history_before_v62.json',
+                ).readAsStringSync(),
+              )
+              as Map;
+      final records = currentLedger().records
+          .take(10)
+          .map((record) => record.toJson())
+          .toList();
+      expect(records, frozen['records']);
+      expect(
+        currentLedger().records.take(10).map((r) => r.recordSha256).toList(),
+        frozen['record_sha256'],
+      );
+    },
+  );
+  test(
+    'all twelve prior whole records and digests retain their frozen identity',
+    () {
+      final frozen =
+          jsonDecode(
+                File(
+                  'test/fixtures/governance_history_before_v64.json',
+                ).readAsStringSync(),
+              )
+              as Map;
+      final records = currentLedger().records.take(12).toList();
+      expect(
+        records.map((record) => record.toJson()).toList(),
+        frozen['records'],
+      );
+      expect(
+        records.map((record) => record.recordSha256).toList(),
+        frozen['record_sha256'],
+      );
+    },
+  );
+  test('all twenty-five whole records and digests remain exact before v77', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v77.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final records = currentLedger().records.take(25).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['ledger_records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256s'],
+    );
+    expect(
+      records.last.currentConfigurationSha256,
+      ContextOfUseRequalificationLedger.historicalV76ConfigurationSha256,
+    );
+  });
+
+  test('all twenty-four whole records and digests remain exact before v76', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v76.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final records = currentLedger().records.take(24).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['ledger_records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256s'],
+    );
+    expect(
+      records.last.currentConfigurationSha256,
+      ContextOfUseRequalificationLedger.historicalV75ConfigurationSha256,
+    );
+  });
+
+  test(
+    'all twenty-three whole records and digests remain exact before v75',
+    () {
+      final frozen =
+          jsonDecode(
+                File(
+                  'test/fixtures/governance_history_before_v75.json',
+                ).readAsStringSync(),
+              )
+              as Map<String, dynamic>;
+      final records = currentLedger().records.take(23).toList();
+      expect(
+        records.map((record) => record.toJson()).toList(),
+        frozen['ledger_records'],
+      );
+      expect(
+        records.map((record) => record.recordSha256).toList(),
+        frozen['record_sha256s'],
+      );
+      expect(
+        records.last.currentConfigurationSha256,
+        ContextOfUseRequalificationLedger.historicalV74ConfigurationSha256,
+      );
+    },
+  );
+
+  test('all twenty-two whole records and digests remain exact before v74', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v74.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final records = currentLedger().records.take(22).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['ledger_records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256s'],
+    );
+    expect(
+      records.last.currentConfigurationSha256,
+      ContextOfUseRequalificationLedger.historicalV73ConfigurationSha256,
+    );
+  });
+
+  test('all twenty-one whole records and digests remain exact before v73', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v73.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(21).toList();
+    expect(records.map((r) => r.toJson()).toList(), frozen['ledger_records']);
+    expect(
+      records.map((r) => r.recordSha256).toList(),
+      frozen['ledger_record_sha256'],
+    );
+  });
+  test('all twenty whole records and digests remain exact before v72', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v72.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(20).toList();
+    expect(records.map((r) => r.toJson()).toList(), frozen['ledger_records']);
+    expect(
+      records.map((r) => r.recordSha256).toList(),
+      frozen['ledger_record_sha256'],
+    );
+  });
+  test('all nineteen whole records and digests remain exact before v71', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v71.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(19).toList();
+    expect(records.map((r) => r.toJson()).toList(), frozen['records']);
+    expect(
+      records.map((r) => r.recordSha256).toList(),
+      frozen['record_sha256'],
+    );
+  });
+  test('all eighteen whole records and digests remain exact before v70', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v70.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(18).toList();
+    expect(records.map((r) => r.toJson()).toList(), frozen['records']);
+    expect(
+      records.map((r) => r.recordSha256).toList(),
+      frozen['record_sha256'],
+    );
+  });
+
+  test('all seventeen whole records and digests remain exact before v69', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v69.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(17).toList();
+    expect(records.map((r) => r.toJson()).toList(), frozen['records']);
+    expect(
+      records.map((r) => r.recordSha256).toList(),
+      frozen['record_sha256'],
+    );
+    expect(currentLedger().latest.approvalSignature, isNull);
+  });
+  test('all sixteen whole records and digests remain exact before v68', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v68.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(16).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256'],
+    );
+    expect(currentLedger().latest.approvalSignature, isNull);
+  });
+  test('all fifteen whole records and digests remain exact before v67', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v67.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(15).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256'],
+    );
+    expect(currentLedger().latest.approvalSignature, isNull);
+  });
+  test('all fourteen whole records and digests remain exact before v66', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v66.json',
+              ).readAsStringSync(),
+            )
+            as Map;
+    final records = currentLedger().records.take(14).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256'],
+    );
+    expect(currentLedger().latest.approvalSignature, isNull);
+  });
+  test(
+    'all thirteen prior whole records and digests remain exact before v65',
+    () {
+      final frozen =
+          jsonDecode(
+                File(
+                  'test/fixtures/governance_history_before_v65.json',
+                ).readAsStringSync(),
+              )
+              as Map;
+      final records = currentLedger().records.take(13).toList();
+      expect(
+        records.map((record) => record.toJson()).toList(),
+        frozen['records'],
+      );
+      expect(
+        records.map((record) => record.recordSha256).toList(),
+        frozen['record_sha256'],
+      );
+      expect(currentLedger().latest.approvalSignature, isNull);
+    },
+  );
+
+  test(
+    'all eleven prior whole records and digests retain their frozen identity',
+    () {
+      final frozen =
+          jsonDecode(
+                File(
+                  'test/fixtures/governance_history_before_v63.json',
+                ).readAsStringSync(),
+              )
+              as Map;
+      final records = currentLedger().records.take(11);
+      expect(records.map((r) => r.toJson()).toList(), frozen['ledger_records']);
+      expect(
+        records.map((r) => r.recordSha256).toList(),
+        frozen['ledger_record_sha256'],
+      );
+    },
+  );
+  test('historical v52 identity is not accepted as the current candidate', () {
+    final ledger = ContextOfUseRequalificationLedger.current(
+      manifest: MechanisticApplicabilityManifest.current,
+      configurationSha256:
+          'e75f4fbe20af2cecb6da8e88034ca7a0da4958571a0cecdd8613a3236ceffe05',
+      evidenceAsOfUtc: evidenceAsOfUtc,
+    );
+
+    expect(
+      ledger.integrityReasons,
+      containsAll(const [
+        'ledger.current_configuration_identity_mismatch',
+        'ledger.latest_configuration_mismatch',
+      ]),
+    );
+    expect(ledger.integrityVerified, isFalse);
+    expect(ledger.canPromoteResearchTraceOnly, isFalse);
   });
 
   test(

@@ -1,13 +1,11 @@
-name: Public release preflight
+name: Manual release audit
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   preflight:
+    name: Manual release audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

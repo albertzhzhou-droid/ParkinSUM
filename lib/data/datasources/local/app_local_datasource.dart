@@ -5,6 +5,7 @@ import '../../../core/models/food_item.dart';
 import '../../../core/models/intake.dart';
 import '../../../core/models/meal.dart';
 import '../../../core/models/user_profile.dart';
+import '../../../core/models/user_preference_write_scope.dart';
 import '../../../core/models/recoverable_user_event.dart';
 import '../../../core/db/recoverable_user_event_store.dart';
 import '../../models/interaction_rule_record.dart';
@@ -38,6 +39,26 @@ class AppLocalDataSource {
   Future<List<String>> loadActiveDrugIds() => database.loadActiveDrugIds();
   Future<void> saveActiveDrugIds(List<String> ids) =>
       database.saveActiveDrugIds(ids);
+
+  ScopedUserPreferenceStore get _scopedPreferenceStore {
+    final store = database;
+    if (store is! ScopedUserPreferenceStore) {
+      throw UnsupportedError(
+        'Session-scoped preference storage is unavailable.',
+      );
+    }
+    return store as ScopedUserPreferenceStore;
+  }
+
+  Future<void> saveUserProfileForSession(
+    UserProfile profile, {
+    required UserPreferenceWriteScope scope,
+  }) => _scopedPreferenceStore.saveUserProfileForSession(profile, scope: scope);
+
+  Future<void> saveActiveDrugIdsForSession(
+    List<String> ids, {
+    required UserPreferenceWriteScope scope,
+  }) => _scopedPreferenceStore.saveActiveDrugIdsForSession(ids, scope: scope);
 
   Future<List<Meal>> loadMeals() => database.loadMeals();
   Future<void> saveMeals(List<Meal> meals) => database.saveMeals(meals);

@@ -1,0 +1,50 @@
+{
+  "schema": "parkinsum.unresolved-medication-preprobe-expectations/1",
+  "frozen_at_utc": "2026-09-30T22:12:45.953515+00:00",
+  "state": "inspection_question_not_yet_reproduced",
+  "working_source_sha256": "ff053eaeeb2cc39b982ac946ce3432dcdfe65e0f4c8f74c55b29757076a1c678",
+  "as_of_utc": "2026-09-30T12:30:00.000Z",
+  "expectation_basis": "Software input completeness, not a clinical interaction claim or new risk threshold. Freeze and observe actual saved-intake AppState / DB-backed / risk-window paths before deciding a fix.",
+  "cases": [
+    {
+      "id": "explicit_absence",
+      "meal": {
+        "id": "synthetic-medication-reference-meal",
+        "title": "Synthetic known captured protein",
+        "eatenAt": "2026-09-30T12:30:00.000Z",
+        "food_id": "synthetic-captured-food",
+        "captured_protein_g_per100g": 20,
+        "quantity_factor": 1,
+        "missing_nutrient_fields": []
+      },
+      "active_drug_ids": [],
+      "intakes": [],
+      "expected": "A completed absent-medication check may remain ok/0. This is the positive control."
+    },
+    {
+      "id": "saved_unresolved_intake",
+      "meal": {
+        "id": "synthetic-medication-reference-meal",
+        "title": "Synthetic known captured protein",
+        "eatenAt": "2026-09-30T12:30:00.000Z",
+        "food_id": "synthetic-captured-food",
+        "captured_protein_g_per100g": 20,
+        "quantity_factor": 1,
+        "missing_nutrient_fields": []
+      },
+      "active_drug_ids": [],
+      "intakes": [
+        {
+          "id": "synthetic-unresolved-intake",
+          "drugId": "synthetic-medication-not-in-catalogue",
+          "takenAt": "2026-09-30T12:00:00.000Z",
+          "dosageNote": "synthetic only",
+          "doseAmount": 100,
+          "doseUnit": "mg",
+          "route": "oral"
+        }
+      ],
+      "expected": "Unresolved saved medication reference must remain explicit review/HOLD; cannot receive the same unqualified completed ok/0 result as explicit absence."
+    }
+  ]
+}

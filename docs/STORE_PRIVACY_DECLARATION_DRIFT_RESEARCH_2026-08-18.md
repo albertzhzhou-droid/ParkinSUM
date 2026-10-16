@@ -2,6 +2,10 @@
 
 Reviewed: 2026-08-18
 
+Local-flow source update: 2026-09-29. The original review snapshot below is
+retained; current dependency/host facts come from the versioned contract and
+its checker. No store approval is recorded by this source update.
+
 ## Decision
 
 ParkinSUM now treats store privacy answers as a dated human-reviewed contract,
@@ -113,6 +117,16 @@ workflow must remain a separate consented flow because user-authored text and
 screenshots cannot inherit the machine bundle's privacy classification.
 
 ## Remaining acceptance boundaries
+
+The 2026-09-29 local-user-state declaration includes owner-scoped meal drafts,
+same-owner Web restore receipts/rollback snapshots and evidence-currency
+candidate review receipts. Drafts and review receipts use owner-digest lookup
+keys; the Web aggregate/restore receipt can retain a raw local owner ID and
+sensitive package/record content. Hashing is not payload encryption,
+anonymization or source authentication. These additions have no new Firebase
+upload path. The synthetic meal trial's independent memory/draft store is a
+separate temporary scope. See [privacy policy draft](privacy_policy_draft.md)
+for record contents, retention and export/deletion limits.
 
 - CI currently derives an Android merged-manifest comparison from the built
   debug artifact. A release AAB permission report and signed-artifact checksum

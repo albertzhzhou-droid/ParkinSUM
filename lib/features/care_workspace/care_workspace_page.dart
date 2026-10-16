@@ -9,15 +9,21 @@ import '../../core/constants/clinical_evidence_source_seed.dart';
 import '../../core/constants/p0_food_source_seed.dart';
 import '../../core/i18n/care_workspace_copy.dart';
 import '../../core/state/app_state.dart';
+import '../../core/services/personal_log_handoff_document_service.dart';
+import '../../core/services/personal_log_handoff_text_pdf_renderer.dart';
+import '../../domain/usecases/personal_log_handoff_summary_service.dart';
 import '../../domain/entities/care_medication_discussion_entry.dart';
 import '../../domain/entities/care_medication_discussion_outcome.dart';
 import '../../domain/entities/care_medication_list_review.dart';
 import '../../domain/entities/cdss_records.dart';
 import '../../domain/entities/decision_support_followup.dart';
 import '../../domain/entities/visit_preparation.dart';
+import '../../domain/entities/visit_report_selection.dart';
 import '../../domain/usecases/fhir_r4_medication_statement_collection_mapper.dart';
 import '../../domain/usecases/source_reference_projection.dart';
 import '../timeline/medication_assertion_reconciliation_page.dart';
+import 'visit_report_selection_page.dart';
+import 'care_portable_data_page.dart';
 
 final List<SourceDocumentRecord> _careWorkspaceSourceDocuments =
     List<SourceDocumentRecord>.unmodifiable([
@@ -164,11 +170,23 @@ class _CareWorkspacePageState extends State<CareWorkspacePage> {
                     const SizedBox(height: 8),
                     Text(
                       _t(
-                        '反馈、观察与问题按账号保存在此设备，暂不包含在现有数据包备份中。状态由本人记录，不代表医生已核实或接受建议。',
-                        'Feedback, observations and questions are stored by account on this device and are not yet included in data-package backups. These are your workflow notes, not clinician verification.',
+                        '反馈、观察与问题按账号保存在此设备，可使用独立 Care 数据包备份。状态由本人记录，不代表医生已核实或接受建议。',
+                        'Feedback, observations and questions are stored by account on this device and can be backed up in a separate Care package. These are your workflow notes, not clinician verification.',
                       ),
                     ),
                     const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      key: const ValueKey('care-open-backup'),
+                      onPressed: _busy || !state.isCareWorkspaceReady
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => const CarePortableDataPage(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.archive_outlined),
+                      label: Text(_t('Care 备份与恢复', 'Care backup & restore')),
+                    ),
                     if (state.careWorkspaceError != null)
                       Card(
                         child: Padding(
@@ -201,6 +219,21 @@ class _CareWorkspacePageState extends State<CareWorkspacePage> {
                       label: Text(_t('预览就诊清单', 'Preview visit checklist')),
                     ),
                     const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      key: const ValueKey('care-select-and-export-visit'),
+                      onPressed: !_authorized
+                          ? null
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    const VisitReportSelectionPage(),
+                              ),
+                            ),
+                      icon: const Icon(Icons.ios_share_outlined),
+                      label: Text(
+                        _t('选择并导出访前报告', 'Select and export a visit report'),
+                      ),
+                    ),
                     _visitObservationSelection(state),
                     const SizedBox(height: 16),
                     Text(
@@ -1576,6 +1609,7 @@ class _CareWorkspacePageState extends State<CareWorkspacePage> {
             report: report,
             owner: _owner!,
             localeTag: _localeTag,
+            sourceLease: _state!.captureVisitPreparationLease(),
           ),
         ),
       );
@@ -1709,10 +1743,18 @@ class VisitPreparationPreview extends StatefulWidget {
     required this.report,
     required this.owner,
     required this.localeTag,
+    this.sourceLease,
+    this.handoffArtifact,
+    this.renderer = const SystemPersonalLogHandoffTextPdfRenderer(),
+    this.delivery = const SystemPersonalLogHandoffDelivery(),
   });
   final VisitPreparationReport report;
   final String owner;
   final String localeTag;
+  final VisitPreparationSourceLease? sourceLease;
+  final PersonalLogHandoffArtifact? handoffArtifact;
+  final PersonalLogHandoffRenderer renderer;
+  final PersonalLogHandoffDelivery delivery;
   @override
   State<VisitPreparationPreview> createState() =>
       _VisitPreparationPreviewState();
@@ -1722,30 +1764,51 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
   AppState? _state;
   bool _expired = false;
   bool _copying = false;
+  VisitPreparationSourceLease? _sourceLease;
+  Uint8List? _pdfBytes;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_state != null) return;
     _state = context.read<AppState>();
+    try {
+      _sourceLease =
+          widget.sourceLease ?? _state!.captureVisitPreparationLease();
+    } catch (_) {
+      _expired = true;
+      _pdfBytes = null;
+    }
     _state!.addListener(_checkOwner);
     _checkOwner();
   }
 
   void _checkOwner() {
-    if (_state!.currentUserId != widget.owner) _expired = true;
+    final lease = _sourceLease;
+    if (_state!.currentUserId != widget.owner ||
+        lease == null ||
+        !_state!.isVisitPreparationLeaseCurrent(lease)) {
+      _expired = true;
+      _pdfBytes = null;
+    }
   }
+
+  bool get _allowed =>
+      !_expired &&
+      _sourceLease != null &&
+      _state!.currentUserId == widget.owner &&
+      _state!.isVisitPreparationLeaseCurrent(_sourceLease!);
 
   @override
   void dispose() {
     _state?.removeListener(_checkOwner);
+    _pdfBytes = null;
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
-    final allowed =
-        !_expired && state.currentUserId == widget.owner && !state.isAuthBusy;
+    final allowed = _allowed;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface.withAlpha(255),
       appBar: AppBar(
@@ -1756,10 +1819,14 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
       body: !allowed
           ? Center(
               child: Text(
-                careWorkspaceVisitCopy(
-                  'preview.accountChanged',
-                  localeTag: widget.localeTag,
-                ),
+                state.currentUserId != widget.owner
+                    ? careWorkspaceVisitCopy(
+                        'preview.accountChanged',
+                        localeTag: widget.localeTag,
+                      )
+                    : widget.localeTag.startsWith('zh')
+                    ? '记录或会话已变化，请返回并重新选择报告内容。'
+                    : 'The records or session changed. Return and select the report contents again.',
               ),
             )
           : Center(
@@ -1768,6 +1835,56 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
                 child: ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
+                    if (widget.handoffArtifact != null) ...[
+                      Text(
+                        widget.localeTag.startsWith('zh')
+                            ? '导出与下方预览使用同一份所选内容。记录或会话变化后需重新生成。'
+                            : 'Export uses the selected contents shown below. Regenerate after the records or session change.',
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton.icon(
+                            key: const ValueKey('visit-export-html'),
+                            onPressed: _copying
+                                ? null
+                                : () => _deliver(_VisitDeliveryAction.html),
+                            icon: const Icon(Icons.language),
+                            label: Text(
+                              widget.localeTag.startsWith('zh')
+                                  ? '保存 HTML'
+                                  : 'Save HTML',
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            key: const ValueKey('visit-export-pdf'),
+                            onPressed: _copying
+                                ? null
+                                : () => _deliver(_VisitDeliveryAction.pdf),
+                            icon: const Icon(Icons.picture_as_pdf_outlined),
+                            label: Text(
+                              widget.localeTag.startsWith('zh')
+                                  ? '保存文本 PDF'
+                                  : 'Save text PDF',
+                            ),
+                          ),
+                          OutlinedButton.icon(
+                            key: const ValueKey('visit-print-pdf'),
+                            onPressed: _copying
+                                ? null
+                                : () => _deliver(_VisitDeliveryAction.print),
+                            icon: const Icon(Icons.print_outlined),
+                            label: Text(
+                              widget.localeTag.startsWith('zh')
+                                  ? '打印'
+                                  : 'Print',
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                     Text(
                       careWorkspaceVisitCopy(
                         'preview.privacy',
@@ -1872,10 +1989,85 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
   Future<void> _copyAgenda() =>
       _copyText(widget.report.agendaText, successKey: 'agenda.copy.success');
 
+  Future<void> _deliver(_VisitDeliveryAction action) async {
+    final artifact = widget.handoffArtifact;
+    if (!_allowed || _copying || artifact == null) return;
+    setState(() => _copying = true);
+    PersonalLogHandoffDeliveryStatus? status;
+    var missingFont = false;
+    try {
+      if (action == _VisitDeliveryAction.html) {
+        final bytes = const PersonalLogHandoffHtmlSerializer().render(artifact);
+        if (!_allowed) return;
+        final box = context.findRenderObject();
+        final origin = box is RenderBox
+            ? box.localToGlobal(Offset.zero) & box.size
+            : null;
+        status = await widget.delivery.shareHtml(
+          bytes: bytes,
+          fileName: artifact.htmlFileName,
+          sharePositionOrigin: origin,
+          authorize: () => mounted && _allowed,
+        );
+      } else {
+        final bytes =
+            _pdfBytes ??
+            await widget.renderer.render(context: context, artifact: artifact);
+        if (!mounted || !_allowed) return;
+        _pdfBytes = bytes;
+        status = action == _VisitDeliveryAction.print
+            ? await widget.delivery.printPdf(
+                bytes: bytes,
+                fileName: artifact.fileName,
+                authorize: () => mounted && _allowed,
+              )
+            : await widget.delivery.saveOrSharePdf(
+                bytes: bytes,
+                fileName: artifact.fileName,
+                authorize: () => mounted && _allowed,
+              );
+      }
+      debugPrint('[CareWorkspace] visit_delivery:${status.name}');
+    } on FormatException catch (error) {
+      missingFont = const [
+        'handoff_pdf_glyph_unavailable',
+        'handoff_pdf_font_unavailable',
+      ].contains(error.message);
+      debugPrint('[CareWorkspace] visit_delivery:format_failure');
+    } catch (_) {
+      debugPrint('[CareWorkspace] visit_delivery:failed');
+    } finally {
+      if (mounted) setState(() => _copying = false);
+    }
+    if (!mounted || !_allowed) return;
+    final chinese = widget.localeTag.startsWith('zh');
+    final message = switch (status) {
+      PersonalLogHandoffDeliveryStatus.completed =>
+        chinese ? '交付已完成。' : 'Delivery completed.',
+      PersonalLogHandoffDeliveryStatus.cancelled =>
+        chinese ? '已取消，未报告保存成功。' : 'Cancelled; no save success reported.',
+      PersonalLogHandoffDeliveryStatus.downloadRequested =>
+        chinese ? '已请求下载。' : 'Download requested.',
+      PersonalLogHandoffDeliveryStatus.unavailable =>
+        chinese
+            ? '当前设备无法交付，请使用 HTML。'
+            : 'Delivery is unavailable here. Use HTML.',
+      null =>
+        missingFont
+            ? chinese
+                  ? '字体无法完整显示所选文字，请保存 HTML。'
+                  : 'The font cannot display all selected text. Save HTML.'
+            : chinese
+            ? '无法交付，请重试。'
+            : 'Delivery failed. Retry.',
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _copyText(String text, {required String successKey}) async {
-    if (_expired ||
-        _state!.currentUserId != widget.owner ||
-        _state!.isAuthBusy) {
+    if (!_allowed) {
       return;
     }
     setState(() => _copying = true);
@@ -1888,7 +2080,7 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
     }
     if (!mounted) return;
     setState(() => _copying = false);
-    if (_expired || _state!.currentUserId != widget.owner) return;
+    if (!_allowed) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -1921,9 +2113,7 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
   }
 
   void _openCurrentMedicationReview(String intakeId) {
-    if (_expired ||
-        _state!.currentUserId != widget.owner ||
-        _state!.isAuthBusy) {
+    if (!_allowed) {
       return;
     }
     debugPrint('[CareWorkspace] visitPreparationReview:opened');
@@ -1936,3 +2126,5 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
     );
   }
 }
+
+enum _VisitDeliveryAction { html, pdf, print }

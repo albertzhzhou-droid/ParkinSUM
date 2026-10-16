@@ -1,0 +1,31 @@
+{
+  "schema": "parkinsum.independent-medication-edit-expectations/1",
+  "frozen_at_utc": "2026-10-01T01:38:50.948Z",
+  "before_production_edit": true,
+  "cases": [
+    {
+      "id": "unresolved_existing_reference",
+      "original_drug_id": "synthetic-medication-not-in-catalogue",
+      "user_selects_replacement": false,
+      "expected_medication_preselection": null,
+      "expected_original_record_unchanged": true
+    },
+    {
+      "id": "catalogue_disappears_while_editing",
+      "user_selects_replacement": false,
+      "expected_medication_preselection": null,
+      "expected_original_record_unchanged": true
+    },
+    {
+      "id": "known_existing_reference",
+      "user_selects_replacement": false,
+      "expected_medication_preselection": "exact_original_known_id"
+    },
+    {
+      "id": "unresolved_explicit_replacement",
+      "user_selects_replacement": true,
+      "expected_saved_drug_id": "explicit_selected_known_id"
+    }
+  ],
+  "boundary": "Manual input-identity expectations fixed before observing editor output. No algorithm output, clinical equivalence, dose evidence or source qualification is inferred."
+}

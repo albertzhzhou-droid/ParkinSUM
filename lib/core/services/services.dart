@@ -46,6 +46,7 @@ import '../../data/datasources/remote/source_fetch_client.dart';
 import '../models/drug_definition.dart';
 import '../models/food_item.dart';
 import 'auth_service.dart';
+import 'meal_draft_service.dart';
 import 'care_workspace_service.dart';
 import 'care_workspace_store.dart';
 import 'capability_rollout_service.dart';
@@ -54,7 +55,9 @@ import 'user_clinical_audit_service.dart';
 import 'user_data_service.dart';
 
 class Services {
+  final bool isEphemeral;
   final AuthService authService;
+  final MealDraftService mealDraftService;
   final CareWorkspaceService careWorkspaceService;
   final AppDatabase appDatabase;
   final CdssDatabase cdssDatabase;
@@ -87,7 +90,9 @@ class Services {
   final Future<void> ready;
 
   Services._({
+    required this.isEphemeral,
     required this.authService,
+    required this.mealDraftService,
     required this.careWorkspaceService,
     required this.appDatabase,
     required this.cdssDatabase,
@@ -238,10 +243,13 @@ class Services {
     AppDatabase? appDatabase,
     CdssDatabase? cdssDatabase,
     CareWorkspaceStore? careWorkspaceStore,
+    MealDraftStore? mealDraftStore,
     KnowledgeGovernanceStore? knowledgeGovernanceStore,
     KnowledgeApprovalTrustPolicy? knowledgeApprovalTrustPolicy,
   }) => Services._configured(
+    ephemeral: true,
     authOverride: LocalAuthService(),
+    mealDraftStoreOverride: mealDraftStore ?? MemoryMealDraftStore(),
     careWorkspaceStoreOverride:
         careWorkspaceStore ?? MemoryCareWorkspaceStore(),
     appDatabaseOverride: appDatabase ?? InMemoryAppDatabase(),
@@ -262,7 +270,9 @@ class Services {
   );
 
   factory Services._configured({
+    bool ephemeral = false,
     AuthService? authOverride,
+    MealDraftStore? mealDraftStoreOverride,
     CareWorkspaceStore? careWorkspaceStoreOverride,
     AppDatabase? appDatabaseOverride,
     CdssDatabase? cdssDatabaseOverride,
@@ -295,7 +305,10 @@ class Services {
       local: localDataSource,
     );
     final userData = UserDataService(repository: appRepository);
-    final userClinicalAudit = UserClinicalAuditService(authService: auth);
+    final userClinicalAudit = UserClinicalAuditService(
+      authService: auth,
+      allowPersistence: !ephemeral,
+    );
     final knowledgeGovernanceService = KnowledgeGovernanceService(
       store:
           knowledgeGovernanceStoreOverride ?? LocalKnowledgeGovernanceStore(),
@@ -346,6 +359,7 @@ class Services {
     );
     final cdssCatalogProjectionService = CdssCatalogProjectionService(
       database: cdssDatabase,
+      requireConsistentCatalog: !ephemeral,
     );
     final rolloutTrustConfigured =
         capabilityRollout.verifier.trustPolicy.isConfigured;
@@ -408,9 +422,12 @@ class Services {
     );
     final p0KnowledgeBase = buildP0FoodKnowledgeBaseSeed();
 
-    final ready = FirebaseBackend.ensureInitialized().then((_) async {
+    final backendReady = ephemeral
+        ? Future<void>.value()
+        : FirebaseBackend.ensureInitialized();
+    final ready = backendReady.then((_) async {
       await capabilityRollout.load();
-      if (FirebaseBackend.enabled) return;
+      if (FirebaseBackend.enabled && !ephemeral) return;
       await Future.wait([
         appRepository.initialize(
           seedFoods: foodRepo.allFoods,
@@ -453,7 +470,11 @@ class Services {
     });
 
     return Services._(
+      isEphemeral: ephemeral,
       authService: auth,
+      mealDraftService: MealDraftService(
+        store: mealDraftStoreOverride ?? LocalMealDraftStore(),
+      ),
       careWorkspaceService: CareWorkspaceService(
         store: careWorkspaceStoreOverride ?? LocalCareWorkspaceStore(),
       ),

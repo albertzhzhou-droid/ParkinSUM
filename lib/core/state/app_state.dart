@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:crypto/crypto.dart';
 
 import '../analysis/catalog_engine.dart';
 import '../i18n/app_i18n.dart';
@@ -13,11 +14,15 @@ import '../models/administration_dose_confirmation.dart';
 import '../models/intake.dart';
 import '../models/interaction_result.dart';
 import '../models/meal.dart';
+import '../models/meal_draft.dart';
 import '../models/user_profile.dart';
+import '../models/user_preference_write_scope.dart';
 import '../models/purpose_bound_consent.dart';
 import '../models/recoverable_user_event.dart';
 import '../services/services.dart';
 import '../services/care_workspace_service.dart';
+import '../services/care_portable_data_service.dart';
+import '../services/origin_storage_coordination.dart';
 import '../../domain/entities/personal_observation.dart';
 import '../../domain/entities/decision_support_followup.dart';
 import '../../domain/entities/care_medication_discussion_entry.dart';
@@ -25,6 +30,8 @@ import '../../domain/entities/care_medication_discussion_outcome.dart';
 import '../../domain/entities/care_medication_list_review.dart';
 import '../../domain/usecases/decision_support_followup_service.dart';
 import '../../domain/entities/visit_preparation.dart';
+import '../../domain/entities/visit_report_selection.dart';
+import '../../domain/usecases/personal_log_date_window_resolver.dart';
 import '../../domain/usecases/visit_preparation_service.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
@@ -189,13 +196,35 @@ class ImportSourceDocumentDrilldown {
 class AppState extends ChangeNotifier {
   final Services services;
 
-  AppState({required this.services}) {
+  AppState({required this.services, Stream<void>? externalStorageChanges}) {
     _authSubscription = services.authService.authStateChanges.listen(
       _handleAuthUserChanged,
     );
+    _externalStorageSubscription =
+        (externalStorageChanges ?? externalLocalDataChanges).listen(
+          (_) => _markExternalStorageChanged(),
+        );
   }
 
   StreamSubscription<AuthUser?>? _authSubscription;
+  StreamSubscription<void>? _externalStorageSubscription;
+  bool _externalStorageStale = false;
+  bool get isLocalStorageStale => _externalStorageStale;
+
+  void _markExternalStorageChanged() {
+    if (_isDisposed || _externalStorageStale) return;
+    _externalStorageStale = true;
+    _invalidatePreferenceMutations();
+    _mealDraftSessionEpoch += 1;
+    _mealDraftEditorEpoch += 1;
+    _careSessionEpoch += 1;
+    _mealCheckCache.clear();
+    _mealCheckCacheInputs.clear();
+    _debugLog('[LocalStorage] external_change:reload_required');
+    notifyListeners();
+  }
+
+  bool _isDisposed = false;
   CareWorkspaceSnapshot? _careWorkspace;
   String? _careWorkspaceError;
   int _careSessionEpoch = 0;
@@ -203,7 +232,9 @@ class AppState extends ChangeNotifier {
 
   String? get careWorkspaceError => _careWorkspaceError;
   bool get isCareWorkspaceReady =>
-      _careWorkspace?.ownerScope == _authUserId && _authUserId != null;
+      !_externalStorageStale &&
+      _careWorkspace?.ownerScope == _authUserId &&
+      _authUserId != null;
   List<PersonalObservation> get observations =>
       _careWorkspace?.observations ?? const [];
   List<CareDiscussionNote> get discussionNotes =>
@@ -214,13 +245,87 @@ class AppState extends ChangeNotifier {
       _careWorkspace?.medicationDiscussionOutcomes ?? const [];
   List<CareMedicationListReview> get medicationListReviews =>
       _careWorkspace?.medicationListReviews ?? const [];
+
+  CarePortableDataArtifact exportCarePortableData({DateTime? createdAt}) {
+    final snapshot = _careWorkspace;
+    if (_isDisposed ||
+        !isCareWorkspaceReady ||
+        isAuthBusy ||
+        snapshot == null) {
+      throw StateError('care_portable_workspace_unavailable');
+    }
+    return const CarePortableDataService().create(
+      snapshot: snapshot,
+      createdAt: createdAt ?? DateTime.now(),
+    );
+  }
+
+  CarePortableRestorePreview prepareCarePortableRestore(String packageJson) {
+    final snapshot = _careWorkspace;
+    if (_isDisposed ||
+        !isCareWorkspaceReady ||
+        isAuthBusy ||
+        snapshot == null) {
+      throw StateError('care_portable_workspace_unavailable');
+    }
+    return const CarePortableDataService().prepare(
+      packageJson: packageJson,
+      current: snapshot,
+      sessionEpoch: _preferenceMutationSessionEpoch,
+    );
+  }
+
+  bool isCarePortablePreviewCurrent(CarePortableRestorePreview preview) =>
+      !_isDisposed &&
+      !isAuthBusy &&
+      isCareWorkspaceReady &&
+      preview.before.ownerScope == _authUserId &&
+      preview.sessionEpoch == _preferenceMutationSessionEpoch &&
+      carePortableSnapshotDigest(_careWorkspace!) == preview.beforeSha256;
+
+  Future<bool> restoreCarePortableData(
+    CarePortableRestorePreview preview, {
+    required bool confirmed,
+  }) async {
+    final owner = _authUserId;
+    final careEpoch = _careSessionEpoch;
+    bool authorized() =>
+        !_isDisposed &&
+        !isAuthBusy &&
+        _authUserId == owner &&
+        services.authService.currentUserId == owner &&
+        _preferenceMutationSessionEpoch == preview.sessionEpoch &&
+        _careSessionEpoch == careEpoch;
+    if (!isCarePortablePreviewCurrent(preview) || !confirmed) return false;
+    try {
+      await const CarePortableDataService().commit(
+        preview: preview,
+        service: services.careWorkspaceService,
+        authorize: authorized,
+        confirmed: confirmed,
+      );
+      if (!authorized()) return false;
+      _careWorkspace = preview.after;
+      _careWorkspaceError = null;
+      _debugLog('[CarePortable] restore:committed');
+      notifyListeners();
+      return true;
+    } catch (_) {
+      if (!authorized()) return false;
+      _careWorkspaceError = 'restore_failed';
+      _debugLog('[CarePortable] restore:failed');
+      notifyListeners();
+      return false;
+    }
+  }
+
   List<DecisionSupportFollowupItem> followups({
     DateTime? now,
     bool includeHistory = false,
   }) {
     final snapshot = _careWorkspace;
     if (snapshot == null || snapshot.ownerScope != _authUserId) return const [];
-    final currentIds = _mealCheckCache.values
+    final currentIds = _currentMealChecks()
         .expand((result) => result.followupPrompts)
         .map((prompt) => prompt.id)
         .toSet();
@@ -266,11 +371,11 @@ class AppState extends ChangeNotifier {
       );
       if (epoch != _careSessionEpoch || owner != _authUserId) return;
       _careWorkspace = loaded;
-      // Retry prompt writes from successful saved-meal checks. Merely rereading
-      // the older ledger would otherwise hide the error while losing prompts.
-      await _registerFollowups(
-        _mealCheckCache.values.expand((result) => result.followupPrompts),
-      );
+      // Reload advances the care session, so the previous meal-check stamps
+      // cannot authorize a retry. Recheck saved inputs under the new lease;
+      // this never writes the meal again and registration retains each first
+      // durable prompt snapshot and its existing feedback.
+      await _refreshMealChecks();
     } catch (_) {
       if (epoch != _careSessionEpoch || owner != _authUserId) return;
       _careWorkspaceError = 'load_failed';
@@ -284,7 +389,11 @@ class AppState extends ChangeNotifier {
   ) async {
     final owner = _authUserId;
     final epoch = _careSessionEpoch;
-    if (owner == null || _careWorkspace?.ownerScope != owner) return false;
+    if (_externalStorageStale ||
+        owner == null ||
+        _careWorkspace?.ownerScope != owner) {
+      return false;
+    }
     bool authorized() =>
         epoch == _careSessionEpoch &&
         owner == _authUserId &&
@@ -465,33 +574,141 @@ class AppState extends ChangeNotifier {
     );
   }
 
+  String get visitPreparationInputRevision {
+    final currentPrompts =
+        _currentMealChecks()
+            .expand((result) => result.followupPrompts)
+            .map((prompt) => prompt.id)
+            .toSet()
+            .toList()
+          ..sort();
+    return sha256
+        .convert(
+          utf8.encode(
+            jsonEncode({
+              'owner': _authUserId,
+              'sessionEpoch': _preferenceMutationSessionEpoch,
+              'profile': _userProfile.toJson(),
+              'care': _careWorkspace?.toJson(),
+              'activeDrugIds': _activeDrugIds,
+              'intakes': _intakes.map((intake) => intake.toJson()).toList(),
+              'medicationRevision': medRepo.revision,
+              'currentPromptIds': currentPrompts,
+            }),
+          ),
+        )
+        .toString();
+  }
+
+  VisitPreparationSourceLease captureVisitPreparationLease() {
+    if (_isDisposed ||
+        _isBootstrapping ||
+        _isAuthBusy ||
+        !isCareWorkspaceReady ||
+        _authUserId == null) {
+      throw StateError('visit_report_source_unavailable');
+    }
+    return VisitPreparationSourceLease(
+      owner: _authUserId!,
+      sessionEpoch: _preferenceMutationSessionEpoch,
+      sourceRevision: visitPreparationInputRevision,
+    );
+  }
+
+  bool isVisitPreparationLeaseCurrent(VisitPreparationSourceLease lease) =>
+      !_isDisposed &&
+      !_isBootstrapping &&
+      !_isAuthBusy &&
+      isCareWorkspaceReady &&
+      _authUserId == lease.owner &&
+      _preferenceMutationSessionEpoch == lease.sessionEpoch &&
+      visitPreparationInputRevision == lease.sourceRevision;
+
   VisitPreparationReport prepareVisit({
     DateTime? now,
     Set<String>? includedObservationIds,
+    VisitReportSelection? selection,
   }) {
     if (!isCareWorkspaceReady) throw StateError('care_workspace_unavailable');
+    if (selection != null && includedObservationIds != null) {
+      throw ArgumentError('Use one explicit visit report selection.');
+    }
     final chinese = _userProfile.displayLocale.startsWith('zh');
     final at = now ?? DateTime.now();
-    final pending = followups(now: at).where((item) => !item.isClosed).toList()
-      ..sort((a, b) => b.prompt.createdAt.compareTo(a.prompt.createdAt));
-    final recentObservations = observations.toList()
-      ..sort((left, right) {
-        final byTime = right.occurredAt.compareTo(left.occurredAt);
-        return byTime != 0 ? byTime : left.id.compareTo(right.id);
-      });
+    if (selection != null && selection.window.zoneId != _userProfile.timezone) {
+      throw StateError('visit_report_zone_changed');
+    }
+    final window = selection == null
+        ? null
+        : PersonalLogDateWindowResolver().resolve(selection.window, asOf: at);
+    List<T> selected<T>(
+      Iterable<T> rows,
+      Set<String>? ids,
+      String Function(T) id,
+      DateTime Function(T) time,
+    ) {
+      final eligible = rows
+          .where(
+            (row) =>
+                window == null ||
+                (window.contains(time(row)) && !window.isFuture(time(row))),
+          )
+          .toList();
+      if (ids == null) return eligible;
+      if (ids.difference(eligible.map(id).toSet()).isNotEmpty) {
+        throw StateError('visit_report_selection_changed');
+      }
+      return eligible.where((row) => ids.contains(id(row))).toList();
+    }
+
+    final visitIntakes = selected(
+      _intakes,
+      selection?.intakeIds,
+      (row) => row.id,
+      (row) => row.takenAt,
+    );
+    final pending = selected(
+      followups(now: at).where((item) => !item.isClosed),
+      selection?.followupPromptIds,
+      (row) => row.prompt.id,
+      (row) => row.latestFeedback?.occurredAt ?? row.prompt.createdAt,
+    )..sort((a, b) => b.prompt.createdAt.compareTo(a.prompt.createdAt));
+    final recentObservations =
+        selected(
+          observations,
+          selection?.observationIds,
+          (row) => row.id,
+          (row) => row.occurredAt,
+        )..sort((left, right) {
+          final byTime = right.occurredAt.compareTo(left.occurredAt);
+          return byTime != 0 ? byTime : left.id.compareTo(right.id);
+        });
     final visitObservationCandidates = recentObservations
         .take(visitPreparationMaxItems)
         .toList(growable: false);
     final selectedVisitObservationIds = includedObservationIds?.intersection(
       visitObservationCandidates.map((item) => item.id).toSet(),
     );
-    final recentNotes = discussionNotes.toList()
-      ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
-    final recentMedicationDiscussionEntries =
-        medicationDiscussionEntries.toList()
-          ..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    final recentNotes = selected(
+      discussionNotes,
+      selection?.questionNoteIds,
+      (row) => row.id,
+      (row) => row.recordedAt,
+    )..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+    final recentMedicationDiscussionEntries = selected(
+      medicationDiscussionEntries,
+      selection?.medicationEntryIds,
+      (row) => row.id,
+      (row) => row.recordedAt,
+    )..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
     final medicationAssertionReviewIntakes =
-        _intakes.where((intake) => !intake.takenAt.isAfter(at)).toList()
+        visitIntakes
+            .where(
+              (intake) =>
+                  !intake.takenAt.isAfter(at) &&
+                  (selection == null || selection.includeSourceAssertions),
+            )
+            .toList()
           ..sort((left, right) {
             final byTime = right.takenAt.compareTo(left.takenAt);
             return byTime != 0 ? byTime : left.id.compareTo(right.id);
@@ -586,16 +803,25 @@ class AppState extends ChangeNotifier {
       generatedAt: at,
       chinese: chinese,
       snapshot: VisitPreparationSnapshot(
-        activeDrugIds: _activeDrugIds,
+        currentSelectionIncluded: selection?.includeCurrentMedications ?? true,
+        sourceAssertionsIncluded: selection?.includeSourceAssertions ?? true,
+        discussionUpdatesIncluded: selection?.includeDiscussionUpdates ?? true,
+        activeDrugIds: selection?.includeCurrentMedications == false
+            ? const []
+            : _activeDrugIds,
         medicationCatalog: services.medicationRepository.allDrugs,
-        intakes: _intakes,
+        intakes: selection?.includeRecordNotes == false
+            ? visitIntakes.map((intake) => intake.copyWith(dosageNote: ''))
+            : visitIntakes,
         discussionItems: pending
             .take(128)
             .map(
               (item) => VisitDiscussionItem(
                 label: item.prompt.explanation,
                 status: followupStatusLabel(item.status, chinese: chinese),
-                reason: item.latestFeedback?.reason,
+                reason: selection?.includeRecordNotes == false
+                    ? null
+                    : item.latestFeedback?.reason,
                 recordedAt:
                     item.latestFeedback?.occurredAt ?? item.prompt.createdAt,
                 sourceIds: [
@@ -609,7 +835,7 @@ class AppState extends ChangeNotifier {
           (item) => VisitObservationSummary(
             label: item.summary(chinese: chinese),
             summary:
-                '${item.notes ?? ''} ${chinese ? '来源' : 'Source'}: ${switch (item.source) {
+                '${selection?.includeRecordNotes == false ? '' : item.notes ?? ''} ${chinese ? '来源' : 'Source'}: ${switch (item.source) {
                   PersonalObservationSource.selfReported => chinese ? '本人自报' : 'Self-reported',
                   PersonalObservationSource.deviceManual => chinese ? '手动录入设备读数' : 'Device reading entered manually',
                   PersonalObservationSource.caregiverReported => chinese ? '照护者提供，本人录入' : 'Caregiver report entered by the account holder',
@@ -622,9 +848,49 @@ class AppState extends ChangeNotifier {
           ),
         ),
         includedObservationIds: selectedVisitObservationIds,
-        medicationDiscussionEntries: recentMedicationDiscussionEntries,
-        medicationDiscussionOutcomes: medicationDiscussionOutcomes,
-        medicationListReviews: medicationListReviews,
+        medicationDiscussionEntries: selection?.includeRecordNotes == false
+            ? recentMedicationDiscussionEntries.map(
+                (entry) => CareMedicationDiscussionEntry(
+                  id: entry.id,
+                  name: entry.name,
+                  category: entry.category,
+                  reportedUse: entry.reportedUse,
+                  ingredientLabel: null,
+                  doseAndScheduleText: null,
+                  question: entry.question,
+                  recordedAt: entry.recordedAt,
+                  recorderId: entry.recorderId,
+                ),
+              )
+            : recentMedicationDiscussionEntries,
+        medicationDiscussionOutcomes: selection == null
+            ? medicationDiscussionOutcomes
+            : selection.includeDiscussionUpdates
+            ? medicationDiscussionOutcomes
+                  .where(
+                    (outcome) =>
+                        selection.medicationEntryIds.contains(
+                          outcome.entryId,
+                        ) &&
+                        window!.contains(outcome.recordedAt) &&
+                        !window.isFuture(outcome.recordedAt),
+                  )
+                  .map(
+                    (outcome) => selection.includeRecordNotes
+                        ? outcome
+                        : CareMedicationDiscussionOutcome(
+                            id: outcome.id,
+                            entryId: outcome.entryId,
+                            status: outcome.status,
+                            note: null,
+                            recordedAt: outcome.recordedAt,
+                            recorderId: outcome.recorderId,
+                          ),
+                  )
+            : const [],
+        medicationListReviews: selection?.includeCurrentMedications == false
+            ? const []
+            : medicationListReviews,
         medicationAssertionReviews: medicationAssertionReviews,
         unreviewedMedicationAssertionIntakeCount:
             unreviewedMedicationAssertionIntakeCount,
@@ -653,6 +919,37 @@ class AppState extends ChangeNotifier {
   List<String> _activeDrugIds = [];
   final ActiveDrugSelectionCoordinator _activeDrugSelectionCoordinator =
       ActiveDrugSelectionCoordinator();
+  int _preferenceMutationSessionEpoch = 0;
+  int get preferenceMutationSessionEpoch => _preferenceMutationSessionEpoch;
+
+  void _invalidatePreferenceMutations() {
+    _preferenceMutationSessionEpoch += 1;
+    _profileMutationCoordinator.invalidate();
+    _activeDrugSelectionCoordinator.invalidate();
+  }
+
+  UserPreferenceWriteScope? _currentPreferenceWriteScope() {
+    final owner = _authUserId;
+    if (owner == null) return null;
+    final epoch = _preferenceMutationSessionEpoch;
+    return UserPreferenceWriteScope(
+      ownerUid: owner,
+      sessionEpoch: epoch,
+      expectedProfileDigest: userPreferenceProfileDigest(_userProfile),
+      expectedActiveSelectionDigest: userPreferenceSelectionDigest(
+        _activeDrugIds,
+      ),
+      isCurrent: () =>
+          !_isDisposed &&
+          !_externalStorageStale &&
+          !_isBootstrapping &&
+          !_isAuthBusy &&
+          epoch == _preferenceMutationSessionEpoch &&
+          owner == _authUserId &&
+          services.authService.currentUserId == owner,
+    );
+  }
+
   List<Meal> _meals = [];
   final PersistedListMutationCoordinator<Meal> _mealMutationCoordinator =
       PersistedListMutationCoordinator<Meal>();
@@ -672,8 +969,13 @@ class AppState extends ChangeNotifier {
       const RecoverableEventRestoreImpactService();
   String? _restoreImpactAlgorithmConfigurationDigest;
   List<FoodRecommendation> _recommendations = [];
+  int _recommendationRefreshEpoch = 0;
+  String? _recommendationInputStamp;
+  int _derivedSourceEpoch = 0;
   bool _recommendationRankPresentationWithheld = false;
   Map<String, InteractionResult> _mealCheckCache = {};
+  Map<String, ({String contextKey, String mealKey})> _mealCheckCacheInputs = {};
+  int _mealCheckRefreshEpoch = 0;
   bool _isImportingP0 = false;
   ImportTaskResult? _latestImportTask;
   Map<String, String> _lastImportRequest = {};
@@ -724,17 +1026,23 @@ class AppState extends ChangeNotifier {
       List<RecoverableUserEventRevision>.unmodifiable(_recoverableEventHistory);
   bool get isImportingP0 => _isImportingP0;
   ImportTaskResult? get latestImportTask => _latestImportTask;
-  String get recommendationDecisionPath => _recommendationDecisionPath;
-  List<String> get recommendationExplanations =>
-      List.unmodifiable(_recommendationExplanations);
-  List<String> get recommendationGateReasons =>
-      List.unmodifiable(_recommendationGateReasons);
-  bool get recommendationAiUsed => _recommendationAiUsed;
+  String get recommendationDecisionPath => _recommendationsAreCurrent
+      ? _recommendationDecisionPath
+      : 'pending_input_refresh';
+  List<String> get recommendationExplanations => _recommendationsAreCurrent
+      ? List.unmodifiable(_recommendationExplanations)
+      : const [];
+  List<String> get recommendationGateReasons => _recommendationsAreCurrent
+      ? List.unmodifiable(_recommendationGateReasons)
+      : const ['derived_inputs_changed'];
+  bool get recommendationAiUsed =>
+      _recommendationsAreCurrent && _recommendationAiUsed;
   String? get recommendationTemplateCountryCode =>
-      _recommendationTemplateCountryCode;
-  String? get recommendationTemplateMealSlot => _recommendationTemplateMealSlot;
+      _recommendationsAreCurrent ? _recommendationTemplateCountryCode : null;
+  String? get recommendationTemplateMealSlot =>
+      _recommendationsAreCurrent ? _recommendationTemplateMealSlot : null;
   String? get recommendationTemplateTextureLevel =>
-      _recommendationTemplateTextureLevel;
+      _recommendationsAreCurrent ? _recommendationTemplateTextureLevel : null;
   LocalAiAvailability? get localAiAvailability => _localAiAvailability;
   bool get isRunningReplayBenchmark => _isRunningReplayBenchmark;
   RecommendationReplayRunReport? get latestReplayBenchmarkReport =>
@@ -782,15 +1090,19 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> bootstrap() async {
+    _invalidatePreferenceMutations();
     _debugLog('[AppState] bootstrap:start');
     _isBootstrapping = true;
     _mealCheckCache = {};
+    _mealCheckCacheInputs = {};
     _authError = null;
     notifyListeners();
 
     await services.ready;
 
-    if (FirebaseBackend.enabled && services.authService.currentUserId == null) {
+    if (FirebaseBackend.enabled &&
+        !services.isEphemeral &&
+        services.authService.currentUserId == null) {
       _clearVisiblePatientData();
       _isBootstrapping = false;
       _debugLog('[AppState] bootstrap:waiting_for_firebase_sign_in');
@@ -936,6 +1248,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _waitForActiveOnboardingPersistence();
+    _invalidatePreferenceMutations();
     _isAuthBusy = true;
     _authError = null;
     notifyListeners();
@@ -985,6 +1298,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> _runAuthTask(Future<String> Function() task) async {
     await _waitForActiveOnboardingPersistence();
+    _invalidatePreferenceMutations();
     _isAuthBusy = true;
     _authError = null;
     notifyListeners();
@@ -1003,6 +1317,8 @@ class AppState extends ChangeNotifier {
   Future<void> _handleAuthUserChanged(AuthUser? user) async {
     final previousUid = _authUserId;
     if (previousUid != user?.uid) {
+      _invalidatePreferenceMutations();
+      _mealDraftSessionEpoch += 1;
       _careSessionEpoch += 1;
       _careWorkspace = null;
       _careWorkspaceError = null;
@@ -1026,6 +1342,8 @@ class AppState extends ChangeNotifier {
   }
 
   void _clearVisiblePatientData() {
+    _invalidatePreferenceMutations();
+    _mealDraftSessionEpoch += 1;
     _careSessionEpoch += 1;
     _careWorkspace = null;
     _careWorkspaceError = null;
@@ -1039,8 +1357,10 @@ class AppState extends ChangeNotifier {
     _intakes = [];
     _recoverableEventHistory = [];
     _recommendations = [];
+    _recommendationInputStamp = null;
     _recommendationRankPresentationWithheld = false;
     _mealCheckCache = {};
+    _mealCheckCacheInputs = {};
     _recommendationDecisionPath = 'conservative_cdss';
     _recommendationExplanations = const [];
     _recommendationGateReasons = const [];
@@ -1158,13 +1478,16 @@ class AppState extends ChangeNotifier {
         ? profile.copyWith(patientId: _authUserId)
         : profile;
     final previousProfile = _userProfile;
+    final scope = _currentPreferenceWriteScope();
     _debugLog(
       '[AppState] saveUserProfile:start region=${scopedProfile.registrationRegion} locale=${scopedProfile.displayLocale}',
     );
     final result = await _profileMutationCoordinator.commit(
       previousValue: previousProfile,
       nextValue: scopedProfile,
-      persist: services.userDataService.saveUserProfile,
+      isCurrent: () => scope?.isCurrent ?? false,
+      persist: (value) =>
+          services.userDataService.saveUserProfile(value, scope: scope!),
       apply: (savedProfile) {
         _userProfile = savedProfile;
         PurposeBoundConsentRuntimeGate.synchronize(
@@ -1175,8 +1498,10 @@ class AppState extends ChangeNotifier {
       },
       refresh: () async {
         await _refreshRecommendations();
+        if (!scope!.isCurrent) return;
         await _refreshMealChecks();
-        await refreshLocalAiAvailability();
+        if (!scope.isCurrent) return;
+        await refreshLocalAiAvailability(isCurrent: () => scope.isCurrent);
       },
       onRunningChanged: (isRunning) {
         _debugLog('[AppState] saveUserProfile:running=$isRunning');
@@ -1240,18 +1565,32 @@ class AppState extends ChangeNotifier {
     );
   }
 
-  Future<void> refreshLocalAiAvailability() async {
+  Future<void> refreshLocalAiAvailability({bool Function()? isCurrent}) async {
+    final owner = _authUserId;
+    final epoch = _preferenceMutationSessionEpoch;
+    final profile = _userProfile;
+    bool current() =>
+        !_isDisposed &&
+        owner == _authUserId &&
+        services.authService.currentUserId == owner &&
+        epoch == _preferenceMutationSessionEpoch &&
+        identical(profile, _userProfile) &&
+        (isCurrent?.call() ?? true);
+    if (!current()) return;
     final adapter = services.nextMealRecommendationOrchestrator.localAiAdapter;
     if (adapter == null) {
       _localAiAvailability = null;
       notifyListeners();
       return;
     }
-    _localAiAvailability = await adapter.probe(userProfile: _userProfile);
+    final availability = await adapter.probe(userProfile: profile);
+    if (!current()) return;
+    _localAiAvailability = availability;
     notifyListeners();
   }
 
   Future<ActiveDrugSelectionResult> setActiveDrugIds(List<String> ids) async {
+    final scope = _currentPreferenceWriteScope();
     final requested = ids.toSet();
     final nextIds = <String>[
       for (final drug in medRepo.allDrugs)
@@ -1266,13 +1605,16 @@ class AppState extends ChangeNotifier {
     final result = await _activeDrugSelectionCoordinator.commit(
       previousIds: previousIds,
       nextIds: nextIds,
-      persist: services.userDataService.saveActiveDrugIds,
+      isCurrent: () => scope?.isCurrent ?? false,
+      persist: (value) =>
+          services.userDataService.saveActiveDrugIds(value, scope: scope!),
       apply: (committedIds) {
         _activeDrugIds = List<String>.from(committedIds);
         notifyListeners();
       },
       refresh: () async {
         await _refreshRecommendations();
+        if (!scope!.isCurrent) return;
         await _refreshMealChecks();
       },
       onRunningChanged: (isRunning) {
@@ -1288,6 +1630,176 @@ class AppState extends ChangeNotifier {
     );
     _debugLog('[AppState] activeDrugs:result=${result.status.name}');
     return result;
+  }
+
+  final Map<String, Future<PersistedListMutationResult<Meal>>> _draftSaveTasks =
+      {};
+
+  int _mealDraftSessionEpoch = 0;
+  int get mealDraftSessionEpoch => _mealDraftSessionEpoch;
+  int _mealDraftEditorEpoch = 0;
+  int get mealDraftEditorEpoch => _mealDraftEditorEpoch;
+
+  int claimMealDraftEditor({required String owner}) {
+    if (!_mealDraftOwnerIsCurrent(owner, _mealDraftSessionEpoch)) {
+      throw StateError('meal_draft_session_changed');
+    }
+    _mealDraftEditorEpoch += 1;
+    notifyListeners();
+    return _mealDraftEditorEpoch;
+  }
+
+  bool _mealDraftEditorIsCurrent(int? editorEpoch) =>
+      editorEpoch == null || editorEpoch == _mealDraftEditorEpoch;
+
+  bool _mealDraftOwnerIsCurrent(String owner, int epoch) =>
+      !_isDisposed &&
+      !_externalStorageStale &&
+      epoch == _mealDraftSessionEpoch &&
+      owner == _authUserId &&
+      services.authService.currentUserId == owner;
+
+  Future<MealDraft?> loadMealDraft({required String owner}) async {
+    final epoch = _mealDraftSessionEpoch;
+    if (!_mealDraftOwnerIsCurrent(owner, epoch)) {
+      throw StateError('meal_draft_session_changed');
+    }
+    final draft = await services.mealDraftService.load(owner);
+    if (!_mealDraftOwnerIsCurrent(owner, epoch)) {
+      throw StateError('meal_draft_session_changed');
+    }
+    _debugLog('[AppState] mealDraft:loaded present=${draft != null}');
+    return draft;
+  }
+
+  Future<void> persistMealDraft(
+    MealDraft draft, {
+    required String owner,
+    int? editorEpoch,
+  }) async {
+    final epoch = _mealDraftSessionEpoch;
+    await services.mealDraftService.save(
+      owner,
+      draft,
+      authorize: () =>
+          _mealDraftOwnerIsCurrent(owner, epoch) &&
+          _mealDraftEditorIsCurrent(editorEpoch),
+    );
+    _debugLog(
+      '[AppState] mealDraft:checkpoint items=${draft.meal.items.length}',
+    );
+  }
+
+  Future<void> discardMealDraft(
+    String draftId, {
+    required String owner,
+    int? editorEpoch,
+  }) async {
+    final epoch = _mealDraftSessionEpoch;
+    await services.mealDraftService.clear(
+      owner,
+      draftId,
+      authorize: () =>
+          _mealDraftOwnerIsCurrent(owner, epoch) &&
+          _mealDraftEditorIsCurrent(editorEpoch),
+    );
+    _debugLog('[AppState] mealDraft:cleared');
+  }
+
+  MealDraft reuseMealAsDraft(Meal history) => MealDraft.fromTemplate(
+    template: MealDraft.templateFromHistory(
+      history,
+      countryCode: _userProfile.registrationRegion,
+      catalog: services.foodRepository.allFoods,
+    ),
+    draftId: newId('meal_draft'),
+    newMealId: newId('meal'),
+    now: DateTime.now(),
+    historyMealId: history.id,
+  );
+
+  Future<PersistedListMutationResult<Meal>> saveMealDraft(
+    MealDraft draft, {
+    required String owner,
+    int? editorEpoch,
+  }) {
+    final epoch = _mealDraftSessionEpoch;
+    if (!_mealDraftOwnerIsCurrent(owner, epoch) ||
+        !_mealDraftEditorIsCurrent(editorEpoch)) {
+      throw StateError('meal_draft_session_changed');
+    }
+    if (!draft.readyToSave) {
+      throw StateError('meal_draft_confirmation_required');
+    }
+    final taskKey = '$owner|$epoch|$editorEpoch|${draft.draftId}';
+    return _draftSaveTasks.putIfAbsent(taskKey, () async {
+      try {
+        // A stable fresh meal ID is the idempotency key even if clearing a
+        // committed draft failed, or the process stopped just after persistence.
+        final existing = _meals
+            .where((meal) => meal.id == draft.meal.id)
+            .firstOrNull;
+        if (draft.editingMealId == null && existing != null) {
+          if (recoverableUserEventPayloadDigest(existing.toJson()) !=
+              recoverableUserEventPayloadDigest(draft.meal.toJson())) {
+            throw StateError('meal_draft_identity_conflict');
+          }
+          await discardMealDraft(
+            draft.draftId,
+            owner: owner,
+            editorEpoch: editorEpoch,
+          );
+          if (!_mealDraftOwnerIsCurrent(owner, epoch) ||
+              !_mealDraftEditorIsCurrent(editorEpoch)) {
+            throw StateError('meal_draft_session_changed');
+          }
+          return _mealMutationCoordinator.unchanged(_meals);
+        }
+        await persistMealDraft(draft, owner: owner, editorEpoch: editorEpoch);
+        if (!_mealDraftOwnerIsCurrent(owner, epoch) ||
+            !_mealDraftEditorIsCurrent(editorEpoch)) {
+          throw StateError('meal_draft_session_changed');
+        }
+        final result = draft.editingMealId == null
+            ? await addMeal(draft.meal)
+            : await updateMeal(draft.meal);
+        if (result.status == PersistedListMutationStatus.unchanged &&
+            draft.editingMealId != null) {
+          final retained = _meals
+              .where((meal) => meal.id == draft.editingMealId)
+              .firstOrNull;
+          if (retained == null ||
+              recoverableUserEventPayloadDigest(retained.toJson()) !=
+                  recoverableUserEventPayloadDigest(draft.meal.toJson())) {
+            throw StateError('meal_draft_edit_target_changed_or_missing');
+          }
+        }
+        if ((result.wasCommitted ||
+                (result.status == PersistedListMutationStatus.unchanged &&
+                    draft.editingMealId != null)) &&
+            _mealDraftOwnerIsCurrent(owner, epoch) &&
+            _mealDraftEditorIsCurrent(editorEpoch)) {
+          try {
+            await discardMealDraft(
+              draft.draftId,
+              owner: owner,
+              editorEpoch: editorEpoch,
+            );
+          } catch (_) {
+            // The committed meal remains authoritative; a leftover draft can
+            // be retried with its stable ID without making a duplicate meal.
+            _debugLog('[AppState] mealDraft:clear_failed_after_commit');
+          }
+        }
+        if (!_mealDraftOwnerIsCurrent(owner, epoch) ||
+            !_mealDraftEditorIsCurrent(editorEpoch)) {
+          throw StateError('meal_draft_session_changed');
+        }
+        return result;
+      } finally {
+        _draftSaveTasks.remove(taskKey);
+      }
+    });
   }
 
   Future<PersistedListMutationResult<Meal>> addMeal(Meal meal) async {
@@ -1362,7 +1874,10 @@ class AppState extends ChangeNotifier {
         beforePayload: _meals.firstWhere((item) => item.id == mealId).toJson(),
         afterPayload: null,
       ),
-      afterApply: () => _mealCheckCache.remove(mealId),
+      afterApply: () {
+        _mealCheckCache.remove(mealId);
+        _mealCheckCacheInputs.remove(mealId);
+      },
     );
   }
 
@@ -1713,7 +2228,14 @@ class AppState extends ChangeNotifier {
     VoidCallback? afterApply,
   }) async {
     final previousMeals = List<Meal>.from(_meals);
+    if (_externalStorageStale) {
+      return PersistedListMutationResult(
+        status: PersistedListMutationStatus.persistenceFailed,
+        items: List.unmodifiable(previousMeals),
+      );
+    }
     final expectedUserScope = _authUserId;
+    final expectedMealSessionEpoch = _mealDraftSessionEpoch;
     final result = await _mealMutationCoordinator.commit(
       previousItems: previousMeals,
       nextItems: nextMeals,
@@ -1724,7 +2246,9 @@ class AppState extends ChangeNotifier {
             fallbackIntakes: _intakes,
           ),
       apply: (committedMeals) {
-        if (_authUserId != expectedUserScope) {
+        if (_externalStorageStale ||
+            _authUserId != expectedUserScope ||
+            _mealDraftSessionEpoch != expectedMealSessionEpoch) {
           _debugLog('[AppState] $operation:publication_superseded_account');
           return;
         }
@@ -1734,13 +2258,17 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       },
       refresh: () async {
-        if (_authUserId != expectedUserScope) return;
+        if (_externalStorageStale ||
+            _authUserId != expectedUserScope ||
+            _mealDraftSessionEpoch != expectedMealSessionEpoch) {
+          return;
+        }
         await _refreshRecommendations();
         await _refreshMealChecks();
       },
       onRunningChanged: (isRunning) {
         _debugLog('[AppState] $operation:running=$isRunning');
-        notifyListeners();
+        if (!_isDisposed) notifyListeners();
       },
       onError: (stage, error) {
         _debugLog(
@@ -1762,6 +2290,12 @@ class AppState extends ChangeNotifier {
     required RecoverableUserEventRevision revision,
   }) async {
     final previousIntakes = List<Intake>.from(_intakes);
+    if (_externalStorageStale) {
+      return PersistedListMutationResult(
+        status: PersistedListMutationStatus.persistenceFailed,
+        items: List.unmodifiable(previousIntakes),
+      );
+    }
     final expectedUserScope = _authUserId;
     final result = await _intakeMutationCoordinator.commit(
       previousItems: previousIntakes,
@@ -1773,7 +2307,7 @@ class AppState extends ChangeNotifier {
             fallbackIntakes: committedIntakes,
           ),
       apply: (committedIntakes) {
-        if (_authUserId != expectedUserScope) {
+        if (_externalStorageStale || _authUserId != expectedUserScope) {
           _debugLog('[AppState] $operation:publication_superseded_account');
           return;
         }
@@ -1782,7 +2316,7 @@ class AppState extends ChangeNotifier {
         notifyListeners();
       },
       refresh: () async {
-        if (_authUserId != expectedUserScope) return;
+        if (_externalStorageStale || _authUserId != expectedUserScope) return;
         await _refreshRecommendations();
         await _refreshMealChecks();
       },
@@ -1998,7 +2532,10 @@ class AppState extends ChangeNotifier {
           next,
           revision: revision,
           afterApply: selected.beforePayload == null
-              ? () => _mealCheckCache.remove(selected.recordId)
+              ? () {
+                  _mealCheckCache.remove(selected.recordId);
+                  _mealCheckCacheInputs.remove(selected.recordId);
+                }
               : null,
         );
         return result.status;
@@ -2026,20 +2563,23 @@ class AppState extends ChangeNotifier {
     final owner = _authUserId;
     final epoch = _careSessionEpoch;
     final inputKey = _mealCheckContextKey();
+    final mealInputKey = _mealCheckInputKey(meal);
     bool authorized() =>
         owner == _authUserId &&
         epoch == _careSessionEpoch &&
         services.authService.currentUserId == owner &&
-        inputKey == _mealCheckContextKey();
+        inputKey == _mealCheckContextKey() &&
+        mealInputKey == _mealCheckInputKey(meal);
     final rawResult = await services.databaseBackedMealCheckUseCase(
       meal: meal,
       activeDrugs: _drugsForMealCheck(),
       intakes: _intakes,
       userProfile: _userProfile,
+      requiredDrugIds: _activeDrugIds,
     );
     if (!authorized()) return rawResult;
     final adapter = services.nextMealRecommendationOrchestrator.localAiAdapter;
-    final result = adapter == null
+    final result = adapter == null || !rawResult.hasAssessment
         ? rawResult
         : await adapter.polishInteractionResult(
             userProfile: _userProfile,
@@ -2056,6 +2596,10 @@ class AppState extends ChangeNotifier {
     );
     if (isSaved) {
       _mealCheckCache = {..._mealCheckCache, meal.id: result};
+      _mealCheckCacheInputs = {
+        ..._mealCheckCacheInputs,
+        meal.id: (contextKey: inputKey, mealKey: mealInputKey),
+      };
       await _registerFollowups(rawResult.followupPrompts);
     }
     if (!authorized()) return result;
@@ -2070,14 +2614,34 @@ class AppState extends ChangeNotifier {
     return result;
   }
 
-  InteractionResult cachedMealCheck(Meal meal) {
-    return _mealCheckCache[meal.id] ??
-        services.interactionEngine.evaluateMealWithDrugs(
-          meal: meal,
-          drugs: _drugsForMealCheck(),
-          // 旧引擎只作为缓存未命中时的兜底，也需要跟随用户当前语言。
-          localeTag: _userProfile.displayLocale,
-        );
+  /// Only a returned result for this exact input may be presented. Unresolved
+  /// context retains its explicit unassessed state; a cache miss stays pending.
+  InteractionResult? cachedMealCheck(Meal meal) {
+    if (_externalStorageStale) return null;
+    final stamp = _mealCheckCacheInputs[meal.id];
+    if (stamp == null ||
+        services.authService.currentUserId != _authUserId ||
+        stamp.contextKey != _mealCheckContextKey() ||
+        stamp.mealKey != _mealCheckInputKey(meal)) {
+      return null;
+    }
+    return _mealCheckCache[meal.id];
+  }
+
+  Iterable<InteractionResult> _currentMealChecks() sync* {
+    if (_externalStorageStale) return;
+    if (services.authService.currentUserId != _authUserId) return;
+    final contextKey = _mealCheckContextKey();
+    for (final meal in _meals) {
+      final stamp = _mealCheckCacheInputs[meal.id];
+      final result = _mealCheckCache[meal.id];
+      if (result != null &&
+          stamp != null &&
+          stamp.contextKey == contextKey &&
+          stamp.mealKey == _mealCheckInputKey(meal)) {
+        yield result;
+      }
+    }
   }
 
   List<TimelineEvent> get timeline {
@@ -2090,19 +2654,27 @@ class AppState extends ChangeNotifier {
   }
 
   List<FoodRecommendation> get recommendations {
-    return List.unmodifiable(_recommendations);
+    return _recommendationsAreCurrent
+        ? List.unmodifiable(_recommendations)
+        : const [];
   }
 
   bool get recommendationRankPresentationWithheld =>
-      _recommendationRankPresentationWithheld;
+      !_recommendationsAreCurrent || _recommendationRankPresentationWithheld;
 
   List<ProteinTrendPoint> get proteinTrend {
-    return services.getProteinTrendUseCase(_meals);
+    return services.getProteinTrendUseCase(_meals, catalog: foodRepo.allFoods);
   }
 
   double get averageProtein {
-    return services.getProteinTrendUseCase.averageProtein(_meals);
+    return services.getProteinTrendUseCase.averageProtein(
+      _meals,
+      catalog: foodRepo.allFoods,
+    );
   }
+
+  double? get averageKnownProtein => services.getProteinTrendUseCase
+      .knownAverageProtein(_meals, catalog: foodRepo.allFoods);
 
   // Cryptographically secure RNG for record ids (falls back to a seeded RNG
   // only on platforms without an entropy source). A static instance avoids
@@ -2128,24 +2700,60 @@ class AppState extends ChangeNotifier {
   /// Best-effort augmentation of the food repository with foods projected
   /// from CDSS observations. Educational simulation only; failures are
   /// swallowed because the persisted catalog already provides a working
-  /// baseline. The projection adds items via id-keyed merge; for duplicate
-  /// ids the richer entry wins (`_preferRicherFood`: source authority, then
-  /// completeness, preferring the projected entry on ties) so official
-  /// provenance + missingness metadata is not shadowed by a stale seed row.
-  /// Projection-only items are appended.
+  /// baseline. A captured current catalogue supersedes cached values and
+  /// missingness; a held capture disables arithmetic in imported cache rows.
+  /// Legacy adapters retain their separately unverified richer-row merge.
   Future<void> _augmentFoodRepoFromProjection() async {
     try {
-      final projected = await services.cdssCatalogProjectionService
-          .projectFoods();
-      if (projected.isEmpty) return;
+      final projection = await services.cdssCatalogProjectionService
+          .projectFoodsWithAudit();
+      final projected = projection.foods;
+      final currentCapture = const {
+        'native_sqlite_transaction',
+        'web_single_document',
+      }.contains(projection.queryAudit['read_consistency']);
+      if (projected.isEmpty) {
+        if (projection.queryAudit['status'] == 'HOLD') {
+          services.foodRepository.replaceAll([
+            for (final food in services.foodRepository.allFoods)
+              if (food.catalogProvenanceEvidence != null ||
+                  food.nutrientObservationEvidence.isNotEmpty ||
+                  food.foodProductEvidence.isNotEmpty)
+                FoodItem.fromJson({
+                  ...food.toJson(),
+                  'missingNutrientFields': {
+                    ...food.missingNutrientFields,
+                    'proteinG',
+                    'carbsG',
+                    'fatG',
+                    'fiberG',
+                    'sodiumMg',
+                    'energyKcal',
+                    'waterG',
+                  }.toList(),
+                  'aminoAcidProfile': null,
+                  'nutrientObservationEvidence': [
+                    for (final row in food.nutrientObservationEvidence)
+                      {
+                        ...row.toJson(),
+                        'selected_for_legacy_point_projection': false,
+                      },
+                  ],
+                })
+              else
+                food,
+          ]);
+        }
+        return;
+      }
       final existing = services.foodRepository.allFoods;
       final byId = <String, FoodItem>{for (final f in existing) f.id: f};
       for (final p in projected) {
         final current = byId[p.id];
-        // Do NOT blindly let a seed/persisted food win over a projected CDSS
-        // food with the same id. Prefer the richer official/projected entry so
-        // its provenance + missingness metadata survives into the runtime repo.
-        byId[p.id] = (current == null) ? p : _preferRicherFood(current, p);
+        // A current capture also wins when it removes a previously usable value.
+        byId[p.id] = (current == null || currentCapture)
+            ? p
+            : _preferRicherFood(current, p);
       }
       services.foodRepository.replaceAll(byId.values.toList(growable: false));
     } catch (_) {
@@ -2263,8 +2871,9 @@ class AppState extends ChangeNotifier {
       request: NextMealRecommendationRequest(
         userProfile: _userProfile,
         history: _meals,
-        activeDrugs: activeDrugs,
+        activeDrugs: _drugsForMealCheck(),
         intakes: _intakes,
+        requiredDrugIds: List<String>.of(_activeDrugIds),
         now: nextMealAt,
         mode: mode,
         userConsentedToAi: useLocalAi && _userProfile.hasCurrentLocalAiConsent,
@@ -2275,19 +2884,52 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _refreshRecommendations() async {
+    final refreshEpoch = ++_recommendationRefreshEpoch;
+    final inputStamp = _recommendationInputKey();
+    final owner = _authUserId;
+    final sessionEpoch = _careSessionEpoch;
+    final profile = _userProfile;
+    final meals = _meals;
+    final intakes = _intakes;
+    final selectedIds = List<String>.unmodifiable(_activeDrugIds);
+    final selectedIdentity = jsonEncode(selectedIds);
+    final foodRevision = foodRepo.revision;
+    final medicationRevision = medRepo.revision;
+    bool current() =>
+        !_isDisposed &&
+        refreshEpoch == _recommendationRefreshEpoch &&
+        inputStamp == _recommendationInputKey() &&
+        owner == _authUserId &&
+        services.authService.currentUserId == owner &&
+        sessionEpoch == _careSessionEpoch &&
+        identical(profile, _userProfile) &&
+        identical(meals, _meals) &&
+        identical(intakes, _intakes) &&
+        selectedIdentity == jsonEncode(_activeDrugIds) &&
+        foodRevision == foodRepo.revision &&
+        medicationRevision == medRepo.revision;
+    if (!current()) return;
     final result = await services.nextMealRecommendationOrchestrator.recommend(
       request: NextMealRecommendationRequest(
-        userProfile: _userProfile,
-        history: _meals,
-        activeDrugs: activeDrugs,
-        intakes: _intakes,
+        userProfile: profile,
+        history: meals,
+        activeDrugs: _drugsForMealCheck(),
+        intakes: intakes,
+        requiredDrugIds: selectedIds,
         now: DateTime.now(),
         mode: RecommendationMode.auto,
-        userConsentedToAi: _userProfile.hasCurrentLocalAiConsent,
+        userConsentedToAi: profile.hasCurrentLocalAiConsent,
       ),
       candidateFoods: services.foodRepository.allFoods,
     );
+    if (!current()) {
+      _debugLog(
+        '[AppState] recommendations:discard_superseded_session_or_inputs',
+      );
+      return;
+    }
     _recommendations = result.recommendations;
+    _recommendationInputStamp = inputStamp;
     _recommendationRankPresentationWithheld =
         shouldWithholdRankedFoodPresentation(
           candidateSetSha256: result.candidateSetSnapshot.sha256Digest,
@@ -2316,38 +2958,46 @@ class AppState extends ChangeNotifier {
     if (!FirebaseBackend.enabled) {
       final activeSnapshot = await services.clinicalDecisionSupportService
           .latestPromotedSnapshot();
+      if (!current()) return;
       await services.clinicalDecisionSupportService.writeRecommendationAudit(
         userProfile: UserProfileRuntimeContext(
-          patientId: _userProfile.patientId,
-          registrationRegion: _userProfile.registrationRegion,
-          displayLocale: _userProfile.displayLocale,
-          contentJurisdictionOverride: _userProfile.contentJurisdictionOverride,
-          dietProfileRegion: _userProfile.dietProfileRegion,
-          timezone: _userProfile.timezone,
+          patientId: profile.patientId,
+          registrationRegion: profile.registrationRegion,
+          displayLocale: profile.displayLocale,
+          contentJurisdictionOverride: profile.contentJurisdictionOverride,
+          dietProfileRegion: profile.dietProfileRegion,
+          timezone: profile.timezone,
         ),
         mealSlot: 'dashboard',
         factsVersion: activeSnapshot?.factsVersion ?? 'regional_master_data_v1',
         rulesVersion: 'baseline_cdss_rules_v1',
-        recommendations: _recommendations,
+        recommendations: result.recommendations,
       );
     } else {
       await services.userClinicalAuditService.recordRecommendationRefresh(
-        userProfile: _userProfile,
-        activeDrugIds: _activeDrugIds,
-        intakes: _intakes,
-        meals: _meals,
-        recommendations: _recommendations,
-        decisionPath: _recommendationDecisionPath,
-        explanations: _recommendationExplanations,
-        gateReasons: _recommendationGateReasons,
-        aiUsed: _recommendationAiUsed,
+        userProfile: profile,
+        activeDrugIds: selectedIds,
+        intakes: intakes,
+        meals: meals,
+        recommendations: result.recommendations,
+        decisionPath: result.decisionPath,
+        explanations: result.explanations,
+        gateReasons: result.gateReasons,
+        aiUsed: result.aiUsed,
       );
     }
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
+    _invalidatePreferenceMutations();
+    _mealDraftSessionEpoch += 1;
+    _mealDraftEditorEpoch += 1;
+    _careSessionEpoch += 1;
+    _authUserId = null;
     _authSubscription?.cancel();
+    _externalStorageSubscription?.cancel();
     super.dispose();
   }
 
@@ -2357,6 +3007,7 @@ class AppState extends ChangeNotifier {
     String? dailyMedPath,
     String? dpdPath,
   }) async {
+    _invalidateDerivedSources();
     _isImportingP0 = true;
     notifyListeners();
     final locator = createLocalP0ImportLocator();
@@ -2462,6 +3113,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> resumeImportTask(String resumeToken) async {
     if (resumeToken.trim().isEmpty) return;
+    _invalidateDerivedSources();
     _isImportingP0 = true;
     notifyListeners();
     try {
@@ -2496,6 +3148,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> runRemoteImportTask(String sourceKey) async {
+    _invalidateDerivedSources();
     _isImportingP0 = true;
     notifyListeners();
     try {
@@ -2818,6 +3471,7 @@ class AppState extends ChangeNotifier {
     required String filePath,
     String channel = 'bundle_import',
   }) async {
+    _invalidateDerivedSources();
     _isRunningSnapshotOperation = true;
     _lastSnapshotOperationMessage = null;
     notifyListeners();
@@ -2840,6 +3494,7 @@ class AppState extends ChangeNotifier {
     String reason = 'manual_rollback_from_ui',
     String channel = 'local_stable',
   }) async {
+    _invalidateDerivedSources();
     _isRunningSnapshotOperation = true;
     _lastSnapshotOperationMessage = null;
     notifyListeners();
@@ -2862,33 +3517,111 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _refreshMealChecks() async {
+    final refreshEpoch = ++_mealCheckRefreshEpoch;
     final owner = _authUserId;
     final epoch = _careSessionEpoch;
     final inputKey = _mealCheckContextKey();
+    final savedMeals = _meals;
     final next = <String, InteractionResult>{};
-    for (final meal in List<Meal>.of(_meals)) {
+    final nextInputs = <String, ({String contextKey, String mealKey})>{};
+    for (final meal in List<Meal>.of(savedMeals)) {
+      final mealInputKey = _mealCheckInputKey(meal);
       next[meal.id] = await services.databaseBackedMealCheckUseCase(
         meal: meal,
         activeDrugs: _drugsForMealCheck(),
         intakes: _intakes,
         userProfile: _userProfile,
+        requiredDrugIds: _activeDrugIds,
       );
       if (owner != _authUserId ||
           epoch != _careSessionEpoch ||
+          refreshEpoch != _mealCheckRefreshEpoch ||
+          !identical(savedMeals, _meals) ||
+          mealInputKey != _mealCheckInputKey(meal) ||
           services.authService.currentUserId != owner ||
           inputKey != _mealCheckContextKey()) {
+        _debugLog('[AppState] mealChecks:discard_superseded_inputs');
         return;
       }
+      nextInputs[meal.id] = (contextKey: inputKey, mealKey: mealInputKey);
     }
     _mealCheckCache = next;
+    _mealCheckCacheInputs = nextInputs;
     await _registerFollowups(
       next.values.expand((result) => result.followupPrompts),
     );
   }
 
   String _mealCheckContextKey() => jsonEncode({
+    'owner': _authUserId,
+    'sessionEpoch': _careSessionEpoch,
+    'sourceEpoch': _derivedSourceEpoch,
+    'compiledRules': [
+      for (final rule in services.databaseBackedMealCheckUseCase.compiledRules)
+        {
+          'ruleId': rule.ruleId,
+          'version': rule.version,
+          'status': rule.status,
+          'ruleType': rule.ruleType.name,
+          'priorityBand': rule.priorityBand,
+          'specificityBand': rule.specificityBand,
+          'jurisdictions': rule.jurisdictions,
+          'appliesTo': rule.appliesTo,
+          'conditions': rule.conditions,
+          'then': {
+            'decision': rule.thenClause.decision.name,
+            'severity': rule.thenClause.severity,
+            'messages': {
+              'zh': rule.thenClause.messages.zh,
+              'en': rule.thenClause.messages.en,
+              'localized': rule.thenClause.messages.localized,
+            },
+            'actions': rule.thenClause.actions,
+            'outputTags': rule.thenClause.outputTags,
+          },
+          'provenance': {
+            'evidenceLevel': rule.provenance.evidenceLevel,
+            'sourceRefs': rule.provenance.sourceRefs,
+            'effectiveFrom': rule.provenance.effectiveFrom?.toIso8601String(),
+            'effectiveTo': rule.provenance.effectiveTo?.toIso8601String(),
+          },
+          'override': rule.override,
+        },
+    ],
+    'foodCatalogRevision': foodRepo.revision,
+    'medicationCatalogRevision': medRepo.revision,
+    'selectedDrugIds': List<String>.of(_activeDrugIds)..sort(),
     'profile': _userProfile.toJson(),
     'drugs': _drugsForMealCheck().map((drug) => drug.toJson()).toList(),
     'intakes': _intakes.map((intake) => intake.toJson()).toList(),
   });
+
+  /// A live source lease for derived previews; historical records retain their
+  /// own source identity. The digest contains no serialized user data in logs.
+  String get derivedResultInputRevision =>
+      sha256.convert(utf8.encode(_mealCheckContextKey())).toString();
+
+  String _recommendationInputKey() => jsonEncode({
+    'context': _mealCheckContextKey(),
+    'meals': _meals.map((meal) => meal.toJson()).toList(),
+  });
+
+  bool get _recommendationsAreCurrent =>
+      !_isDisposed &&
+      !_externalStorageStale &&
+      services.authService.currentUserId == _authUserId &&
+      _recommendationInputStamp != null &&
+      _recommendationInputStamp == _recommendationInputKey();
+
+  void _invalidateDerivedSources() {
+    _derivedSourceEpoch += 1;
+    _recommendationRefreshEpoch += 1;
+    _mealCheckRefreshEpoch += 1;
+    _recommendationInputStamp = null;
+    _mealCheckCache.clear();
+    _mealCheckCacheInputs.clear();
+    _debugLog('[AppState] derived_sources:invalidated');
+  }
+
+  String _mealCheckInputKey(Meal meal) => jsonEncode(meal.toJson());
 }

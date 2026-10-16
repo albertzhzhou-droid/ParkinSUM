@@ -90,6 +90,9 @@ class VisitPreparationSnapshot {
     this.unreviewedMedicationAssertionIntakeCount = 0,
     Iterable<String> userNotes = const [],
     this.activeSelectionUpdatedAt,
+    this.currentSelectionIncluded = true,
+    this.sourceAssertionsIncluded = true,
+    this.discussionUpdatesIncluded = true,
   }) : activeDrugIds = visitStrings(
          activeDrugIds,
          limit: visitPreparationMaxMedications,
@@ -132,6 +135,17 @@ class VisitPreparationSnapshot {
        userNotes = visitStrings(userNotes, limit: 64) {
     if (unreviewedMedicationAssertionIntakeCount < 0) {
       throw ArgumentError('Unreviewed medication assertion count is invalid.');
+    }
+    if ((!currentSelectionIncluded &&
+            (this.activeDrugIds.isNotEmpty ||
+                this.medicationListReviews.isNotEmpty)) ||
+        (!sourceAssertionsIncluded &&
+            this.medicationAssertionReviews.isNotEmpty) ||
+        (!discussionUpdatesIncluded &&
+            this.medicationDiscussionOutcomes.isNotEmpty)) {
+      throw ArgumentError(
+        'Omitted report sections cannot contain supplied records.',
+      );
     }
     final observationRecordIds = this.observations
         .map((observation) => observation.sourceRecordId)
@@ -195,6 +209,9 @@ class VisitPreparationSnapshot {
   final int unreviewedMedicationAssertionIntakeCount;
   final List<String> userNotes;
   final DateTime? activeSelectionUpdatedAt;
+  final bool currentSelectionIncluded;
+  final bool sourceAssertionsIncluded;
+  final bool discussionUpdatesIncluded;
 }
 
 class VisitCatalogEvidence {

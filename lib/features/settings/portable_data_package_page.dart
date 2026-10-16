@@ -11,6 +11,9 @@ import '../../core/services/portable_data_export_sink.dart';
 import '../../core/services/portable_data_owner_scope_service.dart';
 import '../../core/services/user_logging_reminder_service.dart';
 import '../../core/state/app_state.dart';
+import '../../core/db/portable_data_restore_store.dart';
+import '../../core/models/portable_data_restore.dart';
+import '../../core/services/portable_data_restore_coordinator.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/portable_schema_migration.dart';
 import '../../domain/usecases/user_portable_data_package_service.dart';
@@ -45,11 +48,13 @@ class _PortableOperationLease {
     required this.rawScope,
     required this.scopeKind,
     required this.epoch,
+    required this.authSessionEpoch,
   });
 
   final String rawScope;
   final String scopeKind;
   final int epoch;
+  final int authSessionEpoch;
 }
 
 class _PortableExistingStateSnapshot {
@@ -58,12 +63,14 @@ class _PortableExistingStateSnapshot {
     required this.recordIdDigest,
     required this.reminderProcessRevision,
     required this.reminderIds,
+    required this.reminderContentDigest,
   });
 
   final Map<String, Set<String>> recordIds;
   final String recordIdDigest;
   final String reminderProcessRevision;
   final Set<String> reminderIds;
+  final String reminderContentDigest;
 }
 
 class PortableDataPackagePage extends StatefulWidget {
@@ -96,6 +103,11 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
   late final PortableDataOwnerScopeResolver _resolvedOwnerScopeResolver;
   UserPortableDataPackageArtifact? _artifact;
   UserPortableDataImportPreview? _preview;
+  PortableDataRestoreRequest? _restoreRequest;
+  PortableDataRestoreReceipt? _restoreReceipt;
+  String? _restoreHeldReason;
+  int? _restoreOwnerRevision;
+  String? _restoreOwnerProtectionClass;
   String? _artifactOwnerRawScope;
   String? _artifactOwnerEffectiveScope;
   String? _artifactScopeKind;
@@ -108,9 +120,11 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
   String? _previewExistingRecordIdDigest;
   String? _previewReminderProcessRevision;
   Set<String>? _previewReminderIds;
+  String? _previewReminderContentDigest;
   bool _previewInvalidationScheduled = false;
   bool _hasObservedScope = false;
   String? _observedScope;
+  int? _observedAuthSessionEpoch;
   int _scopeEpoch = 0;
   bool _busy = false;
   String? _error;
@@ -137,6 +151,27 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
   int get _inputByteBudget =>
       widget.inputByteBudget ?? widget.packageService.maxPackageBytes;
 
+  PortableDataRestoreCoordinator? _restoreCoordinator(AppState state) {
+    final database = state.services.appDatabase;
+    return !FirebaseBackend.enabled && database is PortableDataRestoreStore
+        ? PortableDataRestoreCoordinator(
+            store: database as PortableDataRestoreStore,
+            packageService: widget.packageService,
+          )
+        : null;
+  }
+
+  String _restoreText(AppState state, String english, String chinese) =>
+      state.userProfile.displayLocale.startsWith('zh') ? chinese : english;
+
+  bool _stateWriteIdle(AppState state) =>
+      !state.isUpdatingMeals &&
+      !state.isUpdatingIntakes &&
+      !state.isSavingUserProfile &&
+      !state.isUpdatingActiveDrugIds &&
+      !state.isBootstrapping &&
+      !state.isAuthBusy;
+
   @override
   void initState() {
     super.initState();
@@ -151,20 +186,45 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final currentScope = context.read<AppState>().currentUserId;
+    final state = context.read<AppState>();
+    final currentScope = state.currentUserId;
+    final currentSessionEpoch = state.mealDraftSessionEpoch;
     if (!_hasObservedScope) {
       _hasObservedScope = true;
       _observedScope = currentScope;
+      _observedAuthSessionEpoch = currentSessionEpoch;
+      _loadStoredRestoreReceipt();
       return;
     }
-    if (_observedScope != currentScope) {
+    if (_observedScope != currentScope ||
+        _observedAuthSessionEpoch != currentSessionEpoch) {
       // Clear every account-owned transient, including import-only text and a
       // preview with no generated artifact, synchronously before the new
       // account's build can paint.
       _observedScope = currentScope;
+      _observedAuthSessionEpoch = currentSessionEpoch;
       _scopeEpoch += 1;
       _clearScopedState();
+      _loadStoredRestoreReceipt();
     }
+  }
+
+  void _loadStoredRestoreReceipt() {
+    final state = context.read<AppState>();
+    final lease = _captureLease(state);
+    final coordinator = _restoreCoordinator(state);
+    if (lease == null || coordinator == null) return;
+    coordinator.store
+        .loadPortableRestoreReceipt(ownerScope: lease.rawScope)
+        .then(
+          (receipt) {
+            if (receipt == null || !_isLeaseCurrent(lease)) return;
+            setState(() => _restoreReceipt = receipt);
+          },
+          onError: (Object _, StackTrace _) {
+            // A malformed or stale receipt cannot authorize undo.
+          },
+        );
   }
 
   @override
@@ -309,6 +369,15 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
           ),
           const SizedBox(height: 8),
           Text(i18n.tr('portable.export_body')),
+          const SizedBox(height: 8),
+          Text(
+            _restoreText(
+              state,
+              'The v4 backup excludes care discussions, follow-up outcomes, self-checks, drafts, and replay or currency receipts.',
+              'v4 备份不含照护讨论、会后结果、自查、草稿，以及 replay/currency 回执。',
+            ),
+            key: const ValueKey('portable-export-exclusions'),
+          ),
           const SizedBox(height: 16),
           Align(
             alignment: AlignmentDirectional.centerEnd,
@@ -442,6 +511,17 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
           ),
           const SizedBox(height: 8),
           Text(i18n.tr('portable.preview_body')),
+          if (_restoreCoordinator(state) != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _restoreText(
+                state,
+                'This browser window can merge a v4 package for the same owner: profile preferences, medication selections, intakes, and meals. Existing records and recovery history stay. Packages with reminders, observations, conflicts, or evidence that cannot be preserved are held. The v4 backup excludes care discussions, follow-up outcomes, self-checks, drafts, and replay or currency receipts. Notification permission and AI consent are never imported.',
+                '此浏览器窗口可合并同一所有者的 v4 包：资料偏好、药品选择、服药记录与餐食。保留已有记录与恢复历史；含提醒、观察、冲突或无法保留的来源信息时拒绝恢复。v4 备份不含照护讨论、会后结果、自查、草稿，以及 replay/currency 回执。不会导入通知权限或 AI 同意。',
+              ),
+              key: const ValueKey('portable-restore-scope'),
+            ),
+          ],
           const SizedBox(height: 14),
           TextField(
             key: const ValueKey('portable-import-json'),
@@ -571,9 +651,49 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (_restoreCoordinator(state) != null) ...[
+                    const SizedBox(height: 12),
+                    if (_restoreHeldReason != null)
+                      Text(
+                        _restoreHeldReason!,
+                        key: const ValueKey('portable-restore-held'),
+                      ),
+                    FilledButton.icon(
+                      key: const ValueKey('portable-restore'),
+                      onPressed:
+                          _busy ||
+                              _restoreRequest == null ||
+                              !_stateWriteIdle(state)
+                          ? null
+                          : () => _restore(state),
+                      icon: const Icon(Icons.restore_outlined),
+                      label: Text(
+                        _restoreText(state, 'Review and restore', '确认并恢复'),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
+          if (_restoreReceipt != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              _restoreText(
+                state,
+                'The scoped merge was saved. You can undo it while the stored state is unchanged.',
+                '已保存本次合并。存储状态未发生新变化时可撤回。',
+              ),
+              key: const ValueKey('portable-restore-complete'),
+            ),
+            OutlinedButton.icon(
+              key: const ValueKey('portable-restore-rollback'),
+              onPressed: _busy || !_stateWriteIdle(state)
+                  ? null
+                  : () => _rollbackRestore(state),
+              icon: const Icon(Icons.undo_outlined),
+              label: Text(_restoreText(state, 'Undo this restore', '撤回本次恢复')),
+            ),
+          ],
         ],
       ),
     );
@@ -1022,6 +1142,35 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
         currentScopeKind: owner.scopeKind,
         existingRecordIds: beforeSnapshot.recordIds,
       );
+      PortableDataRestoreRequest? restoreRequest;
+      String? restoreHeldReason;
+      final coordinator = _restoreCoordinator(state);
+      if (coordinator != null &&
+          preview.status == UserPortableDataPreviewStatus.ready) {
+        try {
+          if (!_stateWriteIdle(state)) {
+            throw StateError('portable_restore_state_busy');
+          }
+          restoreRequest = await coordinator.prepare(
+            packageJson: raw,
+            ownerScope: lease.rawScope,
+            effectiveOwnerScope: owner.effectiveOpaqueScope,
+            scopeKind: owner.scopeKind,
+            foodCatalog: state.foodRepo.allFoods,
+            medicationCatalog: state.medRepo.allDrugs,
+            authorize: () =>
+                _isLeaseCurrent(lease) &&
+                _inputSha256(_importController.text.trim()) == inputSha256 &&
+                _stateWriteIdle(state),
+          );
+        } catch (_) {
+          restoreHeldReason = _restoreText(
+            state,
+            'Restore is held: this package has a conflict, unsupported records, or a source projection that cannot be preserved exactly.',
+            '暂停恢复：该包有冲突、不支持的记录，或无法逐项保留的来源信息。',
+          );
+        }
+      }
       if (!_isLeaseCurrent(lease) ||
           _inputSha256(_importController.text.trim()) != inputSha256) {
         return;
@@ -1043,15 +1192,157 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       setState(() {
         _error = null;
         _preview = preview;
+        _restoreRequest = restoreRequest;
+        _restoreHeldReason = restoreHeldReason;
+        _restoreOwnerRevision = restoreRequest == null ? null : owner.revision;
+        _restoreOwnerProtectionClass = restoreRequest == null
+            ? null
+            : owner.protectionClass;
         _previewInputSha256 = inputSha256;
         _previewScopeEpoch = lease.epoch;
         _previewExistingRecordIdDigest = afterSnapshot.recordIdDigest;
         _previewReminderProcessRevision = afterSnapshot.reminderProcessRevision;
         _previewReminderIds = afterSnapshot.reminderIds;
+        _previewReminderContentDigest = afterSnapshot.reminderContentDigest;
       });
     } catch (_) {
       if (_isLeaseCurrent(lease)) {
         _setError(i18n.tr('portable.error_inspect'));
+      }
+    } finally {
+      if (_isLeaseCurrent(lease)) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _restore(AppState state) async {
+    final lease = _captureLease(state);
+    final request = _restoreRequest;
+    final coordinator = _restoreCoordinator(state);
+    if (lease == null ||
+        request == null ||
+        coordinator == null ||
+        _currentBoundPreview(state) == null ||
+        !_stateWriteIdle(state)) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(_restoreText(state, 'Restore these records?', '恢复这些记录？')),
+        content: Text(
+          _restoreText(
+            state,
+            'Merge the inspected records and update the exported profile preferences in this browser. Existing record IDs will never be overwritten. Reminders, observations, notification permission, and AI consent are excluded. The previous state is kept locally for undo.',
+            '将已预览记录合并到此浏览器，并更新包内资料偏好。不会覆盖已有记录 ID；提醒、观察、通知权限和 AI 同意不导入。原状态保留在本地供撤回。',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(_restoreText(state, 'Cancel', '取消')),
+          ),
+          FilledButton(
+            key: const ValueKey('portable-restore-confirm'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(_restoreText(state, 'Restore', '恢复')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true ||
+        !_isLeaseCurrent(lease) ||
+        !identical(request, _restoreRequest) ||
+        _currentBoundPreview(state) == null) {
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final owner = await _ownerScopeResolver.resolve(
+        rawScope: lease.rawScope,
+        scopeKind: lease.scopeKind,
+      );
+      if (!_isLeaseCurrent(lease) ||
+          owner.revision != _restoreOwnerRevision ||
+          owner.protectionClass != _restoreOwnerProtectionClass) {
+        throw StateError('portable_restore_owner_capability_changed');
+      }
+      final freshPreview = await widget.packageService.inspectAsync(
+        packageJson: _importController.text.trim(),
+        currentUserScope: owner.effectiveOpaqueScope,
+        currentDoseOwnerScope: lease.rawScope,
+        currentScopeKind: owner.scopeKind,
+      );
+      final freshSnapshot = await _captureExistingStateSnapshot(lease);
+      if (freshPreview.status != UserPortableDataPreviewStatus.ready ||
+          freshSnapshot?.recordIdDigest != _previewExistingRecordIdDigest ||
+          freshSnapshot?.reminderProcessRevision !=
+              _previewReminderProcessRevision) {
+        throw StateError('portable_restore_owner_or_contents_changed');
+      }
+      final receipt = await coordinator.commit(
+        request: request,
+        currentPackageJson: _importController.text.trim(),
+        explicitlyConfirmed: true,
+        authorize: () =>
+            _isLeaseCurrent(lease) &&
+            identical(request, _restoreRequest) &&
+            _currentBoundPreview(state) != null &&
+            _stateWriteIdle(state),
+      );
+      if (!_isLeaseCurrent(lease)) return;
+      setState(() {
+        _restoreReceipt = receipt;
+        _invalidatePreviewState();
+      });
+      await state.bootstrap();
+    } catch (_) {
+      if (_isLeaseCurrent(lease)) {
+        _setError(
+          _restoreText(
+            state,
+            'Restore was not confirmed. Inspect again before retrying.',
+            '未确认恢复完成，请重新预览后重试。',
+          ),
+        );
+      }
+    } finally {
+      if (_isLeaseCurrent(lease)) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _rollbackRestore(AppState state) async {
+    final lease = _captureLease(state);
+    final receipt = _restoreReceipt;
+    final coordinator = _restoreCoordinator(state);
+    if (lease == null || receipt == null || coordinator == null) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await coordinator.store.rollbackPortableRestore(
+        receipt,
+        ownerScope: lease.rawScope,
+        authorize: () => _isLeaseCurrent(lease) && _stateWriteIdle(state),
+      );
+      if (!_isLeaseCurrent(lease)) return;
+      setState(() {
+        _restoreReceipt = null;
+        _invalidatePreviewState();
+      });
+      await state.bootstrap();
+    } catch (_) {
+      if (_isLeaseCurrent(lease)) {
+        _setError(
+          _restoreText(
+            state,
+            'Undo was held because the stored state or owner changed.',
+            '存储状态或所有者已变化，已拒绝撤回。',
+          ),
+        );
       }
     } finally {
       if (_isLeaseCurrent(lease)) setState(() => _busy = false);
@@ -1115,6 +1406,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     if (rawScope == null || rawScope.trim().isEmpty) return null;
     if (!_hasObservedScope ||
         _observedScope != rawScope ||
+        _observedAuthSessionEpoch != state.mealDraftSessionEpoch ||
         context.read<AppState>().currentUserId != rawScope) {
       return null;
     }
@@ -1124,6 +1416,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
           ? firebasePortableScopeKind
           : localPortableScopeKind,
       epoch: _scopeEpoch,
+      authSessionEpoch: state.mealDraftSessionEpoch,
     );
   }
 
@@ -1132,6 +1425,9 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       _hasObservedScope &&
       lease.epoch == _scopeEpoch &&
       lease.rawScope == _observedScope &&
+      lease.authSessionEpoch == _observedAuthSessionEpoch &&
+      lease.authSessionEpoch ==
+          context.read<AppState>().mealDraftSessionEpoch &&
       lease.scopeKind ==
           (FirebaseBackend.enabled
               ? firebasePortableScopeKind
@@ -1154,14 +1450,18 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       context.read<AppState>(),
       reminders.map((item) => item.id).toSet(),
       revisionAfter,
+      reminderContentDigest: portableRestoreDigest(
+        reminders.map((item) => item.toJson()).toList(),
+      ),
     );
   }
 
   _PortableExistingStateSnapshot _existingStateSnapshot(
     AppState state,
     Set<String> reminderIds,
-    String reminderProcessRevision,
-  ) {
+    String reminderProcessRevision, {
+    required String reminderContentDigest,
+  }) {
     final medicationSelectionIds = <String>{
       for (final id in state.activeDrugIds)
         if (id.trim().isNotEmpty) id.trim(),
@@ -1177,11 +1477,33 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
     final canonicalIds = <String, Object?>{
       for (final entry in recordIds.entries)
         entry.key: (entry.value.toList()..sort()),
+      'profile': state.userProfile.toJson(),
+      'meals': state.meals.map((item) => item.toJson()).toList(),
+      'intakes': state.intakes.map((item) => item.toJson()).toList(),
+      'history': state.recoverableEventHistory
+          .map((item) => item.toJson())
+          .toList(),
+      'observations': state.observations.map((item) => item.toJson()).toList(),
+      'discussionNotes': state.discussionNotes
+          .map((item) => item.toJson())
+          .toList(),
+      'medicationDiscussionEntries': state.medicationDiscussionEntries
+          .map((item) => item.toJson())
+          .toList(),
+      'medicationDiscussionOutcomes': state.medicationDiscussionOutcomes
+          .map((item) => item.toJson())
+          .toList(),
+      'medicationListReviews': state.medicationListReviews
+          .map((item) => item.toJson())
+          .toList(),
+      'foodCatalogRevision': state.foodRepo.revision,
+      'medicationCatalogRevision': state.medRepo.revision,
+      'reminderContentDigest': reminderContentDigest,
     };
     final digest = sha256
         .convert(
           utf8.encode(
-            'parkinsum-portable-existing-record-ids-v1|'
+            'parkinsum-portable-existing-state-content-v2|'
             '${jsonEncode(canonicalIds)}',
           ),
         )
@@ -1195,6 +1517,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       recordIdDigest: digest,
       reminderProcessRevision: reminderProcessRevision,
       reminderIds: Set<String>.unmodifiable(reminderIds),
+      reminderContentDigest: reminderContentDigest,
     );
   }
 
@@ -1207,6 +1530,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
         _previewExistingRecordIdDigest == null ||
         _previewReminderProcessRevision == null ||
         _previewReminderIds == null ||
+        _previewReminderContentDigest == null ||
         _observedScope == null) {
       return null;
     }
@@ -1219,6 +1543,7 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
       state,
       _previewReminderIds!,
       UserLoggingReminderProcessRevision.read(_observedScope!),
+      reminderContentDigest: _previewReminderContentDigest!,
     );
     if (currentSnapshot.recordIdDigest != _previewExistingRecordIdDigest ||
         currentSnapshot.reminderProcessRevision !=
@@ -1278,15 +1603,21 @@ class _PortableDataPackagePageState extends State<PortableDataPackagePage> {
   }
 
   void _invalidatePreviewState() {
+    _restoreRequest = null;
+    _restoreHeldReason = null;
+    _restoreOwnerRevision = null;
+    _restoreOwnerProtectionClass = null;
     _preview = null;
     _previewInputSha256 = null;
     _previewScopeEpoch = null;
     _previewExistingRecordIdDigest = null;
     _previewReminderProcessRevision = null;
     _previewReminderIds = null;
+    _previewReminderContentDigest = null;
   }
 
   void _clearScopedState({String? error}) {
+    _restoreReceipt = null;
     _artifact = null;
     _artifactOwnerRawScope = null;
     _artifactOwnerEffectiveScope = null;

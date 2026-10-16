@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import '../../core/db/cdss_database.dart';
+import '../../core/models/food_item.dart';
+import '../../core/models/drug_definition.dart';
 import '../../core/i18n/app_i18n.dart';
 import '../../core/security/cdss_identifier_factory.dart';
 import '../../core/utils/qualified_value_parser.dart';
@@ -159,7 +161,45 @@ class ClinicalDecisionSupportService {
   /// 仍未完成：
   /// - 更完整的人工 review 工单流仍是后续增强项；
   /// - 主表仍是当前投影，版本回放依赖 cdss_record_history。
-  Future<CdssImportReport> importBundle(P0ImportBundle bundle) async {
+  Future<CdssImportReport> importBundle(P0ImportBundle bundle) =>
+      _importBundleWithIncumbents(bundle);
+
+  Future<CdssImportReport> _importBundleWithIncumbents(
+    P0ImportBundle bundle, {
+    List<ResolvedFactRecord> additionalIncumbents = const [],
+  }) async {
+    final backend = database;
+    if (backend is! CdssAtomicWriter) {
+      throw UnsupportedError('Import requires atomic catalogue storage.');
+    }
+    CdssImportHeldException? held;
+    final report = await (backend as CdssAtomicWriter)
+        .runAtomicWrite<CdssImportReport?>(() async {
+          try {
+            return await _importBundleInsideAtomicWrite(
+              bundle,
+              additionalIncumbents: additionalIncumbents,
+            );
+          } on CdssImportHeldException catch (error) {
+            // A deliberate hold is a committed review packet, not a partial
+            // activation. Report it only after its complete evidence persists.
+            held = error;
+            return null;
+          }
+        });
+    if (held != null) throw held!;
+    // ignore: avoid_print
+    print(
+      '[CDSS] import committed atomically; observations=${bundle.observations.length}',
+    );
+    return report!;
+  }
+
+  Future<CdssImportReport> _importBundleInsideAtomicWrite(
+    P0ImportBundle bundle, {
+    List<ResolvedFactRecord> additionalIncumbents = const [],
+    Map<String, _ReviewedImportChoice> reviewedChoices = const {},
+  }) async {
     await database.initialize();
     final createdAt = DateTime.now();
     final baseHash = identifierFactory.inputDigest('import-bundle', {
@@ -178,6 +218,15 @@ class ClinicalDecisionSupportService {
           .map((e) => e['rule_id'])
           .toList(),
       'runtime_events': bundle.runtimeEvents.map((e) => e.eventId).toList(),
+      if (reviewedChoices.isNotEmpty)
+        'reviewed_choices': {
+          for (final e in reviewedChoices.entries)
+            e.key: {
+              'decision_id': e.value.decisionId,
+              'original_rationale_sha256': e.value.originalRationaleSha256,
+              'chosen_observation': e.value.observation.observationId,
+            },
+        },
     });
     final activeSnapshot = await latestPromotedSnapshot();
     final stagingSnapshotId = 'staging_${createdAt.microsecondsSinceEpoch}';
@@ -223,15 +272,6 @@ class ClinicalDecisionSupportService {
       ),
     );
 
-    for (final record in bundle.sourceDocuments) {
-      await database.insertSourceDocument(record);
-    }
-    for (final record in bundle.countryDietProfiles) {
-      await database.insertCountryDietProfile(record);
-    }
-    for (final record in bundle.foodConcepts) {
-      await database.insertFoodConcept(record);
-    }
     for (final record in bundle.foodVariants) {
       await database.insertStagingRow('staging_food_variant', {
         'staging_id':
@@ -252,9 +292,6 @@ class ClinicalDecisionSupportService {
         }),
       });
     }
-    for (final record in bundle.drugConcepts) {
-      await database.insertDrugConcept(record);
-    }
     for (final record in bundle.drugProductVariants) {
       await database.insertStagingRow('staging_drug_product_variant', {
         'staging_id':
@@ -274,18 +311,6 @@ class ClinicalDecisionSupportService {
           'source_status': record.sourceStatus,
         }),
       });
-    }
-    for (final record in bundle.drugLabelSections) {
-      await database.insertDrugLabelSection(record);
-    }
-    for (final record in bundle.drugProductCodes) {
-      await database.insertDrugProductCode(record);
-    }
-    for (final record in bundle.drugProductPackagings) {
-      await database.insertDrugProductPackaging(record);
-    }
-    for (final record in bundle.drugProductMedias) {
-      await database.insertDrugProductMedia(record);
     }
     for (final record in _effectiveCrosswalks(bundle, runId, createdAt)) {
       await database.insertStagingRow('staging_concept_variant_crosswalk', {
@@ -373,6 +398,55 @@ class ClinicalDecisionSupportService {
         'event_id': record.eventId,
         'payload_json': jsonEncode(_runtimeEventPayload(record)),
       });
+    }
+
+    // Audit before any live catalogue or label row is replaced.
+    final conflictRationales = await _auditImportConflicts(
+      runId: runId,
+      snapshotId: stagingSnapshotId,
+      bundle: bundle,
+      createdAt: createdAt,
+      additionalIncumbents: additionalIncumbents,
+      reviewedChoices: reviewedChoices,
+    );
+    if (conflictRationales.any((row) => row['needs_human_review'] == true)) {
+      await _holdImport(
+        runId: runId,
+        snapshotId: stagingSnapshotId,
+        bundle: bundle,
+        rationales: conflictRationales,
+        createdAt: createdAt,
+        parentSnapshotId: activeSnapshot?.snapshotId,
+      );
+      throw CdssImportHeldException(
+        runId: runId,
+        stagingSnapshotId: stagingSnapshotId,
+      );
+    }
+
+    for (final record in bundle.sourceDocuments) {
+      await database.insertSourceDocument(record);
+    }
+    for (final record in bundle.countryDietProfiles) {
+      await database.insertCountryDietProfile(record);
+    }
+    for (final record in bundle.foodConcepts) {
+      await database.insertFoodConcept(record);
+    }
+    for (final record in bundle.drugConcepts) {
+      await database.insertDrugConcept(record);
+    }
+    for (final record in bundle.drugLabelSections) {
+      await database.insertDrugLabelSection(record);
+    }
+    for (final record in bundle.drugProductCodes) {
+      await database.insertDrugProductCode(record);
+    }
+    for (final record in bundle.drugProductPackagings) {
+      await database.insertDrugProductPackaging(record);
+    }
+    for (final record in bundle.drugProductMedias) {
+      await database.insertDrugProductMedia(record);
     }
 
     // promote: 从 staging 表读取经过落盘的结果，再写正式表，确保导入链可回放。
@@ -550,12 +624,6 @@ class ClinicalDecisionSupportService {
           jsonDecode('${row['payload_json']}') as Map<String, dynamic>;
       await database.insertStagingRow('concept_variant_crosswalk', payload);
     }
-    final conflictRationales = await _auditImportConflicts(
-      runId: runId,
-      snapshotId: promotedSnapshotId,
-      bundle: bundle,
-      createdAt: createdAt,
-    );
     final importArtifacts = await _writeArtifactSet(
       artifactId: 'import_$runId',
       snapshotId: promotedSnapshotId,
@@ -659,6 +727,771 @@ class ClinicalDecisionSupportService {
       ruleRegistryCount: bundle.ruleRegistryRows.length,
       runtimeEventCount: bundle.runtimeEvents.length,
       completedAt: DateTime.now(),
+    );
+  }
+
+  /// Read-only, evidence-bound preview for an explicit local source review.
+  /// It confers no clinical authority, publication or upstream currency claim.
+  Future<CdssReviewedImportPreview> previewReviewedImport({
+    required String heldSnapshotId,
+    required List<String> decisionIds,
+  }) async {
+    final backend = database;
+    if (backend is! CdssAtomicWriter) {
+      throw UnsupportedError('Review requires atomic catalogue storage.');
+    }
+    return (backend as CdssAtomicWriter).runAtomicWrite(() async {
+      final prepared = await _prepareReviewedImport(
+        heldSnapshotId,
+        decisionIds,
+      );
+      return CdssReviewedImportPreview._(
+        heldSnapshotId: heldSnapshotId,
+        evidenceSha256: prepared.evidenceSha256,
+        stateSha256: await _reviewActivationStateDigest(),
+        decisionIds: List.unmodifiable(decisionIds.toList()..sort()),
+        selectedObservations: List.unmodifiable([
+          for (final choice in prepared.choices.values)
+            Map<String, Object?>.unmodifiable({
+              'cluster_key': choice.originalRationale['cluster_key'],
+              'observation_id': choice.observation.observationId,
+              'source_doc_id': choice.observation.sourceDocId,
+              'raw_value_text': choice.observation.value.rawValueText,
+              'unit': choice.observation.unit,
+              'basis_type': choice.observation.basisType,
+              'basis_amount': choice.observation.basisAmount,
+              'scope_hash': choice.observation.scopeHash,
+              'method_code': choice.observation.methodCode,
+            }),
+        ]),
+      );
+    });
+  }
+
+  /// Creates a new derived snapshot; never releases the original held one.
+  /// A second confirmation or any intervening participating mutation fails.
+  Future<CdssImportReport> activateReviewedImport({
+    required CdssReviewedImportPreview preview,
+    required String confirmationReference,
+    required String confirmationReason,
+    bool Function()? isSessionCurrent,
+  }) async {
+    if (confirmationReference.trim().isEmpty ||
+        confirmationReason.trim().isEmpty) {
+      throw ArgumentError(
+        'An explicit local confirmation and reason are required.',
+      );
+    }
+    final backend = database;
+    if (backend is! CdssAtomicWriter) {
+      throw UnsupportedError('Activation requires atomic catalogue storage.');
+    }
+    final report = await (backend as CdssAtomicWriter).runAtomicWrite(() async {
+      if (isSessionCurrent != null && !isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      if (await _reviewActivationStateDigest() != preview.stateSha256) {
+        throw StateError('Catalogue state changed; review a new preview.');
+      }
+      final prepared = await _prepareReviewedImport(
+        preview.heldSnapshotId,
+        preview.decisionIds,
+      );
+      if (prepared.evidenceSha256 != preview.evidenceSha256) {
+        throw StateError('Original review evidence changed.');
+      }
+      final result = await _importBundleInsideAtomicWrite(
+        prepared.bundle,
+        reviewedChoices: prepared.choices,
+      );
+      final receipt = <String, Object?>{
+        'schema': 'parkinsum.reviewed-import-activation/1',
+        'original_held_snapshot_id': preview.heldSnapshotId,
+        'original_evidence_sha256': preview.evidenceSha256,
+        'confirmed_state_sha256': preview.stateSha256,
+        'review_decision_ids': preview.decisionIds,
+        'derived_snapshot_id': result.promotedSnapshotId,
+        'derived_run_id': result.runId,
+        'confirmation_reference': confirmationReference.trim(),
+        'confirmation_reason': confirmationReason.trim(),
+        'original_hold_released': false,
+        'source_currency_inferred': false,
+        'reviewer_authentication_asserted': false,
+        'clinical_approval': false,
+      };
+      // Receipt persistence shares the complete catalogue transaction. A
+      // failure here rolls back rows, histories and the activation marker.
+      await database.insertConflictAuditLog(
+        ConflictAuditLogRecord(
+          auditId: identifierFactory.newId('review_activation'),
+          snapshotId: result.promotedSnapshotId,
+          runId: result.runId,
+          auditType: 'REVIEWED_IMPORT_ACTIVATION',
+          target: preview.heldSnapshotId,
+          decision: 'derived_snapshot_activated',
+          winningRuleIdsJson: '[]',
+          suppressedRuleIdsJson: '[]',
+          sourceDocRefsJson: jsonEncode(
+            prepared.bundle.sourceDocuments.map((e) => e.sourceDocId).toList(),
+          ),
+          inputHash: identifierFactory.inputDigest(
+            'reviewed-import-activation',
+            receipt,
+          ),
+          decisionReason: jsonEncode(receipt),
+          machineActionsJson: '[]',
+          humanMessage:
+              'Explicit local source review; clinical qualification unchanged.',
+          needsHumanReview: false,
+          createdAt: DateTime.now(),
+        ),
+      );
+      if (isSessionCurrent != null && !isSessionCurrent()) {
+        throw StateError('The local review session changed.');
+      }
+      return result;
+    });
+    // ignore: avoid_print
+    print(
+      '[CDSS] reviewed import committed; choices=${preview.decisionIds.length}',
+    );
+    return report;
+  }
+
+  // Bind all defined CDSS tables, including decisions, histories and staging.
+  // Row ordering is not an identity; no field or historical value is omitted.
+  Future<String> _reviewActivationStateDigest() async =>
+      identifierFactory.inputDigest('reviewed-import-current-state', {
+        for (final table in const [
+          'source_document',
+          'food_concept',
+          'food_variant',
+          'drug_concept',
+          'drug_product_variant',
+          'drug_label_section',
+          'drug_product_code',
+          'drug_product_packaging',
+          'drug_product_media',
+          'concept_variant_crosswalk',
+          'observation',
+          'variant_scope',
+          'resolved_fact',
+          'rule_registry',
+          'runtime_event',
+          'conflict_audit_log',
+          'human_review_ticket',
+          'engine_snapshot',
+          'user_profile',
+          'region_jurisdiction_map',
+          'locale_resource_bundle',
+          'country_diet_profile',
+          'meal_template',
+          'recommendation_audit_log',
+          'ingestion_run',
+          'snapshot_distribution',
+          'cdss_record_history',
+          ..._reviewStagingTables,
+        ])
+          table: _stableReviewRows(await database.queryTable(table)),
+      });
+
+  Future<_PreparedReviewedImport> _prepareReviewedImport(
+    String snapshotId,
+    List<String> decisionIds,
+  ) async {
+    if (decisionIds.isEmpty ||
+        decisionIds.toSet().length != decisionIds.length) {
+      throw StateError('Exactly one current choice per conflict is required.');
+    }
+    final evidence = await loadHeldImportReviewEvidence(snapshotId: snapshotId);
+    if (evidence['schema'] != 'parkinsum.held-import-review-evidence/2') {
+      throw StateError(
+        'This historical packet lacks complete activation resources.',
+      );
+    }
+    final payload = Map<String, Object?>.from(evidence['payload'] as Map);
+    final auditRows = (payload['conflict_audits'] as List).cast<Map>();
+    final unresolved = auditRows
+        .where(
+          (r) =>
+              r['needs_human_review'] == true || r['needs_human_review'] == 1,
+        )
+        .toList();
+    if (unresolved.length != decisionIds.length || unresolved.isEmpty) {
+      throw StateError(
+        'Every original unresolved conflict needs an explicit choice.',
+      );
+    }
+    final currentAudits = await database.queryTable('conflict_audit_log');
+    final tickets = await database.queryTable('human_review_ticket');
+    final choices = <String, _ReviewedImportChoice>{};
+    final covered = <String>{};
+    for (final id in decisionIds) {
+      final rows = currentAudits
+          .where(
+            (r) =>
+                r['audit_id'] == id &&
+                r['audit_type'] == 'IMPORT_CONFLICT_REVIEW_DECISION',
+          )
+          .toList();
+      if (rows.length != 1) {
+        throw StateError('Review decision identity is ambiguous.');
+      }
+      final row = rows.single;
+      final d = jsonDecode(row['decision_reason'] as String) as Map;
+      if (d['schema'] != 'parkinsum.import-conflict-review-decision/1' ||
+          d['action'] != 'choose_observation' ||
+          row['decision'] != d['action'] ||
+          d['activation_authorized'] != false ||
+          d['clinical_approval'] != false ||
+          d['snapshot_id'] != snapshotId ||
+          row['snapshot_id'] != snapshotId ||
+          d['run_id'] != payload['run_id'] ||
+          row['run_id'] != payload['run_id'] ||
+          d['evidence_sha256'] != evidence['input_sha256'] ||
+          '${d['reviewer_reference'] ?? ''}'.trim().isEmpty ||
+          '${d['reason'] ?? ''}'.trim().isEmpty ||
+          row['input_hash'] !=
+              identifierFactory.inputDigest('import-review-decision', d)) {
+        throw StateError(
+          'Only a current original-evidence choice can activate.',
+        );
+      }
+      final original = unresolved
+          .where((a) => a['audit_id'] == d['conflict_audit_id'])
+          .toList();
+      if (original.length != 1 || !covered.add('${d['conflict_audit_id']}')) {
+        throw StateError('A conflict is missing or selected more than once.');
+      }
+      final audit = original.single;
+      final matchingTickets = tickets
+          .where((t) => t['ticket_id'] == d['ticket_id'])
+          .toList();
+      if (matchingTickets.length != 1 ||
+          matchingTickets.single['status'] != 'open' ||
+          matchingTickets.single['snapshot_id'] != snapshotId ||
+          matchingTickets.single['run_id'] != payload['run_id'] ||
+          matchingTickets.single['reason_code'] != 'unresolved_conflict' ||
+          matchingTickets.single['target_type'] != audit['audit_type'] ||
+          matchingTickets.single['target_id'] != audit['target'] ||
+          audit['audit_type'] != 'FACT_CLUSTER_RESOLUTION' ||
+          audit['decision'] != 'review_required' ||
+          d['original_audit_sha256'] !=
+              identifierFactory.inputDigest('original-conflict-audit', audit)) {
+        throw StateError('Original ticket and conflict must still match.');
+      }
+      final rationale = Map<String, Object?>.from(
+        jsonDecode(audit['decision_reason'] as String) as Map,
+      );
+      final edges = (rationale['comparison_edges'] as List).cast<Map>();
+      // Scope/method/identity/quantity incompatibility needs corrected evidence,
+      // not a preference that discards an independently applicable measurement.
+      if (edges.isEmpty || edges.any((e) => e['numeric_comparable'] != true)) {
+        throw StateError(
+          'Incomparable evidence must be corrected or split by scope.',
+        );
+      }
+      final participantIds = {
+        for (final e in edges) ...[
+          e['left_observation_id'],
+          e['right_observation_id'],
+        ],
+      };
+      final chosen = d['chosen_observation'];
+      final chosenSource = d['chosen_source'];
+      if (chosen is! Map ||
+          chosenSource is! Map ||
+          !participantIds.contains(chosen['observation_id'])) {
+        throw StateError('An original graph participant is required.');
+      }
+      final history = payload['incumbent_evidence'] as Map;
+      final originals = <Map>[
+        ...(payload['observations'] as List).cast<Map>(),
+        ...(history['observation'] as List).cast<Map>(),
+      ].where((o) => o['observation_id'] == chosen['observation_id']).toList();
+      final originalSources = <Map>[
+        ...(payload['source_documents'] as List).cast<Map>(),
+        ...(history['source_document'] as List).cast<Map>(),
+      ].where((o) => o['source_doc_id'] == chosen['source_doc_id']).toList();
+      final chosenHash = identifierFactory.inputDigest(
+        'chosen-observation',
+        chosen,
+      );
+      final sourceHash = identifierFactory.inputDigest(
+        'chosen-source',
+        chosenSource,
+      );
+      if (originals.isEmpty ||
+          originalSources.isEmpty ||
+          d['chosen_observation_sha256'] != chosenHash ||
+          d['chosen_source_sha256'] != sourceHash ||
+          originals.any(
+            (o) =>
+                identifierFactory.inputDigest('chosen-observation', o) !=
+                chosenHash,
+          ) ||
+          originalSources.any(
+            (o) =>
+                identifierFactory.inputDigest('chosen-source', o) != sourceHash,
+          )) {
+        throw StateError(
+          'Chosen original quantity/source changed or is ambiguous.',
+        );
+      }
+      final observation = _observationFromRow(
+        Map<String, Object?>.from(chosen),
+      );
+      if (observation.value.low == null ||
+          observation.value.high == null ||
+          !observation.value.low!.isFinite ||
+          !observation.value.high!.isFinite ||
+          observation.value.low! > observation.value.high! ||
+          observation.value.qualifierKind == QualifierKind.parsingUncertainty ||
+          observation.methodCode?.trim().isNotEmpty != true ||
+          observation.recordLocator.trim().isEmpty ||
+          observation.basisType.trim().isEmpty ||
+          observation.unit.trim().isEmpty) {
+        throw StateError(
+          'An original qualified quantity, method and basis are required.',
+        );
+      }
+      final key = '${audit['target']}';
+      if (choices.containsKey(key)) {
+        throw StateError('Conflicting choices for one cluster.');
+      }
+      choices[key] = _ReviewedImportChoice(
+        decisionId: id,
+        originalAuditId: '${audit['audit_id']}',
+        originalRationale: rationale,
+        originalRationaleSha256: identifierFactory.inputDigest(
+          'reviewed-original-rationale',
+          rationale,
+        ),
+        observation: observation,
+      );
+    }
+    final originalBundle = _bundleFromReviewPayload(payload);
+    final allSources = <String, SourceDocumentRecord>{
+      for (final row in await database.queryTable('source_document'))
+        '${row['source_doc_id']}': _sourceFromRow(row),
+      for (final row
+          in (payload['incumbent_evidence'] as Map)['source_document'] as List)
+        '${(row as Map)['source_doc_id']}': _sourceFromRow(
+          Map<String, Object?>.from(row),
+        ),
+      for (final source in originalBundle.sourceDocuments)
+        source.sourceDocId: source,
+    };
+    final referencedSources = await _validateReviewedImportReferences(
+      originalBundle,
+    );
+    referencedSources.addAll(
+      choices.values.map((c) => c.observation.sourceDocId),
+    );
+    referencedSources.addAll(
+      originalBundle.sourceDocuments.map((s) => s.sourceDocId),
+    );
+    final now = DateTime.now();
+    for (final id in referencedSources) {
+      final source = allSources[id];
+      if (source == null) {
+        throw StateError('Original source reference is missing.');
+      }
+      if (source.sourceStatus != 'active' ||
+          source.rawPayload.trim().isEmpty ||
+          source.checksum != stableHash(source.rawPayload) ||
+          source.originUrl.trim().isEmpty ||
+          (source.publishedAt?.isAfter(now) ?? false) ||
+          (source.effectiveAt?.isAfter(now) ?? false)) {
+        throw StateError(
+          'Source lifecycle/content is not qualified for local activation.',
+        );
+      }
+    }
+    final facts = [
+      for (final fact in originalBundle.resolvedFacts)
+        if (!choices.values.any(
+          (c) =>
+              c.observation.entityKey == fact.entityKey &&
+              c.observation.attributeCode == fact.attributeCode,
+        ))
+          fact,
+      for (final choice in choices.values)
+        ResolvedFactRecord(
+          factId: 'reviewed_${choice.decisionId}',
+          entityKey: choice.observation.entityKey,
+          attributeCode: choice.observation.attributeCode,
+          scopeHash: choice.observation.scopeHash,
+          resolutionStatus: 'EXPLICIT_SOURCE_REVIEW',
+          chosenObservationId: choice.observation.observationId,
+          resolvedValue: choice.observation.value,
+          resolvedUnit: choice.observation.unit,
+          resolutionPolicyId: choice.decisionId,
+          snapshotId: snapshotId,
+          factVersion: snapshotId,
+          manualOverride: true,
+        ),
+    ];
+    final bundle = _reviewBundleWithFacts(originalBundle, facts);
+    return _PreparedReviewedImport(
+      bundle,
+      choices,
+      '${evidence['input_sha256']}',
+    );
+  }
+
+  Future<Set<String>> _validateReviewedImportReferences(
+    P0ImportBundle bundle,
+  ) async {
+    Future<Set<String>> ids(
+      String table,
+      String field,
+      Iterable<String> incoming,
+    ) async {
+      final known = <String>{};
+      for (final row in await database.queryTable(table)) {
+        final id = row[field];
+        if (id is! String || id.trim().isEmpty || !known.add(id)) {
+          throw StateError('Ambiguous current resource identity.');
+        }
+      }
+      final added = <String>{};
+      for (final id in incoming) {
+        if (id.trim().isEmpty || !added.add(id)) {
+          throw StateError('Ambiguous incoming resource identity.');
+        }
+      }
+      return {...known, ...added};
+    }
+
+    final foods = await ids(
+      'food_variant',
+      'food_variant_id',
+      bundle.foodVariants.map((r) => r.foodVariantId),
+    );
+    final foodConcepts = await ids(
+      'food_concept',
+      'food_concept_id',
+      bundle.foodConcepts.map((r) => r.foodConceptId),
+    );
+    final drugs = await ids(
+      'drug_product_variant',
+      'drug_product_variant_id',
+      bundle.drugProductVariants.map((r) => r.drugProductVariantId),
+    );
+    final drugConcepts = await ids(
+      'drug_concept',
+      'drug_concept_id',
+      bundle.drugConcepts.map((r) => r.drugConceptId),
+    );
+    final scopes = await ids(
+      'variant_scope',
+      'scope_hash',
+      bundle.variantScopes.map((r) => r.scopeHash),
+    );
+    final sources = await ids(
+      'source_document',
+      'source_doc_id',
+      bundle.sourceDocuments.map((r) => r.sourceDocId),
+    );
+    await ids(
+      'observation',
+      'observation_id',
+      bundle.observations.map((r) => r.observationId),
+    );
+    final referencedSources = <String>{};
+    void referenceSource(String id) {
+      if (!sources.contains(id)) {
+        throw StateError('Missing original resource source.');
+      }
+      referencedSources.add(id);
+    }
+
+    for (final row in bundle.foodVariants) {
+      if (!foodConcepts.contains(row.foodConceptId)) {
+        throw StateError('Missing food concept.');
+      }
+    }
+    for (final row in bundle.drugProductVariants) {
+      if (!drugConcepts.contains(row.drugConceptId) ||
+          row.sourceStatus != 'active') {
+        throw StateError(
+          'Drug product identity or lifecycle is not qualified.',
+        );
+      }
+    }
+    for (final row in bundle.observations) {
+      referenceSource(row.sourceDocId);
+      if (!scopes.contains(row.scopeHash) ||
+          (row.domain == 'food' && !foods.contains(row.entityKey)) ||
+          (row.domain == 'drug' && !drugs.contains(row.entityKey))) {
+        throw StateError('Observation catalogue/scope reference is missing.');
+      }
+    }
+    final drugResources = [
+      for (final row in bundle.drugLabelSections)
+        (row.drugProductVariantId, row.sourceDocId),
+      for (final row in bundle.drugProductCodes)
+        (row.drugProductVariantId, row.sourceDocId),
+      for (final row in bundle.drugProductPackagings)
+        (row.drugProductVariantId, row.sourceDocId),
+      for (final row in bundle.drugProductMedias)
+        (row.drugProductVariantId, row.sourceDocId),
+    ];
+    for (final (product, source) in drugResources) {
+      if (!drugs.contains(product)) {
+        throw StateError('Missing drug product resource.');
+      }
+      referenceSource(source);
+    }
+    for (final row in bundle.conceptVariantCrosswalks) {
+      referenceSource(row.sourceDocId);
+      if ((row.domain == 'food' &&
+              (!foods.contains(row.variantId) ||
+                  !foodConcepts.contains(row.conceptId))) ||
+          (row.domain == 'drug' &&
+              (!drugs.contains(row.variantId) ||
+                  !drugConcepts.contains(row.conceptId)))) {
+        throw StateError('Missing crosswalk catalogue resource.');
+      }
+    }
+    return referencedSources;
+  }
+
+  P0ImportBundle _reviewBundleWithFacts(
+    P0ImportBundle b,
+    List<ResolvedFactRecord> facts,
+  ) => P0ImportBundle(
+    sourceDocuments: b.sourceDocuments,
+    countryDietProfiles: b.countryDietProfiles,
+    foodConcepts: b.foodConcepts,
+    foodVariants: b.foodVariants,
+    drugConcepts: b.drugConcepts,
+    drugProductVariants: b.drugProductVariants,
+    drugLabelSections: b.drugLabelSections,
+    drugProductCodes: b.drugProductCodes,
+    drugProductPackagings: b.drugProductPackagings,
+    drugProductMedias: b.drugProductMedias,
+    conceptVariantCrosswalks: b.conceptVariantCrosswalks,
+    variantScopes: b.variantScopes,
+    observations: b.observations,
+    resolvedFacts: facts,
+    ruleRegistryRows: b.ruleRegistryRows,
+    runtimeEvents: b.runtimeEvents,
+    projectedFoods: b.projectedFoods,
+    projectedDrugs: b.projectedDrugs,
+  );
+
+  // v2 is the complete held-package codec. Required groups and field types are
+  // checked before mutation; historical v1 remains available for review only.
+  P0ImportBundle _bundleFromReviewPayload(Map<String, Object?> payload) {
+    final retained = payload['retained_catalog_rows'] as Map;
+    final staged = payload['staging_rows'] as Map;
+    List<Map<String, Object?>> rows(String table, {bool staging = false}) {
+      final value = staging ? staged['staging_$table'] : retained[table];
+      if (value is! List) {
+        throw FormatException('Missing original group: $table');
+      }
+      return [
+        for (final row in value)
+          Map<String, Object?>.from(
+            staging
+                ? jsonDecode((row as Map)['payload_json'] as String) as Map
+                : row as Map,
+          ),
+      ];
+    }
+
+    String text(Map<String, Object?> r, String key) => r[key] as String;
+    String? optionalText(Map<String, Object?> r, String key) {
+      if (!r.containsKey(key)) {
+        throw FormatException('Missing original field: $key');
+      }
+      return r[key] as String?;
+    }
+
+    DateTime date(Map<String, Object?> r, String key) =>
+        DateTime.fromMillisecondsSinceEpoch(r[key] as int);
+    return P0ImportBundle(
+      sourceDocuments: [
+        for (final r in (payload['source_documents'] as List).cast<Map>())
+          _sourceFromRow(Map<String, Object?>.from(r)),
+      ],
+      observations: [
+        for (final r in rows('observation', staging: true))
+          _observationFromRow(r),
+      ],
+      resolvedFacts: [
+        for (final r in rows('resolved_fact', staging: true)) _factFromRow(r),
+      ],
+      ruleRegistryRows: [
+        for (final r in rows('rule_registry', staging: true))
+          Map<String, dynamic>.from(r),
+      ],
+      projectedFoods: [
+        for (final r in rows('projected_foods'))
+          FoodItem.fromJson(Map<String, dynamic>.from(r)),
+      ],
+      projectedDrugs: [
+        for (final r in rows('projected_drugs'))
+          DrugDefinition.fromJson(Map<String, dynamic>.from(r)),
+      ],
+      countryDietProfiles: [
+        for (final r in rows('country_diet_profile'))
+          CountryDietProfileRecord(
+            countryCode: text(r, 'country_code'),
+            guidelineSource: text(r, 'guideline_source'),
+            mealPatternJson: text(r, 'meal_pattern_json'),
+            stapleFoodsJson: text(r, 'staple_foods_json'),
+            preferredProteinSourcesJson: text(
+              r,
+              'preferred_protein_sources_json',
+            ),
+            avoidanceNotesJson: text(r, 'avoidance_notes_json'),
+          ),
+      ],
+      foodConcepts: [
+        for (final r in rows('food_concept'))
+          FoodConceptRecord(
+            foodConceptId: text(r, 'food_concept_id'),
+            canonicalNameEn: text(r, 'canonical_name_en'),
+            canonicalNameZh: text(r, 'canonical_name_zh'),
+            foodGroup: text(r, 'food_group'),
+          ),
+      ],
+      foodVariants: [
+        for (final r in rows('food_variant', staging: true))
+          FoodVariantRecord(
+            foodVariantId: text(r, 'food_variant_id'),
+            foodConceptId: text(r, 'food_concept_id'),
+            jurisdiction: text(r, 'jurisdiction'),
+            sourceFamily: text(r, 'source_family'),
+            sourceFoodCode: optionalText(r, 'source_food_code'),
+            displayNameLocal: text(r, 'display_name_local'),
+            isAuthoritativeForRegion: r['is_authoritative_for_region'] as bool,
+            isAuthoritativeFallback: r['is_authoritative_fallback'] as bool,
+            status: text(r, 'status'),
+            fallbackChainJson: text(r, 'fallback_chain_json'),
+          ),
+      ],
+      drugConcepts: [
+        for (final r in rows('drug_concept'))
+          DrugConceptRecord(
+            drugConceptId: text(r, 'drug_concept_id'),
+            genericName: text(r, 'generic_name'),
+            atcLikeCode: text(r, 'atc_like_code'),
+          ),
+      ],
+      drugProductVariants: [
+        for (final r in rows('drug_product_variant', staging: true))
+          DrugProductVariantRecord(
+            drugProductVariantId: text(r, 'drug_product_variant_id'),
+            drugConceptId: text(r, 'drug_concept_id'),
+            jurisdiction: text(r, 'jurisdiction'),
+            regulator: text(r, 'regulator'),
+            externalProductCode: text(r, 'external_product_code'),
+            route: text(r, 'route'),
+            dosageForm: text(r, 'dosage_form'),
+            releaseType: text(r, 'release_type'),
+            labelVersion: text(r, 'label_version'),
+            sourceStatus: text(r, 'source_status'),
+          ),
+      ],
+      drugLabelSections: [
+        for (final r in rows('drug_label_section'))
+          DrugLabelSectionRecord(
+            sectionId: text(r, 'section_id'),
+            drugProductVariantId: text(r, 'drug_product_variant_id'),
+            sourceDocId: text(r, 'source_doc_id'),
+            sectionKey: text(r, 'section_key'),
+            sectionTitle: text(r, 'section_title'),
+            sectionText: text(r, 'section_text'),
+          ),
+      ],
+      drugProductCodes: [
+        for (final r in rows('drug_product_code'))
+          DrugProductCodeRecord(
+            productCodeId: text(r, 'product_code_id'),
+            drugProductVariantId: text(r, 'drug_product_variant_id'),
+            sourceDocId: text(r, 'source_doc_id'),
+            codeSystem: text(r, 'code_system'),
+            codeValue: text(r, 'code_value'),
+            displayText: optionalText(r, 'display_text'),
+          ),
+      ],
+      drugProductPackagings: [
+        for (final r in rows('drug_product_packaging'))
+          DrugProductPackagingRecord(
+            packagingId: text(r, 'packaging_id'),
+            drugProductVariantId: text(r, 'drug_product_variant_id'),
+            sourceDocId: text(r, 'source_doc_id'),
+            packageCode: optionalText(r, 'package_code'),
+            description: text(r, 'description'),
+            marketingStatus: optionalText(r, 'marketing_status'),
+          ),
+      ],
+      drugProductMedias: [
+        for (final r in rows('drug_product_media'))
+          DrugProductMediaRecord(
+            mediaId: text(r, 'media_id'),
+            drugProductVariantId: text(r, 'drug_product_variant_id'),
+            sourceDocId: text(r, 'source_doc_id'),
+            mediaType: text(r, 'media_type'),
+            mediaUrl: text(r, 'media_url'),
+            caption: optionalText(r, 'caption'),
+          ),
+      ],
+      conceptVariantCrosswalks: [
+        for (final r in rows('concept_variant_crosswalk', staging: true))
+          ConceptVariantCrosswalkRecord(
+            crosswalkId: text(r, 'crosswalk_id'),
+            domain: text(r, 'domain'),
+            appEntityId: text(r, 'app_entity_id'),
+            conceptId: text(r, 'concept_id'),
+            variantId: text(r, 'variant_id'),
+            externalIdSystem: text(r, 'external_id_system'),
+            externalIdValue: text(r, 'external_id_value'),
+            jurisdiction: text(r, 'jurisdiction'),
+            sourceDocId: text(r, 'source_doc_id'),
+            importRunId: optionalText(r, 'import_run_id'),
+            confidence: (r['confidence'] as num).toDouble(),
+            status: text(r, 'status'),
+            mappingPayloadJson: text(r, 'mapping_payload_json'),
+            createdAt: date(r, 'created_at'),
+          ),
+      ],
+      variantScopes: [
+        for (final r in rows('variant_scope', staging: true))
+          VariantScopeRecord(
+            scopeHash: text(r, 'scope_hash'),
+            jurisdiction: text(r, 'jurisdiction'),
+            brand: optionalText(r, 'brand'),
+            dosageForm: optionalText(r, 'dosage_form'),
+            releaseType: optionalText(r, 'release_type'),
+            saltForm: optionalText(r, 'salt_form'),
+            route: optionalText(r, 'route'),
+            preparationState: optionalText(r, 'preparation_state'),
+            cookingState: optionalText(r, 'cooking_state'),
+            plantPart: optionalText(r, 'plant_part'),
+            cultivar: optionalText(r, 'cultivar'),
+            samplingFrame: optionalText(r, 'sampling_frame'),
+          ),
+      ],
+      runtimeEvents: [
+        for (final r in rows('runtime_event', staging: true))
+          RuntimeEventRecord(
+            eventId: text(r, 'event_id'),
+            patientId: text(r, 'patient_id'),
+            eventType: text(r, 'event_type'),
+            snapshotId: text(r, 'snapshot_id'),
+            contextJson: text(r, 'context_json'),
+            machineReadableJson: text(r, 'machine_readable_json'),
+            humanReadableMarkdown: text(r, 'human_readable_markdown'),
+            jurisdiction: text(r, 'jurisdiction'),
+            timezone: text(r, 'timezone'),
+            createdAt: date(r, 'created_at'),
+          ),
+      ],
     );
   }
 
@@ -885,17 +1718,30 @@ class ClinicalDecisionSupportService {
     required ResolvedFactRecord resolvedFact,
   }) async {
     await database.initialize();
-    // 单条 observation 的最小写入链路：
-    // source document -> observation -> variant scope -> conflict classify -> resolved fact
-    // 未完成：cluster 级别的批量 ingest / auto-resolve / human review ticket 还没有接上。
-    await database.insertSourceDocument(sourceDocument);
-    await database.insertObservation(observation);
-    await database.insertVariantScope(variantScope);
     final result = factConflictEngine.classify(
       observation: observation,
       existingFacts: existingFacts,
     );
-    await database.insertResolvedFact(resolvedFact);
+    // The single-record path uses the same staging and activation gate as a
+    // bulk import. Supplied incumbents can add a hold, never bypass stored ones.
+    try {
+      await _importBundleWithIncumbents(
+        P0ImportBundle(
+          sourceDocuments: [sourceDocument],
+          observations: [observation],
+          variantScopes: [variantScope],
+          resolvedFacts: [resolvedFact],
+        ),
+        additionalIncumbents: existingFacts,
+      );
+    } on CdssImportHeldException catch (error) {
+      return FactConflictResult(
+        type: result.type,
+        reason: '$error',
+        rejectedRationaleJson: result.rejectedRationaleJson,
+        needsManualReview: true,
+      );
+    }
     return result;
   }
 
@@ -1409,40 +2255,249 @@ class ClinicalDecisionSupportService {
     required String snapshotId,
     required P0ImportBundle bundle,
     required DateTime createdAt,
+    List<ResolvedFactRecord> additionalIncumbents = const [],
+    Map<String, _ReviewedImportChoice> reviewedChoices = const {},
   }) async {
+    final previousSourceRows = await database.queryTable('source_document');
+    final previousScopeRows = await database.queryTable('variant_scope');
+    final identityIssues = <Map<String, dynamic>>[];
+    for (final doc in bundle.sourceDocuments) {
+      for (final previous in previousSourceRows.where(
+        (row) => row['source_doc_id'] == doc.sourceDocId,
+      )) {
+        final checksum = '${previous['checksum'] ?? ''}';
+        if (checksum.isNotEmpty && checksum != doc.checksum) {
+          identityIssues.add({
+            'cluster_key': 'source_document:${doc.sourceDocId}',
+            'status': 'source_identity_collision',
+            'source_doc_refs': [doc.sourceDocId],
+            'previous_checksum': checksum,
+            'incoming_checksum': doc.checksum,
+            'needs_human_review': true,
+            'explanation':
+                'Different source content requires a distinct immutable document identity.',
+          });
+        }
+      }
+    }
+    final previousObservations = {
+      for (final row in await database.queryTable('observation'))
+        if ('${row['entity_key'] ?? ''}'.isNotEmpty)
+          '${row['observation_id']}': _observationFromRow(row),
+    };
+    final previousFacts = [
+      ...additionalIncumbents,
+      for (final row in await database.queryTable('resolved_fact'))
+        if ('${row['entity_key'] ?? ''}'.isNotEmpty) _factFromRow(row),
+    ];
+    final incomingById = {
+      for (final row in bundle.observations) row.observationId: row,
+    };
+    if (incomingById.length != bundle.observations.length ||
+        incomingById.keys.any((id) => id.trim().isEmpty)) {
+      identityIssues.add({
+        'cluster_key': 'observation_identity',
+        'status': 'invalid_observation_identity',
+        'needs_human_review': true,
+        'source_doc_refs': <String>[],
+        'explanation':
+            'Incoming observation IDs must be non-empty and globally unique.',
+      });
+    }
+    for (final fact in bundle.resolvedFacts) {
+      final original =
+          incomingById[fact.chosenObservationId] ??
+          previousObservations[fact.chosenObservationId];
+      if (original == null ||
+          original.entityKey != fact.entityKey ||
+          original.attributeCode != fact.attributeCode ||
+          original.scopeHash != fact.scopeHash ||
+          original.unit != fact.resolvedUnit ||
+          jsonEncode(original.value.toJson()) !=
+              jsonEncode(fact.resolvedValue.toJson())) {
+        identityIssues.add({
+          'cluster_key': 'resolved_fact:${fact.factId}',
+          'status': 'candidate_fact_evidence_mismatch',
+          'needs_human_review': true,
+          'source_doc_refs': original == null
+              ? <String>[]
+              : [original.sourceDocId],
+          'explanation':
+              'A candidate fact must match its original observation, scope, quantity and unit.',
+        });
+      }
+    }
+    const scopeFields = [
+      'jurisdiction',
+      'brand',
+      'dosage_form',
+      'release_type',
+      'salt_form',
+      'route',
+      'preparation_state',
+      'cooking_state',
+      'plant_part',
+      'cultivar',
+      'sampling_frame',
+    ];
+    for (final scope in bundle.variantScopes) {
+      final incoming = {
+        'jurisdiction': scope.jurisdiction,
+        'brand': scope.brand,
+        'dosage_form': scope.dosageForm,
+        'release_type': scope.releaseType,
+        'salt_form': scope.saltForm,
+        'route': scope.route,
+        'preparation_state': scope.preparationState,
+        'cooking_state': scope.cookingState,
+        'plant_part': scope.plantPart,
+        'cultivar': scope.cultivar,
+        'sampling_frame': scope.samplingFrame,
+      };
+      for (final previous in previousScopeRows.where(
+        (row) =>
+            row['scope_hash'] == scope.scopeHash &&
+            row.containsKey('jurisdiction'),
+      )) {
+        if (scopeFields.any((field) => previous[field] != incoming[field])) {
+          identityIssues.add({
+            'cluster_key': 'variant_scope:${scope.scopeHash}',
+            'status': 'scope_identity_collision',
+            'needs_human_review': true,
+            'source_doc_refs': <String>[],
+            'explanation':
+                'Different scope dimensions cannot replace an existing immutable scope hash.',
+          });
+        }
+      }
+    }
     final sourceById = <String, SourceDocumentRecord>{
+      for (final row in previousSourceRows)
+        '${row['source_doc_id']}': _sourceFromRow(row),
       for (final doc in bundle.sourceDocuments) doc.sourceDocId: doc,
     };
     final scopesByHash = <String, VariantScopeRecord>{
+      for (final row in previousScopeRows)
+        '${row['scope_hash']}': VariantScopeRecord(
+          scopeHash: '${row['scope_hash']}',
+          jurisdiction: '${row['jurisdiction'] ?? ''}',
+          brand: row['brand']?.toString(),
+          dosageForm: row['dosage_form']?.toString(),
+          releaseType: row['release_type']?.toString(),
+          saltForm: row['salt_form']?.toString(),
+          route: row['route']?.toString(),
+          preparationState: row['preparation_state']?.toString(),
+          cookingState: row['cooking_state']?.toString(),
+          plantPart: row['plant_part']?.toString(),
+          cultivar: row['cultivar']?.toString(),
+          samplingFrame: row['sampling_frame']?.toString(),
+        ),
       for (final scope in bundle.variantScopes) scope.scopeHash: scope,
     };
     final grouped = <String, List<ObservationRecord>>{};
     for (final observation in bundle.observations) {
+      // FDC labels are retained above as per-serving evidence, not promoted
+      // per-100 g composition. Comparing the two bases in one numeric cluster
+      // would hold an otherwise valid import without a comparable conflict.
+      if (observation.domain == 'food' &&
+          observation.basisType == 'per_serving_label' &&
+          observation.methodCode == 'fdc:label_nutrients' &&
+          sourceById[observation.sourceDocId]?.sourceFamily == 'FDC' &&
+          !bundle.resolvedFacts.any(
+            (fact) => fact.chosenObservationId == observation.observationId,
+          )) {
+        final historicalReferences = previousFacts
+            .where(
+              (fact) => fact.chosenObservationId == observation.observationId,
+            )
+            .toList(growable: false);
+        if (historicalReferences.isEmpty) {
+          continue;
+        }
+        // Evidence-only labels must not overwrite an adopted original. Check
+        // its entity/attribute here, before grouping could hide that incumbent;
+        // the complete original payload is checked by the conflict engine.
+        if (historicalReferences.any(
+          (fact) =>
+              fact.entityKey != observation.entityKey ||
+              fact.attributeCode != observation.attributeCode,
+        )) {
+          identityIssues.add({
+            'cluster_key': 'observation:${observation.observationId}',
+            'status': 'historical_observation_identity_collision',
+            'source_doc_refs': [observation.sourceDocId],
+            'needs_human_review': true,
+            'explanation':
+                'An adopted observation identity cannot be reassigned to a different entity or attribute.',
+          });
+          continue;
+        }
+      }
       final key = [
         observation.domain,
         observation.entityType,
         observation.entityKey,
         observation.attributeCode,
-        observation.scopeHash,
-        observation.unit,
-        observation.basisType,
       ].join('|');
       grouped.putIfAbsent(key, () => <ObservationRecord>[]).add(observation);
     }
 
-    final rationales = <Map<String, dynamic>>[];
-    for (final entry in grouped.entries.where(
-      (entry) => entry.value.length > 1,
-    )) {
+    final rationales = <Map<String, dynamic>>[...identityIssues];
+    for (final payload in identityIssues) {
+      await database.insertConflictAuditLog(
+        ConflictAuditLogRecord(
+          auditId:
+              'source_identity_${stableHash('$runId:${payload['cluster_key']}')}',
+          snapshotId: snapshotId,
+          runId: runId,
+          auditType: 'IMPORT_EVIDENCE_IDENTITY_HOLD',
+          target: '${payload['cluster_key']}',
+          decision: '${payload['status']}',
+          winningRuleIdsJson: '[]',
+          suppressedRuleIdsJson: '[]',
+          sourceDocRefsJson: jsonEncode(payload['source_doc_refs']),
+          inputHash: stableHash(jsonEncode(payload)),
+          decisionReason: jsonEncode(payload),
+          machineActionsJson: '[{"type":"open_manual_conflict_review"}]',
+          humanMessage: '${payload['explanation']}',
+          needsHumanReview: true,
+          createdAt: createdAt,
+        ),
+      );
+    }
+    // Ranking under an ambiguous document/scope identity would fabricate
+    // provenance. Retain the identity hold before constructing numeric edges.
+    if (identityIssues.isNotEmpty) return rationales;
+    for (final entry in grouped.entries) {
+      final first = entry.value.first;
+      final incumbents = previousFacts
+          .where(
+            (fact) =>
+                fact.entityKey == first.entityKey &&
+                fact.attributeCode == first.attributeCode,
+          )
+          .toList(growable: false);
+      // A lone missing raw observation is retained as evidence, not promoted
+      // as a resolved number. Other clusters and all incumbents are audited.
+      if (entry.value.length == 1 &&
+          incumbents.isEmpty &&
+          !bundle.resolvedFacts.any(
+            (fact) => fact.chosenObservationId == first.observationId,
+          )) {
+        continue;
+      }
       final resolution = factConflictEngine.resolveCluster(
         observations: entry.value,
-        existingFacts: const <ResolvedFactRecord>[],
+        existingFacts: incumbents,
+        existingObservationsById: previousObservations,
         sourceDocumentsById: sourceById,
         scopesByHash: scopesByHash,
       );
       final accepted = resolution.chosenObservation;
       final payload = {
         'cluster_key': entry.key,
+        'incumbent_fact_ids': incumbents.map((fact) => fact.factId).toList()
+          ..sort(),
         'status': resolution.status,
         'accepted': accepted == null
             ? null
@@ -1456,9 +2511,59 @@ class ClinicalDecisionSupportService {
                 'rationale': resolution.acceptedRationale,
               },
         'rejected': resolution.rejectedRationales,
+        'comparison_edges': resolution.comparisonEdges,
         'explanation': resolution.explanation,
         'needs_human_review': resolution.needsManualReview,
       };
+      final review = reviewedChoices[entry.key];
+      if (review != null) {
+        if (!resolution.needsManualReview ||
+            identifierFactory.inputDigest(
+                  'reviewed-original-rationale',
+                  payload,
+                ) !=
+                review.originalRationaleSha256) {
+          throw StateError(
+            'The original comparison changed before activation.',
+          );
+        }
+        // Only this private path, built from current original decisions, can
+        // derive a new choice. Preserve the entire original graph and hold.
+        payload.addAll({
+          'status': 'explicit_source_review_choice',
+          'accepted': {
+            'observation_id': review.observation.observationId,
+            'source_doc_id': review.observation.sourceDocId,
+            'entity_key': review.observation.entityKey,
+            'attribute_code': review.observation.attributeCode,
+            'scope_hash': review.observation.scopeHash,
+            'rationale': 'explicit_local_source_review',
+          },
+          'needs_human_review': false,
+          'original_rationale': review.originalRationale,
+          'original_conflict_audit_id': review.originalAuditId,
+          'review_decision_id': review.decisionId,
+          'rejected': [
+            for (final id
+                in {
+                      for (final edge in resolution.comparisonEdges) ...[
+                        edge['left_observation_id'],
+                        edge['right_observation_id'],
+                      ],
+                    }
+                    .where((id) => id != review.observation.observationId)
+                    .toList()
+                  ..sort((a, b) => '$a'.compareTo('$b')))
+              {
+                'observation_id': id,
+                'rationale': 'not_selected_in_explicit_source_review',
+              },
+          ],
+          'explanation':
+              'Explicit local source choice; original alternatives and comparison retained.',
+          'clinical_approval': false,
+        });
+      }
       rationales.add(payload);
       await database.insertConflictAuditLog(
         ConflictAuditLogRecord(
@@ -1467,36 +2572,563 @@ class ClinicalDecisionSupportService {
           runId: runId,
           auditType: 'FACT_CLUSTER_RESOLUTION',
           target: entry.key,
-          decision: resolution.status,
+          decision: '${payload['status']}',
           winningRuleIdsJson: jsonEncode(
-            accepted == null ? const <String>[] : [accepted.observationId],
+            review != null
+                ? [review.observation.observationId]
+                : accepted == null
+                ? const <String>[]
+                : [accepted.observationId],
           ),
           suppressedRuleIdsJson: jsonEncode(
-            resolution.rejectedRationales
+            (payload['rejected'] as List)
+                .cast<Map>()
                 .map((item) => item['observation_id'])
                 .whereType<String>()
                 .toList(growable: false),
           ),
           sourceDocRefsJson: jsonEncode(
-            entry.value.map((item) => item.sourceDocId).toSet().toList(),
+            {
+              ...entry.value.map((item) => item.sourceDocId),
+              for (final fact in incumbents)
+                if (previousObservations[fact.chosenObservationId] != null)
+                  previousObservations[fact.chosenObservationId]!.sourceDocId,
+            }.toList()..sort(),
           ),
           inputHash: stableHash(jsonEncode(payload)),
           decisionReason: jsonEncode(payload),
           machineActionsJson: jsonEncode([
             {
-              'type': resolution.needsManualReview
+              'type': payload['needs_human_review'] == true
                   ? 'open_manual_conflict_review'
+                  : review != null
+                  ? 'accept_explicit_review_choice'
                   : 'accept_ranked_observation',
               'params': payload,
             },
           ]),
-          humanMessage: resolution.explanation,
-          needsHumanReview: resolution.needsManualReview,
+          humanMessage: '${payload['explanation']}',
+          needsHumanReview: payload['needs_human_review'] == true,
           createdAt: createdAt,
         ),
       );
     }
     return rationales;
+  }
+
+  ObservationRecord _observationFromRow(Map<String, Object?> row) =>
+      ObservationRecord(
+        observationId: '${row['observation_id']}',
+        domain: '${row['domain']}',
+        entityType: '${row['entity_type']}',
+        entityKey: '${row['entity_key']}',
+        attributeCode: '${row['attribute_code']}',
+        valueType: '${row['value_type']}',
+        value: _valueFromRow(row),
+        unit: '${row['unit']}',
+        basisType: '${row['basis_type']}',
+        basisAmount: (row['basis_amount'] as num?)?.toDouble(),
+        scopeHash: '${row['scope_hash']}',
+        sourceDocId: '${row['source_doc_id']}',
+        recordLocator: '${row['record_locator']}',
+        methodCode: row['method_code']?.toString(),
+        extractionConfidence:
+            (row['extraction_confidence'] as num?)?.toDouble() ?? 0,
+      );
+
+  QualifiedValue _valueFromRow(
+    Map<String, Object?> row, {
+    bool resolved = false,
+  }) => QualifiedValue(
+    rawValueText: '${row['raw_value_text'] ?? ''}',
+    qualifierKind: _qualifierKindFromWireValue(
+      '${row['qualifier_kind'] ?? 'missing'}',
+    ),
+    low: (row[resolved ? 'resolved_low' : 'low'] as num?)?.toDouble(),
+    high: (row[resolved ? 'resolved_high' : 'high'] as num?)?.toDouble(),
+    valueNum: (row['value_num'] as num?)?.toDouble(),
+  );
+
+  ResolvedFactRecord _factFromRow(Map<String, Object?> row) =>
+      ResolvedFactRecord(
+        factId: '${row['fact_id']}',
+        entityKey: '${row['entity_key']}',
+        attributeCode: '${row['attribute_code']}',
+        scopeHash: '${row['scope_hash']}',
+        resolutionStatus: '${row['resolution_status']}',
+        chosenObservationId: '${row['chosen_observation_id']}',
+        resolvedValue: _valueFromRow(row, resolved: true),
+        resolvedUnit: '${row['resolved_unit']}',
+        resolutionPolicyId: '${row['resolution_policy_id']}',
+        snapshotId: '${row['snapshot_id']}',
+        factVersion: '${row['fact_version']}',
+        manualOverride:
+            row['manual_override'] == true || row['manual_override'] == 1,
+      );
+
+  SourceDocumentRecord _sourceFromRow(Map<String, Object?> row) =>
+      SourceDocumentRecord(
+        sourceDocId: '${row['source_doc_id']}',
+        sourceFamily: '${row['source_family']}',
+        dataTier: '${row['data_tier'] ?? ''}',
+        ingestionStrategy: '${row['ingestion_strategy'] ?? ''}',
+        organization: '${row['organization'] ?? ''}',
+        jurisdiction: '${row['jurisdiction'] ?? ''}',
+        docType: '${row['doc_type'] ?? ''}',
+        title: '${row['title'] ?? ''}',
+        originUrl: '${row['origin_url'] ?? ''}',
+        publishedAt: row['published_at'] is num
+            ? DateTime.fromMillisecondsSinceEpoch(
+                (row['published_at'] as num).toInt(),
+              )
+            : null,
+        effectiveAt: row['effective_at'] is num
+            ? DateTime.fromMillisecondsSinceEpoch(
+                (row['effective_at'] as num).toInt(),
+              )
+            : null,
+        language: '${row['language'] ?? ''}',
+        licenseNote: '${row['license_note'] ?? ''}',
+        checksum: '${row['checksum'] ?? ''}',
+        sourceStatus: '${row['source_status'] ?? ''}',
+        rawPayload: '${row['raw_payload'] ?? ''}',
+      );
+
+  Map<String, Object?> _sourceEvidencePayload(SourceDocumentRecord source) => {
+    'source_doc_id': source.sourceDocId,
+    'source_family': source.sourceFamily,
+    'data_tier': source.dataTier,
+    'ingestion_strategy': source.ingestionStrategy,
+    'organization': source.organization,
+    'jurisdiction': source.jurisdiction,
+    'doc_type': source.docType,
+    'title': source.title,
+    'origin_url': source.originUrl,
+    'published_at': source.publishedAt?.millisecondsSinceEpoch,
+    'effective_at': source.effectiveAt?.millisecondsSinceEpoch,
+    'language': source.language,
+    'license_note': source.licenseNote,
+    'checksum': source.checksum,
+    'source_status': source.sourceStatus,
+    'raw_payload': source.rawPayload,
+  };
+
+  // Rows not covered by the existing staging tables stay in the digest-bound
+  // review packet. This preserves the original import; it does not activate it.
+  Map<String, Object?> _retainedCatalogReviewRows(P0ImportBundle bundle) => {
+    'country_diet_profile': [
+      for (final row in bundle.countryDietProfiles)
+        {
+          'country_code': row.countryCode,
+          'guideline_source': row.guidelineSource,
+          'meal_pattern_json': row.mealPatternJson,
+          'staple_foods_json': row.stapleFoodsJson,
+          'preferred_protein_sources_json': row.preferredProteinSourcesJson,
+          'avoidance_notes_json': row.avoidanceNotesJson,
+        },
+    ],
+    'food_concept': [
+      for (final row in bundle.foodConcepts)
+        {
+          'food_concept_id': row.foodConceptId,
+          'canonical_name_en': row.canonicalNameEn,
+          'canonical_name_zh': row.canonicalNameZh,
+          'food_group': row.foodGroup,
+        },
+    ],
+    'drug_concept': [
+      for (final row in bundle.drugConcepts)
+        {
+          'drug_concept_id': row.drugConceptId,
+          'generic_name': row.genericName,
+          'atc_like_code': row.atcLikeCode,
+        },
+    ],
+    'drug_label_section': [
+      for (final row in bundle.drugLabelSections)
+        {
+          'section_id': row.sectionId,
+          'drug_product_variant_id': row.drugProductVariantId,
+          'source_doc_id': row.sourceDocId,
+          'section_key': row.sectionKey,
+          'section_title': row.sectionTitle,
+          'section_text': row.sectionText,
+        },
+    ],
+    'drug_product_code': [
+      for (final row in bundle.drugProductCodes)
+        {
+          'product_code_id': row.productCodeId,
+          'drug_product_variant_id': row.drugProductVariantId,
+          'source_doc_id': row.sourceDocId,
+          'code_system': row.codeSystem,
+          'code_value': row.codeValue,
+          'display_text': row.displayText,
+        },
+    ],
+    'drug_product_packaging': [
+      for (final row in bundle.drugProductPackagings)
+        {
+          'packaging_id': row.packagingId,
+          'drug_product_variant_id': row.drugProductVariantId,
+          'source_doc_id': row.sourceDocId,
+          'package_code': row.packageCode,
+          'description': row.description,
+          'marketing_status': row.marketingStatus,
+        },
+    ],
+    'drug_product_media': [
+      for (final row in bundle.drugProductMedias)
+        {
+          'media_id': row.mediaId,
+          'drug_product_variant_id': row.drugProductVariantId,
+          'source_doc_id': row.sourceDocId,
+          'media_type': row.mediaType,
+          'media_url': row.mediaUrl,
+          'caption': row.caption,
+        },
+    ],
+    'projected_foods': [for (final row in bundle.projectedFoods) row.toJson()],
+    'projected_drugs': [for (final row in bundle.projectedDrugs) row.toJson()],
+  };
+
+  static const _reviewStagingTables = [
+    'staging_food_variant',
+    'staging_drug_product_variant',
+    'staging_variant_scope',
+    'staging_observation',
+    'staging_resolved_fact',
+    'staging_rule_registry',
+    'staging_runtime_event',
+    'staging_concept_variant_crosswalk',
+  ];
+
+  List<Map<String, Object?>> _stableReviewRows(
+    Iterable<Map<String, Object?>> rows,
+  ) => rows.toList()
+    ..sort(
+      (a, b) => identifierFactory
+          .inputDigest('import-review-row', a)
+          .compareTo(identifierFactory.inputDigest('import-review-row', b)),
+    );
+
+  Future<Map<String, Object?>> _reviewStagingEvidence(String runId) async => {
+    for (final table in _reviewStagingTables)
+      table: _stableReviewRows(
+        (await database.queryTable(
+          table,
+        )).where((row) => row['run_id'] == runId),
+      ),
+  };
+
+  Future<Map<String, Object?>> _reviewIncumbentEvidence(
+    List<Map<String, Object?>> incoming,
+    List<Map<String, Object?>> incomingSources,
+    List<Object?> reviewedScopeHashes,
+  ) async {
+    final keys = incoming
+        .map((row) => '${row['entity_key']}|${row['attribute_code']}')
+        .toSet();
+    final facts = (await database.queryTable('resolved_fact'))
+        .where(
+          (row) =>
+              keys.contains('${row['entity_key']}|${row['attribute_code']}'),
+        )
+        .toList();
+    final observationIds = {
+      ...incoming.map((row) => row['observation_id']),
+      ...facts.map((row) => row['chosen_observation_id']),
+    };
+    final originals = (await database.queryTable(
+      'observation',
+    )).where((row) => observationIds.contains(row['observation_id'])).toList();
+    final sourceIds = {
+      ...incomingSources.map((row) => row['source_doc_id']),
+      ...incoming.map((row) => row['source_doc_id']),
+      ...originals.map((row) => row['source_doc_id']),
+    };
+    final scopeHashes = {
+      ...reviewedScopeHashes,
+      ...incoming.map((row) => row['scope_hash']),
+      ...facts.map((row) => row['scope_hash']),
+      ...originals.map((row) => row['scope_hash']),
+    };
+    return {
+      'resolved_fact': _stableReviewRows(facts),
+      'observation': _stableReviewRows(originals),
+      'source_document': _stableReviewRows(
+        (await database.queryTable(
+          'source_document',
+        )).where((row) => sourceIds.contains(row['source_doc_id'])),
+      ),
+      'variant_scope': _stableReviewRows(
+        (await database.queryTable(
+          'variant_scope',
+        )).where((row) => scopeHashes.contains(row['scope_hash'])),
+      ),
+    };
+  }
+
+  /// Reads the complete held evidence from the existing ingestion backend.
+  /// Inline sidecar URIs are not used as a persistence guarantee. A packet is
+  /// usable only while staging, original audits and incumbent evidence match.
+  Future<Map<String, dynamic>> loadHeldImportReviewEvidence({
+    required String snapshotId,
+  }) => _loadHeldImportReviewEvidence(snapshotId: snapshotId);
+
+  /// Historical content remains readable after a derived activation or later
+  /// source changes. This archive never satisfies the current activation gate.
+  Future<Map<String, dynamic>> loadHeldImportReviewArchive({
+    required String snapshotId,
+  }) async => {
+    'validation_scope': 'original_packet_identity_only',
+    'current_activation_eligible': false,
+    'evidence': await _loadHeldImportReviewEvidence(
+      snapshotId: snapshotId,
+      requireCurrentIncumbents: false,
+    ),
+  };
+
+  Future<Map<String, dynamic>> _loadHeldImportReviewEvidence({
+    required String snapshotId,
+    bool requireCurrentIncumbents = true,
+  }) async {
+    await database.initialize();
+    final rows = (await database.queryTable('ingestion_run'))
+        .where(
+          (row) =>
+              row['snapshot_id'] == snapshotId &&
+              row['status'] == 'held_for_conflict_review',
+        )
+        .toList();
+    if (rows.length != 1) {
+      throw StateError('Held import evidence is unavailable or ambiguous.');
+    }
+    final notes = jsonDecode(rows.single['notes_json'] as String) as Map;
+    final evidence = Map<String, dynamic>.from(
+      notes['review_evidence'] as Map? ?? {},
+    );
+    final payload = Map<String, dynamic>.from(
+      evidence['payload'] as Map? ?? {},
+    );
+    final runId = payload['run_id'];
+    final schema = evidence['schema'];
+    final retained = payload['retained_catalog_rows'];
+    final completeRetainedRows =
+        retained is Map &&
+        const [
+          'country_diet_profile',
+          'food_concept',
+          'drug_concept',
+          'drug_label_section',
+          'drug_product_code',
+          'drug_product_packaging',
+          'drug_product_media',
+          'projected_foods',
+          'projected_drugs',
+        ].every((key) => retained[key] is List);
+    if (!const {
+          'parkinsum.held-import-review-evidence/1',
+          'parkinsum.held-import-review-evidence/2',
+        }.contains(schema) ||
+        (schema == 'parkinsum.held-import-review-evidence/2' &&
+            !completeRetainedRows) ||
+        payload['snapshot_id'] != snapshotId ||
+        runId is! String ||
+        rows.single['run_id'] != '${runId}_promote' ||
+        evidence['input_sha256'] !=
+            identifierFactory.inputDigest(
+              'held-import-review-evidence',
+              payload,
+            )) {
+      throw StateError('Held import evidence identity does not match.');
+    }
+    final snapshots = (await database.queryTable(
+      'engine_snapshot',
+    )).where((row) => row['snapshot_id'] == snapshotId).toList();
+    if (snapshots.length != 1 ||
+        snapshots.single['promoted_at'] != null ||
+        snapshots.single['input_hash'] != payload['snapshot_input_hash']) {
+      throw StateError('Held snapshot identity changed.');
+    }
+    final audits = _stableReviewRows(
+      (await database.queryTable('conflict_audit_log')).where(
+        (row) =>
+            row['snapshot_id'] == snapshotId &&
+            row['run_id'] == runId &&
+            (row['audit_type'] == 'FACT_CLUSTER_RESOLUTION' ||
+                row['audit_type'] == 'IMPORT_EVIDENCE_IDENTITY_HOLD'),
+      ),
+    );
+    final incoming = (payload['observations'] as List)
+        .map((row) => Map<String, Object?>.from(row as Map))
+        .toList();
+    final sources = (payload['source_documents'] as List)
+        .map((row) => Map<String, Object?>.from(row as Map))
+        .toList();
+    final current = {
+      'staging_rows': await _reviewStagingEvidence(runId),
+      'conflict_audits': audits,
+      if (requireCurrentIncumbents)
+        'incumbent_evidence': await _reviewIncumbentEvidence(
+          incoming,
+          sources,
+          (payload['scope_hashes'] as List).cast<Object?>(),
+        ),
+    };
+    for (final entry in current.entries) {
+      if (identifierFactory.inputDigest(
+            'import-review-bound-state',
+            entry.value,
+          ) !=
+          identifierFactory.inputDigest(
+            'import-review-bound-state',
+            payload[entry.key],
+          )) {
+        throw StateError('Held review evidence is stale: ${entry.key}.');
+      }
+    }
+    return evidence;
+  }
+
+  Future<void> _holdImport({
+    required String runId,
+    required String snapshotId,
+    required P0ImportBundle bundle,
+    required List<Map<String, dynamic>> rationales,
+    required DateTime createdAt,
+    String? parentSnapshotId,
+  }) async {
+    final incoming = [
+      for (final row in bundle.observations)
+        <String, Object?>{
+          'observation_id': row.observationId,
+          'domain': row.domain,
+          'entity_type': row.entityType,
+          'entity_key': row.entityKey,
+          'attribute_code': row.attributeCode,
+          'value_type': row.valueType,
+          'source_doc_id': row.sourceDocId,
+          'record_locator': row.recordLocator,
+          'scope_hash': row.scopeHash,
+          'method_code': row.methodCode,
+          'basis_type': row.basisType,
+          'basis_amount': row.basisAmount,
+          'unit': row.unit,
+          'extraction_confidence': row.extractionConfidence,
+          ...row.value.toJson(),
+        },
+    ];
+    final sources = [
+      for (final source in bundle.sourceDocuments)
+        _sourceEvidencePayload(source),
+    ];
+    final snapshots = await database.queryTable('engine_snapshot');
+    final scopeHashes =
+        bundle.variantScopes.map((row) => row.scopeHash).toList()..sort();
+    final payload = <String, Object?>{
+      'snapshot_id': snapshotId,
+      'run_id': runId,
+      'snapshot_input_hash': snapshots.singleWhere(
+        (row) => row['snapshot_id'] == snapshotId,
+      )['input_hash'],
+      'source_documents': sources,
+      'retained_catalog_rows': _retainedCatalogReviewRows(bundle),
+      'scope_hashes': scopeHashes,
+      'observations': incoming,
+      'conflict_rationales': rationales,
+      'staging_rows': await _reviewStagingEvidence(runId),
+      'conflict_audits': _stableReviewRows(
+        (await database.queryTable('conflict_audit_log')).where(
+          (row) =>
+              row['snapshot_id'] == snapshotId &&
+              row['run_id'] == runId &&
+              (row['audit_type'] == 'FACT_CLUSTER_RESOLUTION' ||
+                  row['audit_type'] == 'IMPORT_EVIDENCE_IDENTITY_HOLD'),
+        ),
+      ),
+      'incumbent_evidence': await _reviewIncumbentEvidence(
+        incoming,
+        sources,
+        scopeHashes,
+      ),
+    };
+    final evidence = {
+      'schema': 'parkinsum.held-import-review-evidence/2',
+      'input_sha256': identifierFactory.inputDigest(
+        'held-import-review-evidence',
+        payload,
+      ),
+      'payload': payload,
+    };
+    Future<void> saveHold(Map<String, Object?> artifactNotes) =>
+        database.insertIngestionRun(
+          IngestionRunRecord(
+            runId: '${runId}_promote',
+            sourceFamily: _bundleSourceFamily(bundle),
+            stage: 'promote',
+            status: 'held_for_conflict_review',
+            snapshotId: snapshotId,
+            parentSnapshotId: parentSnapshotId,
+            createdAt: createdAt,
+            completedAt: DateTime.now(),
+            notesJson: jsonEncode({
+              'activated': false,
+              'review_evidence': evidence,
+              ...artifactNotes,
+              'checkpoint': {
+                'phase': 'conflict_review_required',
+                'retained_staging_run_id': runId,
+              },
+            }),
+          ),
+        );
+    // Persist the complete source packet before optional sidecar I/O.
+    await saveHold({});
+    await loadHeldImportReviewEvidence(snapshotId: snapshotId);
+    try {
+      final artifacts = await _writeArtifactSet(
+        artifactId: 'held_import_$runId',
+        snapshotId: snapshotId,
+        channel: 'import_run',
+        distributionType: 'import_artifacts',
+        createdAt: createdAt,
+        files: {
+          'conflict_rationale.json': jsonEncode(rationales),
+          'source_evidence.json': jsonEncode(evidence),
+          'release_readiness.json': jsonEncode({
+            'status': 'held_for_conflict_review',
+            'staging_snapshot_id': snapshotId,
+            'activated': false,
+            'blocking_issues': [
+              for (final row in rationales)
+                if (row['needs_human_review'] == true)
+                  'unresolved_conflict:${row['cluster_key']}',
+            ],
+          }),
+        },
+        manifest: {
+          'kind': 'held_import',
+          'run_id': runId,
+          'snapshot_id': snapshotId,
+          'activated': false,
+        },
+      );
+      await saveHold({
+        'artifact_path': artifacts.artifactPath,
+        'artifact_files': artifacts.files,
+      });
+    } catch (_) {
+      // The optional filesystem/inline attachment cannot discard the packet or
+      // turn a known conflict into an ordinary retryable promote failure.
+      await saveHold({'artifact_warning': 'sidecar_write_failed'});
+    }
+    await loadHeldImportReviewEvidence(snapshotId: snapshotId);
+    // Counts only; raw source content remains in the review artifact.
+    // ignore: avoid_print
+    print(
+      '[CDSS] import held for conflict review; clusters=${rationales.where((row) => row['needs_human_review'] == true).length}',
+    );
   }
 
   List<Map<String, dynamic>> _ruleHitTrace({
@@ -2095,6 +3727,18 @@ class ClinicalDecisionSupportService {
 /// 单次 CDSS 导入报告：
 /// - 让上层 UI 能按 source/run 展示 counts；
 /// - 同时给失败重试和最近导入任务页面提供稳定的 run 标识。
+class CdssImportHeldException implements Exception {
+  final String runId;
+  final String stagingSnapshotId;
+  const CdssImportHeldException({
+    required this.runId,
+    required this.stagingSnapshotId,
+  });
+  @override
+  String toString() =>
+      'Import held for conflict review; retained staging run $runId.';
+}
+
 class CdssImportReport {
   final String runId;
   final String sourceFamily;
@@ -2121,4 +3765,51 @@ class CdssImportReport {
     required this.runtimeEventCount,
     required this.completedAt,
   });
+}
+
+final class CdssReviewedImportPreview {
+  const CdssReviewedImportPreview._({
+    required this.heldSnapshotId,
+    required this.evidenceSha256,
+    required this.stateSha256,
+    required this.decisionIds,
+    required this.selectedObservations,
+  });
+  final String heldSnapshotId;
+  final String evidenceSha256;
+  final String stateSha256;
+  final List<String> decisionIds;
+  final List<Map<String, Object?>> selectedObservations;
+  Map<String, Object?> toJson() => {
+    'schema': 'parkinsum.reviewed-import-preview/1',
+    'held_snapshot_id': heldSnapshotId,
+    'evidence_sha256': evidenceSha256,
+    'state_sha256': stateSha256,
+    'decision_ids': decisionIds,
+    'selected_observations': selectedObservations,
+    'source_currency_inferred': false,
+    'clinical_approval': false,
+  };
+}
+
+final class _ReviewedImportChoice {
+  const _ReviewedImportChoice({
+    required this.decisionId,
+    required this.originalAuditId,
+    required this.originalRationale,
+    required this.originalRationaleSha256,
+    required this.observation,
+  });
+  final String decisionId;
+  final String originalAuditId;
+  final Map<String, Object?> originalRationale;
+  final String originalRationaleSha256;
+  final ObservationRecord observation;
+}
+
+final class _PreparedReviewedImport {
+  const _PreparedReviewedImport(this.bundle, this.choices, this.evidenceSha256);
+  final P0ImportBundle bundle;
+  final Map<String, _ReviewedImportChoice> choices;
+  final String evidenceSha256;
 }

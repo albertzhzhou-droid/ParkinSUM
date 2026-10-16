@@ -12,6 +12,7 @@ import '../diagnostics/operational_observability_page.dart';
 import '../diagnostics/rule_audit_trail_page.dart';
 import '../diagnostics/rule_test_workbench_page.dart';
 import '../entry/entry_page.dart';
+import '../entry/synthetic_meal_journey_page.dart';
 import '../import/import_page.dart';
 import '../legal/privacy_disclaimer_page.dart';
 import '../reminders/reminder_center_page.dart';
@@ -83,6 +84,17 @@ List<AppTool> appTools(AppI18n i18n) {
           loadSavedReplayCapsules: repository.loadMechanisticReplayCapsules,
         );
       },
+    ),
+    AppTool(
+      id: 'synthetic-meal-journey',
+      group: AppToolGroup.evidence,
+      icon: Icons.restaurant_outlined,
+      label: zh ? '餐食流程合成试用' : 'Synthetic meal journey',
+      subtitle: zh
+          ? '隔离、可重置的历史复用、草稿和份量预览流程。'
+          : 'Isolated, resettable history reuse, drafts and portion previews.',
+      keywords: const ['meal', 'draft', 'portion', 'synthetic', 'demo'],
+      builder: (_) => const SyntheticMealJourneyPage(),
     ),
     AppTool(
       id: 'rule-audit',

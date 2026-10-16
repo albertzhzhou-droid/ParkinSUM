@@ -570,7 +570,7 @@ final class ReminderNotificationCapabilityMatrix {
         archiveSha256:
             '1447ba911c60f2ba3f25dae1af151ec187162566b0f57e37771bf0b400f013ad',
         lockfileSha256:
-            '270beb8b2ea01f4eb8d02827f06228577c129125c9fb7bb151afc28bc502e17b',
+            'a8a5be6f96efe4428693876a6453cdc81cae021064dc0925968b3e78dfdd4b46',
       );
 
   static final ReminderNotificationCapabilityMatrix current =
