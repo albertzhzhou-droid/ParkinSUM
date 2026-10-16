@@ -135,7 +135,16 @@
     "firebase-admin": "^14.2.0"
   },
   "overrides": {
-    "uuid": "^11.1.1"
+    "uuid": "^11.1.1",
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.14.6"
+    },
+    "@lhncbc/ucum-lhc": {
+      "csv-parse": "^7.0.3"
+    },
+    "@google-cloud/pubsub": {
+      "@opentelemetry/core": "^2.8.0"
+    }
   },
   "devDependencies": {
     "@cqframework/cql": "5.3.0",
@@ -144,6 +153,6 @@
     "cql-exec-fhir": "2.1.6",
     "cql-execution": "3.3.2",
     "firebase": "^12.17.1",
-    "firebase-tools": "15.27.0"
+    "firebase-tools": "15.34.0"
   }
 }
