@@ -214,6 +214,12 @@ abstract final class AlgorithmComponentGraphIdentityValidator {
     return {
       'reference_protein_g': AminoAcidCompetitionModel.referenceProteinG,
       'sample_stride_minutes': AminoAcidCompetitionModel.sampleStrideMinutes,
+      'reference_lnaa_fraction_of_protein':
+          AminoAcidCompetitionModel.referenceLnaaFractionOfProtein,
+      'load_factor_domain_minimum':
+          AminoAcidCompetitionModel.loadFactorDomainMinimum,
+      'load_factor_domain_maximum':
+          AminoAcidCompetitionModel.loadFactorDomainMaximum,
       'protein_source_lnaa_factors': [
         for (final factor in factors) factor.toJson(),
       ],

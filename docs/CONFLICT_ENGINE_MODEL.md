@@ -314,12 +314,56 @@ instantaneous intestinal arrival rate (derivative of `emptiedFractionAt`),
 (b) a protein amplitude factor scaled against a 20 g reference, and (c)
 an **LNAA load factor** that depends on the protein source type of each
 food component (`ProteinSourceType` in `lib/domain/entities/protein_source.dart`).
-The load factor is direction-only: animal protein generally carries higher
-LNAA per gram than plant protein. Magnitudes are tagged
-`prototype_heuristic`; direction is grounded in the cited reviews (Nutt et
-al. 1989; Cereda et al. 2017; Boelens Keun et al. 2021; Virmani et al.
-2023). When the component's protein source is `unknown`, the uncertainty
-band widens by one step rather than the model faking precision.
+The load factor is calibrated on official food composition. For each
+protein source type it is the median competing-LNAA fraction of protein
+(leucine + isoleucine + valine + phenylalanine + tyrosine + tryptophan,
+divided by protein) of that type's FoodData Central 2025-04-24 SR Legacy
+reference records, divided by the all-food median of 0.2667 (140 records
+with at least 2 g protein and all six amino acids; 109 independent
+amino-acid patterns). The generated table is
+`lib/core/constants/lnaa_protein_fraction_calibration_table.dart`.
+
+| Source | Records | Patterns | Load factor | Interquartile factors |
+| --- | --- | --- | --- | --- |
+| dairy | 21 | 15 | 1.27 | 1.23–1.29 |
+| egg | 6 | 5 | 1.18 | 1.15–1.29 |
+| meat (incl. poultry) | 13 | 9 | 0.99 | 0.81–1.00 |
+| fish and seafood | 18 | 7 | 0.99 | 0.97–1.00 |
+| grain | 27 | 24 | 0.99 | 0.89–1.10 |
+| soy (incl. soymilk, miso, soy sauces) | 14 | 14 | 0.96 | 0.88–1.05 |
+| other legume | 13 | 10 | 0.93 | 0.91–1.00 |
+| mixed, unknown | all | all | 1 | 0.91–1.14 |
+
+Records whose six amino-acid-to-protein ratios agree within the rounding of
+the published values share a pattern (12 of the 18 fish records do, as do
+sheep milk, Roquefort and feta). Statistics count each pattern once, so
+copied patterns do not narrow the spread. The cited reviews (Nutt et al.
+1989; Cereda et al. 2017; Boelens Keun et al. 2021; Virmani et al. 2023)
+describe animal protein as generally higher in LNAA per gram; on these
+records that holds for dairy and egg but not for meat or fish against grain.
+The magnitudes describe food composition; how load scales competition
+pressure remains `prototype_heuristic`. When the component's protein source
+is `unknown`, the uncertainty band widens by one step rather than the model
+faking precision.
+
+Catalog foods take their protein source from the curated reference group
+when they are FDC reference records. Other foods are read from the name and
+then the aliases in English (whole words, so "eggplant" is not egg) or
+Chinese (specific food words, so 土豆 is not a legume). Plant drinks are not
+dairy, and a name that names two non-grain sources is `mixed`. Across the
+224 curated reference foods the Chinese name, English name and official
+description each infer the curated source, apart from seven botanical or
+near-zero-protein cases pinned in `test/lnaa_protein_source_test.dart`.
+
+An actual amino-acid profile is normalised by the same all-food median, so
+a food at the median has factor 1. The per-component factor is clamped to
+0.5–1.5; a clamp widens uncertainty and is reported as `load_factor_clamped`
+(only prunes and tomato paste among the 140 records fall outside). The
+summary also reports `reference_lnaa_fraction_of_protein` and a
+protein-weighted interquartile envelope (`load_factor_interquartile_low` and
+`_high`), in which proxy components take their type's quartile factors and
+actual components keep their own factor. The envelope is a spread of food
+composition, not a confidence interval.
 
 The competition score is the *openness-weighted* competition pressure across
 an available absorption opportunity profile (see §12a). Discretized bands:

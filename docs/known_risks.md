@@ -297,6 +297,14 @@ Residual risks:
   source records (for example, milk sugars reported as lactose monohydrate),
   are pinned in tests and are never corrected. Amino-acid profiles now feed
   the LNAA layer for these foods; values describe sampled foods, not people.
+- Iteration 4 (2026-10-15) calibrates the LNAA load on those official rows.
+  The all-food median competing-LNAA fraction of protein (0.2667) replaces an
+  unsupported 0.45 reference, and each protein-source factor is its type's
+  median over it (dairy 1.27, egg 1.18, meat, fish and grain 0.99, soy 0.96,
+  other legume 0.93). The calibration set is a convenience sample of 140
+  catalog records, not a dietary-intake weighting; 12 of 18 fish records
+  share one amino-acid pattern, and many rows are calculated or uncoded. The
+  mapping from load to competition pressure is still a prototype heuristic.
 - The FoodData Central 2025-04-24 nutrient definitions and conversion factors
   are pinned; a later FDC release can renumber or redefine nutrients and
   needs a re-pin. One food-specific energy factor (coconut oil) disagrees

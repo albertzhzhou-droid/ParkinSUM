@@ -16,8 +16,10 @@ import '../entities/time_axis_events.dart';
 ///      meal's peak emptying window).
 ///   2. Pressure amplitude scales with total protein grams (relative to a
 ///      moderate reference of ~20 g) and is multiplied by an effective
-///      LNAA load factor that depends on protein-source type
-///      (`ProteinSourceType` per food component).
+///      LNAA load factor: a food's competing-LNAA fraction of protein over
+///      the all-food median of the official FDC calibration records, or the
+///      calibrated median of its `ProteinSourceType` when no usable
+///      amino-acid profile is present.
 ///   3. The competition score is the overlap of this pressure timeline
 ///      with the absorption opportunity window.
 ///   4. If protein data are missing, return `unknown` band with widened
@@ -27,6 +29,17 @@ import '../entities/time_axis_events.dart';
 class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
   static const double referenceProteinG = 20.0;
   static const int sampleStrideMinutes = 5;
+
+  /// Supported per-component load-factor domain. Values outside it are
+  /// clamped and the clamp widens uncertainty. Of the 140 calibration foods,
+  /// only two low-protein records (prunes, tomato paste) fall below it.
+  static const double loadFactorDomainMinimum = 0.5;
+  static const double loadFactorDomainMaximum = 1.5;
+
+  /// All-food median competing-LNAA fraction of protein used to normalise an
+  /// actual amino-acid profile (official FDC 2025-04-24 calibration).
+  static double get referenceLnaaFractionOfProtein =>
+      ProteinSourceLnaaRegistry.referenceFraction;
 
   static const List<String> _baseSourceRefs = [
     'src.nutt.lnaa.1989',
@@ -153,6 +166,9 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
     });
     if (lnaa.uncertaintyWidened) {
       assumptions.add('aa.lnaa.unknown_source_widened_uncertainty');
+    }
+    if (lnaa.loadFactorClamped) {
+      assumptions.add('aa.lnaa.load_factor_clamped_to_supported_domain');
     }
     if (lnaa.partialAminoAcidData) {
       assumptions.add(
@@ -397,15 +413,21 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
     }
 
     if (completeProfiles.isNotEmpty) {
-      const referenceLnaaFractionOfProtein = 0.45;
+      final reference = referenceLnaaFractionOfProtein;
       var totalProtein = 0.0;
       var weighted = 0.0;
+      var weightedLow = 0.0;
+      var weightedHigh = 0.0;
+      var clamped = false;
       var totalCompetingLnaaGrams = 0.0;
       var actualProteinGrams = 0.0;
       var totalServingGrams = 0.0;
       var allHavePortion = true;
       final ids = <String>{};
-      final refs = <String>{'src.fdc.api.amino_acid_fields'};
+      final refs = <String>{
+        'src.fdc.api.amino_acid_fields',
+        ProteinSourceLnaaRegistry.calibrationSourceId,
+      };
       final proxySources = <ProteinSourceType>{};
       NutrientConfidenceTier? aggregateTier;
 
@@ -416,12 +438,16 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
         if (profile != null) {
           final lnaa = profile.competingLnaaGrams!;
           final fraction = (lnaa / p).clamp(0.0, 1.0);
-          final factor = (fraction / referenceLnaaFractionOfProtein).clamp(
-            0.5,
-            1.5,
+          final raw = fraction / reference;
+          final factor = raw.clamp(
+            loadFactorDomainMinimum,
+            loadFactorDomainMaximum,
           );
+          if (factor != raw) clamped = true;
           actualProteinGrams += p;
           weighted += p * factor;
+          weightedLow += p * factor;
+          weightedHigh += p * factor;
           totalCompetingLnaaGrams += lnaa;
           if (c.portionGrams != null) {
             totalServingGrams += c.portionGrams!;
@@ -441,6 +467,8 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
         } else {
           final proxy = ProteinSourceLnaaRegistry.factorFor(c.proteinSource);
           weighted += p * proxy.loadFactor;
+          weightedLow += p * proxy.interquartileLowFactor;
+          weightedHigh += p * proxy.interquartileHighFactor;
           proxySources.add(c.proteinSource);
           refs.addAll(proxy.sourceRefs);
         }
@@ -476,8 +504,9 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
             : proxySources.toList(growable: false),
         isPrototypeHeuristic: true,
         // Hybrid coverage always widens structural uncertainty by at least one
-        // band; weak nutrient derivation provenance also widens pure actual.
-        uncertaintyWidened: !pureActual || tierWidens,
+        // band; weak nutrient derivation provenance or a factor clamped to
+        // the supported domain also widens pure actual.
+        uncertaintyWidened: !pureActual || tierWidens || clamped,
         sourceRefs: refs.toList(growable: false),
         dataMode: pureActual
             ? AminoAcidDataMode.actualAminoAcidFields
@@ -493,11 +522,17 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
         partialAminoAcidData: !pureActual,
         actualAminoAcidProteinCoverageFraction: coverage,
         aminoAcidConfidenceTier: pureActual ? aggregateTier?.name : null,
+        referenceLnaaFractionOfProtein: reference,
+        loadFactorInterquartileLow: weightedLow / totalProtein,
+        loadFactorInterquartileHigh: weightedHigh / totalProtein,
+        loadFactorClamped: clamped,
       );
     }
 
     var totalProtein = 0.0;
     var weightedFactor = 0.0;
+    var weightedLow = 0.0;
+    var weightedHigh = 0.0;
     final sources = <ProteinSourceType>{};
     var unknownProteinSeen = false;
     final refs = <String>{};
@@ -507,6 +542,8 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
       final factor = ProteinSourceLnaaRegistry.factorFor(c.proteinSource);
       totalProtein += p;
       weightedFactor += p * factor.loadFactor;
+      weightedLow += p * factor.interquartileLowFactor;
+      weightedHigh += p * factor.interquartileHighFactor;
       sources.add(c.proteinSource);
       refs.addAll(factor.sourceRefs);
       if (c.proteinSource == ProteinSourceType.unknown) {
@@ -538,6 +575,9 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
       dataMode: AminoAcidDataMode.proteinSourceProxy,
       partialAminoAcidData: unusableProfileSeen,
       actualAminoAcidProteinCoverageFraction: 0,
+      referenceLnaaFractionOfProtein: referenceLnaaFractionOfProtein,
+      loadFactorInterquartileLow: weightedLow / totalProtein,
+      loadFactorInterquartileHigh: weightedHigh / totalProtein,
     );
   }
 

@@ -1380,22 +1380,106 @@ final class AlgorithmParameterProvenanceManifest {
         limitation: 'Numerical sampling interval is an engineering choice.',
       ),
     ]);
+    const calibrationReviewDate = '2026-10-15';
+    records.addAll([
+      _valueRecord(
+        id: 'competition.reference_lnaa_fraction_of_protein',
+        algorithmIds: const ['amino_acid_competition'],
+        displayName: 'All-food median competing-LNAA fraction of protein',
+        formulaId: 'lnaa.competition.fdc-calibration-median/1',
+        unit: 'g_per_g_protein',
+        value: AminoAcidCompetitionModel.referenceLnaaFractionOfProtein,
+        minimum: 0.001,
+        maximum: 1,
+        sources: const [ProteinSourceLnaaRegistry.calibrationSourceId],
+        reviewDate: calibrationReviewDate,
+        limitation:
+            'Median over independent amino-acid patterns of the official '
+            'FDC 2025-04-24 SR Legacy reference records with at least 2 g '
+            'protein per 100 g; a convenience sample of catalog foods, not '
+            'a dietary-intake weighting.',
+        status: AlgorithmParameterProvenanceStatus.literatureDerived,
+      ),
+      _valueRecord(
+        id: 'competition.load_factor_domain_minimum',
+        algorithmIds: const ['amino_acid_competition'],
+        displayName: 'Per-component LNAA load-factor lower clamp',
+        formulaId: 'lnaa.competition.peak-normalized-load/2',
+        unit: 'multiplier',
+        value: AminoAcidCompetitionModel.loadFactorDomainMinimum,
+        minimum: 0,
+        maximum: 3,
+        sources: const [internalSource],
+        reviewDate: calibrationReviewDate,
+        limitation: 'Engineering bound; a clamped factor widens uncertainty.',
+      ),
+      _valueRecord(
+        id: 'competition.load_factor_domain_maximum',
+        algorithmIds: const ['amino_acid_competition'],
+        displayName: 'Per-component LNAA load-factor upper clamp',
+        formulaId: 'lnaa.competition.peak-normalized-load/2',
+        unit: 'multiplier',
+        value: AminoAcidCompetitionModel.loadFactorDomainMaximum,
+        minimum: 0,
+        maximum: 3,
+        sources: const [internalSource],
+        reviewDate: calibrationReviewDate,
+        limitation: 'Engineering bound; a clamped factor widens uncertainty.',
+      ),
+    ]);
     for (final factor in lnaaFactors) {
-      records.add(
+      final status = factor.isPrototypeHeuristic
+          ? AlgorithmParameterProvenanceStatus.prototypeHeuristic
+          : AlgorithmParameterProvenanceStatus.literatureDerived;
+      final name = factor.sourceType.name;
+      records.addAll([
         _valueRecord(
-          id: 'competition.lnaa_factor.${factor.sourceType.name}',
+          id: 'competition.lnaa_factor.$name',
           algorithmIds: const ['amino_acid_competition'],
-          displayName: '${factor.sourceType.name} protein LNAA load factor',
-          formulaId: 'lnaa.competition.source-factor/1',
+          displayName: '$name protein LNAA load factor',
+          formulaId: 'lnaa.competition.source-factor/2',
           unit: 'multiplier',
           value: factor.loadFactor,
           minimum: 0,
           maximum: 3,
           sources: factor.sourceRefs,
-          reviewDate: reviewDate,
+          reviewDate: calibrationReviewDate,
           limitation: factor.limitation,
+          status: status,
         ),
-      );
+        _valueRecord(
+          id: 'competition.lnaa_factor_interquartile_low.$name',
+          algorithmIds: const ['amino_acid_competition'],
+          displayName: '$name protein LNAA load factor, lower quartile',
+          formulaId: 'lnaa.competition.source-factor-envelope/1',
+          unit: 'multiplier',
+          value: factor.interquartileLowFactor,
+          minimum: 0,
+          maximum: 3,
+          sources: factor.sourceRefs,
+          reviewDate: calibrationReviewDate,
+          limitation:
+              'Lower-quartile calibration pattern over the all-food median; '
+              'a composition spread, not a confidence bound.',
+          status: status,
+        ),
+        _valueRecord(
+          id: 'competition.lnaa_factor_interquartile_high.$name',
+          algorithmIds: const ['amino_acid_competition'],
+          displayName: '$name protein LNAA load factor, upper quartile',
+          formulaId: 'lnaa.competition.source-factor-envelope/1',
+          unit: 'multiplier',
+          value: factor.interquartileHighFactor,
+          minimum: 0,
+          maximum: 3,
+          sources: factor.sourceRefs,
+          reviewDate: calibrationReviewDate,
+          limitation:
+              'Upper-quartile calibration pattern over the all-food median; '
+              'a composition spread, not a confidence bound.',
+          status: status,
+        ),
+      ]);
     }
 
     for (final spec

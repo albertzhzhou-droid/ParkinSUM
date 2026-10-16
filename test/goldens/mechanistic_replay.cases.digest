@@ -1,20 +1,20 @@
 # Per-row digest (FNV-1a/32). Drift detection only.
 # row_id	digest
-s01_low_protein_far	c0b2fbd9
-s02_high_protein_close	2253797e
-s03_high_fat_before	06b05263
-s04_overlapping_meals	810dc206
-s04b_multidose_ir	099edd40
-s05_liquid_meal	eb6cf62b
+s01_low_protein_far	d4216461
+s02_high_protein_close	1d3e36e4
+s03_high_fat_before	cbd127b3
+s04_overlapping_meals	9f409c1c
+s04b_multidose_ir	6136c568
+s05_liquid_meal	232f11bc
 s06_missing_protein	ca3143d1
 s07_missing_meal_time	15816c32
 s08_bare_numeric	eb6aa4ad
 s09_levodopa_no_unit	e3d07cd8
 s10_slashed_no_unit	48033034
-s11_mixed_solid_liquid	0ed58c48
-s12_high_fat_plus_protein	dc2c6c4f
-s13_user_window_candidates	5eaef21f
-s14_user_window_missing_nutrients	db53b3b9
+s11_mixed_solid_liquid	e4153618
+s12_high_fat_plus_protein	a52de851
+s13_user_window_candidates	1889602f
+s14_user_window_missing_nutrients	4bc19409
 s15_multi_point_window_variation	7c5f2a71
 s16_daytime_high_overlap_high_protein	eb083e6e
 s17_evening_low_overlap_high_protein	389f9fdc
@@ -33,12 +33,12 @@ s29_bare_numeric_invalid_with_window	4b0e7b2e
 s30_no_window_fallback_visible	a784aaab
 s31_daytime_overlap_amino_acid_food	37a332bc
 s32_partial_amino_acid_profile	3ff9564c
-s33_high_calorie_high_fat_meal	951eb4c0
-s34_explicit_dose_dose_relative_lnaa	929ee34a
-s35_missing_calories_and_portion	d0c4d730
+s33_high_calorie_high_fat_meal	620ca068
+s34_explicit_dose_dose_relative_lnaa	5508a907
+s35_missing_calories_and_portion	94b4c652
 s36_missing_all_macros_unknown_competition	8237b1a8
-s37_enteral_continuous_low_protein	e2fe17d8
-s38_enteral_bolus_protein	ca7475e0
-s39_spl_ir_section_provenance	d3c4e30b
+s37_enteral_continuous_low_protein	01268b28
+s38_enteral_bolus_protein	6af946aa
+s39_spl_ir_section_provenance	47c45fa5
 s40_spl_er_section_provenance	6afb0d0d
 # rows	41

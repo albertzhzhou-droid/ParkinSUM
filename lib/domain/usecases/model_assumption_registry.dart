@@ -875,18 +875,23 @@ class ModelAssumptionRegistry {
     sourceType: ModelSourceType.referenceDataset,
     mechanismSupported:
         'Official nutrient ids, legacy numbers, names and units used by the '
-        'importer, and the per-food nitrogen-to-protein and calorie '
-        'conversion factors used by the composition identity audit.',
+        'importer, the per-food nitrogen-to-protein and calorie conversion '
+        'factors used by the composition identity audit, and the SR Legacy '
+        'amino-acid rows from which the competing-LNAA fraction of protein '
+        'is calibrated (all-food median and per-protein-source quartiles).',
     limitation:
         'Retrieved through a third-party mirror and pinned by SHA-256; '
-        'definitions and factors can change in later FDC releases.',
+        'definitions and factors can change in later FDC releases. Many '
+        'amino-acid rows are calculated or carry no derivation code, and '
+        'several records share one amino-acid pattern; the calibration '
+        'describes food composition, not people or doses.',
     citationText:
         'U.S. Department of Agriculture, Agricultural Research Service. '
         'FoodData Central, full download of all data types, April 2025 '
         '(release 2025-04-24). Retrieved via the Hugging Face mirror '
         'yvfu/FoodData_Central_csv_2025-04-24; public domain.',
     evidenceLevel: ModelEvidenceLevel.mechanism,
-    lastReviewed: '2026-10-08',
+    lastReviewed: '2026-10-15',
   );
 
   static const ModelAssumption usdaFndds20172018 = ModelAssumption(

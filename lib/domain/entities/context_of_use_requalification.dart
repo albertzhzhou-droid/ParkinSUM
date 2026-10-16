@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.15-v63';
+  static const String ledgerVersion = '2026.10.15-v64';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d';
+  static const String historicalV76ConfigurationSha256 =
       '7954d51606b7e63acafba92884df6d69f61cebd1d5182093f158af6a75605028';
   static const String historicalV75ConfigurationSha256 =
       'bb7ce2ed3bbfbeaffdeff0ee7a24a054a6495b97247cc838f13c5e454bfe34fd';
@@ -1177,7 +1179,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           provenanceAwareNutritionCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV76ConfigurationSha256,
       evidenceCurrencyRegistrySha256: provenanceAwareNutritionCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: provenanceAwareNutritionCandidateRecord
@@ -1212,6 +1214,51 @@ final class ContextOfUseRequalificationLedger {
           'qualification, authenticated approval or release acceptance. All '
           'evidence holds and blocked promotion remain in force.',
     );
+    final lnaaCalibrationCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 26,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          browserRestorePerformanceCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          browserRestorePerformanceCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256: browserRestorePerformanceCandidateRecord
+          .evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256: browserRestorePerformanceCandidateRecord
+          .evidenceSynthesisRegistrySha256,
+      semanticDiffSha256:
+          browserRestorePerformanceCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          browserRestorePerformanceCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          browserRestorePerformanceCandidateRecord.affectedPredicateIds,
+      changeClasses: browserRestorePerformanceCandidateRecord.changeClasses,
+      modelRisk: browserRestorePerformanceCandidateRecord.modelRisk,
+      questionOfInterest:
+          browserRestorePerformanceCandidateRecord.questionOfInterest,
+      contextOfUse: browserRestorePerformanceCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-16T01:30:36.000Z',
+      releaseArtifact: 'unreleased-worktree:lnaa-load-calibration-v77',
+      evidenceDecisions:
+          browserRestorePerformanceCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v77 candidate binds the LNAA competition load calibration on '
+          'official FoodData Central 2025-04-24 SR Legacy amino-acid rows: '
+          'the all-food median competing-LNAA fraction of protein replaces an '
+          'unsupported 0.45 reference, and protein-source load factors become '
+          'calibrated medians. Modeled competition pressure and overlap '
+          'change; the mapping from load to pressure remains a prototype '
+          'heuristic. All twenty-five prior whole records and their digests '
+          'remain exact. Composition statistics describe foods, not people, '
+          'and supply no new scientific evidence, independent review, '
+          'clinical qualification, authenticated approval or release '
+          'acceptance. All evidence holds and blocked promotion remain in '
+          'force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1244,6 +1291,7 @@ final class ContextOfUseRequalificationLedger {
         publicNutritionIntegrationCandidateRecord,
         provenanceAwareNutritionCandidateRecord,
         browserRestorePerformanceCandidateRecord,
+        lnaaCalibrationCandidateRecord,
       ],
     );
   }

@@ -344,10 +344,45 @@ void main() {
           hybridSummary.actualAminoAcidProteinCoverageFraction,
           closeTo(0.25, 1e-12),
         );
+        // The synthetic profile carries 4.5 g competing LNAA per 10 g protein,
+        // above every calibration food, so its factor is clamped to the
+        // supported domain; the meat proxy uses its calibrated median.
+        final meat = ProteinSourceLnaaRegistry.factorFor(
+          ProteinSourceType.meat,
+        );
         expect(
           hybridSummary.effectiveLoadFactor,
-          closeTo((10 * 1.0 + 30 * 1.15) / 40, 1e-12),
+          closeTo(
+            (10 * AminoAcidCompetitionModel.loadFactorDomainMaximum +
+                    30 * meat.loadFactor) /
+                40,
+            1e-12,
+          ),
         );
+        expect(hybridSummary.loadFactorClamped, isTrue);
+        expect(
+          hybridSummary.loadFactorInterquartileLow,
+          closeTo(
+            (10 * AminoAcidCompetitionModel.loadFactorDomainMaximum +
+                    30 * meat.interquartileLowFactor) /
+                40,
+            1e-12,
+          ),
+        );
+        expect(
+          hybridSummary.loadFactorInterquartileHigh,
+          closeTo(
+            (10 * AminoAcidCompetitionModel.loadFactorDomainMaximum +
+                    30 * meat.interquartileHighFactor) /
+                40,
+            1e-12,
+          ),
+        );
+        expect(
+          hybridSummary.referenceLnaaFractionOfProtein,
+          AminoAcidCompetitionModel.referenceLnaaFractionOfProtein,
+        );
+        expect(hybridSummary.structuralIntegrityReasons, isEmpty);
         expect(hybridSummary.sourcesPresent, contains(ProteinSourceType.meat));
         expect(hybridSummary.aminoAcidNutrientIds, isNotEmpty);
         expect(hybridSummary.competingLnaaGrams, isNull);
@@ -362,7 +397,7 @@ void main() {
         expect(
           hybrid.assumptions,
           contains(
-            'aa.lnaa.hybrid_actual_and_protein_source_proxy (effective 1.11)',
+            'aa.lnaa.hybrid_actual_and_protein_source_proxy (effective 1.12)',
           ),
         );
 
@@ -377,6 +412,12 @@ void main() {
         expect(pureActualWithZero.actualAminoAcidProteinCoverageFraction, 1);
         expect(pureActualWithZero.partialAminoAcidData, isFalse);
         expect(pureActualWithZero.competingLnaaGrams, closeTo(4.5, 1e-12));
+        expect(pureActualWithZero.loadFactorClamped, isTrue);
+        expect(pureActualWithZero.uncertaintyWidened, isTrue);
+        expect(
+          evaluateComponents([profiled, zeroProtein]).assumptions,
+          contains('aa.lnaa.load_factor_clamped_to_supported_domain'),
+        );
       },
     );
 

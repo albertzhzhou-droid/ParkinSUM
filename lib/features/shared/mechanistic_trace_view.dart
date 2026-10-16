@@ -1180,7 +1180,8 @@ bool _validAvailableCompetitionWire(Map<dynamic, dynamic> wire) {
       ) ||
       summary['dose_relative_available'] is! bool ||
       (summary['dose_relative_available'] == true) !=
-          (summary['dose_relative_lnaa_ratio'] != null)) {
+          (summary['dose_relative_lnaa_ratio'] != null) ||
+      !_lnaaCalibrationWireCoherent(summary)) {
     return false;
   }
   final dataMode = summary['data_mode'];
@@ -1252,6 +1253,40 @@ bool _isNonnegativeRequiredWireNumber(Object? value) =>
 
 bool _isOptionalBoundedWireNumber(Object? value) =>
     value == null || _isBoundedWireNumber(value);
+
+/// Calibration fields of the LNAA summary. They are optional so wires written
+/// before the calibration existed stay readable; when present they must be
+/// coherent with the effective load factor.
+bool _lnaaCalibrationWireCoherent(Map summary) {
+  final effective = summary['effective_load_factor'] as num;
+  final reference = summary['reference_lnaa_fraction_of_protein'];
+  if (reference != null &&
+      (reference is! num ||
+          !reference.isFinite ||
+          reference <= 0 ||
+          reference > 1)) {
+    return false;
+  }
+  final low = summary['load_factor_interquartile_low'];
+  final high = summary['load_factor_interquartile_high'];
+  if ((low == null) != (high == null)) return false;
+  if (low != null) {
+    if (low is! num ||
+        high is! num ||
+        !low.isFinite ||
+        !high.isFinite ||
+        low < 0.5 ||
+        high > 1.5 ||
+        low > effective + 1e-9 ||
+        high < effective - 1e-9) {
+      return false;
+    }
+  }
+  final clamped = summary['load_factor_clamped'];
+  if (clamped != null && clamped is! bool) return false;
+  if (clamped == true && summary['uncertainty_widened'] != true) return false;
+  return true;
+}
 
 MechanisticResultAvailability _parseAvailability(Object? raw) {
   if (raw is String) {

@@ -3,7 +3,7 @@
 Deterministic reference instant: 2026-01-01T08:00:00.000Z (fixed anchor, not the time this report was produced)
 Evidence-currency assessment: 2026-08-19T00:00:00.000Z (offline snapshot; the JSON report carries unsigned receipts)
 
-Algorithm configuration: `parkinsum-default-algorithm-stack` @ `2026.10.15-v76` · `7954d51606b7e63acafba92884df6d69f61cebd1d5182093f158af6a75605028`
+Algorithm configuration: `parkinsum-default-algorithm-stack` @ `2026.10.15-v77` · `51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d`
 Scope: the digest proves engineering replay identity only; it does **not** establish biological or clinical validity.
 
 **41 / 41 scenarios passed.**
@@ -432,7 +432,7 @@ Scope: the digest proves engineering replay identity only; it does **not** estab
 - pass: true
 - result_availability: available
 - has_modeled_output: true
-- interaction_score: 0.286
+- interaction_score: 0.344
 - severity_band: moderate
 - confidence_band: high
 - amino_acid_competition_band: moderate
