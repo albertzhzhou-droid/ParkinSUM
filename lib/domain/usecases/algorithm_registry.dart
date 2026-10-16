@@ -296,6 +296,8 @@ class AlgorithmRegistry {
         'lib/domain/entities/amino_acid_profile.dart',
         'lib/domain/entities/nutrient_derivation.dart',
         'lib/domain/entities/protein_source.dart',
+        'lib/domain/entities/lnaa_protein_fraction_calibration.dart',
+        'lib/core/constants/lnaa_protein_fraction_calibration_table.dart',
       ],
       userVisibleImpact:
           'Models overlap between protein-derived LNAA pressure and absorption opportunity.',

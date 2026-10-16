@@ -296,8 +296,8 @@ List<AlgorithmNumericalOracleVector> _buildTruthVectors() {
   final absorption = _referenceAbsorption(gastric);
   final competition = _referenceCompetition(gastric, absorption);
   final conflictScore = 0.6 * competition.overlap + 0.4 * 0.25;
-  const candidateOverlap = 0.11183888589587694;
-  const candidateRedistribution = 0.6358563899364431;
+  const candidateOverlap = 0.11375394452051583;
+  const candidateRedistribution = 0.6351861194178196;
   const candidateAdequacy = 0.35;
   final candidateFinal =
       0.45 * (1 - candidateOverlap) +
@@ -463,11 +463,11 @@ List<AlgorithmNumericalOracleVector> _buildTruthVectors() {
       'competition.peak_pressure',
       'amino_acid_competition',
       'peak relative pressure',
-      0.17,
+      _referencePeakPressure,
       1e-12,
       'unitless',
       'independent normalized-amplitude equation',
-      '(8/20 * 0.85) / 2',
+      '(8/20 * grain median 0.26336359 / all-food median 0.26669838) / 2',
     ),
     v(
       'competition.overlap',
@@ -619,7 +619,9 @@ _referenceAbsorption(
     for (final sample in arrivals)
       _ReferenceSample(
         sample.minute,
-        peakArrival <= 0 ? 0 : sample.value / peakArrival * 0.17,
+        peakArrival <= 0
+            ? 0
+            : sample.value / peakArrival * _referencePeakPressure,
       ),
   ];
   var weighted = 0.0;
@@ -670,6 +672,12 @@ double _referenceArrival(List<_ReferenceComponent> components, int minute) {
   final emptiedLeft = 1 - _referenceRemaining(components, left);
   return ((emptiedRight - emptiedLeft) / 2).clamp(0.0, 1.0);
 }
+
+/// Peak pressure of the fixture's 8 g grain meal. The grain load factor is
+/// restated from the published FDC calibration medians (grain over all
+/// foods) rather than read from the production registry.
+const double _referencePeakPressure =
+    (8 / 20 * (0.26336359438402057 / 0.26669838249286393)) / 2;
 
 double _referenceOpenness(int minute, int start, int peak, int end) {
   if (minute < start || minute > end) return 0;

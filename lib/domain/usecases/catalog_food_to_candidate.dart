@@ -3,7 +3,31 @@ import '../../core/models/meal.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
 import '../entities/time_axis_events.dart';
+import 'food_composition_interdependency_model.dart' show referenceRowsByFdcId;
 import 'mechanistic_next_meal_scorer.dart';
+
+/// Protein source of a catalog food. A FoodData Central record that is in
+/// the curated reference subset takes its curated group (the grouping the
+/// LNAA calibration uses); any other food is inferred from its name, then
+/// its aliases (which carry the English name of a Chinese-named entry), then
+/// its category.
+ProteinSourceType proteinSourceForFoodItem(FoodItem item) {
+  final fdcId = item.sourceSystem.startsWith('USDA_FDC')
+      ? int.tryParse(item.sourceFoodCode ?? '')
+      : null;
+  final reference = fdcId == null ? null : referenceRowsByFdcId[fdcId];
+  if (reference != null) {
+    return proteinSourceForReferenceGroup(
+      reference.group,
+      reference.sourceDescription,
+    );
+  }
+  return inferProteinSourceFromNameAndCategory(
+    name: item.name,
+    category: item.category.name,
+    aliases: item.aliases,
+  );
+}
 
 /// Pure adapter from a runtime `FoodItem` (seed catalog OR DB-projected) to
 /// a `CandidateFood` that the mechanistic next-meal scorer consumes.
@@ -14,10 +38,7 @@ import 'mechanistic_next_meal_scorer.dart';
 /// uncertainty when unknown rather than guessing.
 CandidateFood foodItemToCandidateFood(FoodItem item) {
   final physicalForm = textureClassToPhysicalForm(item.textureClass);
-  final proteinSource = inferProteinSourceFromNameAndCategory(
-    name: item.name,
-    category: item.category.name,
-  );
+  final proteinSource = proteinSourceForFoodItem(item);
 
   // Missing ≠ zero: when a nutrient field has no source data (recorded in
   // `item.missingNutrientFields`), pass null to the component so the normalizer
@@ -58,10 +79,11 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
 /// Map a single logged `MealItem` to a `FoodComponent` for mechanistic
 /// meal-history composition. Macros + portion come from the user-logged item
 /// (`quantityFactor × per-100g`); the optional [catalogMatch] enriches physical
-/// form, energy (calories), protein source, and the amino-acid profile (scaled
-/// to the logged serving). Nothing is fabricated: when the catalog lacks
-/// energy/texture/amino-acid data those stay null/unknown, and the LNAA layer
-/// falls back to the protein-source proxy.
+/// form, energy (calories), protein source (see [proteinSourceForFoodItem]),
+/// and the amino-acid profile (scaled to the logged serving). Nothing is
+/// fabricated: when the catalog lacks energy/texture/amino-acid data those
+/// stay null/unknown, and the LNAA layer falls back to the protein-source
+/// proxy.
 FoodComponent mealItemToFoodComponent(
   MealItem item, {
   required String componentId,
@@ -105,10 +127,12 @@ FoodComponent mealItemToFoodComponent(
       ? sourceAminoAcidProfile?.scaledToGrams(portionGrams)
       : null;
 
-  final proteinSource = inferProteinSourceFromNameAndCategory(
-    name: item.foodName,
-    category: item.foodCategory.name,
-  );
+  final proteinSource = catalogMatch != null
+      ? proteinSourceForFoodItem(catalogMatch)
+      : inferProteinSourceFromNameAndCategory(
+          name: item.foodName,
+          category: item.foodCategory.name,
+        );
 
   return FoodComponent(
     id: componentId,

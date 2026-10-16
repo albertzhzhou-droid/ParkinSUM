@@ -16,6 +16,7 @@ import '../../domain/entities/algorithm_dependency_compatibility.dart';
 import '../../domain/entities/algorithm_configuration_change_impact.dart';
 import '../../domain/entities/algorithm_contract_independent_oracle_attestation.dart';
 import '../../domain/entities/algorithm_relation_domain_sampling_attestation.dart';
+import '../../domain/entities/amino_acid_competition.dart';
 import '../../domain/entities/algorithm_result_root_manifest.dart';
 import '../../domain/entities/algorithm_trace_node.dart';
 import '../../domain/entities/context_of_use_requalification.dart';
@@ -1932,8 +1933,19 @@ class _AbsorptionCompetitionPanel extends StatelessWidget {
         _ChartMarker(x: (mealMinute - start).toDouble(), label: 'meal'),
       ],
       longDescription:
-          'Overlap ${(competition.overlapWithAbsorptionWindow * 100).toStringAsFixed(1)}% · peak pressure ${(competition.peakPressure * 100).toStringAsFixed(0)}% · ${competition.lnaaSummary?.dataMode.name ?? 'unknown data mode'} · ${absorption.delayedArrivalLikelihood.name} delayed-arrival likelihood. Curves are unitless educational weights.',
+          'Overlap ${(competition.overlapWithAbsorptionWindow * 100).toStringAsFixed(1)}% · peak pressure ${(competition.peakPressure * 100).toStringAsFixed(0)}% · ${competition.lnaaSummary?.dataMode.name ?? 'unknown data mode'}${_lnaaLoadText(competition.lnaaSummary)} · ${absorption.delayedArrivalLikelihood.name} delayed-arrival likelihood. Curves are unitless educational weights.',
     );
+  }
+
+  /// Load factor and its food-composition interquartile envelope, when the
+  /// summary carries them. A composition spread, not a confidence interval.
+  static String _lnaaLoadText(CompetitionLnaaSummary? summary) {
+    final low = summary?.loadFactorInterquartileLow;
+    final high = summary?.loadFactorInterquartileHigh;
+    if (summary == null || low == null || high == null) return '';
+    return ' · LNAA load ×${summary.effectiveLoadFactor.toStringAsFixed(2)} '
+        '(composition IQR ${low.toStringAsFixed(2)}–${high.toStringAsFixed(2)}'
+        '${summary.loadFactorClamped ? ', clamped' : ''})';
   }
 }
 
@@ -4496,6 +4508,13 @@ class _ParameterEvidencePanel extends StatelessWidget {
               AlgorithmParameterProvenanceStatus.fitted,
         )
         .length;
+    final literatureCount = records
+        .where(
+          (record) =>
+              record.provenanceStatus ==
+              AlgorithmParameterProvenanceStatus.literatureDerived,
+        )
+        .length;
     return PaperCard(
       key: const Key('observatory-parameter-evidence'),
       child: Column(
@@ -4509,7 +4528,8 @@ class _ParameterEvidencePanel extends StatelessWidget {
           Text(
             '${AlgorithmParameterProvenanceManifest.schema} · '
             '${records.length} result-affecting parameter/structure records · '
-            '$heuristicCount prototype-heuristic · $fittedCount fitted. '
+            '$heuristicCount prototype-heuristic · '
+            '$literatureCount literature-derived · $fittedCount fitted. '
             'Configuration ${configurationIdentity.sha256Digest.substring(0, 12)}… proves replay identity only, not biological or clinical validity.',
             style: const TextStyle(color: Paper.inkMuted),
           ),

@@ -55,7 +55,7 @@ final class AlgorithmConfigurationIdentity {
   // v55 makes the proximate-closure identity provenance-aware: it is tested
   // only when FDC reports carbohydrate as calculated by difference, and is
   // recorded as skipped when the source assumed or imputed it.
-  static const String defaultVersion = '2026.10.15-v55';
+  static const String defaultVersion = '2026.10.15-v56';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -63,7 +63,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'fc6f546f227504a33cc5c00e59fc9772501fdf1477ab9e53a9e6b47ef8f263d0';
+      'c0fbc9a25e2beffa7dd8b99f3483a08cefb369c69c3b3f8da061ad3fd175f85a';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -84,15 +84,19 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/levodopa_absorption_opportunity_model.dart':
         'c0c2500bd33df75f18499b6bfaef8f4dacab413ab923a098cd26b101c4cfd2cd',
     'lib/domain/entities/amino_acid_competition.dart':
-        'db04c321607e84dda10511e40158b575e7788408f3ff0ac5a3257fe4ac47f1b9',
+        '1b3f956a55182e38a270f6e8c5f28ceb5b0139a4f269d10e24f6eca715dfa3a7',
     'lib/domain/entities/amino_acid_profile.dart':
         'b19f1b235adeab1b2592507b2f3e81cf9edcba72c267751e44006f042692b5dd',
     'lib/domain/entities/nutrient_derivation.dart':
         '013684f5865c2d957a0ce27fed47b93e8f0ca27852be2b6a6330d0f377fabd99',
     'lib/domain/entities/protein_source.dart':
-        'd04048adf3a7d4d44f4de9d4293b59b8aa28ac627fa24fd6b524894167c14d86',
+        'fd65b4dd253f95407908940db89a9acc294589b1609f4e2ddec7f4ba112f5152',
+    'lib/domain/entities/lnaa_protein_fraction_calibration.dart':
+        'e1739ca141d6bfed73c0361e1d03819741f8cf61a7ce44448e17c1e89d9642fb',
+    'lib/core/constants/lnaa_protein_fraction_calibration_table.dart':
+        '9167c42ec79724b688fb98d7910bdae2202e5b479687579ef8f2a61b93df3270',
     'lib/domain/usecases/amino_acid_competition_model.dart':
-        '499cb3a8939f135c01ffa630202fa8c9abf57dae5cd5868ca4f3b0012bbf5f70',
+        '3ab4ea0fa6c06ca92e20a26329cdddaf205497f299ccb8172d3a9619e0383d4f',
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
         '79c01e3d8de22b7660ba16d917682f28a1447d7e867af09f84651cfd878c05cf',
     'lib/domain/usecases/food_composition_interdependency_model.dart':
@@ -548,6 +552,12 @@ final class AlgorithmConfigurationIdentity {
           'reference_protein_g': AminoAcidCompetitionModel.referenceProteinG,
           'sample_stride_minutes':
               AminoAcidCompetitionModel.sampleStrideMinutes,
+          'reference_lnaa_fraction_of_protein':
+              AminoAcidCompetitionModel.referenceLnaaFractionOfProtein,
+          'load_factor_domain_minimum':
+              AminoAcidCompetitionModel.loadFactorDomainMinimum,
+          'load_factor_domain_maximum':
+              AminoAcidCompetitionModel.loadFactorDomainMaximum,
           'protein_source_lnaa_factors': [
             for (final factor in lnaaFactors) factor.toJson(),
           ],

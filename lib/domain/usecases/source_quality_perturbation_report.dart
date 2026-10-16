@@ -287,13 +287,16 @@ class SourceQualityPerturbationReportRunner {
     NutrientConfidenceTier.unknown => 'X',
   };
 
+  // 3.16 g competing LNAA: 0.26 g per g of the 12 g tier-case protein, near
+  // the official FDC calibration median, so only the provenance tier
+  // differs between the tier cases (no load-factor clamp).
   AminoAcidProfile _aaProfile(NutrientConfidenceTier tier) => AminoAcidProfile(
-    leucine: 1.8,
-    isoleucine: 1.0,
-    valine: 1.1,
-    phenylalanine: 0.9,
-    tyrosine: 0.7,
-    tryptophan: 0.3,
+    leucine: 0.96,
+    isoleucine: 0.55,
+    valine: 0.6,
+    phenylalanine: 0.5,
+    tyrosine: 0.4,
+    tryptophan: 0.15,
     basis: 'per_serving',
     nutrientIds: const ['504', '503', '510', '508', '509', '501'],
     sourceRefs: const ['src.fdc.api.amino_acid_fields'],

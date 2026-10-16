@@ -461,3 +461,70 @@ All files come from the Hugging Face mirror
 - The 47 foods that appeared in two windows had byte-identical copies.
 - The portion rows come from one contiguous byte range covering the entire
   SR Legacy portion block (14,449 rows).
+
+## 10. Iteration 4 (2026-10-15) — LNAA calibration from official amino acids
+
+### 10.1 The miscalibration
+
+The competition model normalised an actual amino-acid profile by a competing
+LNAA fraction of 0.45 g per g protein. No food in the reference set comes
+close: across the 140 SR Legacy reference records with at least 2 g protein
+and all six competing amino acids, the fraction runs from 0.12 (prunes) to
+0.39 (Swiss cheese), with a median of 0.27. With 0.45 as the reference,
+every real profile read as a low-load food. The protein-source proxy factors
+(meat 1.15, dairy 1.10, grain 0.85) were illustrative and ranked meat above
+dairy and grain well below meat. The official rows rank them differently.
+
+### 10.2 Method
+
+- Fraction = (Leu + Ile + Val + Phe + Tyr + Trp) / protein, from the
+  published values of the same record.
+- Eligible: reference records with protein ≥ 2 g per 100 g and all six
+  amino acids reported. Raw Brussels sprouts (no tyrosine row) are excluded,
+  as the competition model also refuses a five-of-six sum.
+- Each record gets the protein source the app gives it at runtime, so a
+  type is calibrated on exactly the foods that carry it.
+- Two records share a pattern when, for all six amino acids, the intervals
+  of amino acid / protein implied by the rounding of the published values
+  overlap. Patterns are the connected components of that relation. 140
+  records form 109 patterns.
+- Statistics are taken over patterns (one value per pattern, the median of
+  its members), with type-7 quantiles.
+
+### 10.3 Results
+
+| Source | Records | Patterns | Median fraction | Factor |
+| --- | --- | --- | --- | --- |
+| all | 140 | 109 | 0.2667 | 1 |
+| dairy | 21 | 15 | 0.3381 | 1.268 |
+| egg | 6 | 5 | 0.3154 | 1.183 |
+| meat | 13 | 9 | 0.2643 | 0.991 |
+| fish | 18 | 7 | 0.2637 | 0.989 |
+| grain | 27 | 24 | 0.2634 | 0.987 |
+| soy | 14 | 14 | 0.2566 | 0.962 |
+| legume | 13 | 10 | 0.2484 | 0.931 |
+
+Shared patterns reveal how the source tables were built. Twelve finfish
+records (carp, cod, herring, mackerel, salmon, pollock, sardine, tuna) carry
+one pattern scaled to their protein. Roquefort and feta carry the sheep-milk
+pattern. Raw and cooked forms of rice, couscous, lentils, black beans,
+broad beans, peas, spinach, turkey and lamb share theirs. Of the 140
+records, 48 have all six amino-acid rows coded analytical; 83 have at least
+one row whose derivation is unknown to the app (no code, or a code such as
+`JA` or `O` that it does not classify).
+
+### 10.4 What changed in the model
+
+- The reference fraction is the all-food median (0.2667).
+- Proxy factors are the type medians over it. Mixed and unknown stay at 1.
+- The summary reports the reference fraction, a protein-weighted
+  interquartile envelope of the factor, and whether a factor was clamped to
+  the 0.5–1.5 domain. A clamp widens uncertainty.
+- Catalog foods take their protein source from the curated group. Free-text
+  inference now matches English whole words and Chinese food words. Before,
+  every catalog food (Chinese display names) inferred `unknown` or `mixed`,
+  and substring matches read eggplant as egg and oat milk as dairy.
+
+The factors describe food composition. The mapping from load to competition
+pressure remains a prototype heuristic and says nothing about a person, a
+dose or a timing choice.

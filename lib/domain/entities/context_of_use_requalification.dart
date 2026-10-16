@@ -263,12 +263,12 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.15-v42';
+  static const String ledgerVersion = '2026.10.15-v43';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
-      'e2a18594d3a825ad0fe21e5f82996e31036a0f0498cb9d8faed85f517bbdd346';
+      '017ec5bdecd3b0799b0824a9e41cf16ccea41d7013756c1b60f2c00e907a49b4';
   static const String expectedInitialSemanticDiffSha256 =
       '1a2047b215617d8b85cf57189de6b7a7aaa0706c27b0ff1ac1689a6bd68a4937';
   static const String expectedCurrentEvidenceCurrencyRegistrySha256 =
@@ -362,7 +362,9 @@ final class ContextOfUseRequalificationLedger {
           'The v52 release refresh bound the configuration and '
           'evidence-synthesis registry identities; the v53, v54 and v55 '
           'rebinds bind the food-composition interdependency and '
-          'composition-audit configuration only. Retained '
+          'composition-audit configuration only, and the v56 rebind binds '
+          'the LNAA load calibration on official food composition, which '
+          'changes modeled competition pressure. Retained '
           'synthetic '
           'fixture timestamps do not '
           'attest current-worktree review or evidence coverage.',

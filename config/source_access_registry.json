@@ -4369,7 +4369,7 @@
         "src.usda.fdc.full_download.2025_04_24"
       ],
       "last_policy_reviewed": "2026-10-08",
-      "notes": "Verbatim nutrient.csv, Foundation and conversion-factor files, the derivation code table, and the food_nutrient and food_portion rows of the 280 SR Legacy reference and seed foods in tool/data/fdc_2025-04-24/; public domain."
+      "notes": "Verbatim nutrient.csv, Foundation and conversion-factor files, the derivation code table, and the food_nutrient and food_portion rows of the 280 SR Legacy reference and seed foods in tool/data/fdc_2025-04-24/; public domain. The SR Legacy amino-acid rows also calibrate the competing-LNAA fraction of protein (lib/core/constants/lnaa_protein_fraction_calibration_table.dart)."
     },
     {
       "source_id": "src.usda.fndds.2017_2018",

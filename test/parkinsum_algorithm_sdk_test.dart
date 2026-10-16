@@ -11,6 +11,7 @@ import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/medication_entry_validation.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_conflict_result.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
+import 'package:parkinsum_companion/domain/entities/protein_source.dart';
 import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
 import 'package:parkinsum_companion/domain/usecases/dosage_note_parser.dart';
 import 'package:parkinsum_companion/domain/usecases/get_protein_trend_usecase.dart';
@@ -593,8 +594,26 @@ void main() {
   test('default parameter provenance is complete, ordered, and explicit', () {
     final identity = AlgorithmConfigurationIdentity.defaults();
     final manifest = identity.parameterProvenanceManifest;
+    final fdcCalibrated = {
+      'competition.reference_lnaa_fraction_of_protein',
+      for (final type in const [
+        'dairy',
+        'meat',
+        'fish',
+        'egg',
+        'soy',
+        'legume',
+        'grain',
+      ])
+        for (final prefix in const [
+          'lnaa_factor',
+          'lnaa_factor_interquartile_low',
+          'lnaa_factor_interquartile_high',
+        ])
+          'competition.$prefix.$type',
+    };
 
-    expect(manifest.records, hasLength(121));
+    expect(manifest.records, hasLength(142));
     expect(
       manifest.records.map((record) => record.parameterId),
       orderedEquals(
@@ -613,6 +632,21 @@ void main() {
       expect(record.sourceIds, isNotEmpty, reason: record.parameterId);
       expect(record.reviewDate, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
       expect(record.limitation, isNotEmpty, reason: record.parameterId);
+      if (fdcCalibrated.contains(record.parameterId)) {
+        // Statistics of the official FDC amino-acid records: derived from a
+        // published dataset, never measured or fitted by this project.
+        expect(
+          record.provenanceStatus,
+          AlgorithmParameterProvenanceStatus.literatureDerived,
+          reason: record.parameterId,
+        );
+        expect(
+          record.sourceIds,
+          contains(ProteinSourceLnaaRegistry.calibrationSourceId),
+          reason: record.parameterId,
+        );
+        continue;
+      }
       expect(
         record.provenanceStatus,
         AlgorithmParameterProvenanceStatus.prototypeHeuristic,
@@ -620,6 +654,17 @@ void main() {
             'No default coefficient is measured or fitted; do not overstate ${record.parameterId}.',
       );
     }
+    expect(
+      manifest.records
+          .where(
+            (record) =>
+                record.provenanceStatus ==
+                AlgorithmParameterProvenanceStatus.literatureDerived,
+          )
+          .map((record) => record.parameterId)
+          .toSet(),
+      fdcCalibrated,
+    );
     expect(
       manifest.records.map((record) => record.parameterId),
       containsAll([
@@ -1202,11 +1247,26 @@ void main() {
         'competition.sample_stride_minutes',
         competition['sample_stride_minutes'],
       );
+      for (final key in const [
+        'reference_lnaa_fraction_of_protein',
+        'load_factor_domain_minimum',
+        'load_factor_domain_maximum',
+      ]) {
+        expectRecordValue('competition.$key', competition[key]);
+      }
       for (final factor
           in (competition['protein_source_lnaa_factors'] as List).cast<Map>()) {
         expectRecordValue(
           'competition.lnaa_factor.${factor['source_type']}',
           factor['load_factor'],
+        );
+        expectRecordValue(
+          'competition.lnaa_factor_interquartile_low.${factor['source_type']}',
+          factor['interquartile_low_factor'],
+        );
+        expectRecordValue(
+          'competition.lnaa_factor_interquartile_high.${factor['source_type']}',
+          factor['interquartile_high_factor'],
         );
       }
 

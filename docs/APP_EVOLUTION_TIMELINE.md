@@ -9191,3 +9191,39 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Revert the catalog projections, the closure change and the importer derivation passthrough.
 - Restore identity `2026.10.08-v54` with its digests, the CoU v41/plan v39/attestation v38 pins, the relation attestation report pins, the queue sentence, the goldens, the README, registry and allowlist lines, research Section 9, the R14 paragraph, and this entry.
 - Preserve every unrelated file.
+
+## 2026-10-15 — LNAA-CALIBRATION-20261015 — Competing-LNAA load calibrated on official amino-acid composition
+
+### Baseline and scope
+
+- Branch `claude/modest-knuth-rl15va` at `1804d13` (iteration FOOD-FIDELITY-20261015). This entry covers the uncommitted changes in this iteration only and preserves all unrelated files.
+- Algorithm configuration identity advances `2026.10.15-v55` → `2026.10.15-v56`. Configuration SHA-256 `017ec5bdecd3b0799b0824a9e41cf16ccea41d7013756c1b60f2c00e907a49b4`; previous-configuration fixture `9f71b594af5fa88cecbf4b06115f875109069681bc08d8f7ffb5a0d06f8225b4`; registered-source bundle `c0fbc9a25e2beffa7dd8b99f3483a08cefb369c69c3b3f8da061ad3fd175f85a`. CoU ledger `2026.10.15-v43`, prospective plan `2026.10.15-v41`, and evidence attestation `2026.10.15-v40` are mechanically rebound; none adds evidence, review, or qualification. The relation-oracle and sampling attestation report digests and the trace-surface manifest are re-pinned. No persisted schema version changes; the LNAA summary gains optional fields.
+
+### Changes
+
+- **Calibration.** A generator computes the competing-LNAA fraction of protein (Leu + Ile + Val + Phe + Tyr + Trp ÷ protein) for the 140 SR Legacy reference records with at least 2 g protein and all six amino acids in the official FoodData Central 2025-04-24 rows. Records whose six ratios agree within the rounding of the published values share a pattern (109 patterns; 12 of 18 fish records share one). Statistics are taken over patterns with type-7 quantiles, per protein source and overall, with weakest-derivation-tier counts. Output: `lib/core/constants/lnaa_protein_fraction_calibration_table.dart`, entity `lib/domain/entities/lnaa_protein_fraction_calibration.dart`.
+- **Competition model.** The reference fraction for an actual profile changes from an unsupported 0.45 to the all-food median 0.2667. Proxy factors become each type's median over it: dairy 1.268, egg 1.183, meat 0.991, fish 0.989, grain 0.987, soy 0.962, legume 0.931; mixed and unknown stay 1. A factor clamped to 0.5–1.5 widens uncertainty. `CompetitionLnaaSummary` adds `reference_lnaa_fraction_of_protein`, a protein-weighted interquartile envelope and `load_factor_clamped`, with integrity and wire checks. Provenance gains 21 records (142 total); the 22 calibrated records are `literatureDerived` from `src.usda.fdc.full_download.2025_04_24`.
+- **Protein-source inference.** Catalog FDC reference foods take their curated group. Free text matches English whole words and Chinese food words, treats plant drinks as non-dairy, and returns `mixed` for two non-grain sources. Before, every reference food (Chinese display names) inferred `unknown` or `mixed`, eggplant read as egg and oat milk as dairy. The Chinese name, English name and official description of all 224 reference foods now infer the curated source, except seven pinned botanical or near-zero-protein cases.
+- **Changed files:**
+  - Model: `lib/domain/entities/{protein_source,amino_acid_competition,lnaa_protein_fraction_calibration}.dart`, `lib/domain/usecases/{amino_acid_competition_model,catalog_food_to_candidate,algorithm_registry,model_assumption_registry}.dart`, `lib/core/constants/lnaa_protein_fraction_calibration_table.dart`.
+  - Identity and provenance: `lib/algorithm_sdk/{algorithm_configuration_identity,algorithm_component_graph_identity,algorithm_parameter_provenance}.dart`, `lib/domain/usecases/algorithm_configuration_change_impact_service.dart`, `lib/domain/entities/{context_of_use_requalification,prospective_model_credibility_plan,credibility_evidence_execution_attestation,algorithm_contract_independent_oracle_attestation,algorithm_relation_domain_sampling_attestation}.dart`.
+  - UI: `lib/features/shared/mechanistic_trace_view.dart` (wire check), `lib/features/algorithm_observatory/algorithm_observatory_page.dart` (load envelope in chart text; the parameter panel now also counts literature-derived records).
+  - Verifiers: `lib/domain/usecases/algorithm_numerical_verification_oracle.dart` restates the fixture's grain factor from the published calibration medians, and its pinned oats-candidate overlap and redistribution inputs are re-read from production; `lib/domain/usecases/source_quality_perturbation_report.dart` gives its synthetic profile a realistic fraction (0.26 g per g protein) so the tier cases differ only in provenance and no case clamps.
+  - Config: `config/{complete_app_upgrade_queue,algorithm_trace_surface_manifest,source_access_registry}.json`.
+  - Tooling: `tool/{lnaa_protein_fraction_calibration_codegen,generate_lnaa_protein_fraction_calibration_table}.dart`.
+  - Tests and goldens: `test/lnaa_protein_fraction_calibration_test.dart` (new), `test/{lnaa_protein_source,mechanistic_model_invariant_gate,parkinsum_algorithm_sdk,algorithm_numerical_verification_oracle,algorithm_observatory_page}_test.dart`, `test/goldens/mechanistic_replay.{md,cases.digest}`.
+  - Docs: `Bibliographies.md`, `docs/CONFLICT_ENGINE_MODEL.md` §13, the research note (Section 10), `docs/known_risks.md` R14, and this timeline.
+
+### Verification and remaining boundaries
+
+- The calibration test recomputes every generated value from the source files, checks each competing total against the extractor the model uses, pins the shared patterns, the factor ordering and the two records outside the clamp, and runs an official cheddar profile and a clamped prune profile through the model.
+- Replay scenario s34 (synthetic actual amino-acid meal, fraction 0.26) moves from 0.286 to 0.344 and stays `moderate`; the other 40 scenarios keep their reported scores and bands.
+- Format, analyze, the calibration, protein-source, invariant-gate, SDK, numerical-oracle, verification-gate, perturbation, observatory-page, goldens and trace-manifest tests, the queue check, and the relation-oracle and sampling gates pass. A first full run failed 9 tests in the numerical oracle, the verification-gate report, the source-quality perturbation report and the observatory page; all were fixed above. The final full-suite and `verify:all` results are recorded in the follow-up commit.
+- The calibration set is a convenience sample of catalog records, not a dietary-intake weighting, and many amino-acid rows are calculated or uncoded. The factors describe food composition; the mapping from load to competition pressure remains a prototype heuristic. Nothing here is dietary, medication or timing advice.
+
+### Surgical rollback
+
+- Remove the calibration table, entity, generator files and the new test.
+- Revert the competition model, `protein_source.dart`, the summary fields and wire check, the catalog adapter, the registry and provenance records, the observatory text and panel count, the numerical-oracle vectors and manifest pin, and the perturbation fixture.
+- Restore identity `2026.10.15-v55` with its digests, the CoU v42/plan v40/attestation v39 pins, the relation attestation report pins, the trace-surface manifest, the queue sentence, the goldens, `Bibliographies.md`, `docs/CONFLICT_ENGINE_MODEL.md` §13, research Section 10, the R14 paragraph, and this entry.
+- Preserve every unrelated file.

@@ -609,7 +609,10 @@ void main() {
     );
     expect(find.textContaining('replay identity only'), findsOneWidget);
     expect(
-      find.textContaining('121 result-affecting parameter/structure records'),
+      find.textContaining(
+        '142 result-affecting parameter/structure records · '
+        '120 prototype-heuristic · 22 literature-derived · 0 fitted.',
+      ),
       findsOneWidget,
     );
     final legacyRecords = AlgorithmConfigurationIdentity.defaults()

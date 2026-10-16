@@ -72,6 +72,22 @@ class CompetitionLnaaSummary {
   /// NOT a measurement-uncertainty or clinical-accuracy estimate.
   final String? aminoAcidConfidenceTier;
 
+  /// All-food median competing-LNAA fraction of protein that normalised the
+  /// load factors (official FDC calibration). Null when no factor was
+  /// computed from protein.
+  final double? referenceLnaaFractionOfProtein;
+
+  /// Protein-weighted load factor with every proxy component at the lower
+  /// or upper quartile of its calibration patterns; actual components keep
+  /// their own factor. A spread of food composition across the calibration
+  /// records, not a confidence interval. Null when no factor was computed.
+  final double? loadFactorInterquartileLow;
+  final double? loadFactorInterquartileHigh;
+
+  /// True when an actual component's factor fell outside the supported
+  /// domain and was clamped; the clamp widens uncertainty.
+  final bool loadFactorClamped;
+
   const CompetitionLnaaSummary({
     required this.effectiveLoadFactor,
     required this.sourcesPresent,
@@ -87,6 +103,10 @@ class CompetitionLnaaSummary {
     this.partialAminoAcidData = false,
     this.actualAminoAcidProteinCoverageFraction,
     this.aminoAcidConfidenceTier,
+    this.referenceLnaaFractionOfProtein,
+    this.loadFactorInterquartileLow,
+    this.loadFactorInterquartileHigh,
+    this.loadFactorClamped = false,
   });
 
   /// Checks that the nested summary matches one of the data paths the
@@ -98,6 +118,27 @@ class CompetitionLnaaSummary {
         effectiveLoadFactor < 0.5 ||
         effectiveLoadFactor > 1.5) {
       reasons.add('competition.profile_lnaa_load_factor_out_of_domain');
+    }
+    final reference = referenceLnaaFractionOfProtein;
+    if (reference != null &&
+        (!reference.isFinite || reference <= 0 || reference > 1)) {
+      reasons.add('competition.profile_lnaa_reference_fraction_invalid');
+    }
+    final low = loadFactorInterquartileLow;
+    final high = loadFactorInterquartileHigh;
+    if ((low == null) != (high == null) ||
+        (low != null &&
+            high != null &&
+            (!low.isFinite ||
+                !high.isFinite ||
+                low < 0.5 ||
+                high > 1.5 ||
+                low > effectiveLoadFactor + 1e-12 ||
+                high < effectiveLoadFactor - 1e-12))) {
+      reasons.add('competition.profile_lnaa_interquartile_envelope_invalid');
+    }
+    if (loadFactorClamped && !uncertaintyWidened) {
+      reasons.add('competition.profile_lnaa_clamp_without_widening');
     }
 
     final numericValues = <double?>[
@@ -166,6 +207,8 @@ class CompetitionLnaaSummary {
             hasAbsoluteValues ||
             aminoAcidNutrientIds.isNotEmpty ||
             aminoAcidConfidenceTier != null ||
+            low != null ||
+            loadFactorClamped ||
             !exactUnknownSources) {
           reasons.add('competition.profile_lnaa_unknown_shape_invalid');
         }
@@ -191,6 +234,10 @@ class CompetitionLnaaSummary {
     'actual_amino_acid_protein_coverage_fraction':
         actualAminoAcidProteinCoverageFraction,
     'amino_acid_confidence_tier': aminoAcidConfidenceTier,
+    'reference_lnaa_fraction_of_protein': referenceLnaaFractionOfProtein,
+    'load_factor_interquartile_low': loadFactorInterquartileLow,
+    'load_factor_interquartile_high': loadFactorInterquartileHigh,
+    'load_factor_clamped': loadFactorClamped,
   };
 }
 
