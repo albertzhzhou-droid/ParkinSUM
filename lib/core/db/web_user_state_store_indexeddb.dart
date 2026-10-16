@@ -10,6 +10,23 @@ import '../models/user_preference_write_scope.dart';
 import '../services/user_state_change_notifications.dart';
 import 'web_user_state_store.dart';
 
+final class _VerifiedUserStateEnvelope {
+  _VerifiedUserStateEnvelope({
+    required this.raw,
+    required Map<String, Object?> value,
+    required this.legacyCanonicalJson,
+  }) : value = Map<String, Object?>.unmodifiable({
+         ...value,
+         'legacyKeys': Map<String, String?>.unmodifiable(
+           Map<String, String?>.from(value['legacyKeys'] as Map),
+         ),
+       });
+
+  final String raw;
+  final Map<String, Object?> value;
+  final String legacyCanonicalJson;
+}
+
 /// One complete envelope retains the unchanged legacy values, their witness,
 /// and the current aggregate. It preserves existing restore/history atomicity
 /// without splitting records across multiple independently committed keys.
@@ -45,6 +62,8 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     'documentDigest',
   ];
   web.IDBDatabase? _database;
+  _VerifiedUserStateEnvelope? _verifiedEnvelope;
+  ({String document, String digest})? _lastCandidateDigest;
 
   @override
   String get backendId => 'IndexedDB / personal-record aggregate';
@@ -88,7 +107,11 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
         }
         database.onversionchange = ((web.Event _) {
           database.close();
-          if (identical(_database, database)) _database = null;
+          if (identical(_database, database)) {
+            _database = null;
+            _verifiedEnvelope = null;
+            _lastCandidateDigest = null;
+          }
         }).toJS;
         _database = database;
         completed.complete(database);
@@ -179,7 +202,20 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     await completed.future;
   }
 
-  Map<String, Object?> _decode(String raw, WebUserStateLegacySnapshot legacy) {
+  _VerifiedUserStateEnvelope _verifyEnvelope(
+    String raw,
+    WebUserStateLegacySnapshot legacy,
+  ) {
+    // The caller has just read the actual IndexedDB value and checked live
+    // legacy storage. Only byte-for-byte equality reuses a prior verification;
+    // a different raw value always passes the complete decoder and witnesses.
+    final verified = _verifiedEnvelope;
+    if (verified != null && verified.raw == raw) {
+      if (legacy.canonicalJson != verified.legacyCanonicalJson) {
+        throw StateError('web_user_state_legacy_writer_conflict');
+      }
+      return verified;
+    }
     final decoded = jsonDecode(raw);
     if (decoded is! Map ||
         decoded.length != _envelopeKeys.length ||
@@ -200,7 +236,13 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     if (legacy.canonicalJson != old.canonicalJson) {
       throw StateError('web_user_state_legacy_writer_conflict');
     }
-    return Map<String, Object?>.from(decoded);
+    final result = _VerifiedUserStateEnvelope(
+      raw: raw,
+      value: Map<String, Object?>.from(decoded),
+      legacyCanonicalJson: old.canonicalJson,
+    );
+    _verifiedEnvelope = result;
+    return result;
   }
 
   void _requireUnchangedLiveLegacy(WebUserStateLegacySnapshot legacy) {
@@ -229,28 +271,32 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     }
   }
 
-  Future<String> _ensureEnvelope(WebUserStateLegacySnapshot legacy) async {
+  Future<_VerifiedUserStateEnvelope> _ensureEnvelope(
+    WebUserStateLegacySnapshot legacy,
+  ) async {
     _requireUnchangedLiveLegacy(legacy);
     final prior = await _readRaw();
     _requireUnchangedLiveLegacy(legacy);
     if (prior != null) {
-      _decode(prior, legacy);
+      final verified = _verifyEnvelope(prior, legacy);
       _ensureMigrationMarker();
-      return prior;
+      return verified;
     }
+    _verifiedEnvelope = null;
     // A surviving marker distinguishes first migration from disappearance of
     // the previously authoritative database. Never resurrect an old snapshot.
     if (web.window.localStorage.getItem(_markerKey) != null) {
       throw StateError('web_user_state_authoritative_document_missing');
     }
     final document = legacy.values['db.user_state.v1'];
-    final candidate = jsonEncode({
+    final envelope = <String, Object?>{
       'schema': _schema,
       'legacyKeys': legacy.values,
       'legacyDigest': legacy.digest,
       'document': document,
       'documentDigest': portableRestoreDigest(document),
-    });
+    };
+    final candidate = jsonEncode(envelope);
     await _compareAndPut(
       candidate,
       expectedRaw: null,
@@ -263,12 +309,25 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     _requireUnchangedLiveLegacy(legacy);
     _ensureMigrationMarker();
     debugPrint('WebUserState: original snapshot retained in IndexedDB');
-    return candidate;
+    return _verifyEnvelope(candidate, legacy);
   }
 
   @override
   Future<String?> read(WebUserStateLegacySnapshot legacy) async =>
-      _decode(await _ensureEnvelope(legacy), legacy)['document'] as String?;
+      (await _ensureEnvelope(legacy)).value['document'] as String?;
+
+  String _candidateDigest(String document) {
+    // A failed transaction can retry the exact same immutable document. This
+    // memo is only a mathematical result, never proof that a write persisted.
+    // Reading a different external envelope still verifies it independently.
+    final previous = _lastCandidateDigest;
+    if (previous != null && previous.document == document) {
+      return previous.digest;
+    }
+    final digest = portableRestoreDigest(document);
+    _lastCandidateDigest = (document: document, digest: digest);
+    return digest;
+  }
 
   @override
   Future<void> write(
@@ -279,18 +338,19 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
   }) async {
     if (!authorize()) throw StateError('web_user_state_authorization_changed');
     final prior = await _ensureEnvelope(legacy);
-    final envelope = _decode(prior, legacy);
+    final envelope = prior.value;
     if (envelope['document'] != expectedDocument) {
       throw StateError('web_user_state_document_changed');
     }
-    final candidate = jsonEncode({
+    final nextEnvelope = <String, Object?>{
       ...envelope,
       'document': document,
-      'documentDigest': portableRestoreDigest(document),
-    });
+      'documentDigest': _candidateDigest(document),
+    };
+    final candidate = jsonEncode(nextEnvelope);
     await _compareAndPut(
       candidate,
-      expectedRaw: prior,
+      expectedRaw: prior.raw,
       authorize: authorize,
       legacy: legacy,
       invokeHook: true,
@@ -302,6 +362,15 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
     // writer in another browser agent can still change after the last active
     // callback check. Refuse success and retain both values in that case.
     _requireUnchangedLiveLegacy(legacy);
+    // This envelope combines verified immutable legacy evidence with the
+    // exact document whose digest we just computed. A completed transaction
+    // and exact readback prove these bytes persisted; do not hash them again
+    // on the next read. External changes still miss the exact-raw cache.
+    _verifiedEnvelope = _VerifiedUserStateEnvelope(
+      raw: candidate,
+      value: nextEnvelope,
+      legacyCanonicalJson: prior.legacyCanonicalJson,
+    );
     notifyUserStateChanged();
     afterPublication?.call();
     _requireUnchangedLiveLegacy(legacy);
@@ -319,5 +388,7 @@ final class IndexedDbWebUserStateStore implements WebUserStateStore {
   void close() {
     _database?.close();
     _database = null;
+    _verifiedEnvelope = null;
+    _lastCandidateDigest = null;
   }
 }

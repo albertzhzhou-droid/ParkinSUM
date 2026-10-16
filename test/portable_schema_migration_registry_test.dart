@@ -39,6 +39,37 @@ void main() {
     },
   );
 
+  test('no-migration receipts retain independent source and output hashes', () {
+    for (final compact in <bool>[false, true]) {
+      final artifact = packageService.create(
+        snapshot: _snapshot(),
+        generatedAt: DateTime.utc(2026, 8, 31, 20),
+        preferCompactTransport: compact,
+      );
+      final source = _clone(artifact.document);
+      final assessment = PortableSchemaMigrationRegistry.assess(
+        sourceJson: artifact.prettyJson,
+        sourceDocument: source,
+      );
+      expect(assessment.accepted, isTrue);
+      final output = assessment.outputDocument!;
+      final receipt = assessment.receipt!;
+      expect(identical(source, output), isFalse);
+      expect(portableCanonicalJson(output), portableCanonicalJson(source));
+      expect(receipt.sourceBytesSha256, portableSha256(artifact.prettyJson));
+      expect(receipt.sourceCanonicalSha256, portableCanonicalSha256(source));
+      expect(receipt.outputCanonicalSha256, portableCanonicalSha256(output));
+      expect(receipt.outputCanonicalSha256, receipt.sourceCanonicalSha256);
+      final independentlyHashedReceipt = receipt.toJson(includeDigest: false)
+        ..['sourceCanonicalSha256'] = portableCanonicalSha256(source)
+        ..['outputCanonicalSha256'] = portableCanonicalSha256(output);
+      expect(
+        receipt.receiptSha256,
+        portableCanonicalSha256(independentlyHashedReceipt),
+      );
+    }
+  });
+
   test('v2 migration reaches v4 and marks older observations unavailable', () {
     final v4 = packageService.create(
       snapshot: _snapshot(),
@@ -74,6 +105,18 @@ void main() {
     );
 
     final output = first.outputDocument!;
+    expect(
+      first.receipt!.sourceCanonicalSha256,
+      portableCanonicalSha256(source),
+    );
+    expect(
+      first.receipt!.outputCanonicalSha256,
+      portableCanonicalSha256(output),
+    );
+    expect(
+      first.receipt!.outputCanonicalSha256,
+      isNot(first.receipt!.sourceCanonicalSha256),
+    );
     final files = Map<String, Object?>.from(output['files'] as Map);
     final profile = Map<String, Object?>.from(files['profile.json'] as Map);
     final reminder = Map<String, Object?>.from(

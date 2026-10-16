@@ -661,12 +661,20 @@ abstract final class PortableSchemaMigrationRegistry {
     required List<String> warnings,
     required List<String> heldFields,
   }) {
+    final sourceCanonical = portableCanonicalJson(sourceDocument);
+    final outputCanonical = portableCanonicalJson(outputDocument);
+    final sourceCanonicalSha256 = portableSha256(sourceCanonical);
+    // A validated, cloned no-migration document has identical canonical bytes.
+    // Reuse its digest only after comparing the complete canonical strings.
+    final outputCanonicalSha256 = outputCanonical == sourceCanonical
+        ? sourceCanonicalSha256
+        : portableSha256(outputCanonical);
     final withoutDigest = PortableSchemaMigrationReceipt(
       sourceVersion: source.version,
       targetVersion: target.version,
       sourceBytesSha256: portableSha256(sourceJson),
-      sourceCanonicalSha256: portableCanonicalSha256(sourceDocument),
-      outputCanonicalSha256: portableCanonicalSha256(outputDocument),
+      sourceCanonicalSha256: sourceCanonicalSha256,
+      outputCanonicalSha256: outputCanonicalSha256,
       sourceValidatorIdentity: source.validatorIdentity,
       targetValidatorIdentity: target.validatorIdentity,
       migrationIdentity: migrationIdentity,

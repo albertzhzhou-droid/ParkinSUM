@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
@@ -89,6 +90,52 @@ int _independentNodes(Object? value) =>
         ? value.fold<int>(0, (sum, item) => sum + _independentNodes(item))
         : 0);
 
+Object? _independentSorted(Object? value) {
+  if (value is Map) {
+    final keys = value.keys.cast<String>().toList()..sort();
+    return <String, Object?>{
+      for (final key in keys) key: _independentSorted(value[key]),
+    };
+  }
+  if (value is List) return value.map(_independentSorted).toList();
+  return value;
+}
+
+void _expectIndependentWireHashes(Map<String, Object?> root) {
+  String digest(Object? value) => sha256
+      .convert(utf8.encode(jsonEncode(_independentSorted(value))))
+      .toString();
+  final files = _files(root);
+  final manifest = root['manifest'] as Map;
+  final summaries = (manifest['files'] as List).cast<Map>();
+  expect(summaries.map((row) => row['path']), unorderedEquals(files.keys));
+  for (final row in summaries) {
+    final value = files[row['path']];
+    expect(row['sha256'], digest(value), reason: row['path'] as String);
+    final count = value is List
+        ? value.length
+        : value is Map && value['records'] is List
+        ? (value['records'] as List).length
+        : value is Map && value['links'] is List
+        ? (value['links'] as List).length
+        : 1;
+    expect(row['recordCount'], count, reason: row['path'] as String);
+  }
+  final contentSha256 = digest(files);
+  expect((manifest['integrity'] as Map)['contentSha256'], contentSha256);
+  expect(
+    manifest['packageId'],
+    sha256
+        .convert(
+          utf8.encode(
+            'parkinsum-portable-package-v${root['schemaVersion']}|'
+            '${(manifest['ownerScope'] as Map)['bindingSha256']}|$contentSha256',
+          ),
+        )
+        .toString(),
+  );
+}
+
 void _rewriteSnapshot(Map<String, Object?> root, void Function(Map) mutate) {
   final files = root['files'] as Map;
   final entries = files[userPortableDataFoodItemSnapshotsPath] as List;
@@ -121,6 +168,7 @@ void main() {
     final first = _root(compact: false);
     expect(first['schemaVersion'], 4);
     expect(_files(first).keys.toSet(), userPortableDataFilePaths.toSet());
+    _expectIndependentWireHashes(first);
     expect(
       _inspect(portableCanonicalJson(first)).status,
       UserPortableDataPreviewStatus.ready,
@@ -157,6 +205,75 @@ void main() {
         _inspect(portableCanonicalJson(compact), owner: 'another_owner').status,
         UserPortableDataPreviewStatus.wrongOwner,
       );
+    },
+  );
+
+  test(
+    'repeated equal snapshots share an identity without sharing quantities or later edits',
+    () {
+      final files = _files(_root(compact: false));
+      final meal = Map<String, Object?>.from(
+        (files['meals.json'] as List).first as Map,
+      );
+      final original = Map<String, Object?>.from(
+        (meal['items'] as List).first as Map,
+      );
+      final snapshot = Map<String, Object?>.from(original)..remove('quantity');
+      final expectedId = portableCanonicalSha256(snapshot);
+      final items = [
+        for (var index = 0; index < 300; index++)
+          <String, Object?>{
+            // Equal content with a different insertion order must share the
+            // same identity; each row still carries its own exact quantity.
+            ...Map<String, Object?>.fromEntries(
+              index.isEven
+                  ? original.entries
+                  : original.entries.toList().reversed,
+            ),
+            'quantity': {'factorPer100g': index / 10, 'grams': index * 10.0},
+          },
+      ];
+      files['meals.json'] = [
+        <String, Object?>{...meal, 'items': items},
+      ];
+      final first = PortableDataCompactTransportService.encode(files);
+      final snapshots = first[userPortableDataFoodItemSnapshotsPath] as List;
+      expect(snapshots, hasLength(1));
+      expect((snapshots.single as Map)['snapshotId'], expectedId);
+      expect(
+        portableCanonicalJson(
+          PortableDataCompactTransportService.resolve(first).files,
+        ),
+        portableCanonicalJson(files),
+      );
+      final references =
+          ((first['meals.json'] as List).single as Map)['items'] as List;
+      for (var index = 0; index < references.length; index++) {
+        expect((references[index] as Map)['snapshotId'], expectedId);
+        expect(
+          (references[index] as Map)['quantity'],
+          items[index]['quantity'],
+        );
+      }
+
+      // A subsequent encode re-evaluates changed captured content even when
+      // its food ID and object identity are unchanged.
+      items.first['foodName'] = 'Synthetic later captured name';
+      final second = PortableDataCompactTransportService.encode(files);
+      final changedEntries =
+          second[userPortableDataFoodItemSnapshotsPath] as List;
+      expect(changedEntries, hasLength(2));
+      for (final raw in changedEntries) {
+        final entry = raw as Map;
+        expect(entry['snapshotId'], portableCanonicalSha256(entry['snapshot']));
+      }
+      expect(
+        portableCanonicalJson(
+          PortableDataCompactTransportService.resolve(second).files,
+        ),
+        portableCanonicalJson(files),
+      );
+      expect((snapshots.single as Map)['snapshotId'], expectedId);
     },
   );
 
@@ -388,6 +505,7 @@ void main() {
         generatedAt: _time,
       );
       expect(artifact.document['schemaVersion'], 5);
+      _expectIndependentWireHashes(artifact.document);
       expect(_independentNodes(artifact.document), lessThanOrEqualTo(500000));
       expect(
         utf8.encode(artifact.prettyJson).length,

@@ -445,21 +445,24 @@ class UserPortableDataPackageService {
       );
     }
 
-    var fileSummaries = <UserPortableDataFileSummary>[
-      for (final path in userPortableDataFilePaths)
-        UserPortableDataFileSummary(
-          path: path,
-          sha256: _sha256(_canonicalJson(files[path])),
-          recordCount: _recordCount(files[path]),
-        ),
+    // A SHA-256 hex digest always occupies one 64-byte string node. Use that
+    // exact budget shape until the final wire representation is selected, so
+    // compact exports do not hash and then discard the expanded schema-4 files.
+    const pendingSha256 =
+        '0000000000000000000000000000000000000000000000000000000000000000';
+    var outputFiles = files;
+    var outputSchemaVersion = userPortableDataPackageSchemaVersion;
+    var outputFilePaths = userPortableDataFilePaths;
+    List<Object?> budgetFileSummaries() => <Object?>[
+      for (final path in outputFilePaths)
+        <String, Object?>{
+          'path': path,
+          'sha256': pendingSha256,
+          'recordCount': _recordCount(outputFiles[path]),
+        },
     ];
-    var contentSha256 = _sha256(_canonicalJson(files));
-    var packageId = _sha256(
-      'parkinsum-portable-package-v$userPortableDataPackageSchemaVersion|'
-      '$ownerScopeSha256|$contentSha256',
-    );
     final manifest = <String, Object?>{
-      'packageId': packageId,
+      'packageId': pendingSha256,
       'createdAt': generatedUtc.toIso8601String(),
       'producer': 'parkinsum_companion',
       'ownerScope': <String, Object?>{
@@ -472,17 +475,10 @@ class UserPortableDataPackageService {
       'integrity': <String, Object?>{
         'algorithm': 'SHA-256',
         'canonicalization': userPortableDataCanonicalization,
-        'contentSha256': contentSha256,
+        'contentSha256': pendingSha256,
         'signatureStatus': 'unsigned',
       },
-      'files': <Object?>[
-        for (final file in fileSummaries)
-          <String, Object?>{
-            'path': file.path,
-            'sha256': file.sha256,
-            'recordCount': file.recordCount,
-          },
-      ],
+      'files': budgetFileSummaries(),
       'privacyBoundary': <String, Object?>{
         'encryption': 'none',
         'containsSensitiveUserData': true,
@@ -506,39 +502,42 @@ class UserPortableDataPackageService {
     if (preferCompactTransport ||
         outputBudgetFinding ==
             'The package exceeds the $userPortableDataMaxJsonNodes-node JSON budget.') {
-      final compactFiles = PortableDataCompactTransportService.encode(files);
-      fileSummaries = <UserPortableDataFileSummary>[
-        for (final path in PortableSchemaMigrationRegistry.filePathsForVersion(
-          userPortableDataCompactSchemaVersion,
-        ))
-          UserPortableDataFileSummary(
-            path: path,
-            sha256: _sha256(_canonicalJson(compactFiles[path])),
-            recordCount: _recordCount(compactFiles[path]),
-          ),
-      ];
-      contentSha256 = _sha256(_canonicalJson(compactFiles));
-      packageId = _sha256(
-        'parkinsum-portable-package-v$userPortableDataCompactSchemaVersion|'
-        '$ownerScopeSha256|$contentSha256',
+      outputFiles = PortableDataCompactTransportService.encode(files);
+      outputSchemaVersion = userPortableDataCompactSchemaVersion;
+      outputFilePaths = PortableSchemaMigrationRegistry.filePathsForVersion(
+        outputSchemaVersion,
       );
-      manifest['packageId'] = packageId;
-      (manifest['integrity'] as Map)['contentSha256'] = contentSha256;
-      manifest['files'] = <Object?>[
-        for (final file in fileSummaries)
-          <String, Object?>{
-            'path': file.path,
-            'sha256': file.sha256,
-            'recordCount': file.recordCount,
-          },
-      ];
-      document['schemaVersion'] = userPortableDataCompactSchemaVersion;
-      document['files'] = compactFiles;
+      manifest['files'] = budgetFileSummaries();
+      document['schemaVersion'] = outputSchemaVersion;
+      document['files'] = outputFiles;
       outputBudgetFinding = _decodedBudgetFinding(document);
     }
     if (outputBudgetFinding != null) {
       throw FormatException(outputBudgetFinding);
     }
+    final fileSummaries = <UserPortableDataFileSummary>[
+      for (final path in outputFilePaths)
+        UserPortableDataFileSummary(
+          path: path,
+          sha256: _sha256(_canonicalJson(outputFiles[path])),
+          recordCount: _recordCount(outputFiles[path]),
+        ),
+    ];
+    final contentSha256 = _sha256(_canonicalJson(outputFiles));
+    final packageId = _sha256(
+      'parkinsum-portable-package-v$outputSchemaVersion|'
+      '$ownerScopeSha256|$contentSha256',
+    );
+    manifest['packageId'] = packageId;
+    (manifest['integrity'] as Map)['contentSha256'] = contentSha256;
+    manifest['files'] = <Object?>[
+      for (final file in fileSummaries)
+        <String, Object?>{
+          'path': file.path,
+          'sha256': file.sha256,
+          'recordCount': file.recordCount,
+        },
+    ];
     final sortedDocument = _sortJson(document) as Map<String, Object?>;
     final canonicalJson = jsonEncode(sortedDocument);
     final prettyJson = const JsonEncoder.withIndent(
@@ -1204,7 +1203,7 @@ class UserPortableDataPackageService {
       preferCompactTransport:
           root['schemaVersion'] == userPortableDataCompactSchemaVersion,
     );
-    final reexportFiles = (jsonDecode(reexport.prettyJson) as Map)['files'];
+    final reexportFiles = reexport.document['files'];
     if (portableRestoreCanonicalJson(reexportFiles) !=
         portableRestoreCanonicalJson(wireFiles)) {
       throw StateError('portable_restore_lossless_projection_held');
@@ -5208,11 +5207,16 @@ class _PortableJsonPreflightParser {
     final tokenStart = _index;
     _expect(0x22);
     var sourceBytes = 0;
+    var hasEscapes = false;
     while (_index < source.length) {
       final unit = source.codeUnitAt(_index);
       if (unit == 0x22) {
         _index += 1;
         if (!decode) return null;
+        // The scan has already checked every character, Unicode scalar and
+        // string-byte limit. An unescaped key is its literal source slice;
+        // escaped keys still use JSON decoding before duplicate detection.
+        if (!hasEscapes) return source.substring(tokenStart + 1, _index - 1);
         try {
           final decoded = jsonDecode(source.substring(tokenStart, _index));
           if (decoded is! String) _syntaxFailure();
@@ -5223,6 +5227,7 @@ class _PortableJsonPreflightParser {
       }
       if (unit < 0x20) _syntaxFailure();
       if (unit == 0x5c) {
+        hasEscapes = true;
         sourceBytes += 1;
         _index += 1;
         if (_index >= source.length) _syntaxFailure();

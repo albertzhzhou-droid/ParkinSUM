@@ -53,6 +53,7 @@ abstract final class PortableDataCompactTransportService {
     }
     final snapshots = <String, Map<String, Object?>>{};
     final canonicalSnapshots = <String, String>{};
+    final idsByCanonicalSnapshot = <String, String>{};
     final meals = _rows(logicalFiles['meals.json']);
     final compactMeals = <Object?>[];
     for (final rawMeal in meals) {
@@ -64,7 +65,13 @@ abstract final class PortableDataCompactTransportService {
         _exactKeys(item, <String>{..._snapshotFields, 'quantity'});
         final snapshot = Map<String, Object?>.from(item)..remove('quantity');
         final canonical = portableCanonicalJson(snapshot);
-        final id = portableSha256(canonical);
+        // Repeated captured evidence can occur at many distinct quantities.
+        // Reuse only an identical canonical string within this one encoding;
+        // different content still hashes and passes the collision check below.
+        final id = idsByCanonicalSnapshot.putIfAbsent(
+          canonical,
+          () => portableSha256(canonical),
+        );
         final previous = canonicalSnapshots[id];
         if (previous != null && previous != canonical) {
           throw const FormatException(

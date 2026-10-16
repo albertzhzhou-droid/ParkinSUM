@@ -60,12 +60,26 @@ class WebAppDatabase
       'db.mechanistic_replay_capsules.v1';
 
   SharedPreferences? _prefs;
+  ({String source, String digest})? _lastSourcePackageDigest;
   static Future<void> _userStateTail = Future<void>.value();
   static Future<void> _replayCapsuleTail = Future<void>.value();
 
   Future<SharedPreferences> _ensure() async {
     _prefs ??= await SharedPreferences.getInstance();
     return _prefs!;
+  }
+
+  String _sourcePackageDigest(String source) {
+    // This bounded cache holds only a pure digest of exact immutable bytes.
+    // Every load still reads and decodes the current state, then compares its
+    // claimed receipt digest with this computed value.
+    final previous = _lastSourcePackageDigest;
+    if (previous != null && previous.source == source) {
+      return previous.digest;
+    }
+    final digest = portableRestoreBytesDigest(source);
+    _lastSourcePackageDigest = (source: source, digest: digest);
+    return digest;
   }
 
   Future<T> _serializeUserState<T>(Future<T> Function() operation) {
@@ -115,6 +129,7 @@ class WebAppDatabase
       return _WebUserState.fromJson(
         Map<String, dynamic>.from(jsonDecode(aggregate) as Map),
         legacyMeals: legacyMeals,
+        sourcePackageDigest: _sourcePackageDigest,
       );
     }
     final profileRaw = prefs.getString(_kUserProfile);
@@ -262,7 +277,7 @@ class WebAppDatabase
         throw StateError('portable_restore_retry_state_changed');
       }
       if (witness.digest != request.expectedStateDigest ||
-          portableRestoreBytesDigest(request.sourcePackageJson) !=
+          _sourcePackageDigest(request.sourcePackageJson) !=
               request.packageJsonSha256 ||
           (current.profile.patientId != request.ownerScope &&
               (current.profile.patientId != 'local_user' ||
@@ -765,6 +780,7 @@ class _WebUserState {
   factory _WebUserState.fromJson(
     Map<String, dynamic> json, {
     List<Meal> legacyMeals = const <Meal>[],
+    String Function(String source)? sourcePackageDigest,
   }) {
     final operationId = json['onboardingOperationId'];
     final schemaVersion = json['schemaVersion'];
@@ -789,7 +805,7 @@ class _WebUserState {
             receipt['operationId'] is! String ||
             receipt['ownerScope'] is! String ||
             receipt['sourcePackageJson'] is! String ||
-            portableRestoreBytesDigest(
+            (sourcePackageDigest ?? portableRestoreBytesDigest)(
                   receipt['sourcePackageJson'] as String,
                 ) !=
                 receipt['packageJsonSha256'] ||

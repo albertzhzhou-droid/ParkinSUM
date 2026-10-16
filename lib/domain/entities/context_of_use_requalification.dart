@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.15-v62';
+  static const String ledgerVersion = '2026.10.15-v63';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '7954d51606b7e63acafba92884df6d69f61cebd1d5182093f158af6a75605028';
+  static const String historicalV75ConfigurationSha256 =
       'bb7ce2ed3bbfbeaffdeff0ee7a24a054a6495b97247cc838f13c5e454bfe34fd';
   static const String historicalV74ConfigurationSha256 =
       'c0a34a359397ce0405474b1ca006067e58ecc7f0b7a13d65ca03c4df92ba5d40';
@@ -1129,7 +1131,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           publicNutritionIntegrationCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV75ConfigurationSha256,
       evidenceCurrencyRegistrySha256: publicNutritionIntegrationCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: publicNutritionIntegrationCandidateRecord
@@ -1167,6 +1169,49 @@ final class ContextOfUseRequalificationLedger {
           'release signature or production acceptance. All evidence holds '
           'and blocked promotion remain in force.',
     );
+    final browserRestorePerformanceCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 25,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          provenanceAwareNutritionCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          provenanceAwareNutritionCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256: provenanceAwareNutritionCandidateRecord
+          .evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256: provenanceAwareNutritionCandidateRecord
+          .evidenceSynthesisRegistrySha256,
+      semanticDiffSha256:
+          provenanceAwareNutritionCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          provenanceAwareNutritionCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          provenanceAwareNutritionCandidateRecord.affectedPredicateIds,
+      changeClasses: provenanceAwareNutritionCandidateRecord.changeClasses,
+      modelRisk: provenanceAwareNutritionCandidateRecord.modelRisk,
+      questionOfInterest:
+          provenanceAwareNutritionCandidateRecord.questionOfInterest,
+      contextOfUse: provenanceAwareNutritionCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-15T23:54:44.000Z',
+      releaseArtifact: 'unreleased-worktree:browser-restore-performance-v76',
+      evidenceDecisions:
+          provenanceAwareNutritionCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v76 candidate binds local browser personal-record restore '
+          'performance work, including reuse of a SHA-256 digest only for '
+          'the exact same canonical string. Canonical bytes, wire budgets, '
+          'validation, owner checks and clinical calculations remain unchanged. '
+          'All twenty-four prior whole records and their digests remain exact. '
+          'Local synthetic browser tests establish only their observed '
+          'engineering scope; retained evidence and historical timestamps do '
+          'not supply new scientific evidence, independent review, clinical '
+          'qualification, authenticated approval or release acceptance. All '
+          'evidence holds and blocked promotion remain in force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1198,6 +1243,7 @@ final class ContextOfUseRequalificationLedger {
         personalRecordCapacityCandidateRecord,
         publicNutritionIntegrationCandidateRecord,
         provenanceAwareNutritionCandidateRecord,
+        browserRestorePerformanceCandidateRecord,
       ],
     );
   }

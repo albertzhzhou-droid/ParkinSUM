@@ -38,26 +38,33 @@ class PortableDataRestoreState {
   final String canonicalJson;
   Map<String, Object?> get json =>
       Map<String, Object?>.from(jsonDecode(canonicalJson) as Map);
-  String get digest => portableRestoreDigest(json);
+  // The snapshot already owns canonical bytes. Re-decoding and sorting them
+  // again adds a full-state allocation without changing the witness.
+  late final String digest = portableRestoreBytesDigest(canonicalJson);
   UserProfile get profile =>
       UserProfile.fromJson(Map<String, dynamic>.from(json['profile'] as Map));
-  Map<String, Set<String>> get recordIds => <String, Set<String>>{
-    'medication_selections.json': <String>{
-      ...(json['activeDrugIds'] as List).cast<String>(),
-      for (final row in json['intakes'] as List)
-        (row as Map)['drugId'] as String,
-    },
-    'intakes.json': {
-      for (final row in json['intakes'] as List) (row as Map)['id'] as String,
-      for (final row in json['eventHistory'] as List)
-        if ((row as Map)['event_type'] == 'intake') row['record_id'] as String,
-    },
-    'meals.json': {
-      for (final row in json['meals'] as List) (row as Map)['id'] as String,
-      for (final row in json['eventHistory'] as List)
-        if ((row as Map)['event_type'] == 'meal') row['record_id'] as String,
-    },
-  };
+  Map<String, Set<String>> get recordIds {
+    final state = json;
+    return <String, Set<String>>{
+      'medication_selections.json': <String>{
+        ...(state['activeDrugIds'] as List).cast<String>(),
+        for (final row in state['intakes'] as List)
+          (row as Map)['drugId'] as String,
+      },
+      'intakes.json': {
+        for (final row in state['intakes'] as List)
+          (row as Map)['id'] as String,
+        for (final row in state['eventHistory'] as List)
+          if ((row as Map)['event_type'] == 'intake')
+            row['record_id'] as String,
+      },
+      'meals.json': {
+        for (final row in state['meals'] as List) (row as Map)['id'] as String,
+        for (final row in state['eventHistory'] as List)
+          if ((row as Map)['event_type'] == 'meal') row['record_id'] as String,
+      },
+    };
+  }
 }
 
 class PortableDataRestorePayload {

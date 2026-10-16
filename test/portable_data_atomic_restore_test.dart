@@ -399,6 +399,56 @@ void main() {
     },
   );
 
+  for (final corruption in ['source_bytes', 'declared_digest']) {
+    test(
+      'cached source digest refuses changed receipt $corruption without publishing',
+      () async {
+        final db = WebAppDatabase();
+        final text = _package();
+        final request = await _prepare(db, text);
+        final receipt = await _commit(db, request, text);
+        expect(
+          (await db.loadPortableRestoreState()).digest,
+          receipt.afterDigest,
+        );
+        final preferences = await SharedPreferences.getInstance();
+        final original = preferences.getString('db.user_state.v1')!;
+        final changed = jsonDecode(original) as Map;
+        final storedReceipt = changed['portableRestoreReceipt'] as Map;
+        if (corruption == 'source_bytes') {
+          // Equal decoded package semantics still have different exact bytes.
+          storedReceipt['sourcePackageJson'] = '$text\n';
+        } else {
+          storedReceipt['packageJsonSha256'] = portableRestoreBytesDigest(
+            '$text\n',
+          );
+        }
+        final corrupted = jsonEncode(changed);
+        await preferences.setString('db.user_state.v1', corrupted);
+        await expectLater(db.loadPortableRestoreState(), throwsFormatException);
+        await expectLater(db.saveOnboarded(true), throwsFormatException);
+        await expectLater(
+          WebAppDatabase().loadPortableRestoreState(),
+          throwsFormatException,
+        );
+        await preferences.reload();
+        expect(preferences.getString('db.user_state.v1'), corrupted);
+
+        await preferences.setString('db.user_state.v1', original);
+        expect(
+          (await db.loadPortableRestoreState()).digest,
+          receipt.afterDigest,
+        );
+        // An unchanged source receipt must not cache mutable profile or rows.
+        final edited = jsonDecode(original) as Map;
+        (edited['profile'] as Map)['displayLocale'] = 'zh-CN';
+        await preferences.setString('db.user_state.v1', jsonEncode(edited));
+        expect((await db.loadUserProfile()).displayLocale, 'zh-CN');
+        expect(await db.loadPortableRestoreReceipt(ownerScope: _owner), isNull);
+      },
+    );
+  }
+
   test(
     'exact-state rollback is recoverable and refuses later modifications',
     () async {

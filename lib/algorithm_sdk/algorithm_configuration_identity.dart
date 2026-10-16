@@ -87,7 +87,9 @@ final class AlgorithmConfigurationIdentity {
   // v75 integrates Claude PR147 source-bound nutrient profiles and records
   // proximate closure only for source-calculated by-difference carbohydrate.
   // Assumed or imputed carbohydrate retains an explicit skipped-audit reason.
-  static const String defaultVersion = '2026.10.15-v75';
+  // v76 binds exact-string digest reuse in the Web personal-record adapter.
+  // Canonical bytes, persistence checks and clinical calculations are unchanged.
+  static const String defaultVersion = '2026.10.15-v76';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -95,7 +97,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'e84b4c40fd28e4e14ee6123c19e383265e789c5943cc84a7f235f676680479a1';
+      '439f7b3d12fd30929bef46131597362a9b26ee81f0a9f882154335ee51c5359c';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.

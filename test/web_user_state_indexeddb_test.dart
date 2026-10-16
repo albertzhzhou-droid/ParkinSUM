@@ -131,7 +131,7 @@ void main() {
   );
 
   test(
-    'queued write followed by actual transaction abort preserves entire prior envelope',
+    'queued write abort preserves prior envelope and identical retry remains atomic',
     () async {
       var abort = false;
       final store = connect(
@@ -158,6 +158,25 @@ void main() {
         throwsStateError,
       );
       expect(await connect().read(legacy), 'original');
+      abort = false;
+      await store.write(
+        'must not publish',
+        expectedDocument: 'original',
+        legacy: legacy,
+        authorize: () => true,
+      );
+      expect(await connect().read(legacy), 'must not publish');
+      await store.write(
+        'synthetic different candidate needs its own digest',
+        expectedDocument: 'must not publish',
+        legacy: legacy,
+        authorize: () => true,
+      );
+      store.close();
+      expect(
+        await store.read(legacy),
+        'synthetic different candidate needs its own digest',
+      );
     },
   );
 
@@ -438,6 +457,135 @@ void main() {
         ),
         throwsFormatException,
       );
+      expect(await _ownedRawEntry(databaseName), corrupted);
+    },
+  );
+
+  test(
+    'each read observes a fresh envelope and rejects a newly corrupted document witness',
+    () async {
+      final legacy = _snapshot(await SharedPreferences.getInstance());
+      final store = connect();
+      expect(await store.read(legacy), isNull);
+      await store.write(
+        'synthetic original verified write',
+        expectedDocument: null,
+        legacy: legacy,
+        authorize: () => true,
+      );
+      expect(await store.read(legacy), 'synthetic original verified write');
+      final initial = Map<String, Object?>.from(
+        jsonDecode((await _ownedRawEntry(databaseName))!) as Map,
+      );
+      const replacement = 'synthetic externally replaced aggregate';
+      final validReplacement = jsonEncode({
+        ...initial,
+        'document': replacement,
+        'documentDigest': portableRestoreDigest(replacement),
+      });
+      await _ownedRawEntry(databaseName, writeRaw: validReplacement);
+      expect(await store.read(legacy), replacement);
+      await expectLater(
+        store.write(
+          'must not overwrite an intervening valid write',
+          expectedDocument: null,
+          legacy: legacy,
+          authorize: () => true,
+        ),
+        throwsStateError,
+      );
+      expect(await _ownedRawEntry(databaseName), validReplacement);
+
+      final corrupted = jsonEncode({
+        ...Map<String, Object?>.from(jsonDecode(validReplacement) as Map),
+        'document': 'synthetic replacement with stale witness',
+      });
+      await _ownedRawEntry(databaseName, writeRaw: corrupted);
+      await expectLater(store.read(legacy), throwsFormatException);
+      await expectLater(
+        store.write(
+          'must not repair or overwrite corrupted evidence',
+          expectedDocument: replacement,
+          legacy: legacy,
+          authorize: () => true,
+        ),
+        throwsFormatException,
+      );
+      expect(await _ownedRawEntry(databaseName), corrupted);
+    },
+  );
+
+  test(
+    'a previously verified legacy witness is rechecked on the next operation',
+    () async {
+      final legacy = _snapshot(await SharedPreferences.getInstance());
+      final store = connect();
+      expect(await store.read(legacy), isNull);
+      final corrupted = jsonEncode({
+        ...Map<String, Object?>.from(
+          jsonDecode((await _ownedRawEntry(databaseName))!) as Map,
+        ),
+        'legacyDigest': portableRestoreDigest('synthetic unrelated witness'),
+      });
+      await _ownedRawEntry(databaseName, writeRaw: corrupted);
+      await expectLater(store.read(legacy), throwsFormatException);
+      await expectLater(
+        store.write(
+          'must not replace invalid legacy evidence',
+          expectedDocument: null,
+          legacy: legacy,
+          authorize: () => true,
+        ),
+        throwsFormatException,
+      );
+      expect(await _ownedRawEntry(databaseName), corrupted);
+    },
+  );
+
+  test(
+    'unchanged cached raw still refuses a different caller legacy snapshot',
+    () async {
+      final legacy = _snapshot(await SharedPreferences.getInstance());
+      final store = connect();
+      expect(await store.read(legacy), isNull);
+      expect(await store.read(legacy), isNull);
+      final originalRaw = await _ownedRawEntry(databaseName);
+      final changed = WebUserStateLegacySnapshot({
+        ...legacy.values,
+        'db.active_drugs': '["synthetic_intervening_selection"]',
+      });
+      await expectLater(store.read(changed), throwsStateError);
+      await expectLater(
+        store.write(
+          'must not overwrite a conflicting legacy snapshot',
+          expectedDocument: null,
+          legacy: changed,
+          authorize: () => true,
+        ),
+        throwsStateError,
+      );
+      expect(await _ownedRawEntry(databaseName), originalRaw);
+      expect(await store.read(legacy), isNull);
+    },
+  );
+
+  test(
+    'reopened store validates raw corruption after an earlier successful read',
+    () async {
+      final legacy = _snapshot(await SharedPreferences.getInstance());
+      final store = connect();
+      expect(await store.read(legacy), isNull);
+      expect(await store.read(legacy), isNull);
+      store.close();
+      final corrupted = jsonEncode({
+        ...Map<String, Object?>.from(
+          jsonDecode((await _ownedRawEntry(databaseName))!) as Map,
+        ),
+        'document': 'synthetic changed while connection was closed',
+      });
+      await _ownedRawEntry(databaseName, writeRaw: corrupted);
+      await expectLater(store.read(legacy), throwsFormatException);
+      await expectLater(connect().read(legacy), throwsFormatException);
       expect(await _ownedRawEntry(databaseName), corrupted);
     },
   );
