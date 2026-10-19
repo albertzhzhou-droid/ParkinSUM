@@ -63,19 +63,41 @@ published root. Assets and the shared stylesheet use relative paths inside
 
 ## Custom domain (Cloudflare)
 
-`python3 tool/build_site.py` (standard library only) writes `build/website/` for
-`https://parkinsum.com`: the showcase at `/`, the visual guide at `/guide/`, only
-the assets the pages reference, canonical and Open Graph tags, a 404 page,
-`robots.txt`, `sitemap.xml`, `_redirects` (old `/site/` and `/wiki/` paths) and
-`_headers` (a content security policy that allows no scripts, plus
-`nosniff`, `frame-ancestors 'none'` and asset caching). The script stops if a
-page keeps an unresolved relative link or references a missing asset.
+`https://parkinsum.com` serves a separate page, the Evidence Atlas, from
+`docs/website/`. It uses the Atlas site's typefaces (Geist, Geist Mono and Source
+Serif 4 italic, bundled under `docs/website/fonts/` with their OFL licences),
+palette and copy. Its motion comes from this showcase and the Learning Radar
+archive array. It also needs no JavaScript:
 
-`parkinsum.com` and `www.parkinsum.com` are served by the `parkinsum` Cloudflare
-Worker as static assets; there is no Worker script. `wrangler.jsonc` at the
-repository root names the asset directory, the 404 page and both custom domains,
-and Cloudflare applies `_headers` and `_redirects` from the bundle. Deploys are
-manual, from a clean checkout of `main`:
+- **Chapters and the evidence chain.** Radio-driven panels cross-fade in place.
+  The incoming panel rises over 300 ms on the enter curve, and the outgoing one
+  sinks over 200 ms on the exit curve.
+- **Archive shelves.** Each source or ledger record is a designed volume: a box
+  file, booklet, clothbound journal or binder. Its spine is the control.
+  Choosing one pulls it out with a spring, ripples its neighbours by distance,
+  and swings its cover open from the spine to show the record. On narrow
+  screens the shelf becomes a stack and the record unfolds downward.
+- **Hero.** An ambient card field idles behind the hero.
+- **Scroll motion.** Reveals and line drawing are scroll-driven animations.
+- **Motion off.** A pause control and reduced-motion both stop all of it.
+
+`python3 tool/wiki_svg/site_archive.py` regenerates both archives on both
+pages from one set of records. `python3 tool/build_site.py` (standard library
+only) writes `build/website/`:
+
+- the page at `/`, its stylesheet and fonts, and only the assets it references
+- canonical and Open Graph tags, a 404 page, `robots.txt` and `sitemap.xml`
+- `_redirects`: the old `/site/` path goes home, and `/guide/` and `/wiki/` go
+  to the visual guide on GitHub Pages
+- `_headers`: a content security policy that allows no scripts, plus `nosniff`,
+  `frame-ancestors 'none'` and caching
+
+The script stops if a page keeps an unresolved relative link or references a
+missing asset or font.
+
+The domain is served by the `parkinsum` Cloudflare Worker as static assets.
+There is no Worker script. `wrangler.jsonc` at the repository root names the
+asset directory, the 404 page and both custom domains. Deploys are manual:
 
 ```sh
 python3 tool/build_site.py
