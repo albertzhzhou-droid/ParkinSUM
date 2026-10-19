@@ -21,6 +21,7 @@ Deploy with `npx wrangler@4 deploy` (see wrangler.jsonc).
 
 import argparse
 import datetime
+import hashlib
 import html
 import os
 import re
@@ -127,12 +128,18 @@ def main():
     os.makedirs(out)
     src = os.path.join(DOCS, "website")
 
+    css = open(os.path.join(src, "styles.css"), encoding="utf-8").read()
+    # A content hash in the stylesheet URL, so a cached copy never outlives it.
+    css_url = "/styles.css?v=" + hashlib.sha256(css.encode("utf-8")).hexdigest()[:10]
+
     pages = {
         "index.html": transform(
             open(os.path.join(src, "index.html"), encoding="utf-8").read(),
             origin=origin, path="/", own_dir="/", other_links={}),
         "404.html": NOT_FOUND,
     }
+    pages = {name: text.replace('href="/styles.css"', f'href="{css_url}"')
+             for name, text in pages.items()}
     for name, text in pages.items():
         leftover = re.findall(r'(?:href|src)="\.\./[^"]*"', text)
         if leftover:
@@ -140,7 +147,6 @@ def main():
         with open(os.path.join(out, name), "w", encoding="utf-8") as fh:
             fh.write(text)
 
-    css = open(os.path.join(src, "styles.css"), encoding="utf-8").read()
     if "../" in css:
         raise SystemExit("styles.css: unresolved relative reference")
     shutil.copy(os.path.join(src, "styles.css"), os.path.join(out, "styles.css"))
