@@ -29,18 +29,22 @@ jobs:
       - name: Check out the wiki mirror
         uses: actions/checkout@v7
 
+      # Checking out the wiki with actions/checkout keeps the workflow token in
+      # git's credential config, so no token ever appears in a remote URL.
+      - name: Check out the wiki repository
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: .wiki
+          fetch-depth: 1
+
       - name: Push pages and assets to the wiki
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
           SOURCE_SHA: ${{ github.sha }}
         run: |
           set -eu
-          wiki="$RUNNER_TEMP/wiki"
-          git clone --depth 1 \
-            "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPOSITORY}.wiki.git" "$wiki"
-          cp -R docs/github-wiki/. "$wiki/"
-          cd "$wiki"
+          cp -R docs/github-wiki/. .wiki/
+          cd .wiki
           git add -A
           if git diff --cached --quiet; then
             echo "The wiki already matches docs/github-wiki."
