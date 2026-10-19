@@ -1,0 +1,1 @@
+<sub>ParkinSUM Companion is an educational software prototype. It is not a medical device, is not clinically validated and gives no diagnosis, treatment, medication-timing or dietary advice. Review health questions with a qualified clinician.</sub>

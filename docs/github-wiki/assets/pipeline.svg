@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="380" viewBox="0 0 960 380" role="img" aria-labelledby="t d">
+<title id="t">Conflict engine pipeline</title>
+<desc id="d">Five layers in order: meal composition, gastric emptying, absorption window, LNAA competition, result. A pulse travels through them. A separate interdependency layer feeds the result and lowers confidence from high to medium while the score stays unchanged.</desc>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #F6F1E6; --sheet: #FFFDF8; --sunken: #EEE6D6;
+  --ink: #2A2420; --ink2: #453D35; --muted: #6E655A; --faint: #A39888;
+  --line: #CBBFA8; --hair: #E2D9C8;
+  --accent: #A84B2A; --accent-soft: #F3E2D6; --gilt: #A8874A; --ok: #4E7A4A;
+  --top: #F2EBDD; --left: #DED3BF; --right: #CDBFA6; --dot: #2A2420;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1C1916; --sheet: #26211D; --sunken: #2E2823;
+    --ink: #F1E9DC; --ink2: #D9CFC0; --muted: #B3A795; --faint: #7F7568;
+    --line: #5A4F44; --hair: #3A332C;
+    --accent: #E38D66; --accent-soft: #4A2E22; --gilt: #CDAE72; --ok: #8DBA86;
+    --top: #4A4138; --left: #3A322B; --right: #2E2822; --dot: #F1E9DC;
+  }
+}
+
+.bg { fill: var(--paper); }
+.ink { fill: var(--ink); } .ink2 { fill: var(--ink2); }
+.muted { fill: var(--muted); } .faint { fill: var(--faint); }
+.accent { fill: var(--accent); }
+text { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.h1 { font-size: 30px; font-weight: 650; letter-spacing: .02em; }
+.h2 { font-size: 19px; font-weight: 600; }
+.body { font-size: 13px; }
+.small { font-size: 11.5px; }
+.stroke-ink { stroke: var(--ink); fill: none; }
+.stroke-line { stroke: var(--line); fill: none; }
+.stroke-accent { stroke: var(--accent); fill: none; }
+
+.node { fill: var(--sheet); stroke: var(--line); stroke-width: 1; }
+.wire { stroke: var(--line); stroke-width: 1.4; }
+.pulse { fill: var(--accent); }
+.rail { stroke: var(--gilt); stroke-width: 1.4; stroke-dasharray: 5 5; fill: none;
+  animation: march 1.2s linear infinite; }
+@keyframes march { to { stroke-dashoffset: -20; } }
+.chip { fill: var(--sunken); stroke: var(--line); }
+.n0 { animation: n0 10.0s linear infinite; }@keyframes n0 { 0%, 0.0% { stroke: var(--line); stroke-width: 1; } 2.0%, 16.0% { stroke: var(--accent); stroke-width: 2; } 20.0%, 100% { stroke: var(--line); stroke-width: 1; } }.p0 { opacity: 0; animation: p0 10.0s linear infinite; }@keyframes p0 { 0%, 9.0% { opacity: 0; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 9.1% { opacity: 1; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 15.0% { opacity: 1; transform: translateX(24px); } 15.5%, 100% { opacity: 0; transform: translateX(24px); } }.n1 { animation: n1 10.0s linear infinite; }@keyframes n1 { 0%, 14.0% { stroke: var(--line); stroke-width: 1; } 16.0%, 30.0% { stroke: var(--accent); stroke-width: 2; } 34.0%, 100% { stroke: var(--line); stroke-width: 1; } }.p1 { opacity: 0; animation: p1 10.0s linear infinite; }@keyframes p1 { 0%, 23.0% { opacity: 0; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 23.1% { opacity: 1; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 29.0% { opacity: 1; transform: translateX(24px); } 29.5%, 100% { opacity: 0; transform: translateX(24px); } }.n2 { animation: n2 10.0s linear infinite; }@keyframes n2 { 0%, 28.0% { stroke: var(--line); stroke-width: 1; } 30.0%, 44.0% { stroke: var(--accent); stroke-width: 2; } 48.0%, 100% { stroke: var(--line); stroke-width: 1; } }.p2 { opacity: 0; animation: p2 10.0s linear infinite; }@keyframes p2 { 0%, 37.0% { opacity: 0; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 37.1% { opacity: 1; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 43.0% { opacity: 1; transform: translateX(24px); } 43.5%, 100% { opacity: 0; transform: translateX(24px); } }.n3 { animation: n3 10.0s linear infinite; }@keyframes n3 { 0%, 42.0% { stroke: var(--line); stroke-width: 1; } 44.0%, 58.0% { stroke: var(--accent); stroke-width: 2; } 62.0%, 100% { stroke: var(--line); stroke-width: 1; } }.p3 { opacity: 0; animation: p3 10.0s linear infinite; }@keyframes p3 { 0%, 51.0% { opacity: 0; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 51.1% { opacity: 1; transform: translateX(0); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); } 57.0% { opacity: 1; transform: translateX(24px); } 57.5%, 100% { opacity: 0; transform: translateX(24px); } }.n4 { animation: n4 10.0s linear infinite; }@keyframes n4 { 0%, 56.0% { stroke: var(--line); stroke-width: 1; } 58.0%, 72.0% { stroke: var(--accent); stroke-width: 2; } 76.0%, 100% { stroke: var(--line); stroke-width: 1; } }.conf-hi { animation: hi 10.0s linear infinite; } .conf-md { opacity: 0; animation: md 10.0s linear infinite; }@keyframes hi { 0%, 70% { opacity: 1; } 74%, 96% { opacity: 0; } 100% { opacity: 1; } }@keyframes md { 0%, 70% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); } 76%, 94% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }.lock { animation: lock 10.0s linear infinite; }@keyframes lock { 0%, 70% { opacity: .55; } 74%, 94% { opacity: 1; } 100% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .conf-hi { opacity: 0; } .conf-md { opacity: 1; } .lock { opacity: 1; }
+}
+</style>
+<rect class="bg" width="960" height="380" rx="14"/>
+<text x="40.0" y="44.0" class="cap muted" text-anchor="start">Conflict engine · one deterministic pass</text>
+<text x="40.0" y="70.0" class="h2 ink" text-anchor="start">Every layer leaves a trace; interdependency findings only lower confidence</text>
+<rect class="node n0" x="40" y="92" width="158" height="74" rx="10"/>
+<text x="54.0" y="118.0" class="small mono muted" text-anchor="start">01</text>
+<text x="54.0" y="138.0" class="body ink" text-anchor="start" style="font-weight:600">Meal composition</text>
+<text x="54.0" y="155.0" class="small muted" text-anchor="start">macros, form, portion</text>
+<line class="wire" x1="198" y1="129.0" x2="222" y2="129.0"/>
+<circle class="pulse p0" cx="198" cy="129.0" r="4"/>
+<rect class="node n1" x="222" y="92" width="158" height="74" rx="10"/>
+<text x="236.0" y="118.0" class="small mono muted" text-anchor="start">02</text>
+<text x="236.0" y="138.0" class="body ink" text-anchor="start" style="font-weight:600">Gastric emptying</text>
+<text x="236.0" y="155.0" class="small muted" text-anchor="start">per-component lag</text>
+<line class="wire" x1="380" y1="129.0" x2="404" y2="129.0"/>
+<circle class="pulse p1" cx="380" cy="129.0" r="4"/>
+<rect class="node n2" x="404" y="92" width="158" height="74" rx="10"/>
+<text x="418.0" y="118.0" class="small mono muted" text-anchor="start">03</text>
+<text x="418.0" y="138.0" class="body ink" text-anchor="start" style="font-weight:600">Absorption window</text>
+<text x="418.0" y="155.0" class="small muted" text-anchor="start">openness profile</text>
+<line class="wire" x1="562" y1="129.0" x2="586" y2="129.0"/>
+<circle class="pulse p2" cx="562" cy="129.0" r="4"/>
+<rect class="node n3" x="586" y="92" width="158" height="74" rx="10"/>
+<text x="600.0" y="118.0" class="small mono muted" text-anchor="start">04</text>
+<text x="600.0" y="138.0" class="body ink" text-anchor="start" style="font-weight:600">LNAA competition</text>
+<text x="600.0" y="155.0" class="small muted" text-anchor="start">load × arrival</text>
+<line class="wire" x1="744" y1="129.0" x2="768" y2="129.0"/>
+<circle class="pulse p3" cx="744" cy="129.0" r="4"/>
+<rect class="node n4" x="768" y="92" width="158" height="74" rx="10"/>
+<text x="782.0" y="118.0" class="small mono muted" text-anchor="start">05</text>
+<text x="782.0" y="138.0" class="body ink" text-anchor="start" style="font-weight:600">Result</text>
+<text x="782.0" y="155.0" class="small muted" text-anchor="start">score + confidence</text>
+<rect class="node" x="40" y="236" width="520" height="56" rx="10"/>
+<text x="56.0" y="258.0" class="body ink" text-anchor="start" style="font-weight:600">Food-composition interdependency</text>
+<text x="56.0" y="277.0" class="small muted" text-anchor="start">food-borne L-dopa · dry vs cooked · energy identity · source-record identities</text>
+<path class="rail" d="M 560 262 H 916 V 166"/>
+<text x="574.0" y="254.0" class="small" text-anchor="start" style="fill:var(--gilt)">lowers confidence · never the score</text>
+<rect class="chip" x="762" y="180" width="72" height="26" rx="13"/>
+<text x="798.0" y="197.0" class="small mono ink" text-anchor="middle">score 0.34</text>
+<g class="lock"><text x="798.0" y="220.0" class="small muted" text-anchor="middle">unchanged</text></g>
+<rect class="chip" x="838" y="180" width="68" height="26" rx="13"/>
+<g class="conf-hi"><text x="872.0" y="197.0" class="small mono ink" text-anchor="middle">conf high</text></g>
+<g class="conf-md"><text x="872.0" y="197.0" class="small mono accent" text-anchor="middle">conf med</text></g>
+<line class="stroke-line" x1="40" y1="340" x2="920" y2="340"/>
+<text x="40.0" y="362.0" class="small muted" text-anchor="start">Synthetic replay values. The output is an educational trace, not a prediction for a person or a timing suggestion.</text>
+</svg>

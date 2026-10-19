@@ -1,6 +1,15 @@
 # Safety Boundary
 
+<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/safety-boundary.svg" width="960" alt="A boundary ring around an educational prototype using synthetic data only. Inside: architecture review, deterministic rule explanations, synthetic walkthroughs, provenance inspection. Outside: diagnosis or treatment, medication timing or dose, dietary instructions, real patient data."></p>
+
 ParkinSUM Companion is an educational prototype and public showcase artifact. It must not be presented as a medical product.
+
+## How the code keeps the boundary
+
+- Dose-relative values exist only when a dose was explicitly logged. Doses are never invented.
+- Food-borne L-dopa is shown as presence and variability context. It is never converted into a dose equivalent.
+- Source findings and ambiguities only widen uncertainty. They never make a result look more certain.
+- User-facing copy is checked against banned phrases such as instructions to take, change, avoid or time anything.
 
 ## Appropriate Public Framing
 
