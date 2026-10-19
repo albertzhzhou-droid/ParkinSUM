@@ -69,21 +69,28 @@ Serif 4 italic, bundled under `docs/website/fonts/` with their OFL licences),
 palette and copy. Its motion comes from this showcase and the Learning Radar
 archive array. It also needs no JavaScript:
 
-- **A deck, not a scroll.** The page is 15 fixed pages. A control bar offers
-  previous, page dots and next, and the header links jump to sections. The page
-  dots are one radio group that has focus on load, so the arrow keys turn pages.
-  - A page fades out and settles back while the next fades in from a slight
-    zoom. Its content then builds in sequence.
-  - On short screens a page scales down to fit instead of scrolling. On phones
-    a page taller than the screen scrolls within itself.
+- **Paged scrolling.** The page scrolls, but in whole pages. Each of the 15
+  pages fills one screen and is a snap point that a scroll cannot pass, so one
+  wheel step, swipe, arrow key or Page Down shifts exactly one page. A page
+  index on the right marks the current page and links to every page.
+  - **Shift.** While a page shifts, the old one recedes and dims toward the
+    paper and the new one rises into place. This is scroll-driven, on each
+    page's view timeline.
+  - **Landing.** In browsers that can query snapped scroll state, a page that
+    has not landed waits in its starting state: content faint and lowered,
+    books in their archive slots, curves undrawn. When it lands, its content
+    builds in, an archive page extracts its books and the model curves draw.
+  - **Fit.** Shorter screens scale a page down so it still fits one screen.
+  - **Phones.** Snapping is loose and the shift and landing effects are off,
+    because pages are taller than the screen.
 - **Friction, not glides.** Motion uses friction profiles (stick, slip,
   constant deceleration, a dead stop) instead of smooth easing. Chapter and
   evidence panels switch in place.
 - **Archive libraries.** The archive is an isometric 3D base of standing files.
   Its record books are designed objects: box files, a booklet, clothbound
   journals and ledger binders, built from CSS 3D faces.
-  - Opening an archive page extracts the books: each is worked loose from its
-    slot, lifted, turned spine-out and set down on a reading shelf.
+  - When an archive page lands, each book is worked loose from its slot,
+    lifted, turned spine-out and set down on a reading shelf.
   - Each book is the control. Choosing one lifts it off the shelf. Its reading
     copy is carried to a stand and opened like a physical book: the cover
     resists at the hinge, then swings open, and two leaves curl over, the second
