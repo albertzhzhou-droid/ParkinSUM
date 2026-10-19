@@ -1,6 +1,6 @@
 # Safety Boundary
 
-<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/safety-boundary.svg" width="960" alt="A boundary ring around an educational prototype using synthetic data only. Inside: architecture review, deterministic rule explanations, synthetic walkthroughs, provenance inspection. Outside: diagnosis or treatment, medication timing or dose, dietary instructions, real patient data."></p>
+<p align="center"><img src="https://raw.githubusercontent.com/albertzhzhou-droid/ParkinSUM/main/docs/github-wiki/assets/safety-boundary.svg" width="960" alt="A boundary ring around an educational prototype using synthetic data only. Inside: architecture review, deterministic rule explanations, synthetic walkthroughs, provenance inspection. Outside: diagnosis or treatment, medication timing or dose, dietary instructions, real patient data."></p>
 
 ParkinSUM Companion is an educational prototype and public showcase artifact. It must not be presented as a medical product.
 

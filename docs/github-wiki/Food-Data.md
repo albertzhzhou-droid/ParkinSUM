@@ -1,6 +1,6 @@
 # Food data
 
-<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/provenance.svg" width="960" alt="Official FoodData Central CSV pinned by SHA-256, a generator, a generated table of 26,995 rows for 280 foods, and tests that compare every value with the source."></p>
+<p align="center"><img src="https://raw.githubusercontent.com/albertzhzhou-droid/ParkinSUM/main/docs/github-wiki/assets/provenance.svg" width="960" alt="Official FoodData Central CSV pinned by SHA-256, a generator, a generated table of 26,995 rows for 280 foods, and tests that compare every value with the source."></p>
 
 ## Provenance in one line
 
@@ -16,7 +16,7 @@ The audit checks only relations that follow from definitions: energy from macron
 
 ## LNAA calibration
 
-<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/lnaa-calibration.svg" width="960" alt="Median competing-LNAA fraction of protein per protein source: dairy 0.338, egg 0.315, meat 0.264, fish 0.264, grain 0.263, soy 0.257, legume 0.248. The reference line moves from the old value 0.45 to the all-food median 0.2667."></p>
+<p align="center"><img src="https://raw.githubusercontent.com/albertzhzhou-droid/ParkinSUM/main/docs/github-wiki/assets/lnaa-calibration.svg" width="960" alt="Median competing-LNAA fraction of protein per protein source: dairy 0.338, egg 0.315, meat 0.264, fish 0.264, grain 0.263, soy 0.257, legume 0.248. The reference line moves from the old value 0.45 to the all-food median 0.2667."></p>
 
 The old reference fraction of 0.45 g competing LNAA per g protein matched no real food. Across 140 SR Legacy records (109 shared amino-acid patterns), the fraction runs 0.12–0.39 with a median of **0.2667**. Each protein source's factor is its median over that value. The calibration set is a convenience sample of catalog foods, not a dietary-intake weighting.
 
