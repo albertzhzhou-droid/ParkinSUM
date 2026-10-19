@@ -69,17 +69,26 @@ Serif 4 italic, bundled under `docs/website/fonts/` with their OFL licences),
 palette and copy. Its motion comes from this showcase and the Learning Radar
 archive array. It also needs no JavaScript:
 
-- **Chapters and the evidence chain.** Radio-driven panels cross-fade in place.
-  The incoming panel rises over 300 ms on the enter curve, and the outgoing one
-  sinks over 200 ms on the exit curve.
-- **Archive shelves.** Each source or ledger record is a designed volume: a box
-  file, booklet, clothbound journal or binder. Its spine is the control.
-  Choosing one pulls it out with a spring, ripples its neighbours by distance,
-  and swings its cover open from the spine to show the record. On narrow
-  screens the shelf becomes a stack and the record unfolds downward.
+- **Friction, not glides.** Motion uses friction profiles instead of smooth
+  easing. Things stick, slip, then decelerate at a constant rate to a dead
+  stop. Chapter and evidence panels slide like paper over paper, in from the
+  side each panel sits on.
+- **Archive libraries.** The archive is an isometric 3D base of standing files.
+  Its record books are designed objects: box files, a booklet, clothbound
+  journals and ledger binders, built from CSS 3D faces.
+  - As the archive scrolls into view, each book is worked loose from its slot,
+    lifted, turned spine-out and set down on a reading shelf.
+  - Each book is the control. Choosing one slides it off the shelf. Its reading
+    copy is carried to a stand and opened like a physical book: the cover
+    resists at the hinge, then swings open, and two leaves curl over, the second
+    clinging to the first.
+  - On narrow screens the book opens to a single page.
 - **Hero.** An ambient card field idles behind the hero.
 - **Scroll motion.** Reveals and line drawing are scroll-driven animations.
-- **Motion off.** A pause control and reduced-motion both stop all of it.
+- **Motion off.** A pause control and reduced-motion both stop all of it, and
+  everything rests in its finished state.
+- **Opacity rule.** Opacity is never animated on or around a 3D book. Chrome
+  flattens or stops painting such subtrees.
 
 `python3 tool/wiki_svg/site_archive.py` regenerates both archives on both
 pages from one set of records. `python3 tool/build_site.py` (standard library

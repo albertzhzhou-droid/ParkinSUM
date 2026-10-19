@@ -13,10 +13,10 @@ columns recede and the chosen card is lifted out. Changing the keyframe name
 per choice restarts a travelling crest. The site's reduced-motion rule turns
 every transition and animation off; the choice still changes instantly.
 
-docs/website/ draws the same records as a shelf instead: each record is a
-designed volume (box file, booklet, journal or ledger binder) whose spine is the
-radio's label. Choosing one pulls it out with a spring, ripples its neighbours
-by distance, and swings its cover open to show the record. Its hero also gets
+docs/website/ draws the same records as a 3D library: designed books (box
+file, booklet, journal or ledger binder) stand among anonymous files on an
+isometric base, and scrolling extracts them to a reading shelf. Each book is the
+radio's label; choosing one opens its reading copy like a physical book. Its hero also gets
 an ambient card field, drawn with one <use> per card, idling out of phase and
 swept by a recurring crest.
 """
@@ -129,55 +129,165 @@ def selection_css(name, items):
 KIND = {"Reference dataset": "dataset", "Consensus standard": "standard",
         "Primary human study": "study", "Analytical study": "analytical"}
 
-# Declarations for the chosen volume (docs/website). Everything else in the
-# shelf reads these custom properties, so one rule opens a volume.
-OPEN = ("--open: 1; --vis: visible; --pull: shelf-pull; --leaf-row: 1fr; "
-        "--page-ease: var(--spring); --page-dur: 820ms; --page-delay: 240ms;")
+# --- parkinsum.com: a 3D library -------------------------------------------
+# World units are CSS px on the archive floor: x along lanes, y toward the
+# viewer, z up. The page rotates the floor into an orthographic isometric view,
+# so every face here is a flat element placed with one matrix3d.
+
+FILE_W, FILE_H, LANE_PITCH, ROW_PITCH = 64, 86, 78, 12
+FIELD_X, FIELD_Y, FRONT_GAP, BOOK_PITCH, MARGIN = 34, 26, 56, 66, 30
+# thickness (spine width), cover width, height
+BOOK = {"dataset": (28, 70, 126), "standard": (14, 60, 104), "study": (22, 64, 118),
+        "analytical": (20, 62, 112), "ledger": (26, 66, 120)}
+
+# Declarations for the chosen record: the book steps out of the shelf and its
+# reading copy opens. Everything in the archive reads these custom properties.
+OPEN = ("--open: 1; --vis: visible; --step-dur: 640ms; "
+        "--arrive: rb-arrive; --rb-dur: 760ms; --rb-delay: 60ms; "
+        "--cover-anim: cover-open; --pshade-anim: page-shadow; "
+        "--cover-dur: 1250ms; --cover-delay: 700ms; "
+        "--leaf1-anim: leaf-turn-1; --leaf2-anim: leaf-turn-2; --title-anim: title-in; "
+        "--leaf-dur: 1150ms; --leaf-delay: 1660ms;")
 
 
-def shelf_block(name, title, legend, items, note):
-    """The parkinsum.com archive: a shelf of designed volumes. Each spine is the
-    radio's label, so the record itself is what you click; the catalogue column
-    points at the same radios."""
-    out = [f'<div class="archive shelf-archive" data-archive="{name}">']
+def m3d(p, u, v):
+    """matrix3d placing an element's top-left at p, its x-axis along u and its
+    y-axis along v (so its front faces u x v)."""
+    n = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2],
+         u[0] * v[1] - u[1] * v[0])
+    vals = [*u, 0, *v, 0, *n, 0, *p, 1]
+    return "matrix3d(" + ",".join(f"{x:g}" for x in vals) + ")"
+
+
+X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)
+NX, NY, NZ = (-1, 0, 0), (0, -1, 0), (0, 0, -1)
+
+
+def face(cls, w, h, transform, inner=""):
+    return (f'<span class="face {cls}" style="width:{w}px;height:{h}px;'
+            f'transform:{transform}">{inner}</span>')
+
+
+def book_faces(kind, it, number):
+    t, c, h = BOOK[kind]
+    title = escape(it["spine"])
+    hole = ('<span class="spine-stamp">Blocked</span>' if kind == "ledger"
+            else '<span class="spine-hole"></span>')
+    spine = (f'<span class="spine-n">{number}</span><span class="spine-title">{title}</span>'
+             f'{hole}<span class="spine-meta">{escape(it["meta"])}</span>')
+    cover = (f'<span class="cover-n">{number}</span><span class="cover-title">{title}</span>'
+             f'<span class="cover-meta">{escape(it["meta"])}</span>')
+    return "".join([
+        face("f-top", t, c, m3d((-t / 2, -c / 2, h), X, Y)),
+        face("f-fore", t, h, m3d((t / 2, -c / 2, h), NX, NZ)),
+        face("f-back", c, h, m3d((t / 2, c / 2, h), NY, NZ)),
+        face("f-cover", c, h, m3d((-t / 2, -c / 2, h), Y, NZ), cover),
+        face("f-spine", t, h, m3d((-t / 2, c / 2, h), X, NZ), spine),
+    ])
+
+
+def library_block(name, title, legend, items, note, lanes, rows):
+    """The parkinsum.com archive. Record books stand among anonymous files on a
+    3D base; scrolling extracts them to a reading shelf at the front. Each book
+    is the radio's label: choosing one steps it forward and opens its reading
+    copy, a two-page book, beside the scene. The catalogue points at the same
+    radios."""
+    field_d = rows * ROW_PITCH
+    front_y = FIELD_Y + field_d + FRONT_GAP + 40
+    width = max(FIELD_X * 2 + lanes * LANE_PITCH, len(items) * BOOK_PITCH + 2 * MARGIN)
+    depth = front_y + 40 + MARGIN
+    slots = {(it["lane"], it["row"]) for it in items}
+
+    out = [f'<div class="archive library-archive" data-archive="{name}">']
+    out.append(f'<div class="library"><div class="lib-world" style="--w:{width}px;--d:{depth}px">')
+    out.append('<span class="lib-base" aria-hidden="true">'
+               + face("base-front", width, 18, m3d((0, depth, 0), X, NZ))
+               + face("base-side", depth, 18, m3d((0, 0, 0), Y, NZ))
+               + f'<span class="lib-shelf" style="top:{front_y - 52}px;height:104px"></span>'
+               + "</span>")
+    files = []
+    for row in range(rows):
+        for lane in range(lanes):
+            if (lane, row) in slots:
+                continue
+            x = FIELD_X + lane * LANE_PITCH
+            y = FIELD_Y + row * ROW_PITCH
+            files.append(f'<span class="lib-file" style="--r:{row};--c:{lane};'
+                         f'transform:{m3d((x, y, FILE_H), X, NZ)}"></span>')
+    out.append('<span class="lib-files" aria-hidden="true">' + "".join(files) + "</span>")
+    start = (width - len(items) * BOOK_PITCH) / 2 + BOOK_PITCH / 2
+    for i, it in enumerate(items):
+        kind = "ledger" if "num" in it else KIND[it["tag"]]
+        number = it.get("num", f"{i + 1:02d}")
+        sx = FIELD_X + it["lane"] * LANE_PITCH + FILE_W / 2
+        sy = FIELD_Y + it["row"] * ROW_PITCH
+        fx, fy = start + i * BOOK_PITCH, front_y
+        out.append(
+            f'<label class="lib-book" for="{name}-{i}" data-k="{name}-{i}" data-kind="{kind}" '
+            f'style="--i:{i};--sx:{sx:g}px;--sy:{sy:g}px;--fx:{fx:g}px;--fy:{fy:g}px">'
+            f'<span class="lb-body" aria-hidden="true">{book_faces(kind, it, number)}</span>'
+            "</label>")
+    out.append("</div></div>")
+
     out.append('<div class="catalogue" aria-hidden="true">'
                f'<p class="catalogue-title">{escape(title)}</p><ol>')
     for i, it in enumerate(items):
         out.append(f'<li><label for="{name}-{i}"><span>{it.get("num", f"{i + 1:02d}")}'
                    f'</span>{escape(it["short"])}</label></li>')
     out.append("</ol></div>")
-    out.append(f'<fieldset class="shelf"><legend class="sr-only">{escape(legend)}</legend>')
+
+    # The radios live at the top of the reading stand, so focusing one (by
+    # clicking a book or the catalogue) scrolls the open book into view, not
+    # the 3D scene.
+    out.append('<div class="reader">')
+    out.append(f'<fieldset class="rb-inputs"><legend class="sr-only">{escape(legend)}</legend>')
+    for i, it in enumerate(items):
+        number = it.get("num", f"{i + 1:02d}")
+        checked = " checked" if i == 0 else ""
+        out.append(f'<input type="radio" name="{name}" id="{name}-{i}" value="{i}"{checked} '
+                   f'aria-label="{number} {escape(it["spine"])}, {escape(it["tag"])}, '
+                   f'{escape(it["meta"])}" />')
+    out.append("</fieldset>")
     for i, it in enumerate(items):
         kind = "ledger" if "num" in it else KIND[it["tag"]]
-        checked = " checked" if i == 0 else ""
         number = it.get("num", f"{i + 1:02d}")
-        stamp = ('<span class="spine-stamp">Blocked</span>'
-                 if kind == "ledger" else '<span class="spine-hole"></span>')
-        rows_html = "".join(
-            f'<dt>{escape(k)}</dt><dd>{escape(v)}</dd>' for k, v in it["rows"])
+        left_rows = [(k, v) for k, v in it["rows"] if k == "Source id"]
+        right_rows = [(k, v) for k, v in it["rows"] if k != "Source id"]
+        dl = lambda rows_: "".join(f"<dt>{escape(k)}</dt><dd>{escape(v)}</dd>"
+                                   for k, v in rows_)
+        head = (f'<p class="eyebrow">{escape(it["tag"])}</p>'
+                f'<h3>{escape(it["heading"])}</h3>')
         out.append(
-            f'<div class="volume" data-k="{name}-{i}" data-kind="{kind}" style="--i:{i}">'
-            f'<label class="spine"><input type="radio" name="{name}" id="{name}-{i}" '
-            f'value="{i}"{checked} /><span class="spine-n">{number}</span>'
-            f'<span class="spine-title">{escape(it["spine"])}</span>'
-            f'<span class="sr-only">, {escape(it["tag"])}</span>{stamp}'
-            f'<span class="spine-meta">{escape(it["meta"])}</span></label>'
-            f'<div class="leaf"><article class="leaf-page">'
-            f'<p class="eyebrow">{escape(it["tag"])}</p>'
-            f'<h3>{escape(it["heading"])}</h3><dl>{rows_html}</dl></article></div></div>')
-    out.append("</fieldset>")
+            f'<div class="rb-slot" data-k="{name}-{i}"><div class="rb-stage">'
+            f'<article class="rbook" data-kind="{kind}">'
+            f'<div class="rb-page rb-right"><div class="rb-mhead">{head}</div>'
+            f'<dl>{dl(right_rows)}</dl><span class="rb-folio">{number}</span></div>'
+            '<div class="rb-leaf l2" aria-hidden="true"><div class="seg"><div class="seg">'
+            '<div class="seg"></div></div></div></div>'
+            '<div class="rb-leaf l1" aria-hidden="true"><div class="seg"><div class="seg">'
+            f'<span class="rb-half">{escape(it["spine"])}</span><div class="seg"></div>'
+            '</div></div></div>'
+            f'<div class="rb-title">{head}'
+            f'{"<dl>" + dl(left_rows) + "</dl>" if left_rows else ""}</div>'
+            '<div class="rb-cover"><div class="rb-face rb-front" aria-hidden="true">'
+            f'<span class="cover-n">{number}</span><span class="cover-title">'
+            f'{escape(it["spine"])}</span><span class="cover-meta">{escape(it["meta"])}'
+            '</span></div><div class="rb-face rb-back" aria-hidden="true"></div></div>'
+            "</article></div></div>")
+    out.append("</div>")
     out.append(f'<p class="archive-note">{note}</p>')
     out.append("</div>")
     return "\n".join(out)
 
 
-def shelf_css(name, items):
+def library_css(name, items):
     rules = []
     for i in range(len(items)):
         sel = f'.archive:has(#{name}-{i}:checked)'
-        rules.append(f"{sel} {{ --sel: {i}; --ripple: shelf-ripple-{i}; }}")
         rules.append(f'{sel} [data-k="{name}-{i}"] {{ {OPEN} }}')
         rules.append(f'{sel} label[for="{name}-{i}"] {{ --on: 1; }}')
+        rules.append(f'.archive:has(#{name}-{i}:focus-visible) .lib-book[for="{name}-{i}"] '
+                     "{ --focus: 1; }")
     return "\n".join(rules)
 
 
@@ -313,8 +423,10 @@ LG_NOTE = ("Matching hashes prove software identity only. No record claims "
 
 def write_regions(html_path, css_path, shelf):
     if shelf:
-        evidence = shelf_block("ev", "Catalogue", "Choose a source", EVIDENCE, EV_NOTE)
-        ledger = shelf_block("lg", "Ledger", "Choose a ledger record", LEDGER, LG_NOTE)
+        evidence = library_block("ev", "Catalogue", "Choose a source", EVIDENCE,
+                                 EV_NOTE, 6, 14)
+        ledger = library_block("lg", "Ledger", "Choose a ledger record", LEDGER,
+                               LG_NOTE, 4, 11)
     else:
         evidence = block("ev", "Evidence archive", "Choose a source", 6, 16,
                          EVIDENCE, EV_NOTE)
@@ -333,16 +445,7 @@ def write_regions(html_path, css_path, shelf):
 
     count = max(len(EVIDENCE), len(LEDGER))
     if shelf:
-        # One identical keyframe per choice: changing the name restarts the
-        # ripple on every volume, delayed by its distance from the chosen one.
-        keyframes = "\n".join(
-            f"@keyframes shelf-ripple-{i} {{ 0%, 100% {{ transform: none; }} "
-            "35% { transform: translate(calc(var(--ax) * var(--amp) * 1px), "
-            "calc(var(--ay) * var(--amp) * -1px)); } "
-            "65% { transform: translate(calc(var(--ax) * var(--amp) * -.3px), "
-            "calc(var(--ay) * var(--amp) * .3px)); } }"
-            for i in range(count))
-        generated = [shelf_css("ev", EVIDENCE), shelf_css("lg", LEDGER), keyframes]
+        generated = [library_css("ev", EVIDENCE), library_css("lg", LEDGER)]
     else:
         keyframes = "\n".join(
             f"@keyframes archive-crest-{i} {{ 0% {{ transform: translateY(0); }} "
