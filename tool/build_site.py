@@ -1,26 +1,27 @@
-"""Builds the static website for https://parkinsum.com from docs/.
+"""Builds the static website for https://parkinsum.com from docs/website/.
 
 Usage (from the repository root, Python 3 standard library only):
   python3 tool/build_site.py [--out build/website] [--origin https://parkinsum.com]
 
-The sources stay where GitHub Pages already serves them (docs/site/,
-docs/wiki/, docs/assets/). This script copies them into a root-relative
-layout for a custom domain:
+The source stays inside docs/ so GitHub Pages can preview it too. This script
+copies it into a root-relative layout for the custom domain:
 
-  /            <- docs/site/index.html (the Paper showcase)
-  /guide/      <- docs/wiki/index.html (the visual project guide)
-  /assets/...  <- only the files the pages reference
+  /            <- docs/website/index.html (the Evidence Atlas)
+  /styles.css  <- docs/website/styles.css
+  /fonts/...   <- docs/website/fonts/ (Geist, Geist Mono, Source Serif 4; OFL)
+  /assets/...  <- only the docs/assets/ files the page references
 
 and adds canonical and social metadata, a 404 page, robots.txt, sitemap.xml,
-and Cloudflare Pages `_headers` / `_redirects`. The pages use no JavaScript,
-so the content security policy allows no scripts at all.
+and Cloudflare `_headers` / `_redirects`. The old /site/ path redirects home;
+/guide/ and /wiki/ redirect to the visual guide on GitHub Pages. The pages use
+no JavaScript, so the content security policy allows no scripts at all.
 
-Cloudflare Pages settings: build command `python3 tool/build_site.py`,
-build output directory `build/website`, no framework preset.
+Deploy with `npx wrangler@4 deploy` (see wrangler.jsonc).
 """
 
 import argparse
 import datetime
+import hashlib
 import html
 import os
 import re
@@ -32,7 +33,7 @@ DOCS = os.path.join(ROOT, "docs")
 ASSET_RE = re.compile(r'(?:href|src)="(/assets/[^"#?]+)"')
 
 HEADERS = """/*
-  Content-Security-Policy: default-src 'none'; img-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; img-src 'self'; font-src 'self'; style-src 'self'; style-src-attr 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
@@ -42,6 +43,9 @@ HEADERS = """/*
 /assets/*
   Cache-Control: public, max-age=604800
 
+/fonts/*
+  Cache-Control: public, max-age=2592000
+
 /*.css
   Cache-Control: public, max-age=3600, must-revalidate
 """
@@ -49,35 +53,34 @@ HEADERS = """/*
 REDIRECTS = """/site /  301
 /site/ /  301
 /site/index.html /  301
-/wiki /guide/  301
-/wiki/ /guide/  301
-/wiki/index.html /guide/  301
-/guide /guide/  301
+/wiki https://albertzhzhou-droid.github.io/ParkinSUM/wiki/  301
+/wiki/ https://albertzhzhou-droid.github.io/ParkinSUM/wiki/  301
+/wiki/index.html https://albertzhzhou-droid.github.io/ParkinSUM/wiki/  301
+/guide https://albertzhzhou-droid.github.io/ParkinSUM/wiki/  301
+/guide/ https://albertzhzhou-droid.github.io/ParkinSUM/wiki/  301
+/guide/index.html https://albertzhzhou-droid.github.io/ParkinSUM/wiki/  301
 """
 
 NOT_FOUND = """<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <meta name="theme-color" content="#f6f1e6" />
-    <title>Page not found · ParkinSUM Companion</title>
-    <link rel="icon" href="/assets/brand/parkinsum-icon-warm-32.png" sizes="32x32" />
-    <link rel="stylesheet" href="/styles.css" />
-  </head>
-  <body>
-    <main id="main" class="not-found">
-      <p class="eyebrow">404 · Not in the archive</p>
-      <h1>This page isn't<br /><em>on the shelf.</em></h1>
-      <p class="lead">The address may have changed when the showcase moved to its own domain.</p>
-      <div class="action-row">
-        <a class="button primary" href="/">Back to the showcase</a>
-        <a class="button" href="/guide/">Open the project guide</a>
-      </div>
-      <p class="boundary">Educational prototype. Not medical advice; no clinical validation is claimed.</p>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#f5f2eb" />
+  <title>Page not found · ParkinSUM</title>
+  <link rel="icon" href="/assets/brand/parkinsum-icon-warm-32.png" sizes="32x32" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="not-found">
+    <p class="eyebrow"><span class="eyebrow-line"></span> 404 / NOT IN THE ARCHIVE</p>
+    <h1>This page isn’t<br /><span class="serif">on the shelf.</span></h1>
+    <p>The address may have changed when the showcase moved to its own domain.</p>
+    <div class="hero-actions"><a class="button primary" href="/">Back to the atlas</a><a class="text-link" href="https://github.com/albertzhzhou-droid/ParkinSUM/wiki">Explore the wiki</a></div>
+    <p class="scope-note">Educational prototype · Synthetic demonstrations · Not medical advice</p>
+  </main>
+</body>
 </html>
 """
 
@@ -122,18 +125,21 @@ def main():
     out, origin = os.path.abspath(args.out), args.origin.rstrip("/")
     if os.path.exists(out):
         shutil.rmtree(out)
-    os.makedirs(os.path.join(out, "guide"))
+    os.makedirs(out)
+    src = os.path.join(DOCS, "website")
+
+    css = open(os.path.join(src, "styles.css"), encoding="utf-8").read()
+    # A content hash in the stylesheet URL, so a cached copy never outlives it.
+    css_url = "/styles.css?v=" + hashlib.sha256(css.encode("utf-8")).hexdigest()[:10]
 
     pages = {
         "index.html": transform(
-            open(os.path.join(DOCS, "site", "index.html"), encoding="utf-8").read(),
-            origin=origin, path="/", own_dir="/", other_links={"../wiki/": "/guide/"}),
-        "guide/index.html": transform(
-            open(os.path.join(DOCS, "wiki", "index.html"), encoding="utf-8").read(),
-            origin=origin, path="/guide/", own_dir="/guide/",
-            other_links={"../site/": "/", "../site/#try": "/#try"}),
+            open(os.path.join(src, "index.html"), encoding="utf-8").read(),
+            origin=origin, path="/", own_dir="/", other_links={}),
         "404.html": NOT_FOUND,
     }
+    pages = {name: text.replace('href="/styles.css"', f'href="{css_url}"')
+             for name, text in pages.items()}
     for name, text in pages.items():
         leftover = re.findall(r'(?:href|src)="\.\./[^"]*"', text)
         if leftover:
@@ -141,34 +147,33 @@ def main():
         with open(os.path.join(out, name), "w", encoding="utf-8") as fh:
             fh.write(text)
 
-    shutil.copy(os.path.join(DOCS, "site", "styles.css"), os.path.join(out, "styles.css"))
-    with open(os.path.join(out, "styles.css"), "a", encoding="utf-8") as fh:
-        fh.write("\n.not-found { width: min(760px, calc(100% - 40px)); margin: 18vh auto 12vh; }\n")
-    guide_css = open(os.path.join(DOCS, "wiki", "styles.css"), encoding="utf-8").read()
-    guide_css = guide_css.replace('@import url("../site/styles.css");',
-                                  '@import url("/styles.css");')
-    if "../" in guide_css:
-        raise SystemExit("guide/styles.css: unresolved relative reference")
-    with open(os.path.join(out, "guide", "styles.css"), "w", encoding="utf-8") as fh:
-        fh.write(guide_css)
+    if "../" in css:
+        raise SystemExit("styles.css: unresolved relative reference")
+    shutil.copy(os.path.join(src, "styles.css"), os.path.join(out, "styles.css"))
+    fonts = sorted(set(re.findall(r'url\("(fonts/[^"]+)"\)', css)))
+    os.makedirs(os.path.join(out, "fonts"))
+    for font in fonts + [f"fonts/{n}" for n in os.listdir(os.path.join(src, "fonts"))
+                         if n.startswith("OFL-")]:
+        if not os.path.isfile(os.path.join(src, font)):
+            raise SystemExit(f"missing font {font}")
+        shutil.copy(os.path.join(src, font), os.path.join(out, font))
 
     assets = sorted({a for text in pages.values() for a in ASSET_RE.findall(text)}
                     | {"/assets/screenshots/paper-today.png"})
     for asset in assets:
-        src = os.path.join(DOCS, asset.lstrip("/"))
-        if not os.path.isfile(src):
+        asset_src = os.path.join(DOCS, asset.lstrip("/"))
+        if not os.path.isfile(asset_src):
             raise SystemExit(f"missing asset {asset}")
         dst = os.path.join(out, asset.lstrip("/"))
         os.makedirs(os.path.dirname(dst), exist_ok=True)
-        shutil.copy(src, dst)
+        shutil.copy(asset_src, dst)
 
     today = datetime.date.today().isoformat()
     with open(os.path.join(out, "sitemap.xml"), "w", encoding="utf-8") as fh:
         fh.write('<?xml version="1.0" encoding="UTF-8"?>\n'
                  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-                 + "".join(f"  <url><loc>{origin}{p}</loc><lastmod>{today}</lastmod></url>\n"
-                           for p in ("/", "/guide/"))
-                 + "</urlset>\n")
+                 f"  <url><loc>{origin}/</loc><lastmod>{today}</lastmod></url>\n"
+                 "</urlset>\n")
     with open(os.path.join(out, "robots.txt"), "w", encoding="utf-8") as fh:
         fh.write(f"User-agent: *\nAllow: /\nSitemap: {origin}/sitemap.xml\n")
     with open(os.path.join(out, "_headers"), "w", encoding="utf-8") as fh:
@@ -177,8 +182,8 @@ def main():
         fh.write(REDIRECTS)
     total = sum(os.path.getsize(os.path.join(d, f))
                 for d, _, fs in os.walk(out) for f in fs)
-    print(f"Built {out}: {len(pages)} pages, {len(assets)} assets, {total / 1024:.0f} KiB")
-
+    print(f"Built {out}: {len(pages)} pages, {len(fonts)} fonts, {len(assets)} assets, "
+          f"{total / 1024:.0f} KiB")
 
 if __name__ == "__main__":
     main()

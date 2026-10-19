@@ -63,19 +63,62 @@ published root. Assets and the shared stylesheet use relative paths inside
 
 ## Custom domain (Cloudflare)
 
-`python3 tool/build_site.py` (standard library only) writes `build/website/` for
-`https://parkinsum.com`: the showcase at `/`, the visual guide at `/guide/`, only
-the assets the pages reference, canonical and Open Graph tags, a 404 page,
-`robots.txt`, `sitemap.xml`, `_redirects` (old `/site/` and `/wiki/` paths) and
-`_headers` (a content security policy that allows no scripts, plus
-`nosniff`, `frame-ancestors 'none'` and asset caching). The script stops if a
-page keeps an unresolved relative link or references a missing asset.
+`https://parkinsum.com` serves a separate page, the Evidence Atlas, from
+`docs/website/`. It uses the Atlas site's typefaces (Geist, Geist Mono and Source
+Serif 4 italic, bundled under `docs/website/fonts/` with their OFL licences),
+palette and copy. Its motion comes from this showcase and the Learning Radar
+archive array. It also needs no JavaScript:
 
-`parkinsum.com` and `www.parkinsum.com` are served by the `parkinsum` Cloudflare
-Worker as static assets; there is no Worker script. `wrangler.jsonc` at the
-repository root names the asset directory, the 404 page and both custom domains,
-and Cloudflare applies `_headers` and `_redirects` from the bundle. Deploys are
-manual, from a clean checkout of `main`:
+- **Paged scrolling.** The page scrolls, but in whole pages. Each of the 15
+  pages fills one screen and is a snap point that a scroll cannot pass, so one
+  wheel step, swipe, arrow key or Page Down shifts exactly one page. A page
+  index on the right marks the current page and links to every page.
+  - **Shift.** While a page shifts, the old one recedes and dims toward the
+    paper and the new one rises into place. This is scroll-driven, on each
+    page's view timeline.
+  - **Landing.** In browsers that can query snapped scroll state, a page that
+    has not landed waits in its starting state: content faint and lowered,
+    books in their archive slots, curves undrawn. When it lands, its content
+    builds in, an archive page extracts its books and the model curves draw.
+  - **Fit.** Shorter screens scale a page down so it still fits one screen.
+  - **Phones.** Snapping is loose and the shift and landing effects are off,
+    because pages are taller than the screen.
+- **Friction, not glides.** Motion uses friction profiles (stick, slip,
+  constant deceleration, a dead stop) instead of smooth easing. Chapter and
+  evidence panels switch in place.
+- **Archive libraries.** The archive is an isometric 3D base of standing files.
+  Its record books are designed objects: box files, a booklet, clothbound
+  journals and ledger binders, built from CSS 3D faces.
+  - When an archive page lands, each book is worked loose from its slot,
+    lifted, turned spine-out and set down on a reading shelf.
+  - Each book is the control. Choosing one lifts it off the shelf. Its reading
+    copy is carried to a stand and opened like a physical book: the cover
+    resists at the hinge, then swings open, and two leaves curl over, the second
+    clinging to the first.
+  - On narrow screens the book opens to a single page.
+- **Hero.** An ambient card field idles behind the hero.
+- **Motion off.** A pause control and reduced-motion both stop all of it, and
+  everything rests in its finished state.
+- **Opacity rule.** Opacity is never animated on or around a 3D book. Chrome
+  flattens or stops painting such subtrees.
+
+`python3 tool/wiki_svg/site_archive.py` regenerates both archives on both
+pages from one set of records. `python3 tool/build_site.py` (standard library
+only) writes `build/website/`:
+
+- the page at `/`, its stylesheet and fonts, and only the assets it references
+- canonical and Open Graph tags, a 404 page, `robots.txt` and `sitemap.xml`
+- `_redirects`: the old `/site/` path goes home, and `/guide/` and `/wiki/` go
+  to the visual guide on GitHub Pages
+- `_headers`: a content security policy that allows no scripts, plus `nosniff`,
+  `frame-ancestors 'none'` and caching
+
+The script stops if a page keeps an unresolved relative link or references a
+missing asset or font.
+
+The domain is served by the `parkinsum` Cloudflare Worker as static assets.
+There is no Worker script. `wrangler.jsonc` at the repository root names the
+asset directory, the 404 page and both custom domains. Deploys are manual:
 
 ```sh
 python3 tool/build_site.py
