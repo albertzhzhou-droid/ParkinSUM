@@ -75,3 +75,6 @@ build/operator_tokens/
 build/user_exports/
 build/operator_audit/
 build/**/*.jsonl
+
+# Cloudflare Wrangler local state
+.wrangler/

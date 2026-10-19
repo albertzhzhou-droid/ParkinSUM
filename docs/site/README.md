@@ -61,7 +61,7 @@ GitHub explicitly, so a `/docs` deployment does not need files outside its
 published root. Assets and the shared stylesheet use relative paths inside
 `docs/`.
 
-## Custom domain (Cloudflare Pages)
+## Custom domain (Cloudflare)
 
 `python3 tool/build_site.py` (standard library only) writes `build/website/` for
 `https://parkinsum.com`: the showcase at `/`, the visual guide at `/guide/`, only
@@ -71,11 +71,19 @@ the assets the pages reference, canonical and Open Graph tags, a 404 page,
 `nosniff`, `frame-ancestors 'none'` and asset caching). The script stops if a
 page keeps an unresolved relative link or references a missing asset.
 
-Cloudflare Pages project settings: connect this repository, production branch
-`main`, framework preset *None*, build command `python3 tool/build_site.py`,
-build output directory `build/website`. Then add `parkinsum.com` (and
-`www.parkinsum.com`) under the project's Custom domains. The GitHub Pages
-routes above keep working.
+`parkinsum.com` and `www.parkinsum.com` are served by the `parkinsum` Cloudflare
+Worker as static assets; there is no Worker script. `wrangler.jsonc` at the
+repository root names the asset directory, the 404 page and both custom domains,
+and Cloudflare applies `_headers` and `_redirects` from the bundle. Deploys are
+manual, from a clean checkout of `main`:
+
+```sh
+python3 tool/build_site.py
+npx wrangler@4 deploy
+```
+
+`wrangler login` is needed once per machine. Pushing to `main` does not
+redeploy the domain. The GitHub Pages routes above keep working.
 
 ## Screenshot and claim boundaries
 

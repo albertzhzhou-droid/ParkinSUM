@@ -1,0 +1,18 @@
+// Cloudflare Workers static assets for https://parkinsum.com.
+// Build first with `python3 tool/build_site.py`, then run `npx wrangler deploy`.
+// build/website ships its own _headers (CSP, no scripts) and _redirects.
+{
+  "name": "parkinsum",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./build/website",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
+  },
+  "routes": [
+    { "pattern": "parkinsum.com", "custom_domain": true },
+    { "pattern": "www.parkinsum.com", "custom_domain": true }
+  ],
+  "workers_dev": true,
+  "preview_urls": false
+}
