@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - claude/modest-knuth-rl15va
     paths:
       - "docs/github-wiki/**"
       - ".github/workflows/wiki-sync.yml"
