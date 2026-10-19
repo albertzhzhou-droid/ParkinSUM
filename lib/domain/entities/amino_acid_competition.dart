@@ -18,6 +18,45 @@ CompetitionBand competitionBandForOverlap(double overlap) {
   return CompetitionBand.high;
 }
 
+/// Molecular weights (g/mol) of the competing large neutral amino acids and
+/// levodopa, from their molecular formulas with IUPAC standard atomic
+/// weights: leucine and isoleucine C6H13NO2, valine C5H11NO2, phenylalanine
+/// C9H11NO2, tyrosine C9H11NO3, tryptophan C11H12N2O2, methionine
+/// C5H11NO2S, histidine C6H9N3O2, levodopa C9H11NO4.
+const Map<String, double> lnaaMolecularWeightsGPerMol = {
+  'leucine': 131.17,
+  'isoleucine': 131.17,
+  'valine': 117.15,
+  'phenylalanine': 165.19,
+  'tyrosine': 181.19,
+  'tryptophan': 204.23,
+  'methionine': 149.21,
+  'histidine': 155.16,
+};
+const double levodopaMolecularWeightGPerMol = 197.19;
+
+/// One meal component's share of the competing-LNAA grams when actual
+/// amino-acid fields cover the whole meal. Trace detail only.
+class LnaaComponentContribution {
+  final String componentId;
+  final double competingLnaaGrams;
+
+  /// Fraction of the meal's competing-LNAA grams, 0..1.
+  final double shareOfMealLnaa;
+
+  const LnaaComponentContribution({
+    required this.componentId,
+    required this.competingLnaaGrams,
+    required this.shareOfMealLnaa,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'component_id': componentId,
+    'competing_lnaa_grams': competingLnaaGrams,
+    'share_of_meal_lnaa': shareOfMealLnaa,
+  };
+}
+
 /// LNAA summary attached to the competition timeline so reviewers can see
 /// which protein-source assumptions modulated the proxy. Educational only.
 class CompetitionLnaaSummary {
@@ -88,6 +127,21 @@ class CompetitionLnaaSummary {
   /// domain and was clamped; the clamp widens uncertainty.
   final bool loadFactorClamped;
 
+  /// Per-component competing-LNAA grams and shares, in component order.
+  /// Populated only in actual mode, where every component was measured.
+  final List<LnaaComponentContribution> componentContributions;
+
+  /// Six competing LNAAs plus methionine and histidine, which also use the
+  /// L-type transporter. A sensitivity view of the same profiles, populated
+  /// only in actual mode when every profile reports both. It does not feed
+  /// the load factor.
+  final double? extendedLnaaGrams;
+
+  /// Molar ratio of the six competing LNAAs to the user-entered levodopa
+  /// amount. Available exactly when [doseRelativeAvailable] is true; a
+  /// stoichiometric description of the logged inputs, not a threshold.
+  final double? molarLnaaToLevodopaRatio;
+
   const CompetitionLnaaSummary({
     required this.effectiveLoadFactor,
     required this.sourcesPresent,
@@ -107,6 +161,9 @@ class CompetitionLnaaSummary {
     this.loadFactorInterquartileLow,
     this.loadFactorInterquartileHigh,
     this.loadFactorClamped = false,
+    this.componentContributions = const [],
+    this.extendedLnaaGrams,
+    this.molarLnaaToLevodopaRatio,
   });
 
   /// Checks that the nested summary matches one of the data paths the
@@ -145,6 +202,8 @@ class CompetitionLnaaSummary {
       competingLnaaGrams,
       competingLnaaGramsPerServing,
       doseRelativeLnaaRatio,
+      extendedLnaaGrams,
+      molarLnaaToLevodopaRatio,
     ];
     if (numericValues.whereType<double>().any(
       (value) => !value.isFinite || value < 0,
@@ -158,6 +217,40 @@ class CompetitionLnaaSummary {
     }
     if (doseRelativeAvailable != (doseRelativeLnaaRatio != null)) {
       reasons.add('competition.profile_lnaa_dose_relative_inconsistent');
+    }
+    if (molarLnaaToLevodopaRatio != null && !doseRelativeAvailable) {
+      reasons.add('competition.profile_lnaa_molar_ratio_without_dose');
+    }
+    final total = competingLnaaGrams;
+    final extended = extendedLnaaGrams;
+    if (extended != null &&
+        (total == null || extended.isFinite && extended < total - 1e-9)) {
+      reasons.add('competition.profile_lnaa_extended_below_competing');
+    }
+    if (componentContributions.isNotEmpty) {
+      final grams = componentContributions.fold<double>(
+        0,
+        (sum, c) => sum + c.competingLnaaGrams,
+      );
+      final shares = componentContributions.fold<double>(
+        0,
+        (sum, c) => sum + c.shareOfMealLnaa,
+      );
+      final invalid = componentContributions.any(
+        (c) =>
+            !c.competingLnaaGrams.isFinite ||
+            c.competingLnaaGrams < 0 ||
+            !c.shareOfMealLnaa.isFinite ||
+            c.shareOfMealLnaa < 0 ||
+            c.shareOfMealLnaa > 1,
+      );
+      if (invalid ||
+          total == null ||
+          (grams - total).abs() > 1e-9 * (1 + total) ||
+          (total > 0 && (shares - 1).abs() > 1e-9) ||
+          (total == 0 && shares.abs() > 1e-9)) {
+        reasons.add('competition.profile_lnaa_contributions_incoherent');
+      }
     }
 
     final hasAbsoluteValues =
@@ -187,6 +280,9 @@ class CompetitionLnaaSummary {
             sourcesPresent.isEmpty) {
           reasons.add('competition.profile_lnaa_hybrid_shape_invalid');
         }
+        if (componentContributions.isNotEmpty || extendedLnaaGrams != null) {
+          reasons.add('competition.profile_lnaa_hybrid_shape_invalid');
+        }
       case AminoAcidDataMode.proteinSourceProxy:
         if (coverage == null || coverage.abs() > 1e-12) {
           reasons.add('competition.profile_lnaa_proxy_coverage_invalid');
@@ -194,6 +290,9 @@ class CompetitionLnaaSummary {
         if (hasAbsoluteValues ||
             aminoAcidNutrientIds.isNotEmpty ||
             aminoAcidConfidenceTier != null) {
+          reasons.add('competition.profile_lnaa_proxy_shape_invalid');
+        }
+        if (componentContributions.isNotEmpty || extendedLnaaGrams != null) {
           reasons.add('competition.profile_lnaa_proxy_shape_invalid');
         }
       case AminoAcidDataMode.unknown:
@@ -209,6 +308,8 @@ class CompetitionLnaaSummary {
             aminoAcidConfidenceTier != null ||
             low != null ||
             loadFactorClamped ||
+            componentContributions.isNotEmpty ||
+            extendedLnaaGrams != null ||
             !exactUnknownSources) {
           reasons.add('competition.profile_lnaa_unknown_shape_invalid');
         }
@@ -238,6 +339,15 @@ class CompetitionLnaaSummary {
     'load_factor_interquartile_low': loadFactorInterquartileLow,
     'load_factor_interquartile_high': loadFactorInterquartileHigh,
     'load_factor_clamped': loadFactorClamped,
+    // Trace detail added later; written only when present so earlier wires
+    // keep their exact shape.
+    if (componentContributions.isNotEmpty)
+      'component_contributions': [
+        for (final contribution in componentContributions)
+          contribution.toJson(),
+      ],
+    'extended_lnaa_grams': ?extendedLnaaGrams,
+    'molar_lnaa_to_levodopa_ratio': ?molarLnaaToLevodopaRatio,
   };
 }
 

@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400" role="img" aria-labelledby="t d">
+<title id="t">Composition identities</title>
+<desc id="d">Three identity checks highlight in turn: energy from macronutrients, parts within a whole (milk sugars exceed carbohydrate, a pinned source finding), and vitamin A retinol activity equivalents. Bars fill with a spring.</desc>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #F6F1E6; --sheet: #FFFDF8; --sunken: #EEE6D6;
+  --ink: #2A2420; --ink2: #453D35; --muted: #6E655A; --faint: #A39888;
+  --line: #CBBFA8; --hair: #E2D9C8;
+  --accent: #A84B2A; --accent-soft: #F3E2D6; --gilt: #A8874A; --ok: #4E7A4A;
+  --top: #F2EBDD; --left: #DED3BF; --right: #CDBFA6; --dot: #2A2420;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1C1916; --sheet: #26211D; --sunken: #2E2823;
+    --ink: #F1E9DC; --ink2: #D9CFC0; --muted: #B3A795; --faint: #7F7568;
+    --line: #5A4F44; --hair: #3A332C;
+    --accent: #E38D66; --accent-soft: #4A2E22; --gilt: #CDAE72; --ok: #8DBA86;
+    --top: #4A4138; --left: #3A322B; --right: #2E2822; --dot: #F1E9DC;
+  }
+}
+
+.bg { fill: var(--paper); }
+.ink { fill: var(--ink); } .ink2 { fill: var(--ink2); }
+.muted { fill: var(--muted); } .faint { fill: var(--faint); }
+.accent { fill: var(--accent); }
+text { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.h1 { font-size: 30px; font-weight: 650; letter-spacing: .02em; }
+.h2 { font-size: 19px; font-weight: 600; }
+.body { font-size: 13px; }
+.small { font-size: 11.5px; }
+.stroke-ink { stroke: var(--ink); fill: none; }
+.stroke-line { stroke: var(--line); fill: none; }
+.stroke-accent { stroke: var(--accent); fill: none; }
+
+.card { fill: var(--sheet); stroke: var(--line); }
+.seg { transform-box: fill-box; transform-origin: left center; }
+.whole { fill: none; stroke: var(--ink); stroke-width: 1.4; }
+.over { fill: var(--accent); }
+.phase { opacity: .35; animation: phase 12.0s linear infinite; }
+.phase.b { animation-delay: 4.0s; } .phase.c { animation-delay: 8.0s; }
+@keyframes phase { 0% { opacity: .35; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); } 4%, 30% { opacity: 1; animation-timing-function: cubic-bezier(0.4, 0, 1, 1); } 34%, 100% { opacity: .35; } }
+.fill { transform: scaleX(0); animation: fill 12.0s infinite; }
+.fill.b { animation-delay: 4.0s; } .fill.c { animation-delay: 8.0s; }
+@keyframes fill { 0% { transform: scaleX(0); animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1); animation-timing-function: linear(0, 0.06 1.5%, 0.23 3.5%, 0.86 9%, 1.12 13%, 1.2 15.5%, 1.19 18%, 1.08 23%, 0.97 29%, 0.94 33%, 0.96 38%, 1.01 46%, 1.02 52%, 1 64%, 0.995 78%, 1); } 12%, 30% { transform: scaleX(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); } 34%, 100% { transform: scaleX(0); } }
+.flag { opacity: 0; animation: flag 12.0s linear infinite; animation-delay: 4.0s; }
+@keyframes flag { 0%, 12% { opacity: 0; } 15%, 30% { opacity: 1; } 34%, 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .phase { opacity: 1; } .fill { transform: none; } .flag { opacity: 1; }
+}
+</style>
+<rect class="bg" width="960" height="400" rx="14"/>
+<text x="40.0" y="44.0" class="cap muted" text-anchor="start">Composition identities · definitional, not typical</text>
+<text x="40.0" y="70.0" class="h2 ink" text-anchor="start">Values inside one record must agree with each other</text>
+<g class="phase a"><rect class="card" x="40" y="100" width="280" height="230" rx="12"/>
+<text x="58.0" y="130.0" class="cap ink" text-anchor="start">Energy</text>
+<text x="58.0" y="154.0" class="small mono ink2" text-anchor="start" style="font-size:10.5px">kcal ≈ 4·P + 9·F + 4·C  (± tolerance)</text>
+<g class="fill a seg">
+<rect x="58.0" y="190" width="50.2" height="28" style="fill:var(--left);stroke:var(--line)"/>
+<rect x="108.2" y="190" width="109.4" height="28" style="fill:var(--right);stroke:var(--line)"/>
+<rect x="217.6" y="190" width="59.3" height="28" style="fill:var(--top);stroke:var(--line)"/>
+</g>
+<rect class="whole" x="58" y="186" width="218.9" height="36" rx="3"/>
+<text x="58.0" y="252.0" class="small muted" text-anchor="start">Holds within tolerance</text>
+<text x="58.0" y="276.0" class="small muted" text-anchor="start">FAO 2003 general factors; food-specific</text>
+<text x="58.0" y="293.0" class="small muted" text-anchor="start">factors when reported</text>
+</g>
+<g class="phase b"><rect class="card" x="340" y="100" width="280" height="230" rx="12"/>
+<text x="358.0" y="130.0" class="cap ink" text-anchor="start">Parts within whole</text>
+<text x="358.0" y="154.0" class="small mono ink2" text-anchor="start" style="font-size:10.5px">sugars + starch + fibre ≤ carbohydrate</text>
+<g class="fill b seg">
+<rect x="358.0" y="190" width="118.6" height="28" style="fill:var(--left);stroke:var(--line)"/>
+<rect x="476.6" y="190" width="82.1" height="28" style="fill:var(--right);stroke:var(--line)"/>
+<rect x="558.6" y="190" width="38.8" height="28" style="fill:var(--top);stroke:var(--line)"/>
+</g>
+<rect class="whole" x="358" y="186" width="228.0" height="36" rx="3"/>
+<g class="flag"><rect class="over" x="586.0" y="186" width="11.4" height="36"/><text x="590.0" y="180.0" class="small accent" text-anchor="end">exceeds</text></g>
+<text x="358.0" y="252.0" class="small accent" text-anchor="start">Finding → pinned, never corrected</text>
+<text x="358.0" y="276.0" class="small muted" text-anchor="start">Whole milk: sugars exceed carbohydrate</text>
+<text x="358.0" y="293.0" class="small muted" text-anchor="start">~5.3% (lactose monohydrate)</text>
+</g>
+<g class="phase c"><rect class="card" x="640" y="100" width="280" height="230" rx="12"/>
+<text x="658.0" y="130.0" class="cap ink" text-anchor="start">Vitamin A</text>
+<text x="658.0" y="154.0" class="small mono ink2" text-anchor="start" style="font-size:10.5px">RAE = ret + βcar/12 + (αcar+βcrx)/24</text>
+<g class="fill c seg">
+<rect x="658.0" y="190" width="141.4" height="28" style="fill:var(--left);stroke:var(--line)"/>
+<rect x="799.4" y="190" width="59.3" height="28" style="fill:var(--right);stroke:var(--line)"/>
+<rect x="858.6" y="190" width="27.4" height="28" style="fill:var(--top);stroke:var(--line)"/>
+</g>
+<rect class="whole" x="658" y="186" width="228.0" height="36" rx="3"/>
+<text x="658.0" y="252.0" class="small muted" text-anchor="start">Holds within tolerance</text>
+<text x="658.0" y="276.0" class="small muted" text-anchor="start">Institute of Medicine 2001; IU identity</text>
+<text x="658.0" y="293.0" class="small muted" text-anchor="start">checked the same way</text>
+</g>
+<text x="40.0" y="360.0" class="small ink2" text-anchor="start">In the engine: an energy, proximate, carbohydrate, lipid or nitrogen finding on a scored reference food</text>
+<text x="40.0" y="378.0" class="small ink2" text-anchor="start">adds an uncertainty reason and caps confidence at medium. The score never moves.</text>
+</svg>

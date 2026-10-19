@@ -1181,7 +1181,8 @@ bool _validAvailableCompetitionWire(Map<dynamic, dynamic> wire) {
       summary['dose_relative_available'] is! bool ||
       (summary['dose_relative_available'] == true) !=
           (summary['dose_relative_lnaa_ratio'] != null) ||
-      !_lnaaCalibrationWireCoherent(summary)) {
+      !_lnaaCalibrationWireCoherent(summary) ||
+      !_lnaaDetailWireCoherent(summary)) {
     return false;
   }
   final dataMode = summary['data_mode'];
@@ -1286,6 +1287,52 @@ bool _lnaaCalibrationWireCoherent(Map summary) {
   if (clamped != null && clamped is! bool) return false;
   if (clamped == true && summary['uncertainty_widened'] != true) return false;
   return true;
+}
+
+/// Trace detail of the LNAA summary (per-component contributions, extended
+/// LNAA sensitivity, molar ratio). Absent in wires written before it existed
+/// and in every non-actual data mode; when present it must add up.
+bool _lnaaDetailWireCoherent(Map summary) {
+  final actual = summary['data_mode'] == 'actualAminoAcidFields';
+  final total = summary['competing_lnaa_grams'];
+  final extended = summary['extended_lnaa_grams'];
+  if (extended != null) {
+    if (!actual ||
+        extended is! num ||
+        !extended.isFinite ||
+        total is! num ||
+        extended < total - 1e-9) {
+      return false;
+    }
+  }
+  final molar = summary['molar_lnaa_to_levodopa_ratio'];
+  if (molar != null &&
+      (molar is! num ||
+          !molar.isFinite ||
+          molar < 0 ||
+          summary['dose_relative_available'] != true)) {
+    return false;
+  }
+  final contributions = summary['component_contributions'];
+  if (contributions == null) return true;
+  if (!actual || contributions is! List || contributions.isEmpty) {
+    return false;
+  }
+  if (total is! num) return false;
+  var grams = 0.0;
+  var shares = 0.0;
+  for (final entry in contributions) {
+    if (entry is! Map ||
+        entry['component_id'] is! String ||
+        !_isNonnegativeRequiredWireNumber(entry['competing_lnaa_grams']) ||
+        !_isBoundedWireNumber(entry['share_of_meal_lnaa'])) {
+      return false;
+    }
+    grams += (entry['competing_lnaa_grams'] as num).toDouble();
+    shares += (entry['share_of_meal_lnaa'] as num).toDouble();
+  }
+  if ((grams - total).abs() > 1e-6 * (1 + total)) return false;
+  return total > 0 ? (shares - 1).abs() <= 1e-6 : shares.abs() <= 1e-6;
 }
 
 MechanisticResultAvailability _parseAvailability(Object? raw) {

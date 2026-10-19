@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="450" viewBox="0 0 960 450" role="img" aria-labelledby="t d">
+<title id="t">LNAA load calibration</title>
+<desc id="d">Bar chart of the median competing-LNAA fraction of protein per protein source from official FoodData Central rows: dairy 0.338, egg 0.315, meat 0.264, fish 0.264, grain 0.263, soy 0.257, legume 0.248, with interquartile whiskers. The reference line slides from the old value 0.45 to the all-food median 0.2667.</desc>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #F6F1E6; --sheet: #FFFDF8; --sunken: #EEE6D6;
+  --ink: #2A2420; --ink2: #453D35; --muted: #6E655A; --faint: #A39888;
+  --line: #CBBFA8; --hair: #E2D9C8;
+  --accent: #A84B2A; --accent-soft: #F3E2D6; --gilt: #A8874A; --ok: #4E7A4A;
+  --top: #F2EBDD; --left: #DED3BF; --right: #CDBFA6; --dot: #2A2420;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1C1916; --sheet: #26211D; --sunken: #2E2823;
+    --ink: #F1E9DC; --ink2: #D9CFC0; --muted: #B3A795; --faint: #7F7568;
+    --line: #5A4F44; --hair: #3A332C;
+    --accent: #E38D66; --accent-soft: #4A2E22; --gilt: #CDAE72; --ok: #8DBA86;
+    --top: #4A4138; --left: #3A322B; --right: #2E2822; --dot: #F1E9DC;
+  }
+}
+
+.bg { fill: var(--paper); }
+.ink { fill: var(--ink); } .ink2 { fill: var(--ink2); }
+.muted { fill: var(--muted); } .faint { fill: var(--faint); }
+.accent { fill: var(--accent); }
+text { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.h1 { font-size: 30px; font-weight: 650; letter-spacing: .02em; }
+.h2 { font-size: 19px; font-weight: 600; }
+.body { font-size: 13px; }
+.small { font-size: 11.5px; }
+.stroke-ink { stroke: var(--ink); fill: none; }
+.stroke-line { stroke: var(--line); fill: none; }
+.stroke-accent { stroke: var(--accent); fill: none; }
+
+.bar { fill: var(--left); stroke: var(--line); }
+.iqr { stroke: var(--ink); stroke-width: 1.4; }
+.ref { stroke: var(--accent); stroke-width: 1.6; }
+.old { stroke: var(--faint); stroke-width: 1.4; stroke-dasharray: 4 4; }
+.grow { transform-box: fill-box; transform-origin: left center; transform: scaleX(0);
+  animation: grow 8s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+@keyframes grow { 0%, 4% { transform: scaleX(0); } 22%, 90% { transform: scaleX(1); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); } 98%, 100% { transform: scaleX(0); } }
+.fade { opacity: 0; animation: fade 8s linear infinite; }
+@keyframes fade { 0%, 20% { opacity: 0; } 28%, 90% { opacity: 1; } 97%, 100% { opacity: 0; } }
+.slide { animation: slide 8s linear infinite; }
+@keyframes slide { 0%, 6% { transform: translateX(436.1px); animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1); }
+  20%, 92% { transform: translateX(0); } 100% { transform: translateX(436.1px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .grow { transform: none; } .fade { opacity: 1; } .slide { transform: none; }
+}
+</style>
+<rect class="bg" width="960" height="450" rx="14"/>
+<text x="40.0" y="44.0" class="cap muted" text-anchor="start">LNAA load calibration · official FDC 2025-04-24 amino-acid rows</text>
+<text x="40.0" y="70.0" class="h2 ink" text-anchor="start">Competing-LNAA fraction of protein, median per protein source</text>
+<line class="stroke-line" x1="217.6" y1="94" x2="217.6" y2="350" stroke-dasharray="2 4"/>
+<text x="217.6" y="368.0" class="small mono muted" text-anchor="middle">0.20</text>
+<line class="stroke-line" x1="336.6" y1="94" x2="336.6" y2="350" stroke-dasharray="2 4"/>
+<text x="336.6" y="368.0" class="small mono muted" text-anchor="middle">0.25</text>
+<line class="stroke-line" x1="455.5" y1="94" x2="455.5" y2="350" stroke-dasharray="2 4"/>
+<text x="455.5" y="368.0" class="small mono muted" text-anchor="middle">0.30</text>
+<line class="stroke-line" x1="574.5" y1="94" x2="574.5" y2="350" stroke-dasharray="2 4"/>
+<text x="574.5" y="368.0" class="small mono muted" text-anchor="middle">0.35</text>
+<line class="stroke-line" x1="693.4" y1="94" x2="693.4" y2="350" stroke-dasharray="2 4"/>
+<text x="693.4" y="368.0" class="small mono muted" text-anchor="middle">0.40</text>
+<line class="stroke-line" x1="812.4" y1="94" x2="812.4" y2="350" stroke-dasharray="2 4"/>
+<text x="812.4" y="368.0" class="small mono muted" text-anchor="middle">0.45</text>
+<text x="40.0" y="126.0" class="body ink" text-anchor="start">Dairy</text>
+<text x="108.0" y="126.0" class="small mono faint" text-anchor="start">21/15</text>
+<rect class="bar grow" style="animation-delay:0.00s" x="170" y="114" width="376.2" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.00s"><line class="iqr" x1="525.2" y1="122" x2="562.8" y2="122"/><line class="iqr" x1="525.2" y1="117" x2="525.2" y2="127"/><line class="iqr" x1="562.8" y1="117" x2="562.8" y2="127"/><text x="572.8" y="126.0" class="small mono ink2" text-anchor="start">×1.27</text></g>
+<text x="40.0" y="160.0" class="body ink" text-anchor="start">Egg</text>
+<text x="108.0" y="160.0" class="small mono faint" text-anchor="start">6/5</text>
+<rect class="bar grow" style="animation-delay:0.08s" x="170" y="148" width="322.2" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.08s"><line class="iqr" x1="472.2" y1="156" x2="561.2" y2="156"/><line class="iqr" x1="472.2" y1="151" x2="472.2" y2="161"/><line class="iqr" x1="561.2" y1="151" x2="561.2" y2="161"/><text x="571.2" y="160.0" class="small mono ink2" text-anchor="start">×1.18</text></g>
+<text x="40.0" y="194.0" class="body ink" text-anchor="start">Meat</text>
+<text x="108.0" y="194.0" class="small mono faint" text-anchor="start">13/9</text>
+<rect class="bar grow" style="animation-delay:0.16s" x="170" y="182" width="200.6" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.16s"><line class="iqr" x1="252.6" y1="190" x2="374.6" y2="190"/><line class="iqr" x1="252.6" y1="185" x2="252.6" y2="195"/><line class="iqr" x1="374.6" y1="185" x2="374.6" y2="195"/><text x="384.6" y="194.0" class="small mono ink2" text-anchor="start">×0.99</text></g>
+<text x="40.0" y="228.0" class="body ink" text-anchor="start">Fish</text>
+<text x="108.0" y="228.0" class="small mono faint" text-anchor="start">18/7</text>
+<rect class="bar grow" style="animation-delay:0.24s" x="170" y="216" width="199.1" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.24s"><line class="iqr" x1="356.3" y1="224" x2="377.0" y2="224"/><line class="iqr" x1="356.3" y1="219" x2="356.3" y2="229"/><line class="iqr" x1="377.0" y1="219" x2="377.0" y2="229"/><text x="387.0" y="228.0" class="small mono ink2" text-anchor="start">×0.99</text></g>
+<text x="40.0" y="262.0" class="body ink" text-anchor="start">Grain</text>
+<text x="108.0" y="262.0" class="small mono faint" text-anchor="start">27/24</text>
+<rect class="bar grow" style="animation-delay:0.32s" x="170" y="250" width="198.4" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.32s"><line class="iqr" x1="309.2" y1="258" x2="438.1" y2="258"/><line class="iqr" x1="309.2" y1="253" x2="309.2" y2="263"/><line class="iqr" x1="438.1" y1="253" x2="438.1" y2="263"/><text x="448.1" y="262.0" class="small mono ink2" text-anchor="start">×0.99</text></g>
+<text x="40.0" y="296.0" class="body ink" text-anchor="start">Soy</text>
+<text x="108.0" y="296.0" class="small mono faint" text-anchor="start">14/14</text>
+<rect class="bar grow" style="animation-delay:0.40s" x="170" y="284" width="182.3" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.40s"><line class="iqr" x1="299.9" y1="292" x2="404.8" y2="292"/><line class="iqr" x1="299.9" y1="287" x2="299.9" y2="297"/><line class="iqr" x1="404.8" y1="287" x2="404.8" y2="297"/><text x="414.8" y="296.0" class="small mono ink2" text-anchor="start">×0.96</text></g>
+<text x="40.0" y="330.0" class="body ink" text-anchor="start">Legume</text>
+<text x="108.0" y="330.0" class="small mono faint" text-anchor="start">13/10</text>
+<rect class="bar grow" style="animation-delay:0.48s" x="170" y="318" width="162.7" height="16" rx="3"/>
+<g class="fade" style="animation-delay:0.48s"><line class="iqr" x1="322.0" y1="326" x2="377.0" y2="326"/><line class="iqr" x1="322.0" y1="321" x2="322.0" y2="331"/><line class="iqr" x1="377.0" y1="321" x2="377.0" y2="331"/><text x="387.0" y="330.0" class="small mono ink2" text-anchor="start">×0.93</text></g>
+<line class="old" x1="812.4" y1="90" x2="812.4" y2="350"/>
+<text x="812.4" y="84.0" class="small mono faint" text-anchor="middle">old 0.45</text>
+<g class="slide"><line class="ref" x1="376.3" y1="90" x2="376.3" y2="350"/><text x="376.3" y="84.0" class="small mono accent" text-anchor="middle">all-food median 0.2667</text></g>
+<text x="40.0" y="408.0" class="small muted" text-anchor="start">Bars: type median; whiskers: interquartile range over amino-acid patterns; n = records / patterns; ×: factor over the all-food median.</text>
+<text x="40.0" y="428.0" class="small muted" text-anchor="start">Composition of sampled foods, not people. The mapping from load to competition pressure stays a prototype heuristic.</text>
+</svg>

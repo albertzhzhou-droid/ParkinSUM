@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.15-v64';
+  static const String ledgerVersion = '2026.10.15-v65';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'cdc582bde5b6341add35c6c53098f800dce8715a0ddd3b42a44c88707faa813d';
+  static const String historicalV77ConfigurationSha256 =
       '51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d';
   static const String historicalV76ConfigurationSha256 =
       '7954d51606b7e63acafba92884df6d69f61cebd1d5182093f158af6a75605028';
@@ -1222,7 +1224,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           browserRestorePerformanceCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV77ConfigurationSha256,
       evidenceCurrencyRegistrySha256: browserRestorePerformanceCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: browserRestorePerformanceCandidateRecord
@@ -1259,6 +1261,51 @@ final class ContextOfUseRequalificationLedger {
           'acceptance. All evidence holds and blocked promotion remain in '
           'force.',
     );
+    final referenceRecordIdentityCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 27,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          lnaaCalibrationCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          lnaaCalibrationCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          lnaaCalibrationCandidateRecord.evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          lnaaCalibrationCandidateRecord.evidenceSynthesisRegistrySha256,
+      semanticDiffSha256: lnaaCalibrationCandidateRecord.semanticDiffSha256,
+      affectedProviderIds: lnaaCalibrationCandidateRecord.affectedProviderIds,
+      affectedPredicateIds: lnaaCalibrationCandidateRecord.affectedPredicateIds,
+      changeClasses: lnaaCalibrationCandidateRecord.changeClasses,
+      modelRisk: lnaaCalibrationCandidateRecord.modelRisk,
+      questionOfInterest: lnaaCalibrationCandidateRecord.questionOfInterest,
+      contextOfUse: lnaaCalibrationCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-19T00:00:00.000Z',
+      releaseArtifact:
+          'unreleased-worktree:reference-record-identities-lnaa-detail-v78',
+      evidenceDecisions: lnaaCalibrationCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v78 candidate maps every nutrient in the committed official '
+          'FoodData Central 2025-04-24 SR Legacy rows and audits more '
+          'definitional identities of each record (fatty-acid chains within '
+          'their class, trans closure, individual sugars, vitamin A RAE and '
+          'IU, vitamin D, folate and fortification amounts). The conflict '
+          'engine reads the energy, proximate, carbohydrate, lipid and '
+          'nitrogen findings of a scored reference food as a confidence cap '
+          'and uncertainty reason only, and the LNAA summary adds trace-only '
+          'per-component contributions, an extended-LNAA sensitivity and a '
+          'molar ratio to an explicit logged amount. Scores do not change. '
+          'All twenty-six prior whole records and their digests remain '
+          'exact. Composition identities describe source records, not '
+          'people, and supply no new scientific evidence, independent '
+          'review, clinical qualification, authenticated approval or release '
+          'acceptance. All evidence holds and blocked promotion remain in '
+          'force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1292,6 +1339,7 @@ final class ContextOfUseRequalificationLedger {
         provenanceAwareNutritionCandidateRecord,
         browserRestorePerformanceCandidateRecord,
         lnaaCalibrationCandidateRecord,
+        referenceRecordIdentityCandidateRecord,
       ],
     );
   }

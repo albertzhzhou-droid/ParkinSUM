@@ -92,7 +92,9 @@ final class AlgorithmConfigurationIdentity {
   // v77 calibrates the LNAA competition reference fraction and protein-source
   // load factors on official FDC SR Legacy amino-acid composition; modeled
   // competition pressure changes, and load-to-pressure stays a heuristic.
-  static const String defaultVersion = '2026.10.15-v77';
+  // v78 audits more identities of the official reference records, caps
+  // confidence on scored engine-input findings and adds LNAA trace detail.
+  static const String defaultVersion = '2026.10.15-v78';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -100,7 +102,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '7f5c10e6db1a457b71e2c37e6f5fde35114251996d44d73450fb2dc30906783a';
+      '16f7264fbb8883803c4d8503c760fbc48d5105edff34828a49437c0b469de3dd';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -121,7 +123,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/levodopa_absorption_opportunity_model.dart':
         'c0c2500bd33df75f18499b6bfaef8f4dacab413ab923a098cd26b101c4cfd2cd',
     'lib/domain/entities/amino_acid_competition.dart':
-        '1b3f956a55182e38a270f6e8c5f28ceb5b0139a4f269d10e24f6eca715dfa3a7',
+        '0fd0671063ce0d777f2ee6e8498c92de2fb2ff38dd95d7d80f99caea8cf048b2',
     'lib/domain/entities/amino_acid_profile.dart':
         'b19f1b235adeab1b2592507b2f3e81cf9edcba72c267751e44006f042692b5dd',
     'lib/domain/entities/nutrient_derivation.dart':
@@ -133,11 +135,11 @@ final class AlgorithmConfigurationIdentity {
     'lib/core/constants/lnaa_protein_fraction_calibration_table.dart':
         '9167c42ec79724b688fb98d7910bdae2202e5b479687579ef8f2a61b93df3270',
     'lib/domain/usecases/amino_acid_competition_model.dart':
-        '3ab4ea0fa6c06ca92e20a26329cdddaf205497f299ccb8172d3a9619e0383d4f',
+        'de2e6a4f29740da6981f5e39fcad851ef2b7bf03539e52a398e2a7bcc4c6f68f',
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
-        '79c01e3d8de22b7660ba16d917682f28a1447d7e867af09f84651cfd878c05cf',
+        '24f0fbfd83089a207ac528e88faa897a6d7e20caeca19ca07bd52775bb09d873',
     'lib/domain/usecases/food_composition_interdependency_model.dart':
-        'c5159c191900108f08c2114890659c3bcbbb4893a0a86a2ad402553eb87ac656',
+        '82c65f3bde885aa43f837ff982b3b2665d4ce1867fe90c2d4bcdc8852213db84',
     'lib/domain/usecases/protein_distribution_model.dart':
         '9ab6035545b0dc2d6d462112a7c2d42f900bb24a9b6ecd7b9a42b7fbcfa2f881',
     'lib/domain/usecases/next_meal_scoring_parameters.dart':

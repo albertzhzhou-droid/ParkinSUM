@@ -1,5 +1,7 @@
 # Architecture
 
+> See [[Conflict-Engine]] for the layer pipeline and [[Food-Data]] for data provenance.
+
 ParkinSUM Companion separates the user interface, local state, seeded data, deterministic rules, and evidence-oriented output so reviewers can inspect behavior without treating the app as a clinical product.
 
 ## Layer Map
@@ -11,6 +13,9 @@ ParkinSUM Companion separates the user interface, local state, seeded data, dete
 | Local-first data | Stores public-demo state locally; Firebase paths are retained for internal operator validation. | `lib/core/db/`, `lib/core/services/` |
 | Catalog and metadata | Food and medication records with jurisdiction/source metadata. | `lib/core/analysis/`, `lib/domain/entities/` |
 | Deterministic rule engine | Evaluates educational interaction rules and mechanistic replay assumptions. | `lib/domain/usecases/` |
+| Conflict engine | Layered mechanistic trace: composition, gastric emptying, absorption window, LNAA competition, interdependency. | `lib/domain/usecases/mechanistic_conflict_engine.dart` |
+| Reference food data | Official FDC 2025-04-24 rows, generated tables, identity audit. | `lib/core/constants/`, `tool/data/fdc_2025-04-24/` |
+| Governance | Configuration identity, context-of-use ledger, attestations. | `lib/algorithm_sdk/`, `lib/domain/entities/` |
 | Evidence explanation | Produces traceable copy with limitations, provenance, and not-advice language. | `docs/EVIDENCE_AND_TRACEABILITY_DEMO_GUIDE.md` |
 
 ## Review Flow

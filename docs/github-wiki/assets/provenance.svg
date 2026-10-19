@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="330" viewBox="0 0 960 330" role="img" aria-labelledby="t d">
+<title id="t">Data provenance</title>
+<desc id="d">Four stages: the official FoodData Central CSV pinned by SHA-256, a generator, the generated table of 26,995 rows for 280 foods, and tests that compare every value with the source. Row tokens flow left to right and a check mark draws.</desc>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #F6F1E6; --sheet: #FFFDF8; --sunken: #EEE6D6;
+  --ink: #2A2420; --ink2: #453D35; --muted: #6E655A; --faint: #A39888;
+  --line: #CBBFA8; --hair: #E2D9C8;
+  --accent: #A84B2A; --accent-soft: #F3E2D6; --gilt: #A8874A; --ok: #4E7A4A;
+  --top: #F2EBDD; --left: #DED3BF; --right: #CDBFA6; --dot: #2A2420;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1C1916; --sheet: #26211D; --sunken: #2E2823;
+    --ink: #F1E9DC; --ink2: #D9CFC0; --muted: #B3A795; --faint: #7F7568;
+    --line: #5A4F44; --hair: #3A332C;
+    --accent: #E38D66; --accent-soft: #4A2E22; --gilt: #CDAE72; --ok: #8DBA86;
+    --top: #4A4138; --left: #3A322B; --right: #2E2822; --dot: #F1E9DC;
+  }
+}
+
+.bg { fill: var(--paper); }
+.ink { fill: var(--ink); } .ink2 { fill: var(--ink2); }
+.muted { fill: var(--muted); } .faint { fill: var(--faint); }
+.accent { fill: var(--accent); }
+text { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.h1 { font-size: 30px; font-weight: 650; letter-spacing: .02em; }
+.h2 { font-size: 19px; font-weight: 600; }
+.body { font-size: 13px; }
+.small { font-size: 11.5px; }
+.stroke-ink { stroke: var(--ink); fill: none; }
+.stroke-line { stroke: var(--line); fill: none; }
+.stroke-accent { stroke: var(--accent); fill: none; }
+
+.box { fill: var(--sheet); stroke: var(--line); }
+.row { fill: var(--left); }
+.flow { animation: flow 7.0s cubic-bezier(0.65, 0, 0.35, 1) infinite; opacity: 0; }
+@keyframes flow { 0% { transform: translateX(0); opacity: 0; } 6% { opacity: 1; }
+  60% { transform: translateX(690px); opacity: 1; } 66%, 100% { transform: translateX(690px); opacity: 0; } }
+.check { stroke: var(--ok); stroke-width: 2.4; fill: none; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 50; stroke-dashoffset: 50; animation: check 7.0s linear infinite; }
+@keyframes check { 0%, 62% { stroke-dashoffset: 50; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); } 70%, 92% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 50; } }
+.gear { transform-origin: 380px 167px; animation: spin 6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .flow { opacity: 0; } .check { stroke-dashoffset: 0; }
+}
+</style>
+<rect class="bg" width="960" height="330" rx="14"/>
+<text x="40.0" y="44.0" class="cap muted" text-anchor="start">Data provenance · source to test</text>
+<text x="40.0" y="70.0" class="h2 ink" text-anchor="start">Values are copied, never retyped; a test re-reads the source</text>
+<rect class="box" x="40" y="112" width="190" height="110" rx="10"/>
+<text x="56.0" y="140.0" class="cap ink" text-anchor="start">Official source</text>
+<text x="56.0" y="168.0" class="small mono ink2" text-anchor="start">FDC 2025-04-24 CSV</text>
+<text x="56.0" y="188.0" class="small mono ink2" text-anchor="start">SHA-256 pinned</text>
+<rect class="box" x="270" y="112" width="190" height="110" rx="10"/>
+<text x="286.0" y="140.0" class="cap ink" text-anchor="start">Generator</text>
+<text x="286.0" y="168.0" class="small mono ink2" text-anchor="start">dart run tool/</text>
+<text x="286.0" y="188.0" class="small mono ink2" text-anchor="start">generate_…_table.dart</text>
+<rect class="box" x="500" y="112" width="190" height="110" rx="10"/>
+<text x="516.0" y="140.0" class="cap ink" text-anchor="start">Generated table</text>
+<text x="516.0" y="168.0" class="small mono ink2" text-anchor="start">26,995 rows · 280 foods</text>
+<text x="516.0" y="188.0" class="small mono ink2" text-anchor="start">derivation codes kept</text>
+<rect class="box" x="730" y="112" width="190" height="110" rx="10"/>
+<text x="746.0" y="140.0" class="cap ink" text-anchor="start">Tests</text>
+<text x="746.0" y="168.0" class="small mono ink2" text-anchor="start">every value == source</text>
+<text x="746.0" y="188.0" class="small mono ink2" text-anchor="start">identities audited</text>
+<line class="stroke-line" x1="60" y1="248" x2="900" y2="248"/>
+<path class="stroke-line" d="M 244 242 l 6 6 l -6 6"/>
+<path class="stroke-line" d="M 474 242 l 6 6 l -6 6"/>
+<path class="stroke-line" d="M 704 242 l 6 6 l -6 6"/>
+<rect class="row flow" style="animation-delay:0.00s" x="70" y="244" width="30" height="8" rx="2"/>
+<rect class="row flow" style="animation-delay:0.42s" x="70" y="244" width="30" height="8" rx="2"/>
+<rect class="row flow" style="animation-delay:0.84s" x="70" y="244" width="30" height="8" rx="2"/>
+<rect class="row flow" style="animation-delay:1.26s" x="70" y="244" width="30" height="8" rx="2"/>
+<rect class="row flow" style="animation-delay:1.68s" x="70" y="244" width="30" height="8" rx="2"/>
+<rect class="row flow" style="animation-delay:2.10s" x="70" y="244" width="30" height="8" rx="2"/>
+<rect class="row flow" style="animation-delay:2.52s" x="70" y="244" width="30" height="8" rx="2"/>
+<path class="check" d="M 866 138 l 8 9 l 18 -20"/>
+<text x="40.0" y="290.0" class="small muted" text-anchor="start">The 25 audit findings are inconsistencies inside the source records: pinned in tests, never corrected.</text>
+<text x="40.0" y="310.0" class="small muted" text-anchor="start">Retrieved through a pinned mirror; identity checks catch transcription errors, not a value that is consistent yet wrong.</text>
+</svg>

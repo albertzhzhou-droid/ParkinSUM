@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="300" viewBox="0 0 960 300" role="img" aria-labelledby="t d">
+<title id="t">ParkinSUM Companion</title>
+<desc id="d">Title card: an educational, local-first prototype with deterministic and traceable conflict reasoning. Rings draw and orbit around the words deterministic, traceable and non-clinical.</desc>
+<style>
+:root {
+  color-scheme: light dark;
+  --paper: #F6F1E6; --sheet: #FFFDF8; --sunken: #EEE6D6;
+  --ink: #2A2420; --ink2: #453D35; --muted: #6E655A; --faint: #A39888;
+  --line: #CBBFA8; --hair: #E2D9C8;
+  --accent: #A84B2A; --accent-soft: #F3E2D6; --gilt: #A8874A; --ok: #4E7A4A;
+  --top: #F2EBDD; --left: #DED3BF; --right: #CDBFA6; --dot: #2A2420;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1C1916; --sheet: #26211D; --sunken: #2E2823;
+    --ink: #F1E9DC; --ink2: #D9CFC0; --muted: #B3A795; --faint: #7F7568;
+    --line: #5A4F44; --hair: #3A332C;
+    --accent: #E38D66; --accent-soft: #4A2E22; --gilt: #CDAE72; --ok: #8DBA86;
+    --top: #4A4138; --left: #3A322B; --right: #2E2822; --dot: #F1E9DC;
+  }
+}
+
+.bg { fill: var(--paper); }
+.ink { fill: var(--ink); } .ink2 { fill: var(--ink2); }
+.muted { fill: var(--muted); } .faint { fill: var(--faint); }
+.accent { fill: var(--accent); }
+text { font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.cap { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.h1 { font-size: 30px; font-weight: 650; letter-spacing: .02em; }
+.h2 { font-size: 19px; font-weight: 600; }
+.body { font-size: 13px; }
+.small { font-size: 11.5px; }
+.stroke-ink { stroke: var(--ink); fill: none; }
+.stroke-line { stroke: var(--line); fill: none; }
+.stroke-accent { stroke: var(--accent); fill: none; }
+
+.ring { stroke: var(--ink); stroke-width: 1.3; fill: none; }
+.ring2 { stroke: var(--line); stroke-width: 6; fill: none; }
+.draw { stroke-dasharray: 760; stroke-dashoffset: 760;
+  animation: draw 9s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@keyframes draw { 0% { stroke-dashoffset: 760; } 22%, 78% { stroke-dashoffset: 0; }
+  96%, 100% { stroke-dashoffset: -760; } }
+.spin { transform-origin: 742px 150px; animation: spin 14s linear infinite; }
+.spin-r { transform-origin: 742px 150px; animation: spin 9s linear infinite reverse; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.orbit { transform-origin: 742px 150px; animation: spin 6s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.word { opacity: 0; animation: word 9s linear infinite; }
+.word.b { animation-delay: 3s; } .word.c { animation-delay: 6s; }
+@keyframes word { 0% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+  6%, 28% { opacity: 1; transform: translateY(0); animation-timing-function: cubic-bezier(0.4, 0, 1, 1); }
+  33%, 100% { opacity: 0; transform: translateY(-4px); } }
+.stat { opacity: 0; animation: stat .9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.stat.s2 { animation-delay: .25s; } .stat.s3 { animation-delay: .5s; }
+@keyframes stat { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.tick { stroke: var(--accent); stroke-width: 2; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .word.a, .stat { opacity: 1; } .draw { stroke-dashoffset: 0; }
+}
+</style>
+<rect class="bg" width="960" height="300" rx="14"/>
+<text x="48.0" y="64.0" class="cap muted" text-anchor="start">Educational prototype · local-first · synthetic data</text>
+<text x="48.0" y="112.0" class="h1 ink" text-anchor="start" style="font-size:44px;letter-spacing:.06em">PARKINSUM</text>
+<text x="48.0" y="140.0" class="cap ink" text-anchor="start" style="font-size:14px;letter-spacing:.42em">COMPANION</text>
+<text x="48.0" y="176.0" class="body ink2" text-anchor="start">Meal and medication records, deterministic and traceable</text>
+<text x="48.0" y="196.0" class="body ink2" text-anchor="start">conflict reasoning, evidence you can inspect.</text>
+<g class="stat s1"><line class="tick" x1="48" y1="226" x2="66" y2="226"/><text x="48.0" y="254.0" class="h2 ink" text-anchor="start">65</text><text x="48.0" y="274.0" class="small muted" text-anchor="start">registered algorithms</text></g>
+<g class="stat s2"><line class="tick" x1="216" y1="226" x2="234" y2="226"/><text x="216.0" y="254.0" class="h2 ink" text-anchor="start">26,995</text><text x="216.0" y="274.0" class="small muted" text-anchor="start">official FDC rows</text></g>
+<g class="stat s3"><line class="tick" x1="384" y1="226" x2="402" y2="226"/><text x="384.0" y="254.0" class="h2 ink" text-anchor="start">0</text><text x="384.0" y="274.0" class="small muted" text-anchor="start">clinical claims</text></g>
+<circle class="ring2" cx="742" cy="150" r="104"/>
+<circle class="ring draw" cx="742" cy="150" r="120"/>
+<g class="spin"><path class="ring" d="M 646 122 A 100 100 0 0 1 772 55"/><path class="ring" d="M 838 178 A 100 100 0 0 1 712 245"/></g>
+<g class="spin-r"><path class="ring" d="M 690 160 A 53 53 0 0 1 772 106"/><path class="ring" d="M 792 144 A 53 53 0 0 1 722 200"/></g>
+<g class="orbit"><circle class="ink" cx="816" cy="66" r="4.5"/><circle class="accent" cx="668" cy="234" r="4.5"/></g>
+<g class="word a"><text x="742.0" y="155.0" class="cap ink" text-anchor="middle" style="font-size:13px">DETERMINISTIC</text></g>
+<g class="word b"><text x="742.0" y="155.0" class="cap ink" text-anchor="middle" style="font-size:13px">TRACEABLE</text></g>
+<g class="word c"><text x="742.0" y="155.0" class="cap ink" text-anchor="middle" style="font-size:13px">NON-CLINICAL</text></g>
+</svg>

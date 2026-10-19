@@ -1,49 +1,33 @@
-# ParkinSUM Companion Wiki
+<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/hero.svg" width="960" alt="ParkinSUM Companion: an educational, local-first prototype with deterministic, traceable conflict reasoning. 65 registered algorithms, 26,995 official FDC rows, 0 clinical claims."></p>
 
-ParkinSUM is an educational **production-architecture prototype** that brings
-meal and medication records, deterministic explanations, and evidence review
-into a local-first Flutter workspace.
+> [!IMPORTANT]
+> **Educational prototype.** It is not a medical device and makes no claim of clinical validation. Public demos use synthetic data only. Review any health question with a qualified clinician.
 
-> Not medical advice or a medical device. The model is not clinically
-> calibrated. Public demonstrations use synthetic or sample data only;
-> no clinical validation is claimed.
+ParkinSUM Companion is a local-first Flutter workspace for meal and medication **records**. It is organised in five chapters (**Today, Timeline, Next meal, Insights, Library**) with one entry composer and a **⌘K / Ctrl+K** command palette. Deterministic rules keep authority over classifications, scores, evidence and safety gates. The mechanistic conflict engine is trace-only: every layer writes an inspectable trace, and it never chooses meal times or reorders recommendations. Optional, consent-gated loopback AI is limited to reranking screened candidates and polishing wording. Food data is copied verbatim from official sources and tested back against them.
 
-## The September Paper update
+## Five things to know
 
-The interface now uses five chapters — **Today, Timeline, Next meal, Insights,
-and Library** — with one entry composer and a shared **⌘K / Ctrl+K** command
-palette. Paper uses warm opaque surfaces, legible typography, and finite
-transitions that respect reduced motion. The evidence tools have their own
-sidebar destinations, including the Algorithm Observatory and synthetic rule
-test workbench.
-
-The Observatory distinguishes production-derived traces from static contracts.
-It supports fixed synthetic scenarios, explanations, configuration identity,
-and replay review; coverage labels do not imply that every algorithm has an
-executable trace or complete verification.
-
-## Wiki navigation
-
-| Page | Purpose |
+| | |
 | --- | --- |
-| [[Architecture]] | Local-first layers, deterministic rules, and evidence flow. |
-| [[Demo-Path]] | A current synthetic-data reviewer walkthrough. |
-| [[Safety-Boundary]] | Limits of public use and project claims. |
-| [[Contributing]] | Scoped contributions and review expectations. |
+| **One deterministic pass** | Meal composition → gastric emptying → absorption window → LNAA competition → result. Same inputs, same trace. [[Conflict engine →\|Conflict-Engine]] |
+| **Findings lower confidence, never the score** | Food-borne L-dopa, unstated dry/cooked state and inconsistent source records add uncertainty reasons and cap confidence. [[How →\|Conflict-Engine]] |
+| **Official data, tested back** | 26,995 FoodData Central 2025-04-24 rows for 280 foods; every value is re-read from the source CSV in tests. [[Food data →\|Food-Data]] |
+| **Evidence says what it does *not* support** | Each registered source carries its mechanism and its limitation, negative findings included. [[Evidence & archives →\|Evidence-and-Archives]] |
+| **Governance is append-only** | 27 context-of-use records, each blocked pending evidence; none carries an approval. [[Ledger →\|Evidence-and-Archives]] |
 
-## Project links
+## Pages
 
-- [Paper showcase](https://albertzhzhou-droid.github.io/ParkinSUM/site/)
-- [Visual project guide](https://albertzhzhou-droid.github.io/ParkinSUM/wiki/)
-- [Current README](https://github.com/albertzhzhou-droid/ParkinSUM#readme)
-- [Documentation index](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/README.md)
-- [Capability matrix](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CAPABILITY_MATRIX.md)
-- [Verification guide](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/PUBLIC_VERIFICATION.md)
-- [Changelog](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/CHANGELOG.md)
+| Page | What you get |
+| --- | --- |
+| [[Conflict-Engine]] | The layer pipeline, what each trace records, and how confidence is capped. |
+| [[Food-Data]] | Provenance from official CSV to test, composition identities, LNAA calibration. |
+| [[Evidence-and-Archives]] | The evidence archive and the governance ledger. |
+| [[Architecture]] | Local-first layers and where to start reading code. |
+| [[Demo-Path]] | A synthetic-data walkthrough for reviewers. |
+| [[Safety-Boundary]] | What the project is and is not for. |
+| [[Contributing]] | Scoped contributions and the PR checklist. |
 
-## Run locally
-
-Use the Flutter version pinned in CI and the repository's Dart SDK range.
+## Run it locally
 
 ```sh
 git clone https://github.com/albertzhzhou-droid/ParkinSUM.git
@@ -52,15 +36,18 @@ flutter pub get
 flutter run -d chrome --dart-define=PARKINSUM_BACKEND=local
 ```
 
-Complete onboarding with a fresh synthetic profile. Do not use owner records,
-real account identifiers, or personal exports for a public demonstration.
+Complete onboarding with a fresh synthetic profile. Do not use owner records, real account identifiers or personal exports in a public demonstration.
 
-Deterministic rules retain authority over classifications, scores, evidence,
-and safety gates. The mechanistic model is trace-only and does not choose meal
-times or reorder recommendations. Optional consent-gated loopback AI is limited
-to screened-whitelist reranking and wording polish.
+Before presenting or publishing a change:
 
-This repository is for educational software review. It is not for diagnosis,
-treatment, medication timing, dosing, diet guidance, patient care, or emergency
-support. Browser captures and synthetic checks do not establish clinical
-validity, general standards conformance, or physical-device acceptance.
+```sh
+flutter analyze
+flutter test
+npm run verify:all
+```
+
+## Links
+
+[Capability matrix](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CAPABILITY_MATRIX.md) · [Changelog](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/CHANGELOG.md) · [README](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/README.md) · [Disclaimer](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/DISCLAIMER.md) · [Conflict engine model](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CONFLICT_ENGINE_MODEL.md) · [Known risks](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/known_risks.md) · [Evolution timeline](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/APP_EVOLUTION_TIMELINE.md) · [Paper showcase](https://albertzhzhou-droid.github.io/ParkinSUM/site/) · [Visual guide](https://albertzhzhou-droid.github.io/ParkinSUM/wiki/)
+
+<sub>Animations respect your system's reduced-motion and dark-mode settings.</sub>

@@ -63,6 +63,7 @@ void main() {
         'g' => '_g',
         'mg' => '_mg',
         'ug' => '_ug',
+        'IU' => '_iu',
         _ => '?',
       };
       expect(
