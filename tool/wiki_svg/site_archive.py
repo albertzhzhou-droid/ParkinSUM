@@ -460,9 +460,38 @@ def write_regions(html_path, css_path, shelf):
     open(css_path, "w", encoding="utf-8").write(css)
 
 
+# Per-page rules for the parkinsum.com deck: which page is open, what it
+# animates on opening, which controls show. Written from the page count.
+PAGE_OPEN = ("visibility: visible; opacity: 1; transform: none; "
+             "--s-rise: rise; --s-extract: extract; --s-draw: draw-line; "
+             "transition: opacity 620ms var(--enter) 200ms, transform 900ms var(--enter) 200ms, "
+             "visibility 0s;")
+
+
+def deck_css(pages):
+    rules = []
+    for i in range(pages):
+        deck = f".deck:has(#p-{i}:checked)"
+        rules.append(f"{deck} {{ --cur: {i}; }}")
+        rules.append(f'{deck} .slide[data-p="{i}"] {{ {PAGE_OPEN} }}')
+        rules.append(f'{deck} [data-to~="{i}"] {{ --here: 1; }}')
+        rules.append(f'{deck} :is(.deck-prev, .deck-next)[data-from="{i}"] {{ display: flex; }}')
+        rules.append(f'{deck} .deck-count [data-p="{i}"] {{ display: inline; }}')
+    return "\n".join(rules)
+
+
+def write_deck(html_path, css_path):
+    pages = len(re.findall(r'<section class="slide[ "]', open(html_path, encoding="utf-8").read()))
+    css = open(css_path, encoding="utf-8").read()
+    css = replace_region(css, "/* deck:generated:start */", "/* deck:generated:end */",
+                         deck_css(pages))
+    open(css_path, "w", encoding="utf-8").write(css)
+
+
 def main():
     write_regions(HTML, CSS, shelf=False)
     write_regions(WEB_HTML, WEB_CSS, shelf=True)
+    write_deck(WEB_HTML, WEB_CSS)
     print("site archives written")
 
 

@@ -69,22 +69,27 @@ Serif 4 italic, bundled under `docs/website/fonts/` with their OFL licences),
 palette and copy. Its motion comes from this showcase and the Learning Radar
 archive array. It also needs no JavaScript:
 
-- **Friction, not glides.** Motion uses friction profiles instead of smooth
-  easing. Things stick, slip, then decelerate at a constant rate to a dead
-  stop. Chapter and evidence panels slide like paper over paper, in from the
-  side each panel sits on.
+- **A deck, not a scroll.** The page is 15 fixed pages. A control bar offers
+  previous, page dots and next, and the header links jump to sections. The page
+  dots are one radio group that has focus on load, so the arrow keys turn pages.
+  - A page fades out and settles back while the next fades in from a slight
+    zoom. Its content then builds in sequence.
+  - On short screens a page scales down to fit instead of scrolling. On phones
+    a page taller than the screen scrolls within itself.
+- **Friction, not glides.** Motion uses friction profiles (stick, slip,
+  constant deceleration, a dead stop) instead of smooth easing. Chapter and
+  evidence panels switch in place.
 - **Archive libraries.** The archive is an isometric 3D base of standing files.
   Its record books are designed objects: box files, a booklet, clothbound
   journals and ledger binders, built from CSS 3D faces.
-  - As the archive scrolls into view, each book is worked loose from its slot,
-    lifted, turned spine-out and set down on a reading shelf.
-  - Each book is the control. Choosing one slides it off the shelf. Its reading
+  - Opening an archive page extracts the books: each is worked loose from its
+    slot, lifted, turned spine-out and set down on a reading shelf.
+  - Each book is the control. Choosing one lifts it off the shelf. Its reading
     copy is carried to a stand and opened like a physical book: the cover
     resists at the hinge, then swings open, and two leaves curl over, the second
     clinging to the first.
   - On narrow screens the book opens to a single page.
 - **Hero.** An ambient card field idles behind the hero.
-- **Scroll motion.** Reveals and line drawing are scroll-driven animations.
 - **Motion off.** A pause control and reduced-motion both stop all of it, and
   everything rests in its finished state.
 - **Opacity rule.** Opacity is never animated on or around a 3D book. Chrome
