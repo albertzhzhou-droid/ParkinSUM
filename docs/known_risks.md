@@ -305,6 +305,16 @@ Residual risks:
   catalog records, not a dietary-intake weighting; 12 of 18 fish records
   share one amino-acid pattern, and many rows are calculated or uncoded. The
   mapping from load to competition pressure is still a prototype heuristic.
+- Iteration 5 (2026-10-19) maps every nutrient in those official rows and
+  audits more definitional identities (fatty-acid chains, trans closure,
+  individual sugars, vitamin A RAE and IU, vitamin D, folate and DFE,
+  fortification amounts). Eleven more inconsistencies inside the source
+  records are pinned, not corrected. For 12 catalog reference foods, an energy,
+  proximate, carbohydrate, lipid or nitrogen finding caps the engine's
+  confidence and adds an uncertainty reason; it never changes the score. The
+  new LNAA trace detail (per-component shares, an extended sum with
+  methionine and histidine, a molar ratio to an explicit logged amount) is
+  descriptive and never a threshold.
 - The FoodData Central 2025-04-24 nutrient definitions and conversion factors
   are pinned; a later FDC release can renumber or redefine nutrients and
   needs a re-pin. One food-specific energy factor (coconut oil) disagrees

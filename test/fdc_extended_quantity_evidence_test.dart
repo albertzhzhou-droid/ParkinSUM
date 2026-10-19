@@ -60,33 +60,27 @@ const _currentAttributes = {
   'choline_total_mg': 'choline_mg',
   'sugars_total_1063_g': 'sugars_total_by_summation_g',
   'sugars_total_2000_g': 'sugars_total_g',
+  // Mapped from every nutrient in the official FDC 2025-04-24 rows; the
+  // codes name the chain and isomer FDC reports.
+  'vitamin_d_total_iu': 'vitamin_d_iu',
+  'ala_n3_g': 'pufa_18_3_n3_ccc_ala_g',
+  'epa_n3_g': 'pufa_20_5_n3_epa_g',
+  'dha_n3_g': 'pufa_22_6_n3_dha_g',
 };
-const _sourceOnlyAttributes = {
-  'vitamin_d2_ug',
-  'vitamin_d3_ug',
-  'vitamin_d_total_iu',
-  'vitamin_k_menaquinone4_ug',
-  'vitamin_k_dihydrophylloquinone_ug',
-  'sucrose_g',
-  'glucose_g',
-  'fructose_g',
-  'lactose_g',
-  'maltose_g',
-  'galactose_g',
-  'fiber_soluble_g',
-  'fiber_insoluble_g',
-  'ala_n3_g',
-  'epa_n3_g',
-  'dha_n3_g',
-};
+// Soluble and insoluble fibre are not in the official SR Legacy rows the
+// definitions cover, so they stay attributable source fields only.
+const _sourceOnlyAttributes = {'fiber_soluble_g', 'fiber_insoluble_g'};
 String _currentAttribute(Map vector) =>
     _currentAttributes[vector['expected_attribute']] ??
     '${vector['expected_attribute']}';
 
-// Claude canonicalizes source kilojoule spelling to kJ; raw unit spelling is
+// Claude canonicalizes source kilojoule and IU spelling; raw unit spelling is
 // still asserted separately against the untouched historical source vector.
-String _currentUnit(Map vector) =>
-    vector['expected_unit'] == 'kj' ? 'kJ' : '${vector['expected_unit']}';
+String _currentUnit(Map vector) => switch (vector['expected_unit']) {
+  'kj' => 'kJ',
+  'iu' => 'IU',
+  final unit => '$unit',
+};
 
 void main() {
   const importer = FdcP0Importer(

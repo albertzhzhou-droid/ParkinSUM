@@ -618,6 +618,28 @@ void main() {
             'lnaa_summary': {...validLnaa, 'effective_load_factor': 2.0},
           },
         },
+        // LNAA trace detail outside actual mode, or a molar ratio without
+        // an explicit dose, is incoherent.
+        for (final detail in const <Map<String, Object>>[
+          {
+            'component_contributions': [
+              {
+                'component_id': 'food',
+                'competing_lnaa_grams': 1.0,
+                'share_of_meal_lnaa': 1.0,
+              },
+            ],
+          },
+          {'extended_lnaa_grams': 2.0},
+          {'molar_lnaa_to_levodopa_ratio': 3.0},
+        ])
+          {
+            ...valid,
+            'competition_timeline': {
+              ...validCompetition,
+              'lnaa_summary': {...validLnaa, ...detail},
+            },
+          },
         {
           ...valid,
           'per_event_traces': [

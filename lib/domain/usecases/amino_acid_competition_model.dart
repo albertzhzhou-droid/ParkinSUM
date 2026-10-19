@@ -430,6 +430,9 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
       };
       final proxySources = <ProteinSourceType>{};
       NutrientConfidenceTier? aggregateTier;
+      final contributionGrams = <({String id, double grams})>[];
+      var lnaaMillimoles = 0.0;
+      double? extendedGrams = 0.0;
 
       for (final c in proteinComponents) {
         final p = c.proteinGrams!;
@@ -449,6 +452,14 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
           weightedLow += p * factor;
           weightedHigh += p * factor;
           totalCompetingLnaaGrams += lnaa;
+          contributionGrams.add((id: c.id, grams: lnaa));
+          lnaaMillimoles += _competingLnaaMillimoles(profile);
+          final methionine = profile.methionine;
+          final histidine = profile.histidine;
+          extendedGrams =
+              (extendedGrams == null || methionine == null || histidine == null)
+              ? null
+              : extendedGrams + lnaa + methionine + histidine;
           if (c.portionGrams != null) {
             totalServingGrams += c.portionGrams!;
           } else {
@@ -496,6 +507,22 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
       final doseRelative = doseAvailable
           ? totalCompetingLnaaGrams / (levodopaDoseMg / 100.0)
           : null;
+      // mmol LNAA over mmol levodopa (mg / g·mol⁻¹ = mmol).
+      final molarRatio = doseAvailable
+          ? lnaaMillimoles / (levodopaDoseMg / levodopaMolecularWeightGPerMol)
+          : null;
+      final contributions = pureActual
+          ? [
+              for (final entry in contributionGrams)
+                LnaaComponentContribution(
+                  componentId: entry.id,
+                  competingLnaaGrams: entry.grams,
+                  shareOfMealLnaa: totalCompetingLnaaGrams > 0
+                      ? entry.grams / totalCompetingLnaaGrams
+                      : 0.0,
+                ),
+            ]
+          : const <LnaaComponentContribution>[];
 
       return CompetitionLnaaSummary(
         effectiveLoadFactor: effective,
@@ -526,6 +553,9 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
         loadFactorInterquartileLow: weightedLow / totalProtein,
         loadFactorInterquartileHigh: weightedHigh / totalProtein,
         loadFactorClamped: clamped,
+        componentContributions: List.unmodifiable(contributions),
+        extendedLnaaGrams: pureActual ? extendedGrams : null,
+        molarLnaaToLevodopaRatio: molarRatio,
       );
     }
 
@@ -619,6 +649,24 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
     final protein = component.proteinGrams!;
     if (!total.isFinite || total < 0 || total > protein) return null;
     return profile;
+  }
+
+  /// Millimoles of the six competing LNAAs in a complete serving profile
+  /// (grams × 1000 / molecular weight).
+  static double _competingLnaaMillimoles(AminoAcidProfile profile) {
+    final grams = {
+      'leucine': profile.leucine!,
+      'isoleucine': profile.isoleucine!,
+      'valine': profile.valine!,
+      'phenylalanine': profile.phenylalanine!,
+      'tyrosine': profile.tyrosine!,
+      'tryptophan': profile.tryptophan!,
+    };
+    return grams.entries.fold<double>(
+      0,
+      (sum, entry) =>
+          sum + entry.value * 1000 / lnaaMolecularWeightsGPerMol[entry.key]!,
+    );
   }
 
   CompetitionBand _toBand(double overlap) {

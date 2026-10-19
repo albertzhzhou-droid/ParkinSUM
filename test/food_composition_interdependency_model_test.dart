@@ -542,6 +542,90 @@ void main() {
       expect(assessment.hasFindings, isFalse);
     });
 
+    test('a scored reference record that fails its identities caps '
+        'confidence only', () {
+      // Milk sugars exceed carbohydrate by difference in the official
+      // record (lactose monohydrate basis); the logged macros are the same.
+      final plain = run('synthetic dairy drink');
+      final milk = run('milk, whole, 3.25% fat');
+      expect(milk.interactionScore, plain.interactionScore);
+      expect(milk.severityBand, plain.severityBand);
+      expect(
+        milk.uncertaintyReasons,
+        contains(
+          'food_reference_record_identity_finding('
+          'c:food:fdc_171265:sugars_within_carbohydrate_exceeded)',
+        ),
+      );
+      expect(
+        plain.uncertaintyReasons.any(
+          (r) => r.startsWith('food_reference_record_identity_finding'),
+        ),
+        isFalse,
+      );
+      expect(milk.confidenceBand, isNot(ConfidenceBand.high));
+      final trace = milk.explanation.layerTraces.firstWhere(
+        (t) => t.layer == 'food_composition_interdependency',
+      );
+      expect(
+        trace.assumptionsApplied,
+        contains('confidence_capped:scored_reference_record_inconsistent'),
+      );
+      expect(milk.sourceRefs, contains('src.usda.sr_legacy.2018'));
+    });
+
+    test('only engine-input identities reach the meal assessment', () {
+      // Cider vinegar: acetic acid energy outside the proximates.
+      expect(engineInputSourceIdentityFindings(173469), [
+        'energy_general_factor_residual',
+      ]);
+      // Unsalted butter: closure and an 18:2 chain finding; only the
+      // closure touches an engine input.
+      expect(engineInputSourceIdentityFindings(173430), [
+        'proximate_closure_mismatch',
+      ]);
+      // Brewed coffee: a cis 18:1 chain finding only.
+      expect(engineInputSourceIdentityFindings(171889), isEmpty);
+      // Blue cheese: a vitamin A IU finding only.
+      expect(engineInputSourceIdentityFindings(172175), isEmpty);
+      // No official profile.
+      expect(engineInputSourceIdentityFindings(1), isEmpty);
+
+      final assessment = const FoodCompositionInterdependencyModel().assessMeal(
+        MealCompositionNormalizer().normalize(
+          mealId: 'm',
+          components: const [
+            FoodComponent(
+              id: 'food_ref_usda_169704',
+              name: 'Brown rice',
+              physicalForm: MealPhysicalForm.solid,
+              proteinGrams: 4,
+              fatGrams: 1.5,
+              fiberGrams: 3,
+              carbohydrateGrams: 40,
+              calories: 190,
+              portionGrams: 170,
+              sourceDocId: 'synthetic',
+            ),
+          ],
+        ),
+      );
+      expect(
+        assessment.componentSourceIdentityFindings.map(
+          (f) => '${f.componentId}:${f.fdcId}:${f.findingCode}',
+        ),
+        [
+          'food_ref_usda_169704:169704:'
+              'carbohydrate_fractions_within_total_exceeded',
+        ],
+      );
+      expect(assessment.hasFindings, isTrue);
+      expect(
+        assessment.sourceRefs,
+        containsAll(FoodCompositionInterdependencyModel.identitySourceRefs),
+      );
+    });
+
     test('every emitted interdependency ref resolves and copy stays safe', () {
       final result = run('broad beans');
       for (final ref in result.sourceRefs) {

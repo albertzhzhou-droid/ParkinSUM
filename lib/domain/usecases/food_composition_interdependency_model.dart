@@ -1,4 +1,5 @@
 import '../../core/constants/reference_food_composition_table.dart';
+import '../../core/constants/reference_food_nutrient_profiles.dart';
 import '../entities/meal_composition.dart';
 import '../entities/reference_food_composition.dart';
 
@@ -63,11 +64,24 @@ class FoodCompositionInterdependencyModel {
     final levodopa = <IntrinsicLevodopaMatch>[];
     final ambiguities = <PreparationStateAmbiguityMatch>[];
     final energyFindings = <ComponentEnergyFinding>[];
+    final sourceFindings = <ComponentSourceIdentityFinding>[];
     for (final component in components) {
       final reference = resolveReferenceRow(
         componentId: component.id,
         name: component.name,
       );
+      if (reference != null) {
+        for (final code in engineInputSourceIdentityFindings(reference.fdcId)) {
+          sourceFindings.add(
+            ComponentSourceIdentityFinding(
+              componentId: component.id,
+              componentName: component.name,
+              fdcId: reference.fdcId,
+              findingCode: code,
+            ),
+          );
+        }
+      }
       final source = matchIntrinsicLevodopaSource(
         name: component.name,
         componentId: component.id,
@@ -128,9 +142,54 @@ class FoodCompositionInterdependencyModel {
       intrinsicLevodopaSources: List.unmodifiable(levodopa),
       preparationStateAmbiguities: List.unmodifiable(ambiguities),
       componentEnergyInconsistencies: List.unmodifiable(energyFindings),
+      componentSourceIdentityFindings: List.unmodifiable(sourceFindings),
     );
   }
 }
+
+/// Identity findings that touch a value the conflict engine reads from a
+/// meal component: energy, the proximates, carbohydrate and its fractions,
+/// lipid and its fatty-acid classes, and protein from nitrogen. Findings on
+/// micronutrients or single fatty-acid chains do not reach the engine and
+/// are left to the record audit.
+const Set<String> engineInputIdentityFindingCodes = {
+  'energy_general_factor_residual',
+  'energy_specific_factor_residual',
+  'proximate_closure_mismatch',
+  'carbohydrate_fractions_within_total_exceeded',
+  'sugars_within_carbohydrate_exceeded',
+  'fiber_within_carbohydrate_exceeded',
+  'starch_within_carbohydrate_exceeded',
+  'fatty_acids_within_total_lipid_exceeded',
+  'nitrogen_protein_factor_mismatch',
+};
+
+final Map<int, List<String>> _engineInputFindingsByFdcId = {};
+
+/// Engine-input identity findings inside the official FDC record of one
+/// reference food, sorted and de-duplicated. Empty when the food has no
+/// official profile or the record is consistent. The audit only reads the
+/// committed source rows, so the result is cached per record.
+List<String> engineInputSourceIdentityFindings(int fdcId) =>
+    _engineInputFindingsByFdcId.putIfAbsent(fdcId, () {
+      final values = referenceAttributeValues(fdcId);
+      if (values.isEmpty) return const [];
+      final audit = auditCompositionIdentities(
+        FoodCompositionIdentityInput(
+          recordId: '$fdcId',
+          description: '$fdcId',
+          values: values,
+          derivationCodes: referenceAttributeDerivationCodes(fdcId),
+        ),
+      );
+      return List.unmodifiable(
+        {
+          for (final finding in audit.findings)
+            if (engineInputIdentityFindingCodes.contains(finding.code))
+              finding.code,
+        }.toList()..sort(),
+      );
+    });
 
 // ---------------------------------------------------------------------------
 // 1. Definitional identities
@@ -614,7 +673,17 @@ double _tolerance(double reference, double absolute, double relative) {
 ///   carbohydrate by difference; added within total sugars; fatty-acid
 ///   classes within total lipid; NLEA fat within total lipid.
 /// - Heme + non-heme iron = total iron.
-/// - Vitamin A RAE ≥ retinol + β-carotene/12; folate DFE ≥ total folate.
+/// - Listed fatty acids by chain length sum to no more than their class
+///   total; cis, n-3 / n-6 and isomer rows stay within their chain-length
+///   row; total trans = trans-monoenoic + trans-polyenoic.
+/// - Individual sugars sum to no more than total sugars.
+/// - Vitamin A: RAE = retinol + β-carotene/12 + (α-carotene +
+///   β-cryptoxanthin)/24 and IU = retinol/0.3 + β-carotene/0.6 + (α-carotene
+///   + β-cryptoxanthin)/1.2 (Institute of Medicine 2001).
+/// - Vitamin D (µg) = D2 + D3; IU = 40 × µg.
+/// - Total folate = food folate + folic acid; DFE = food folate + 1.7 ×
+///   folic acid, so DFE ≥ total folate (Institute of Medicine 1998).
+/// - Fortification amounts (vitamin B-12, vitamin E) stay within the totals.
 CompositionIdentityAudit auditCompositionIdentities(
   FoodCompositionIdentityInput input,
 ) {
@@ -867,15 +936,148 @@ CompositionIdentityAudit auditCompositionIdentities(
     }
   }
 
+  // Fatty acids by chain length within their class totals. Class totals
+  // also count minor acids that are not listed, so only the upper bound is
+  // an identity. Values are published to 0.001 g.
+  void chainsWithinClass(String check, String whole, List<String> parts) {
+    final wholeValue = v[whole];
+    if (wholeValue == null) return;
+    final present = [for (final part in parts) ?v[part]];
+    if (present.isEmpty) return;
+    checks.add(check);
+    final sum = present.fold<double>(0, (a, b) => a + b);
+    final tolerance = 0.0005 * present.length + 0.001 + 0.02 * wholeValue;
+    if (sum > wholeValue + tolerance) {
+      finding(
+        '${check}_exceeded',
+        '${present.length} listed acids sum to ${sum.toStringAsFixed(3)} g > '
+            '$whole ${wholeValue.toStringAsFixed(3)} g',
+      );
+    }
+  }
+
+  chainsWithinClass(
+    'saturated_chains_within_class_total',
+    'fatty_acids_saturated_g',
+    _saturatedChainCodes,
+  );
+  chainsWithinClass(
+    'monounsaturated_chains_within_class_total',
+    'fatty_acids_monounsaturated_g',
+    _monounsaturatedChainCodes,
+  );
+  chainsWithinClass(
+    'polyunsaturated_chains_within_class_total',
+    'fatty_acids_polyunsaturated_g',
+    _polyunsaturatedChainCodes,
+  );
+  for (final (part, whole) in _fattyAcidSubsetCodes) {
+    partWithinWhole(
+      'fatty_acid_${part.replaceAll('_g', '')}_within_chain',
+      part,
+      whole,
+      absolute: 0.002,
+      relative: 0.01,
+    );
+  }
+
+  final transTotal = v['fatty_acids_trans_g'];
+  final transMono = v['fatty_acids_trans_monoenoic_g'];
+  final transPoly = v['fatty_acids_trans_polyenoic_g'];
+  if (transTotal != null && (transMono != null || transPoly != null)) {
+    checks.add('trans_fatty_acid_closure');
+    final sum = (transMono ?? 0) + (transPoly ?? 0);
+    if ((sum - transTotal).abs() > 0.002 + 0.02 * transTotal) {
+      finding(
+        'trans_fatty_acid_closure_mismatch',
+        'trans-monoenoic + trans-polyenoic ${sum.toStringAsFixed(3)} g ≠ '
+            'total trans ${transTotal.toStringAsFixed(3)} g',
+      );
+    }
+  }
+
+  // Individual sugars within total sugars (published to 0.01 g).
+  if (sugars != null) {
+    final present = [for (final code in _individualSugarCodes) ?v[code]];
+    if (present.isNotEmpty) {
+      checks.add('individual_sugars_within_total');
+      final sum = present.fold<double>(0, (a, b) => a + b);
+      if (sum > sugars + 0.005 * present.length + 0.01 + 0.02 * sugars) {
+        finding(
+          'individual_sugars_within_total_exceeded',
+          '${present.length} individual sugars sum to ${fmt(sum)} g > total '
+              'sugars ${fmt(sugars)} g',
+        );
+      }
+    }
+  }
+
+  // Vitamin A. RAE weights: retinol 1, β-carotene 1/12, α-carotene and
+  // β-cryptoxanthin 1/24. IU weights: 1 IU = 0.3 µg retinol = 0.6 µg
+  // β-carotene = 1.2 µg other provitamin A carotenoids.
   final rae = v['vitamin_a_rae_ug'];
   final retinol = v['retinol_ug'];
+  final betaCarotene = v['beta_carotene_ug'];
+  final otherProvitaminA =
+      (v['alpha_carotene_ug'] ?? 0.0) + (v['beta_cryptoxanthin_ug'] ?? 0.0);
   if (rae != null && retinol != null) {
     checks.add('vitamin_a_rae_lower_bound');
-    final lowerBound = retinol + (v['beta_carotene_ug'] ?? 0.0) / 12.0;
+    final lowerBound =
+        retinol + (betaCarotene ?? 0.0) / 12.0 + otherProvitaminA / 24.0;
     if (rae + _tolerance(lowerBound, 1.0, 0.02) < lowerBound) {
       finding(
         'vitamin_a_rae_below_components',
-        'RAE ${fmt(rae)} µg < retinol + β-carotene/12 = ${fmt(lowerBound)} µg',
+        'RAE ${fmt(rae)} µg < retinol + β-carotene/12 + (α-carotene + '
+            'β-cryptoxanthin)/24 = ${fmt(lowerBound)} µg',
+      );
+    }
+    if (betaCarotene != null) {
+      checks.add('vitamin_a_rae_upper_bound');
+      final expected = retinol + betaCarotene / 12.0 + otherProvitaminA / 24.0;
+      if (rae > expected + _tolerance(expected, 1.0, 0.05)) {
+        finding(
+          'vitamin_a_rae_above_components',
+          'RAE ${fmt(rae)} µg > components ${fmt(expected)} µg',
+        );
+      }
+    }
+  }
+  final vitaminAIu = v['vitamin_a_iu'];
+  if (vitaminAIu != null && retinol != null && betaCarotene != null) {
+    checks.add('vitamin_a_iu_identity');
+    final expected =
+        retinol / 0.3 + betaCarotene / 0.6 + otherProvitaminA / 1.2;
+    if ((vitaminAIu - expected).abs() > _tolerance(expected, 2.0, 0.05)) {
+      finding(
+        'vitamin_a_iu_identity_mismatch',
+        '${fmt(vitaminAIu)} IU vs retinol/0.3 + β-carotene/0.6 + (α-carotene '
+            '+ β-cryptoxanthin)/1.2 = ${fmt(expected)} IU',
+      );
+    }
+  }
+
+  // Vitamin D: D2 + D3 = D; IU = 40 × µg.
+  final vitaminD = v['vitamin_d_ug'];
+  final d2 = v['vitamin_d2_ug'];
+  final d3 = v['vitamin_d3_ug'];
+  if (vitaminD != null && (d2 != null || d3 != null)) {
+    checks.add('vitamin_d_forms_sum');
+    final sum = (d2 ?? 0) + (d3 ?? 0);
+    if ((sum - vitaminD).abs() > _tolerance(vitaminD, 0.15, 0.05)) {
+      finding(
+        'vitamin_d_forms_sum_mismatch',
+        'D2 + D3 ${fmt(sum)} µg ≠ vitamin D ${fmt(vitaminD)} µg',
+      );
+    }
+  }
+  final vitaminDIu = v['vitamin_d_iu'];
+  if (vitaminD != null && vitaminDIu != null) {
+    checks.add('vitamin_d_iu_identity');
+    final expected = 40.0 * vitaminD;
+    if ((vitaminDIu - expected).abs() > _tolerance(expected, 2.0, 0.05)) {
+      finding(
+        'vitamin_d_iu_identity_mismatch',
+        '${fmt(vitaminDIu)} IU vs 40 × ${fmt(vitaminD)} µg',
       );
     }
   }
@@ -891,6 +1093,66 @@ CompositionIdentityAudit auditCompositionIdentities(
       );
     }
   }
+  final foodFolate = v['folate_food_ug'];
+  final folicAcid = v['folic_acid_ug'];
+  if (foodFolate != null && folicAcid != null) {
+    if (folate != null) {
+      checks.add('folate_total_identity');
+      final expected = foodFolate + folicAcid;
+      if ((folate - expected).abs() > _tolerance(expected, 1.0, 0.03)) {
+        finding(
+          'folate_total_identity_mismatch',
+          'total folate ${fmt(folate)} µg ≠ food folate + folic acid '
+              '${fmt(expected)} µg',
+        );
+      }
+    }
+    if (dfe != null) {
+      checks.add('folate_dfe_identity');
+      final expected = foodFolate + 1.7 * folicAcid;
+      if ((dfe - expected).abs() > _tolerance(expected, 1.0, 0.03)) {
+        finding(
+          'folate_dfe_identity_mismatch',
+          'DFE ${fmt(dfe)} µg ≠ food folate + 1.7 × folic acid '
+              '${fmt(expected)} µg',
+        );
+      }
+    }
+  }
+
+  partWithinWhole(
+    'added_vitamin_b12_within_total',
+    'vitamin_b12_added_ug',
+    'vitamin_b12_ug',
+    absolute: 0.01,
+  );
+  partWithinWhole(
+    'added_vitamin_e_within_alpha_tocopherol',
+    'vitamin_e_added_mg',
+    'vitamin_e_mg',
+    absolute: 0.01,
+  );
+  if (v['phytosterols_mg'] case final sterols?) {
+    final present = [
+      for (final code in const [
+        'beta_sitosterol_mg',
+        'campesterol_mg',
+        'stigmasterol_mg',
+      ])
+        ?v[code],
+    ];
+    if (present.isNotEmpty) {
+      checks.add('individual_sterols_within_phytosterols');
+      final sum = present.fold<double>(0, (a, b) => a + b);
+      if (sum > sterols + _tolerance(sterols, 1.0, 0.02)) {
+        finding(
+          'individual_sterols_within_phytosterols_exceeded',
+          'β-sitosterol + campesterol + stigmasterol ${fmt(sum)} mg > '
+              'phytosterols ${fmt(sterols)} mg',
+        );
+      }
+    }
+  }
 
   return CompositionIdentityAudit(
     recordId: input.recordId,
@@ -900,6 +1162,57 @@ CompositionIdentityAudit auditCompositionIdentities(
     checksSkipped: Map.unmodifiable(skipped),
   );
 }
+
+/// Saturated fatty acids listed by chain length (one row per chain).
+const List<String> _saturatedChainCodes = [
+  'sfa_4_0_g', 'sfa_6_0_g', 'sfa_8_0_g', 'sfa_10_0_g', 'sfa_12_0_g', //
+  'sfa_13_0_g', 'sfa_14_0_g', 'sfa_15_0_g', 'sfa_16_0_g', 'sfa_17_0_g',
+  'sfa_18_0_g', 'sfa_20_0_g', 'sfa_22_0_g', 'sfa_24_0_g',
+];
+
+/// Monounsaturated chain-length rows. 24:1 is published only as its cis
+/// form; the other cis rows are subsets and are not summed.
+const List<String> _monounsaturatedChainCodes = [
+  'mufa_14_1_g', 'mufa_15_1_g', 'mufa_16_1_g', 'mufa_17_1_g', //
+  'mufa_18_1_g', 'mufa_20_1_g', 'mufa_22_1_g', 'mufa_24_1_c_g',
+];
+
+/// Polyunsaturated chain-length rows. 20:2, 20:5, 22:5 and 22:6 are
+/// published only as their n-6 / n-3 forms.
+const List<String> _polyunsaturatedChainCodes = [
+  'pufa_18_2_g', 'pufa_18_3_g', 'pufa_18_4_g', 'pufa_20_2_n6_cc_g', //
+  'pufa_20_3_g', 'pufa_20_4_g', 'pufa_20_5_n3_epa_g', 'pufa_21_5_g',
+  'pufa_22_4_g', 'pufa_22_5_n3_dpa_g', 'pufa_22_6_n3_dha_g',
+];
+
+/// (part, whole) pairs: a cis, n-3 / n-6, conjugated, isomer or trans row
+/// within the row for the same chain length.
+const List<(String, String)> _fattyAcidSubsetCodes = [
+  ('mufa_16_1_c_g', 'mufa_16_1_g'),
+  ('mufa_18_1_c_g', 'mufa_18_1_g'),
+  ('mufa_22_1_c_g', 'mufa_22_1_g'),
+  ('tfa_16_1_t_g', 'mufa_16_1_g'),
+  ('tfa_18_1_t_g', 'mufa_18_1_g'),
+  ('tfa_22_1_t_g', 'mufa_22_1_g'),
+  ('pufa_18_2_n6_cc_g', 'pufa_18_2_g'),
+  ('pufa_18_2_clas_g', 'pufa_18_2_g'),
+  ('pufa_18_2_i_g', 'pufa_18_2_g'),
+  ('pufa_18_3_n3_ccc_ala_g', 'pufa_18_3_g'),
+  ('pufa_18_3_n6_ccc_g', 'pufa_18_3_g'),
+  ('pufa_18_3i_g', 'pufa_18_3_g'),
+  ('pufa_20_3_n3_g', 'pufa_20_3_g'),
+  ('pufa_20_3_n6_g', 'pufa_20_3_g'),
+  ('pufa_20_4_n6_g', 'pufa_20_4_g'),
+];
+
+const List<String> _individualSugarCodes = [
+  'sucrose_g',
+  'glucose_g',
+  'fructose_g',
+  'lactose_g',
+  'maltose_g',
+  'galactose_g',
+];
 
 // ---------------------------------------------------------------------------
 // Cross-source comparison (definition-aware)
@@ -2172,6 +2485,23 @@ final class PreparationStateAmbiguityMatch {
   });
 }
 
+/// A definitional identity that the official source record of a meal
+/// component's reference food does not satisfy. The record is used as
+/// published; the finding only says its values disagree with each other.
+final class ComponentSourceIdentityFinding {
+  final String componentId;
+  final String componentName;
+  final int fdcId;
+  final String findingCode;
+
+  const ComponentSourceIdentityFinding({
+    required this.componentId,
+    required this.componentName,
+    required this.fdcId,
+    required this.findingCode,
+  });
+}
+
 final class ComponentEnergyFinding {
   final String componentId;
   final String componentName;
@@ -2189,18 +2519,21 @@ final class FoodInterdependencyAssessment {
   final List<IntrinsicLevodopaMatch> intrinsicLevodopaSources;
   final List<PreparationStateAmbiguityMatch> preparationStateAmbiguities;
   final List<ComponentEnergyFinding> componentEnergyInconsistencies;
+  final List<ComponentSourceIdentityFinding> componentSourceIdentityFindings;
 
   const FoodInterdependencyAssessment({
     required this.compositionId,
     required this.intrinsicLevodopaSources,
     required this.preparationStateAmbiguities,
     required this.componentEnergyInconsistencies,
+    this.componentSourceIdentityFindings = const [],
   });
 
   bool get hasFindings =>
       intrinsicLevodopaSources.isNotEmpty ||
       preparationStateAmbiguities.isNotEmpty ||
-      componentEnergyInconsistencies.isNotEmpty;
+      componentEnergyInconsistencies.isNotEmpty ||
+      componentSourceIdentityFindings.isNotEmpty;
 
   /// Deterministic, machine-readable uncertainty reasons.
   List<String> get uncertaintyReasons => [
@@ -2214,6 +2547,10 @@ final class FoodInterdependencyAssessment {
     for (final finding in componentEnergyInconsistencies)
       'food_component_energy_inconsistent('
           '$compositionId:${finding.componentId})',
+    for (final finding in componentSourceIdentityFindings)
+      'food_reference_record_identity_finding('
+          '$compositionId:${finding.componentId}:fdc_${finding.fdcId}:'
+          '${finding.findingCode})',
   ];
 
   List<String> get sourceRefs => <String>{
@@ -2221,7 +2558,8 @@ final class FoodInterdependencyAssessment {
       ...FoodCompositionInterdependencyModel.intrinsicLevodopaSourceRefs,
     if (preparationStateAmbiguities.isNotEmpty)
       ...FoodCompositionInterdependencyModel.preparationStateSourceRefs,
-    if (componentEnergyInconsistencies.isNotEmpty)
+    if (componentEnergyInconsistencies.isNotEmpty ||
+        componentSourceIdentityFindings.isNotEmpty)
       ...FoodCompositionInterdependencyModel.identitySourceRefs,
   }.toList(growable: false)..sort();
 

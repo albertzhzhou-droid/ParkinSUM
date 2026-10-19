@@ -528,3 +528,89 @@ one row whose derivation is unknown to the app (no code, or a code such as
 The factors describe food composition. The mapping from load to competition
 pressure remains a prototype heuristic and says nothing about a person, a
 dose or a timing choice.
+
+## 11. Iteration 5 (2026-10-19) — every official nutrient, more identities
+
+### 11.1 Every nutrient in the official rows is mapped
+
+The committed FoodData Central 2025-04-24 rows for the 280 SR Legacy foods
+carry 148 distinct nutrients: 18 amino acids, which the amino-acid extractor
+reads, and 130 others. All 130 now have a nutrient definition. The 86 new
+definitions use the official name, number and unit from `nutrient.csv`: individual sugars, fluoride and betaine, food folate and
+folic acid, added vitamin B-12 and vitamin E, the carotenoids and vitamin A
+in IU, tocopherol and tocotrienol isomers, vitamin D in IU and as D2 and D3,
+menaquinone-4 and dihydrophylloquinone, 14 saturated, 8 monounsaturated and
+11 polyunsaturated chain lengths with their cis, n-3 / n-6 and isomer rows,
+trans fatty acids, phytosterols and hydroxyproline. The generated profile
+table now holds all 26,995 official rows, and a test checks each value
+against the source CSV.
+
+### 11.2 More definitional identities
+
+Each identity follows from how the values are defined, so a violation is an
+inconsistency inside the record:
+
+- Listed fatty acids by chain length sum to no more than their class total.
+  The class totals also include minor acids that are not listed, so only
+  this direction is an identity.
+- A cis, n-3 / n-6 or isomer row stays within its chain-length row, and
+  total trans equals trans-monoenoic plus trans-polyenoic.
+- Individual sugars sum to no more than total sugars.
+- Vitamin A: RAE = retinol + β-carotene/12 + (α-carotene +
+  β-cryptoxanthin)/24, and IU = retinol/0.3 + β-carotene/0.6 + (α-carotene
+  + β-cryptoxanthin)/1.2 (Institute of Medicine, *Dietary Reference Intakes
+  for Vitamin A …*, 2001).
+- Vitamin D (µg) = D2 + D3, and IU = 40 × µg.
+- Total folate = food folate + folic acid, and DFE = food folate + 1.7 ×
+  folic acid (Institute of Medicine, *Dietary Reference Intakes for …
+  Folate …*, 1998).
+- Added vitamin B-12 stays within total B-12, and added vitamin E within
+  α-tocopherol. Individual sterols stay within total phytosterols.
+
+Across the 280 records the audit finds 11 new inconsistencies, pinned in
+`test/reference_food_nutrient_profile_test.dart` and never corrected: listed
+chains above their class total in ground beef (MUFA), cheddar (PUFA, 1.42 vs
+0.94 g) and an almond beverage (SFA and PUFA); cis 18:1 of 0.015 g in three
+brewed coffees whose 18:1 row is 0; 18:2 n-6 cis,cis (2.17 g) above 18:2
+(1.83 g) in unsalted butter; and vitamin A IU disagreeing with its
+components in blue cheese (721 vs 763 IU) and in two black-bean records that
+report IU but no retinol or carotenoids. The RAE, folate, DFE and vitamin D
+identities hold everywhere else.
+
+### 11.3 What the conflict engine reads
+
+When a meal component resolves to a reference food, the meal assessment
+reads the findings of that food's official record that touch a value the
+engine uses: general- and food-specific-factor energy, proximate closure,
+carbohydrate fractions, sugars, fibre and starch within carbohydrate,
+fatty-acid classes within total lipid, and protein from nitrogen. Thirteen
+official records carry one, and twelve of them are catalog reference foods a
+meal component can resolve to (unsalted butter is profiled but not in the
+catalog). Micronutrient and single-chain findings stay in
+the record audit.
+
+Such a finding adds the uncertainty reason
+`food_reference_record_identity_finding(<meal>:<component>:fdc_<id>:<code>)`,
+counts in the interdependency trace, and, when the component's meal is
+scored, caps high confidence at medium
+(`confidence_capped:scored_reference_record_inconsistent`). The score,
+severity and drivers do not change.
+
+### 11.4 LNAA trace detail
+
+When actual amino-acid fields cover the whole meal, the LNAA summary also
+reports, for the trace only:
+
+- each component's competing-LNAA grams and its share of the meal total;
+- an extended sum that adds methionine and histidine, which also use the
+  L-type amino-acid transporter, when every profile reports both;
+- with an explicit logged levodopa amount, the molar ratio of the six
+  competing LNAAs to levodopa, from molecular weights computed from the
+  molecular formulas and IUPAC standard atomic weights (levodopa 197.19
+  g/mol).
+
+None of these feeds the load factor, the pressure curve or the score. Hybrid,
+proxy and unknown modes carry none of them, and a persisted wire that has
+them in another mode, or a molar ratio without an explicit amount, is
+rejected as incoherent. A molar ratio describes the logged inputs; it is not
+a threshold and says nothing about a person, a dose or a timing choice.

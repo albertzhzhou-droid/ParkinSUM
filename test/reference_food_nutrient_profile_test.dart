@@ -216,6 +216,23 @@ void main() {
       '173469:energy_general_factor_residual',
       // Fatty-acid classes exceed a 0.62 g total lipid.
       '173746:fatty_acids_within_total_lipid_exceeded',
+      // Listed fatty acids exceed their class total: ground beef (MUFA),
+      // cheddar (PUFA 1.42 vs 0.94 g), almond milk (SFA and PUFA).
+      '171791:monounsaturated_chains_within_class_total_exceeded',
+      '173414:polyunsaturated_chains_within_class_total_exceeded',
+      '174832:saturated_chains_within_class_total_exceeded',
+      '174832:polyunsaturated_chains_within_class_total_exceeded',
+      // Brewed coffee: cis 18:1 0.015 g while 18:1 is 0.
+      '171889:fatty_acid_mufa_18_1_c_within_chain_exceeded',
+      '171890:fatty_acid_mufa_18_1_c_within_chain_exceeded',
+      '171891:fatty_acid_mufa_18_1_c_within_chain_exceeded',
+      // Unsalted butter: 18:2 n-6 cis,cis 2.17 g within an 18:2 of 1.83 g.
+      '173430:fatty_acid_pufa_18_2_n6_cc_within_chain_exceeded',
+      // Vitamin A IU disagrees with its components: blue cheese (721 vs
+      // 763 IU) and black beans (IU reported, no retinol or carotenoids).
+      '172175:vitamin_a_iu_identity_mismatch',
+      '173734:vitamin_a_iu_identity_mismatch',
+      '173735:vitamin_a_iu_identity_mismatch',
     };
     final findings = <String>{};
     var closureRun = 0;
@@ -241,6 +258,91 @@ void main() {
     expect(closureRun, 236);
     expect(skipped['carbohydrate_assumed_zero'], 32);
     expect(skipped.values.fold<int>(0, (a, b) => a + b), 44);
+  });
+
+  test('micronutrient and fatty-acid identities hold on synthetic records', () {
+    CompositionIdentityAudit audit(Map<String, double> values) =>
+        auditCompositionIdentities(
+          FoodCompositionIdentityInput(
+            recordId: 'synthetic',
+            description: 'synthetic',
+            values: values,
+          ),
+        );
+    Set<String> codes(Map<String, double> values) =>
+        audit(values).findings.map((f) => f.code).toSet();
+
+    // RAE = 100 + 120/12 + 48/24 = 112 µg; IU = 333.3 + 200 + 40 = 573.3.
+    const vitaminA = {
+      'retinol_ug': 100.0,
+      'beta_carotene_ug': 120.0,
+      'alpha_carotene_ug': 24.0,
+      'beta_cryptoxanthin_ug': 24.0,
+      'vitamin_a_rae_ug': 112.0,
+      'vitamin_a_iu': 573.0,
+    };
+    expect(codes(vitaminA), isEmpty);
+    expect(audit(vitaminA).checksRun, contains('vitamin_a_iu_identity'));
+    expect(codes({...vitaminA, 'vitamin_a_rae_ug': 140.0}), {
+      'vitamin_a_rae_above_components',
+    });
+    expect(codes({...vitaminA, 'vitamin_a_iu': 400.0}), {
+      'vitamin_a_iu_identity_mismatch',
+    });
+
+    // Folate: total = 60 + 40 = 100 µg; DFE = 60 + 1.7 × 40 = 128 µg.
+    const folate = {
+      'folate_food_ug': 60.0,
+      'folic_acid_ug': 40.0,
+      'folate_total_ug': 100.0,
+      'folate_dfe_ug': 128.0,
+    };
+    expect(codes(folate), isEmpty);
+    expect(codes({...folate, 'folate_dfe_ug': 100.0}), {
+      'folate_dfe_identity_mismatch',
+    });
+
+    // Vitamin D: 0.5 + 1.5 = 2 µg = 80 IU.
+    const vitaminD = {
+      'vitamin_d2_ug': 0.5,
+      'vitamin_d3_ug': 1.5,
+      'vitamin_d_ug': 2.0,
+      'vitamin_d_iu': 80.0,
+    };
+    expect(codes(vitaminD), isEmpty);
+    expect(codes({...vitaminD, 'vitamin_d_iu': 2.0}), {
+      'vitamin_d_iu_identity_mismatch',
+    });
+
+    // Listed chains may fall short of the class total (minor acids are not
+    // listed) but may not exceed it.
+    const saturated = {
+      'fatty_acids_saturated_g': 2.0,
+      'sfa_16_0_g': 1.2,
+      'sfa_18_0_g': 0.6,
+    };
+    expect(codes(saturated), isEmpty);
+    expect(codes({...saturated, 'sfa_18_0_g': 1.0}), {
+      'saturated_chains_within_class_total_exceeded',
+    });
+    expect(codes({'mufa_18_1_g': 0.5, 'mufa_18_1_c_g': 0.6}), {
+      'fatty_acid_mufa_18_1_c_within_chain_exceeded',
+    });
+    expect(
+      codes({
+        'fatty_acids_trans_g': 0.3,
+        'fatty_acids_trans_monoenoic_g': 0.2,
+        'fatty_acids_trans_polyenoic_g': 0.05,
+      }),
+      {'trans_fatty_acid_closure_mismatch'},
+    );
+    expect(
+      codes({'sugars_total_g': 5.0, 'lactose_g': 4.8, 'galactose_g': 0.6}),
+      {'individual_sugars_within_total_exceeded'},
+    );
+    expect(codes({'vitamin_b12_ug': 1.0, 'vitamin_b12_added_ug': 1.5}), {
+      'added_vitamin_b12_within_total_exceeded',
+    });
   });
 
   test('closure applies to calculated carbohydrate only', () {

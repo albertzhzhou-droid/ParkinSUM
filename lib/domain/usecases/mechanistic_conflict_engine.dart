@@ -606,6 +606,15 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
           scoredCompositionIds.contains(assessment.compositionId) &&
           assessment.preparationStateAmbiguities.isNotEmpty,
     );
+    // A scored component whose reference food's official record breaks a
+    // definitional identity on an engine input (energy, proximates,
+    // carbohydrate fractions, lipid classes) carries values that disagree
+    // with each other inside the source.
+    final hasScoredSourceIdentityFinding = interdependencyAssessments.any(
+      (assessment) =>
+          scoredCompositionIds.contains(assessment.compositionId) &&
+          assessment.componentSourceIdentityFindings.isNotEmpty,
+    );
     final modeledConfidence = _confidence(
       compositionCompleteness: composition.compositionCompleteness,
       consumedUpstreamUncertainty: consumedUpstreamUncertainty,
@@ -633,9 +642,12 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
 
     // The interdependency layer can only lower confidence: the model does
     // not represent food-borne L-dopa, and a protein amount whose dry/cooked
-    // state is unstated can differ 2–5x from the value scored.
+    // state is unstated can differ 2–5x from the value scored, and a scored
+    // reference record that fails its own identities is not self-consistent.
     final confidence =
-        (hasIntrinsicLevodopaSource || hasScoredPreparationAmbiguity) &&
+        (hasIntrinsicLevodopaSource ||
+                hasScoredPreparationAmbiguity ||
+                hasScoredSourceIdentityFinding) &&
             modeledConfidence == ConfidenceBand.high
         ? ConfidenceBand.medium
         : modeledConfidence;
@@ -694,7 +706,8 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
           (assessment) =>
               assessment.intrinsicLevodopaSources.length +
               assessment.preparationStateAmbiguities.length +
-              assessment.componentEnergyInconsistencies.length,
+              assessment.componentEnergyInconsistencies.length +
+              assessment.componentSourceIdentityFindings.length,
         )
         .fold<int>(0, (a, b) => a + b);
 
@@ -762,16 +775,20 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
             'food_borne_levodopa_presence_only_never_dose_equivalent',
             'dry_versus_cooked_state_changes_protein_per_100g',
             'energy_reconciled_with_general_conversion_factors',
+            'reference_record_identities_audited_on_engine_inputs',
             'findings=$interdependencyFindingCount',
             if (hasIntrinsicLevodopaSource)
               'confidence_capped:food_intrinsic_levodopa_not_modeled',
             if (hasScoredPreparationAmbiguity)
               'confidence_capped:scored_protein_state_ambiguous',
+            if (hasScoredSourceIdentityFinding)
+              'confidence_capped:scored_reference_record_inconsistent',
           ],
           interdependencyFindingCount == 0 ? 'narrow' : 'wide',
           'Food composition interdependencies checked: food-borne L-dopa '
-              'sources, dry-versus-cooked state, and energy-macronutrient '
-              'identity. Findings widen uncertainty; they do not change the '
+              'sources, dry-versus-cooked state, energy-macronutrient '
+              'identity, and the definitional identities of each reference '
+              'food\'s official record. Findings widen uncertainty; they do not change the '
               'score.',
         ),
       ],

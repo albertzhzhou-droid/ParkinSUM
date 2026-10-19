@@ -418,6 +418,14 @@ additionally exposes, in `CompetitionLnaaSummary`:
   (see `docs/IMPORTER_METADATA_FLOW.md` §9 and
   `docs/SOURCE_QUALITY_PERTURBATION_REPORT.md`).
 
+In actual mode only, the summary adds trace detail that never feeds the load
+factor or the score: `componentContributions` (each component's competing
+LNAA grams and its share of the meal total), `extendedLnaaGrams` (the six
+plus methionine and histidine, when every profile reports both) and, with an
+explicit user-entered dose, `molarLnaaToLevodopaRatio` (mmol competing LNAA
+per mmol levodopa, from molecular weights). Hybrid, proxy and unknown modes
+carry none of them; a persisted wire that does is rejected.
+
 The modeled value is a **unitless timing-overlap proxy motivated by possible
 intestinal competition**; it is not absorbed fraction, transporter occupancy,
 or concentration. Broader blood–brain-barrier LNAA transport competition is
