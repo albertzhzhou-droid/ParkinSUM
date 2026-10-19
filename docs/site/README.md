@@ -61,6 +61,22 @@ GitHub explicitly, so a `/docs` deployment does not need files outside its
 published root. Assets and the shared stylesheet use relative paths inside
 `docs/`.
 
+## Custom domain (Cloudflare Pages)
+
+`python3 tool/build_site.py` (standard library only) writes `build/website/` for
+`https://parkinsum.com`: the showcase at `/`, the visual guide at `/guide/`, only
+the assets the pages reference, canonical and Open Graph tags, a 404 page,
+`robots.txt`, `sitemap.xml`, `_redirects` (old `/site/` and `/wiki/` paths) and
+`_headers` (a content security policy that allows no scripts, plus
+`nosniff`, `frame-ancestors 'none'` and asset caching). The script stops if a
+page keeps an unresolved relative link or references a missing asset.
+
+Cloudflare Pages project settings: connect this repository, production branch
+`main`, framework preset *None*, build command `python3 tool/build_site.py`,
+build output directory `build/website`. Then add `parkinsum.com` (and
+`www.parkinsum.com`) under the project's Custom domains. The GitHub Pages
+routes above keep working.
+
 ## Screenshot and claim boundaries
 
 The current landing page embeds `paper-today.png`, `paper-timeline.png`,
