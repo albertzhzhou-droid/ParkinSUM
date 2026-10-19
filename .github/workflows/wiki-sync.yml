@@ -1,0 +1,53 @@
+name: Publish wiki
+
+# Mirrors docs/github-wiki/ (pages and assets) into the repository's GitHub
+# wiki. Files are added or overwritten; pages that exist only in the wiki are
+# left in place. Documentation only: no build, test or release step runs here.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/github-wiki/**"
+      - ".github/workflows/wiki-sync.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki-sync
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Mirror docs/github-wiki to the wiki
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out the wiki mirror
+        uses: actions/checkout@v7
+
+      - name: Push pages and assets to the wiki
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -eu
+          wiki="$RUNNER_TEMP/wiki"
+          git clone --depth 1 \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${REPOSITORY}.wiki.git" "$wiki"
+          cp -R docs/github-wiki/. "$wiki/"
+          cd "$wiki"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "The wiki already matches docs/github-wiki."
+            exit 0
+          fi
+          git diff --cached --stat
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Sync wiki from docs/github-wiki at ${SOURCE_SHA}"
+          git push origin HEAD

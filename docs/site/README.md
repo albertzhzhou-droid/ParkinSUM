@@ -6,6 +6,28 @@ Observatory, synthetic workbench, source run, and evidence boundaries. It uses
 plain HTML/CSS, system font stacks, no JavaScript, no analytics, and no remote
 font requests. The Flutter app itself bundles its licensed Paper typefaces.
 
+### Archive selectors
+
+The evidence archive (section II) and the governance ledger (section III) are
+CSS-only: hidden radio inputs choose a record, and `:has()` carries the choice to
+an inline-SVG field of isometric cards. Each card's transition delay grows with
+its distance from the chosen card, so a change ripples outward; neighbours in the
+same column settle, other columns recede, and the chosen card lifts out while its
+record opens. The motion is adapted from the Learning Radar archive array. The
+records come from the source registry and the context-of-use ledger and state
+what each source supports and what it does not. Under reduced motion the choice
+switches instantly. Without `:has()` the first record stays visible.
+
+The favicon, touch icon and 34 px logo use 32, 180 and 96 px copies of
+`parkinsum-icon-warm.png` (2–34 KB instead of 908 KB).
+
+Regenerate the fields, records and per-choice rules (between the `archive:`
+markers in `index.html` and `styles.css`) with:
+
+```sh
+python3 tool/wiki_svg/site_archive.py
+```
+
 The visual wiki at `../wiki/` shares the landing page's design tokens and
 provides a longer guided architecture/demo route. Markdown pages under
 `../github-wiki/` are source material for the separate GitHub Wiki service;
@@ -38,6 +60,22 @@ source update as live. All repository-document links in the HTML point to
 GitHub explicitly, so a `/docs` deployment does not need files outside its
 published root. Assets and the shared stylesheet use relative paths inside
 `docs/`.
+
+## Custom domain (Cloudflare Pages)
+
+`python3 tool/build_site.py` (standard library only) writes `build/website/` for
+`https://parkinsum.com`: the showcase at `/`, the visual guide at `/guide/`, only
+the assets the pages reference, canonical and Open Graph tags, a 404 page,
+`robots.txt`, `sitemap.xml`, `_redirects` (old `/site/` and `/wiki/` paths) and
+`_headers` (a content security policy that allows no scripts, plus
+`nosniff`, `frame-ancestors 'none'` and asset caching). The script stops if a
+page keeps an unresolved relative link or references a missing asset.
+
+Cloudflare Pages project settings: connect this repository, production branch
+`main`, framework preset *None*, build command `python3 tool/build_site.py`,
+build output directory `build/website`. Then add `parkinsum.com` (and
+`www.parkinsum.com`) under the project's Custom domains. The GitHub Pages
+routes above keep working.
 
 ## Screenshot and claim boundaries
 

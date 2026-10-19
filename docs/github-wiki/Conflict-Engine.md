@@ -1,6 +1,6 @@
 # Conflict engine
 
-<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/pipeline.svg" width="960" alt="Five layers in order: meal composition, gastric emptying, absorption window, LNAA competition, result. A separate interdependency layer lowers confidence from high to medium while the score stays unchanged."></p>
+<p align="center"><img src="https://raw.githubusercontent.com/albertzhzhou-droid/ParkinSUM/main/docs/github-wiki/assets/pipeline.svg" width="960" alt="Five layers in order: meal composition, gastric emptying, absorption window, LNAA competition, result. A separate interdependency layer lowers confidence from high to medium while the score stays unchanged."></p>
 
 The engine answers one narrow, educational question: in this synthetic timeline, how much do a meal's modelled stomach residence and amino-acid load overlap the modelled absorption window of a logged levodopa event? The answer is a **unitless overlap proxy** with a confidence band and a trace. It is not an absorbed fraction or a prediction for a person, and it is not a timing suggestion.
 
@@ -26,6 +26,6 @@ The interdependency layer can only add uncertainty. Each case adds a machine-rea
 
 With complete amino-acid fields for the whole meal, the LNAA summary also lists each component's competing-LNAA grams and its share of the total, an extended sum that adds methionine and histidine, and, only when a dose was explicitly logged, the molar LNAA : levodopa ratio. These values are descriptive only. They never feed the score and are not thresholds.
 
-<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/identities.svg" width="960" alt="Three identity checks: energy from macronutrients, parts within a whole with a pinned milk-sugar finding, and vitamin A retinol activity equivalents."></p>
+<p align="center"><img src="https://raw.githubusercontent.com/albertzhzhou-droid/ParkinSUM/main/docs/github-wiki/assets/identities.svg" width="960" alt="Three identity checks: energy from macronutrients, parts within a whole with a pinned milk-sugar finding, and vitamin A retinol activity equivalents."></p>
 
 Read more: [docs/CONFLICT_ENGINE_MODEL.md](https://github.com/albertzhzhou-droid/ParkinSUM/blob/main/docs/CONFLICT_ENGINE_MODEL.md)

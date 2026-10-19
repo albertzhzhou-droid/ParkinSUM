@@ -1,6 +1,5 @@
-<p align="center"><img src="https://raw.githubusercontent.com/wiki/albertzhzhou-droid/ParkinSUM/assets/hero.svg" width="960" alt="ParkinSUM Companion: an educational, local-first prototype with deterministic, traceable conflict reasoning. 65 registered algorithms, 26,995 official FDC rows, 0 clinical claims."></p>
+<p align="center"><img src="https://raw.githubusercontent.com/albertzhzhou-droid/ParkinSUM/main/docs/github-wiki/assets/hero.svg" width="960" alt="ParkinSUM Companion: an educational, local-first prototype with deterministic, traceable conflict reasoning. 65 registered algorithms, 26,995 official FDC rows, 0 clinical claims."></p>
 
-> [!IMPORTANT]
 > **Educational prototype.** It is not a medical device and makes no claim of clinical validation. Public demos use synthetic data only. Review any health question with a qualified clinician.
 
 ParkinSUM Companion is a local-first Flutter workspace for meal and medication **records**. It is organised in five chapters (**Today, Timeline, Next meal, Insights, Library**) with one entry composer and a **⌘K / Ctrl+K** command palette. Deterministic rules keep authority over classifications, scores, evidence and safety gates. The mechanistic conflict engine is trace-only: every layer writes an inspectable trace, and it never chooses meal times or reorders recommendations. Optional, consent-gated loopback AI is limited to reranking screened candidates and polishing wording. Food data is copied verbatim from official sources and tested back against them.
@@ -9,11 +8,11 @@ ParkinSUM Companion is a local-first Flutter workspace for meal and medication *
 
 | | |
 | --- | --- |
-| **One deterministic pass** | Meal composition → gastric emptying → absorption window → LNAA competition → result. Same inputs, same trace. [[Conflict engine →\|Conflict-Engine]] |
-| **Findings lower confidence, never the score** | Food-borne L-dopa, unstated dry/cooked state and inconsistent source records add uncertainty reasons and cap confidence. [[How →\|Conflict-Engine]] |
-| **Official data, tested back** | 26,995 FoodData Central 2025-04-24 rows for 280 foods; every value is re-read from the source CSV in tests. [[Food data →\|Food-Data]] |
-| **Evidence says what it does *not* support** | Each registered source carries its mechanism and its limitation, negative findings included. [[Evidence & archives →\|Evidence-and-Archives]] |
-| **Governance is append-only** | 27 context-of-use records, each blocked pending evidence; none carries an approval. [[Ledger →\|Evidence-and-Archives]] |
+| **One deterministic pass** | Meal composition → gastric emptying → absorption window → LNAA competition → result. Same inputs, same trace. [Conflict engine →](Conflict-Engine) |
+| **Findings lower confidence, never the score** | Food-borne L-dopa, unstated dry/cooked state and inconsistent source records add uncertainty reasons and cap confidence. [How →](Conflict-Engine) |
+| **Official data, tested back** | 26,995 FoodData Central 2025-04-24 rows for 280 foods; every value is re-read from the source CSV in tests. [Food data →](Food-Data) |
+| **Evidence says what it does *not* support** | Each registered source carries its mechanism and its limitation, negative findings included. [Evidence & archives →](Evidence-and-Archives) |
+| **Governance is append-only** | 27 context-of-use records, each blocked pending evidence; none carries an approval. [Ledger →](Evidence-and-Archives) |
 
 ## Pages
 
