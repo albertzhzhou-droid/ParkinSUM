@@ -31,7 +31,7 @@
     "open-source:release-evidence:test": "node --test tool/open_source_release_evidence.test.mjs tool/run_android_gradle_graph_export.test.mjs",
     "open-source:release-evidence": "node tool/open_source_release_evidence.mjs",
     "open-source:android-gradle-graph": "node tool/run_android_gradle_graph_export.mjs",
-    "release:contract": "node --test tool/release_app_check_config.test.mjs tool/release_source_contract.test.mjs tool/public_repo_preflight.test.mjs tool/ci_required_status_gate.test.mjs tool/ci_layering_contract.test.mjs tool/catalog_search_benchmark_review.test.mjs",
+    "release:contract": "node --test tool/release_app_check_config.test.mjs tool/release_source_contract.test.mjs tool/public_repo_preflight.test.mjs tool/ci_required_status_gate.test.mjs tool/ci_layering_contract.test.mjs tool/run_verify_pr.test.mjs tool/identity_rebind.test.mjs tool/catalog_search_benchmark_review.test.mjs",
     "security:dependencies": "npm audit --omit=dev --audit-level=high",
     "rules:test": "node tool/run_firestore_rules_semantic.mjs",
     "firebase:ops": "node tool/firebase_ops.mjs",
@@ -127,6 +127,8 @@
     "fhir:r4-bp:validate": "dart run tool/run_fhir_r4_bp_profile_check.dart",
     "copy:compile": "node tool/run_explanation_copy_compile.mjs",
     "verify:all": "node tool/run_verify_all.mjs",
+    "verify:pr": "node tool/run_verify_pr.mjs",
+    "identity:rebind": "node tool/identity_rebind.mjs",
     "live:smoke": "node tool/run_live_source_smoke.mjs",
     "catalog:inventory": "node tool/run_catalog_inventory.mjs",
     "catalog:search:benchmark": "node --test tool/catalog_search_benchmark_review.test.mjs && dart run tool/run_catalog_search_benchmark.dart && node tool/catalog_search_benchmark_review.mjs"
