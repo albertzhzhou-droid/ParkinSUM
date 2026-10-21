@@ -2,13 +2,13 @@
   "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
   "schemaVersion": 1,
   "review": {
-    "reviewedAt": "2026-10-16",
+    "reviewedAt": "2026-10-21",
     "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository source facts refreshed for the 2026-10-16 Node development-tooling security update (firebase-tools 15.34.0 plus scoped overrides for @grpc/grpc-js, csv-parse and @opentelemetry/core); all 92 production npm packages and every Flutter app dependency are unchanged. Retains the local upgrade and Claude nutrition/reference-data baseline reconciliation, the native SDK migration, and original data-flow declarations. Previously recorded built-artifact facts are not re-attested; owner approval remains pending. This is not a human privacy approval or store submission receipt."
+    "approvalScope": "Repository source facts refreshed for Dependabot PR #119 with flutter_secure_storage 11.2.0, Darwin 0.4.3 and platform_interface 2.1.1. The protected-secret adapter retains the existing RSA-OAEP/AES-GCM profile, owner namespace, resetOnError=false and migration options. Android source manifest and Darwin privacy-manifest bytes are unchanged; current deployment targets satisfy the new minimums. The complete dependency lock is rebound without re-attesting previous device evidence or built-artifact facts. Pre-v10 installations that skipped migration still require a v10 bridge; real-device data migration is unverified. Owner approval remains pending. This is not a human privacy approval or store submission receipt."
   },
   "lockIdentities": {
-    "pubspec.lock": "a8a5be6f96efe4428693876a6453cdc81cae021064dc0925968b3e78dfdd4b46",
+    "pubspec.lock": "5140d80d9b7cd2ff71acf4938fd9907a3204ccf9ba71e4ce682711121e1e7cff",
     "package-lock.json": "00a1805ec51a2aaafa7b9f4396147f0333b3c788ff36987c67618289d8f1e1a2",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"

@@ -62,7 +62,7 @@ ProtectedSecretStoreCapability currentProtectedSecretStoreCapability() {
       storageMechanism: 'rsa_oaep_keystore_wrapped_aes_gcm',
       binding: 'application_installation_and_android_keystore',
       backupBehavior: 'app_backup_and_device_transfer_denied_by_manifest',
-      availabilityBoundary: 'android_api_23_or_newer_keystore_required',
+      availabilityBoundary: 'android_api_24_or_newer_keystore_required',
       isEncryptedAtRest: true,
       isHardwareBackedVerified: false,
     ),
