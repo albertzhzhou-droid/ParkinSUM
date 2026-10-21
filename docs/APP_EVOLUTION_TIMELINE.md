@@ -9698,3 +9698,11 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Boundaries: records restate registry and ledger text; they state limitations and claim no validation, review or clinical qualification. The site goes live only after merge, if GitHub Pages serves `main`'s `/docs`.
 - Custom domain: `tool/build_site.py` builds `build/website/` for `https://parkinsum.com` (showcase at `/`, guide at `/guide/`, referenced assets only, canonical/Open Graph tags, 404, robots, sitemap, Cloudflare `_redirects` and a no-script `_headers` CSP). Checked in Chromium behind that CSP: both pages and the 404 render, all 11 internal links resolve, the archives work at 390 px, no CSP violations. Deployment to Cloudflare is a dashboard step outside this repository.
 - Surgical rollback: remove `tool/build_site.py`; restore `docs/site/{index.html,styles.css,README.md}` and `docs/wiki/index.html`, remove the three icon copies, `tool/wiki_svg/site_archive.py` and this entry.
+
+## 2026-10-21 — DEPS-JAVA-ACTION-20261021 — Refresh Dependabot Java setup
+
+- Baseline: committed HEAD and refreshed public main `7dff5023af6a3dd7b059b7d143786edd1b6d1340`; merge the original #120 commit `33abdda8f7152e51fb04df492ce4780a9997347a` without discarding newer CQF setup.
+- Change: `.github/workflows/ci.yml` uses `actions/setup-java@v6`, retaining Java 21, Temurin, the existing job dependencies, pinned runtimes and all required checks. No dependency lock, application schema or algorithm version changes.
+- Verification: focused CI-layering, required-status and release-source contract tests pass; `git diff --check` passes. Complete hosted CI must run on this updated branch.
+- Boundary: this is an Actions runtime update; no application or clinical validation is claimed.
+- Surgical rollback: restore the single setup-java action version and remove this entry while preserving current main workflow changes.
