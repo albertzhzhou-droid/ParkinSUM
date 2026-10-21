@@ -62,7 +62,7 @@ void main() {
     expect(json['configuration_digest'], matches(RegExp(r'^[a-f0-9]{64}$')));
     final parameterSet = json['parameter_set'] as Map<String, dynamic>;
     expect(parameterSet['id'], 'gastric_emptying_population_sensitivity');
-    expect(parameterSet['version'], '2026.09.02-v3');
+    expect(parameterSet['version'], '2026.10.20-v4');
     expect(parameterSet['sha256'], matches(RegExp(r'^[a-f0-9]{64}$')));
     final configuration =
         json['configuration_identity'] as Map<String, dynamic>;
@@ -180,6 +180,7 @@ void main() {
       ),
       liquidLagMinutes: defaults.liquidLagMinutes,
       liquidHalfMinutes: defaults.liquidHalfMinutes,
+      liquidNutrientKcalPerMinute: defaults.liquidNutrientKcalPerMinute,
       referenceMealCalories: defaults.referenceMealCalories,
       fatSlowdownMultiplier: defaults.fatSlowdownMultiplier,
       fatFractionThreshold: defaults.fatFractionThreshold,
@@ -270,6 +271,7 @@ void main() {
       ),
       liquidLagMinutes: defaults.liquidLagMinutes,
       liquidHalfMinutes: defaults.liquidHalfMinutes,
+      liquidNutrientKcalPerMinute: defaults.liquidNutrientKcalPerMinute,
       referenceMealCalories: defaults.referenceMealCalories,
       fatSlowdownMultiplier: defaults.fatSlowdownMultiplier,
       fatFractionThreshold: defaults.fatFractionThreshold,
@@ -613,7 +615,7 @@ void main() {
           'competition.$prefix.$type',
     };
 
-    expect(manifest.records, hasLength(144));
+    expect(manifest.records, hasLength(145));
     expect(
       manifest.records.map((record) => record.parameterId),
       orderedEquals(
@@ -632,6 +634,19 @@ void main() {
       expect(record.sourceIds, isNotEmpty, reason: record.parameterId);
       expect(record.reviewDate, matches(RegExp(r'^\d{4}-\d{2}-\d{2}$')));
       expect(record.limitation, isNotEmpty, reason: record.parameterId);
+      if (record.parameterId ==
+          GastricEmptyingParameterIds.liquidNutrientKcalPerMinute) {
+        // A measured value from one published human study (Brener et al.
+        // 1983), applied beyond its glucose-solution setting: derived from
+        // literature, never measured or fitted by this project.
+        expect(
+          record.provenanceStatus,
+          AlgorithmParameterProvenanceStatus.literatureDerived,
+        );
+        expect(record.sourceIds, contains('src.brener.glucose_emptying.1983'));
+        expect(record.limitation, contains('1–4 kcal/min'));
+        continue;
+      }
       if (fdcCalibrated.contains(record.parameterId)) {
         // Statistics of the official FDC amino-acid records: derived from a
         // published dataset, never measured or fitted by this project.
@@ -663,7 +678,10 @@ void main() {
           )
           .map((record) => record.parameterId)
           .toSet(),
-      fdcCalibrated,
+      {
+        ...fdcCalibrated,
+        GastricEmptyingParameterIds.liquidNutrientKcalPerMinute,
+      },
     );
     expect(
       manifest.records.map((record) => record.parameterId),
@@ -1812,6 +1830,7 @@ GastricEmptyingParameterSet _gastricWithChangedSolidHalf({
     ),
     liquidLagMinutes: defaults.liquidLagMinutes,
     liquidHalfMinutes: defaults.liquidHalfMinutes,
+    liquidNutrientKcalPerMinute: defaults.liquidNutrientKcalPerMinute,
     referenceMealCalories: defaults.referenceMealCalories,
     fatSlowdownMultiplier: defaults.fatSlowdownMultiplier,
     fatFractionThreshold: defaults.fatFractionThreshold,

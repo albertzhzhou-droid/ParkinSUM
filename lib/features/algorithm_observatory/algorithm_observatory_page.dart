@@ -47,6 +47,7 @@ import '../../domain/usecases/configuration_baseline_registry_service.dart';
 import '../../domain/usecases/algorithm_observatory_service.dart';
 import '../../domain/usecases/administration_dose_confirmation_coordinator.dart';
 import '../../domain/usecases/algorithm_registry.dart';
+import '../../domain/usecases/amino_acid_competition_model.dart';
 import '../../domain/usecases/adaptive_design_operating_characteristics_simulator.dart';
 import '../../domain/usecases/bayesian_borrowing_operating_characteristics_simulator.dart';
 import '../../domain/usecases/bayesian_multisource_model_criticism_simulator.dart';
@@ -1490,9 +1491,24 @@ class _GastricEmptyingPanel extends StatelessWidget {
             profile.aggregateLagMinutes.round(),
       ),
     );
+    // The competition layer weights arrival by the protein (or competing
+    // LNAA) each component carries; the mass curve also counts water. Both
+    // are drawn so the difference stays visible.
+    final arrivalBasis = AminoAcidCompetitionModel().arrivalBasisFor(
+      mealComposition: snapshot.composition,
+      mealEmptyingProfile: profile,
+    );
+    final drawsProteinArrival =
+        arrivalBasis.weighting != CompetitionArrivalWeighting.mealMass;
+    final proteinArrivalLabel =
+        arrivalBasis.weighting == CompetitionArrivalWeighting.competingLnaaGrams
+        ? 'Competing-LNAA arrival rate (line scaled ×40)'
+        : 'Protein arrival rate (line scaled ×40)';
     final aggregate = <_ChartPoint>[];
     final arrival = <_ChartPoint>[];
     final rawArrival = <_ChartPoint>[];
+    final proteinArrival = <_ChartPoint>[];
+    final rawProteinArrival = <_ChartPoint>[];
     final fasterSensitivity = <_ChartPoint>[];
     final slowerSensitivity = <_ChartPoint>[];
     final sensitivityPercent = (profile.timeScaleSensitivityFraction * 100)
@@ -1505,10 +1521,20 @@ class _GastricEmptyingPanel extends StatelessWidget {
       rawArrival.add(_ChartPoint(minute.toDouble(), arrivalRate));
       // The shared chart canvas has a 0..1 vertical axis. Preserve raw
       // fraction/min values for the data table while using an explicit ×40
-      // visual scale for the orange line.
+      // visual scale for the orange and purple lines.
       arrival.add(
         _ChartPoint(minute.toDouble(), (arrivalRate * 40).clamp(0, 1)),
       );
+      if (drawsProteinArrival) {
+        final proteinRate = profile.weightedIntestinalArrivalRateAt(
+          minute,
+          arrivalBasis.weightsByComponentId,
+        );
+        rawProteinArrival.add(_ChartPoint(minute.toDouble(), proteinRate));
+        proteinArrival.add(
+          _ChartPoint(minute.toDouble(), (proteinRate * 40).clamp(0, 1)),
+        );
+      }
       final envelope = profile.sensitivityEnvelopeAt(minute);
       fasterSensitivity.add(
         _ChartPoint(minute.toDouble(), envelope.fasterRemaining),
@@ -1524,12 +1550,20 @@ class _GastricEmptyingPanel extends StatelessWidget {
         points: aggregate,
       ),
       _ChartSeries(
-        label: 'Arrival rate (line scaled ×40)',
+        label: 'Meal-mass arrival rate (line scaled ×40)',
         color: const Color(0xffe06b3c),
         points: arrival,
         tablePoints: rawArrival,
         tableValueFormat: _ChartValueFormat.fractionPerMinute,
       ),
+      if (drawsProteinArrival)
+        _ChartSeries(
+          label: proteinArrivalLabel,
+          color: const Color(0xff7b4bb3),
+          points: proteinArrival,
+          tablePoints: rawProteinArrival,
+          tableValueFormat: _ChartValueFormat.fractionPerMinute,
+        ),
       _ChartSeries(
         label: 'Faster sensitivity (−$sensitivityPercent% time scale)',
         color: const Color(0xff3559e0).withValues(alpha: 0.30),
@@ -1562,15 +1596,15 @@ class _GastricEmptyingPanel extends StatelessWidget {
       id: 'gastric-emptying',
       title: context.appI18n.tr('observatory.gastric.title'),
       subtitle:
-          'Lag + component residence curves → relative intestinal arrival. Uncertainty: ${profile.uncertaintyBand.name}.',
+          'Lag + component residence curves → intestinal arrival of meal mass${drawsProteinArrival ? ' and of protein' : ''}. Uncertainty: ${profile.uncertaintyBand.name}.',
       semanticsLabel:
-          'Gastric emptying chart. Meal remaining starts at 100 percent and declines over $maxMinute minutes. The orange arrival-rate line uses a disclosed times-40 display scale; its data table reports raw fraction per minute. Model uncertainty is ${profile.uncertaintyBand.name}.',
+          'Gastric emptying chart. Meal remaining starts at 100 percent and declines over $maxMinute minutes. The orange meal-mass arrival line${drawsProteinArrival ? ' and the purple protein-arrival line use' : ' uses'} a disclosed times-40 display scale; the data tables report raw fraction per minute. Model uncertainty is ${profile.uncertaintyBand.name}.',
       series: series,
       xStart: 0,
       xEnd: maxMinute.toDouble(),
       xLabel: context.appI18n.tr('observatory.minutes_after_meal'),
       longDescription:
-          'Peak modeled emptying window: ${_relativeWindow(profile.peakEmptyingWindow, snapshot.context.mealEvents.first.minute)} · central mostly-emptied window: ${_relativeWindow(profile.mostlyEmptiedWindow, snapshot.context.mealEvents.first.minute)}. The orange line is scaled ×40 only on the shared chart; the table reports raw fraction/min. The ±$sensitivityPercent% lines are illustrative one-way sensitivity—not a confidence interval. “Mostly emptied” is a model threshold, not a clinical measurement.',
+          'Peak modeled emptying window: ${_relativeWindow(profile.peakEmptyingWindow, snapshot.context.mealEvents.first.minute)} · central mostly-emptied window: ${_relativeWindow(profile.mostlyEmptiedWindow, snapshot.context.mealEvents.first.minute)}. The orange line is arrival of meal mass, which counts water like food. ${drawsProteinArrival ? 'The purple line weights each component by the ${arrivalBasis.weighting == CompetitionArrivalWeighting.competingLnaaGrams ? 'competing LNAA' : 'protein'} it carries; it is the arrival shape the competition layer uses. ' : 'No component carries protein, so the competition layer has no protein arrival to draw. '}${drawsProteinArrival ? 'Both lines are' : 'The line is'} scaled ×40 only on the shared chart; the tables report raw fraction/min. The ±$sensitivityPercent% lines are illustrative one-way sensitivity—not a confidence interval. “Mostly emptied” is a model threshold, not a clinical measurement.',
     );
   }
 }

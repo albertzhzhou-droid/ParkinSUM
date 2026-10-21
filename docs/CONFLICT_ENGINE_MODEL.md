@@ -90,7 +90,8 @@ carries `sourceRefs`, an evidence-level (`mechanism` vs
 modeled value back to a `Bibliographies.md` row via the parameter's
 `sourceRefs`.
 
-The model uses a per-component lag-shifted single-exponential decay:
+Solid, mixed and unknown-form components, and liquids without energy, use a
+per-component lag-shifted single-exponential decay:
 
 ```
 remaining(t) = 1                              if t ≤ lag
@@ -98,7 +99,8 @@ remaining(t) = exp(-(ln 2 / t_half) · (t - lag))   if t > lag
 ```
 
 - **Solid components:** `lag ≈ 20 min`, `t_half ≈ 90 min`.
-- **Liquid components:** `lag = 0 min`, `t_half ≈ 15 min`.
+- **Energy-free liquids** (0 kcal, e.g. water): `lag = 0 min`, `t_half ≈ 15 min`.
+- **Energy-containing liquids:** calorie-regulated delivery instead; see §7.
 - **Unknown physical form:** uses dampened solid defaults *and* widens
   uncertainty.
 
@@ -126,9 +128,52 @@ fraction is the mass-weighted sum of component remaining fractions:
 meal_remaining(t) = Σ fraction_i · remaining_i(t)
 ```
 
-Liquid components empty faster and contribute a faster meal-level decline
-than comparable solid components, matching the direction in the cited
-literature.
+This mass-weighted curve gives the residual stomach load at a dose (§10, §12),
+which shifts the absorption window. It is **not** the protein timing: water
+counts in it like food. The competition layer uses protein-weighted arrival
+instead (§13).
+
+Liquids are split by energy. Brener, Hendrix and McHugh (1983) found that
+saline emptied rapidly and exponentially, while glucose solutions of three
+concentrations settled into a calorie-constant delivery of about 2.13 kcal per
+minute.
+
+- **Energy-free liquid** (`calories == 0`): the volume-driven exponential of
+  §6, unchanged.
+- **Energy-containing liquid** (`calories > 0`): calorie-regulated. All
+  energy-containing liquids of one meal join one pool, because duodenal
+  feedback regulates the total energy that leaves the stomach. The pool is
+  delivered linearly over `D = pool_kcal / rate`, with
+  `rate = ge.liquid.nutrient_kcal_per_min = 2.13 kcal/min`. The liquid never
+  empties faster than an energy-free liquid would:
+
+  ```
+  remaining(t) = max(exp(-(ln 2 / t_vol) · (t - lag)), 1 - (t - lag) / D)
+  t_half       = max(t_vol, D / 2)
+  ```
+
+  `t_vol` is the energy-free half-time with the usual size, fat and fiber
+  multipliers; `D` comes from energy alone, so no multiplier is applied twice.
+  A 300 kcal, 25 g protein shake therefore half-empties after about 70 min
+  instead of 13.5 min; at 45 min the model keeps 68% of it in the stomach
+  instead of 10%.
+  A 2 kcal black coffee still follows the water curve.
+- **Liquid of unknown energy** (`calories` missing or invalid): the model
+  cannot tell which curve applies. It draws the energy-free exponential, the
+  fastest curve any liquid can follow here, states that bound in the trace
+  (`ge.liquid.energy_unknown_fast_bound`), records `liquid_component_calories`
+  as a missing input and widens the uncertainty band by one step. It never
+  assumes the liquid is water.
+
+The rate is `literature_derived` (`mechanism` evidence) and carries an explicit
+1–4 kcal/min sensitivity range, the overall rate at which meals leave a healthy
+stomach (Marathe et al. 2013); at its ends the shake half-empties after 37.5 or
+150 min. Limitations: the measured rate is for glucose solutions; in the
+studies pooled by Hunt and Stubbs (1975) delivered energy still rose with
+energy density, so delivery is only approximately constant; an initial fast
+phase, viscosity, osmolality, macronutrient-specific effects and
+Parkinson-specific emptying are not modeled; and the energy of solid
+components does not join the liquid pool.
 
 ## 8. Meal-size effect
 
@@ -309,9 +354,11 @@ flat numeric window. Not PK/PD calibration, not dose-response advice.
 
 ## 13. Amino-acid competition assumptions
 
-The competition pressure proxy is the product of (a) the meal's
-instantaneous intestinal arrival rate (derivative of `emptiedFractionAt`),
-(b) a protein amplitude factor scaled against a 20 g reference, and (c)
+The competition pressure proxy is the product of (a) the instantaneous
+intestinal arrival rate of the meal's **protein** (protein-weighted, or
+competing-LNAA-weighted when complete amino-acid profiles exist; see the end of
+this section), (b) a protein amplitude factor scaled against a 20 g reference,
+and (c)
 an **LNAA load factor** that depends on the protein source type of each
 food component (`ProteinSourceType` in `lib/domain/entities/protein_source.dart`).
 The load factor is calibrated on official food composition. For each
@@ -431,13 +478,40 @@ intestinal competition**; it is not absorbed fraction, transporter occupancy,
 or concentration. Broader blood–brain-barrier LNAA transport competition is
 named as a cited mechanism in the trace but is not quantified here.
 
-The pressure timeline uses the gastric model's intestinal-arrival curve for
-**shape**, normalizes that curve to its own peak, then applies a bounded
-protein/LNAA load amplitude. This keeps the pressure and its 0–1 band thresholds
-on the same relative scale. Earlier code compared a fraction-per-minute rate
-directly with unitless 0.10/0.25 thresholds, which compressed every rendered
-curve near zero. The normalized result is still a prototype heuristic—not an
-amino-acid concentration, transporter occupancy, or clinical effect probability.
+The pressure timeline takes its **shape** from protein arrival, not meal
+mass:
+
+```
+protein_arrival(t) = Σ w_i · d emptied_i(t)/dt / Σ w_i
+```
+
+`w_i` is the protein (g) of component *i*, or its competing-LNAA grams when
+every protein-bearing component has a complete amino-acid profile
+(`aa.competition.arrival_weighting.protein_grams` or
+`.competing_lnaa_grams` in the trace). A component without protein contributes
+nothing, so water cannot move the curve. The sampled support runs from the
+meal start to the protein-weighted lag plus four protein-weighted half-times
+(`aa.competition.support_weighted_mostly_emptied`), the protein analogue of the
+mostly-emptied window. A meal whose components carry no protein keeps the
+mass-weighted shape; its amplitude is zero. The curve is then normalized to its
+own peak and the bounded protein/LNAA load amplitude applied, which keeps the
+pressure and its 0–1 band thresholds on the same relative scale. Earlier code
+compared a fraction-per-minute rate directly with unitless 0.10/0.25
+thresholds, which compressed every rendered curve near zero. The normalized
+result is still a prototype heuristic—not an amino-acid concentration,
+transporter occupancy, or clinical effect probability.
+
+Until 2026-10-20 the shape came from the mass-weighted arrival curve, so the
+zero-protein part of a meal set the protein timing. For the Observatory
+reference meal (oatmeal with 8 g protein, 240 g, plus 240 g water) pressure
+peaked 5 min after the meal, with 49% of its area in the first 30 min, although
+the oats only begin to empty after a 17-minute lag, and the support ended at
+188 min. With protein weighting the peak is at 20 min (the first 5-minute
+sample after the lag), 11% of the area falls in the first 30 min and the
+support ends at 323 min. The overlap with that scenario's absorption window
+rises from 0.021 to 0.092 and its interaction score from 0.113 (low) to 0.155
+(moderate); the dose-time residual, and so the absorption window, are
+unchanged.
 
 ## 14. Uncertainty / confidence scoring
 
@@ -459,7 +533,10 @@ which inputs degraded confidence.
 ### 14.1 Visible gastric time-scale sensitivity
 
 `GastricEmptyingProfile.sensitivityEnvelopeAt()` evaluates the same component
-model at 0.76× and 1.24× the central lag/half-time scale. The 24% fraction is
+model at 0.76× and 1.24× the central lag/half-time scale. For a
+calorie-regulated liquid the same factor scales its volume half-time and
+delivery time, which is equivalent to 2.80 and 1.72 kcal/min around the central
+2.13, inside the parameter's 1–4 kcal/min sensitivity range. The 24% fraction is
 an illustrative symmetric transform motivated by a study reporting 24.5%
 between-participant variation in measured half-time among healthy participants.
 That study does not supply a Parkinson distribution. The transform is displayed

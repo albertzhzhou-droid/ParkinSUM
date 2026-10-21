@@ -694,6 +694,7 @@ _buildExecutableChangeImpactFixture() {
     ),
     liquidLagMinutes: currentParameters.liquidLagMinutes,
     liquidHalfMinutes: currentParameters.liquidHalfMinutes,
+    liquidNutrientKcalPerMinute: currentParameters.liquidNutrientKcalPerMinute,
     referenceMealCalories: currentParameters.referenceMealCalories,
     fatSlowdownMultiplier: currentParameters.fatSlowdownMultiplier,
     fatFractionThreshold: currentParameters.fatFractionThreshold,

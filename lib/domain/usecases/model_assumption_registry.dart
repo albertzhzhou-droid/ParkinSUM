@@ -372,6 +372,73 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-05-27',
   );
 
+  static const ModelAssumption brenerGlucoseEmptying = ModelAssumption(
+    sourceId: 'src.brener.glucose_emptying.1983',
+    title: 'Regulation of the gastric emptying of glucose',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Saline emptied rapidly and exponentially, while glucose solutions of '
+        'three concentrations settled into a slow, calorie-constant pattern '
+        'that delivered about 2.13 kcal per minute to the duodenum.',
+    limitation:
+        'Glucose solutions in adults only; not a Parkinson cohort, not a mixed '
+        'meal and not an individual prediction. ParkinSUM applies the rate to '
+        'every energy-containing liquid as a central value.',
+    citationText:
+        'Brener W., Hendrix T.R., McHugh P.R. Regulation of the gastric '
+        'emptying of glucose. Gastroenterology 85(1):76–82, 1983. '
+        'PMID:6852464.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-20',
+  );
+
+  static const ModelAssumption huntStubbsEnergyDensity = ModelAssumption(
+    sourceId: 'src.hunt_stubbs.energy_density.1975',
+    title:
+        'The volume and energy content of meals as determinants of gastric '
+        'emptying',
+    sourceType: ModelSourceType.modelPaper,
+    mechanismSupported:
+        'Across 33 pooled studies, meals of higher energy density emptied less '
+        'volume in 30 minutes yet still delivered more energy per minute; the '
+        'results fit equal slowing by isocaloric fat, protein and '
+        'carbohydrate.',
+    limitation:
+        'Pooled analysis that assumed exponential emptying to compute the '
+        'volumes delivered; it describes population tendencies, not '
+        'individuals, and shows energy delivery is only approximately '
+        'constant.',
+    citationText:
+        'Hunt J.N., Stubbs D.F. The volume and energy content of meals as '
+        'determinants of gastric emptying. J Physiol 245(1):209–225, 1975. '
+        'doi:10.1113/jphysiol.1975.sp010841.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-20',
+  );
+
+  static const ModelAssumption maratheGastricEnergyRange = ModelAssumption(
+    sourceId: 'src.marathe.ge_kcal_range.2013',
+    title:
+        'Relationships between gastric emptying, postprandial glycemia, and '
+        'incretin hormones',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'In health, meals leave the stomach at an overall rate of about '
+        '1–4 kcal per minute, with wide variation between people and much '
+        'less within a person.',
+    limitation:
+        'Narrative review centred on diabetes. ParkinSUM uses the 1–4 kcal/min '
+        'span only as the sensitivity range of the delivery rate, not as a '
+        'Parkinson or individual estimate.',
+    citationText:
+        'Marathe C.S., Rayner C.K., Jones K.L., Horowitz M. Relationships '
+        'between gastric emptying, postprandial glycemia, and incretin '
+        'hormones. Diabetes Care 36(5):1396–1405, 2013. '
+        'doi:10.2337/dc12-1609.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-20',
+  );
+
   static const ModelAssumption fdaCdsGuidance = ModelAssumption(
     sourceId: 'src.fda.cds.guidance.2022',
     title: 'FDA Clinical Decision Support Software Guidance (Final, 2022)',
@@ -953,6 +1020,9 @@ class ModelAssumptionRegistry {
     gastricEmptyingHalfTime,
     gastricEmptyingMeasurementVariation,
     foodPhysicalProperties,
+    brenerGlucoseEmptying,
+    huntStubbsEnergyDensity,
+    maratheGastricEnergyRange,
     fdaCdsGuidance,
     lnaaPlantVsAnimal,
     fdcAminoAcidFields,

@@ -330,15 +330,39 @@ final class GastricStructuralUncertaintyService {
           authority: GastricParameterAuthority.productionBound,
           sources: productionProfile.sourceRefs,
         ),
+        if (component.isCalorieRegulated) ...[
+          _parameter(
+            id: 'production.$safeComponent.volume_half',
+            symbol: 'V50_$safeComponent',
+            value: component.volumeHalfEmptyingMinutes!,
+            unit: 'min',
+            authority: GastricParameterAuthority.productionBound,
+            sources: productionProfile.sourceRefs,
+          ),
+          _parameter(
+            id: 'production.$safeComponent.delivery',
+            symbol: 'D_$safeComponent',
+            value: component.calorieDeliveryMinutes!,
+            unit: 'min',
+            authority: GastricParameterAuthority.productionBound,
+            sources: productionProfile.sourceRefs,
+          ),
+        ],
       ]);
     }
+    final hasCalorieRegulatedComponent = productionProfile.componentProfiles
+        .any((component) => component.isCalorieRegulated);
 
     return <GastricStructureContract>[
       GastricStructureContract(
         id: 'gastric.production.component_lag_exponential.v1',
         kind: GastricStructureKind.productionComponentLagExponential,
         name: 'Production component lag-exponential',
-        formula: 'R(t)=sum_i w_i * [t<=L_i ? 1 : exp(-ln(2)*(t-L_i)/T50_i)]',
+        formula: hasCalorieRegulatedComponent
+            ? 'R(t)=sum_i w_i * [t<=L_i ? 1 : (calorie-regulated i ? '
+                  'max(exp(-ln(2)*(t-L_i)/V50_i), 1-(t-L_i)/D_i) : '
+                  'exp(-ln(2)*(t-L_i)/T50_i))]'
+            : 'R(t)=sum_i w_i * [t<=L_i ? 1 : exp(-ln(2)*(t-L_i)/T50_i)]',
         observable: GastricMeasuredObservable.normalizedIntragastricRetention,
         modality: GastricMeasurementModality.scintigraphy,
         originalUnit: 'fraction',

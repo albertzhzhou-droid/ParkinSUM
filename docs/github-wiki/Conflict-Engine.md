@@ -9,9 +9,9 @@ The engine answers one narrow, educational question: in this synthetic timeline,
 | # | Layer | Records in the trace |
 | --- | --- | --- |
 | 1 | Meal composition | Completeness, missing fields, physical form |
-| 2 | Gastric emptying | Per-component lag and half-time, overlap with earlier meals |
+| 2 | Gastric emptying | Per-component lag and half-time; liquids with energy are calorie-regulated (2.13 kcal/min); overlap with earlier meals |
 | 3 | Absorption window | Openness profile around the logged event |
-| 4 | LNAA competition | Load factor, data mode (actual / hybrid / proxy), coverage, pressure curve |
+| 4 | LNAA competition | Load factor, data mode (actual / hybrid / proxy), coverage, pressure curve shaped by protein arrival (water cannot move it) |
 | 5 | Interdependency | Food-borne L-dopa, dry vs cooked state, energy identity, **source-record identities** |
 
 ## Confidence is capped, the score is not touched

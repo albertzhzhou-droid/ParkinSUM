@@ -1172,11 +1172,15 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Bolus enteral-style feed (protein-containing liquid) near a dose — '
         'educational context only, no schedule or timing advice',
-    // On the complete absorption-openness grid, the small nonzero score stays
-    // below the engine's categorical interaction-type cutoff. The score is
-    // retained in the trace; the category is not evidence of biological
-    // absence.
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    // The 230 kcal smoothie carries energy, so it is delivered at the
+    // calorie-regulated rate (about 108 min for the whole drink) rather than
+    // emptying like water. At the dose most of it is still modeled in the
+    // stomach, and its protein keeps arriving across the absorption window.
+    // Until 2026-10-20 the liquid emptied like water (half-time about 12 min)
+    // and the score stayed below the interaction cutoff. The category is a
+    // modeled overlap, not evidence about any person.
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedSeverityFloor: SeverityBand.moderate,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(20)],
     meals: [

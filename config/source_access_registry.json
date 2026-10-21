@@ -1019,6 +1019,105 @@
       "notes": "PMID 22747676; motivates only an illustrative one-way sensitivity transform."
     },
     {
+      "source_id": "src.brener.glucose_emptying.1983",
+      "display_name": "Brener, Hendrix & McHugh \u2014 regulation of the gastric emptying of glucose (1983)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Glucose solutions in adults only; the measured rate is applied to every energy-containing liquid as a central value, not as a Parkinson or individual estimate."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.brener.glucose_emptying.1983"
+      ],
+      "last_policy_reviewed": "2026-10-20",
+      "notes": "PMID 6852464; saline emptied exponentially while glucose was delivered at about 2.13 kcal/min. Sets the central value of ge.liquid.nutrient_kcal_per_min."
+    },
+    {
+      "source_id": "src.hunt_stubbs.energy_density.1975",
+      "display_name": "Hunt & Stubbs \u2014 volume and energy content of meals as determinants of gastric emptying (1975)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Pooled analysis assuming exponential emptying; delivered energy rises with energy density, so a constant calorie rate is an approximation."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.hunt_stubbs.energy_density.1975"
+      ],
+      "last_policy_reviewed": "2026-10-20",
+      "notes": "PMID 1127608; doi:10.1113/jphysiol.1975.sp010841. Supports treating isocaloric fat, protein and carbohydrate alike in the calorie-regulated liquid delivery."
+    },
+    {
+      "source_id": "src.marathe.ge_kcal_range.2013",
+      "display_name": "Marathe, Rayner, Jones & Horowitz \u2014 gastric emptying, postprandial glycemia and incretin hormones (2013)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Narrative review centred on diabetes; the 1\u20134 kcal/min span is used only as the sensitivity range of the delivery rate."
+      ],
+      "documentation_refs": [
+        "docs/CONFLICT_ENGINE_MODEL.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.marathe.ge_kcal_range.2013"
+      ],
+      "last_policy_reviewed": "2026-10-20",
+      "notes": "PMID 23613599; doi:10.2337/dc12-1609. Source of the 1\u20134 kcal/min sensitivity range of ge.liquid.nutrient_kcal_per_min."
+    },
+    {
       "source_id": "src.contin.levodopa.pk.2010",
       "display_name": "Contin & Martinelli \u2014 levodopa pharmacokinetics (2010)",
       "owner": "Peer-reviewed literature",

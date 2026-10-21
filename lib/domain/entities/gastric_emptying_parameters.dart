@@ -14,13 +14,15 @@ import '../usecases/model_assumption_registry.dart';
 ///
 /// The two structural records are emitted by the configuration provenance
 /// manifest, while the trace-provider record is emitted from the algorithm
-/// registry. Together with the fourteen numeric records they form the exact
+/// registry. Together with the fifteen numeric records they form the exact
 /// declared field set used by the completeness witness.
 abstract final class GastricEmptyingParameterIds {
   static const String solidLagMinutes = 'ge.solid.lag_minutes';
   static const String solidHalfMinutes = 'ge.solid.half_minutes';
   static const String liquidLagMinutes = 'ge.liquid.lag_minutes';
   static const String liquidHalfMinutes = 'ge.liquid.half_minutes';
+  static const String liquidNutrientKcalPerMinute =
+      'ge.liquid.nutrient_kcal_per_min';
   static const String referenceMealCalories = 'ge.size.reference_kcal';
   static const String fatSlowdownMultiplier = 'ge.fat.slowdown_multiplier';
   static const String fatFractionThreshold = 'ge.fat.fraction_threshold';
@@ -45,6 +47,7 @@ abstract final class GastricEmptyingParameterIds {
     solidHalfMinutes,
     liquidLagMinutes,
     liquidHalfMinutes,
+    liquidNutrientKcalPerMinute,
     referenceMealCalories,
     fatSlowdownMultiplier,
     fatFractionThreshold,
@@ -73,6 +76,11 @@ final class GastricEmptyingParameter<T extends num> {
   final ModelEvidenceLevel confidence;
   final String limitation;
 
+  /// Literature range the central [value] is checked against and reported
+  /// with. It documents how far the selected value could plausibly move; it
+  /// is not a confidence interval and does not change the central curve.
+  final ({double low, double high})? sensitivityRange;
+
   GastricEmptyingParameter({
     required this.id,
     required this.label,
@@ -80,6 +88,7 @@ final class GastricEmptyingParameter<T extends num> {
     required List<String> sourceRefs,
     required this.confidence,
     required this.limitation,
+    this.sensitivityRange,
   }) : sourceRefs = List<String>.unmodifiable(sourceRefs);
 
   bool get isPrototypeHeuristic =>
@@ -92,6 +101,8 @@ final class GastricEmptyingParameter<T extends num> {
     'source_refs': sourceRefs,
     'confidence': confidence.name,
     'limitation': limitation,
+    if (sensitivityRange case final range?)
+      'sensitivity_range': {'low': range.low, 'high': range.high},
   };
 }
 
@@ -99,7 +110,7 @@ final class GastricEmptyingParameterSet {
   static const String schema = 'parkinsum.gastric-parameter-set/1';
   static const String reviewedDefaultId =
       'gastric_emptying_population_sensitivity';
-  static const String reviewedDefaultVersion = '2026.09.02-v3';
+  static const String reviewedDefaultVersion = '2026.10.20-v4';
 
   final String id;
   final String version;
@@ -108,6 +119,7 @@ final class GastricEmptyingParameterSet {
   final GastricEmptyingParameter<double> solidHalfMinutes;
   final GastricEmptyingParameter<double> liquidLagMinutes;
   final GastricEmptyingParameter<double> liquidHalfMinutes;
+  final GastricEmptyingParameter<double> liquidNutrientKcalPerMinute;
   final GastricEmptyingParameter<double> referenceMealCalories;
   final GastricEmptyingParameter<double> fatSlowdownMultiplier;
   final GastricEmptyingParameter<double> fatFractionThreshold;
@@ -127,6 +139,7 @@ final class GastricEmptyingParameterSet {
     required this.solidHalfMinutes,
     required this.liquidLagMinutes,
     required this.liquidHalfMinutes,
+    required this.liquidNutrientKcalPerMinute,
     required this.referenceMealCalories,
     required this.fatSlowdownMultiplier,
     required this.fatFractionThreshold,
@@ -147,7 +160,7 @@ final class GastricEmptyingParameterSet {
     return GastricEmptyingParameterSet(
       id: reviewedDefaultId,
       version: reviewedDefaultVersion,
-      lastReviewed: '2026-09-02',
+      lastReviewed: '2026-10-20',
       solidLagMinutes: GastricEmptyingParameter<double>(
         id: GastricEmptyingParameterIds.solidLagMinutes,
         label: 'Solid meal lag (minutes before linear emptying begins)',
@@ -204,7 +217,33 @@ final class GastricEmptyingParameterSet {
         confidence: ModelEvidenceLevel.prototypeHeuristic,
         limitation:
             'Liquids empty faster than solids; chosen value is a midrange '
-            'illustrative anchor in the 10–20 min direction.',
+            'illustrative anchor in the 10–20 min direction. It sets the '
+            'whole curve of an energy-free liquid and only the volume-driven '
+            'bound of an energy-containing one.',
+      ),
+      liquidNutrientKcalPerMinute: GastricEmptyingParameter<double>(
+        id: GastricEmptyingParameterIds.liquidNutrientKcalPerMinute,
+        label:
+            'Energy delivery rate of an energy-containing liquid (kcal per '
+            'minute)',
+        value: 2.13,
+        sourceRefs: [
+          'src.brener.glucose_emptying.1983',
+          'src.hunt_stubbs.energy_density.1975',
+          'src.marathe.ge_kcal_range.2013',
+        ],
+        confidence: ModelEvidenceLevel.mechanism,
+        limitation:
+            'Brener et al. measured 2.13 kcal/min for glucose solutions of '
+            'three concentrations in adults, while saline emptied '
+            'exponentially; the rate is applied to every energy-containing '
+            'liquid. The studies pooled by Hunt and Stubbs fit equal slowing '
+            'by isocaloric fat, protein and carbohydrate, but delivered '
+            'energy still rose with energy density, so the rate is not '
+            'strictly constant. Reported healthy rates span 1–4 kcal/min '
+            '(the sensitivity range). Viscosity, osmolality, specific '
+            'macronutrients and Parkinson disease are not modeled.',
+        sensitivityRange: (low: 1.0, high: 4.0),
       ),
       referenceMealCalories: GastricEmptyingParameter<double>(
         id: GastricEmptyingParameterIds.referenceMealCalories,
@@ -337,6 +376,7 @@ final class GastricEmptyingParameterSet {
         solidHalfMinutes,
         liquidLagMinutes,
         liquidHalfMinutes,
+        liquidNutrientKcalPerMinute,
         referenceMealCalories,
         fatSlowdownMultiplier,
         fatFractionThreshold,
@@ -377,6 +417,17 @@ final class GastricEmptyingParameterSet {
           parameter.sourceRefs.toSet().length != parameter.sourceRefs.length) {
         errors.add('parameter_source_refs_invalid:${parameter.id}');
       }
+      final range = parameter.sensitivityRange;
+      if (range != null) {
+        final value = parameter.value.toDouble();
+        if (!range.low.isFinite ||
+            !range.high.isFinite ||
+            range.low <= 0 ||
+            range.low > value ||
+            value > range.high) {
+          errors.add('parameter_sensitivity_range_invalid:${parameter.id}');
+        }
+      }
     }
     if (semanticIds.length != GastricEmptyingParameterIds.numeric.length ||
         !semanticIds.containsAll(GastricEmptyingParameterIds.numeric)) {
@@ -403,6 +454,7 @@ final class GastricEmptyingParameterSet {
     bounded(liquidLagMinutes, 0, 1440);
     bounded(solidHalfMinutes, 0.001, 2880);
     bounded(liquidHalfMinutes, 0.001, 2880);
+    bounded(liquidNutrientKcalPerMinute, 0.1, 20);
     bounded(referenceMealCalories, 0.001, 10000);
     bounded(fatSlowdownMultiplier, 1, 10);
     bounded(fiberSlowdownMultiplier, 1, 10);
@@ -438,6 +490,7 @@ final class GastricEmptyingParameterSet {
     'solid_half_minutes': solidHalfMinutes.toJson(),
     'liquid_lag_minutes': liquidLagMinutes.toJson(),
     'liquid_half_minutes': liquidHalfMinutes.toJson(),
+    'liquid_nutrient_kcal_per_min': liquidNutrientKcalPerMinute.toJson(),
     'reference_meal_calories': referenceMealCalories.toJson(),
     'fat_slowdown_multiplier': fatSlowdownMultiplier.toJson(),
     'fat_fraction_threshold': fatFractionThreshold.toJson(),

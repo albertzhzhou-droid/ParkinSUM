@@ -37,9 +37,9 @@ void main() {
           'protein_distribution',
         ]),
       );
-      expect(snapshot.gastricParameters.all, hasLength(14));
-      expect(snapshot.gastricParameters.version, '2026.09.02-v3');
-      expect(snapshot.gastricParameters.lastReviewed, '2026-09-02');
+      expect(snapshot.gastricParameters.all, hasLength(15));
+      expect(snapshot.gastricParameters.version, '2026.10.20-v4');
+      expect(snapshot.gastricParameters.lastReviewed, '2026-10-20');
       expect(
         snapshot.candidateScores.every((score) => score.sampleCount >= 5),
         isTrue,

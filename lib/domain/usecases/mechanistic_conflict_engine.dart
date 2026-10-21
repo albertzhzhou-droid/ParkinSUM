@@ -757,7 +757,8 @@ class MechanisticConflictEngine with RegisteredAlgorithmComponentIdentity {
           'amino_acid_competition',
           [
             'meal_composition.protein_grams',
-            'gastric_emptying_profile.arrival_rate',
+            'meal_composition.food_components.protein_grams',
+            'gastric_emptying_profile.protein_weighted_arrival_rate',
           ],
           competition.assumptions,
           competition.uncertaintyBand.name,
