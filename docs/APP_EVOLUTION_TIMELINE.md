@@ -9854,3 +9854,38 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Revert the copy service, result view, Next-meal, meals and timeline pages, the i18n keys and values, and the new and edited tests.
 - Restore identity `2026.10.20-v80` with its digests, the CoU v67/plan v63/attestation v62 pins (removing ledger record 30 and `test/fixtures/governance_history_before_v81.json`), the impact-service pins, the oracle and sampling report pins, the queue sentences, the release-probe version, the two goldens, and this entry.
 - Preserve every unrelated file.
+
+## 2026-10-21 — PHYSIO-REF-20261021 — Real-unit physiology reference model checked against published human data
+
+- Baseline: branch `model/physiology-reference-v2`, rebased onto main `cf03826` (identity v81, after the GASTRIC-PHYSICS, SERVING-BASIS and PLAIN-LANGUAGE entries and the Dependabot merge). Research tooling and documentation only: no app code, configuration identity, schema, governance record, golden or test changes.
+- Changes:
+  - `tool/physiology_reference/` (Python standard library) adds a reference model in physical units:
+    - a nutrient-tracked stomach: solids pass through a two-stage grinding lag, and energy leaves at a calorie-limited rate (Brener 1983, 2.13 kcal/min);
+    - water and dissolved levodopa empty first-order, slowed by the energy still in the stomach;
+    - levodopa absorption and one-compartment disposition within published population estimates;
+    - per-amino-acid plasma pools;
+    - competitive blood-brain-barrier entry using the Smith et al. 1987 transport constants.
+  - `parameters.json` gives every value a unit, source and status (literature, calibrated, heuristic, verify) and declares its population variability.
+  - `calibrate.py` fits three parameters, each to one named target:
+    - solid grinding rate, to Tougas 2000 medians;
+    - fed-state liquid slowing, to Nutt 1984's 34-minute delay;
+    - effective amino-acid volume, to Carter 1989's two evenly distributed diets.
+  - `reality_checks.py` runs 15 labelled checks.
+  - `whatif.py` prints meal-offset comparisons with seeded 5th–95th percentile bands and writes `docs/design/assets/physiology-whatif.svg`.
+  - `docs/design/PHYSIOLOGY_MODEL_V2.md` records structure, results, the known gap, the path into the Dart engine and the items still to verify.
+- Verification:
+  - `python3 -I tool/physiology_reference/reality_checks.py`: 14 of 14 non-gap checks pass, exit 0. The kinds are 3 calibrated, 5 independent, 6 structural and 1 known gap.
+  - Independent results:
+    - fasting peak 55 min (target 30–60);
+    - meal peak reduction 19% (target 29% ± 12 points, low edge);
+    - oral phenylalanine and leucine loads lower the brain-entry index to 0.54 and 0.66 with plasma levodopa unchanged, while glycine leaves it at 1.00;
+    - whey vs casein ordering matches Boirie 1997.
+  - Regression guards: water leaves the protein peak time unchanged; a 300 kcal shake half-empties in 74 min, against 13.5 min in the shipped model.
+  - Known gap: Carter's protein-at-dinner diet gives 609 against the observed 542 µmol/L. A likely missing mechanism is carbohydrate/insulin lowering of plasma amino acids. It is kept as an expected failure that fails the run if it starts passing.
+  - The chart renders in Chromium. `node tool/public_repo_preflight.mjs` reports 0 blockers.
+- Boundaries:
+  - Population-typical curves for synthetic scenarios only. Not predictions for any person, clinical cutoffs, or dosing, timing or dietary advice.
+  - Several scenario inputs are assumptions because the abstracts omit them (meal compositions, schedules, body weight).
+  - The BBB Km set and fasting amino-acid values still need checking against primary tables.
+  - No motor-response layer. Nothing in the app consumes the model yet.
+- Surgical rollback: remove `tool/physiology_reference/`, `docs/design/PHYSIOLOGY_MODEL_V2.md`, `docs/design/assets/physiology-whatif.svg` and this entry.
