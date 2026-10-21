@@ -1339,8 +1339,8 @@
       "id": "parkinsum.gastric-emptying-generator-structure",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Meal-evidence gating, fat and size calculations, modifier comparators, component-form branching, component weighting, uncertainty thresholds and aggregate policy form one deterministic generator-structure contract. Incompatible changes require a new schema version and requalification; catalog registration is engineering traceability, not biological or clinical validation.",
+      "currentVersion": 2,
+      "compatibility": "Meal-evidence gating, fat and size calculations, modifier comparators, component-form branching (v2: calorie-regulated delivery for energy-containing liquids), component weighting, uncertainty thresholds and aggregate policy form one deterministic generator-structure contract. Incompatible changes require a new schema version and requalification; catalog registration is engineering traceability, not biological or clinical validation.",
       "source": "lib/domain/usecases/gastric_emptying_model.dart",
       "versionEvidence": [
         {
@@ -1352,8 +1352,8 @@
       "id": "parkinsum.gastric-emptying-output-contract",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "versioned",
-      "currentVersion": 1,
-      "compatibility": "Availability states, fraction integrity, residence-curve semantics, derived windows, sensitivity bounds, arrival-rate calculation and unavailable-wire behavior are versioned together. Incompatible changes require a new schema version; passing this contract is deterministic engineering evidence only and does not establish scientific, clinical or patient-specific validity.",
+      "currentVersion": 2,
+      "compatibility": "Availability states, fraction integrity, residence-curve semantics, derived windows, sensitivity bounds, arrival-rate calculation (v2: protein-weighted arrival alongside the meal-mass curve) and unavailable-wire behavior are versioned together. Incompatible changes require a new schema version; passing this contract is deterministic engineering evidence only and does not establish scientific, clinical or patient-specific validity.",
       "source": "lib/domain/entities/gastric_emptying_profile.dart",
       "versionEvidence": [
         {
@@ -1365,9 +1365,9 @@
       "id": "parkinsum.gastric-parameter-set",
       "surfaceKind": "nested-public-contract",
       "versionStatus": "semantic-versioned",
-      "currentVersion": "2026.09.02-v3",
+      "currentVersion": "2026.10.20-v4",
       "schemaUriVersion": 1,
-      "compatibility": "Schema URI v1 and semantic parameter-set identity 2026.09.02-v3 are independently checked: the former defines the serialized field contract and the latter identifies this reviewed default value set. Any field-contract incompatibility requires a new schema URI version, while any reviewed-value change requires a new semantic version; this identity is not a population calibration or clinical-validity claim.",
+      "compatibility": "Schema URI v1 and semantic parameter-set identity 2026.10.20-v4 are independently checked: the former defines the serialized field contract and the latter identifies this reviewed default value set. Any field-contract incompatibility requires a new schema URI version, while any reviewed-value change requires a new semantic version; this identity is not a population calibration or clinical-validity claim.",
       "source": "lib/domain/entities/gastric_emptying_parameters.dart",
       "versionEvidence": [
         {

@@ -9889,3 +9889,10 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
   - The BBB Km set and fasting amino-acid values still need checking against primary tables.
   - No motor-response layer. Nothing in the app consumes the model yet.
 - Surgical rollback: remove `tool/physiology_reference/`, `docs/design/PHYSIOLOGY_MODEL_V2.md`, `docs/design/assets/physiology-whatif.svg` and this entry.
+
+## 2026-10-21 — SCHEMA-CATALOG-FIX-20261021 — Catalog the gastric schema versions advanced by identity v79
+
+- Baseline: PR #163 head `278aaea` on main `cf03826`. CI failed `schema_contract` (Governance gates and Node public preflight). GASTRIC-PHYSICS advanced three gastric schema surfaces in source without updating `config/schema_catalog.json`. Local runs had not included `npm run schema:contract`.
+- Changes: `config/schema_catalog.json` sets `parkinsum.gastric-emptying-generator-structure` and `parkinsum.gastric-emptying-output-contract` to version 2 and `parkinsum.gastric-parameter-set` to semantic version `2026.10.20-v4` (schema URI stays 1); each compatibility note names the change. `tool/schema_catalog_check.test.mjs` expects those versions, including in its drift simulations. No app code, configuration identity, schema shape or golden changes.
+- Verification: `npm run schema:contract` (33 tests; 201 required surfaces), `upgrade:queue`, `privacy:store`, `open-source:firewall` and `release:contract` pass; public preflight reports 0 blockers. Not run locally: `security:dependencies` and the Firestore emulator rules test, whose inputs this change does not touch.
+- Surgical rollback: restore the three catalog entries, the test expectations, and remove this entry.

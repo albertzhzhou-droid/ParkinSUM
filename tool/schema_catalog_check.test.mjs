@@ -376,20 +376,20 @@ test('committed catalog covers every required and discovered schema surface', ()
       catalog,
       'parkinsum.gastric-emptying-generator-structure',
     ).currentVersion,
-    1,
+    2,
   );
   assert.equal(
     schemaById(
       catalog,
       'parkinsum.gastric-emptying-output-contract',
     ).currentVersion,
-    1,
+    2,
   );
   const gastricParameters = schemaById(
     catalog,
     'parkinsum.gastric-parameter-set',
   );
-  assert.equal(gastricParameters.currentVersion, '2026.09.02-v3');
+  assert.equal(gastricParameters.currentVersion, '2026.10.20-v4');
   assert.equal(gastricParameters.schemaUriVersion, 1);
   assert.match(gastricParameters.compatibility, /not a population calibration/);
   assert.equal(
@@ -940,10 +940,10 @@ test('deleting the support-bundle entry fails required and source discovery', ()
 
 test('each gastric configuration surface is required and source-discovered', () => {
   const { catalog } = baseline();
-  for (const id of [
-    'parkinsum.gastric-emptying-configuration',
-    'parkinsum.gastric-emptying-generator-structure',
-    'parkinsum.gastric-emptying-output-contract',
+  for (const [id, version] of [
+    ['parkinsum.gastric-emptying-configuration', 1],
+    ['parkinsum.gastric-emptying-generator-structure', 2],
+    ['parkinsum.gastric-emptying-output-contract', 2],
   ]) {
     const mutated = structuredClone(catalog);
     mutated.schemas = mutated.schemas.filter((schema) => schema.id !== id);
@@ -956,7 +956,7 @@ test('each gastric configuration surface is required and source-discovered', () 
     );
     assert.ok(
       failures.some((failure) =>
-        failure.includes(`discovered schema URI is not cataloged: ${id}/1`),
+        failure.includes(`discovered schema URI is not cataloged: ${id}/${version}`),
       ),
       `${id} should fail source URI discovery`,
     );
@@ -974,7 +974,7 @@ test('gastric parameter semantic and schema-URI versions drift independently', (
   assert.ok(
     validateSchemaCatalog(staleSemanticVersion).some((failure) =>
       failure.includes(
-        'source version "2026.09.02-v3" does not match catalog "2026.08.17-v2"',
+        'source version "2026.10.20-v4" does not match catalog "2026.08.17-v2"',
       ),
     ),
   );
