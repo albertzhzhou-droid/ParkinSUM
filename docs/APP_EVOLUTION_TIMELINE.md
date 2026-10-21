@@ -9698,3 +9698,11 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Boundaries: records restate registry and ledger text; they state limitations and claim no validation, review or clinical qualification. The site goes live only after merge, if GitHub Pages serves `main`'s `/docs`.
 - Custom domain: `tool/build_site.py` builds `build/website/` for `https://parkinsum.com` (showcase at `/`, guide at `/guide/`, referenced assets only, canonical/Open Graph tags, 404, robots, sitemap, Cloudflare `_redirects` and a no-script `_headers` CSP). Checked in Chromium behind that CSP: both pages and the 404 render, all 11 internal links resolve, the archives work at 390 px, no CSP violations. Deployment to Cloudflare is a dashboard step outside this repository.
 - Surgical rollback: remove `tool/build_site.py`; restore `docs/site/{index.html,styles.css,README.md}` and `docs/wiki/index.html`, remove the three icon copies, `tool/wiki_svg/site_archive.py` and this entry.
+
+## 2026-10-21 — DEPS-ARTIFACT-ACTION-20261021 — Refresh Dependabot artifact upload
+
+- Baseline: committed HEAD and refreshed public main `7dff5023af6a3dd7b059b7d143786edd1b6d1340`; merge original #137 commit `1ba661e762c72b275038f59d28d53857309af8a7` onto that baseline.
+- Change: `.github/workflows/open-source-drift-proposal.yml` uses `actions/upload-artifact@v7`. Main already supplies the security-patched dependency graph absent from the PR's old CI. No application, dependency lock, schema or algorithm version changes.
+- Verification: 10 focused CI-layering, required-status and release-source contract tests pass; `git diff --check` passes. Complete hosted CI must run on this updated branch.
+- Boundary: artifact upload is developer tooling and does not establish release approval.
+- Surgical rollback: restore this workflow's upload-artifact version and remove this entry, preserving current main.
