@@ -174,7 +174,7 @@ void main() {
     );
     expect(find.textContaining('65 / 65 stable roots'), findsOneWidget);
     expect(
-      find.textContaining('declared Analyzer target 14.1.0'),
+      find.textContaining('declared Analyzer target 14.5.0'),
       findsOneWidget,
     );
     expect(find.textContaining('transitive closure HOLD'), findsOneWidget);

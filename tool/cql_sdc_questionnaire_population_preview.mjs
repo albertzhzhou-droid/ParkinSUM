@@ -20,8 +20,8 @@ import { CqlEngine, Environment, EvaluationParams } from '@cqframework/cql/engin
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixturePath = path.join(root, 'test/fixtures/cql_fhir_r4_artifact_binding.json');
 const expectedFixtureSha256 = '01594567851f65cf12417a8059b16616be52bc70c60b1eb9f5966171efd6172a';
-const expectedCqlVersion = '5.3.0';
-const expectedFhirModelPackageVersion = '2.1.6';
+const expectedCqlVersion = '5.4.0';
+const expectedFhirModelPackageVersion = '2.2.0';
 const initialExpressionUrl = 'http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression';
 const cqfLibraryUrl = 'http://hl7.org/fhir/StructureDefinition/cqf-library';
 const primaryLibraryName = 'SyntheticQuestionnaireLogic';

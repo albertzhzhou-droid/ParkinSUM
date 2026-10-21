@@ -705,7 +705,7 @@ function validateFhirObservationCqlExtension(value, findings, extensionPath, res
   if (value.googleCqlPackage !== 'github.com/google/cql@v0.0.3-0.20260814184421-b9169ccd54a3') {
     add(findings, 'invalid_fhir_observation_cql_google_engine', extensionPath + '.googleCqlPackage');
   }
-  if (value.javaScriptExecutionPath !== 'cql-execution@3.3.2 + cql-exec-fhir@2.1.6') {
+  if (value.javaScriptExecutionPath !== 'cql-execution@3.3.2 + cql-exec-fhir@2.2.0') {
     add(findings, 'invalid_fhir_observation_cql_javascript_engine', extensionPath + '.javaScriptExecutionPath');
   }
   if (value.cqfJvmEngine !== 'org.cqframework:engine@5.3.0' ||

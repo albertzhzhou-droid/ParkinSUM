@@ -127,7 +127,7 @@ const fhirConditionStatusCorpusSha256 = createHash('sha256')
 const fhirArtifactBindingSha256 = createHash('sha256')
   .update(readFileSync(fhirArtifactBindingPath))
   .digest('hex');
-const cqlPackage = '@cqframework/cql@5.3.0';
+const cqlPackage = '@cqframework/cql@5.4.0';
 const cqlJvmPackage = 'org.cqframework:engine@5.3.0';
 const cqlExecutionPackage = `cql-execution@${packageJson.devDependencies['cql-execution']}`;
 const expectedGoogleCqlPackage = 'github.com/google/cql@v0.0.3-0.20260814184421-b9169ccd54a3';

@@ -37,7 +37,7 @@ test('evaluates the two fixed Questionnaire initialExpressions through the pinne
   ]);
   assert.deepEqual(report.engine, {
     package: '@cqframework/cql',
-    version: '5.3.0',
+    version: '5.4.0',
     libraryVersion: '1.0.0',
   });
   assert.deepEqual(report.operationOutput, {
@@ -157,14 +157,14 @@ test('rejects fixture drift before evaluating changed or additional artifacts', 
 
 test('rejects unreviewed CQL and FHIR model dependency versions', () => {
   assert.throws(
-    () => assertPopulationPreviewDependencyPins({ cql: '5.3.1', fhirModel: '2.1.6' }),
+    () => assertPopulationPreviewDependencyPins({ cql: '5.3.1', fhirModel: '2.2.0' }),
     /unreviewed_cqf_cql_dependency_version/,
   );
   assert.throws(
-    () => assertPopulationPreviewDependencyPins({ cql: '5.3.0', fhirModel: '2.1.7' }),
+    () => assertPopulationPreviewDependencyPins({ cql: '5.4.0', fhirModel: '2.1.7' }),
     /unreviewed_fhir_model_dependency_version/,
   );
-  assert.doesNotThrow(() => assertPopulationPreviewDependencyPins({ cql: '5.3.0', fhirModel: '2.1.6' }));
+  assert.doesNotThrow(() => assertPopulationPreviewDependencyPins({ cql: '5.4.0', fhirModel: '2.2.0' }));
 });
 
 test('an empty Boolean expression stays unanswered and is never converted to false', () => {
