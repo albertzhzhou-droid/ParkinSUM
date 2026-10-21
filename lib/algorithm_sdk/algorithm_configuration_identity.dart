@@ -101,7 +101,10 @@ final class AlgorithmConfigurationIdentity {
   // portion or FDA/USDA category reference amount, else labelled per 100 g),
   // widens uncertainty for assumed amounts and compares the legacy ranker's
   // meal-sized protein and fiber thresholds with the same evaluated amount.
-  static const String defaultVersion = '2026.10.20-v80';
+  // v81 binds plain-language result copy: missing dose or time is presented
+  // as "can't assess yet"; stored scores, severities and rule decisions are
+  // unchanged.
+  static const String defaultVersion = '2026.10.20-v81';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -109,7 +112,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '9de04f048069558805c90e0fa0fb8914f05d24f49ac549dec5a1a3ec3ea58e69';
+      '50ecd06655dfc6ec4d286489820ac3e748e422d7c992c62108e699a6101f0909';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.

@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v67';
+  static const String ledgerVersion = '2026.10.20-v68';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '1f3af5a2a9e437cf22f6f23fad22035cc4135caeb9b73ad5f07a018896edaace';
+  static const String historicalV80ConfigurationSha256 =
       '464d03611fef12cadf04504be650816be368e393d614fad4c836162a8010013f';
   static const String historicalV79ConfigurationSha256 =
       '9ccb403043d9b803653944779cfdac56d9810b0b77277c196ff3b139885568c2';
@@ -1370,7 +1372,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           proteinArrivalCaloricLiquidCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV80ConfigurationSha256,
       evidenceCurrencyRegistrySha256: proteinArrivalCaloricLiquidCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1409,6 +1411,47 @@ final class ContextOfUseRequalificationLedger {
           'authenticated approval or release acceptance. All evidence holds '
           'and blocked promotion remain in force.',
     );
+    final plainLanguageCopyCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 30,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256: candidateServingBasisRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          candidateServingBasisRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          candidateServingBasisRecord.evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          candidateServingBasisRecord.evidenceSynthesisRegistrySha256,
+      semanticDiffSha256: candidateServingBasisRecord.semanticDiffSha256,
+      affectedProviderIds: candidateServingBasisRecord.affectedProviderIds,
+      affectedPredicateIds: candidateServingBasisRecord.affectedPredicateIds,
+      changeClasses: candidateServingBasisRecord.changeClasses,
+      modelRisk: candidateServingBasisRecord.modelRisk,
+      questionOfInterest: candidateServingBasisRecord.questionOfInterest,
+      contextOfUse: candidateServingBasisRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-21T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:plain-language-result-copy-v81',
+      evidenceDecisions: candidateServingBasisRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v81 candidate binds plain-language result copy in the '
+          'response-copy policy and the result view. A result whose only '
+          'elevated finding is missing medication input, such as the dose or '
+          'the time it was taken, is presented as "can\'t assess yet" in a '
+          'neutral colour; any other elevated finding, or rule advice that '
+          'survived a review escalation, keeps the risk presentation. The '
+          'allow decision is labelled "no rule flags", and the score, its '
+          'factors and the raw findings move under "How was this computed?". '
+          'Stored scores, severities, rule decisions and audit records do not '
+          'change. All twenty-nine prior whole records and their digests '
+          'remain exact. The change supplies no new scientific evidence, '
+          'independent review, clinical qualification, authenticated '
+          'approval or release acceptance. All evidence holds and blocked '
+          'promotion remain in force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1445,6 +1488,7 @@ final class ContextOfUseRequalificationLedger {
         referenceRecordIdentityCandidateRecord,
         proteinArrivalCaloricLiquidCandidateRecord,
         candidateServingBasisRecord,
+        plainLanguageCopyCandidateRecord,
       ],
     );
   }

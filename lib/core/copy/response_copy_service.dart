@@ -50,14 +50,62 @@ class ResponseCopyService {
     return _humanize(text);
   }
 
+  /// Whether an assessed result is elevated only because required inputs,
+  /// such as the dose or the medication time, are missing.
+  ///
+  /// Presentation only: the stored score, severity, rule decisions and audit
+  /// records are unchanged. The UI shows this case as a neutral "can't assess
+  /// yet" state instead of a risk level. Missing inputs can turn a matched
+  /// rule's own decision into a review, so any other elevated issue, or any
+  /// rule advice beyond manual review (avoid, separate, switch), keeps the
+  /// normal risk presentation.
+  bool awaitingMissingInputs(InteractionResult result) {
+    if (!result.hasAssessment) return false;
+    if (result.status == InteractionStatus.ok || result.score == 0) {
+      return false;
+    }
+    var hasMissingInputIssue = false;
+    for (final issue in result.issues) {
+      if (_containsMissingCriticalInputs(issue.detail)) {
+        hasMissingInputIssue = true;
+      } else if (issue.severity != InteractionSeverity.low) {
+        return false;
+      }
+    }
+    return hasMissingInputIssue &&
+        result.nextActions.every(
+          (action) =>
+              _containsManualReview(action) ||
+              _containsMissingCriticalInputs(action),
+        );
+  }
+
+  /// Whether one issue was raised because required inputs are missing.
+  bool issueAwaitsMissingInputs(InteractionIssue issue) {
+    return _containsMissingCriticalInputs(issue.detail);
+  }
+
+  /// The missing inputs named in a result, joined for display, for example
+  /// "medication time and dose".
+  String missingInputs(InteractionResult result) {
+    return _joinLabels(_missingInputLabels(result));
+  }
+
+  /// Neutral headline, for example "Can't assess yet — add medication time
+  /// and dose".
+  String awaitingInputsHeadline(InteractionResult result) {
+    return i18n.tr('interaction.awaiting_inputs', {
+      'missing': missingInputs(result),
+    });
+  }
+
   String interactionSummary(InteractionResult result) {
     if (!result.hasAssessment) return interactionText(result.summary);
     if (result.status == InteractionStatus.ok || result.score == 0) {
       return interactionText(result.summary);
     }
-    if (_hasMissingCriticalInputs(result)) {
+    if (awaitingMissingInputs(result)) {
       return i18n.tr('copy.interaction_summary_missing_inputs', {
-        'score': '${result.score}',
         'missing': _joinLabels(_missingInputLabels(result)),
       });
     }
@@ -77,10 +125,15 @@ class ResponseCopyService {
     final protein = _extractProtein(result.analysisText);
     final parts = <String>[];
     if (_hasMissingCriticalInputs(result)) {
+      // "This does not mean the meal itself is definitely dangerous" is only
+      // true when missing inputs are the sole reason for the result.
       parts.add(
-        i18n.tr('copy.interaction_analysis_missing_inputs', {
-          'missing': _joinLabels(_missingInputLabels(result)),
-        }),
+        i18n.tr(
+          awaitingMissingInputs(result)
+              ? 'copy.interaction_analysis_missing_inputs'
+              : 'copy.interaction_analysis_missing_inputs_also',
+          {'missing': _joinLabels(_missingInputLabels(result))},
+        ),
       );
     }
     if (protein != null) {

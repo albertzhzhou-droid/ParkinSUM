@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/recoverable_user_event.dart';
@@ -105,13 +106,16 @@ class MealPage extends StatelessWidget {
                 }
 
                 final result = context.read<AppState>().cachedMealCheck(meal);
+                final copy = ResponseCopyService(i18n: i18n);
                 final accent = result == null
                     ? Theme.of(context).colorScheme.onSurfaceVariant
-                    : interactionSeverityColor(result.overallSeverity);
+                    : interactionResultColor(result, copy);
                 final checkSummary = result == null
                     ? i18n.tr('timeline.conflict_pending')
                     : !result.hasAssessment
                     ? i18n.tr('interaction.unassessed')
+                    : copy.awaitingMissingInputs(result)
+                    ? i18n.tr('interaction.awaiting_inputs_short')
                     : i18n.tr('interaction.score', {
                         'value': '${result.score}',
                       });

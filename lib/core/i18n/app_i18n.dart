@@ -997,11 +997,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'observatory.stage.explain': '5 · 基于来源进行解释',
     'next_meal.title': '下餐推荐',
     'next_meal.subtitle':
-        '先选好预计下一餐的时间；保守规则路径给出并保持候选顺序，机制模型只附加教育性时间重叠轨迹，不参与重排。本地 AI 为单独的可选安全白名单重排。',
+        '先选好预计下一餐的时间。应用会用教育性规则比较目录中的食物，并在每样食物旁说明原因。这些只是帮助了解规则的示例，不是饮食建议。',
     'next_meal.input_time': '预计下一餐时间',
-    'next_meal.use_local_ai': '启用本地 AI 润色（可选）',
+    'next_meal.use_local_ai': '用本地 AI 改写文字（可选）',
     'next_meal.use_local_ai_help':
-        '只调用 localhost 上的 Ollama/llama.cpp 对冲突引擎已筛过的白名单做重排和文字润色；安全门阻断时自动回退到保守路径。',
+        '只使用本机运行的模型（Ollama 或 llama.cpp）。它可以改写解释文字，并对规则已经筛选过的食物重新排序，但不能改变规则结果。安全检查阻止时，会显示基于规则的列表。',
     'next_meal.generate': '生成推荐',
     'next_meal.window_title': '你提供的进餐时间窗（分钟）',
     'next_meal.window_help': '时间窗由你设置，只用于生成教育性机制轨迹；模型不会替你决定进餐时间，也不会改变保守推荐顺序。',
@@ -1011,9 +1011,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'next_meal.empty': '设置好下一餐时间后点击「生成推荐」，引擎会按那个时间窗重新评估。',
     'next_meal.why_these': '为什么是这几样',
     'next_meal.ai_polished': '本地 AI 已润色',
-    'next_meal.conservative_engine': '冲突引擎保守路径',
+    'next_meal.conservative_engine': '基于规则的列表',
     'next_meal.recommendation_path': '推荐路径',
     'next_meal.gate_reasons': '安全门说明',
+    'next_meal.how_computed_body':
+        '食物的顺序由规则检查决定。教育性时间模型只附加轨迹，从不改变顺序。开启本地 AI 时，它只能对规则已筛选过的食物重新排序或改写文字，不能改变规则结果。',
+    'next_meal.result_boundary':
+        '这些食物是目录中的示例，按粗略的规则顺序列出，这个顺序不是经过验证的排名。这不是饮食或用药建议；做决定前请咨询合格的临床医生。',
     'next_meal.candidates': '候选食物',
     'next_meal.no_candidates': '当前条件下没有合适的候选食物，请调整时间或检查食物目录。',
     'next_meal.error': '生成失败',
@@ -1024,11 +1028,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_intakes': '已记录服药：{count}',
     'dashboard.recommendations': '推荐',
     'dashboard.no_recommendations': '暂无推荐',
-    'dashboard.recommendation_path': '推荐路径',
+    'dashboard.recommendation_path': '教育性示例',
     'dashboard.recommendation_template':
         '当前模板：{region} · {mealSlot} · {texture}',
     'dashboard.ai_used': '已使用本地 AI 增强',
-    'dashboard.ai_not_used': '仅使用保守路径',
+    'dashboard.ai_not_used': '未使用本地 AI',
     'dashboard.recommendation_why': '为什么推荐',
     'dashboard.recommendation_gate': 'AI / 安全门状态',
     'dashboard.recommendation_macro_line':
@@ -1077,6 +1081,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.save_intake_failed': '保存服药记录失败：{error}',
     'timeline.meal_macro_line': '合计：蛋白 {protein} g · 碳水 {carbs} g · 脂肪 {fat} g',
     'timeline.conflict_line': '冲突复核：{severity} · 分数 {score}',
+    'timeline.conflict_awaiting': '冲突复核：暂时无法评估——请补充{missing}',
     'timeline.meal_window_line': '进食时间窗：{start} - {end}',
     'timeline.next_meal_window_line': '下一餐时间窗：{start} - {end}',
     'timeline.nearest_medication_line': '最近服药：{name}（{distance}）',
@@ -1763,6 +1768,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.key_findings': '关键判断',
     'interaction.next_actions': '下一步建议',
     'interaction.data_notes': '数据与边界说明',
+    'interaction.awaiting_inputs': '暂时无法评估——请补充{missing}',
+    'interaction.awaiting_inputs_short': '暂时无法评估',
+    'interaction.how_computed': '这个结果是怎么得出的？',
+    'interaction.how_computed_score': '规则分数：{score}/100',
+    'interaction.how_computed_awaiting_note':
+        '缺少输入会让这次检查转为需要复核，而这一复核要求占了已存规则分数的大部分。分数保留在这里供查看，上方不把它显示为风险等级。',
+    'copy.interaction_analysis_missing_inputs_also': '另外还缺少{missing}。',
     'interaction.missing_input': '缺少关键输入',
     'interaction.evidence_count': '证据 {count} 条',
     'interaction.evidence_pmid': 'PMID',
@@ -1785,7 +1797,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'decision.discourage': '不建议',
     'decision.warn': '警示',
     'decision.info': '信息',
-    'decision.allow': '允许',
+    'decision.allow': '无规则提示',
     'decision.defer': '延后判断',
     'severity.low': '低',
     'severity.moderate': '中',
@@ -1862,12 +1874,12 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'recommend.history_low_protein': '结合近期记录，建议优先低蛋白选项',
     'recommend.culture_match': '符合当前地区饮食模板',
     'recommend.fallback_chain': '当前地区食物知识正在使用 fallback 链',
-    'recommend.general_friendly': '整体上较适合的选择',
+    'recommend.general_friendly': '由规则检查列出',
     'recommend.path.hybrid_local_ai': '本地 AI 辅助重排',
     'recommend.path.conservative_safety_gate': '保守路径（安全门阻断 AI）',
     'recommend.path.conservative_gate_block': '保守路径（本地 AI 不可用）',
     'recommend.path.fallback_invalid_ai': '保守路径（AI 输出未通过校验）',
-    'recommend.path.conservative_cdss': '保守 CDSS 路径',
+    'recommend.path.conservative_cdss': '基于规则',
     'recommend.runtime.local_ai_endpoint_unavailable':
         '没有检测到 localhost 上可响应的 Ollama 或 llama.cpp 服务。请先启动本地模型服务，或关闭本地 AI 重排。',
     'recommend.runtime.endpoint_must_be_localhost':
@@ -1889,8 +1901,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'recommend.runtime.returned_conservative': '已返回确定性的保守推荐结果。',
     'recommend.runtime.ai_validation_failed': '本地 AI 的结构化输出未通过白名单校验。',
     'recommend.runtime.ai_invalid_whitelist': '本地 AI 没有返回有效的白名单候选排序，因此不能使用该结果。',
-    'recommend.runtime.cdss_conservative_observations':
-        '保守 CDSS 路径会在可用时使用真实变体观测值。',
+    'recommend.runtime.cdss_conservative_observations': '规则检查在可用时使用了导入的食物成分数据。',
     'recommend.runtime.local_ai_success': '本地 AI 重排已完成。',
     'recommend.runtime.local_ai_copy_polish_success': '本地 AI 已完成文案润色。',
     'recommend.runtime.medgemma_optional_unavailable':
@@ -1905,7 +1916,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.database_nutrient_facts': '数据库营养事实',
     'copy.missing_input_unknown': '关键信息',
     'copy.interaction_summary_missing_inputs':
-        '当前暂时标为高风险（{score}/100），主要原因是缺少{missing}，系统无法判断这顿饭和用药是否需要错开。',
+        '暂时无法评估：缺少{missing}。补充之前，应用无法判断这顿饭与这种药的时间关系。这既不代表这顿饭没有问题，也不代表这顿饭本身有问题。',
     'copy.interaction_summary_high': '当前检查结果偏高风险（{score}/100），请先查看原因和下一步操作。',
     'copy.interaction_analysis_missing_inputs':
         '这不是在说这顿饭本身一定危险，而是因为缺少{missing}，无法安全计算食物与药物的时间关系。',
@@ -2731,11 +2742,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'observatory.stage.explain': '5 · Explain with provenance',
     'next_meal.title': 'Next-meal recommendation',
     'next_meal.subtitle':
-        'Pick when you plan to eat next. The conservative rule path keeps the candidate order; the mechanistic model adds an educational timing-overlap trace and never reranks it. Local AI is a separate, optional safe-whitelist reranker.',
+        'Pick when you plan to eat next. The app compares foods from its catalog against its educational rules and shows the reasons next to each one. These are examples for exploring the rules, not advice about what to eat.',
     'next_meal.input_time': 'Planned next-meal time',
-    'next_meal.use_local_ai': 'Polish wording with local AI (optional)',
+    'next_meal.use_local_ai': 'Reword with local AI (optional)',
     'next_meal.use_local_ai_help':
-        'Only calls localhost Ollama/llama.cpp to rerank and rewrite explanations for candidates the conflict engine already approved; falls back to the conservative path when the safety gate blocks it.',
+        'Uses only a model running on this computer (Ollama or llama.cpp). It may reword explanations and reorder foods the rules have already screened, but it cannot change rule results. If a safety check blocks it, the rule-based list is shown instead.',
     'next_meal.generate': 'Generate recommendation',
     'next_meal.window_title': 'Meal-time window you provide (minutes)',
     'next_meal.window_help':
@@ -2747,9 +2758,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Set a planned time and tap "Generate recommendation"; the engine will re-evaluate against that window.',
     'next_meal.why_these': 'Why these picks',
     'next_meal.ai_polished': 'Polished by local AI',
-    'next_meal.conservative_engine': 'Conflict-engine conservative path',
+    'next_meal.conservative_engine': 'Rule-based list',
     'next_meal.recommendation_path': 'Recommendation path',
     'next_meal.gate_reasons': 'Safety-gate notes',
+    'next_meal.how_computed_body':
+        'The rule-based check sets the order of these foods. The educational timing model only adds a trace; it never changes the order. Local AI, when turned on, may only reorder or reword foods the rules have already screened and cannot change rule results.',
+    'next_meal.result_boundary':
+        'These foods are examples from the catalog, in a rough rule-based order that is not a validated ranking. This is not meal or medication advice; review decisions with a qualified clinician.',
     'next_meal.candidates': 'Top candidates',
     'next_meal.no_candidates':
         'No suitable candidate under the current constraints. Adjust the planned time or expand the food catalog.',
@@ -2761,11 +2776,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_intakes': 'Medication intakes: {count}',
     'dashboard.recommendations': 'Recommendations',
     'dashboard.no_recommendations': 'No recommendations yet',
-    'dashboard.recommendation_path': 'Recommendation path',
+    'dashboard.recommendation_path': 'Educational examples',
     'dashboard.recommendation_template':
         'Active template: {region} · {mealSlot} · {texture}',
     'dashboard.ai_used': 'Local AI enhancement used',
-    'dashboard.ai_not_used': 'Conservative path only',
+    'dashboard.ai_not_used': 'Local AI off',
     'dashboard.recommendation_why': 'Why these recommendations',
     'dashboard.recommendation_gate': 'AI / safety gate status',
     'dashboard.recommendation_macro_line':
@@ -2818,6 +2833,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.meal_macro_line':
         'Totals: protein {protein} g · carbs {carbs} g · fat {fat} g',
     'timeline.conflict_line': 'Conflict review: {severity} · score {score}',
+    'timeline.conflict_awaiting':
+        "Conflict review: can't assess yet — add {missing}",
     'timeline.meal_window_line': 'Meal window: {start} - {end}',
     'timeline.next_meal_window_line': 'Next meal window: {start} - {end}',
     'timeline.nearest_medication_line':
@@ -3638,6 +3655,14 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.key_findings': 'Key findings',
     'interaction.next_actions': 'Next actions',
     'interaction.data_notes': 'Data notes and boundaries',
+    'interaction.awaiting_inputs': "Can't assess yet — add {missing}",
+    'interaction.awaiting_inputs_short': "Can't assess yet",
+    'interaction.how_computed': 'How was this computed?',
+    'interaction.how_computed_score': 'Rule score: {score}/100',
+    'interaction.how_computed_awaiting_note':
+        'Missing inputs send this check to review, and that review adds most of the stored rule score. The score is kept here for inspection; it is not shown above as a risk level.',
+    'copy.interaction_analysis_missing_inputs_also':
+        'Some required medication information is also missing: {missing}.',
     'interaction.missing_input': 'Missing critical input',
     'interaction.evidence_count': 'Evidence ({count})',
     'interaction.evidence_pmid': 'PMID',
@@ -3667,7 +3692,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'decision.discourage': 'Discourage',
     'decision.warn': 'Warn',
     'decision.info': 'Info',
-    'decision.allow': 'Allow',
+    'decision.allow': 'No rule flags',
     'decision.defer': 'Defer',
     'severity.low': 'Low',
     'severity.moderate': 'Moderate',
@@ -3784,7 +3809,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'recommend.culture_match': 'Matches the current regional diet template',
     'recommend.fallback_chain':
         'Food knowledge for this region is using a fallback chain',
-    'recommend.general_friendly': 'Generally suitable option',
+    'recommend.general_friendly': 'Listed by the rule-based check',
     'recommend.path.hybrid_local_ai': 'Local AI assisted rerank',
     'recommend.path.conservative_safety_gate':
         'Conservative path (AI blocked by safety gate)',
@@ -3792,7 +3817,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Conservative path (local AI unavailable)',
     'recommend.path.fallback_invalid_ai':
         'Conservative path (AI output failed validation)',
-    'recommend.path.conservative_cdss': 'Conservative CDSS path',
+    'recommend.path.conservative_cdss': 'Rule-based',
     'recommend.runtime.local_ai_endpoint_unavailable':
         'No localhost Ollama or llama.cpp service responded. Start the local model service, or disable local AI reranking.',
     'recommend.runtime.endpoint_must_be_localhost':
@@ -3826,7 +3851,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'recommend.runtime.ai_invalid_whitelist':
         'Local AI did not return a valid whitelist-only ordering, so the result was not used.',
     'recommend.runtime.cdss_conservative_observations':
-        'The conservative CDSS path used real variant observations when available.',
+        'The rule-based check used imported food-composition data where it was available.',
     'recommend.runtime.local_ai_success': 'Local AI reranking succeeded.',
     'recommend.runtime.local_ai_copy_polish_success':
         'Local AI copy polish succeeded.',
@@ -3845,7 +3870,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.database_nutrient_facts': 'database nutrient facts',
     'copy.missing_input_unknown': 'key information',
     'copy.interaction_summary_missing_inputs':
-        'This is temporarily marked high risk ({score}/100) because required medication information is missing: {missing}. The app cannot judge meal-medication timing safely until this is completed.',
+        "Can't assess yet because required medication information is missing: {missing}. Until it is added, the app cannot check how this meal's timing relates to the medication. This is not an all-clear, and it does not mean the meal itself is a problem.",
     'copy.interaction_summary_high':
         'This check is currently high risk ({score}/100). Review the reason and next step before relying on timing guidance.',
     'copy.interaction_analysis_missing_inputs':
@@ -4178,6 +4203,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'next_meal.conservative_engine': 'Chemin conservateur du moteur de conflit',
     'next_meal.recommendation_path': 'Chemin de recommandation',
     'next_meal.gate_reasons': 'Notes de la barriere de securite',
+    'next_meal.how_computed_body':
+        "La verification des regles fixe l'ordre de ces aliments. Le modele temporel educatif ajoute seulement une trace et ne change jamais l'ordre. L'IA locale, si elle est activee, peut seulement reordonner ou reformuler des aliments deja filtres par les regles, sans changer leurs resultats.",
+    'next_meal.result_boundary':
+        "Ces aliments sont des exemples du catalogue, dans un ordre approximatif fixe par les regles, qui n'est pas un classement valide. Ce n'est pas un conseil sur les repas ou les medicaments ; discutez de vos decisions avec un clinicien qualifie.",
     'next_meal.candidates': 'Meilleurs candidats',
     'next_meal.no_candidates':
         'Aucun candidat approprie selon les contraintes actuelles. Ajustez l\'heure prevue ou enrichissez le catalogue.',
@@ -4696,6 +4725,15 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.key_findings': 'Constats cles',
     'interaction.next_actions': 'Actions suivantes',
     'interaction.data_notes': 'Notes sur les donnees et limites',
+    'interaction.awaiting_inputs':
+        "Evaluation impossible pour l'instant — ajoutez {missing}",
+    'interaction.awaiting_inputs_short': "Evaluation impossible pour l'instant",
+    'interaction.how_computed': 'Comment ce resultat a-t-il ete calcule ?',
+    'interaction.how_computed_score': 'Score des regles : {score}/100',
+    'interaction.how_computed_awaiting_note':
+        "Les donnees manquantes envoient ce controle en revue, et cette revue compte pour l'essentiel du score enregistre. Le score reste visible ici pour inspection ; il n'est pas affiche plus haut comme niveau de risque.",
+    'copy.interaction_analysis_missing_inputs_also':
+        'Certaines informations requises sur le medicament manquent aussi : {missing}.',
     'interaction.missing_input': 'Entree critique manquante',
     'interaction.evidence_count': 'Preuves ({count})',
     'interaction.evidence_pmid': 'PMID',
@@ -4725,7 +4763,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'decision.discourage': 'Deconseille',
     'decision.warn': 'Avertissement',
     'decision.info': 'Info',
-    'decision.allow': 'Autoriser',
+    'decision.allow': 'Aucune alerte de regle',
     'decision.defer': 'Reporter',
     'severity.low': 'Faible',
     'severity.moderate': 'Modere',
@@ -4846,7 +4884,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Correspond au modele alimentaire regional actuel',
     'recommend.fallback_chain':
         'La base alimentaire de cette region utilise une chaine de secours',
-    'recommend.general_friendly': 'Option generalement adaptee',
+    'recommend.general_friendly': 'Listee par la verification des regles',
     'recommend.path.hybrid_local_ai': 'Reclassement assiste par IA locale',
     'recommend.path.conservative_safety_gate':
         'Chemin conservateur (IA bloquee par la porte de securite)',
@@ -4906,7 +4944,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.database_nutrient_facts': 'faits nutritionnels de la base',
     'copy.missing_input_unknown': 'informations cles',
     'copy.interaction_summary_missing_inputs':
-        'Le resultat est marque a risque eleve ({score}/100) car {missing} manque; lapp ne peut pas evaluer surement le timing repas-medicament.',
+        "Evaluation impossible pour l'instant : {missing} manque. Tant que ce n'est pas ajoute, l'app ne peut pas verifier le lien entre l'heure de ce repas et le medicament. Ce n'est ni un feu vert, ni un signe que le repas lui-meme pose probleme.",
     'copy.interaction_summary_high':
         'Ce controle indique actuellement un risque eleve ({score}/100). Verifiez la raison et letape suivante.',
     'copy.interaction_analysis_missing_inputs':
@@ -5243,6 +5281,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'next_meal.conservative_engine': 'コンフリクトエンジンの保守経路',
     'next_meal.recommendation_path': '推奨経路',
     'next_meal.gate_reasons': '安全ゲートのメモ',
+    'next_meal.how_computed_body':
+        '食品の順序はルールチェックで決まります。教育用の時間モデルはトレースを加えるだけで、順序は変えません。ローカル AI をオンにした場合も、ルールで確認済みの食品の並べ替えや言い換えだけを行い、ルールの結果は変えられません。',
+    'next_meal.result_boundary':
+        'これらはカタログ内の食品の例で、ルールに基づくおおまかな順序で並んでいます。この順序は検証済みの順位ではありません。食事や服薬についての助言ではありません。判断は資格のある臨床医と相談してください。',
     'next_meal.candidates': '上位候補',
     'next_meal.no_candidates': '現在の条件では適切な候補がありません。予定時刻を調整するか、食事目録を見直してください。',
     'next_meal.error': '生成に失敗しました',
@@ -5692,6 +5734,14 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.key_findings': '主要判断',
     'interaction.next_actions': '次の対応',
     'interaction.data_notes': 'データと境界の注記',
+    'interaction.awaiting_inputs': 'まだ評価できません — {missing} を入力してください',
+    'interaction.awaiting_inputs_short': 'まだ評価できません',
+    'interaction.how_computed': 'この結果はどう計算されましたか？',
+    'interaction.how_computed_score': 'ルールスコア：{score}/100',
+    'interaction.how_computed_awaiting_note':
+        '入力不足によりこの確認はレビュー扱いになり、保存されたルールスコアの大部分はそのレビューによるものです。スコアは確認用にここに残し、上ではリスクの程度として表示しません。',
+    'copy.interaction_analysis_missing_inputs_also':
+        '薬に関する必要な情報も一部不足しています：{missing}。',
     'interaction.missing_input': '重要入力が不足',
     'interaction.evidence_count': '証拠 {count} 件',
     'interaction.evidence_pmid': 'PMID',
@@ -5716,7 +5766,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'decision.discourage': '非推奨',
     'decision.warn': '警告',
     'decision.info': '情報',
-    'decision.allow': '許可',
+    'decision.allow': 'ルール上の注意なし',
     'decision.defer': '保留',
     'severity.low': '低',
     'severity.moderate': '中',
@@ -5809,7 +5859,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'recommend.history_low_protein': '最近の履歴に基づき、低たんぱくの選択肢を優先',
     'recommend.culture_match': '現在の地域食事テンプレートに一致',
     'recommend.fallback_chain': 'この地域の食品知識はフォールバックチェーンを使用中',
-    'recommend.general_friendly': '一般的に選びやすい候補',
+    'recommend.general_friendly': 'ルールチェックで挙げられた候補',
     'recommend.path.hybrid_local_ai': 'ローカルAIによる再順位付け',
     'recommend.path.conservative_safety_gate': '保守経路（安全ゲートがAIを停止）',
     'recommend.path.conservative_gate_block': '保守経路（ローカルAI利用不可）',
@@ -5855,7 +5905,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.database_nutrient_facts': 'データベース栄養事実',
     'copy.missing_input_unknown': '重要情報',
     'copy.interaction_summary_missing_inputs':
-        '{missing} が不足しているため、一時的に高リスク（{score}/100）として扱います。食事と薬の時間関係を安全に判断できません。',
+        'まだ評価できません：{missing} が不足しています。入力されるまで、この食事と薬の時間関係は確認できません。問題がないという意味でも、食事そのものに問題があるという意味でもありません。',
     'copy.interaction_summary_high':
         '現在の確認結果は高リスク（{score}/100）です。理由と次の操作を確認してください。',
     'copy.interaction_analysis_missing_inputs':

@@ -1,9 +1,10 @@
 # ParkinSUM Companion — Documentation
 
-ParkinSUM is an educational production-architecture prototype. Public demos and
-model checks use synthetic data; owner-entered local records can contain
-sensitive information. The model is not clinically calibrated, and the project
-makes no clinical-validation or patient-care claim.
+ParkinSUM is an educational production-architecture prototype that explores how
+meals, especially protein, may interact with levodopa timing in Parkinson's
+disease. Public demos and model checks use synthetic data; owner-entered local
+records can contain sensitive information. The model is not clinically
+calibrated, and the project makes no clinical-validation or patient-care claim.
 
 ## Start here
 
@@ -12,6 +13,7 @@ makes no clinical-validation or patient-care claim.
 | [Project README](../README.md) | The Paper workspace, current update, local setup, and boundaries. |
 | [Project showcase](site/index.html) / [Visual wiki](wiki/index.html) | The interface and a short reviewer route. |
 | [Capability matrix](CAPABILITY_MATRIX.md) | What is implemented, fixture-tested, report-only, or future work. |
+| [Evidence scope](EVIDENCE_SCOPE.md) | What screenshots, fixtures, checks, and releases do and do not establish. |
 | [Public verification](PUBLIC_VERIFICATION.md) | Exact checks, prerequisites, failure meaning, and evidence scope. |
 | [App evolution timeline](APP_EVOLUTION_TIMELINE.md) | Dated changes, actual verification results, limitations, and rollback scopes. |
 | [Next upgrade plan and implementation status](NEXT_UPGRADE_PLAN.md) | Preserved 2026-09-29 planning snapshot with actual local M0–M3 implementation status and remaining evidence boundaries. |
