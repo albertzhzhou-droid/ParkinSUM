@@ -2,13 +2,13 @@
   "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
   "schemaVersion": 1,
   "review": {
-    "reviewedAt": "2026-10-16",
+    "reviewedAt": "2026-10-21",
     "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository source facts refreshed for the 2026-10-16 Node development-tooling security update (firebase-tools 15.34.0 plus scoped overrides for @grpc/grpc-js, csv-parse and @opentelemetry/core); all 92 production npm packages and every Flutter app dependency are unchanged. Retains the local upgrade and Claude nutrition/reference-data baseline reconciliation, the native SDK migration, and original data-flow declarations. Previously recorded built-artifact facts are not re-attested; owner approval remains pending. This is not a human privacy approval or store submission receipt."
+    "approvalScope": "Repository source facts refreshed for Dependabot PR #157: analyzer 14.5.0 and the reviewed Flutter minor/patch dependency group. Checked the resolved lock and affected third-party Apple privacy manifest bytes; runtime package roles and declared data flows remain unchanged. Notification plugin capability and analyzer evidence identities are reviewed separately; old device attestations are not re-attested. Previously recorded built-artifact facts are not re-attested; owner approval remains pending. This is not a human privacy approval or store submission receipt."
   },
   "lockIdentities": {
-    "pubspec.lock": "a8a5be6f96efe4428693876a6453cdc81cae021064dc0925968b3e78dfdd4b46",
+    "pubspec.lock": "0645192cd58ad05a85c8e6ca28f4140ecc56eee5fc2f7e6cf137d82f107a606a",
     "package-lock.json": "00a1805ec51a2aaafa7b9f4396147f0333b3c788ff36987c67618289d8f1e1a2",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
@@ -105,7 +105,7 @@
       "printing": {
         "accessedApiCategory": null,
         "reason": null,
-        "manifestAvailability": "no_bundled_privacy_manifest_in_5_15_0",
+        "manifestAvailability": "no_bundled_privacy_manifest_in_5_15_1",
         "reviewBoundary": "system_print_and_share_only_no_pdf_preview_or_google_fonts"
       },
       "sqflite_darwin": {

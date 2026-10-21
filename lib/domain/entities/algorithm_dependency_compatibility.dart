@@ -7,9 +7,9 @@ import 'package:crypto/crypto.dart';
 const String algorithmDependencyCompatibilityReportSchema =
     'parkinsum.algorithm-dependency-compatibility-report/1';
 const int algorithmDependencyCompatibilityReportSchemaVersion = 1;
-const String algorithmDependencyAnalyzerVersion = '14.1.0';
+const String algorithmDependencyAnalyzerVersion = '14.5.0';
 const String algorithmDependencyAnalyzerArchiveSha256 =
-    '62993bed6eadbe9596c5c20d5c167e7bc563c5fe266657a04ddeb93bdb84f4c9';
+    '6d377901d198536b648172974d9d4f277910502cad92193466869cac0ff34990';
 const String algorithmDependencyReviewedDartVersion = '3.13.0';
 const String algorithmDependencyReviewedFlutterVersion = '3.47.0';
 const String algorithmDependencyCompatibilityAccepted =
@@ -192,10 +192,10 @@ class AlgorithmDependencyCompatibilityReport {
     'environment_hold_reasons': environmentHoldReasons,
     'roots': roots.map((root) => root.toJson()).toList(),
     'api_evidence_urls': const [
-      'https://pub.dev/packages/analyzer/versions/14.1.0',
-      'https://pub.dev/documentation/analyzer/14.1.0/dart_analysis_analysis_context_collection/AnalysisContextCollection-class.html',
-      'https://pub.dev/documentation/analyzer/14.1.0/dart_analysis_session/AnalysisSession-class.html',
-      'https://pub.dev/documentation/analyzer/14.1.0/dart_analysis_results/ResolvedUnitResult-class.html',
+      'https://pub.dev/packages/analyzer/versions/14.5.0',
+      'https://pub.dev/documentation/analyzer/14.5.0/dart_analysis_analysis_context_collection/AnalysisContextCollection-class.html',
+      'https://pub.dev/documentation/analyzer/14.5.0/dart_analysis_session/AnalysisSession-class.html',
+      'https://pub.dev/documentation/analyzer/14.5.0/dart_analysis_results/ResolvedUnitResult-class.html',
     ],
   };
 

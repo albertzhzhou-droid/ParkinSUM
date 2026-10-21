@@ -205,7 +205,7 @@ class ReminderNotificationPluginPin {
 
   void validate() {
     if (package != 'flutter_local_notifications' ||
-        version != '22.3.0' ||
+        version != '22.3.2' ||
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(archiveSha256) ||
         !RegExp(r'^[a-f0-9]{64}$').hasMatch(lockfileSha256)) {
       throw const FormatException('notification plugin pin is incomplete');
@@ -566,11 +566,11 @@ final class ReminderNotificationCapabilityMatrix {
   static const ReminderNotificationPluginPin currentPluginPin =
       ReminderNotificationPluginPin(
         package: 'flutter_local_notifications',
-        version: '22.3.0',
+        version: '22.3.2',
         archiveSha256:
-            '1447ba911c60f2ba3f25dae1af151ec187162566b0f57e37771bf0b400f013ad',
+            '9ee28742343dd13df758bb4185e8ded37ac2d1aeca6648c3ba7862c99797517e',
         lockfileSha256:
-            'a8a5be6f96efe4428693876a6453cdc81cae021064dc0925968b3e78dfdd4b46',
+            '0645192cd58ad05a85c8e6ca28f4140ecc56eee5fc2f7e6cf137d82f107a606a',
       );
 
   static final ReminderNotificationCapabilityMatrix current =

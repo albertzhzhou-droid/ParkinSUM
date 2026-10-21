@@ -10,8 +10,9 @@ import 'package:parkinsum_companion/domain/entities/personal_log_view.dart';
 import 'package:parkinsum_companion/domain/usecases/personal_log_date_window_resolver.dart';
 import 'package:parkinsum_companion/domain/usecases/pinned_timezone_rules.dart';
 import 'package:parkinsum_companion/domain/usecases/timezone_local_time_resolver.dart';
-import 'package:timezone/data/latest_all.dart' as historical_data;
 import 'package:timezone/timezone.dart' as tz;
+
+import 'support/frozen_timezone_2025c.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -72,7 +73,7 @@ void main() {
   test(
     'another package-global database cannot relabel the immutable snapshot',
     () {
-      historical_data.initializeTimeZones();
+      loadFrozenTimezone2025c();
       final evidence = _resolve(
         rules.snapshot,
         'America/Winnipeg',
@@ -130,12 +131,7 @@ void main() {
   test(
     'historical2025c receipt retains its civil intent and whole JSON after upgrade',
     () {
-      historical_data.initializeTimeZones();
-      final old = TimezoneRuleSnapshot(
-        database: tz.timeZoneDatabase,
-        tzdbRelease: '2025c',
-        providerIdentity: 'timezone/0.11.1:data/latest_all',
-      );
+      final old = loadFrozenTimezone2025c();
       final evidence = _resolve(
         old,
         'America/Winnipeg',

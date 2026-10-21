@@ -140,10 +140,10 @@ void main() {
     test('matrix pins the exact notification package and lockfile', () {
       final pin = ReminderNotificationCapabilityMatrix.current.pluginPin;
       expect(pin.package, 'flutter_local_notifications');
-      expect(pin.version, '22.3.0');
+      expect(pin.version, '22.3.2');
       expect(
         pin.archiveSha256,
-        '1447ba911c60f2ba3f25dae1af151ec187162566b0f57e37771bf0b400f013ad',
+        '9ee28742343dd13df758bb4185e8ded37ac2d1aeca6648c3ba7862c99797517e',
       );
       expect(
         sha256.convert(File('pubspec.lock').readAsBytesSync()).toString(),

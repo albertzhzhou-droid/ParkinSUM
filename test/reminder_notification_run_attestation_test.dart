@@ -23,7 +23,7 @@ const _apkManifestTreeSha =
 const _outputMetadataSha =
     '4444444444444444444444444444444444444444444444444444444444444444';
 const _pluginPackageSha =
-    '1447ba911c60f2ba3f25dae1af151ec187162566b0f57e37771bf0b400f013ad';
+    '9ee28742343dd13df758bb4185e8ded37ac2d1aeca6648c3ba7862c99797517e';
 const _certificateSha =
     'd5106acb503a636166825b4ed0f792d50fa01da0b15e9f05c44c1efac06e0914';
 const _apksignerJarSha =
@@ -51,7 +51,7 @@ void main() {
       expect(attestation.source.dirty, isTrue);
       expect(attestation.releaseEligible, isFalse);
       expect(attestation.claims.visibleDeliveryVerified, isFalse);
-      expect(attestation.platformBinding.notificationPluginVersion, '22.3.0');
+      expect(attestation.platformBinding.notificationPluginVersion, '22.3.2');
       expect(attestation.executionIsolation.resources, hasLength(2));
       expect(
         attestation.executionIsolation.leaseEvidenceSha256,

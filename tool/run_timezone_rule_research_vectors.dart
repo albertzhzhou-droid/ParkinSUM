@@ -5,8 +5,9 @@ import 'package:crypto/crypto.dart';
 import 'package:parkinsum_companion/domain/entities/local_time_resolution.dart';
 import 'package:parkinsum_companion/domain/usecases/timezone_local_time_resolver.dart';
 import 'package:parkinsum_companion/domain/usecases/pinned_timezone_rules.dart';
-import 'package:timezone/data/latest_all.dart' as historical_data;
 import 'package:timezone/timezone.dart' as tz;
+
+import '../test/support/frozen_timezone_2025c.dart';
 
 void main(List<String> args) {
   if (args.length != 4) {
@@ -23,17 +24,12 @@ void main(List<String> args) {
   if (rows.length > 32 || points.length > 64) {
     throw const FormatException('Timezone research budget exceeded.');
   }
-  historical_data.initializeTimeZones();
-  final oldDatabase = tz.timeZoneDatabase;
+  final historical = loadFrozenTimezone2025c();
   final bytes = File(args[2]).readAsBytesSync();
   final pinned = PinnedTimezoneRules.fromBytes(bytes);
   final newDatabase = pinned.snapshot.database;
   final snapshots = <String, TimezoneRuleSnapshot>{
-    '2025c': TimezoneRuleSnapshot(
-      database: oldDatabase,
-      tzdbRelease: '2025c',
-      providerIdentity: 'timezone/0.11.1:data/latest_all',
-    ),
+    '2025c': historical,
     '2026e': pinned.snapshot,
   };
   const resolver = TimezoneLocalTimeResolver();
@@ -108,6 +104,9 @@ void main(List<String> args) {
         'lib/domain/entities/local_time_resolution.dart',
         'lib/domain/usecases/pinned_timezone_rules.dart',
         'tool/run_timezone_rule_research_vectors.dart',
+        'test/support/frozen_timezone_2025c.dart',
+        frozenTimezone2025cAssetPath,
+        frozenTimezone2025cManifestPath,
       ])
         file: sha256.convert(File(file).readAsBytesSync()).toString(),
     },

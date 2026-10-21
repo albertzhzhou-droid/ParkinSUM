@@ -27,14 +27,14 @@
         "sourceRevision": "4cf24164269a5ebf0c16a028a00727d0e77bbb05"
       },
       "flutter_local_notifications": {
-        "version": "22.3.0",
+        "version": "22.3.2",
         "versionSource": "pubspec.lock",
-        "sourceRevision": "b475bc883dab07da3c1b19e86b0746eb20f14f2f"
+        "sourceRevision": "2a1157a0c046c27fefc38cd640b2abec4d7172fc"
       },
       "share_plus": {
-        "version": "13.3.0",
+        "version": "13.3.1",
         "versionSource": "pubspec.lock",
-        "sourceRevision": "2c5b4935c85fdbfeffea2bd68c9286c064ed8b7c"
+        "sourceRevision": "53e5ecf38c8775af21c62c2932d07f88bad1a3b2"
       },
       "adobe_source_serif_font_assets": {
         "version": "Source Serif 4 4.004",
@@ -77,9 +77,9 @@
         "sourceRevision": "9710da1eacb3be272583c3224dcb70f9da6eadbb"
       },
       "dart_pdf_printing": {
-        "version": "3.13.0",
+        "version": "3.13.1",
         "versionSource": "pubspec.lock",
-        "sourceRevision": "0833cd2fc8cf3e62b0228732e81402afca5cc542"
+        "sourceRevision": "1ce3ee24331df4345952d4104cde1852f12a7090"
       },
       "flutter_packages_shared_preferences": {
         "version": "2.4.3",
@@ -1361,7 +1361,7 @@
     {
       "id": "dart_pdf_printing",
       "officialUrl": "https://github.com/davbfr/dart_pdf",
-      "pinnedCommit": "0833cd2fc8cf3e62b0228732e81402afca5cc542",
+      "pinnedCommit": "1ce3ee24331df4345952d4104cde1852f12a7090",
       "defaultBranch": "master",
       "declaredSpdx": "Apache-2.0",
       "repositoryDetectedSpdx": "Apache-2.0",
@@ -1502,7 +1502,7 @@
     {
       "id": "flutter_local_notifications",
       "officialUrl": "https://github.com/MaikuB/flutter_local_notifications",
-      "pinnedCommit": "b475bc883dab07da3c1b19e86b0746eb20f14f2f",
+      "pinnedCommit": "2a1157a0c046c27fefc38cd640b2abec4d7172fc",
       "defaultBranch": "master",
       "declaredSpdx": "BSD-3-Clause",
       "repositoryDetectedSpdx": "NOASSERTION",
@@ -3349,7 +3349,7 @@
     {
       "id": "share_plus",
       "officialUrl": "https://github.com/fluttercommunity/plus_plugins",
-      "pinnedCommit": "2c5b4935c85fdbfeffea2bd68c9286c064ed8b7c",
+      "pinnedCommit": "53e5ecf38c8775af21c62c2932d07f88bad1a3b2",
       "defaultBranch": "main",
       "declaredSpdx": "BSD-3-Clause",
       "repositoryDetectedSpdx": "BSD-3-Clause",

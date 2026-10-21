@@ -680,7 +680,7 @@ test('share_plus is release-linked at its pinned version and source commit', () 
   const { inventory, observed } = fixture();
   const share = inventory.influences.find((entry) => entry.id === 'share_plus');
   assert.equal(share.officialUrl, 'https://github.com/fluttercommunity/plus_plugins');
-  assert.equal(share.pinnedCommit, '2c5b4935c85fdbfeffea2bd68c9286c064ed8b7c');
+  assert.equal(share.pinnedCommit, '53e5ecf38c8775af21c62c2932d07f88bad1a3b2');
   assert.equal(share.declaredSpdx, 'BSD-3-Clause');
   assert.equal(share.repositoryDetectedSpdx, 'BSD-3-Clause');
   assert.equal(share.licenseStatus, 'machine_detected');
@@ -874,9 +874,9 @@ test('PDF linkage and Arabic copyright reference retain separate transfer scopes
   const { inventory, observed } = fixture();
   assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
   const pdf = inventory.influences.find(entry => entry.id === 'dart_pdf_printing');
-  assert.equal(pdf.pinnedCommit, '0833cd2fc8cf3e62b0228732e81402afca5cc542');
+  assert.equal(pdf.pinnedCommit, '1ce3ee24331df4345952d4104cde1852f12a7090');
   assert.equal(pdf.transferStatus, 'linked');
-  assert.equal(inventory.releaseBoundary.linkedVersionEvidence[pdf.id].version, '3.13.0');
+  assert.equal(inventory.releaseBoundary.linkedVersionEvidence[pdf.id].version, '3.13.1');
   const reference = inventory.influences.find(entry => entry.id === 'noto_arabic_copyright_reference');
   assert.equal(reference.transferStatus, 'concept_only');
   assert.deepEqual(reference.localPaths, []);
