@@ -90,7 +90,8 @@ carries `sourceRefs`, an evidence-level (`mechanism` vs
 modeled value back to a `Bibliographies.md` row via the parameter's
 `sourceRefs`.
 
-The model uses a per-component lag-shifted single-exponential decay:
+Solid, mixed and unknown-form components, and liquids without energy, use a
+per-component lag-shifted single-exponential decay:
 
 ```
 remaining(t) = 1                              if t ≤ lag
@@ -98,7 +99,8 @@ remaining(t) = exp(-(ln 2 / t_half) · (t - lag))   if t > lag
 ```
 
 - **Solid components:** `lag ≈ 20 min`, `t_half ≈ 90 min`.
-- **Liquid components:** `lag = 0 min`, `t_half ≈ 15 min`.
+- **Energy-free liquids** (0 kcal, e.g. water): `lag = 0 min`, `t_half ≈ 15 min`.
+- **Energy-containing liquids:** calorie-regulated delivery instead; see §7.
 - **Unknown physical form:** uses dampened solid defaults *and* widens
   uncertainty.
 
@@ -126,9 +128,52 @@ fraction is the mass-weighted sum of component remaining fractions:
 meal_remaining(t) = Σ fraction_i · remaining_i(t)
 ```
 
-Liquid components empty faster and contribute a faster meal-level decline
-than comparable solid components, matching the direction in the cited
-literature.
+This mass-weighted curve gives the residual stomach load at a dose (§10, §12),
+which shifts the absorption window. It is **not** the protein timing: water
+counts in it like food. The competition layer uses protein-weighted arrival
+instead (§13).
+
+Liquids are split by energy. Brener, Hendrix and McHugh (1983) found that
+saline emptied rapidly and exponentially, while glucose solutions of three
+concentrations settled into a calorie-constant delivery of about 2.13 kcal per
+minute.
+
+- **Energy-free liquid** (`calories == 0`): the volume-driven exponential of
+  §6, unchanged.
+- **Energy-containing liquid** (`calories > 0`): calorie-regulated. All
+  energy-containing liquids of one meal join one pool, because duodenal
+  feedback regulates the total energy that leaves the stomach. The pool is
+  delivered linearly over `D = pool_kcal / rate`, with
+  `rate = ge.liquid.nutrient_kcal_per_min = 2.13 kcal/min`. The liquid never
+  empties faster than an energy-free liquid would:
+
+  ```
+  remaining(t) = max(exp(-(ln 2 / t_vol) · (t - lag)), 1 - (t - lag) / D)
+  t_half       = max(t_vol, D / 2)
+  ```
+
+  `t_vol` is the energy-free half-time with the usual size, fat and fiber
+  multipliers; `D` comes from energy alone, so no multiplier is applied twice.
+  A 300 kcal, 25 g protein shake therefore half-empties after about 70 min
+  instead of 13.5 min; at 45 min the model keeps 68% of it in the stomach
+  instead of 10%.
+  A 2 kcal black coffee still follows the water curve.
+- **Liquid of unknown energy** (`calories` missing or invalid): the model
+  cannot tell which curve applies. It draws the energy-free exponential, the
+  fastest curve any liquid can follow here, states that bound in the trace
+  (`ge.liquid.energy_unknown_fast_bound`), records `liquid_component_calories`
+  as a missing input and widens the uncertainty band by one step. It never
+  assumes the liquid is water.
+
+The rate is `literature_derived` (`mechanism` evidence) and carries an explicit
+1–4 kcal/min sensitivity range, the overall rate at which meals leave a healthy
+stomach (Marathe et al. 2013); at its ends the shake half-empties after 37.5 or
+150 min. Limitations: the measured rate is for glucose solutions; in the
+studies pooled by Hunt and Stubbs (1975) delivered energy still rose with
+energy density, so delivery is only approximately constant; an initial fast
+phase, viscosity, osmolality, macronutrient-specific effects and
+Parkinson-specific emptying are not modeled; and the energy of solid
+components does not join the liquid pool.
 
 ## 8. Meal-size effect
 
@@ -140,7 +185,8 @@ size_multiplier = clamp(0.6 + 0.4 · (kcal / 400 kcal),   0.6 .. 2.0)
 
 Tagged `prototype_heuristic`. Larger meals therefore extend the modeled
 emptying profile; missing `total_calories` defaults `size_multiplier = 1.0`
-and widens uncertainty.
+and widens uncertainty. A next-meal candidate's energy is its reference
+serving's energy (§18a), not a per-100 g value.
 
 ## 9. Fat / protein / fiber effect assumptions
 
@@ -309,9 +355,11 @@ flat numeric window. Not PK/PD calibration, not dose-response advice.
 
 ## 13. Amino-acid competition assumptions
 
-The competition pressure proxy is the product of (a) the meal's
-instantaneous intestinal arrival rate (derivative of `emptiedFractionAt`),
-(b) a protein amplitude factor scaled against a 20 g reference, and (c)
+The competition pressure proxy is the product of (a) the instantaneous
+intestinal arrival rate of the meal's **protein** (protein-weighted, or
+competing-LNAA-weighted when complete amino-acid profiles exist; see the end of
+this section), (b) a protein amplitude factor scaled against a 20 g reference,
+and (c)
 an **LNAA load factor** that depends on the protein source type of each
 food component (`ProteinSourceType` in `lib/domain/entities/protein_source.dart`).
 The load factor is calibrated on official food composition. For each
@@ -431,13 +479,40 @@ intestinal competition**; it is not absorbed fraction, transporter occupancy,
 or concentration. Broader blood–brain-barrier LNAA transport competition is
 named as a cited mechanism in the trace but is not quantified here.
 
-The pressure timeline uses the gastric model's intestinal-arrival curve for
-**shape**, normalizes that curve to its own peak, then applies a bounded
-protein/LNAA load amplitude. This keeps the pressure and its 0–1 band thresholds
-on the same relative scale. Earlier code compared a fraction-per-minute rate
-directly with unitless 0.10/0.25 thresholds, which compressed every rendered
-curve near zero. The normalized result is still a prototype heuristic—not an
-amino-acid concentration, transporter occupancy, or clinical effect probability.
+The pressure timeline takes its **shape** from protein arrival, not meal
+mass:
+
+```
+protein_arrival(t) = Σ w_i · d emptied_i(t)/dt / Σ w_i
+```
+
+`w_i` is the protein (g) of component *i*, or its competing-LNAA grams when
+every protein-bearing component has a complete amino-acid profile
+(`aa.competition.arrival_weighting.protein_grams` or
+`.competing_lnaa_grams` in the trace). A component without protein contributes
+nothing, so water cannot move the curve. The sampled support runs from the
+meal start to the protein-weighted lag plus four protein-weighted half-times
+(`aa.competition.support_weighted_mostly_emptied`), the protein analogue of the
+mostly-emptied window. A meal whose components carry no protein keeps the
+mass-weighted shape; its amplitude is zero. The curve is then normalized to its
+own peak and the bounded protein/LNAA load amplitude applied, which keeps the
+pressure and its 0–1 band thresholds on the same relative scale. Earlier code
+compared a fraction-per-minute rate directly with unitless 0.10/0.25
+thresholds, which compressed every rendered curve near zero. The normalized
+result is still a prototype heuristic—not an amino-acid concentration,
+transporter occupancy, or clinical effect probability.
+
+Until 2026-10-20 the shape came from the mass-weighted arrival curve, so the
+zero-protein part of a meal set the protein timing. For the Observatory
+reference meal (oatmeal with 8 g protein, 240 g, plus 240 g water) pressure
+peaked 5 min after the meal, with 49% of its area in the first 30 min, although
+the oats only begin to empty after a 17-minute lag, and the support ended at
+188 min. With protein weighting the peak is at 20 min (the first 5-minute
+sample after the lag), 11% of the area falls in the first 30 min and the
+support ends at 323 min. The overlap with that scenario's absorption window
+rises from 0.021 to 0.092 and its interaction score from 0.113 (low) to 0.155
+(moderate); the dose-time residual, and so the absorption window, are
+unchanged.
 
 ## 14. Uncertainty / confidence scoring
 
@@ -459,7 +534,10 @@ which inputs degraded confidence.
 ### 14.1 Visible gastric time-scale sensitivity
 
 `GastricEmptyingProfile.sensitivityEnvelopeAt()` evaluates the same component
-model at 0.76× and 1.24× the central lag/half-time scale. The 24% fraction is
+model at 0.76× and 1.24× the central lag/half-time scale. For a
+calorie-regulated liquid the same factor scales its volume half-time and
+delivery time, which is equivalent to 2.80 and 1.72 kcal/min around the central
+2.13, inside the parameter's 1–4 kcal/min sensitivity range. The 24% fraction is
 an illustrative symmetric transform motivated by a study reporting 24.5%
 between-participant variation in measured half-time among healthy participants.
 That study does not supply a Parkinson distribution. The transform is displayed
@@ -531,6 +609,9 @@ The scenarios in `lib/core/constants/mechanistic_replay_scenarios.dart`
 17. Partial amino-acid profile (partial flag + widened uncertainty).
 18. High-calorie/high-fat meal (gastric uncertainty widened).
 19. Explicit user dose enabling the dose-relative LNAA proxy.
+20. Built-in catalog candidates per reference serving (s41: USDA milk,
+    chicken breast and white rice per source portion, CIQUAL cheddar per
+    category reference amount, CIQUAL coffee per 100 g).
 
 The replay report (`MechanisticReplayCaseReport`) additionally surfaces, per
 scenario: `mealComponentCount`, `gastricEmptyingAssumptions`,
@@ -585,6 +666,85 @@ final order, in which case it reports `local_ai_safe_candidate_rerank`;
 This is an executable decision-influence ceiling, not a disclaimer. A future
 change to ranking requires a separately reviewed context of use, governed
 calibration/validation evidence, and a versioned promotion contract.
+
+## 18a. Candidate serving basis
+
+Catalog nutrients are stored per 100 g edible portion. A next-meal candidate
+used to be evaluated as if 100 g were the meal: 2 % milk entered the model as
+3.3 g protein (one cup is about 8 g), and the gastric size multiplier, the
+LNAA load amplitude and the legacy ranker's meal-sized protein thresholds all
+saw 100 g. Candidates are now evaluated at a **reference serving**
+(`food_serving_reference_resolver.dart`, rule `food_serving_rule_v1`):
+
+1. Values that are not per 100 g edible portion (for example per 100 mL or
+   dry matter) are never scaled: no serving.
+2. Usable source portions (FDC `foodPortions`, retained in
+   `FoodItem.foodPortionEvidence`) have a finite positive gram weight and all
+   name one source food; for an FDC-coded item it must be the item itself.
+3. Exactly one portion described as the source's **NLEA serving** is the
+   serving.
+4. Otherwise, when the food has a product category, the portion closest to
+   the category's reference amount is chosen among portions above 50 % and
+   below 200 % of it (the single-unit range of 21 CFR 101.9(b)(2)(i)(B)–(C)).
+   A mass amount is compared in grams; a volume amount only with portions
+   stated in tsp, tbsp, cup, fl oz, mL or L (21 CFR 101.9(b)(5)(viii):
+   5, 15, 240, 30 mL). Ties go to the lower FDC sequence number.
+5. Otherwise a **mass** reference amount of the category is the serving
+   (`category_default`).
+6. Otherwise no serving (`none`): values stay per 100 g and are labelled
+   "per 100 g — serving unknown".
+
+Reference amounts are FDA reference amounts customarily consumed (RACC,
+21 CFR 101.12(b) Table 2, as amended at 81 FR 34000, 2016) and, for meat and
+poultry cuts, USDA FSIS 9 CFR 317.312(b) and 381.412(b)
+(`food_serving_reference_amounts.dart`). Each built-in catalog food is
+assigned to a category explicitly (`food_serving_reference_assignments.dart`);
+the coarse `FoodCategory` cannot pick one (dairy spans milk, yogurt and
+cheese). A volume amount is never turned into grams without the food's own
+household-measure weight, so CIQUAL milk and olive oil, which carry no
+portion records, stay per 100 g. `docs/CANDIDATE_SERVING_REFERENCE.md` lists
+the table and the outcome for every built-in catalog food (generated and
+checked by a test): of 430 foods, 261 use a source portion, 74 a category
+default and 95 have no serving (44 of those are seed foods with no composition record at all).
+
+**Into the engine.** `foodItemToCandidateFood` scales protein, fat, fiber,
+carbohydrate and energy by `grams / 100`, sets `FoodComponent.portionGrams`
+and `portionBasis`, and scales the amino-acid profile through
+`AminoAcidProfile.scaledToGrams` (a profile on any other basis is withheld).
+A nutrient the source marks missing stays null. Without a serving the
+per-100 g values, the per-100 g profile and a missing portion are passed on
+unchanged. Because an energy-containing liquid is delivered at the
+calorie-regulated rate (§7), the serving's energy also sets how long a liquid
+candidate is modeled in the stomach: a 244 g cup of 2 % milk (about 122 kcal)
+has a half-time of about 29 min instead of its 16 min volume half-time,
+whereas for 100 g (about 50 kcal, delivery half-time 12 min) the volume
+half-time would still apply. A liquid
+candidate with unknown energy (CIQUAL coffee) stays on the energy-free bound
+with uncertainty widened.
+
+**Uncertainty.** A category default is an assumed amount: the normalizer
+records `portion_grams_assumed` as one missing input, so completeness is
+7/8 instead of 8/8 for an otherwise complete source-portion candidate, and the
+gastric, competition and confidence bands widen as for any incomplete
+composition. A candidate without a serving keeps `portion_grams` and
+`liquid_fraction` missing (6/8), as before. Each candidate trace states its
+modeled amount and basis.
+
+**Legacy ranker.** Protein and fiber thresholds of
+`GetFoodRecommendationsUseCase` and the orchestrator's next-meal window
+branches compare the food's evaluated amount (serving, else 100 g), the same
+basis as the per-meal history averages. Parameter set `2026.10.20-v3` records
+the unit `g_per_evaluated_amount`. The rank-sensitivity replay moves each
+breakpoint onto the food's per-100 g scale. Score breakdowns carry
+`evaluated_amount_g`, `evaluated_protein_g` and `evaluated_fiber_g`; risk tags
+mark `serving_category_reference_amount` and `serving_unknown_per_100g`. The
+trace-only ranking boundary above is unchanged.
+
+**Limits.** A serving is a comparison amount, not portion advice and not an
+estimate of what a person eats. Portions at or below half the reference
+amount are not multiplied (2 tbsp of hummus is not formed from a 1 tbsp
+record), the mixed-dish, dip and volume categories often yield no serving,
+and branded label serving sizes are not used yet.
 
 ## 19. What the model does NOT infer
 

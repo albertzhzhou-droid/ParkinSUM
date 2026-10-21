@@ -263,11 +263,17 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.15-v65';
+  static const String ledgerVersion = '2026.10.20-v68';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '1f3af5a2a9e437cf22f6f23fad22035cc4135caeb9b73ad5f07a018896edaace';
+  static const String historicalV80ConfigurationSha256 =
+      '464d03611fef12cadf04504be650816be368e393d614fad4c836162a8010013f';
+  static const String historicalV79ConfigurationSha256 =
+      '9ccb403043d9b803653944779cfdac56d9810b0b77277c196ff3b139885568c2';
+  static const String historicalV78ConfigurationSha256 =
       'cdc582bde5b6341add35c6c53098f800dce8715a0ddd3b42a44c88707faa813d';
   static const String historicalV77ConfigurationSha256 =
       '51c839f072a70582d34a5c55b38f45f2f657dec84f4ed01d139bedc3782bc82d';
@@ -1269,7 +1275,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           lnaaCalibrationCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV78ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           lnaaCalibrationCandidateRecord.evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1306,6 +1312,146 @@ final class ContextOfUseRequalificationLedger {
           'acceptance. All evidence holds and blocked promotion remain in '
           'force.',
     );
+    final proteinArrivalCaloricLiquidCandidateRecord =
+        ContextOfUseRequalificationRecord(
+          sequence: 28,
+          changeKind: 'software_identity_candidate_rebind',
+          previousManifestSha256:
+              referenceRecordIdentityCandidateRecord.currentManifestSha256,
+          previousConfigurationSha256:
+              referenceRecordIdentityCandidateRecord.currentConfigurationSha256,
+          currentManifestSha256: expectedCurrentManifestSha256,
+          currentConfigurationSha256: historicalV79ConfigurationSha256,
+          evidenceCurrencyRegistrySha256: referenceRecordIdentityCandidateRecord
+              .evidenceCurrencyRegistrySha256,
+          evidenceSynthesisRegistrySha256:
+              referenceRecordIdentityCandidateRecord
+                  .evidenceSynthesisRegistrySha256,
+          semanticDiffSha256:
+              referenceRecordIdentityCandidateRecord.semanticDiffSha256,
+          affectedProviderIds:
+              referenceRecordIdentityCandidateRecord.affectedProviderIds,
+          affectedPredicateIds:
+              referenceRecordIdentityCandidateRecord.affectedPredicateIds,
+          changeClasses: referenceRecordIdentityCandidateRecord.changeClasses,
+          modelRisk: referenceRecordIdentityCandidateRecord.modelRisk,
+          questionOfInterest:
+              referenceRecordIdentityCandidateRecord.questionOfInterest,
+          contextOfUse: referenceRecordIdentityCandidateRecord.contextOfUse,
+          author: 'automated-local-software-integration',
+          recordedAtUtc: '2026-10-20T00:00:00.000Z',
+          releaseArtifact:
+              'unreleased-worktree:protein-arrival-caloric-liquids-v79',
+          evidenceDecisions:
+              referenceRecordIdentityCandidateRecord.evidenceDecisions,
+          releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+          approvalSignature: null,
+          decisionBoundary:
+              'The v79 candidate corrects two gastric-model physics errors. The '
+              'competition layer now shapes pressure by the arrival of protein '
+              '(competing-LNAA grams when complete amino-acid profiles exist) '
+              'instead of meal mass, so a component without protein, such as '
+              'water, no longer sets the protein timing; the mass-weighted '
+              'residual still sets the dose-time absorption shift. A liquid that '
+              'carries energy is now delivered at a calorie-regulated rate of '
+              '2.13 kcal/min (literature range 1–4 kcal/min) instead of emptying '
+              'like water, and a liquid of unknown energy is drawn on the '
+              'energy-free bound with widened uncertainty. Modeled competition, '
+              'residual load and scores change. All twenty-seven prior whole '
+              'records and their digests remain exact. The rate comes from '
+              'glucose solutions in adults and supplies no new scientific '
+              'evidence, independent review, clinical qualification, '
+              'authenticated approval or release acceptance. All evidence holds '
+              'and blocked promotion remain in force.',
+        );
+    final candidateServingBasisRecord = ContextOfUseRequalificationRecord(
+      sequence: 29,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          proteinArrivalCaloricLiquidCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          proteinArrivalCaloricLiquidCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: historicalV80ConfigurationSha256,
+      evidenceCurrencyRegistrySha256: proteinArrivalCaloricLiquidCandidateRecord
+          .evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          proteinArrivalCaloricLiquidCandidateRecord
+              .evidenceSynthesisRegistrySha256,
+      semanticDiffSha256:
+          proteinArrivalCaloricLiquidCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          proteinArrivalCaloricLiquidCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          proteinArrivalCaloricLiquidCandidateRecord.affectedPredicateIds,
+      changeClasses: proteinArrivalCaloricLiquidCandidateRecord.changeClasses,
+      modelRisk: proteinArrivalCaloricLiquidCandidateRecord.modelRisk,
+      questionOfInterest:
+          proteinArrivalCaloricLiquidCandidateRecord.questionOfInterest,
+      contextOfUse: proteinArrivalCaloricLiquidCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-20T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:candidate-serving-basis-v80',
+      evidenceDecisions:
+          proteinArrivalCaloricLiquidCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v80 candidate evaluates catalog next-meal candidates at a '
+          'reference serving instead of per 100 g: a source-reported portion '
+          'chosen by a documented rule, else the FDA/USDA reference amount of '
+          'the food\'s product category, else per 100 g with that label. A '
+          'category reference amount is recorded as an assumed portion and '
+          'widens uncertainty, and the legacy ranker compares its meal-sized '
+          'protein and fiber thresholds with the same evaluated amount. The '
+          'mechanistic trace stays trace-only. All twenty-eight prior whole '
+          'records and their digests remain exact. A serving is a comparison '
+          'amount, not portion advice, and supplies no new scientific '
+          'evidence, independent review, clinical qualification, '
+          'authenticated approval or release acceptance. All evidence holds '
+          'and blocked promotion remain in force.',
+    );
+    final plainLanguageCopyCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 30,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256: candidateServingBasisRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          candidateServingBasisRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          candidateServingBasisRecord.evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          candidateServingBasisRecord.evidenceSynthesisRegistrySha256,
+      semanticDiffSha256: candidateServingBasisRecord.semanticDiffSha256,
+      affectedProviderIds: candidateServingBasisRecord.affectedProviderIds,
+      affectedPredicateIds: candidateServingBasisRecord.affectedPredicateIds,
+      changeClasses: candidateServingBasisRecord.changeClasses,
+      modelRisk: candidateServingBasisRecord.modelRisk,
+      questionOfInterest: candidateServingBasisRecord.questionOfInterest,
+      contextOfUse: candidateServingBasisRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-21T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:plain-language-result-copy-v81',
+      evidenceDecisions: candidateServingBasisRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v81 candidate binds plain-language result copy in the '
+          'response-copy policy and the result view. A result whose only '
+          'elevated finding is missing medication input, such as the dose or '
+          'the time it was taken, is presented as "can\'t assess yet" in a '
+          'neutral colour; any other elevated finding, or rule advice that '
+          'survived a review escalation, keeps the risk presentation. The '
+          'allow decision is labelled "no rule flags", and the score, its '
+          'factors and the raw findings move under "How was this computed?". '
+          'Stored scores, severities, rule decisions and audit records do not '
+          'change. All twenty-nine prior whole records and their digests '
+          'remain exact. The change supplies no new scientific evidence, '
+          'independent review, clinical qualification, authenticated '
+          'approval or release acceptance. All evidence holds and blocked '
+          'promotion remain in force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1340,6 +1486,9 @@ final class ContextOfUseRequalificationLedger {
         browserRestorePerformanceCandidateRecord,
         lnaaCalibrationCandidateRecord,
         referenceRecordIdentityCandidateRecord,
+        proteinArrivalCaloricLiquidCandidateRecord,
+        candidateServingBasisRecord,
+        plainLanguageCopyCandidateRecord,
       ],
     );
   }

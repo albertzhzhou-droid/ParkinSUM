@@ -3,9 +3,9 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Explore ParkinSUM's Paper workspace, deterministic rule explanations, the evidence archive, and the governance ledger. An educational local-first Flutter prototype." />
+    <meta name="description" content="ParkinSUM Companion is an educational Flutter prototype that explores how meals, especially protein, may interact with levodopa timing in Parkinson's disease. Synthetic data only; not medical advice." />
     <meta name="theme-color" content="#f6f1e6" />
-    <title>ParkinSUM Companion · A notebook for inspectable evidence</title>
+    <title>ParkinSUM Companion · Protein, levodopa and meal timing</title>
     <link rel="icon" href="../assets/brand/parkinsum-icon-warm-32.png" sizes="32x32" />
     <link rel="apple-touch-icon" href="../assets/brand/parkinsum-icon-warm-180.png" />
     <link rel="stylesheet" href="styles.css" />
@@ -30,10 +30,12 @@
       <section class="hero" id="overview">
         <div class="hero-copy">
           <p class="eyebrow">The Paper edition · Updated October 2026</p>
-          <h1>A research notebook.<br /><em>An inspectable story.</em></h1>
-          <p class="lead">Meal and medication context, deterministic explanations,
-            and the evidence behind an educational model — brought together in
-            one local-first workspace.</p>
+          <h1>Protein, levodopa, and timing.<br /><em>Explored, not prescribed.</em></h1>
+          <p class="lead">Protein in a meal may change how levodopa, a common
+            Parkinson's disease medication, is absorbed. ParkinSUM is an
+            educational app prototype for exploring that timing question: log a
+            meal, see what its rules note and why, and inspect every source and
+            assumption behind the result.</p>
           <div class="action-row">
             <a class="button primary" href="#workspace">Explore the workspace <span aria-hidden="true">↓</span></a>
             <a class="button" href="https://github.com/albertzhzhou-droid/ParkinSUM#run-locally">Run locally ↗</a>
@@ -70,7 +72,7 @@
         <div class="chapter-grid">
           <article class="chapter"><span class="chapter-number">01 / Today</span><h3>Start with an entry.</h3><p>One composer for a meal, medication intake, or observation, alongside recent activity and previews.</p></article>
           <article class="chapter"><span class="chapter-number">02 / Timeline</span><h3>Keep the sequence.</h3><p>Browse records, inspect details, edit entries, and choose explicit export actions.</p></article>
-          <article class="chapter"><span class="chapter-number">03 / Next meal</span><h3>Compare with context.</h3><p>Set a time window and inspect candidate explanations, missing information, and model limitations.</p></article>
+          <article class="chapter"><span class="chapter-number">03 / Next meal</span><h3>Compare foods.</h3><p>Pick a time and see catalog foods compared by the rules, with the reasons and limits beside each one.</p></article>
           <article class="chapter"><span class="chapter-number">04 / Insights</span><h3>Read your records.</h3><p>Explore descriptive logging and protein-distribution views, without inferring clinical outcomes.</p></article>
           <article class="chapter"><span class="chapter-number">05 / Library</span><h3>Check the source.</h3><p>Review selected medications and the food/medication catalog with source and jurisdiction context.</p></article>
         </div>
@@ -78,7 +80,7 @@
           from the sidebar or <kbd>⌘K</kbd> / <kbd>Ctrl+K</kbd>. Local AI configuration
           lives in Settings → Advanced.</p>
         <div class="capture-grid" aria-label="Actual Paper app captures">
-          <figure class="capture wide"><a href="../assets/screenshots/paper-today.png"><img src="../assets/screenshots/paper-today.png" alt="Paper Today chapter with one synthetic meal, the entry composer, and zero active medications" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Today · One place to begin</strong><span>A saved synthetic meal, recent activity, descriptive figures, and the conservative candidate preview.</span></figcaption></figure>
+          <figure class="capture wide"><a href="../assets/screenshots/paper-today.png"><img src="../assets/screenshots/paper-today.png" alt="Paper Today chapter with one synthetic meal, the entry composer, and zero active medications" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Today · One place to begin</strong><span>A saved synthetic meal, recent activity, descriptive figures, and the rule-based candidate preview.</span></figcaption></figure>
           <figure class="capture"><a href="../assets/screenshots/paper-timeline.png"><img src="../assets/screenshots/paper-timeline.png" alt="Paper Timeline with the saved synthetic demo meal" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Timeline · Follow the record</strong><span>The synthetic meal appears in its chronological context.</span></figcaption></figure>
           <figure class="capture"><a href="../assets/screenshots/paper-next-meal.png"><img src="../assets/screenshots/paper-next-meal.png" alt="Paper Next meal settings before result generation" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Next meal · Set the context</strong><span>The comparison settings before any result is generated.</span></figcaption></figure>
           <figure class="capture wide"><a href="../assets/screenshots/paper-library.png"><img src="../assets/screenshots/paper-library.png" alt="Paper Library with built-in medication catalog entries and zero selected medications" width="1440" height="1000" loading="lazy" /></a><figcaption><strong>Library · Inspect source context</strong><span>Built-in catalog entries, with no medications selected. Catalog wording is not individualized guidance.</span></figcaption></figure>
@@ -146,7 +148,7 @@
           <div><dt>26,995</dt><dd>official FoodData Central rows for 280 foods, each re-read from the source CSV in tests</dd></div>
           <div><dt>148</dt><dd>nutrients per record, from individual sugars to 33 fatty-acid chain lengths</dd></div>
           <div><dt>25</dt><dd>disagreements inside the source records, pinned in tests and never corrected</dd></div>
-          <div><dt>0.2667</dt><dd>median competing-LNAA fraction of protein across 140 records (the old reference was 0.45)</dd></div>
+          <div><dt>0.2667</dt><dd>median share of protein made up of the amino acids that compete with levodopa (LNAA), across 140 records (the old reference was 0.45)</dd></div>
         </dl>
         <p class="section-note">A source-record disagreement on a value the conflict engine
           uses adds an uncertainty reason and caps confidence. It never changes a

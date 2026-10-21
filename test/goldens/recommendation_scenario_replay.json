@@ -1,6 +1,6 @@
 {
   "report_type": "recommendation_scenario_replay",
-  "dataset_version": "local-ai-replay.2026-06.v1",
+  "dataset_version": "local-ai-replay.2026-10.v2",
   "no_medical_advice": true,
   "cases": [
     {
@@ -71,14 +71,14 @@
         "source_fallback_partial_provenance"
       ],
       "deterministic_ranking": [
+        "food_brown_rice",
         "food_banana",
-        "food_tofu",
-        "food_brown_rice"
+        "food_tofu"
       ],
       "ai_ranking": [
+        "food_brown_rice",
         "food_banana",
-        "food_tofu",
-        "food_brown_rice"
+        "food_tofu"
       ],
       "ai_used": false,
       "decision_path": "conservative_cdss",
@@ -87,7 +87,7 @@
       ],
       "ranking_diffs": [],
       "matched_expected_top_food_ids": [
-        "food_banana"
+        "food_brown_rice"
       ],
       "missing_expected_top_food_ids": [],
       "ai_preserved_candidate_set": true

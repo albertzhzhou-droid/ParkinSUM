@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/gastric_emptying_parameters.dart';
 import '../entities/gastric_emptying_profile.dart';
@@ -13,11 +15,16 @@ import '../entities/time_axis_events.dart';
 /// lag, liquids fast, fat slows, large meals slow, fiber widens
 /// uncertainty, mixed meals cumulate) is grounded in the cited literature;
 /// exact magnitudes are illustrative and are not patient-calibrated.
+///
+/// Liquids are split by energy. An energy-free liquid keeps the fast
+/// volume-driven exponential. A liquid that carries energy is delivered at a
+/// calorie-regulated rate (`ge.liquid.nutrient_kcal_per_min`, from Brener et
+/// al. 1983) and so empties more slowly the more energy it carries.
 class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
   static const String configurationSchema =
       'parkinsum.gastric-emptying-configuration/1';
   static const String generatorStructureSchema =
-      'parkinsum.gastric-emptying-generator-structure/1';
+      'parkinsum.gastric-emptying-generator-structure/2';
   static const double fatCaloriesPerGram = 9.0;
   static const double sizeScaleIntercept = 0.6;
   static const double sizeScaleSlope = 0.4;
@@ -34,6 +41,8 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
   static const double firstOverlapThreshold = 0.1;
   static const double secondOverlapThreshold = 0.3;
   static const double overlapDisclosureThreshold = 0.0;
+  static const double energyFreeLiquidKcal = 0.0;
+  static const int unknownEnergyLiquidUncertaintyIncrement = 1;
   static const int assumptionNumericDecimalPlaces = 2;
 
   /// Canonical declaration of every result-affecting branch that is not an
@@ -88,6 +97,25 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       'unknown_lag_multiplier': unknownFormLagMultiplier,
       'unknown_half_time_multiplier': unknownFormHalfTimeMultiplier,
     },
+    'liquid_energy_branch': <String, Object>{
+      'energy_source':
+          'component_calories_or_meal_total_calories_for_synthesized_component',
+      'energy_free_when': 'calories_finite_and_equal_to_zero',
+      'energy_free_curve': 'liquid_parameter_pair_exponential',
+      'energy_containing_when':
+          'calories_finite_and_strictly_greater_than_zero',
+      'energy_containing_pool':
+          'sum_of_energy_containing_liquid_component_calories',
+      'calorie_delivery_minutes_formula':
+          'pool_kcal / ge.liquid.nutrient_kcal_per_min',
+      'calorie_delivery_multipliers': 'none',
+      'energy_containing_curve':
+          'max(liquid_parameter_pair_exponential, linear_calorie_delivery)',
+      'energy_containing_modifier': 'calorie_regulated_delivery',
+      'energy_unknown_when': 'calories_null_nonfinite_or_negative',
+      'energy_unknown_curve': 'liquid_parameter_pair_exponential_fast_bound',
+      'energy_free_threshold_kcal': energyFreeLiquidKcal,
+    },
     'component_fallback': <String, Object>{
       'when': 'no_food_components_and_any_meal_level_evidence',
       'component_id_suffix': '__synthesized',
@@ -114,6 +142,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       'fiber_grams_missing_when_band_unknown': true,
       'meal_physical_form_missing_for_unknown_synthesized_component': true,
       'portion_grams_missing_for_null_nonfinite_or_negative_portions': true,
+      'liquid_component_calories_missing_when_liquid_energy_unknown': true,
     },
     'assumption_and_modifier_policy': <String, Object>{
       'numeric_decimal_places': assumptionNumericDecimalPlaces,
@@ -122,6 +151,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       'high_fat_emits_parameter_and_uncertainty_ids': true,
       'high_calorie_emits_uncertainty_id': true,
       'high_fiber_emits_slowdown_id_and_modifier': true,
+      'liquid_energy_branch_emits_assumption_ids': true,
       'fallbacks_remain_explicit': true,
     },
     'uncertainty_ordinal_score': <String, Object>{
@@ -139,6 +169,8 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       'high_fiber_increment_source': 'ge.mixed_meal.uncertainty_boost',
       'high_fat_increment_source': 'ge.fat.uncertainty_boost',
       'high_calorie_increment_source': 'ge.highcal.uncertainty_boost',
+      'unknown_energy_liquid_increment':
+          unknownEnergyLiquidUncertaintyIncrement,
       'band_mapping': <String, String>{
         '0': 'narrow',
         '1': 'moderate',
@@ -301,6 +333,85 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       missingInputs.add('fiber_grams');
     }
 
+    // Liquid energy selects liquid kinetics. An energy-free liquid (water,
+    // saline) keeps the volume-driven exponential. Energy-containing liquids
+    // are delivered at a calorie-regulated rate (Brener et al. 1983) and share
+    // one pool, because duodenal feedback regulates the total energy that
+    // leaves the stomach. A liquid of unknown energy is drawn on the
+    // exponential, the fastest curve any liquid follows here; that bound, the
+    // missing input and a wider uncertainty band are disclosed, and the liquid
+    // is never assumed to be water.
+    final liquidEnergies = composition.foodComponents.isEmpty
+        ? <double?>[
+            if (composition.mealPhysicalForm == MealPhysicalForm.liquid)
+              composition.totalCalories,
+          ]
+        : <double?>[
+            for (final component in composition.foodComponents)
+              if (component.physicalForm == MealPhysicalForm.liquid)
+                component.calories,
+          ];
+    var liquidEnergyPoolKcal = 0.0;
+    var energyFreeLiquidCount = 0;
+    var energyContainingLiquidCount = 0;
+    var unknownEnergyLiquidCount = 0;
+    for (final kcal in liquidEnergies) {
+      if (!_isKnownEnergy(kcal)) {
+        unknownEnergyLiquidCount += 1;
+      } else if (kcal! > energyFreeLiquidKcal) {
+        energyContainingLiquidCount += 1;
+        liquidEnergyPoolKcal += kcal;
+      } else {
+        energyFreeLiquidCount += 1;
+      }
+    }
+    if (!liquidEnergyPoolKcal.isFinite) {
+      // A pool that overflows cannot set a finite delivery time; treat its
+      // members as unknown energy rather than inventing a duration.
+      unknownEnergyLiquidCount += energyContainingLiquidCount;
+      energyContainingLiquidCount = 0;
+      liquidEnergyPoolKcal = 0.0;
+    }
+    final calorieRate = parameters.liquidNutrientKcalPerMinute;
+    final calorieDeliveryMinutes = energyContainingLiquidCount > 0
+        ? liquidEnergyPoolKcal / calorieRate.value
+        : null;
+    if (energyFreeLiquidCount > 0) {
+      assumptions.add(
+        'ge.liquid.energy_free_exponential '
+        '($energyFreeLiquidCount liquid component(s))',
+      );
+    }
+    if (calorieDeliveryMinutes != null) {
+      final range = calorieRate.sensitivityRange;
+      final rangeText = range == null
+          ? ''
+          : '; ${range.low.toStringAsFixed(assumptionNumericDecimalPlaces)}–'
+                '${range.high.toStringAsFixed(assumptionNumericDecimalPlaces)} '
+                'kcal/min gives '
+                '${(liquidEnergyPoolKcal / range.high).toStringAsFixed(assumptionNumericDecimalPlaces)}–'
+                '${(liquidEnergyPoolKcal / range.low).toStringAsFixed(assumptionNumericDecimalPlaces)} '
+                'min';
+      assumptions.add(
+        '${calorieRate.id} (calorie-regulated liquid delivery: '
+        '${liquidEnergyPoolKcal.toStringAsFixed(assumptionNumericDecimalPlaces)} '
+        'kcal over '
+        '${calorieDeliveryMinutes.toStringAsFixed(assumptionNumericDecimalPlaces)} '
+        'min at '
+        '${calorieRate.value.toStringAsFixed(assumptionNumericDecimalPlaces)} '
+        'kcal/min$rangeText)',
+      );
+    }
+    if (unknownEnergyLiquidCount > 0) {
+      missingInputs.add('liquid_component_calories');
+      assumptions.add(
+        'ge.liquid.energy_unknown_fast_bound ($unknownEnergyLiquidCount '
+        'liquid component(s) drawn on the energy-free exponential, the '
+        'fastest liquid curve; a liquid that carries energy empties more '
+        'slowly; uncertainty widened)',
+      );
+    }
+
     // Build per-component profiles. When component detail is absent but some
     // meal-level evidence is present, retain the existing disclosed central
     // sensitivity component. A completely empty composition already abstained
@@ -316,6 +427,9 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
           fiberMultiplier: fiberMultiplier,
           fractionOfMeal: neutralUnitMass,
           modifiers: List<String>.unmodifiable(modifiers),
+          calorieDeliveryMinutes: _isEnergyContaining(composition.totalCalories)
+              ? calorieDeliveryMinutes
+              : null,
         ),
       );
       if (composition.mealPhysicalForm == MealPhysicalForm.unknown) {
@@ -433,6 +547,9 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
             fiberMultiplier: fiberMultiplier,
             fractionOfMeal: fraction,
             modifiers: List<String>.unmodifiable(modifiers),
+            calorieDeliveryMinutes: _isEnergyContaining(c.calories)
+                ? calorieDeliveryMinutes
+                : null,
           ),
         );
       }
@@ -450,6 +567,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
       highFiber: highFiber,
       highFat: highFat,
       highCalorie: highCalorie,
+      unknownEnergyLiquid: unknownEnergyLiquidCount > 0,
     );
 
     final derivedShape = deriveGastricProfileShape(
@@ -490,6 +608,12 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     );
   }
 
+  static bool _isKnownEnergy(double? kcal) =>
+      kcal != null && kcal.isFinite && kcal >= 0;
+
+  static bool _isEnergyContaining(double? kcal) =>
+      _isKnownEnergy(kcal) && kcal! > energyFreeLiquidKcal;
+
   EmptyingComponentProfile _buildComponent({
     required String componentId,
     required MealPhysicalForm form,
@@ -498,6 +622,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     required double fiberMultiplier,
     required double fractionOfMeal,
     required List<String> modifiers,
+    double? calorieDeliveryMinutes,
   }) {
     final isLiquid = form == MealPhysicalForm.liquid;
     final baseLag = isLiquid
@@ -512,14 +637,34 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
                     unknownFormHalfTimeMultiplier
               : parameters.solidHalfMinutes.value);
 
+    final volumeHalf =
+        baseHalf * sizeMultiplier * fatMultiplier * fiberMultiplier;
+    // Only an energy-containing liquid is calorie-regulated. Its delivery time
+    // comes from energy alone: size, fat and fiber multipliers already act on
+    // the volume-driven bound and are not applied to it a second time.
+    final delivery = isLiquid ? calorieDeliveryMinutes : null;
+    if (delivery == null) {
+      return EmptyingComponentProfile(
+        componentId: componentId,
+        physicalForm: form,
+        lagMinutes: baseLag * sizeMultiplier,
+        halfEmptyingMinutes: volumeHalf,
+        fractionOfMeal: fractionOfMeal,
+        appliedModifiers: modifiers,
+      );
+    }
     return EmptyingComponentProfile(
       componentId: componentId,
       physicalForm: form,
       lagMinutes: baseLag * sizeMultiplier,
-      halfEmptyingMinutes:
-          baseHalf * sizeMultiplier * fatMultiplier * fiberMultiplier,
+      halfEmptyingMinutes: math.max(volumeHalf, delivery / 2),
       fractionOfMeal: fractionOfMeal,
-      appliedModifiers: modifiers,
+      appliedModifiers: List<String>.unmodifiable([
+        ...modifiers,
+        'calorie_regulated_delivery',
+      ]),
+      volumeHalfEmptyingMinutes: volumeHalf,
+      calorieDeliveryMinutes: delivery,
     );
   }
 
@@ -529,6 +674,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     required bool highFiber,
     required bool highFat,
     required bool highCalorie,
+    required bool unknownEnergyLiquid,
   }) {
     var score = 0;
     if (compositionCompleteness < completeCompositionThreshold) score += 1;
@@ -545,6 +691,7 @@ class GastricEmptyingModel with RegisteredAlgorithmComponentIdentity {
     if (highFiber) score += parameters.mixedMealUncertaintyBoost.value;
     if (highFat) score += parameters.fatUncertaintyBoost.value;
     if (highCalorie) score += parameters.highCalorieUncertaintyBoost.value;
+    if (unknownEnergyLiquid) score += unknownEnergyLiquidUncertaintyIncrement;
     switch (score) {
       case 0:
         return UncertaintyBand.narrow;

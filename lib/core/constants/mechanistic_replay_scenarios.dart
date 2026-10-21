@@ -3,8 +3,12 @@ import '../../domain/entities/mechanistic_conflict_result.dart';
 import '../../domain/entities/meal_composition.dart';
 import '../../domain/entities/medication_source_metadata.dart';
 import '../../domain/entities/time_axis_events.dart';
+import '../../domain/usecases/catalog_food_to_candidate.dart';
 import '../../domain/usecases/medication_entry_validator.dart';
 import '../../domain/usecases/mechanistic_next_meal_scorer.dart';
+import '../models/food_item.dart';
+import 'p0_food_source_seed.dart';
+import 'reference_food_catalog.dart';
 
 /// Expected output type for replay assertions.
 enum ScenarioExpectedOutputType {
@@ -467,8 +471,63 @@ const _candidateMissingNutrients = CandidateFood(
   ],
 );
 
-/// The default replay scenario suite (covers all 14 acceptance scenarios).
-const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
+/// The default replay scenario suite: the synthetic scenarios plus one
+/// scenario whose candidates come from the built-in catalogs.
+final List<MechanisticReplayScenario> mechanisticReplayScenarios =
+    List<MechanisticReplayScenario>.unmodifiable([
+      ..._syntheticReplayScenarios,
+      _catalogServingBasisScenario(),
+    ]);
+
+/// Built-in catalog foods evaluated at their reference servings: a source
+/// portion (USDA milk, chicken breast, white rice), a category reference
+/// amount (CIQUAL cheddar) and no serving (CIQUAL coffee, per 100 g). The
+/// medication and meal timeline is synthetic.
+MechanisticReplayScenario _catalogServingBasisScenario() {
+  const ids = <String>[
+    'food_ref_usda_171267', // milk, reduced fat, 2 %
+    'food_ref_usda_171477', // chicken breast, roasted
+    'food_ref_usda_169757', // white rice, cooked
+    'food_cheddar_cheese',
+    'food_coffee',
+  ];
+  final byId = <String, FoodItem>{
+    for (final food in [
+      ...buildP0FoodCatalog(),
+      ...buildReferenceFoodCatalog(),
+    ])
+      food.id: food,
+  };
+  return MechanisticReplayScenario(
+    scenarioId: 's41_catalog_candidates_serving_basis',
+    title:
+        'Catalog candidates evaluated per reference serving (source portion, '
+        'category reference amount, or labelled per 100 g)',
+    expectedOutputType: ScenarioExpectedOutputType.educationalInfo,
+    expectNonEmptyRecommendations: true,
+    medicationEntries: const [_carbidopaLevodopaIr],
+    medicationMinutesOffsets: const [MinutesOffset(-240)],
+    meals: const [
+      ScenarioMeal(
+        id: 'meal_breakfast',
+        offset: MinutesOffset(-300),
+        physicalForm: MealPhysicalForm.solid,
+        components: [_oatmealSolidSmall],
+      ),
+    ],
+    userDefinedWindow: const UserDefinedMealWindow(
+      window: TimelineWindow(startMinute: 60, endMinute: 120),
+      source: 'synthetic_demo_fixture',
+    ),
+    candidateFoods: [for (final id in ids) foodItemToCandidateFood(byId[id]!)],
+    notes:
+        'Per-100 g catalog values are scaled to each food\'s serving; a '
+        'category reference amount widens uncertainty and a food without a '
+        'serving stays per 100 g.',
+  );
+}
+
+const List<MechanisticReplayScenario> _syntheticReplayScenarios = [
   MechanisticReplayScenario(
     scenarioId: 's01_low_protein_far',
     title:
@@ -1172,11 +1231,15 @@ const List<MechanisticReplayScenario> mechanisticReplayScenarios = [
     title:
         'Bolus enteral-style feed (protein-containing liquid) near a dose — '
         'educational context only, no schedule or timing advice',
-    // On the complete absorption-openness grid, the small nonzero score stays
-    // below the engine's categorical interaction-type cutoff. The score is
-    // retained in the trace; the category is not evidence of biological
-    // absence.
-    expectedOutputType: ScenarioExpectedOutputType.noModeledInteraction,
+    // The 230 kcal smoothie carries energy, so it is delivered at the
+    // calorie-regulated rate (about 108 min for the whole drink) rather than
+    // emptying like water. At the dose most of it is still modeled in the
+    // stomach, and its protein keeps arriving across the absorption window.
+    // Until 2026-10-20 the liquid emptied like water (half-time about 12 min)
+    // and the score stayed below the interaction cutoff. The category is a
+    // modeled overlap, not evidence about any person.
+    expectedOutputType: ScenarioExpectedOutputType.educationalCaution,
+    expectedSeverityFloor: SeverityBand.moderate,
     medicationEntries: [_carbidopaLevodopaIr],
     medicationMinutesOffsets: [MinutesOffset(20)],
     meals: [

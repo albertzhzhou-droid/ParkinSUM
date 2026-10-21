@@ -19,9 +19,9 @@ import 'mechanistic_next_meal_scorer.dart';
 /// of both identities' self-declared digests.
 final class AlgorithmConfigurationChangeImpactService {
   static const String baselineFixtureSha256Pin =
-      'eb01c68eb348909faab808e4bc9197125b76b8ec1f46309946f06f109e22e29c';
+      '69f5236bee77284c0056c63cd5df92066231b5aad4a1ff71d88c15087a9d3c2e';
   static const String currentFixtureSha256Pin =
-      'cdc582bde5b6341add35c6c53098f800dce8715a0ddd3b42a44c88707faa813d';
+      '1f3af5a2a9e437cf22f6f23fad22035cc4135caeb9b73ad5f07a018896edaace';
   static const String boundary =
       'This comparison uses a manufactured, deterministic prior configuration '
       'to exercise change control. It is not repository history, clinical '
@@ -582,6 +582,7 @@ final class AlgorithmConfigurationChangeImpactService {
       ),
       liquidLagMinutes: current.liquidLagMinutes,
       liquidHalfMinutes: current.liquidHalfMinutes,
+      liquidNutrientKcalPerMinute: current.liquidNutrientKcalPerMinute,
       referenceMealCalories: current.referenceMealCalories,
       fatSlowdownMultiplier: current.fatSlowdownMultiplier,
       fatFractionThreshold: current.fatFractionThreshold,

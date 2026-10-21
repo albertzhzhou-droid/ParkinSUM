@@ -289,6 +289,7 @@ GastricEmptyingParameterSet _gastricWithChangedSolidHalf() {
     ),
     liquidLagMinutes: defaults.liquidLagMinutes,
     liquidHalfMinutes: defaults.liquidHalfMinutes,
+    liquidNutrientKcalPerMinute: defaults.liquidNutrientKcalPerMinute,
     referenceMealCalories: defaults.referenceMealCalories,
     fatSlowdownMultiplier: defaults.fatSlowdownMultiplier,
     fatFractionThreshold: defaults.fatFractionThreshold,

@@ -440,15 +440,17 @@ final class AlgorithmExecutableContractGate {
             <String, Object?>{
               'case_id': 'replay_source_fallback_partial_provenance',
               'decision_path': 'conservative_cdss',
+              // Since legacy parameter set v3 fiber is compared per reference
+              // serving: 140 g of cooked brown rice carries 2.24 g.
               'deterministic_ranking': <String>[
+                'food_brown_rice',
                 'food_banana',
                 'food_tofu',
-                'food_brown_rice',
               ],
               'observed_ranking': <String>[
+                'food_brown_rice',
                 'food_banana',
                 'food_tofu',
-                'food_brown_rice',
               ],
             },
             <String, Object?>{

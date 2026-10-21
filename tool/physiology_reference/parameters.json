@@ -1,0 +1,184 @@
+{
+  "$schema": "parkinsum.physiology-reference-parameters/1",
+  "parameter_set_id": "physiology_reference_v2_prototype",
+  "parameter_set_version": "2026.10.20-v0",
+  "boundary": "Educational research prototype. Population-typical values only; not patient estimates, clinical cutoffs, or dosing, timing or dietary advice.",
+  "status_vocabulary": {
+    "literature": "Point value taken from the cited publication.",
+    "calibrated": "Fitted so the model reproduces the cited calibration target; it is NOT independently validated by that target.",
+    "heuristic": "Illustrative modeling choice with a stated rationale; replaceable when better evidence is found.",
+    "verify": "Value transcribed from a cited table that has not yet been re-checked against the primary source in this repository."
+  },
+  "parameters": [
+    {
+      "id": "stomach.energy_delivery_max_kcal_per_min",
+      "value": 2.13,
+      "unit": "kcal/min",
+      "status": "literature",
+      "source": "Brener W, Hendrix TR, McHugh PR. Gastroenterology 1983;85:76-82 (PMID 6852464): glucose solutions emptied at a calorie-constant 2.13 kcal/min at all three concentrations.",
+      "note": "Applied to the emptiable (processed) pool of every energy-containing component, liquid or solid.",
+      "iiv_cv": 0.25,
+      "iiv_source": "Between-person spread of measured half-emptying in healthy adults (~24.5%); the repository's existing src.camilleri.ge.variation.2012 reference."
+    },
+    {
+      "id": "stomach.energy_tail_half_kcal",
+      "value": 10.0,
+      "unit": "kcal",
+      "status": "heuristic",
+      "note": "Energy left in the emptiable pool at which delivery is half of the maximum. Kept small so delivery stays near-constant through most of emptying, as Brener 1983 observed, while small loads still finish with a first-order tail."
+    },
+    {
+      "id": "stomach.solid_trituration_rate_per_min",
+      "value": 0.0312,
+      "unit": "1/min (per stage, two stages)",
+      "status": "calibrated",
+      "source": "Tougas G et al. Am J Gastroenterol 2000;95:1456-62 (DOI 10.1111/j.1572-0241.2000.02076.x): median solid retention 69% at 60 min, 24% at 120 min, 1.2% at 240 min for the standardized low-fat egg-substitute meal (123 healthy volunteers, 11 centres).",
+      "note": "Two first-order grinding stages in series reproduce the lag-then-linear solid emptying described by the power-exponential model (Elashoff 1982, PMID 7129034). Calibration meal energy assumed 255 kcal (consensus meal; energy to verify against Abell 2008, DOI 10.1111/j.1572-0241.2007.01636.x).",
+      "iiv_cv": 0.3
+    },
+    {
+      "id": "stomach.fasted_liquid_half_time_min",
+      "value": 10.0,
+      "unit": "min",
+      "status": "heuristic",
+      "source": "Brener 1983 (PMID 6852464): saline emptied rapidly and exponentially (volume-driven, open loop).",
+      "note": "Half-time for water and dissolved drug in an otherwise empty stomach. Fasting emptying varies with the migrating motor complex; the wide spread is carried as variability.",
+      "iiv_cv": 0.5
+    },
+    {
+      "id": "stomach.fed_liquid_slowing_half_kcal",
+      "value": 231.4,
+      "unit": "kcal",
+      "status": "calibrated",
+      "source": "Nutt JG et al. N Engl J Med 1984;310:483-8 (DOI 10.1056/NEJM198402233100802): meals delayed levodopa absorption by 34 minutes and reduced peak plasma levodopa by 29 per cent.",
+      "note": "Energy still in the stomach at which water and dissolved drug empty at half the fasted rate. Fitted to the 34-minute delay only; the 29% peak reduction is then an independent check. The study meal composition is not in the abstract; the calibration meal is an assumed ~500 kcal mixed breakfast.",
+      "iiv_cv": 0.4
+    },
+    {
+      "id": "levodopa.ir_dissolution_half_time_min",
+      "value": 3.0,
+      "unit": "min",
+      "status": "heuristic",
+      "note": "Immediate-release tablet disintegration and dissolution. Controlled- and extended-release forms are not executable in v0."
+    },
+    {
+      "id": "levodopa.gut_absorption_half_time_min",
+      "value": 7.4,
+      "unit": "min",
+      "status": "heuristic",
+      "source": "Othman AA, Dutta S. Br J Clin Pharmacol 2014;78:94-105 (DOI 10.1111/bcp.12324): mean absorption time ~25 min for oral levodopa-carbidopa tablets.",
+      "note": "Chosen so fasted gastric residence (half-time 10 min, mean 14.4 min) plus gut absorption (mean 10.7 min) matches the ~25 min mean absorption time.",
+      "iiv_cv": 0.6,
+      "iiv_source": "Simon N et al. Eur J Clin Pharmacol 2016;72:423-30 (DOI 10.1007/s00228-016-2034-0) report 122% between-subject variability on the absorption rate constant; part of that is carried by the gastric parameters here."
+    },
+    {
+      "id": "levodopa.apparent_clearance_l_per_h",
+      "value": 30.0,
+      "unit": "L/h",
+      "status": "literature",
+      "source": "Within published population estimates: 24.8 L/h (Othman & Dutta 2014, DOI 10.1111/bcp.12324) and 36.6 L/h (Simon et al. 2016, DOI 10.1007/s00228-016-2034-0), with a dopa-decarboxylase inhibitor.",
+      "iiv_cv": 0.38,
+      "iiv_source": "Simon et al. 2016: 38% between-subject variability on clearance."
+    },
+    {
+      "id": "levodopa.apparent_volume_l",
+      "value": 65.0,
+      "unit": "L",
+      "status": "heuristic",
+      "source": "Contin M, Martinelli P. J Neurol 2010;257 Suppl 2:S253-61 (DOI 10.1007/s00415-010-5728-8) review levodopa's very short plasma half-life; with carbidopa it is commonly reported near 1.5 h.",
+      "note": "One-compartment volume chosen so that CL/V gives an elimination half-life of 90 min. Published two-compartment models (Othman & Dutta 2014: Vss 131 L) are the upgrade path.",
+      "iiv_cv": 0.25
+    },
+    {
+      "id": "aa.mixed_protein_composition_g_per_g",
+      "value": {
+        "leu": 0.08,
+        "ile": 0.045,
+        "val": 0.052,
+        "phe": 0.044,
+        "tyr": 0.035,
+        "trp": 0.011,
+        "met": 0.024,
+        "his": 0.026
+      },
+      "unit": "g amino acid per g protein",
+      "status": "heuristic",
+      "note": "Default when a food has no amino-acid profile. The six competing LNAAs sum to 0.267, the all-food median of the repository's FDC 2025-04-24 SR Legacy calibration (lib/core/constants/lnaa_protein_fraction_calibration_table.dart); the split between amino acids is a typical mixed-protein pattern."
+    },
+    {
+      "id": "aa.digestion_absorption_half_time_min",
+      "value": 30.0,
+      "unit": "min",
+      "status": "heuristic",
+      "note": "Digestion and absorption after the duodenum. Fast versus slow proteins differ mainly through gastric behaviour (Boirie Y et al. PNAS 1997;94:14930-5, DOI 10.1073/pnas.94.26.14930), which the stomach model carries.",
+      "iiv_cv": 0.3
+    },
+    {
+      "id": "aa.systemic_fraction",
+      "value": {
+        "leu": 0.75,
+        "ile": 0.75,
+        "val": 0.75,
+        "phe": 0.6,
+        "tyr": 0.6,
+        "trp": 0.6,
+        "met": 0.6,
+        "his": 0.6
+      },
+      "unit": "fraction",
+      "status": "heuristic",
+      "note": "Fraction of absorbed amino acid escaping first-pass splanchnic uptake. Branched-chain amino acids are extracted less by the liver than aromatic ones; magnitudes are illustrative and absorbed into the calibrated plasma volume."
+    },
+    {
+      "id": "aa.plasma_distribution_volume_l",
+      "value": 73.9,
+      "unit": "L",
+      "status": "calibrated",
+      "source": "Carter JH et al. Neurology 1989;39:552-6 (DOI 10.1212/wnl.39.4.552): mean plasma LNAA 732 nmol/mL on 1.6 g/kg/day protein and 640 on 0.8 g/kg/day evenly distributed; 542 on 0.8 g/kg/day restricted to the evening meal.",
+      "note": "Fitted to the two evenly distributed diets (closed-form least squares) with the relaxation half-time held at its prior; the evening-restricted diet is the independent check. Absorbs the systemic-fraction and composition heuristics, so it is an effective volume, not a measured one.",
+      "iiv_cv": 0.25
+    },
+    {
+      "id": "aa.plasma_relaxation_half_time_min",
+      "value": 60.0,
+      "unit": "min",
+      "status": "heuristic",
+      "note": "Declared prior, set before any fitting: post-meal plasma amino acids return toward fasting within a few hours. Not identifiable from the Carter daily means (any value from 45 to 180 min fits the two even diets equally well), so it is declared rather than fitted.",
+      "iiv_cv": 0.25
+    },
+    {
+      "id": "aa.fasting_plasma_umol_per_l",
+      "value": {
+        "leu": 120,
+        "ile": 60,
+        "val": 220,
+        "phe": 55,
+        "tyr": 60,
+        "trp": 50,
+        "met": 25,
+        "his": 80
+      },
+      "unit": "umol/L",
+      "status": "verify",
+      "note": "Typical adult fasting plasma values (mid reference range). The six competing LNAAs sum to 565 umol/L, close to the 542 nmol/mL Carter et al. reported on a daytime-protein-restricted diet. Replace with a cited reference-range table before promotion."
+    },
+    {
+      "id": "bbb.km_umol_per_l",
+      "value": {
+        "phe": 11,
+        "trp": 15,
+        "leu": 29,
+        "met": 40,
+        "ile": 56,
+        "tyr": 64,
+        "his": 100,
+        "val": 210
+      },
+      "unit": "umol/L",
+      "status": "verify",
+      "source": "Smith QR et al. J Neurochem 1987;49:1651-8 (DOI 10.1111/j.1471-4159.1987.tb01039.x): complete set of blood-brain-barrier neutral amino acid transport constants (rat, in situ perfusion). Pardridge & Choi 1986 (PMID 3519291) report human brain-capillary phenylalanine Km close to rat values.",
+      "note": "Transcribed values; re-check against the paper's table before promotion. Rat, anesthetized; human values may differ, so the set carries a common variability factor.",
+      "iiv_cv": 0.3
+    }
+  ]
+}

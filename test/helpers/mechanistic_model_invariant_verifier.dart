@@ -797,6 +797,7 @@ final class MechanisticModelInvariantVerifier {
     nonnegative(parameters.liquidLagMinutes);
     positive(parameters.solidHalfMinutes);
     positive(parameters.liquidHalfMinutes);
+    positive(parameters.liquidNutrientKcalPerMinute);
     positive(parameters.referenceMealCalories);
     if (parameters.fatSlowdownMultiplier.value < 1 ||
         parameters.fiberSlowdownMultiplier.value < 1) {

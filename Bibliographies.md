@@ -109,6 +109,20 @@ The runtime registry now also contains the following primary/consensus records:
 - `src.camilleri.ge.variation.2012` — Camilleri et al., *Neurogastroenterol
   Motil* 24:1076-e562, PMID:22747676.
 
+### 2026-10-20 gastric physics update
+
+Registered for the calorie-regulated liquid delivery rate
+(`ge.liquid.nutrient_kcal_per_min`, 2.13 kcal/min, sensitivity range
+1–4 kcal/min) in `lib/domain/entities/gastric_emptying_parameters.dart`.
+Details and boundaries: `docs/CONFLICT_ENGINE_MODEL.md` §7.
+
+- `src.brener.glucose_emptying.1983` — Brener, Hendrix, and McHugh,
+  *Gastroenterology* 85:76–82, PMID:6852464.
+- `src.hunt_stubbs.energy_density.1975` — Hunt and Stubbs, *J Physiol*
+  245:209–225, doi:10.1113/jphysiol.1975.sp010841, PMID:1127608.
+- `src.marathe.ge_kcal_range.2013` — Marathe, Rayner, Jones, and Horowitz,
+  *Diabetes Care* 36:1396–1405, doi:10.2337/dc12-1609, PMID:23613599.
+
 ### 2026-10-08 food-composition interdependency update
 
 Registered for `lib/domain/usecases/food_composition_interdependency_model.dart`
@@ -185,7 +199,9 @@ source is cited only for *mechanism direction*.
 | --- | --- | --- | --- | --- |
 | `ge.solid.lag.10_30` | Solid meals are modeled with an illustrative gastric-emptying lag before the modeled residence curve begins to decline. | [9], [10] | `prototype_heuristic` selected value; literature-informed direction | Curve shape and selected lag have no individual calibration. |
 | `ge.solid.half.60_120` | The default solid component uses a 90-minute illustrative half-emptying anchor. | [9], [33] | `prototype_heuristic` selected value; `mechanism` measurement context | The cited 24.5% coefficient of variation is from healthy-participant scintigraphy and is not a Parkinson distribution. |
-| `ge.liquid.fast` | Liquids are represented with a shorter lag and half-time than solids. | [10] | `prototype_heuristic` selected values; literature-informed direction | Mixed meals diverge from pure-liquid kinetics. |
+| `ge.liquid.fast` | Energy-free liquids (0 kcal) are represented with a shorter lag and half-time than solids; the same exponential is the volume-driven bound for liquids that carry energy. | [10], [34] | `prototype_heuristic` selected values; literature-informed direction | Mixed meals diverge from pure-liquid kinetics. |
+| `ge.liquid.nutrient_kcal_per_min` | A liquid that carries energy is delivered at a calorie-regulated rate of 2.13 kcal/min (all such liquids of a meal share one pool), and never faster than an energy-free liquid: `remaining = max(volume exponential, 1 − (t − lag)/(pool kcal ÷ rate))`. A liquid of unknown energy is drawn on the energy-free exponential as the stated fastest bound, records `liquid_component_calories` as missing and widens uncertainty by one step. | [34], [35], [36] | `literature_derived` value (`mechanism`); explicit 1–4 kcal/min sensitivity range | Measured for glucose solutions; delivered energy rises somewhat with energy density, so delivery is only approximately constant. Viscosity, osmolality, macronutrient-specific effects, an initial fast phase and Parkinson disease are not modeled; solid-phase energy does not join the liquid pool. Implemented: `gastric_emptying_model.dart`, `gastric_emptying_profile.dart`. |
+| `aa.competition.protein_weighted_arrival` | The competition pressure takes its shape from the arrival of protein, `Σ protein_i · d emptied_i/dt / Σ protein_i` (competing-LNAA grams instead of protein when every protein-bearing component has a complete amino-acid profile), over a support that ends at the protein-weighted lag plus four protein-weighted half-times. Components without protein, such as water, cannot move it; the mass-weighted residual still sets the dose-time absorption shift. | [4], [5], [10] | `mechanism` (direction); `prototype_heuristic` (shape-to-pressure mapping) | Assumes protein leaves the stomach with the component that carries it; no intragastric mixing or sieving between components is modeled. Implemented: `amino_acid_competition_model.dart`, `gastric_emptying_profile.dart`. |
 | `ge.fat.slowdown.1_5x` | Meals with ≥30% kcal from fat are modeled with ~1.5× longer half-emptying. | [10] | `prototype_heuristic` | Multiplier is illustrative, not patient-fitted. |
 | `ge.fiber.uncertainty` | High-fiber meals widen the model's uncertainty band rather than asserting precision. | [10] | `prototype_heuristic` | Direction supported; magnitude is illustrative. |
 | `ge.size.linear_scale` | Half-emptying scales linearly with total kcal vs a 400 kcal reference. | [9] | `prototype_heuristic` | Real kinetics are non-linear; included only as monotonic direction. |
@@ -338,6 +354,21 @@ citation/implementation candidates; none enable live ingestion today.
     *Neurogastroenterology & Motility*, vol. 24, no. 12, 2012, pp. 1076-e562.
     doi:10.1111/j.1365-2982.2012.01972.x. PMC,
     https://pmc.ncbi.nlm.nih.gov/articles/PMC3465511/. Accessed 17 Aug. 2026.
+
+34. Brener, W., T. R. Hendrix, and P. R. McHugh. "Regulation of the Gastric
+    Emptying of Glucose." *Gastroenterology*, vol. 85, no. 1, 1983,
+    pp. 76–82. PubMed, https://pubmed.ncbi.nlm.nih.gov/6852464/.
+    Accessed 20 Oct. 2026.
+
+35. Hunt, J. N., and D. F. Stubbs. "The Volume and Energy Content of Meals as
+    Determinants of Gastric Emptying." *The Journal of Physiology*, vol. 245,
+    no. 1, 1975, pp. 209–25. doi:10.1113/jphysiol.1975.sp010841. PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC1330851/. Accessed 20 Oct. 2026.
+
+36. Marathe, Chinmay S., et al. "Relationships between Gastric Emptying,
+    Postprandial Glycemia, and Incretin Hormones." *Diabetes Care*, vol. 36,
+    no. 5, 2013, pp. 1396–405. doi:10.2337/dc12-1609. PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC3631884/. Accessed 20 Oct. 2026.
 
 ## Potential future model/data-flow sources
 

@@ -9,8 +9,8 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 | Source documents | 43 |
 | CDSS rules | 12 |
 | Safe-copy templates | 25 |
-| Replay scenarios | 41 |
-| Model assumptions | 44 |
+| Replay scenarios | 42 |
+| Model assumptions | 47 |
 
 ## Known gaps
 
@@ -121,7 +121,7 @@ What this prototype actually ships. Counting coverage is not a claim that the co
 
 | Value | Count |
 | --- | --- |
-| mechanism | 39 |
+| mechanism | 42 |
 | label | 2 |
 | regulatoryGuidance | 2 |
 | prototypeHeuristic | 1 |

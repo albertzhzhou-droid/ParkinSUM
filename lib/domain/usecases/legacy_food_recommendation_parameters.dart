@@ -6,6 +6,11 @@
 /// score composition, bound, threshold, and ordering contract in one immutable
 /// object lets production execution, replay identity, provenance, and the
 /// Algorithm Observatory refer to the same values.
+///
+/// Candidate protein and fiber thresholds are meal-sized grams. Since v3 they
+/// compare the food's evaluated amount (its reference serving, else 100 g;
+/// see `food_serving_reference_resolver.dart`), so a candidate is compared
+/// like with like against them and against per-meal history averages.
 library;
 
 abstract final class LegacyFoodRecommendationParameterIds {
@@ -225,8 +230,8 @@ final class LegacyFoodRecommendationScalar {
 
 final class LegacyFoodRecommendationParameterSet {
   static const String defaultId = 'legacy_food_recommendations.compatibility';
-  static const String defaultVersion = '2026.09.23-v2';
-  static const String defaultLastReviewed = '2026-09-23';
+  static const String defaultVersion = '2026.10.20-v3';
+  static const String defaultLastReviewed = '2026-10-20';
   static const String scoreDescendingFoodIdAscending = 'score_desc_food_id_asc';
   static const List<String> supportedTieBreakPolicies = [
     scoreDescendingFoodIdAscending,
@@ -287,9 +292,13 @@ final class LegacyFoodRecommendationParameterSet {
     );
 
     const scoreFormula = 'legacy-food.score.bounded-linear-composition/2';
-    const proteinFormula = 'legacy-food.threshold.protein-branching/1';
-    const fiberFormula = 'legacy-food.threshold.fiber-branching/1';
-    const historyFormula = 'legacy-food.history.arithmetic-mean-branching/1';
+    const proteinFormula =
+        'legacy-food.threshold.protein-branching.evaluated-amount/2';
+    const fiberFormula =
+        'legacy-food.threshold.fiber-branching.evaluated-amount/2';
+    const historyFormula =
+        'legacy-food.history.arithmetic-mean-branching.evaluated-amount/2';
+    const perEvaluatedAmount = 'g_per_evaluated_amount';
 
     return LegacyFoodRecommendationParameterSet(
       id: defaultId,
@@ -473,7 +482,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.safetyCautionProteinG,
           label: 'Protein threshold for caution-tier safety score',
           value: 15,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -482,7 +491,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.safetyHighProteinG,
           label: 'Protein threshold for high-tier safety score',
           value: 25,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -491,7 +500,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.scheduleHighProteinG,
           label: 'Protein threshold for schedule-fit branching',
           value: 20,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -501,7 +510,7 @@ final class LegacyFoodRecommendationParameterSet {
               .timingSensitivityCautionProteinG,
           label: 'Protein threshold for caution timing sensitivity',
           value: 15,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -511,7 +520,7 @@ final class LegacyFoodRecommendationParameterSet {
               .timingSensitivityHighProteinG,
           label: 'Protein threshold for high timing sensitivity',
           value: 20,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -520,7 +529,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.warningProteinG,
           label: 'Protein threshold for visible warning decision',
           value: 20,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -529,7 +538,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.contextPenaltyProteinG,
           label: 'Protein threshold for iron/feed context penalties',
           value: 15,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -538,7 +547,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.lowProteinReasonG,
           label: 'Exclusive protein threshold for low-protein reason copy',
           value: 10,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: proteinFormula,
@@ -556,7 +565,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.historyLowCandidateProteinG,
           label: 'Exclusive low-protein candidate threshold after high history',
           value: 8,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: historyFormula,
@@ -565,7 +574,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.highFiberSupportG,
           label: 'High fiber-support threshold',
           value: 4,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: fiberFormula,
@@ -574,7 +583,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.moderateFiberSupportG,
           label: 'Moderate fiber-support threshold',
           value: 2,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: fiberFormula,
@@ -583,7 +592,7 @@ final class LegacyFoodRecommendationParameterSet {
           id: LegacyFoodRecommendationParameterIds.nutrientFiberG,
           label: 'Fiber threshold for nutrient-match branching',
           value: 2,
-          unit: 'g',
+          unit: perEvaluatedAmount,
           minimum: 0,
           maximum: 1000,
           formulaId: fiberFormula,

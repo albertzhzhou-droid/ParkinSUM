@@ -315,10 +315,31 @@ Residual risks:
   new LNAA trace detail (per-component shares, an extended sum with
   methionine and histidine, a molar ratio to an explicit logged amount) is
   descriptive and never a threshold.
+- Iteration 6 (2026-10-20) corrects two gastric-model physics errors. The
+  competition layer now follows protein arrival, so a zero-protein drink no
+  longer sets protein timing; this assumes protein leaves the stomach with the
+  component that carries it. A liquid that carries energy is delivered at
+  2.13 kcal/min (Brener et al. 1983, glucose solutions in adults; reported
+  healthy range 1–4 kcal/min) instead of emptying like water. The rate is not
+  strictly constant, and viscosity, osmolality, macronutrient-specific effects
+  and Parkinson-specific emptying are not modeled. A liquid of unknown energy
+  is drawn on the fast energy-free curve as a stated bound with widened
+  uncertainty. Modeled scores change for meals with drinks; none of this is a
+  timing or diet instruction.
 - The FoodData Central 2025-04-24 nutrient definitions and conversion factors
   are pinned; a later FDC release can renumber or redefine nutrients and
   needs a re-pin. One food-specific energy factor (coconut oil) disagrees
   across releases and is documented, not corrected.
+- Iteration 7 (2026-10-21) evaluates next-meal candidates at a reference
+  serving instead of per 100 g: a source portion chosen by a documented rule,
+  else the FDA/USDA reference amount of the food's product category, else per
+  100 g with a "serving unknown" label (`docs/CANDIDATE_SERVING_REFERENCE.md`).
+  A serving is a comparison amount, not an estimate of what a person eats and
+  not portion advice. Category assignments are curated by hand, a category
+  reference amount is an assumption (uncertainty is widened), volume amounts
+  without a source household measure stay per 100 g, and the legacy ranking
+  order changes where a serving crosses a meal-sized protein or fiber
+  threshold that 100 g did not.
 
 Required mitigation:
 

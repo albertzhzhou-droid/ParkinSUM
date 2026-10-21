@@ -1606,7 +1606,7 @@ MealComposition _controlledComposition({
   // protein/40 as the controlled overlap without using an empty-meal sentinel.
   foodComponents: [
     FoodComponent(
-      id: 'synthetic:threshold-component',
+      id: 'synthetic:controlled-component',
       name: 'controlled threshold component',
       physicalForm: MealPhysicalForm.solid,
       proteinGrams: proteinGrams,
@@ -1764,6 +1764,14 @@ final class _ControlledGastricProfile extends GastricEmptyingProfile {
 
   @override
   double intestinalArrivalRateAt(int minutesSinceMealStart) => arrivalRate;
+
+  // The competition layer reads protein-weighted arrival; the controlled
+  // component carries all of the meal's protein.
+  @override
+  double weightedIntestinalArrivalRateAt(
+    int minutesSinceMealStart,
+    Map<String, double> weightsByComponentId,
+  ) => arrivalRate;
 }
 
 GastricEmptyingParameter<double> _doubleParameter(
@@ -1810,6 +1818,7 @@ GastricEmptyingParameterSet _gastricWith(
   ),
   liquidLagMinutes: defaults.liquidLagMinutes,
   liquidHalfMinutes: defaults.liquidHalfMinutes,
+  liquidNutrientKcalPerMinute: defaults.liquidNutrientKcalPerMinute,
   referenceMealCalories: _doubleParameter(
     defaults.referenceMealCalories,
     referenceMealCalories ?? defaults.referenceMealCalories.value,

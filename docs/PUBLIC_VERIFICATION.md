@@ -617,9 +617,10 @@ behaviour change at commit N show up as a reviewable diff against commit N-1.
 - **Network:** no. **Data:** synthetic only.
 
 ### `dart run tool/run_mechanistic_replay.dart`  (or `npm run mechanistic:replay`)
-- **Checks:** the deterministic mechanistic replay suite (41 synthetic
-  scenarios) and a banned-prescriptive-phrase scan over every emission.
-- **Expected:** `Mechanistic replay: 41/41 scenarios passed.` and report files
+- **Checks:** the deterministic mechanistic replay suite (42 synthetic
+  scenarios; s41 scores built-in catalog foods per reference serving) and a
+  banned-prescriptive-phrase scan over every emission.
+- **Expected:** `Mechanistic replay: 42/42 scenarios passed.` and report files
   under `build/mechanistic_replay/latest.{json,md}`.
 - **Failure means:** a scenario's modeled output changed unexpectedly, or banned
   copy leaked. **This is synthetic regression testing, not clinical validation.**

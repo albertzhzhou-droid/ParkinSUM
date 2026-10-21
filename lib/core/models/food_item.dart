@@ -160,9 +160,11 @@ class FoodItem {
   /// probability distributions or measurement-uncertainty estimates.
   final List<NutrientObservationEvidence> nutrientObservationEvidence;
 
-  /// Source-reported portion descriptions and gram weights, retained as
-  /// evidence only. These records are not selected servings and are not used
-  /// to rescale nutrient values or ranking inputs.
+  /// Source-reported portion descriptions and gram weights. They are kept as
+  /// evidence, and the documented serving rule
+  /// (`food_serving_reference_resolver.dart`) may select one as the reference
+  /// serving a next-meal candidate is evaluated at. They never alter the
+  /// stored per-100 g values or a logged meal amount.
   final List<FoodPortionEvidence> foodPortionEvidence;
 
   /// Complete original provider objects. No ingredient, density or label conversion.

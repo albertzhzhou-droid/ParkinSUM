@@ -94,7 +94,7 @@ Per-case report row (see `MechanisticReplayCaseReport`):
 | `medication_metadata_completeness` / `medication_missing_fields` | Medication-context completeness grade + recorded missing provenance fields. |
 | `pass` / `failureReason` | Bool + diagnostic message. |
 
-The suite contains **41 scenarios** (s01–s40, including s04b), covering
+The suite contains **42 scenarios** (s01–s41, including s04b), covering
 catalog-backed medication context, missing-field downgrades, invalid medication,
 daytime high-overlap vs evening low-overlap protein behavior, zero-vs-moderate
 protein in low-overlap windows, the no-window fallback, amino-acid
@@ -105,7 +105,9 @@ far window, mixed-mode candidate sets, invalid-with-window, no-window
 fallback visibility, daytime-overlap amino-acid food), missingness/uncertainty
 and enteral coverage (s32–s38), and **medication section-provenance bridging**
 (s39 SPL IR carbidopa/levodopa with label-section refs; s40 SPL ER) where CDSS
-drug metadata reaches the mechanistic context without fabricating a dose. Report rows
+drug metadata reaches the mechanistic context without fabricating a dose, and
+built-in catalog candidates evaluated per reference serving (s41; the
+timeline is synthetic, the foods are public reference records). Report rows
 additionally carry `amino_acid_data_mode`, `amino_acid_nutrient_ids`,
 `source_implementation_status`, `live_fetch_enabled`, `license_review_status`,
 `can_support_mechanism_evidence_alone`, and `clinical_calibration_status`
@@ -125,7 +127,8 @@ clinical-validation advice.
 ## How to add a scenario
 
 1. Append a `MechanisticReplayScenario` literal to
-   `mechanisticReplayScenarios` in
+   `_syntheticReplayScenarios` (or a catalog-backed builder to
+   `mechanisticReplayScenarios`) in
    `lib/core/constants/mechanistic_replay_scenarios.dart`.
 2. Use only synthetic catalog-backed medication entries (or deliberately
    invalid ones for negative scenarios).

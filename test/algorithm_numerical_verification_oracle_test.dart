@@ -46,7 +46,7 @@ void main() {
   test('truth manifest is stable, finite, unique, and method-bounded', () {
     expect(
       AlgorithmNumericalVerificationOracle.manifestDigest,
-      '3de7383e6eeeb776ecb363b9658057f16b8e352e87c370345d270edee9ea0dac',
+      '65cb491b65791ac35f92099912fda62b2b8ad27faae7dca5e0560d6d1ddff73e',
     );
     final vectors = AlgorithmNumericalVerificationOracle.truthVectors;
     expect(vectors.map((entry) => entry.id).toSet(), hasLength(vectors.length));

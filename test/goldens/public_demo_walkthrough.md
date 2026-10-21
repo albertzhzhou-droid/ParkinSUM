@@ -6,7 +6,7 @@ Composed from existing synthetic artifacts. Missing artifacts are reported as `m
 
 ## 1. Synthetic input summary
 
-All inputs are synthetic/demo only (no patient data). Scenarios: 41 synthetic replay scenarios. Capability matrix: see docs/CAPABILITY_MATRIX.md.
+All inputs are synthetic/demo only (no patient data). Scenarios: 42 synthetic replay scenarios. Capability matrix: see docs/CAPABILITY_MATRIX.md.
 
 ## 2. Source quality summary
 
@@ -14,11 +14,11 @@ missing_artifact
 
 ## 3. Missingness summary
 
-Missing nutrient/medication fields are recorded as missing (never coerced to a true 0 g), which lowers completeness and widens uncertainty. 25 of 41 replay scenarios model reduced meal-context completeness.
+Missing nutrient/medication fields are recorded as missing (never coerced to a true 0 g), which lowers completeness and widens uncertainty. 25 of 42 replay scenarios model reduced meal-context completeness.
 
 ## 4. Mechanistic replay summary
 
-Mechanistic replay: 41/41 deterministic synthetic scenarios passed, each scanned for banned prescriptive phrasing. This is synthetic regression testing, not clinical validation.
+Mechanistic replay: 42/42 deterministic synthetic scenarios passed, each scanned for banned prescriptive phrasing. This is synthetic regression testing, not clinical validation.
 
 ## 5. Evidence trace / bundle summary
 

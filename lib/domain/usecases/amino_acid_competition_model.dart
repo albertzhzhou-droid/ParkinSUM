@@ -8,12 +8,34 @@ import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
 import '../entities/time_axis_events.dart';
 
+/// Which quantity weights each component's arrival in the competition layer.
+enum CompetitionArrivalWeighting {
+  /// Competing-LNAA grams per component; used when every protein-bearing
+  /// component has a complete amino-acid profile.
+  competingLnaaGrams,
+
+  /// Protein grams per component.
+  proteinGrams,
+
+  /// Meal mass; used only when no component carries protein, so the pressure
+  /// amplitude is zero and the shape cannot matter.
+  mealMass,
+}
+
+/// The weighting used for one meal and the per-component weights it implies.
+typedef CompetitionArrivalBasis = ({
+  CompetitionArrivalWeighting weighting,
+  Map<String, double> weightsByComponentId,
+});
+
 /// Educational proxy for amino-acid competition pressure timeline.
 ///
 /// Approach:
 ///   1. Pressure peaks where the gastric emptying profile is releasing the
-///      most protein into the small intestine (i.e. roughly during the
-///      meal's peak emptying window).
+///      most protein into the small intestine. The arrival curve is weighted
+///      by protein grams per component (competing-LNAA grams when complete
+///      amino-acid profiles exist), so a component without protein, such as
+///      water, cannot shift the protein timing.
 ///   2. Pressure amplitude scales with total protein grams (relative to a
 ///      moderate reference of ~20 g) and is multiplied by an effective
 ///      LNAA load factor: a food's competing-LNAA fraction of protein over
@@ -202,19 +224,76 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
     final proteinAmplitude = (proteinAmplitudeBase * lnaa.effectiveLoadFactor)
         .clamp(0.0, 2.0);
 
+    // Protein reaches the intestine with the components that carry it. The
+    // mass-weighted arrival curve counts a glass of water like the food it is
+    // served with, so it would let a zero-protein drink set the competition
+    // timing; the weighted curve and its support do not. The mass-weighted
+    // residual still drives the dose-time absorption shift upstream.
+    final basis = _arrivalBasis(mealComposition, mealEmptyingProfile, lnaa);
+    final profileComponentIds = {
+      for (final component in mealEmptyingProfile.componentProfiles)
+        component.componentId,
+    };
+    if (!basis.weightsByComponentId.keys.every(profileComponentIds.contains)) {
+      // Protein the gastric profile cannot place has no arrival time. Holding
+      // the result is safer than dropping that protein from the curve.
+      return CompetitionPressureTimeline(
+        availability: MechanisticProviderAvailability.blockedIntegrity,
+        applicabilityReasons: const [
+          'competition.protein_component_missing_from_gastric_profile',
+        ],
+        samples: const [],
+        peakMinute: mealStartMinute,
+        peakPressure: 0,
+        overlapWithAbsorptionWindow: 0,
+        competitionBand: CompetitionBand.unknown,
+        uncertaintyBand: UncertaintyBand.veryWide,
+        assumptions: List.unmodifiable([
+          ...assumptions,
+          'aa.competition.protein_arrival_integrity_blocked',
+        ]),
+        sourceRefs: _baseSourceRefs,
+      );
+    }
+    final weightedShape =
+        basis.weighting == CompetitionArrivalWeighting.mealMass
+        ? null
+        : mealEmptyingProfile.weightedProfileShape(basis.weightsByComponentId);
+    final weightedMostlyEmptiedMinutes =
+        weightedShape?.mostlyEmptiedWindowDurationMinutes;
+    assumptions.add(switch (basis.weighting) {
+      CompetitionArrivalWeighting.competingLnaaGrams =>
+        'aa.competition.arrival_weighting.competing_lnaa_grams',
+      CompetitionArrivalWeighting.proteinGrams =>
+        'aa.competition.arrival_weighting.protein_grams',
+      CompetitionArrivalWeighting.mealMass =>
+        'aa.competition.arrival_weighting.meal_mass_no_protein_component',
+    });
     final startMin = mealStartMinute;
-    final endMin = mealEmptyingProfile.mostlyEmptiedWindow.endMinute;
+    final int endMin;
+    if (weightedShape != null && weightedMostlyEmptiedMinutes != null) {
+      endMin =
+          mealStartMinute +
+          weightedShape.aggregateLagMinutes.round() +
+          weightedMostlyEmptiedMinutes;
+      assumptions.add('aa.competition.support_weighted_mostly_emptied');
+    } else {
+      endMin = mealEmptyingProfile.mostlyEmptiedWindow.endMinute;
+    }
     final arrivalSamples = <({int minute, double rate})>[];
     var peakArrivalRate = 0.0;
     for (var t = startMin; t <= endMin; t += sampleStrideMinutes) {
-      final rate = mealEmptyingProfile.intestinalArrivalRateAt(
-        t - mealStartMinute,
-      );
+      final rate = basis.weighting == CompetitionArrivalWeighting.mealMass
+          ? mealEmptyingProfile.intestinalArrivalRateAt(t - mealStartMinute)
+          : mealEmptyingProfile.weightedIntestinalArrivalRateAt(
+              t - mealStartMinute,
+              basis.weightsByComponentId,
+            );
       arrivalSamples.add((minute: t, rate: rate));
       if (rate > peakArrivalRate) peakArrivalRate = rate;
     }
 
-    // `intestinalArrivalRateAt` is a fraction-per-minute (typically a small
+    // The arrival rate is a fraction-per-minute (typically a small
     // number such as 0.005). Comparing it directly with 0..1 competition-band
     // thresholds made the pressure scale effectively degenerate. Preserve its
     // evidence-informed *shape*, normalize that shape to its own peak, then
@@ -284,6 +363,70 @@ class AminoAcidCompetitionModel with RegisteredAlgorithmComponentIdentity {
       assumptions: List.unmodifiable(assumptions),
       sourceRefs: _baseSourceRefs,
       lnaaSummary: lnaa,
+    );
+  }
+
+  /// The arrival weighting and per-component weights [build] uses for this
+  /// meal, so a view can draw exactly the protein-arrival series the model
+  /// used. Weights do not depend on the logged dose.
+  CompetitionArrivalBasis arrivalBasisFor({
+    required MealComposition mealComposition,
+    required GastricEmptyingProfile mealEmptyingProfile,
+  }) => _arrivalBasis(
+    mealComposition,
+    mealEmptyingProfile,
+    _computeLnaaLoad(mealComposition, null),
+  );
+
+  /// Competing-LNAA grams when every protein-bearing component has a complete
+  /// amino-acid profile, protein grams otherwise, and meal mass only when no
+  /// component carries protein. A meal without components gives its protein to
+  /// the single synthesized gastric component.
+  CompetitionArrivalBasis _arrivalBasis(
+    MealComposition composition,
+    GastricEmptyingProfile profile,
+    CompetitionLnaaSummary lnaa,
+  ) {
+    const massBasis = (
+      weighting: CompetitionArrivalWeighting.mealMass,
+      weightsByComponentId: <String, double>{},
+    );
+    bool positive(double? value) =>
+        value != null && value.isFinite && value > 0;
+    if (composition.foodComponents.isEmpty) {
+      final protein = composition.proteinGrams;
+      if (!positive(protein) || profile.componentProfiles.length != 1) {
+        return massBasis;
+      }
+      return (
+        weighting: CompetitionArrivalWeighting.proteinGrams,
+        weightsByComponentId: Map<String, double>.unmodifiable({
+          profile.componentProfiles.single.componentId: protein!,
+        }),
+      );
+    }
+    if (lnaa.dataMode == AminoAcidDataMode.actualAminoAcidFields) {
+      final lnaaWeights = <String, double>{
+        for (final contribution in lnaa.componentContributions)
+          if (positive(contribution.competingLnaaGrams))
+            contribution.componentId: contribution.competingLnaaGrams,
+      };
+      if (lnaaWeights.isNotEmpty) {
+        return (
+          weighting: CompetitionArrivalWeighting.competingLnaaGrams,
+          weightsByComponentId: Map<String, double>.unmodifiable(lnaaWeights),
+        );
+      }
+    }
+    final proteinWeights = <String, double>{
+      for (final component in composition.foodComponents)
+        if (positive(component.proteinGrams))
+          component.id: component.proteinGrams!,
+    };
+    if (proteinWeights.isEmpty) return massBasis;
+    return (
+      weighting: CompetitionArrivalWeighting.proteinGrams,
+      weightsByComponentId: Map<String, double>.unmodifiable(proteinWeights),
     );
   }
 

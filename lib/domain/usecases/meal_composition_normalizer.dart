@@ -78,6 +78,15 @@ class MealCompositionNormalizer with RegisteredAlgorithmComponentIdentity {
     final hasUnknownPortion = components.any(
       (component) => component.portionGrams == null,
     );
+    // A category reference amount is an assumed portion, not an observed
+    // one. Its grams still size the evaluated nutrients and masses, but the
+    // portion counts as missing input so completeness and the downstream
+    // uncertainty bands reflect the assumption.
+    final hasAssumedPortion = components.any(
+      (component) =>
+          component.portionGrams != null &&
+          component.portionBasis == FoodComponent.categoryDefaultPortionBasis,
+    );
     final hasInvalidPortion = components.any((component) {
       final portion = component.portionGrams;
       return portion != null && (!portion.isFinite || portion < 0);
@@ -131,7 +140,11 @@ class MealCompositionNormalizer with RegisteredAlgorithmComponentIdentity {
     if (fiber == null) missing.add('fiber_grams');
     if (carbs == null) missing.add('carbohydrate_grams');
     if (calories == null) missing.add('total_calories');
-    if (portionIncomplete) missing.add('portion_grams');
+    if (portionIncomplete) {
+      missing.add('portion_grams');
+    } else if (hasAssumedPortion) {
+      missing.add('portion_grams_assumed');
+    }
     if (liquidFraction == null) missing.add('liquid_fraction');
     if (!hasKnownDeclaredForm && hasUnknownComponentForm) {
       missing.add('meal_physical_form');

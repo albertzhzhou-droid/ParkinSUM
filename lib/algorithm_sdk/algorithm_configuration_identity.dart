@@ -94,7 +94,17 @@ final class AlgorithmConfigurationIdentity {
   // competition pressure changes, and load-to-pressure stays a heuristic.
   // v78 audits more identities of the official reference records, caps
   // confidence on scored engine-input findings and adds LNAA trace detail.
-  static const String defaultVersion = '2026.10.15-v78';
+  // v79 weights the competition layer's arrival curve by protein (competing
+  // LNAA with complete profiles) and delivers energy-containing liquids at a
+  // calorie-regulated rate; modeled competition, residual and scores change.
+  // v80 evaluates next-meal candidates at a reference serving (source
+  // portion or FDA/USDA category reference amount, else labelled per 100 g),
+  // widens uncertainty for assumed amounts and compares the legacy ranker's
+  // meal-sized protein and fiber thresholds with the same evaluated amount.
+  // v81 binds plain-language result copy: missing dose or time is presented
+  // as "can't assess yet"; stored scores, severities and rule decisions are
+  // unchanged.
+  static const String defaultVersion = '2026.10.20-v81';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -102,20 +112,20 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '16f7264fbb8883803c4d8503c760fbc48d5105edff34828a49437c0b469de3dd';
+      '50ecd06655dfc6ec4d286489820ac3e748e422d7c992c62108e699a6101f0909';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
   /// Values are verified mechanically in `parkinsum_algorithm_sdk_test.dart`.
   static const Map<String, String> defaultImplementationSourceDigests = {
     'lib/domain/entities/gastric_emptying_parameters.dart':
-        'c6f3f29de193e403cd2cab5b6d113fd6ea52f220e875092492179b5d93baac5f',
+        '630c8eae97c1fb14374c5cd799331be68e9b71a33610ca14b3b1c119f6e84895',
     'lib/domain/entities/gastric_emptying_profile.dart':
-        '907c6ed035001f35eee062df4c24fdf3d0f435a1f9739851944fb1670fcc558e',
+        'ba25b54dee08e9dbfe569b717b5354264d254b5134d9be28f341a53df67b4cf1',
     'lib/domain/usecases/gastric_emptying_model.dart':
-        '4463c1c8de88b7f5e12a8ff87b0edef96aaf1d71b72cd2eaa38ab2b4978fca7b',
+        '3aa135e3e5588c01029a40bb8948cad6ba35c7b6d707415e9a44c681812a72ea',
     'lib/domain/usecases/meal_composition_normalizer.dart':
-        'c9e902d8c5f37b37ad73be5d598319730d1b7d6afb5eafb63f4ba787598c9c7f',
+        '7a1f0442590fd801fbfb2e8c2f338d1fb59b874e42078a930d5b40cac493c8d5',
     'lib/domain/entities/absorption_opportunity.dart':
         'b069f21f51e7a7a3730d602160fcc3355b6dfe2953567b34f3084f6d599e1628',
     'lib/domain/entities/levodopa_absorption_opportunity_parameters.dart':
@@ -135,9 +145,9 @@ final class AlgorithmConfigurationIdentity {
     'lib/core/constants/lnaa_protein_fraction_calibration_table.dart':
         '9167c42ec79724b688fb98d7910bdae2202e5b479687579ef8f2a61b93df3270',
     'lib/domain/usecases/amino_acid_competition_model.dart':
-        'de2e6a4f29740da6981f5e39fcad851ef2b7bf03539e52a398e2a7bcc4c6f68f',
+        '2567d6927ab0766a3d3c13b375c89f4ec60c088825c2be7d6b9459adea6e5127',
     'lib/domain/usecases/mechanistic_conflict_engine.dart':
-        '24f0fbfd83089a207ac528e88faa897a6d7e20caeca19ca07bd52775bb09d873',
+        '8ed9896c57f4eb63563b167b80cf3c7eaa05272699c1fef98edf3dd31ab65c95',
     'lib/domain/usecases/food_composition_interdependency_model.dart':
         '82c65f3bde885aa43f837ff982b3b2665d4ce1867fe90c2d4bcdc8852213db84',
     'lib/domain/usecases/protein_distribution_model.dart':
@@ -145,7 +155,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/next_meal_scoring_parameters.dart':
         '6d02d9c819e99bc1ba075c4aa331eb1c5c0dfe51746ba868e2ca1a5647881b77',
     'lib/domain/usecases/mechanistic_next_meal_scorer.dart':
-        'c71097ba45f8c7f02804fe657a36db9348e3e8524634b5447cf178707cb91b0a',
+        '00dcbb9977e6e08b87a9c49821da0c41c111ac7707a5153756c432083abbf88b',
     'lib/domain/entities/rule_registry_models.dart':
         'dbecb0bbef2dd2e6baa64262b07df6fef3be07b2d6765e2898560ff432769b5b',
     'lib/domain/usecases/runtime_rule_engine.dart':
@@ -274,6 +284,7 @@ final class AlgorithmConfigurationIdentity {
           ],
           GastricEmptyingParameterIds.solidHalfMinutes ||
           GastricEmptyingParameterIds.liquidHalfMinutes ||
+          GastricEmptyingParameterIds.liquidNutrientKcalPerMinute ||
           GastricEmptyingParameterIds.fatSlowdownMultiplier ||
           GastricEmptyingParameterIds.fiberSlowdownMultiplier => const [
             'component_profiles',
