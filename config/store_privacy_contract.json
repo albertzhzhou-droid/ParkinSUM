@@ -2,14 +2,14 @@
   "$schema": "https://parkinsum.app/schemas/store-privacy-contract/v1",
   "schemaVersion": 1,
   "review": {
-    "reviewedAt": "2026-10-16",
+    "reviewedAt": "2026-10-21",
     "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository source facts refreshed for the 2026-10-16 Node development-tooling security update (firebase-tools 15.34.0 plus scoped overrides for @grpc/grpc-js, csv-parse and @opentelemetry/core); all 92 production npm packages and every Flutter app dependency are unchanged. Retains the local upgrade and Claude nutrition/reference-data baseline reconciliation, the native SDK migration, and original data-flow declarations. Previously recorded built-artifact facts are not re-attested; owner approval remains pending. This is not a human privacy approval or store submission receipt."
+    "approvalScope": "Repository source facts refreshed for Dependabot PR #156: operator-only firebase-admin 14.5.0 and development-only @cqframework/cql 5.4.0, cql-exec-fhir 2.2.0 and @playwright/cli 0.1.22. Reviewed the resolved Node lock graph; Flutter application packages, declared data flows and native privacy manifests are unchanged. Previously recorded built-artifact facts are not re-attested; owner approval remains pending. This is not a human privacy approval or store submission receipt."
   },
   "lockIdentities": {
     "pubspec.lock": "a8a5be6f96efe4428693876a6453cdc81cae021064dc0925968b3e78dfdd4b46",
-    "package-lock.json": "00a1805ec51a2aaafa7b9f4396147f0333b3c788ff36987c67618289d8f1e1a2",
+    "package-lock.json": "3bca74b296c071fcedb5520cbd9ee49f2154e44fb468297ef5a77d9b61f5ea73",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
   },

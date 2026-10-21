@@ -72,7 +72,7 @@ test('every CQL differential case maps to a card or a response-level diagnostic'
       assert.equal(metadata.caseId, testCase.id);
       assert.equal(metadata.cqlResult, testCase.expectedCql);
       assert.equal(metadata.rulePackVersion, 'cql_differential_1');
-      assert.equal(metadata.cqlPackage, '@cqframework/cql@5.3.0');
+      assert.equal(metadata.cqlPackage, '@cqframework/cql@5.4.0');
       assert.equal(metadata.cqlExecutionPackage, 'cql-execution@3.3.2');
       assert.equal(metadata.independentCqlResult, testCase.expectedCql);
       assert.equal(metadata.cqlEngineRelation, 'same');

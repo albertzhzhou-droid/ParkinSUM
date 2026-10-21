@@ -47,9 +47,9 @@
         "sourceRevision": "91158e012bdc4abd59fa066d0eae9fc11c2c9f24"
       },
       "cqframework_cql_exec_fhir_reference": {
-        "version": "2.1.6",
+        "version": "2.2.0",
         "versionSource": "package.json",
-        "sourceRevision": "f3f9a968d597e2f029533a9e5cb1e6a643f2f69a"
+        "sourceRevision": "2aa6bf755dcd1dc888a853926f21d186ff3d4212"
       },
       "cqframework_cql_execution_reference": {
         "version": "3.3.2",
@@ -57,9 +57,9 @@
         "sourceRevision": "1991335e7ad490a8db88a05dd7f03dc3eecbda6d"
       },
       "cqframework_cql_reference": {
-        "version": "5.3.0",
-        "versionSource": "tool/cqf_jvm_cql_differential/build.gradle",
-        "sourceRevision": "88693baefa482ec6f189c90113cfe1f3f4ce9d31"
+        "version": "5.4.0",
+        "versionSource": "package.json",
+        "sourceRevision": "c41c21f5616a0da82d49e32a9cc3a5b3ca299bc2"
       },
       "google_cql_engine_reference": {
         "version": "v0.0.3-0.20260814184421-b9169ccd54a3",
@@ -1223,7 +1223,7 @@
     {
       "id": "cqframework_cql_exec_fhir_reference",
       "officialUrl": "https://github.com/cqframework/cql-exec-fhir",
-      "pinnedCommit": "f3f9a968d597e2f029533a9e5cb1e6a643f2f69a",
+      "pinnedCommit": "2aa6bf755dcd1dc888a853926f21d186ff3d4212",
       "defaultBranch": "master",
       "declaredSpdx": "Apache-2.0",
       "repositoryDetectedSpdx": "Apache-2.0",
@@ -1234,7 +1234,7 @@
         "source_code"
       ],
       "reviewedConcepts": [
-        "Pinned cql-exec-fhir 2.1.6 supplies a local FHIR R4.0.1 Bundle PatientSource for the JavaScript CQL runtime and does not query FHIR servers",
+        "Pinned cql-exec-fhir 2.2.0 supplies a local FHIR R4.0.1 Bundle PatientSource for the JavaScript CQL runtime and does not query FHIR servers",
         "The upstream PatientSource selects by resource type/profile and does not scope Observation.subject to the Patient context; the synthetic harness filters foreign subjects before loading a Bundle"
       ],
       "transferStatus": "development_linked",
@@ -1306,7 +1306,7 @@
     {
       "id": "cqframework_cql_reference",
       "officialUrl": "https://github.com/cqframework/clinical_quality_language",
-      "pinnedCommit": "88693baefa482ec6f189c90113cfe1f3f4ce9d31",
+      "pinnedCommit": "c41c21f5616a0da82d49e32a9cc3a5b3ca299bc2",
       "defaultBranch": "main",
       "declaredSpdx": "Apache-2.0",
       "repositoryDetectedSpdx": "Apache-2.0",
@@ -1316,7 +1316,7 @@
         "source_code"
       ],
       "reviewedConcepts": [
-        "CQF CQL 5.3.0 translator, engine, and engine-fhir plus quick model-info modules are used only by development checks: nine fixed synthetic literal cases and a separate three-case synthetic FHIR R4 retrieval probe",
+        "The JavaScript @cqframework/cql translator and engine are pinned to 5.4.0 at source commit c41c21f5616a0da82d49e32a9cc3a5b3ca299bc2; the distinct JVM translator, engine, engine-fhir and quick modules remain pinned to 5.3.0 at source commit 88693baefa482ec6f189c90113cfe1f3f4ce9d31 in the unchanged Gradle build and lockfile; these are development-only synthetic comparison paths",
         "The CQF JVM and JavaScript artifacts share the same upstream implementation family for literal platform parity; no source, terminology service, clinical rule content, or CQF runtime dependency is shipped with the app"
       ],
       "transferStatus": "development_linked",

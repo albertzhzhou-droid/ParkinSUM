@@ -31,8 +31,8 @@ const CqlExecFhir = require('cql-exec-fhir');
 
 function compileAllergyIntoleranceLibrary() {
   const versionPins = {
-    '@cqframework/cql': '5.3.0',
-    'cql-exec-fhir': '2.1.6',
+    '@cqframework/cql': '5.4.0',
+    'cql-exec-fhir': '2.2.0',
     'cql-execution': '3.3.2',
   };
   for (const [dependency, expectedVersion] of Object.entries(versionPins)) {
