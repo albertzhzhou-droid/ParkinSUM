@@ -685,13 +685,21 @@ class AlgorithmRegistry {
       stage: AlgorithmStage.normalize,
       visualization: AlgorithmVisualization.provenanceGraph,
       sourcePath: 'lib/domain/usecases/catalog_food_to_candidate.dart',
+      additionalSourcePaths: [
+        'lib/domain/usecases/food_serving_reference_resolver.dart',
+        'lib/domain/entities/food_serving_reference.dart',
+        'lib/core/constants/food_serving_reference_amounts.dart',
+        'lib/core/constants/food_serving_reference_assignments.dart',
+      ],
       userVisibleImpact:
-          'Controls which catalog nutrient, form, and provenance fields enter candidate scoring.',
-      inputs: 'Catalog food row and nutrient missingness',
-      outputs: 'Mechanistic candidate with preserved provenance',
+          'Controls which catalog nutrient, form, and provenance fields enter candidate scoring, and the serving each candidate is evaluated at.',
+      inputs:
+          'Catalog food row, nutrient missingness, source portion records and the category reference-amount table',
+      outputs:
+          'Mechanistic candidate at its reference serving, with the serving basis and preserved provenance',
       hasLiveTrace: false,
       limitation:
-          'Projection preserves source data and does not infer missing nutrients.',
+          'Projection preserves source data and does not infer missing nutrients. A serving is a source portion or a documented category reference amount (FDA/USDA RACC), never portion advice; without one, values stay per 100 g.',
     ),
     AlgorithmDescriptor(
       id: 'evidence_trace_bundle',

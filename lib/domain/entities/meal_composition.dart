@@ -96,6 +96,23 @@ final class FoodComponent {
   /// protein-source proxy). Null when not extracted.
   final AminoAcidProfile? aminoAcidProfile;
 
+  /// How [portionGrams] was obtained for a catalog candidate: one of
+  /// [sourcePortionBasis], [categoryDefaultPortionBasis] or
+  /// [noServingPortionBasis]. Null for logged and synthetic components,
+  /// whose portion is entered directly.
+  final String? portionBasis;
+
+  /// A portion reported by the food's source record.
+  static const String sourcePortionBasis = 'source_portion';
+
+  /// The reference amount of the food's product category. The amount is
+  /// assumed, not observed, so the normalizer records it as missing input.
+  static const String categoryDefaultPortionBasis = 'category_default';
+
+  /// No serving is available; nutrient values are per 100 g and
+  /// [portionGrams] is null.
+  static const String noServingPortionBasis = 'none';
+
   const FoodComponent({
     required this.id,
     required this.name,
@@ -109,6 +126,7 @@ final class FoodComponent {
     required this.sourceDocId,
     this.proteinSource = ProteinSourceType.unknown,
     this.aminoAcidProfile,
+    this.portionBasis,
   });
 
   Map<String, dynamic> toJson() => {
@@ -124,5 +142,6 @@ final class FoodComponent {
     'source_doc_id': sourceDocId,
     'protein_source': proteinSource.name,
     'amino_acid_profile': aminoAcidProfile?.toJson(),
+    'portion_basis': ?portionBasis,
   };
 }

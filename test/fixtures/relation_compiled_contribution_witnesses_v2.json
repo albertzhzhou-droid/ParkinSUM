@@ -105,7 +105,18 @@
     "lib/domain/usecases/source_authority_scorer.dart": "6bf0ae4479e512ca75eed423ddb19188122b511dd8a4d43d3dc6e8d8b20014f1",
     "lib/domain/usecases/fact_conflict_engine.dart": "3eb3b49ec4f69307f68dfcf437260ad97b5d33f3a3b9c4a0f9f08b319d0ac38c"
   },
-  "baseline_case_sha256": "5376f6a67de52c23e82367eaf39c94f223d31aeb6a7203c68e05aa4f303a0471",
+  "baseline_case_sha256": "f565723f0948338fe53c1da57c01506cea34f4d71f4fe83cebe0f5ac9147a7e8",
+  "baseline_case_rebaselines": [
+    {
+      "recorded_at_utc": "2026-10-20T00:00:00.000Z",
+      "previous_baseline_case_sha256": "5376f6a67de52c23e82367eaf39c94f223d31aeb6a7203c68e05aa4f303a0471",
+      "changed_relations": [
+        "recommendation_orchestrator.deterministic_fallback",
+        "local_ai_adapter.consent_endpoint_whitelist"
+      ],
+      "reason": "Next-meal candidates are evaluated per reference serving (legacy parameter set v3) and the local-AI replay dataset advanced to local-ai-replay.2026-10.v2; the source-fallback case now ranks cooked brown rice first. The six compiled mutation witnesses cover catalog_resolution, source_authority and fact_conflict relations only and are unchanged; no mutation was recompiled."
+    }
+  ],
   "baseline_minimal_scope_trials": [
     {
       "id": "one_fact_different_scope",

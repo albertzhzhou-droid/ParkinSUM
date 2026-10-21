@@ -6,6 +6,8 @@ import '../../core/models/user_profile.dart';
 import '../../core/utils/texture_support.dart';
 import '../entities/algorithm_component_identity_witness.dart';
 import '../entities/food_recommendation.dart';
+import '../entities/food_serving_reference.dart';
+import 'food_serving_reference_resolver.dart';
 import 'legacy_food_recommendation_parameters.dart';
 
 class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
@@ -71,10 +73,24 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
         latestMeal?.enteralFeedMode == 'continuous';
 
     final recommendations = allFoods.map((food) {
-      final safetyScore = _safetyScore(food: food, hasLevodopa: hasLevodopa);
-      final nutrientMatch = _nutrientMatch(food, averageProtein);
-      final scheduleFit = _scheduleFit(
+      // Protein and fiber thresholds are meal-sized, so they compare the
+      // food's evaluated amount: its reference serving when one exists, else
+      // the per-100 g value (labelled by the serving basis).
+      final amount = FoodServingNutrients(food);
+      final protein = amount.rankingProteinG;
+      final fiber = amount.rankingFiberG;
+      final safetyScore = _safetyScore(
+        protein: protein,
+        hasLevodopa: hasLevodopa,
+      );
+      final nutrientMatch = _nutrientMatch(
         food: food,
+        protein: protein,
+        fiber: fiber,
+        averageProtein: averageProtein,
+      );
+      final scheduleFit = _scheduleFit(
+        protein: protein,
         hasLevodopa: hasLevodopa,
         latestMeal: latestMeal,
       );
@@ -94,13 +110,13 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
           ? 0.0
           : 0.35;
       final drugTimingSensitivity = hasLevodopa
-          ? (food.proteinG >=
+          ? (protein >=
                     _parameter(
                       LegacyFoodRecommendationParameterIds
                           .timingSensitivityHighProteinG,
                     )
                 ? 1.0
-                : food.proteinG >=
+                : protein >=
                       _parameter(
                         LegacyFoodRecommendationParameterIds
                             .timingSensitivityCautionProteinG,
@@ -115,16 +131,17 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
       final fallbackUsed = _fallbackUsed(requestedRegion: region, food: food);
       final fallbackPenalty = fallbackUsed ? 0.35 : 0.0;
       final repetitionPenalty = recentlyUsed ? 0.18 : 0.0;
-      final fiberSupportScore = _fiberSupportScore(food);
+      final fiberSupportScore = _fiberSupportScore(fiber);
       final mealContextPenalty = _mealContextPenalty(
         hasLevodopa: hasLevodopa,
-        food: food,
+        protein: protein,
         hasIronCoevent: hasIronCoevent,
         hasIronMultivitaminCoevent: hasIronMultivitaminCoevent,
         hasContinuousEnteralFeed: hasContinuousEnteralFeed,
       );
       final contextDataGapPenalty = _contextDataGapPenalty(
         food: food,
+        protein: protein,
         hasThickenerContext: hasThickenerContext,
         hasContinuousEnteralFeed: hasContinuousEnteralFeed,
       );
@@ -151,9 +168,13 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
                   swallowingTexturePenalty));
       final riskTags = <String>[
         if (hasLevodopa) 'levodopa_sensitive',
-        if (food.proteinG >=
+        if (protein >=
             _parameter(LegacyFoodRecommendationParameterIds.warningProteinG))
           'high_protein_candidate',
+        if (amount.serving.basis == FoodServingBasis.categoryDefault)
+          'serving_category_reference_amount',
+        if (amount.serving.basis == FoodServingBasis.none)
+          'serving_unknown_per_100g',
         if (!hasPreciseTimingWindow) 'timing_window_unclear',
         if (!usedDatabaseFacts) 'local_seed_only',
         if (fallbackUsed) 'fallback_chain',
@@ -238,12 +259,12 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
       final reasons = <String>[];
       var decision = 'ALLOW';
 
-      if (food.proteinG <
+      if (protein <
           _parameter(LegacyFoodRecommendationParameterIds.lowProteinReasonG)) {
         reasons.add(i18n.tr('recommend.low_protein'));
       }
       if (hasLevodopa &&
-          food.proteinG >=
+          protein >=
               _parameter(
                 LegacyFoodRecommendationParameterIds.warningProteinG,
               )) {
@@ -254,7 +275,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
               _parameter(
                 LegacyFoodRecommendationParameterIds.historyAverageProteinHighG,
               ) &&
-          food.proteinG <
+          protein <
               _parameter(
                 LegacyFoodRecommendationParameterIds
                     .historyLowCandidateProteinG,
@@ -274,7 +295,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
       }
       if ((hasIronCoevent || hasIronMultivitaminCoevent) &&
           hasLevodopa &&
-          food.proteinG >=
+          protein >=
               _parameter(
                 LegacyFoodRecommendationParameterIds.contextPenaltyProteinG,
               )) {
@@ -282,7 +303,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
       }
       if (hasContinuousEnteralFeed &&
           hasLevodopa &&
-          food.proteinG >=
+          protein >=
               _parameter(
                 LegacyFoodRecommendationParameterIds.contextPenaltyProteinG,
               )) {
@@ -335,6 +356,9 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
           'unbounded_score_points': unboundedScore,
           'bounded_score_points': score,
           'score_bound_applied': score == unboundedScore ? 0.0 : 1.0,
+          'evaluated_amount_g': amount.evaluatedGrams,
+          'evaluated_protein_g': protein,
+          'evaluated_fiber_g': fiber,
         },
         featureSnapshot: RecommendationFeatureSnapshot(
           safetyScore: safetyScore,
@@ -371,7 +395,8 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
 
   /// Protein thresholds that can change a score, decision, reason, or feature
   /// trace. Kept beside the scorer so bounded sensitivity runs use the same
-  /// configuration that production scoring reads.
+  /// configuration that production scoring reads. They are grams at the
+  /// food's evaluated amount (reference serving, else 100 g).
   List<double> get sensitivityProteinBreakpoints => <double>[
     for (final parameterId in <String>[
       LegacyFoodRecommendationParameterIds.safetyCautionProteinG,
@@ -387,7 +412,8 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
       _parameter(parameterId),
   ];
 
-  /// Fiber thresholds that can change a score or its feature trace.
+  /// Fiber thresholds that can change a score or its feature trace, in grams
+  /// at the food's evaluated amount.
   List<double> get sensitivityFiberBreakpoints => <double>[
     _parameter(LegacyFoodRecommendationParameterIds.highFiberSupportG),
     _parameter(LegacyFoodRecommendationParameterIds.moderateFiberSupportG),
@@ -414,7 +440,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
   }
 
   double _scheduleFit({
-    required FoodItem food,
+    required double protein,
     required bool hasLevodopa,
     required Meal? latestMeal,
   }) {
@@ -424,14 +450,14 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
         latestMeal?.nextMealWindowEnd != null;
     if (!hasWindow) {
       // 未拿到完整时间窗时，不做更激进的排序，只保留保守惩罚。
-      return food.proteinG >=
+      return protein >=
               _parameter(
                 LegacyFoodRecommendationParameterIds.scheduleHighProteinG,
               )
           ? 0.5
           : 0.82;
     }
-    return food.proteinG >=
+    return protein >=
             _parameter(
               LegacyFoodRecommendationParameterIds.scheduleHighProteinG,
             )
@@ -439,16 +465,16 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
         : 0.92;
   }
 
-  double _safetyScore({required FoodItem food, required bool hasLevodopa}) {
+  double _safetyScore({required double protein, required bool hasLevodopa}) {
     if (hasLevodopa &&
-        food.proteinG >=
+        protein >=
             _parameter(
               LegacyFoodRecommendationParameterIds.safetyHighProteinG,
             )) {
       return 0.4;
     }
     if (hasLevodopa &&
-        food.proteinG >=
+        protein >=
             _parameter(
               LegacyFoodRecommendationParameterIds.safetyCautionProteinG,
             )) {
@@ -457,18 +483,23 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
     return 0.95;
   }
 
-  double _nutrientMatch(FoodItem food, double averageProtein) {
+  double _nutrientMatch({
+    required FoodItem food,
+    required double protein,
+    required double fiber,
+    required double averageProtein,
+  }) {
     if (averageProtein >
             _parameter(
               LegacyFoodRecommendationParameterIds.historyAverageProteinHighG,
             ) &&
-        food.proteinG <
+        protein <
             _parameter(
               LegacyFoodRecommendationParameterIds.historyLowCandidateProteinG,
             )) {
       return 0.95;
     }
-    if (food.fiberG >=
+    if (fiber >=
             _parameter(LegacyFoodRecommendationParameterIds.nutrientFiberG) ||
         food.category == FoodCategory.fruit) {
       return 0.85;
@@ -515,12 +546,12 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
     return 0.45;
   }
 
-  double _fiberSupportScore(FoodItem food) {
-    if (food.fiberG >=
+  double _fiberSupportScore(double fiber) {
+    if (fiber >=
         _parameter(LegacyFoodRecommendationParameterIds.highFiberSupportG)) {
       return 1.0;
     }
-    if (food.fiberG >=
+    if (fiber >=
         _parameter(
           LegacyFoodRecommendationParameterIds.moderateFiberSupportG,
         )) {
@@ -531,7 +562,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
 
   double _mealContextPenalty({
     required bool hasLevodopa,
-    required FoodItem food,
+    required double protein,
     required bool hasIronCoevent,
     required bool hasIronMultivitaminCoevent,
     required bool hasContinuousEnteralFeed,
@@ -540,7 +571,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
     // 这是推荐排序层的保守惩罚，不是新的医学硬规则。
     if (hasLevodopa &&
         (hasIronCoevent || hasIronMultivitaminCoevent) &&
-        food.proteinG >=
+        protein >=
             _parameter(
               LegacyFoodRecommendationParameterIds.contextPenaltyProteinG,
             )) {
@@ -548,7 +579,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
     }
     if (hasLevodopa &&
         hasContinuousEnteralFeed &&
-        food.proteinG >=
+        protein >=
             _parameter(
               LegacyFoodRecommendationParameterIds.contextPenaltyProteinG,
             )) {
@@ -559,6 +590,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
 
   double _contextDataGapPenalty({
     required FoodItem food,
+    required double protein,
     required bool hasThickenerContext,
     required bool hasContinuousEnteralFeed,
   }) {
@@ -573,7 +605,7 @@ class GetFoodRecommendationsUseCase with RegisteredAlgorithmComponentIdentity {
     }
     // 连续肠内营养场景下，蛋白较高的候选需要更保守的默认排序。
     if (hasContinuousEnteralFeed &&
-        food.proteinG >=
+        protein >=
             _parameter(
               LegacyFoodRecommendationParameterIds.contextPenaltyProteinG,
             )) {

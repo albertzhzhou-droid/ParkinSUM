@@ -400,6 +400,7 @@ class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
           '${(avgOverlap * 100).toStringAsFixed(0)}%) across '
           '${perSampleResults.length} sample points in the educational '
           'simulation.',
+      ?_modeledAmountLine(candidate),
       'Modeled meal physical form: ${composition.mealPhysicalForm.name}.',
       'Composition completeness: '
           '${(composition.compositionCompleteness * 100).toStringAsFixed(0)}%.',
@@ -448,6 +449,27 @@ class MechanisticNextMealScorer with RegisteredAlgorithmComponentIdentity {
       jurisdiction: meta?.jurisdiction ?? 'unknown',
       scoringParameterSetId: scoringParameters.id,
     );
+  }
+
+  /// States the amount a catalog candidate was modeled at. Candidates built
+  /// without a portion basis (synthetic or multi-component) get no line.
+  String? _modeledAmountLine(CandidateFood candidate) {
+    if (candidate.components.length != 1) return null;
+    final component = candidate.components.single;
+    final amount = component.portionGrams?.toStringAsFixed(0);
+    return switch (component.portionBasis) {
+      FoodComponent.sourcePortionBasis when amount != null =>
+        'Modeled amount: one source-reported portion of about $amount g; '
+            'per-100 g source values were scaled to it.',
+      FoodComponent.categoryDefaultPortionBasis when amount != null =>
+        'Modeled amount: about $amount g, the reference amount for this '
+            'food category rather than a source portion, so uncertainty is '
+            'widened.',
+      FoodComponent.noServingPortionBasis =>
+        'Modeled amount: 100 g, because no serving size is available for '
+            'this food; values stay per 100 g and uncertainty is widened.',
+      _ => null,
+    };
   }
 
   MechanisticCandidateScore _insufficient(

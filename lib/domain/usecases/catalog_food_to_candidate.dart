@@ -1,9 +1,11 @@
 import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
+import '../entities/food_serving_reference.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
 import '../entities/time_axis_events.dart';
 import 'food_composition_interdependency_model.dart' show referenceRowsByFdcId;
+import 'food_serving_reference_resolver.dart';
 import 'mechanistic_next_meal_scorer.dart';
 
 /// Protein source of a catalog food. A FoodData Central record that is in
@@ -36,16 +38,45 @@ ProteinSourceType proteinSourceForFoodItem(FoodItem item) {
 /// physical form (from `textureClass`), and the nutrient fields the local
 /// catalog actually populates. Inferred `ProteinSourceType` widens
 /// uncertainty when unknown rather than guessing.
-CandidateFood foodItemToCandidateFood(FoodItem item) {
+///
+/// The candidate is evaluated at the food's reference serving
+/// ([foodServingReferenceFor]): per-100 g values are scaled to a source
+/// portion or a category reference amount, and the component carries the
+/// serving grams and their basis. Without a serving the values stay per
+/// 100 g, the portion stays missing and the basis says so.
+CandidateFood foodItemToCandidateFood(
+  FoodItem item, {
+  FoodServingReference? servingReference,
+}) {
   final physicalForm = textureClassToPhysicalForm(item.textureClass);
   final proteinSource = proteinSourceForFoodItem(item);
+  final serving = servingReference ?? foodServingReferenceFor(item);
+  final servingGrams = serving.grams;
 
   // Missing ≠ zero: when a nutrient field has no source data (recorded in
   // `item.missingNutrientFields`), pass null to the component so the normalizer
   // records it as a missing field and lowers completeness — instead of letting
   // the FoodItem's non-nullable 0 default masquerade as a true measured 0 g.
-  double? present(String field, double value) =>
-      item.isNutrientMissing(field) ? null : value;
+  // A serving scales a present, finite, non-negative per-100 g value only.
+  double? present(String field, double? value) {
+    if (item.isNutrientMissing(field) || value == null) return null;
+    if (servingGrams == null) return value;
+    if (!value.isFinite || value < 0) return null;
+    final scaled = value * servingGrams / 100.0;
+    return scaled.isFinite ? scaled : null;
+  }
+
+  // The amino-acid profile follows the same serving through the existing
+  // per-100 g `scaledToGrams` path; a profile on any other basis has no
+  // proven relationship to this serving and is withheld.
+  final sourceProfile = item.supportsEdibleMassPoint
+      ? item.aminoAcidProfile
+      : null;
+  final aminoAcidProfile = servingGrams == null
+      ? sourceProfile
+      : sourceProfile?.basis == 'per_100g'
+      ? sourceProfile!.scaledToGrams(servingGrams)
+      : null;
 
   return CandidateFood(
     id: item.id,
@@ -62,17 +93,14 @@ CandidateFood foodItemToCandidateFood(FoodItem item) {
         fiberGrams: present('fiberG', item.fiberG),
         carbohydrateGrams: present('carbsG', item.carbsG),
         // Carry energy only when the source provides it (never fabricated).
-        // Portion grams are not captured by the local catalog → left null so
-        // the normalizer records them as missing rather than inventing values.
-        calories: item.isNutrientMissing('energyKcal') ? null : item.energyKcal,
-        portionGrams: null,
+        calories: present('energyKcal', item.energyKcal),
+        portionGrams: servingGrams,
         sourceDocId: item.sourceSystem,
         proteinSource: proteinSource,
         // Prefer the actual amino-acid profile when present; null → the LNAA
         // layer falls back to the protein-source proxy.
-        aminoAcidProfile: item.supportsEdibleMassPoint
-            ? item.aminoAcidProfile
-            : null,
+        aminoAcidProfile: aminoAcidProfile,
+        portionBasis: serving.basis.wireName,
       ),
     ],
   );

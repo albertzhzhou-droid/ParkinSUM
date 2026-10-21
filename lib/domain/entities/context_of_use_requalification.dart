@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v66';
+  static const String ledgerVersion = '2026.10.20-v67';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '464d03611fef12cadf04504be650816be368e393d614fad4c836162a8010013f';
+  static const String historicalV79ConfigurationSha256 =
       '9ccb403043d9b803653944779cfdac56d9810b0b77277c196ff3b139885568c2';
   static const String historicalV78ConfigurationSha256 =
       'cdc582bde5b6341add35c6c53098f800dce8715a0ddd3b42a44c88707faa813d';
@@ -1317,7 +1319,7 @@ final class ContextOfUseRequalificationLedger {
           previousConfigurationSha256:
               referenceRecordIdentityCandidateRecord.currentConfigurationSha256,
           currentManifestSha256: expectedCurrentManifestSha256,
-          currentConfigurationSha256: expectedCurrentConfigurationSha256,
+          currentConfigurationSha256: historicalV79ConfigurationSha256,
           evidenceCurrencyRegistrySha256: referenceRecordIdentityCandidateRecord
               .evidenceCurrencyRegistrySha256,
           evidenceSynthesisRegistrySha256:
@@ -1360,6 +1362,53 @@ final class ContextOfUseRequalificationLedger {
               'authenticated approval or release acceptance. All evidence holds '
               'and blocked promotion remain in force.',
         );
+    final candidateServingBasisRecord = ContextOfUseRequalificationRecord(
+      sequence: 29,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          proteinArrivalCaloricLiquidCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          proteinArrivalCaloricLiquidCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256: proteinArrivalCaloricLiquidCandidateRecord
+          .evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          proteinArrivalCaloricLiquidCandidateRecord
+              .evidenceSynthesisRegistrySha256,
+      semanticDiffSha256:
+          proteinArrivalCaloricLiquidCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          proteinArrivalCaloricLiquidCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          proteinArrivalCaloricLiquidCandidateRecord.affectedPredicateIds,
+      changeClasses: proteinArrivalCaloricLiquidCandidateRecord.changeClasses,
+      modelRisk: proteinArrivalCaloricLiquidCandidateRecord.modelRisk,
+      questionOfInterest:
+          proteinArrivalCaloricLiquidCandidateRecord.questionOfInterest,
+      contextOfUse: proteinArrivalCaloricLiquidCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-20T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:candidate-serving-basis-v80',
+      evidenceDecisions:
+          proteinArrivalCaloricLiquidCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v80 candidate evaluates catalog next-meal candidates at a '
+          'reference serving instead of per 100 g: a source-reported portion '
+          'chosen by a documented rule, else the FDA/USDA reference amount of '
+          'the food\'s product category, else per 100 g with that label. A '
+          'category reference amount is recorded as an assumed portion and '
+          'widens uncertainty, and the legacy ranker compares its meal-sized '
+          'protein and fiber thresholds with the same evaluated amount. The '
+          'mechanistic trace stays trace-only. All twenty-eight prior whole '
+          'records and their digests remain exact. A serving is a comparison '
+          'amount, not portion advice, and supplies no new scientific '
+          'evidence, independent review, clinical qualification, '
+          'authenticated approval or release acceptance. All evidence holds '
+          'and blocked promotion remain in force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1395,6 +1444,7 @@ final class ContextOfUseRequalificationLedger {
         lnaaCalibrationCandidateRecord,
         referenceRecordIdentityCandidateRecord,
         proteinArrivalCaloricLiquidCandidateRecord,
+        candidateServingBasisRecord,
       ],
     );
   }

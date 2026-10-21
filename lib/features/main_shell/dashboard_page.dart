@@ -11,6 +11,7 @@ import '../../domain/entities/protein_trend_point.dart';
 import '../../domain/entities/timeline_event.dart';
 import '../entry/entry_page.dart';
 import '../next_meal/candidate_set_snapshot_card.dart';
+import '../shared/candidate_serving_macro_line.dart';
 import '../timeline/timeline_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -443,11 +444,7 @@ class DashboardPage extends StatelessWidget {
                 recommendations[i].food.name,
               ),
               decision: i18n.decisionLabel(recommendations[i].decision),
-              macros: i18n.tr('dashboard.recommendation_macro_line', {
-                'protein': recommendations[i].food.proteinG.toStringAsFixed(1),
-                'carbs': recommendations[i].food.carbsG.toStringAsFixed(1),
-                'fat': recommendations[i].food.fatG.toStringAsFixed(1),
-              }),
+              macros: candidateServingMacroLine(i18n, recommendations[i].food),
               provenance:
                   '${recommendations[i].jurisdiction} · ${recommendations[i].food.sourceSystem}',
               breakdown: _localizedRecommendationBreakdown(

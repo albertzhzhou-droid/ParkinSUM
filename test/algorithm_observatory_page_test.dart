@@ -708,10 +708,13 @@ void main() {
       expect(structure, findsOneWidget);
       expect(tester.widget<Text>(structure).data, contains(record.$2));
     }
+    // The parameter and registry sections above the manifest span more than
+    // the default 50 scroll steps since the v79 and v80 additions.
     await tester.scrollUntilVisible(
       find.byKey(const Key('observatory-applicability-manifest')),
       260,
       scrollable: outerScrollable,
+      maxScrolls: 80,
     );
     expect(find.text('Model applicability manifest'), findsOneWidget);
     expect(find.textContaining('TRACE ONLY'), findsOneWidget);
@@ -1895,7 +1898,10 @@ void main() {
         find.descendant(
           of: card,
           matching: find.text(
-            'Boundary: Projection preserves source data and does not infer missing nutrients.',
+            'Boundary: Projection preserves source data and does not infer '
+            'missing nutrients. A serving is a source portion or a documented '
+            'category reference amount (FDA/USDA RACC), never portion advice; '
+            'without one, values stay per 100 g.',
           ),
         ),
         findsOneWidget,

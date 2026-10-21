@@ -15,8 +15,9 @@ import 'reference_food_nutrient_profiles.dart';
 ///   non-nullable getters keep 0 only for legacy display.
 /// - Water, the amino-acid profile (with FDC derivation provenance) and the
 ///   portion records come from the official FoodData Central 2025-04-24
-///   rows of the same food. Portions are evidence only; they never select a
-///   serving or rescale a value.
+///   rows of the same food. Portions are evidence; the next-meal serving rule
+///   may pick one as a candidate's reference serving, but they never change
+///   the per-100 g values here.
 List<FoodItem> buildReferenceFoodCatalog() => referenceFoodCompositionRows
     .map(referenceRowToFoodItem)
     .toList(growable: false);

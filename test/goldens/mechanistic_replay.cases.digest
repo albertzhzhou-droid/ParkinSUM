@@ -41,4 +41,5 @@ s37_enteral_continuous_low_protein	a21a6dfd
 s38_enteral_bolus_protein	add95ebd
 s39_spl_ir_section_provenance	4f3278e0
 s40_spl_er_section_provenance	6afb0d0d
-# rows	41
+s41_catalog_candidates_serving_basis	4d030827
+# rows	42

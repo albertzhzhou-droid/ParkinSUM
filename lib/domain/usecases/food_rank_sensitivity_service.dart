@@ -2,6 +2,7 @@ import '../../core/models/food_item.dart';
 import '../entities/food_composition_candidate_set_snapshot.dart';
 import '../entities/food_rank_sensitivity_assessment.dart';
 import '../entities/food_recommendation.dart';
+import 'food_serving_reference_resolver.dart';
 
 /// Runs the production heuristic scorer over a bounded set of source-reported
 /// protein/fiber intervals. It never creates a probability distribution and
@@ -88,9 +89,14 @@ class FoodRankSensitivityService {
         );
         if (interval == null) continue;
         final point = _pointValue(food, field);
-        final breakpoints = field == 'proteinG'
-            ? proteinBreakpoints
-            : fiberBreakpoints;
+        // Breakpoints are meal-sized grams at the food's evaluated amount
+        // (reference serving, else 100 g); the source range is per 100 g, so
+        // each breakpoint is moved onto that per-100 g scale.
+        final scale = FoodServingNutrients(food).serving.per100gScale;
+        final breakpoints =
+            (field == 'proteinG' ? proteinBreakpoints : fiberBreakpoints)
+                .map((breakpoint) => breakpoint / scale)
+                .toList(growable: false);
         final representatives = _representativeValues(
           low: interval.low,
           high: interval.high,
@@ -497,10 +503,15 @@ class FoodRankSensitivityService {
         waterG: food.waterG,
         aminoAcidProfile: food.aminoAcidProfile,
         nutrientObservationEvidence: food.nutrientObservationEvidence,
+        // Portion, product and basis evidence keep the scenario food on the
+        // same serving and source-basis qualification as the original.
+        foodPortionEvidence: food.foodPortionEvidence,
+        foodProductEvidence: food.foodProductEvidence,
         catalogProvenanceEvidence: food.catalogProvenanceEvidence,
         basisType: food.basisType,
         preparationState: food.preparationState,
         qualifierKind: food.qualifierKind,
+        sourceBasisEvidence: food.sourceBasisEvidence,
       );
 
   String _nutrientCode(String field) => switch (field) {

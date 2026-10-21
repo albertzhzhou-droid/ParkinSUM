@@ -330,6 +330,16 @@ Residual risks:
   are pinned; a later FDC release can renumber or redefine nutrients and
   needs a re-pin. One food-specific energy factor (coconut oil) disagrees
   across releases and is documented, not corrected.
+- Iteration 7 (2026-10-21) evaluates next-meal candidates at a reference
+  serving instead of per 100 g: a source portion chosen by a documented rule,
+  else the FDA/USDA reference amount of the food's product category, else per
+  100 g with a "serving unknown" label (`docs/CANDIDATE_SERVING_REFERENCE.md`).
+  A serving is a comparison amount, not an estimate of what a person eats and
+  not portion advice. Category assignments are curated by hand, a category
+  reference amount is an assumption (uncertainty is widened), volume amounts
+  without a source household measure stay per 100 g, and the legacy ranking
+  order changes where a serving crosses a meal-sized protein or fiber
+  threshold that 100 g did not.
 
 Required mitigation:
 

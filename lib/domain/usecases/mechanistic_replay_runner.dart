@@ -401,14 +401,14 @@ class MechanisticReplayRunner {
   }
 
   MechanisticReplayRunReport run({
-    List<MechanisticReplayScenario> scenarios = mechanisticReplayScenarios,
+    List<MechanisticReplayScenario>? scenarios,
     DateTime? referenceTime,
     DateTime? evidenceAsOfUtc,
   }) {
     final now = referenceTime ?? DateTime.utc(2026, 1, 1, 8, 0);
     final evidenceAsOf = evidenceAsOfUtc?.toUtc() ?? DateTime.utc(2026, 8, 19);
     final cases = <MechanisticReplayCaseReport>[];
-    for (final s in scenarios) {
+    for (final s in scenarios ?? mechanisticReplayScenarios) {
       cases.add(_runOne(s, now, evidenceAsOf));
     }
     return MechanisticReplayRunReport(
