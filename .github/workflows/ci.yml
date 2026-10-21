@@ -125,7 +125,7 @@ jobs:
           cache-dependency-path: tool/google_cql_differential/go.sum
 
       - name: Set up Java 21 for Firestore Emulator and CQF JVM checks
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"

@@ -37,7 +37,7 @@ test('response-level CQL diagnostics are valid with no cards and strictly bounde
         schemaVersion: '1.0.0',
         caseId: 'dose_unknown',
         cqlResult: 'unknown',
-        cqlPackage: '@cqframework/cql@5.3.0',
+        cqlPackage: '@cqframework/cql@5.4.0',
         cqlExecutionPackage: 'cql-execution@3.3.2',
         corpusDigest: 'a'.repeat(64),
         errors: ['evaluation_indeterminate'],

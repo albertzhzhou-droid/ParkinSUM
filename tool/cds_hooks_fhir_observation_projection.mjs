@@ -17,7 +17,7 @@ const allowedCaseFields = new Set([
 const GOOGLE_CQL_PACKAGE =
   'github.com/google/cql@v0.0.3-0.20260814184421-b9169ccd54a3';
 const JAVASCRIPT_EXECUTION_PATH =
-  'cql-execution@3.3.2 + cql-exec-fhir@2.1.6';
+  'cql-execution@3.3.2 + cql-exec-fhir@2.2.0';
 const CQF_JVM_ENGINE = 'org.cqframework:engine@5.3.0';
 const CQF_JVM_FHIR_ARTIFACT = 'org.cqframework:engine-fhir@5.3.0';
 const corpusDigestPattern = /^[0-9a-f]{64}$/;

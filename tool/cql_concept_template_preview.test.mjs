@@ -85,7 +85,7 @@ test('generates a versioned CQL Library draft and executes its typed count cases
   );
   assert.deepEqual(preview.syntheticEvaluation, {
     status: 'passed',
-    engine: 'cql-execution@3.3.2 + cql-exec-fhir@2.1.6',
+    engine: 'cql-execution@3.3.2 + cql-exec-fhir@2.2.0',
     expansionSource: 'fixed-in-memory-synthetic-valueset',
     patientScope: 'only observations referencing the synthetic Patient are evaluated',
     caseCount: 6,
