@@ -6026,6 +6026,7 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
           _foodBasisUnavailableTranslations[entry.key] ??
           _foodBasisUnavailableTranslations['en']!,
       ...?_replayCapsuleSaveTranslations[entry.key],
+      ...?_candidateServingTranslations[entry.key],
       ...(entry.key == 'zh'
           ? kPersonalLogViewChinese
           : kPersonalLogViewEnglish),
@@ -6059,6 +6060,39 @@ const _foodBasisUnavailableTranslations = <String, String>{
       'Tych wartości źródłowych nie można obecnie używać do obliczania porcji. Oryginalne wartości są dostępne w szczegółach źródła.',
   'ar':
       'لا يمكن حاليًا استخدام هذه القيم لحساب كمية الطعام المتناولة. يمكنك الاطلاع على القيم الأصلية في تفاصيل المصدر.',
+};
+
+/// Next-meal candidate amounts. A serving is a source portion or a category
+/// reference amount used to compare foods; it is never portion advice. Other
+/// language families fall back to English for these keys.
+const Map<String, Map<String, String>> _candidateServingTranslations = {
+  'en': {
+    'serving.macro_line':
+        'Per serving (≈{grams} g, {basis}): P {protein} · C {carbs} · F {fat}',
+    'serving.macro_line_per_100g_unknown':
+        'Per 100 g — serving unknown: P {protein} · C {carbs} · F {fat}',
+    'serving.basis.source_portion': 'source portion',
+    'serving.basis.category_default': 'category reference amount',
+    'serving.value_grams': '{value} g',
+    'serving.value_unknown': 'unknown',
+    'serving.basis_note':
+        'Amounts are per serving: a portion from the food’s source record or, '
+        'when the source has none, a reference amount for its food category. '
+        'Servings only make foods comparable; they are not portion advice.',
+  },
+  'zh': {
+    'serving.macro_line':
+        '每份（约 {grams} g，{basis}）：蛋白 {protein} · 碳水 {carbs} · 脂肪 {fat}',
+    'serving.macro_line_per_100g_unknown':
+        '每 100 g（份量未知）：蛋白 {protein} · 碳水 {carbs} · 脂肪 {fat}',
+    'serving.basis.source_portion': '来源份量',
+    'serving.basis.category_default': '类别参考量',
+    'serving.value_grams': '{value} g',
+    'serving.value_unknown': '未知',
+    'serving.basis_note':
+        '数值按每份计算：份量取自食物的来源记录；来源没有时，采用该食物类别的参考量。'
+        '份量只用于让食物之间可以比较，不是份量建议。',
+  },
 };
 
 const Map<String, Map<String, String>> _replayCapsuleSaveTranslations = {

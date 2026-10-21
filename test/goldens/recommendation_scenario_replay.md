@@ -1,6 +1,6 @@
 # Local AI Scenario Replay — Reviewer Report
 
-Dataset version: `local-ai-replay.2026-06.v1`
+Dataset version: `local-ai-replay.2026-10.v2`
 
 Educational prototype; synthetic fixtures only. This replay runs the same conservative + hybrid recommendation orchestrators the app uses, with an offline scripted Local AI stand-in. It is engineering review material, not medical advice and not a clinical evaluation.
 
@@ -65,13 +65,13 @@ _Archetype:_ Candidates resolve through jurisdiction fallback with capped synthe
 | Field | Value |
 | --- | --- |
 | Focus tags | source_fallback_partial_provenance |
-| Deterministic ranking | food_banana → food_tofu → food_brown_rice |
-| AI ranking | food_banana → food_tofu → food_brown_rice |
+| Deterministic ranking | food_brown_rice → food_banana → food_tofu |
+| AI ranking | food_brown_rice → food_banana → food_tofu |
 | Decision path | `conservative_cdss` |
 | Local AI used | no |
 | Gate reasons | 用户尚未启用本地 AI 重排。 |
 | AI preserved candidate set | yes |
-| Expected top ids matched | food_banana |
+| Expected top ids matched | food_brown_rice |
 | Expected top ids missing | none |
 
 _Local AI was limited to wording polish here: the deterministic gate held the conservative ranking._

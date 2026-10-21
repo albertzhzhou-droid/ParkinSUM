@@ -16,7 +16,7 @@ import '../../domain/entities/recommendation_benchmark_models.dart';
 /// the Local AI path (when consented) may only reorder the safe whitelist, so
 /// the replay records the deterministic vs AI ranking for drift + safety review.
 const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
-  version: 'local-ai-replay.2026-06.v1',
+  version: 'local-ai-replay.2026-10.v2',
   cases: <RecommendationBenchmarkCase>[
     // 1 — Missing medication time/dose: a levodopa intake with no parsable dose
     // and no next-meal window. The orchestrator must stay conservative and
@@ -81,7 +81,10 @@ const localAiReplayScenarioDataset = RecommendationBenchmarkDataset(
       historyFoodIds: <String>['food_brown_rice'],
       activeDrugIds: <String>[],
       intakeSpecs: <RecommendationBenchmarkIntakeSpec>[],
-      expectedTopFoodIds: <String>['food_banana'],
+      // Fiber is compared per reference serving since v2: cooked brown rice
+      // carries 2.24 g in its 140 g category reference amount (1.6 g per
+      // 100 g), which now meets the 2 g fiber branch and ranks it first.
+      expectedTopFoodIds: <String>['food_brown_rice'],
       expectedRiskTags: <String>[],
       userConsentedToAi: false,
       notes:

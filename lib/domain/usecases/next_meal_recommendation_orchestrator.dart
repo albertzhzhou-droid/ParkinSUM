@@ -31,6 +31,7 @@ import 'catalog_food_to_candidate.dart';
 import 'cdss_catalog_projection_service.dart';
 import 'get_food_recommendations_usecase.dart';
 import 'food_rank_sensitivity_service.dart';
+import 'food_serving_reference_resolver.dart';
 import 'intake_dose_context_builder.dart';
 import 'local_ai_recommendation_adapter.dart';
 import 'meal_composition_normalizer.dart';
@@ -287,6 +288,8 @@ class NextMealRecommendationOrchestrator {
       candidateSetSnapshot: candidateSetSnapshot,
       candidates: mergedCandidates,
       baselineRecommendations: windowAware,
+      // Breakpoints are grams at each food's evaluated amount; the service
+      // converts them to that food's per-100 g scale.
       proteinBreakpoints: <double>[
         ...conservativeRecommender.sensitivityProteinBreakpoints,
         15.0, // next-meal and levodopa-window composition branch
@@ -609,13 +612,16 @@ class NextMealRecommendationOrchestrator {
               (templateTextureAffinity - 0.55) * 8.0;
 
           // 这是工程默认排序项，不是医学硬阈值。
-          if (gapMinutes < 180 && item.food.proteinG >= 15) {
+          // Meal-sized cut-offs compare the evaluated amount (reference
+          // serving, else 100 g), like the conservative scorer.
+          final amount = FoodServingNutrients(item.food);
+          if (gapMinutes < 180 && amount.rankingProteinG >= 15) {
             score -= 10;
             reasons.add(i18n.tr('recommend.next_meal_gap_close'));
             if (!updatedRiskTags.contains('short_next_meal_gap')) {
               updatedRiskTags.add('short_next_meal_gap');
             }
-          } else if (gapMinutes >= 240 && item.food.fiberG >= 2) {
+          } else if (gapMinutes >= 240 && amount.rankingFiberG >= 2) {
             score += 4;
             reasons.add(i18n.tr('recommend.next_meal_window_fiber'));
           }
@@ -816,7 +822,10 @@ class NextMealRecommendationOrchestrator {
         .where((drug) => drug.tags.contains(DrugTag.levodopaLike))
         .map((drug) => drug.id)
         .toSet();
-    if (levodopaDrugIds.isEmpty || food.proteinG < 15) return 0;
+    if (levodopaDrugIds.isEmpty ||
+        FoodServingNutrients(food).rankingProteinG < 15) {
+      return 0;
+    }
     final matchingIntakes = intakes
         .where((intake) => levodopaDrugIds.contains(intake.drugId))
         .toList(growable: false);

@@ -9,6 +9,7 @@ import '../../domain/entities/mechanistic_candidate_score.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
 import '../../domain/entities/food_rank_sensitivity_assessment.dart';
 import 'candidate_set_snapshot_card.dart';
+import '../shared/candidate_serving_macro_line.dart';
 import '../shared/mechanistic_trace_view.dart';
 
 /// Exact, one-to-one projection of model traces onto the heuristic order that
@@ -695,6 +696,16 @@ class _ResultBlock extends StatelessWidget {
               letterSpacing: -0.1,
             ),
           ),
+          const SizedBox(height: 4),
+          Text(
+            i18n.tr('serving.basis_note'),
+            key: const ValueKey('next-meal-serving-basis-note'),
+            style: const TextStyle(
+              fontSize: 11,
+              color: Paper.inkMuted,
+              height: 1.35,
+            ),
+          ),
           const SizedBox(height: 8),
         ],
         if (!rankPresentationWithheld && result.recommendations.isEmpty)
@@ -742,11 +753,7 @@ class _ResultBlock extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      i18n.tr('dashboard.recommendation_macro_line', {
-                        'protein': rec.food.proteinG.toStringAsFixed(1),
-                        'carbs': rec.food.carbsG.toStringAsFixed(1),
-                        'fat': rec.food.fatG.toStringAsFixed(1),
-                      }),
+                      candidateServingMacroLine(i18n, rec.food),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Paper.inkMuted,

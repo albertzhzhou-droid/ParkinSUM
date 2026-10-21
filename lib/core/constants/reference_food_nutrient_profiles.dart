@@ -118,8 +118,9 @@ AminoAcidProfile? referenceAminoAcidProfile(int fdcId) {
   );
 }
 
-/// Official portion records as catalog evidence. A portion never selects a
-/// serving and never rescales a nutrient value.
+/// Official portion records as catalog evidence. The next-meal serving rule
+/// may select one as a candidate's reference serving; a portion never
+/// changes the stored per-100 g nutrient values.
 List<FoodPortionEvidence> referencePortionEvidence(int fdcId) => [
   for (final record in referencePortionRecordsFor(fdcId))
     FoodPortionEvidence(

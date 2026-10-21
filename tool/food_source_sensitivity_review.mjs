@@ -18,12 +18,15 @@ export function reviewJoint(expectations,actual) {
   return {portion_macro_comparisons:checked,...rankSummary(actual.scenarios.map(s=>({id:s.scenario_id,stratum:s.window_id,inputs:Object.fromEntries(s.choices.map(c=>[c.candidate_id,c.option_id])),results:s.results.map(r=>({id:r.candidate_id,score:r.score,availability:r.availability}))})),[1,2,3])};
 }
 // Independently specified analytic branches. Does not import Dart, production
-// output or production parameters to manufacture the expected score.
+// output or production parameters to manufacture the expected score. The
+// synthetic domain foods carry no source portion and no product category, so
+// thresholds compare their per-100 g values and every food is tagged
+// `serving_unknown_per_100g` (legacy parameter set v3).
 export function expectedHeuristic(food,p) {
  const protein=Number(food.protein_g),fiber=Number(food.fiber_g);
  const features={safety_score:protein>=25?.4:protein>=Number(p.caution_protein_g)?.65:.95,nutrient_match:fiber>=2?.85:.7,medication_schedule_fit:protein>=20?.5:.82,drug_timing_sensitivity:protein>=20?1:protein>=15?.7:.35,fiber_support_score:fiber>=4?1:fiber>=2?.8:.45};
  const raw=100*(Number(p.safety_weight)*features.safety_score+.2*features.nutrient_match+.15*features.medication_schedule_fit+.1*.72+.1*.68+.05*.95+.03+.02+Number(p.fiber_weight)*features.fiber_support_score-.04*features.drug_timing_sensitivity);
- return {id:food.id,score:Math.max(0,Math.min(100,raw)),raw,features,decision:protein>=Number(p.warning_protein_g)?'WARN':'ALLOW',risk_tags:['levodopa_sensitive',...(protein>=Number(p.warning_protein_g)?['high_protein_candidate']:[]),'timing_window_unclear']};
+ return {id:food.id,score:Math.max(0,Math.min(100,raw)),raw,features,decision:protein>=Number(p.warning_protein_g)?'WARN':'ALLOW',risk_tags:['levodopa_sensitive',...(protein>=Number(p.warning_protein_g)?['high_protein_candidate']:[]),'serving_unknown_per_100g','timing_window_unclear']};
 }
 export function reviewHeuristic(domain,actual) {
  assert.deepEqual(actual.default_parameters_before,actual.default_parameters_after);assert.equal(actual.production_defaults_changed,false);assert.equal(actual.cases.length,domain.cases.length);

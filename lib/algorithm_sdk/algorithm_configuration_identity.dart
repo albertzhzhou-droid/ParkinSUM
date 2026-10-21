@@ -97,7 +97,11 @@ final class AlgorithmConfigurationIdentity {
   // v79 weights the competition layer's arrival curve by protein (competing
   // LNAA with complete profiles) and delivers energy-containing liquids at a
   // calorie-regulated rate; modeled competition, residual and scores change.
-  static const String defaultVersion = '2026.10.20-v79';
+  // v80 evaluates next-meal candidates at a reference serving (source
+  // portion or FDA/USDA category reference amount, else labelled per 100 g),
+  // widens uncertainty for assumed amounts and compares the legacy ranker's
+  // meal-sized protein and fiber thresholds with the same evaluated amount.
+  static const String defaultVersion = '2026.10.20-v80';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -105,7 +109,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'edc92ec7941e86a6673cfac0313245e61d56c27cc9ef318c74be098bc7938877';
+      '9de04f048069558805c90e0fa0fb8914f05d24f49ac549dec5a1a3ec3ea58e69';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -118,7 +122,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/gastric_emptying_model.dart':
         '3aa135e3e5588c01029a40bb8948cad6ba35c7b6d707415e9a44c681812a72ea',
     'lib/domain/usecases/meal_composition_normalizer.dart':
-        'c9e902d8c5f37b37ad73be5d598319730d1b7d6afb5eafb63f4ba787598c9c7f',
+        '7a1f0442590fd801fbfb2e8c2f338d1fb59b874e42078a930d5b40cac493c8d5',
     'lib/domain/entities/absorption_opportunity.dart':
         'b069f21f51e7a7a3730d602160fcc3355b6dfe2953567b34f3084f6d599e1628',
     'lib/domain/entities/levodopa_absorption_opportunity_parameters.dart':
@@ -148,7 +152,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/next_meal_scoring_parameters.dart':
         '6d02d9c819e99bc1ba075c4aa331eb1c5c0dfe51746ba868e2ca1a5647881b77',
     'lib/domain/usecases/mechanistic_next_meal_scorer.dart':
-        'c71097ba45f8c7f02804fe657a36db9348e3e8524634b5447cf178707cb91b0a',
+        '00dcbb9977e6e08b87a9c49821da0c41c111ac7707a5153756c432083abbf88b',
     'lib/domain/entities/rule_registry_models.dart':
         'dbecb0bbef2dd2e6baa64262b07df6fef3be07b2d6765e2898560ff432769b5b',
     'lib/domain/usecases/runtime_rule_engine.dart':

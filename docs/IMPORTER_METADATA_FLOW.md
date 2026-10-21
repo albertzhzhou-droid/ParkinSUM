@@ -88,6 +88,23 @@ rest. This follows USDA's explicit distinction between an absent Foundation
 Foods value (which may mean the nutrient was not analyzed) and a measured zero;
 see the official [Foundation Foods documentation](https://fdc.nal.usda.gov/Foundation_Foods_Documentation/).
 
+### 6a-i. Portion records and the candidate serving
+
+FDC `foodPortions` (and the SR Legacy `food_portion.csv` rows of the built-in
+reference and seed catalogs) are stored unchanged in
+`FoodItem.foodPortionEvidence`. Import never selects a serving and never
+rescales a stored value; the FDC importer's `foodPortions` audit record says
+so. At next-meal evaluation the serving rule (`food_serving_reference_resolver.dart`,
+documented in `docs/CONFLICT_ENGINE_MODEL.md` §18a) may select one record as
+the candidate's reference serving: the source's NLEA serving, else the
+household portion closest to the food's FDA/USDA reference amount within
+50–200 % of it. A food with no usable record falls back to its category's
+mass reference amount, otherwise its values stay per 100 g and are labelled
+as such. Every record keeps its source document, record locator and gram
+weight, so a selected serving traces back to one source row.
+`docs/CANDIDATE_SERVING_REFERENCE.md` lists the outcome for every built-in
+catalog food. Branded label serving sizes (`servingSize`) are not used yet.
+
 ### 6b. Actual amino-acid fields
 
 When USDA FDC amino-acid fields are available, `AminoAcidExtractor` builds an
@@ -221,6 +238,12 @@ but downgraded; seed never overrides official; missing metadata → neutral
 defaults (never fake-high).
 
 ## 11. How metadata feeds next-meal scoring
+
+Each catalog candidate enters the scorer at its reference serving (§6a-i):
+nutrients, energy and the amino-acid profile are scaled from per 100 g, and
+the component carries `portionGrams` and `portionBasis`. A category reference
+amount is recorded as the missing input `portion_grams_assumed`, which widens
+uncertainty.
 
 `MechanisticNextMealScorer` composes `finalCandidateScore` from conflict
 overlap, protein-redistribution score, nutrition-adequacy contribution,

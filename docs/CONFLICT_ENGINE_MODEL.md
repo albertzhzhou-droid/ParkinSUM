@@ -185,7 +185,8 @@ size_multiplier = clamp(0.6 + 0.4 · (kcal / 400 kcal),   0.6 .. 2.0)
 
 Tagged `prototype_heuristic`. Larger meals therefore extend the modeled
 emptying profile; missing `total_calories` defaults `size_multiplier = 1.0`
-and widens uncertainty.
+and widens uncertainty. A next-meal candidate's energy is its reference
+serving's energy (§18a), not a per-100 g value.
 
 ## 9. Fat / protein / fiber effect assumptions
 
@@ -608,6 +609,9 @@ The scenarios in `lib/core/constants/mechanistic_replay_scenarios.dart`
 17. Partial amino-acid profile (partial flag + widened uncertainty).
 18. High-calorie/high-fat meal (gastric uncertainty widened).
 19. Explicit user dose enabling the dose-relative LNAA proxy.
+20. Built-in catalog candidates per reference serving (s41: USDA milk,
+    chicken breast and white rice per source portion, CIQUAL cheddar per
+    category reference amount, CIQUAL coffee per 100 g).
 
 The replay report (`MechanisticReplayCaseReport`) additionally surfaces, per
 scenario: `mealComponentCount`, `gastricEmptyingAssumptions`,
@@ -662,6 +666,85 @@ final order, in which case it reports `local_ai_safe_candidate_rerank`;
 This is an executable decision-influence ceiling, not a disclaimer. A future
 change to ranking requires a separately reviewed context of use, governed
 calibration/validation evidence, and a versioned promotion contract.
+
+## 18a. Candidate serving basis
+
+Catalog nutrients are stored per 100 g edible portion. A next-meal candidate
+used to be evaluated as if 100 g were the meal: 2 % milk entered the model as
+3.3 g protein (one cup is about 8 g), and the gastric size multiplier, the
+LNAA load amplitude and the legacy ranker's meal-sized protein thresholds all
+saw 100 g. Candidates are now evaluated at a **reference serving**
+(`food_serving_reference_resolver.dart`, rule `food_serving_rule_v1`):
+
+1. Values that are not per 100 g edible portion (for example per 100 mL or
+   dry matter) are never scaled: no serving.
+2. Usable source portions (FDC `foodPortions`, retained in
+   `FoodItem.foodPortionEvidence`) have a finite positive gram weight and all
+   name one source food; for an FDC-coded item it must be the item itself.
+3. Exactly one portion described as the source's **NLEA serving** is the
+   serving.
+4. Otherwise, when the food has a product category, the portion closest to
+   the category's reference amount is chosen among portions above 50 % and
+   below 200 % of it (the single-unit range of 21 CFR 101.9(b)(2)(i)(B)–(C)).
+   A mass amount is compared in grams; a volume amount only with portions
+   stated in tsp, tbsp, cup, fl oz, mL or L (21 CFR 101.9(b)(5)(viii):
+   5, 15, 240, 30 mL). Ties go to the lower FDC sequence number.
+5. Otherwise a **mass** reference amount of the category is the serving
+   (`category_default`).
+6. Otherwise no serving (`none`): values stay per 100 g and are labelled
+   "per 100 g — serving unknown".
+
+Reference amounts are FDA reference amounts customarily consumed (RACC,
+21 CFR 101.12(b) Table 2, as amended at 81 FR 34000, 2016) and, for meat and
+poultry cuts, USDA FSIS 9 CFR 317.312(b) and 381.412(b)
+(`food_serving_reference_amounts.dart`). Each built-in catalog food is
+assigned to a category explicitly (`food_serving_reference_assignments.dart`);
+the coarse `FoodCategory` cannot pick one (dairy spans milk, yogurt and
+cheese). A volume amount is never turned into grams without the food's own
+household-measure weight, so CIQUAL milk and olive oil, which carry no
+portion records, stay per 100 g. `docs/CANDIDATE_SERVING_REFERENCE.md` lists
+the table and the outcome for every built-in catalog food (generated and
+checked by a test): of 430 foods, 261 use a source portion, 74 a category
+default and 95 have no serving (44 of those are seed foods with no composition record at all).
+
+**Into the engine.** `foodItemToCandidateFood` scales protein, fat, fiber,
+carbohydrate and energy by `grams / 100`, sets `FoodComponent.portionGrams`
+and `portionBasis`, and scales the amino-acid profile through
+`AminoAcidProfile.scaledToGrams` (a profile on any other basis is withheld).
+A nutrient the source marks missing stays null. Without a serving the
+per-100 g values, the per-100 g profile and a missing portion are passed on
+unchanged. Because an energy-containing liquid is delivered at the
+calorie-regulated rate (§7), the serving's energy also sets how long a liquid
+candidate is modeled in the stomach: a 244 g cup of 2 % milk (about 122 kcal)
+has a half-time of about 29 min instead of its 16 min volume half-time,
+whereas for 100 g (about 50 kcal, delivery half-time 12 min) the volume
+half-time would still apply. A liquid
+candidate with unknown energy (CIQUAL coffee) stays on the energy-free bound
+with uncertainty widened.
+
+**Uncertainty.** A category default is an assumed amount: the normalizer
+records `portion_grams_assumed` as one missing input, so completeness is
+7/8 instead of 8/8 for an otherwise complete source-portion candidate, and the
+gastric, competition and confidence bands widen as for any incomplete
+composition. A candidate without a serving keeps `portion_grams` and
+`liquid_fraction` missing (6/8), as before. Each candidate trace states its
+modeled amount and basis.
+
+**Legacy ranker.** Protein and fiber thresholds of
+`GetFoodRecommendationsUseCase` and the orchestrator's next-meal window
+branches compare the food's evaluated amount (serving, else 100 g), the same
+basis as the per-meal history averages. Parameter set `2026.10.20-v3` records
+the unit `g_per_evaluated_amount`. The rank-sensitivity replay moves each
+breakpoint onto the food's per-100 g scale. Score breakdowns carry
+`evaluated_amount_g`, `evaluated_protein_g` and `evaluated_fiber_g`; risk tags
+mark `serving_category_reference_amount` and `serving_unknown_per_100g`. The
+trace-only ranking boundary above is unchanged.
+
+**Limits.** A serving is a comparison amount, not portion advice and not an
+estimate of what a person eats. Portions at or below half the reference
+amount are not multiplied (2 tbsp of hummus is not formed from a 1 tbsp
+record), the mixed-dish, dip and volume categories often yield no serving,
+and branded label serving sizes are not used yet.
 
 ## 19. What the model does NOT infer
 

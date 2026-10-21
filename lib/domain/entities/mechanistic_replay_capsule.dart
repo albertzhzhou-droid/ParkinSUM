@@ -788,7 +788,9 @@ MealComposition _mealCompositionFromJson(Map<String, Object?> json) {
 }
 
 FoodComponent _foodComponentFromJson(Map<String, Object?> json) {
-  _requireExactKeys(json, const <String>{
+  // `portion_basis` is written only for catalog candidates, so logged and
+  // synthetic components keep their original wire bytes.
+  _requireExactKeys(json, <String>{
     'id',
     'name',
     'physical_form',
@@ -801,7 +803,17 @@ FoodComponent _foodComponentFromJson(Map<String, Object?> json) {
     'source_doc_id',
     'protein_source',
     'amino_acid_profile',
+    if (json.containsKey('portion_basis')) 'portion_basis',
   }, 'food component');
+  final portionBasis = _nullableString(json['portion_basis'], 'portion_basis');
+  if (json.containsKey('portion_basis') &&
+      !const <String>{
+        FoodComponent.sourcePortionBasis,
+        FoodComponent.categoryDefaultPortionBasis,
+        FoodComponent.noServingPortionBasis,
+      }.contains(portionBasis)) {
+    throw const FormatException('food component portion_basis is unknown.');
+  }
   final profileJson = json['amino_acid_profile'];
   final component = FoodComponent(
     id: _string(json['id'], 'food component id'),
@@ -831,6 +843,7 @@ FoodComponent _foodComponentFromJson(Map<String, Object?> json) {
         : AminoAcidProfile.fromJson(
             _asDynamicMap(profileJson, 'amino_acid_profile'),
           ),
+    portionBasis: portionBasis,
   );
   _assertJsonRoundTrip(json, component.toJson(), 'food component');
   return component;
