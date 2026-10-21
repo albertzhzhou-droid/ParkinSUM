@@ -340,6 +340,11 @@ Residual risks:
   without a source household measure stay per 100 g, and the legacy ranking
   order changes where a serving crosses a meal-sized protein or fiber
   threshold that 100 g did not.
+- Meal entry (2026-10-21) starts a newly added food at that same reference
+  serving, labelled with its basis, or at 100 g labelled "no reference
+  serving". It only speeds up logging and is editable; a logged amount that is
+  left at the default is still an assumption about what was eaten, and meal
+  totals and rule checks use whatever amount is saved.
 
 Required mitigation:
 

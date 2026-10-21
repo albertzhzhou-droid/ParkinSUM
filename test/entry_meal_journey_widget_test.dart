@@ -77,7 +77,10 @@ void main() {
         400,
         scrollable: entryScrollable(),
       );
-      await tester.drag(entryScrollable(), const Offset(0, -250));
+      // Bring the button clear of the bottom save bar.
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('entry-portion-preview-0')),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('entry-portion-preview-0')));
       await tester.pumpAndSettle();

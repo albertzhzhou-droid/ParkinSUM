@@ -266,7 +266,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               controller: _medicationSearchController,
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
-                labelText: i18n.tr('catalog.search'),
+                labelText: i18n.tr('onboarding.medication_search'),
                 prefixIcon: const Icon(Icons.search_outlined),
                 suffixIcon: _medicationSearchController.text.isEmpty
                     ? null
@@ -451,68 +451,131 @@ class _OnboardingPageState extends State<OnboardingPage> {
     ];
   }
 
+  bool _listedForRegistrationRegion(DrugDefinition drug) {
+    final jurisdiction = drug.jurisdiction.trim().toUpperCase();
+    return jurisdiction == _registrationRegion.trim().toUpperCase() ||
+        jurisdiction == 'GLOBAL';
+  }
+
+  /// Matches by display name, generic name, brand names, aliases, source and
+  /// jurisdiction. Drugs listed for the chosen registration region come
+  /// first; drugs listed only for other regions follow under their own
+  /// heading, and a search that finds only those says so.
   Widget _medicationPicker(AppState state, AppI18n i18n) {
-    final query = _medicationSearchController.text.trim().toLowerCase();
-    final drugs = state.medRepo.allDrugs
-        .where((drug) {
-          if (query.isEmpty) return true;
-          final localizedName = i18n
-              .medicationName(drug.id, drug.displayName)
-              .toLowerCase();
-          return localizedName.contains(query) ||
-              drug.genericName.toLowerCase().contains(query) ||
-              drug.sourceSystem.toLowerCase().contains(query) ||
-              drug.jurisdiction.toLowerCase().contains(query);
-        })
-        .toList(growable: false);
+    final query = _medicationSearchController.text.trim();
+    final normalizedQuery = query.toLowerCase();
+    bool matches(DrugDefinition drug) =>
+        normalizedQuery.isEmpty ||
+        [
+          i18n.medicationName(drug.id, drug.displayName),
+          drug.genericName,
+          ...drug.brandNames,
+          ...drug.aliases,
+          drug.sourceSystem,
+          drug.jurisdiction,
+        ].any((text) => text.toLowerCase().contains(normalizedQuery));
+    final drugs = state.medRepo.allDrugs.where(matches).toList(growable: false);
     if (drugs.isEmpty) {
       return Padding(
+        key: const ValueKey('onboarding-medication-empty'),
         padding: const EdgeInsets.symmetric(vertical: 20),
-        child: Text(i18n.tr('onboarding.no_medications_available')),
+        child: Text(
+          query.isEmpty
+              ? i18n.tr('onboarding.no_medications_available')
+              : i18n.tr('onboarding.medication_no_match', {'query': query}),
+        ),
       );
     }
-    return ConstrainedBox(
-      key: const ValueKey('onboarding-medication-picker'),
-      constraints: const BoxConstraints(maxHeight: 420),
-      child: Scrollbar(
-        child: ListView.builder(
-          primary: false,
-          shrinkWrap: true,
-          itemCount: drugs.length,
-          itemBuilder: (context, index) {
-            final drug = drugs[index];
-            return CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _activeDrugIds.contains(drug.id),
-              title: Text(i18n.medicationName(drug.id, drug.displayName)),
-              subtitle: Text(
-                [
-                  i18n.sourceSystemLabel(drug.sourceSystem),
-                  i18n.regionLabel(drug.jurisdiction),
-                  i18n.routeLabel(drug.route),
-                  i18n.dosageFormLabel(drug.dosageForm),
-                ].join(' · '),
-              ),
-              onChanged: (value) => setState(() {
-                if (value == true) {
-                  _activeDrugIds.add(drug.id);
-                  _initialIntakeDrugId ??= drug.id;
-                } else {
-                  _activeDrugIds.remove(drug.id);
-                  if (_initialIntakeDrugId == drug.id) {
-                    _initialIntakeDrugId = _activeDrugIds.isEmpty
-                        ? null
-                        : _activeDrugIds.first;
-                  }
-                  if (_activeDrugIds.isEmpty) {
-                    _recordInitialIntake = false;
-                  }
-                }
-              }),
-            );
-          },
+    final inRegion = [
+      for (final drug in drugs)
+        if (_listedForRegistrationRegion(drug)) drug,
+    ];
+    final otherRegion = [
+      for (final drug in drugs)
+        if (!_listedForRegistrationRegion(drug)) drug,
+    ];
+    final region = i18n.regionLabel(_registrationRegion);
+    final otherRegions = {
+      for (final drug in otherRegion) i18n.regionLabel(drug.jurisdiction),
+    }.toList()..sort();
+    final notice = inRegion.isNotEmpty
+        ? null
+        : query.isEmpty
+        ? i18n.tr('onboarding.medication_region_empty', {'region': region})
+        : i18n.tr('onboarding.medication_other_region_only', {
+            'query': query,
+            'region': region,
+            'regions': otherRegions.join(', '),
+          });
+    final rows = <Widget>[
+      for (final drug in inRegion) _medicationTile(drug, i18n),
+      if (otherRegion.isNotEmpty) ...[
+        Padding(
+          key: const ValueKey('onboarding-medication-other-regions'),
+          padding: const EdgeInsets.only(top: 12, bottom: 4),
+          child: Text(
+            i18n.tr('onboarding.medication_other_regions_heading'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
         ),
+        for (final drug in otherRegion) _medicationTile(drug, i18n),
+      ],
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (notice != null)
+          Padding(
+            key: const ValueKey('onboarding-medication-region-notice'),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(notice),
+          ),
+        ConstrainedBox(
+          key: const ValueKey('onboarding-medication-picker'),
+          constraints: const BoxConstraints(maxHeight: 420),
+          child: Scrollbar(
+            child: ListView.builder(
+              primary: false,
+              shrinkWrap: true,
+              itemCount: rows.length,
+              itemBuilder: (context, index) => rows[index],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _medicationTile(DrugDefinition drug, AppI18n i18n) {
+    return CheckboxListTile(
+      key: ValueKey('onboarding-medication-${drug.id}'),
+      contentPadding: EdgeInsets.zero,
+      value: _activeDrugIds.contains(drug.id),
+      title: Text(i18n.medicationName(drug.id, drug.displayName)),
+      subtitle: Text(
+        [
+          i18n.sourceSystemLabel(drug.sourceSystem),
+          i18n.regionLabel(drug.jurisdiction),
+          i18n.routeLabel(drug.route),
+          i18n.dosageFormLabel(drug.dosageForm),
+        ].join(' · '),
       ),
+      onChanged: (value) => setState(() {
+        if (value == true) {
+          _activeDrugIds.add(drug.id);
+          _initialIntakeDrugId ??= drug.id;
+        } else {
+          _activeDrugIds.remove(drug.id);
+          if (_initialIntakeDrugId == drug.id) {
+            _initialIntakeDrugId = _activeDrugIds.isEmpty
+                ? null
+                : _activeDrugIds.first;
+          }
+          if (_activeDrugIds.isEmpty) {
+            _recordInitialIntake = false;
+          }
+        }
+      }),
     );
   }
 
