@@ -617,8 +617,8 @@ void main() {
     expect(
       find.textContaining(
         '$parameterRecordCount result-affecting parameter/structure records · '
-        '${parameterRecordCount - 22} prototype-heuristic · '
-        '22 literature-derived · 0 fitted.',
+        '${parameterRecordCount - 23} prototype-heuristic · '
+        '23 literature-derived · 0 fitted.',
       ),
       findsOneWidget,
     );

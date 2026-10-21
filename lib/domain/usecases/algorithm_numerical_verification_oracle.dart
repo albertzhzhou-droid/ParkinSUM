@@ -477,7 +477,7 @@ List<AlgorithmNumericalOracleVector> _buildTruthVectors() {
       1e-12,
       'unitless',
       'independent grid integration',
-      'sum(pressure(t)*openness(t))/sum(openness(t)) on the full 5-minute absorption grid',
+      'protein-weighted arrival (oats only; water carries no protein); sum(pressure(t)*openness(t))/sum(openness(t)) on the full 5-minute absorption grid',
     ),
     v(
       'competition.band_index',
@@ -503,11 +503,11 @@ List<AlgorithmNumericalOracleVector> _buildTruthVectors() {
       'conflict.severity_index',
       'mechanistic_conflict',
       'severity branch',
-      1,
+      2,
       0,
       'enum index',
       'independent threshold branch',
-      'score in the low band maps to low',
+      'score in the moderate band (0.15 to below 0.35) maps to moderate',
     ),
     v(
       'candidate.oats_final_score',
@@ -607,11 +607,17 @@ _referenceAbsorption(
   })
   absorption,
 ) {
-  final mealEnd = gastric.aggregateLag.round() + gastric.mostlyDuration;
+  // Only the oat component carries protein, so it alone sets both the
+  // protein-arrival shape and the support (its lag plus four half-times).
+  final oats = gastric.components.first;
+  final proteinCarriers = <_ReferenceComponent>[
+    _ReferenceComponent(weight: 1, lag: oats.lag, half: oats.half),
+  ];
+  final mealEnd = oats.lag.round() + (oats.half * 4).round();
   final arrivals = <_ReferenceSample>[];
   var peakArrival = 0.0;
   for (var minute = 0; minute <= mealEnd; minute += 5) {
-    final rate = _referenceArrival(gastric.components, minute);
+    final rate = _referenceArrival(proteinCarriers, minute);
     arrivals.add(_ReferenceSample(minute, rate));
     if (rate > peakArrival) peakArrival = rate;
   }

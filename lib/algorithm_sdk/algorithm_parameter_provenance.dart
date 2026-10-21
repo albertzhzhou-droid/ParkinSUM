@@ -1122,7 +1122,7 @@ final class AlgorithmParameterProvenanceManifest {
         algorithmIds: const ['gastric_emptying'],
         displayName: 'Gastric generator branch and weighting policy',
         semanticId: GastricEmptyingParameterIds.generatorStructure,
-        formulaId: 'gastric-emptying.generator-structure/1',
+        formulaId: 'gastric-emptying.generator-structure/2',
         originalUnit: 'canonical_json',
         canonicalUnit: 'canonical_json',
         originalValue: GastricEmptyingModel.generatorStructure,
@@ -1144,7 +1144,7 @@ final class AlgorithmParameterProvenanceManifest {
         algorithmIds: const ['gastric_emptying'],
         displayName: 'Gastric output integrity and wire policy',
         semanticId: GastricEmptyingParameterIds.outputIntegrityContract,
-        formulaId: 'gastric-emptying.output-integrity/1',
+        formulaId: 'gastric-emptying.output-integrity/2',
         originalUnit: 'canonical_json',
         canonicalUnit: 'canonical_json',
         originalValue: GastricEmptyingOutputContract.integrityConfiguration,
@@ -1831,6 +1831,14 @@ AlgorithmParameterProvenanceRecord _valueRecord({
 ({String formulaId, String unit, double minimum, double maximum}) _gastricSpec(
   String id,
 ) {
+  if (id == GastricEmptyingParameterIds.liquidNutrientKcalPerMinute) {
+    return (
+      formulaId: 'gastric-emptying.calorie-regulated-liquid-delivery/1',
+      unit: 'kcal_per_min',
+      minimum: 0.1,
+      maximum: 20,
+    );
+  }
   if (id.endsWith('lag_minutes')) {
     return (
       formulaId: 'gastric-emptying.explicit-lag-linear-exponential/2',

@@ -1009,7 +1009,8 @@ bool _validAvailableGastricWire(Map<dynamic, dynamic> wire) {
           'mixed',
           'unknown',
         }.contains(rawComponent['physical_form']) ||
-        !_isStringWireList(rawComponent['applied_modifiers'])) {
+        !_isStringWireList(rawComponent['applied_modifiers']) ||
+        !_validCalorieRegulationWire(rawComponent, half.toDouble())) {
       return false;
     }
     fractionSum += fraction.toDouble();
@@ -1030,6 +1031,37 @@ bool _validAvailableGastricWire(Map<dynamic, dynamic> wire) {
           derived.peakWindowDurationMinutes &&
       (mostlyMap['end_minute'] as int) - (mostlyMap['start_minute'] as int) ==
           derived.mostlyEmptiedWindowDurationMinutes;
+}
+
+/// A calorie-regulated component carries all three calorie-regulation keys,
+/// is a liquid, and its half-time is the slower of its volume half-time and
+/// half its delivery time. An exponential component (including every record
+/// written before calorie regulation existed) carries none of them.
+bool _validCalorieRegulationWire(
+  Map<dynamic, dynamic> component,
+  double halfEmptyingMinutes,
+) {
+  final kinetics = component['emptying_kinetics'];
+  final volumeHalf = component['volume_half_emptying_minutes'];
+  final delivery = component['calorie_delivery_minutes'];
+  if (kinetics == null && volumeHalf == null && delivery == null) {
+    return !component.containsKey('emptying_kinetics') &&
+        !component.containsKey('volume_half_emptying_minutes') &&
+        !component.containsKey('calorie_delivery_minutes');
+  }
+  if (kinetics != 'calorie_regulated' ||
+      component['physical_form'] != 'liquid' ||
+      volumeHalf is! num ||
+      !volumeHalf.isFinite ||
+      volumeHalf <= 0 ||
+      delivery is! num ||
+      !delivery.isFinite ||
+      delivery <= 0) {
+    return false;
+  }
+  final expectedHalf = math.max(volumeHalf.toDouble(), delivery / 2);
+  return (halfEmptyingMinutes - expectedHalf).abs() <=
+      gastricDerivedCoherenceTolerance;
 }
 
 bool _validAvailableAbsorptionWire(Map<dynamic, dynamic> wire) {

@@ -645,7 +645,7 @@ final class _PulseGastricProfile extends GastricEmptyingProfile {
         mealId: 'synthetic:pulse-meal',
         componentProfiles: const [
           EmptyingComponentProfile(
-            componentId: 'synthetic:pulse-component',
+            componentId: 'synthetic:pulse-protein',
             physicalForm: MealPhysicalForm.solid,
             lagMinutes: 0,
             halfEmptyingMinutes: 10,
@@ -669,4 +669,12 @@ final class _PulseGastricProfile extends GastricEmptyingProfile {
   @override
   double intestinalArrivalRateAt(int minutesSinceMealStart) =>
       minutesSinceMealStart >= 0 && minutesSinceMealStart <= 20 ? 1 : 0;
+
+  // The competition layer reads protein-weighted arrival; the pulse carries
+  // all of the meal's protein.
+  @override
+  double weightedIntestinalArrivalRateAt(
+    int minutesSinceMealStart,
+    Map<String, double> weightsByComponentId,
+  ) => intestinalArrivalRateAt(minutesSinceMealStart);
 }

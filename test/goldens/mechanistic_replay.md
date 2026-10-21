@@ -3,7 +3,7 @@
 Deterministic reference instant: 2026-01-01T08:00:00.000Z (fixed anchor, not the time this report was produced)
 Evidence-currency assessment: 2026-08-19T00:00:00.000Z (offline snapshot; the JSON report carries unsigned receipts)
 
-Algorithm configuration: `parkinsum-default-algorithm-stack` @ `2026.10.15-v78` · `cdc582bde5b6341add35c6c53098f800dce8715a0ddd3b42a44c88707faa813d`
+Algorithm configuration: `parkinsum-default-algorithm-stack` @ `2026.10.20-v79` · `9ccb403043d9b803653944779cfdac56d9810b0b77277c196ff3b139885568c2`
 Scope: the digest proves engineering replay identity only; it does **not** establish biological or clinical validity.
 
 **41 / 41 scenarios passed.**
@@ -143,7 +143,7 @@ Scope: the digest proves engineering replay identity only; it does **not** estab
 - pass: true
 - result_availability: available
 - has_modeled_output: true
-- interaction_score: 0.107
+- interaction_score: 0.137
 - severity_band: low
 - confidence_band: high
 - amino_acid_competition_band: low
@@ -467,7 +467,7 @@ Scope: the digest proves engineering replay identity only; it does **not** estab
 - pass: true
 - result_availability: available
 - has_modeled_output: true
-- interaction_score: 0.020
+- interaction_score: 0.021
 - severity_band: low
 - confidence_band: high
 - amino_acid_competition_band: low
@@ -478,10 +478,10 @@ Scope: the digest proves engineering replay identity only; it does **not** estab
 - pass: true
 - result_availability: available
 - has_modeled_output: true
-- interaction_score: 0.029
-- severity_band: low
+- interaction_score: 0.325
+- severity_band: moderate
 - confidence_band: high
-- amino_acid_competition_band: low
+- amino_acid_competition_band: moderate
 - gastric_emptying: lag=0min uncertainty=narrow
 - banned_phrase_hits: 0
 
