@@ -861,7 +861,7 @@ final class ReminderNotificationRunPlatformBinding {
     required this.buildMode,
   });
 
-  static const String requiredNotificationPluginVersion = '22.3.0';
+  static const String requiredNotificationPluginVersion = '22.3.2';
   static const Set<String> supportedBuildModes = {
     'debug',
     'profile',

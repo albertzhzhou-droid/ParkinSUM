@@ -16,7 +16,7 @@ const corpus = JSON.parse(fixtureBytes.toString('utf8'));
 const corpusDigest = createHash('sha256').update(fixtureBytes).digest('hex');
 const engines = {
   googleCqlPackage: 'github.com/google/cql@v0.0.3-0.20260814184421-b9169ccd54a3',
-  javaScriptExecutionPath: 'cql-execution@3.3.2 + cql-exec-fhir@2.1.6',
+  javaScriptExecutionPath: 'cql-execution@3.3.2 + cql-exec-fhir@2.2.0',
   cqfJvmEngine: 'org.cqframework:engine@5.3.0',
   cqfJvmFhirArtifact: 'org.cqframework:engine-fhir@5.3.0',
   corpusDigest,

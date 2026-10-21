@@ -1,0 +1,50 @@
+{
+  "schema": "parkinsum.frozen-historical-timezone-fixture/1",
+  "tzdb_release": "2025c",
+  "source_package": "timezone/0.11.1",
+  "source_package_url": "https://pub.dev/packages/timezone/versions/0.11.1",
+  "source_package_archive_sha256": "981d1020d6ef8fe1e7b3de5054e5b25579ae7c403d7734adc508ffc47668e9cb",
+  "source_database_path": "lib/data/latest_all.tzf",
+  "source_database_bytes": 445672,
+  "source_database_sha256": "ee21af1303316a3fa414521f2120880e0af7eef46674f3c25b04114279bf9ade",
+  "source_generated_header": "// Timezone data version: 2025c",
+  "source_generated_dart_sha256": "77037d9de6af36309b5c48826704d9a4223ebbc081b040b7c8cca3af6c1532c1",
+  "extraction": "Concatenate unchanged complete TZF location records for the five zones already declared by the finite research fixtures. No transitions, offsets or abbreviations are edited or re-encoded.",
+  "fixture_path": "test/fixtures/timezone_research/iana_2025c_five_zones.tzf",
+  "fixture_bytes": 9104,
+  "fixture_sha256": "e20a656edf5a9715563cf6ca870e6a84c6917862d8d88e184c51b08011f1b455",
+  "zones": [
+    {
+      "name": "America/Toronto",
+      "source_byte_offset": 153784,
+      "record_bytes": 2224,
+      "record_sha256": "7ec5d2614f777c8a81e74a2b931b58f6f5b3e2521f88d40c4ba58263a0c60255"
+    },
+    {
+      "name": "America/Vancouver",
+      "source_byte_offset": 156152,
+      "record_bytes": 1832,
+      "record_sha256": "a6cf941f60003c46751eeb71ee8ffc8aa9d76670cd6c7748298b4548183d1647"
+    },
+    {
+      "name": "America/Winnipeg",
+      "source_byte_offset": 159136,
+      "record_bytes": 1816,
+      "record_sha256": "52795374387d5db50c58c6974f37ee755b46b60ab7c68d5d09e8439474d8f62f"
+    },
+    {
+      "name": "Australia/Sydney",
+      "source_byte_offset": 254504,
+      "record_bytes": 1384,
+      "record_sha256": "ac62370af3c09e0747d510e8fa83fba27a0d640d951d4161fa94ce18735d2207"
+    },
+    {
+      "name": "Europe/Paris",
+      "source_byte_offset": 350800,
+      "record_bytes": 1848,
+      "record_sha256": "9d9fb9eda5d1b2e54c1506ca068dcceff7842e3dd160e1f8d045064849368718"
+    }
+  ],
+  "license": "IANA timezone data are public domain; see assets/timezone/LICENSE-IANA.txt. No timezone package implementation code is vendored.",
+  "scope": "Historical finite test and research inputs only; never loaded by application runtime. This subset does not establish all-zone, legal, device or clinical scheduling validity."
+}

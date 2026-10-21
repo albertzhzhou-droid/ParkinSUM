@@ -221,7 +221,7 @@ export function runCqfJvmTemplateDifferential(root, template, previews) {
     scope: 'synthetic-fhir-r4-cql-template-javascript-jvm-differential',
     templateIdentity: { id: template.templateId, version: template.templateVersion },
     fhirVersion: '4.0.1',
-    javascriptEngine: 'cql-execution@3.3.2 + cql-exec-fhir@2.1.6',
+    javascriptEngine: 'cql-execution@3.3.2 + cql-exec-fhir@2.2.0',
     cqfJvmEngine: 'org.cqframework:engine@5.3.0 + engine-fhir@5.3.0 + cql-to-elm-jvm@5.3.0',
     comparatorCount: fixedTemplateOperators.length,
     caseCount: cases.length,

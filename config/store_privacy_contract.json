@@ -5,11 +5,11 @@
     "reviewedAt": "2026-10-21",
     "reviewerRole": "automated_repository_source_fact_review",
     "storeOwnerApproval": "pending_external_account_owner",
-    "approvalScope": "Repository source facts refreshed for Dependabot PR #119 with flutter_secure_storage 11.2.0, Darwin 0.4.3 and platform_interface 2.1.1. The protected-secret adapter retains the existing RSA-OAEP/AES-GCM profile, owner namespace, resetOnError=false and migration options. Android source manifest and Darwin privacy-manifest bytes are unchanged; current deployment targets satisfy the new minimums. The complete dependency lock is rebound without re-attesting previous device evidence or built-artifact facts. Pre-v10 installations that skipped migration still require a v10 bridge; real-device data migration is unverified. Owner approval remains pending. This is not a human privacy approval or store submission receipt."
+    "approvalScope": "Combined repository source-fact review for Dependabot #119/#120/#137/#156/#157: Flutter minor/patch group with analyzer 14.5.0 and notifications 22.3.2; secure storage 11.2.0, Darwin 0.4.3 and platform_interface 2.1.1; operator-only firebase-admin 14.5.0 and development-only CQL 5.4.0, cql-exec-fhir 2.2.0 and Playwright CLI 0.1.22. Both complete lock digests and affected Apple privacy manifests were checked. Runtime data-flow roles, modern secret cipher/namespace/reset/migration settings, source permissions and native privacy-manifest declarations are unchanged. Existing device evidence and built-artifact facts are not re-attested. Pre-v10 installations that skipped migration require a v10 bridge; real-device migration remains unverified. Store-owner approval remains pending; this is not a human privacy approval or store submission receipt."
   },
   "lockIdentities": {
-    "pubspec.lock": "5140d80d9b7cd2ff71acf4938fd9907a3204ccf9ba71e4ce682711121e1e7cff",
-    "package-lock.json": "00a1805ec51a2aaafa7b9f4396147f0333b3c788ff36987c67618289d8f1e1a2",
+    "pubspec.lock": "b86a0d3105a5783e727febb43d07cef81075e09a73d0ae9dda647fc1d35a9a75",
+    "package-lock.json": "3bca74b296c071fcedb5520cbd9ee49f2154e44fb468297ef5a77d9b61f5ea73",
     "ios/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "94f531207993c9c41339a5935baea23babc404856fbfdf351a5da85dd5f33ba3",
     "macos/Runner.xcworkspace/xcshareddata/swiftpm/Package.resolved": "319a8371fd8a1a05c0698b5c653d605ae831ca614e781feebe2c6f40822d1213"
   },
@@ -105,7 +105,7 @@
       "printing": {
         "accessedApiCategory": null,
         "reason": null,
-        "manifestAvailability": "no_bundled_privacy_manifest_in_5_15_0",
+        "manifestAvailability": "no_bundled_privacy_manifest_in_5_15_1",
         "reviewBoundary": "system_print_and_share_only_no_pdf_preview_or_google_fonts"
       },
       "sqflite_darwin": {

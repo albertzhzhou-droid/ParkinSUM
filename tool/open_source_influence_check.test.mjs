@@ -613,11 +613,12 @@ test('existing Web preferences dependency retains its exact package pin and scop
   assert.ok(codes(inventory, observed).includes('false_machine_detection'));
 });
 
-test('CQF CQL JVM reference is linked only to locked development tooling', () => {
+test('CQF CQL JavaScript source and retained JVM modules are linked only to locked development tooling', () => {
   const { inventory, observed } = fixture();
   const cqf = inventory.influences.find((entry) => entry.id === 'cqframework_cql_reference');
   assert.equal(cqf.officialUrl, 'https://github.com/cqframework/clinical_quality_language');
-  assert.equal(cqf.pinnedCommit, '88693baefa482ec6f189c90113cfe1f3f4ce9d31');
+  assert.equal(cqf.pinnedCommit, 'c41c21f5616a0da82d49e32a9cc3a5b3ca299bc2');
+  assert.match(cqf.reviewedConcepts.join(' '), /JVM.*5\.3\.0 at source commit 88693baefa482ec6f189c90113cfe1f3f4ce9d31/);
   assert.equal(cqf.declaredSpdx, 'Apache-2.0');
   assert.equal(cqf.repositoryDetectedSpdx, 'Apache-2.0');
   assert.equal(cqf.transferStatus, 'development_linked');
@@ -633,9 +634,9 @@ test('CQF CQL JVM reference is linked only to locked development tooling', () =>
   assert.deepEqual(
     inventory.releaseBoundary.linkedVersionEvidence.cqframework_cql_reference,
     {
-      version: '5.3.0',
-      versionSource: 'tool/cqf_jvm_cql_differential/build.gradle',
-      sourceRevision: '88693baefa482ec6f189c90113cfe1f3f4ce9d31',
+      version: '5.4.0',
+      versionSource: 'package.json',
+      sourceRevision: 'c41c21f5616a0da82d49e32a9cc3a5b3ca299bc2',
     },
   );
   assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
@@ -651,8 +652,8 @@ test('CQF JavaScript execution and FHIR data-source packages are pinned developm
     },
     {
       id: 'cqframework_cql_exec_fhir_reference',
-      commit: 'f3f9a968d597e2f029533a9e5cb1e6a643f2f69a',
-      version: '2.1.6',
+      commit: '2aa6bf755dcd1dc888a853926f21d186ff3d4212',
+      version: '2.2.0',
     },
   ];
   for (const { id, commit, version } of expected) {
@@ -680,7 +681,7 @@ test('share_plus is release-linked at its pinned version and source commit', () 
   const { inventory, observed } = fixture();
   const share = inventory.influences.find((entry) => entry.id === 'share_plus');
   assert.equal(share.officialUrl, 'https://github.com/fluttercommunity/plus_plugins');
-  assert.equal(share.pinnedCommit, '2c5b4935c85fdbfeffea2bd68c9286c064ed8b7c');
+  assert.equal(share.pinnedCommit, '53e5ecf38c8775af21c62c2932d07f88bad1a3b2');
   assert.equal(share.declaredSpdx, 'BSD-3-Clause');
   assert.equal(share.repositoryDetectedSpdx, 'BSD-3-Clause');
   assert.equal(share.licenseStatus, 'machine_detected');
@@ -874,9 +875,9 @@ test('PDF linkage and Arabic copyright reference retain separate transfer scopes
   const { inventory, observed } = fixture();
   assert.deepEqual(validateInfluenceInventory(inventory, observed), []);
   const pdf = inventory.influences.find(entry => entry.id === 'dart_pdf_printing');
-  assert.equal(pdf.pinnedCommit, '0833cd2fc8cf3e62b0228732e81402afca5cc542');
+  assert.equal(pdf.pinnedCommit, '1ce3ee24331df4345952d4104cde1852f12a7090');
   assert.equal(pdf.transferStatus, 'linked');
-  assert.equal(inventory.releaseBoundary.linkedVersionEvidence[pdf.id].version, '3.13.0');
+  assert.equal(inventory.releaseBoundary.linkedVersionEvidence[pdf.id].version, '3.13.1');
   const reference = inventory.influences.find(entry => entry.id === 'noto_arabic_copyright_reference');
   assert.equal(reference.transferStatus, 'concept_only');
   assert.deepEqual(reference.localPaths, []);
