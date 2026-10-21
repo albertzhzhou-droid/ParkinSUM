@@ -1,9 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
+import 'package:parkinsum_companion/core/copy/response_copy_service.dart';
 import 'package:parkinsum_companion/core/db/cdss_database_memory.dart';
+import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
 import 'package:parkinsum_companion/core/models/drug_definition.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
+import 'package:parkinsum_companion/core/models/interaction_result.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/models/user_profile.dart';
 import 'package:parkinsum_companion/domain/usecases/clinical_decision_support_service.dart';
@@ -103,7 +106,11 @@ void main() {
             reason: route,
           );
           expect(
-            result.keyFindings.any((finding) => finding.startsWith('Allow')),
+            result.keyFindings.any(
+              (finding) => finding.startsWith(
+                AppI18n.fromLocaleTag('en-US').decisionLabel('ALLOW'),
+              ),
+            ),
             isFalse,
             reason: route,
           );
@@ -318,6 +325,72 @@ void main() {
         );
         if (missing) expect(result.issues, isNotEmpty);
       }
+    },
+  );
+  test(
+    'oral levodopa without an intake is shown as awaiting inputs, not risk',
+    () async {
+      final time = DateTime.utc(2026, 9, 29, 12);
+      final db = _OralLevodopaDatabase(route: 'oral');
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: ClinicalDecisionSupportService(
+          database: db,
+          factConflictEngine: FactConflictEngine(),
+          runtimeRuleEngine: RuntimeRuleEngine(),
+        ),
+        compiledRules: RuleRegistryCompiler().compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'baseline_cdss_rules_v1',
+        ),
+      );
+      final result = await useCase(
+        meal: Meal(
+          id: 'synthetic_missing_intake_meal',
+          eatenAt: time,
+          title: 'Synthetic',
+          items: [
+            MealItem(
+              foodId: 'synthetic_protein_food',
+              foodName: 'Synthetic',
+              foodCategory: FoodCategory.other,
+              quantityFactor: 1,
+              foodTags: [],
+              proteinPer100g: 31,
+              carbsPer100g: 0,
+              fatPer100g: 3.6,
+              fiberPer100g: 0,
+              sodiumPer100g: 0,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'synthetic_oral_levodopa',
+            genericName: 'Levodopa',
+            brandNames: [],
+            tags: [DrugTag.levodopaLike],
+            notes: '',
+          ),
+        ],
+        intakes: const [],
+        userProfile: UserProfile.defaults().copyWith(displayLocale: 'en-US'),
+        now: time,
+      );
+      // The stored rule outcome is unchanged: a review-level, high score.
+      expect(result.overallSeverity, InteractionSeverity.high);
+      expect(
+        result.scoreFactors.map((factor) => factor.code),
+        contains('rule_decision_weight'),
+      );
+      // Only the presentation is neutral, and it names the missing inputs.
+      final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('en-US'));
+      expect(copy.awaitingMissingInputs(result), isTrue);
+      expect(
+        copy.awaitingInputsHeadline(result),
+        startsWith("Can't assess yet"),
+      );
+      expect(copy.awaitingInputsHeadline(result), contains('medication time'));
     },
   );
 }

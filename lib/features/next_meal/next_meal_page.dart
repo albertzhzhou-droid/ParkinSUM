@@ -540,56 +540,37 @@ class _ResultBlock extends StatelessWidget {
       key: const ValueKey('next-meal-result'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Path + AI badge header.
+        // Rule-based or AI-reworded list; the engine path is under
+        // "How was this computed?".
         PaperCard(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Icon(
-                    result.aiUsed
-                        ? Icons.auto_awesome_rounded
-                        : Icons.shield_outlined,
-                    size: 20,
-                    color: scheme.primary,
-                    semanticLabel: result.aiUsed
-                        ? i18n.tr('next_meal.ai_polished')
-                        : i18n.tr('next_meal.conservative_engine'),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      result.aiUsed
-                          ? i18n.tr('next_meal.ai_polished')
-                          : i18n.tr('next_meal.conservative_engine'),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Paper.ink,
-                      ),
-                    ),
-                  ),
-                ],
+              Icon(
+                result.aiUsed
+                    ? Icons.auto_awesome_rounded
+                    : Icons.shield_outlined,
+                size: 20,
+                color: scheme.primary,
+                semanticLabel: result.aiUsed
+                    ? i18n.tr('next_meal.ai_polished')
+                    : i18n.tr('next_meal.conservative_engine'),
               ),
-              const SizedBox(height: 6),
-              Text(
-                '${i18n.tr('next_meal.recommendation_path')}: '
-                '${i18n.recommendationPathLabel(result.decisionPath)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Paper.inkMuted,
-                  height: 1.35,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  result.aiUsed
+                      ? i18n.tr('next_meal.ai_polished')
+                      : i18n.tr('next_meal.conservative_engine'),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Paper.ink,
+                  ),
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: 10),
-        CandidateSetSnapshotCard(
-          snapshot: result.candidateSetSnapshot,
-          rankSensitivityAssessment: result.rankSensitivityAssessment,
         ),
         if (rankPresentationWithheld) ...[
           const SizedBox(height: 10),
@@ -633,52 +614,6 @@ class _ResultBlock extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
-        if (gateLines.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          PaperCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.shield_outlined,
-                      size: 18,
-                      color: scheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    // Must flex: this label is far longer in some locales
-                    // (fr is ~2x en) and overflowed the row without it.
-                    Expanded(
-                      child: Text(
-                        i18n.tr('next_meal.gate_reasons'),
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Paper.ink,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                for (final line in gateLines)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3),
-                    child: Text(
-                      '• $line',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Paper.inkMuted,
-                        height: 1.4,
-                      ),
                     ),
                   ),
               ],
@@ -778,78 +713,182 @@ class _ResultBlock extends StatelessWidget {
                 ),
               ),
             ),
-        if (result.mechanisticTrace != null) ...[
-          const SizedBox(height: 12),
-          MechanisticConflictTraceCard(typedResult: result.mechanisticTrace),
-        ],
-        if (!rankPresentationWithheld &&
-            traceAlignment.alignedScores.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          const Text(
-            'Model trace per candidate (educational)',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Paper.inkMuted,
+        const SizedBox(height: 4),
+        Text(
+          i18n.tr('next_meal.result_boundary'),
+          key: const ValueKey('next-meal-result-boundary'),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Paper.inkMuted,
+            height: 1.4,
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Engine detail: path, candidate-set snapshot, gate notes and the
+        // educational traces. Safety notices above stay visible.
+        Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            key: const ValueKey('next-meal-how-computed'),
+            tilePadding: EdgeInsets.zero,
+            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+            shape: const Border(),
+            collapsedShape: const Border(),
+            title: Text(
+              i18n.tr('interaction.how_computed'),
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Paper.ink,
+              ),
             ),
+            children: [
+              Text(
+                i18n.tr('next_meal.how_computed_body'),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Paper.inkMuted,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${i18n.tr('next_meal.recommendation_path')}: '
+                '${i18n.recommendationPathLabel(result.decisionPath)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Paper.inkMuted,
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 10),
+              CandidateSetSnapshotCard(
+                snapshot: result.candidateSetSnapshot,
+                rankSensitivityAssessment: result.rankSensitivityAssessment,
+              ),
+              if (gateLines.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                PaperCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.shield_outlined,
+                            size: 18,
+                            color: scheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          // Must flex: this label is far longer in some locales
+                          // (fr is ~2x en) and overflowed the row without it.
+                          Expanded(
+                            child: Text(
+                              i18n.tr('next_meal.gate_reasons'),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Paper.ink,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      for (final line in gateLines)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Text(
+                            '• $line',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Paper.inkMuted,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+              if (result.mechanisticTrace != null) ...[
+                const SizedBox(height: 12),
+                MechanisticConflictTraceCard(
+                  typedResult: result.mechanisticTrace,
+                ),
+              ],
+              if (!rankPresentationWithheld &&
+                  traceAlignment.alignedScores.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                const Text(
+                  'Model trace per candidate (educational)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Paper.inkMuted,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                for (final s in traceAlignment.alignedScores)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: MechanisticCandidateScoreLine(score: s),
+                  ),
+              ],
+              if (!rankPresentationWithheld &&
+                  (result.mechanisticCandidateScores?.isNotEmpty ?? false) &&
+                  !traceAlignment.complete) ...[
+                const SizedBox(height: 4),
+                const Text(
+                  'Some candidate trace rows were withheld because an exact '
+                  'one-to-one ID match with the displayed heuristic order could '
+                  'not be established.',
+                  key: ValueKey('next-meal-trace-alignment-withheld'),
+                  style: TextStyle(fontSize: 11, color: Paper.inkMuted),
+                ),
+              ],
+              if (result.rankerUsed != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Recommendation ranker: ${result.rankerUsed} · '
+                  'mechanistic trace changes order: no',
+                  style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
+                ),
+              ],
+              if (result.rankerEligibility != null &&
+                  result.rankerEligibility!.fallbackReasons.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  result.rankerEligibility!.fallbackReasons.contains(
+                        'mechanistic_trace_only_not_validated_for_ranking',
+                      )
+                      ? 'The mechanistic model is an educational trace only and '
+                            'does not reorder recommendations. Trace limitations: '
+                            '${result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ').isEmpty ? 'none beyond the trace-only boundary' : result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ')}.'
+                      : 'The mechanistic trace is unavailable for this request '
+                            '(${result.rankerEligibility!.fallbackReasons.join(', ')}).',
+                  style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
+                ),
+              ],
+              if (result.mechanisticCandidateScores == null &&
+                  result.rankerEligibility == null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  !windowProvided
+                      ? 'No meal-time window was provided, so no per-candidate '
+                            'mechanistic trace was generated. Recommendations remain '
+                            'on the conservative heuristic. This is not medical advice.'
+                      : 'The mechanistic trace is unavailable for this request '
+                            '(insufficient or out-of-domain context). Recommendations '
+                            'remain on the conservative heuristic. '
+                            'This is not medical advice.',
+                  style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 6),
-          for (final s in traceAlignment.alignedScores)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: MechanisticCandidateScoreLine(score: s),
-            ),
-        ],
-        if (!rankPresentationWithheld &&
-            (result.mechanisticCandidateScores?.isNotEmpty ?? false) &&
-            !traceAlignment.complete) ...[
-          const SizedBox(height: 4),
-          const Text(
-            'Some candidate trace rows were withheld because an exact '
-            'one-to-one ID match with the displayed heuristic order could '
-            'not be established.',
-            key: ValueKey('next-meal-trace-alignment-withheld'),
-            style: TextStyle(fontSize: 11, color: Paper.inkMuted),
-          ),
-        ],
-        if (result.rankerUsed != null) ...[
-          const SizedBox(height: 6),
-          Text(
-            'Recommendation ranker: ${result.rankerUsed} · '
-            'mechanistic trace changes order: no',
-            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
-          ),
-        ],
-        if (result.rankerEligibility != null &&
-            result.rankerEligibility!.fallbackReasons.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            result.rankerEligibility!.fallbackReasons.contains(
-                  'mechanistic_trace_only_not_validated_for_ranking',
-                )
-                ? 'The mechanistic model is an educational trace only and '
-                      'does not reorder recommendations. Trace limitations: '
-                      '${result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ').isEmpty ? 'none beyond the trace-only boundary' : result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ')}.'
-                : 'The mechanistic trace is unavailable for this request '
-                      '(${result.rankerEligibility!.fallbackReasons.join(', ')}).',
-            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
-          ),
-        ],
-        if (result.mechanisticCandidateScores == null &&
-            result.rankerEligibility == null) ...[
-          const SizedBox(height: 6),
-          Text(
-            !windowProvided
-                ? 'No meal-time window was provided, so no per-candidate '
-                      'mechanistic trace was generated. Recommendations remain '
-                      'on the conservative heuristic. This is not medical advice.'
-                : 'The mechanistic trace is unavailable for this request '
-                      '(insufficient or out-of-domain context). Recommendations '
-                      'remain on the conservative heuristic. '
-                      'This is not medical advice.',
-            style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
-          ),
-        ],
+        ),
       ],
     );
   }
@@ -872,9 +911,10 @@ class _DecisionChip extends StatelessWidget {
       case 'info':
       case 'defer':
         return scheme.primary;
+      // No rule flag is not an all-clear, so it is not shown in green.
       case 'allow':
       default:
-        return Colors.green.withValues(alpha: 0.8);
+        return Paper.inkMuted;
     }
   }
 

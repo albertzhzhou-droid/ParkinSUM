@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/administration_dose_confirmation.dart';
 import '../../core/models/drug_definition.dart';
@@ -883,6 +884,7 @@ class _TimelinePageState extends State<TimelinePage> {
             ?.toStringAsFixed(1) ??
         (i18n.languageFamily == 'zh' ? '未知' : 'Unknown');
     final result = state.cachedMealCheck(meal);
+    final copy = ResponseCopyService(i18n: i18n);
     final nearestIntake = lookup.nearestIntakeForMeal(meal);
     final parts = <String>[
       i18n.tr('timeline.meal_macro_line', {
@@ -894,6 +896,10 @@ class _TimelinePageState extends State<TimelinePage> {
         i18n.tr('timeline.conflict_pending')
       else if (!result.hasAssessment)
         i18n.tr('interaction.unassessed')
+      else if (copy.awaitingMissingInputs(result))
+        i18n.tr('timeline.conflict_awaiting', {
+          'missing': copy.missingInputs(result),
+        })
       else
         i18n.tr('timeline.conflict_line', {
           'severity': i18n.severityLabel(result.overallSeverity!.name),
