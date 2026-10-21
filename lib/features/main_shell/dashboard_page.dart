@@ -446,7 +446,7 @@ class DashboardPage extends StatelessWidget {
               decision: i18n.decisionLabel(recommendations[i].decision),
               macros: candidateServingMacroLine(i18n, recommendations[i].food),
               provenance:
-                  '${recommendations[i].jurisdiction} · ${recommendations[i].food.sourceSystem}',
+                  '${i18n.sourceSystemLabel(recommendations[i].food.sourceSystem)} · ${i18n.regionLabel(recommendations[i].jurisdiction)}',
               breakdown: _localizedRecommendationBreakdown(
                 i18n,
                 recommendations[i],

@@ -1,3 +1,4 @@
+import '../constants/reference_food_composition_table.dart';
 import 'app_i18n_full_translations.dart';
 import 'app_i18n_log_view_translations.dart';
 
@@ -340,10 +341,20 @@ class AppI18n {
     }
   }
 
+  /// Display name of a catalogue food in this locale: a translated
+  /// `food.<id>` entry, else the source's own name pair for a USDA reference
+  /// food (Chinese for zh, English for every other language), else
+  /// [fallback].
   String foodName(String foodId, String fallback) {
     final key = 'food.$foodId';
     final familyMap = _strings[languageFamily] ?? _strings['en']!;
-    return familyMap[key] ?? fallback;
+    final direct = familyMap[key];
+    if (direct != null) return direct;
+    final reference = _referenceFoodNames[foodId];
+    if (reference != null) {
+      return languageFamily == 'zh' ? reference.zh : reference.en;
+    }
+    return fallback;
   }
 
   String medicationNote(String drugId, String fallback) {
@@ -413,29 +424,24 @@ class AppI18n {
         .replaceAll(')', '');
   }
 
-  String sourceSystemLabel(String value) {
-    final normalized = value.toUpperCase();
-    final key = 'source_system.$normalized';
-    final familyMap = _strings[languageFamily] ?? _strings['en']!;
-    return familyMap[key] ?? value;
-  }
+  String sourceSystemLabel(String value) =>
+      _catalogLabel('source_system.${value.toUpperCase()}', value);
 
-  String routeLabel(String value) {
-    final key = 'route.${value.toLowerCase()}';
-    final familyMap = _strings[languageFamily] ?? _strings['en']!;
-    return familyMap[key] ?? value;
-  }
+  String routeLabel(String value) =>
+      _catalogLabel('route.${value.toLowerCase()}', value);
 
-  String dosageFormLabel(String value) {
-    final key = 'dosage_form.${value.toLowerCase()}';
-    final familyMap = _strings[languageFamily] ?? _strings['en']!;
-    return familyMap[key] ?? value;
-  }
+  String dosageFormLabel(String value) =>
+      _catalogLabel('dosage_form.${value.toLowerCase()}', value);
 
-  String releaseTypeLabel(String value) {
-    final key = 'release_type.${value.toLowerCase()}';
+  String releaseTypeLabel(String value) =>
+      _catalogLabel('release_type.${value.toLowerCase()}', value);
+
+  /// Catalogue code label in this language, else in English, else the code
+  /// with underscores read as spaces, so `tablet_or_odt` never reaches a
+  /// user verbatim.
+  String _catalogLabel(String key, String value) {
     final familyMap = _strings[languageFamily] ?? _strings['en']!;
-    return familyMap[key] ?? value;
+    return familyMap[key] ?? _strings['en']![key] ?? value.replaceAll('_', ' ');
   }
 
   /// Read-only view of the full translation dictionary, keyed by language
@@ -455,6 +461,19 @@ class AppI18n {
   static List<String> get translationFamilies =>
       _strings.keys.toList(growable: false)..sort();
 }
+
+/// English and Chinese names of the USDA SR Legacy reference foods by app
+/// food id. Their catalogue records keep the Chinese name in `name`, so the
+/// display name is chosen here.
+final Map<String, ({String en, String zh})> _referenceFoodNames = {
+  for (final row in referenceFoodCompositionRows)
+    row.appFoodId: (
+      en: row.nameEn.isEmpty
+          ? row.nameEn
+          : '${row.nameEn[0].toUpperCase()}${row.nameEn.substring(1)}',
+      zh: row.nameZh,
+    ),
+};
 
 /// Family → flatKey → translatedString.
 ///
@@ -6077,6 +6096,10 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
           _foodBasisUnavailableTranslations['en']!,
       ...?_replayCapsuleSaveTranslations[entry.key],
       ...?_candidateServingTranslations[entry.key],
+      ...?_foodDisplayTranslations[entry.key],
+      'onboarding.medication_search':
+          _medicationSearchTranslations[entry.key] ??
+          _medicationSearchTranslations['en']!,
       ...(entry.key == 'zh'
           ? kPersonalLogViewChinese
           : kPersonalLogViewEnglish),
@@ -6084,6 +6107,157 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
           ? kInteractionReviewChinese
           : kInteractionReviewEnglish),
     },
+};
+
+/// Placeholder of the medications-only onboarding search field.
+const _medicationSearchTranslations = <String, String>{
+  'zh': '搜索药品',
+  'en': 'Search medications',
+  'fr': 'Rechercher des médicaments',
+  'ja': '薬を検索',
+  'ko': '약물 검색',
+  'hi': 'दवा खोजें',
+  'es': 'Buscar medicamentos',
+  'vi': 'Tìm thuốc',
+  'th': 'ค้นหายา',
+  'id': 'Cari obat',
+  'ru': 'Поиск лекарств',
+  'pl': 'Szukaj leków',
+  'ar': 'ابحث عن الأدوية',
+};
+
+/// Readable catalogue labels and meal-entry food display. Source systems,
+/// routes, dose forms and release types are named instead of showing their
+/// catalogue codes; full provenance stays on the food detail page. Other
+/// language families fall back to English for these keys.
+const Map<String, Map<String, String>> _foodDisplayTranslations = {
+  'en': {
+    'source_system.USDA_FDC': 'USDA FoodData Central',
+    'source_system.FDC': 'USDA FoodData Central',
+    'source_system.CIQUAL': 'ANSES-Ciqual',
+    'source_system.CHINA_CDC_FOOD_PLATFORM':
+        'China CDC food composition platform',
+    'source_system.RXNORM': 'RxNorm (US National Library of Medicine)',
+    'source_system.DAILYMED': 'DailyMed (US structured product labels)',
+    'source_system.HEALTH_CANADA_DPD': 'Health Canada Drug Product Database',
+    'source_system.EMA': 'European Medicines Agency',
+    'source_system.PMDA': 'PMDA (Japan)',
+    'source_system.NMPA': 'NMPA (China)',
+    'source_system.NHS_DMD': 'NHS dm+d (UK)',
+    'source_system.OPENFDA_NDC': 'openFDA NDC directory',
+    'source_system.FDA': 'US FDA',
+    'source_system.FDA/NLM': 'FDA/NLM',
+    'source_system.CDSS': 'Local CDSS',
+    'source_system.LOCAL_SEED': 'Local seed data',
+    'source_system.SYNTHETIC': 'Synthetic demo data',
+    'route.oral': 'oral',
+    'route.transdermal': 'transdermal',
+    'route.sublingual_or_subcutaneous': 'sublingual or subcutaneous',
+    'route.oral_or_transdermal': 'oral or transdermal',
+    'dosage_form.tablet': 'tablet',
+    'dosage_form.capsule': 'capsule',
+    'dosage_form.tablet_or_odt': 'tablet or orally disintegrating tablet',
+    'dosage_form.tablet_or_capsule': 'tablet or capsule',
+    'dosage_form.capsule_or_tablet': 'capsule or tablet',
+    'dosage_form.patch': 'patch',
+    'dosage_form.film_or_injection': 'film or injection',
+    'dosage_form.powder_for_solution': 'powder for solution',
+    'dosage_form.capsule_or_patch': 'capsule or patch',
+    'release_type.immediate_release': 'immediate release',
+    'release_type.extended_release': 'extended release',
+    'release_type.immediate_or_extended_release':
+        'immediate or extended release',
+    'release_type.immediate_or_continuous': 'immediate or continuous release',
+    'release_type.continuous': 'continuous release',
+    'release_type.rescue': 'rescue use',
+    'release_type.unspecified': 'release type not specified',
+    'food_display.protein': 'Protein',
+    'food_display.carbs': 'Carbs',
+    'food_display.fat': 'Fat',
+    'food_display.fiber': 'Fiber',
+    'food_display.amount_grams': '{nutrient} {value} g',
+    'food_display.amount_unknown': '{nutrient} unknown',
+    'food_display.per_100g': 'Per 100 g: {values}',
+    'food_display.serving_portion': '{portion}, {grams} g',
+    'food_display.serving_grams': '{grams} g',
+    'food_display.adds_serving': 'Adds {amount} ({basis})',
+    'food_display.adds_per_100g': 'Adds 100 g (no reference serving)',
+    'food_display.item_serving': '{amount} · reference serving ({basis})',
+    'food_display.item_per_100g': '100 g · no reference serving',
+    'food_display.item_custom': '{grams} g · amount you set',
+    'food_display.added_feedback': '{name} added: {amount}',
+    'food_display.added_badge': 'Added ×{count}',
+    'food_display.search_hint':
+        'Type a food name to search the catalog. Results appear here.',
+    'food_display.results_count': '{count} matching foods',
+    'food_display.show_more_results': 'Show {count} more',
+    'food_display.serving_note':
+        'A new food starts at the reference serving from its source record '
+        'or its category reference amount, or at 100 g when neither exists. '
+        'This only speeds up logging; set the amount that was eaten.',
+    'food_display.decrease_25g': 'Decrease by 25 g',
+    'food_display.increase_25g': 'Increase by 25 g',
+    'food_display.more_context': 'More context',
+    'food_display.more_context_hint':
+        'Iron supplements, thickener and enteral feeding',
+    'food_display.more_context_set': 'Set: {items}',
+    'onboarding.medication_no_match':
+        'No medication in the catalog matches “{query}”.',
+    'onboarding.medication_other_region_only':
+        '“{query}” is not in this prototype’s {region} catalog. '
+        'The catalog lists it for: {regions}.',
+    'onboarding.medication_region_empty':
+        'This prototype’s catalog has no medications for {region}. '
+        'Medications listed for other regions are shown below.',
+    'onboarding.medication_other_regions_heading': 'Listed for other regions',
+  },
+  'zh': {
+    'source_system.USDA_FDC': 'USDA FoodData Central（美国农业部）',
+    'source_system.FDC': 'USDA FoodData Central（美国农业部）',
+    'source_system.CIQUAL': 'ANSES-Ciqual（法国）',
+    'source_system.CHINA_CDC_FOOD_PLATFORM': '中国疾控中心食物成分平台',
+    'source_system.RXNORM': 'RxNorm（美国国家医学图书馆）',
+    'source_system.EMA': '欧洲药品管理局',
+    'source_system.PMDA': '日本 PMDA',
+    'source_system.NMPA': '国家药品监督管理局',
+    'source_system.NHS_DMD': '英国 NHS dm+d',
+    'source_system.OPENFDA_NDC': 'openFDA NDC 目录',
+    'source_system.SYNTHETIC': '合成示例数据',
+    'release_type.rescue': '救急使用',
+    'release_type.unspecified': '未指定释放类型',
+    'food_display.protein': '蛋白质',
+    'food_display.carbs': '碳水',
+    'food_display.fat': '脂肪',
+    'food_display.fiber': '膳食纤维',
+    'food_display.amount_grams': '{nutrient} {value} g',
+    'food_display.amount_unknown': '{nutrient}未知',
+    'food_display.per_100g': '每 100 g：{values}',
+    'food_display.serving_portion': '{portion}，{grams} g',
+    'food_display.serving_grams': '{grams} g',
+    'food_display.adds_serving': '添加 {amount}（{basis}）',
+    'food_display.adds_per_100g': '添加 100 g（无参考份量）',
+    'food_display.item_serving': '{amount} · 参考份量（{basis}）',
+    'food_display.item_per_100g': '100 g · 无参考份量',
+    'food_display.item_custom': '{grams} g · 你设置的份量',
+    'food_display.added_feedback': '已添加{name}：{amount}',
+    'food_display.added_badge': '已添加 ×{count}',
+    'food_display.search_hint': '输入食物名称以搜索目录，结果会显示在这里。',
+    'food_display.results_count': '{count} 种匹配食物',
+    'food_display.show_more_results': '再显示 {count} 项',
+    'food_display.serving_note':
+        '新添加的食物默认采用来源记录中的参考份量或其类别参考量；两者都没有时为 100 g。'
+        '这只是为了方便记录，请改成实际吃下的量。',
+    'food_display.decrease_25g': '减少 25 g',
+    'food_display.increase_25g': '增加 25 g',
+    'food_display.more_context': '更多情境',
+    'food_display.more_context_hint': '铁剂、增稠剂与肠内营养',
+    'food_display.more_context_set': '已设置：{items}',
+    'onboarding.medication_no_match': '目录中没有与“{query}”匹配的药品。',
+    'onboarding.medication_other_region_only':
+        '“{query}”不在本原型的{region}目录中。目录中列出它的地区：{regions}。',
+    'onboarding.medication_region_empty': '本原型目录中没有{region}的药品。下方显示其他地区目录中的药品。',
+    'onboarding.medication_other_regions_heading': '其他地区目录中的药品',
+  },
 };
 
 const _foodBasisUnavailableTranslations = <String, String>{
@@ -6118,9 +6292,11 @@ const _foodBasisUnavailableTranslations = <String, String>{
 const Map<String, Map<String, String>> _candidateServingTranslations = {
   'en': {
     'serving.macro_line':
-        'Per serving (≈{grams} g, {basis}): P {protein} · C {carbs} · F {fat}',
+        'Per serving (≈{grams} g, {basis}): '
+        'Protein {protein} · Carbs {carbs} · Fat {fat}',
     'serving.macro_line_per_100g_unknown':
-        'Per 100 g — serving unknown: P {protein} · C {carbs} · F {fat}',
+        'Per 100 g — serving unknown: '
+        'Protein {protein} · Carbs {carbs} · Fat {fat}',
     'serving.basis.source_portion': 'source portion',
     'serving.basis.category_default': 'category reference amount',
     'serving.value_grams': '{value} g',
