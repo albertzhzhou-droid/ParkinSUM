@@ -45,29 +45,44 @@ Every pull request should state whether it touches:
 Run before submitting:
 
 ```sh
-npm ci
-flutter pub get
-dart format --output=none --set-exit-if-changed lib test tool
-flutter analyze
-flutter test
-npm run verify:all
-npm run public:preflight
-npm run rules:contract
-npm run rules:test
-npm run schema:contract
-npm run upgrade:queue
-npm run release:contract
-npm run security:dependencies
+npm run verify:pr
 ```
 
-The CI workflow separates these into Flutter build/test, Node/public-security,
-and deterministic governance jobs. `npm run rules:test` uses the Firestore
-Emulator and therefore needs Java 21 or newer; the repository runner checks an
-explicit ParkinSUM Java home, `JAVA_HOME`, standard Android Studio JBR
-locations, and `java` on `PATH` without changing the system Java setting.
-Expected rule-denial cases may print `PERMISSION_DENIED`; the command succeeds
-only when every allow and deny assertion reaches its expected result and all
-seven required semantic cases complete with no skipped or TODO result.
+`npm run verify:pr` runs every step of the pull-request workflow
+(`.github/workflows/ci.yml`) in the same order, including `flutter pub get`
+before `dart format`, the Flutter tests and builds, the Node public preflight
+(`public:preflight`, `rules:contract`, `rules:runner:test`, `schema:contract`,
+`upgrade:queue`, `privacy:store`, `open-source:firewall`, `release:contract`,
+`security:dependencies`, `rules:test`) and `npm run verify:all`. Steps that need
+a toolchain you do not have (Go, Gradle, Java 21, an Android SDK) or the network
+are reported as skipped, never as passed, and the command then exits with 3
+instead of 0; say in the PR which steps were skipped.
+`npm run verify:pr -- --list` shows every step and what it needs. See
+[docs/PUBLIC_VERIFICATION.md](docs/PUBLIC_VERIFICATION.md).
+
+`npm run rules:test` uses the Firestore Emulator and therefore needs Java 21 or
+newer; the repository runner checks an explicit ParkinSUM Java home,
+`JAVA_HOME`, standard Android Studio JBR locations, and `java` on `PATH`
+without changing the system Java setting. Expected rule-denial cases may print
+`PERMISSION_DENIED`; the command succeeds only when every allow and deny
+assertion reaches its expected result and all seven required semantic cases
+complete with no skipped or TODO result.
+
+## Algorithm Configuration Identity
+
+Do not bump the algorithm configuration identity by hand, and never on two
+branches in parallel: both would edit the same governance files and create the
+same `test/fixtures/governance_history_before_vN.json`. Leave the identity,
+context-of-use ledger, plan, attestations and queue sentences alone in feature
+commits. At merge time, rebase onto `origin/main` and run
+
+```sh
+npm run identity:rebind -- --title "<short noun phrase>" --reason "<binds …>"
+```
+
+then commit the result as its own last commit (drop and redo it after any
+further rebase). The tool is idempotent and verifies the result with the
+existing governance tests; see [docs/IDENTITY_REBIND.md](docs/IDENTITY_REBIND.md).
 
 If your change is documentation-only and local tooling is unavailable, say so in
 the PR and list the files you reviewed manually.
