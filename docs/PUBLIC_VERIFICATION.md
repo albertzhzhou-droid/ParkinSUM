@@ -30,6 +30,35 @@ large mechanical diff as a behavioral change.
 
 ## One command
 
+### `npm run verify:pr`
+- **Checks:** every step of the pull-request workflow (`.github/workflows/ci.yml`)
+  in the same order: Format and analysis (after `flutter pub get`, which
+  `dart format` needs for the package language version), Flutter checks
+  (tests, Web and Android builds, notices), Node public preflight (CQL
+  differential, public preflight, rules contract and runner, schema contract,
+  upgrade queue, store privacy, open-source firewall, release contracts,
+  dependency audit, Firestore emulator rules), Governance gates
+  (`npm run verify:all`), and the `preflight` required-status gate fed with this
+  run's own job results. The workflow's `run:` text is executed verbatim with
+  bash; install steps (`flutter pub get`, `npm ci`) run where CI runs them.
+- **Skips:** a step whose toolchain is missing locally (Go, Gradle, Java 21, an
+  Android SDK) or that needs the network (`npm audit`; also `--offline`) is
+  reported as `SKIPPED` with the reason. A skip is never counted as a pass, and
+  the summary gate then reports the incomplete prerequisites.
+- **Exit codes:** 0 every step passed; 1 a step failed; 2 usage error or the
+  plan no longer matches the workflow; 3 nothing failed but at least one step
+  was skipped (not full CI parity); 130/143 interrupted.
+- **Options:** `--list` prints the steps and their requirements; `--job=<id>`
+  runs one job (repeatable); `--fail-fast` stops after the first failure.
+- **Output:** one status line per step, the tail of a failing step's log, logs
+  under `build/verify_pr/runs/<id>/`, and `build/verify_pr/latest.{json,md}`.
+- **Drift guard:** `tool/run_verify_pr.test.mjs` (part of
+  `npm run release:contract`) fails when a workflow step is added, removed,
+  reordered or changed without the matching `verify:pr` step, and the command
+  itself refuses to run in that state.
+- **Network:** for `npm ci`, the audit and the first Firestore emulator
+  download. **Data:** synthetic only.
+
 ### `npm run verify:all`
 - **Checks:** every deterministic governance gate in one run — explanation copy
   compile, localization safety lint, dose-expression grammar differential
