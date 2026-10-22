@@ -25,6 +25,8 @@ enum AlgorithmVisualization {
 abstract final class AlgorithmTraceProviderIds {
   static const String productionObservatorySnapshot =
       'observatory.production-snapshot/1';
+  static const String physiologyReferenceTimingComparison =
+      'observatory.physiology-reference-timing/1';
 }
 
 /// Executable declaration of a producer that binds production-derived trace

@@ -27,6 +27,11 @@ export const OUTPUT_CONTRACTS = {
     latest('gastric_structural_uncertainty', schema('parkinsum.gastric-structural-uncertainty-check/1'), 'passed'),
     latest('gastric_high_precision_reference', schema('parkinsum.gastric-high-precision-reference-check/1')),
   ],
+  physiology_reality: [
+    file('build/physiology_reference/report.json', 'pass', schema('parkinsum.physiology-reference-reality-checks/1')),
+    file('build/physiology_reference/fixture_freshness.json', 'pass', schema('parkinsum.physiology-reference-fixture-freshness/1')),
+    file('build/physiology_reference/agreement.json', 'pass', schema('parkinsum.physiology-reference-agreement-report/1')),
+  ],
   mechanistic_replay: [latest('mechanistic_replay', {}, null, 'replay')],
   mechanistic_invariants: [latest('mechanistic_model_verification', schema('parkinsum.mechanistic-model-verification-report/2'), null, 'invariants')],
   mechanistic_ledger_authorization: [latest('mechanistic_ledger_authorization', schema('parkinsum.mechanistic-ledger-authorization/1'))],

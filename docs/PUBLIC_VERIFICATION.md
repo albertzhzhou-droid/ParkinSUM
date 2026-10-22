@@ -89,9 +89,10 @@ large mechanical diff as a behavioral change.
   release-artifact Web reflow contract tests, local Wasm hosting attestation
   contract tests,
   evidence currency/correction/retraction/sunset gate,
-  claim-level contradiction and synthesis adjudication, and the committed-golden
-  drift check.
-- **Expected:** `All 55 gates passed.` plus `build/verify_all/latest.{json,md}`.
+  claim-level contradiction and synthesis adjudication, physiology reference
+  reality checks against published human data with Dart/Python agreement,
+  and the committed-golden drift check.
+- **Expected:** `All 56 gates passed.` plus `build/verify_all/latest.{json,md}`.
 - **Failure means:** at least one gate reported a blocker; the composed report
   names which. The command exits non-zero, so it is a ratchet, not a summary.
 - **Network:** no. **Data:** synthetic only.

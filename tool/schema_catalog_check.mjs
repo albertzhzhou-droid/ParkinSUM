@@ -49,6 +49,7 @@ export const requiredSchemaSurfaces = Object.freeze([
   ['parkinsum.reviewed-import-activation', 'lib/domain/usecases/clinical_decision_support_service.dart'],
   ['parkinsum.administration-dose-expression', 'lib/domain/usecases/dosage_note_parser.dart'],
   ['parkinsum.protein-trend-aggregation', 'lib/domain/usecases/get_protein_trend_usecase.dart'],
+  ['parkinsum.physiology-reference-trace', 'lib/domain/usecases/physiology_reference_trace_provider.dart'],
   ['parkinsum.food-rank-sensitivity-assessment', 'lib/domain/entities/food_rank_sensitivity_assessment.dart'],
   ['parkinsum.fhir-r4-medication-intake-statement', 'lib/domain/usecases/fhir_r4_medication_intake_statement_mapper.dart'],
   ['parkinsum.synthetic-rule-test-suite-checkpoint', 'lib/domain/entities/rule_test_suite.dart'],

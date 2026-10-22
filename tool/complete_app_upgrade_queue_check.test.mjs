@@ -969,7 +969,7 @@ test('transitive result dependency closure remains conservative and fail closed'
   assert.match(item.currentGap, /algorithm ID, logical root ID and canonical package URI/);
   assert.match(item.currentGap, /rejects missing, duplicate, unexpected or swapped identities/);
   assert.match(item.currentGap, /rather than assuming a hardcoded root count/);
-  assert.match(item.currentGap, /current compiled registry and reviewed root manifest contain 65 roots/);
+  assert.match(item.currentGap, /current compiled registry and reviewed root manifest contain 66 roots/);
   for (const artifact of [
     'build/algorithm_direct_edge_probe/latest.json',
     'build/algorithm_dependency_compatibility/latest.json',
@@ -2519,10 +2519,10 @@ test('next-wave applicability, oracle, terminology, privacy, and durability gate
   assert.match(invariant.currentGap, /23 digest-bound checks/i);
   assert.match(invariant.currentGap, /schema-v2/i);
   assert.match(invariant.currentGap, /relabelled probe cannot manufacture coverage/i);
-  assert.match(invariant.currentGap, /22-of-65/i);
-  assert.match(invariant.currentGap, /43 not covered/i);
-  assert.match(invariant.currentGap, /30-of-65/i);
-  assert.match(invariant.currentGap, /35 uncovered/i);
+  assert.match(invariant.currentGap, /22-of-66/i);
+  assert.match(invariant.currentGap, /44 not covered/i);
+  assert.match(invariant.currentGap, /30-of-66/i);
+  assert.match(invariant.currentGap, /36 uncovered/i);
   assert.match(invariant.currentGap, /FDC amino-acid extraction probe/i);
   assert.match(invariant.currentGap, /absent or unknown units/i);
   assert.match(invariant.currentGap, /catalog-candidate projection/i);
@@ -3204,15 +3204,16 @@ test('next-wave algorithm, notification, time, egress, and response research sta
     'algorithm_executable_trace_coverage',
   );
   assert.equal(liveCoverage.status, 'queued');
-  assert.match(liveCoverage.currentGap, /fourteen IDs.*live/i);
+  assert.match(liveCoverage.currentGap, /fifteen IDs as live/i);
+  assert.match(liveCoverage.currentGap, /physiology_reference_model/);
   assert.match(liveCoverage.currentGap, /input_quality_gate/);
   assert.match(liveCoverage.currentGap, /medication_entry_validator/);
   assert.match(liveCoverage.currentGap, /time_axis_builder/);
   assert.match(liveCoverage.currentGap, /protein_trend/);
   assert.match(liveCoverage.currentGap, /dosage_note_parser/);
   assert.match(liveCoverage.currentGap, /protein_distribution/);
-  assert.match(liveCoverage.currentGap, /all 65 registered algorithms/i);
-  assert.match(liveCoverage.currentGap, /14\/65 production traces/i);
+  assert.match(liveCoverage.currentGap, /all 66 registered algorithms/i);
+  assert.match(liveCoverage.currentGap, /15\/66 production traces/i);
   assert.match(liveCoverage.currentGap, /51 static-only contracts/i);
   const independentContracts = requiredItem(
     queue,
@@ -3232,8 +3233,8 @@ test('next-wave algorithm, notification, time, egress, and response research sta
   );
   assert.equal(executable.status, 'shipped');
   assert.equal(executable.score, 30);
-  assert.match(executable.currentGap, /30-of-65/);
-  assert.match(executable.currentGap, /35 explicit gaps/);
+  assert.match(executable.currentGap, /30-of-66/);
+  assert.match(executable.currentGap, /36 explicit gaps/);
   assert.match(executable.currentGap, /catalog-candidate projection/);
   assert.match(executable.currentGap, /order-dependent fact-conflict defect/);
   assert.match(executable.acceptanceCriteria.join(' '), /30-of-63/);

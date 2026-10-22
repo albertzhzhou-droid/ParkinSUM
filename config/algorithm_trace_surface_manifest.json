@@ -2,11 +2,32 @@
   "$schema": "parkinsum.algorithm-trace-surface-manifest/1",
   "schema_version": 1,
   "classification_boundary": "production_trace means a fixed synthetic fixture executed the real application engine and emitted an algorithm-bound trace node; it is not clinical calibration, patient evidence, benefit, safety, or medical advice. static_contract_only means a visible, source-linked audit representation exists but no production scenario trace is claimed.",
-  "algorithm_count": 65,
-  "production_trace_count": 14,
+  "algorithm_count": 66,
+  "production_trace_count": 15,
   "static_contract_only_count": 51,
-  "registry_surface_sha256": "b00883a6b65b42e4a13726fa077c1894802a8d9fdbfb387b7934d03f2a1ad49a",
+  "registry_surface_sha256": "c807e19dd42c3394f667999a7938845748a573ecb048a781bb83386f0d2fa922",
   "providers": [
+    {
+      "provider_id": "observatory.physiology-reference-timing/1",
+      "algorithm_ids": [
+        "physiology_reference_model"
+      ],
+      "fixture_schema": "parkinsum.physiology-reference-trace/1",
+      "fixture_revision": "synthetic-physiology-reference-v1",
+      "lifecycle": "lazy_memoized_trace_on_first_panel_build;dispose_immutable_value_not_applicable",
+      "route_id": "app-tools.observatory",
+      "route_source_path": "lib/features/main_shell/app_destinations.dart",
+      "provider_source_path": "lib/domain/usecases/physiology_reference_trace_provider.dart",
+      "ui_surface_keys_by_algorithm": {
+        "physiology_reference_model": "chart-panel-physiology-reference"
+      },
+      "executable_test_paths": [
+        "test/algorithm_observatory_page_test.dart",
+        "test/physiology_reference_agreement_test.dart",
+        "test/physiology_reference_model_test.dart",
+        "test/physiology_reference_panel_test.dart"
+      ]
+    },
     {
       "provider_id": "observatory.production-snapshot/1",
       "algorithm_ids": [
@@ -67,6 +88,7 @@
     "mechanistic_conflict",
     "mechanistic_lossless_replay_capsule",
     "medication_entry_validator",
+    "physiology_reference_model",
     "protein_distribution",
     "protein_trend",
     "time_axis_builder"
@@ -124,5 +146,5 @@
     "timeline_projection",
     "variant_resolver"
   ],
-  "manifest_sha256": "b2eb32549424ae8f4f936244d038d1c56811dcfb3485d06f5f6bb649ec52e376"
+  "manifest_sha256": "ca89852cb1dc724c0d59d3d862d8f39bef547aa9564a2f42f89043a30368babb"
 }

@@ -58,7 +58,7 @@ void main() {
           'catalog_candidate_projection',
         }),
       );
-      expect(AlgorithmRegistry.all, hasLength(65));
+      expect(AlgorithmRegistry.all, hasLength(66));
       expect(report.coveredAlgorithmIds, hasLength(22));
       expect(
         AlgorithmRegistry.all
@@ -68,7 +68,7 @@ void main() {
                   AlgorithmInvariantCoverageStatus.notCovered,
             )
             .toList(growable: false),
-        hasLength(43),
+        hasLength(44),
       );
       expect(
         report.statusFor('gastric_emptying'),
