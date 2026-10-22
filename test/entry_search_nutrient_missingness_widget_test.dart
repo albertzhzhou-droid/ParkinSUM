@@ -64,16 +64,16 @@ void main() {
         // two cards are the actual isolated journey fixtures, not replicas.
         final expectedLines = locale == 'zh'
             ? [
-                '每 100g：蛋白 10.0 g · 碳水 20.0 g · F 4.0 · Fiber 未知',
-                '每 100g：蛋白 未知 g · 碳水 未知 g · F 未知 · Fiber 未知',
-                '每 100g：蛋白 0.0 g · 碳水 0.0 g · F 0.0 · Fiber 0.0',
-                '每 100g：蛋白 未知 g · 碳水 未知 g · F 未知 · Fiber 未知',
+                '每 100 g：蛋白质 10.0 g · 碳水 20.0 g · 脂肪 4.0 g · 膳食纤维未知',
+                '每 100 g：蛋白质未知 · 碳水未知 · 脂肪未知 · 膳食纤维未知',
+                '每 100 g：蛋白质 0.0 g · 碳水 0.0 g · 脂肪 0.0 g · 膳食纤维 0.0 g',
+                '每 100 g：蛋白质未知 · 碳水未知 · 脂肪未知 · 膳食纤维未知',
               ]
             : [
-                'Per 100g: P 10.0 g - C 20.0 g · F 4.0 · Fiber Unknown',
-                'Per 100g: P Unknown g - C Unknown g · F Unknown · Fiber Unknown',
-                'Per 100g: P 0.0 g - C 0.0 g · F 0.0 · Fiber 0.0',
-                'Per 100g: P Unknown g - C Unknown g · F Unknown · Fiber Unknown',
+                'Per 100 g: Protein 10.0 g · Carbs 20.0 g · Fat 4.0 g · Fiber unknown',
+                'Per 100 g: Protein unknown · Carbs unknown · Fat unknown · Fiber unknown',
+                'Per 100 g: Protein 0.0 g · Carbs 0.0 g · Fat 0.0 g · Fiber 0.0 g',
+                'Per 100 g: Protein unknown · Carbs unknown · Fat unknown · Fiber unknown',
               ];
         for (var index = 0; index < foods.length; index++) {
           await tester.scrollUntilVisible(search, -400, scrollable: scrollable);
@@ -88,7 +88,11 @@ void main() {
           expect(subtitle.data!.split('\n').first, expectedLines[index]);
           if (index != 2) {
             expect(subtitle.data, isNot(contains('Fiber 0.0')));
+            expect(subtitle.data, isNot(contains('膳食纤维 0.0')));
           }
+          // A unit never follows an unknown value.
+          expect(subtitle.data, isNot(contains('nknown g')));
+          expect(subtitle.data, isNot(contains('未知 g')));
           expect(tester.takeException(), isNull);
         }
       },

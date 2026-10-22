@@ -199,7 +199,7 @@ void main() {
         food,
       );
       expect(macroLine, startsWith('Per 100 g — serving unknown'));
-      expect(macroLine, contains('P 20.0 g'));
+      expect(macroLine, contains('Protein 20.0 g'));
       expect(
         candidateServingMacroLine(AppI18n.fromLocaleTag('zh'), food),
         startsWith('每 100 g（份量未知）'),
@@ -279,7 +279,7 @@ void main() {
       expect(component.fatGrams, closeTo(4 * 0.85, 1e-12));
       expect(
         candidateServingMacroLine(AppI18n.fromLocaleTag('en'), food),
-        contains('P unknown'),
+        contains('Protein unknown'),
       );
     });
   });
@@ -457,7 +457,8 @@ void main() {
         AppI18n.fromLocaleTag('en'),
         catalogFood('food_ref_usda_171267'),
       ),
-      'Per serving (≈244 g, source portion): P 8.1 g · C 11.7 g · F 4.8 g',
+      'Per serving (≈244 g, source portion): '
+      'Protein 8.1 g · Carbs 11.7 g · Fat 4.8 g',
     );
     expect(
       candidateServingMacroLine(

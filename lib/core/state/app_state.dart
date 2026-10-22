@@ -2755,11 +2755,91 @@ class AppState extends ChangeNotifier {
             ? p
             : _preferRicherFood(current, p);
       }
-      services.foodRepository.replaceAll(byId.values.toList(growable: false));
+      services.foodRepository.replaceAll(
+        collapseFoodsBySourceIdentity(byId.values.toList(growable: false)),
+      );
     } catch (_) {
       // Projection unavailable on this device (e.g. CDSS DB empty);
       // existing seed/persisted catalog remains active.
     }
+  }
+
+  /// Prefix of ids the CDSS projection assigns to a variant without a
+  /// concept-variant crosswalk (see `CdssCatalogProjectionService`).
+  static const String _fallbackProjectionIdPrefix = 'food_projected_';
+
+  /// Keeps one record per source food.
+  ///
+  /// Boot seeds every catalogue food into CDSS as a food variant without a
+  /// crosswalk, so the projection returns each USDA FDC and CIQUAL food again
+  /// under a fallback id, usually without nutrient observations. Records that
+  /// share (source system, source food code) collapse to the most complete
+  /// one; ties keep a stable catalogue id over a fallback projection id, then
+  /// the more authoritative source, then the earlier record. A fallback
+  /// projection that is more complete keeps its values but takes the stable
+  /// id and position, so meals, names and serving assignments keyed by that
+  /// id still resolve. FDC data types share one FDC id namespace. Foods
+  /// without a source code are kept.
+  @visibleForTesting
+  static List<FoodItem> collapseFoodsBySourceIdentity(List<FoodItem> foods) {
+    String? keyOf(FoodItem food) {
+      final code = food.sourceFoodCode?.trim() ?? '';
+      if (code.isEmpty) return null;
+      final system = food.sourceSystem.trim().toUpperCase();
+      final family = system == 'USDA_FDC' || FdcFoodBasis.isFdcDataType(system)
+          ? 'USDA_FDC'
+          : system;
+      return '$family|$code';
+    }
+
+    bool ranksAbove(FoodItem candidate, FoodItem incumbent) {
+      final completeness =
+          _completenessRank(candidate) - _completenessRank(incumbent);
+      if (completeness != 0) return completeness > 0;
+      final candidateStable = !candidate.id.startsWith(
+        _fallbackProjectionIdPrefix,
+      );
+      final incumbentStable = !incumbent.id.startsWith(
+        _fallbackProjectionIdPrefix,
+      );
+      if (candidateStable != incumbentStable) return candidateStable;
+      return _provenanceRank(candidate) > _provenanceRank(incumbent);
+    }
+
+    bool isStable(FoodItem food) =>
+        !food.id.startsWith(_fallbackProjectionIdPrefix);
+
+    final keys = [for (final food in foods) keyOf(food)];
+    final winnerByKey = <String, int>{};
+    final firstStableByKey = <String, int>{};
+    for (var index = 0; index < foods.length; index++) {
+      final key = keys[index];
+      if (key == null) continue;
+      if (isStable(foods[index])) {
+        firstStableByKey.putIfAbsent(key, () => index);
+      }
+      final current = winnerByKey[key];
+      if (current == null || ranksAbove(foods[index], foods[current])) {
+        winnerByKey[key] = index;
+      }
+    }
+    final result = <FoodItem>[];
+    for (var index = 0; index < foods.length; index++) {
+      final key = keys[index];
+      if (key == null) {
+        result.add(foods[index]);
+        continue;
+      }
+      final winner = foods[winnerByKey[key]!];
+      final slot = firstStableByKey[key] ?? winnerByKey[key]!;
+      if (index != slot) continue;
+      result.add(
+        isStable(winner) || index == winnerByKey[key]
+            ? winner
+            : FoodItem.fromJson({...winner.toJson(), 'id': foods[index].id}),
+      );
+    }
+    return result;
   }
 
   /// Choose between an existing (seed/persisted) food and a projected food
@@ -2780,7 +2860,7 @@ class AppState extends ChangeNotifier {
   /// Coarse source-authority rank (higher = more authoritative). Mirrors the
   /// orchestrator's conservative mapping: synthetic < seed/local < cdss <
   /// recognized official import family.
-  int _provenanceRank(FoodItem f) {
+  static int _provenanceRank(FoodItem f) {
     final s = f.sourceSystem.toLowerCase();
     if (s.contains('synthetic')) return 0;
     if (s.contains('seed') || s == 'local_seed') return 1;
@@ -2790,7 +2870,7 @@ class AppState extends ChangeNotifier {
 
   /// Metadata completeness rank (higher = richer): present nutrient fields plus
   /// presence of amino-acid profile, basis type, and source food code.
-  int _completenessRank(FoodItem f) {
+  static int _completenessRank(FoodItem f) {
     const core = [
       'proteinG',
       'carbsG',

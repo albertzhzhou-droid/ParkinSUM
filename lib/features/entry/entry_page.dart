@@ -7,7 +7,9 @@ import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/meal_draft.dart';
+import '../../domain/entities/food_serving_reference.dart';
 import '../../domain/usecases/entry_food_portion_preview_service.dart';
+import '../../domain/usecases/food_serving_reference_resolver.dart';
 import 'food_portion_preview_dialog.dart';
 import '../../core/state/app_state.dart';
 import '../catalog/catalog_detail_pages.dart';
@@ -48,6 +50,8 @@ class _EntryPageState extends State<EntryPage> {
   bool get _isEditing => _draft?.editingMealId != null || widget.isEditing;
   late final TextEditingController _titleCtrl;
   final TextEditingController _searchCtrl = TextEditingController();
+  static const int _searchResultPreviewLimit = 20;
+  bool _showAllSearchResults = false;
   late List<MealItem> _items;
   bool _isSaving = false;
   bool _didLocalizeDefaultTitle = false;
@@ -606,7 +610,23 @@ class _EntryPageState extends State<EntryPage> {
     _updateItemQuantity(index, grams / 100);
   }
 
-  void _addFood(MealItem item) {
+  /// Adds [food] at its reference serving (source portion, else category
+  /// reference amount), or at 100 g when it has none. The amount stays
+  /// editable on the added-food card.
+  void _addCatalogFood(FoodItem food) {
+    final serving = foodServingReferenceFor(food);
+    _addFood(
+      MealItem.fromFood(
+        food: food,
+        quantityFactor: serving.evaluatedGrams / 100,
+      ),
+      amount: serving.hasServing
+          ? _servingAmount(context.appI18n, serving)
+          : context.appI18n.tr('food_display.serving_grams', {'grams': '100'}),
+    );
+  }
+
+  void _addFood(MealItem item, {required String amount}) {
     final i18n = context.appI18n;
     final localizedFoodName = i18n.foodName(item.foodId, item.foodName);
     setState(() {
@@ -614,18 +634,24 @@ class _EntryPageState extends State<EntryPage> {
       _items = [..._items, item.copyWith(foodName: localizedFoodName)];
     });
     _inputsChanged(quantity: true);
-    _entryDebugLog('[EntryPage] addFood items=${_items.length}');
+    _entryDebugLog(
+      '[EntryPage] addFood items=${_items.length} grams=${item.grams.toStringAsFixed(1)}',
+    );
     final messenger = ScaffoldMessenger.of(context);
     messenger
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
+          key: const ValueKey('entry-food-added-feedback'),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.fromLTRB(12, 12, 12, 110),
           content: Text(
-            i18n.tr('entry.food_added', {'name': localizedFoodName}),
+            i18n.tr('food_display.added_feedback', {
+              'name': localizedFoodName,
+              'amount': amount,
+            }),
           ),
-          duration: const Duration(milliseconds: 1200),
+          duration: const Duration(milliseconds: 2500),
         ),
       );
   }
@@ -668,8 +694,16 @@ class _EntryPageState extends State<EntryPage> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final factor = grams / 100;
-            final protein = current.proteinPer100g * factor;
-            final carbs = current.carbsPer100g * factor;
+            final protein = _itemNutrientValue(
+              current,
+              'proteinG',
+              current.proteinPer100g * factor,
+            );
+            final carbs = _itemNutrientValue(
+              current,
+              'carbsG',
+              current.carbsPer100g * factor,
+            );
 
             void updateGrams(double value) {
               final safeValue = value < 1 ? 1.0 : value;
@@ -681,7 +715,9 @@ class _EntryPageState extends State<EntryPage> {
 
             return AlertDialog(
               title: Text(
-                i18n.tr('entry.adjust_quantity', {'name': current.foodName}),
+                i18n.tr('entry.adjust_quantity', {
+                  'name': i18n.foodName(current.foodId, current.foodName),
+                }),
               ),
               content: SingleChildScrollView(
                 child: Column(
@@ -719,12 +755,8 @@ class _EntryPageState extends State<EntryPage> {
                       onChanged: updateGrams,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      '${i18n.tr('entry.protein')}：${protein.toStringAsFixed(1)} g',
-                    ),
-                    Text(
-                      '${i18n.tr('entry.carbs')}：${carbs.toStringAsFixed(1)} g',
-                    ),
+                    Text(_nutrientText(i18n, 'food_display.protein', protein)),
+                    Text(_nutrientText(i18n, 'food_display.carbs', carbs)),
                   ],
                 ),
               ),
@@ -754,7 +786,7 @@ class _EntryPageState extends State<EntryPage> {
     controller.dispose();
   }
 
-  String _formatTotals() {
+  String _formatTotals(AppI18n i18n) {
     final meal = Meal(
       id: 'preview',
       eatenAt: DateTime.now(),
@@ -762,43 +794,262 @@ class _EntryPageState extends State<EntryPage> {
       items: _items,
     );
     final totals = meal.computeTotals();
-    return 'P ${_totalDisplay("proteinG", totals.totalProteinG)} · C ${_totalDisplay("carbsG", totals.totalCarbsG)} · F ${_totalDisplay("fatG", totals.totalFatG)}';
+    return [
+      _nutrientText(
+        i18n,
+        'food_display.protein',
+        _totalValue('proteinG', totals.totalProteinG),
+      ),
+      _nutrientText(
+        i18n,
+        'food_display.carbs',
+        _totalValue('carbsG', totals.totalCarbsG),
+      ),
+      _nutrientText(
+        i18n,
+        'food_display.fat',
+        _totalValue('fatG', totals.totalFatG),
+      ),
+    ].join(' · ');
   }
 
-  String _totalDisplay(String field, double value) {
-    final catalog = _appState!.services.foodRepository.allFoods;
+  FoodItem? _catalogFood(String foodId) => _appState!
+      .services
+      .foodRepository
+      .allFoods
+      .where((food) => food.id == foodId)
+      .firstOrNull;
+
+  /// Meal total for [field], or null when any item lacks it.
+  double? _totalValue(String field, double value) {
     final missing = _items.any((item) {
-      final food = catalog.where((food) => food.id == item.foodId).firstOrNull;
+      final food = _catalogFood(item.foodId);
       return item.isNutrientMissing(field) ||
           food == null ||
           food.isNutrientMissing(field);
     });
-    return missing
-        ? (context.appI18n.languageFamily == 'zh' ? '未知' : 'Unknown')
-        : '${value.toStringAsFixed(1)}g';
+    return missing ? null : value;
   }
 
-  String _itemNutrient(MealItem item, String field, double value) {
-    final food = _appState!.services.foodRepository.allFoods
-        .where((food) => food.id == item.foodId)
-        .firstOrNull;
+  /// Item amount of [field], or null when the item or its catalogue food
+  /// marks it missing.
+  double? _itemNutrientValue(MealItem item, String field, double value) {
+    final food = _catalogFood(item.foodId);
     return item.isNutrientMissing(field) ||
             food == null ||
             food.isNutrientMissing(field)
-        ? (context.appI18n.languageFamily == 'zh' ? '未知' : 'Unknown')
-        : '${value.toStringAsFixed(1)}g';
+        ? null
+        : value;
   }
 
-  String _searchNutrient(
-    AppI18n i18n,
-    FoodItem food,
-    String field,
-    double value,
-  ) {
-    if (food.isNutrientMissing(field) || !value.isFinite || value < 0) {
-      return i18n.languageFamily == 'zh' ? '未知' : 'Unknown';
+  /// "Protein 3.2 g", or "Protein unknown" for a missing or invalid value.
+  String _nutrientText(AppI18n i18n, String labelKey, double? value) {
+    final nutrient = i18n.tr(labelKey);
+    if (value == null || !value.isFinite || value < 0) {
+      return i18n.tr('food_display.amount_unknown', {'nutrient': nutrient});
     }
-    return value.toStringAsFixed(1);
+    return i18n.tr('food_display.amount_grams', {
+      'nutrient': nutrient,
+      'value': value.toStringAsFixed(1),
+    });
+  }
+
+  /// Per-100 g line of a catalogue food in search results.
+  String _per100gLine(AppI18n i18n, FoodItem food) {
+    double? value(String field, double raw) =>
+        food.isNutrientMissing(field) ? null : raw;
+    return i18n.tr('food_display.per_100g', {
+      'values': [
+        _nutrientText(
+          i18n,
+          'food_display.protein',
+          value('proteinG', food.proteinG),
+        ),
+        _nutrientText(i18n, 'food_display.carbs', value('carbsG', food.carbsG)),
+        _nutrientText(i18n, 'food_display.fat', value('fatG', food.fatG)),
+        _nutrientText(i18n, 'food_display.fiber', value('fiberG', food.fiberG)),
+      ].join(' · '),
+    });
+  }
+
+  static String _formatGrams(double grams) => grams == grams.roundToDouble()
+      ? grams.toStringAsFixed(0)
+      : grams.toStringAsFixed(1);
+
+  /// "1 cup, 244 g" for a source portion; "85 g" for a category amount.
+  /// Source household measures are English text, so other languages show
+  /// the grams only.
+  String _servingAmount(AppI18n i18n, FoodServingReference serving) {
+    final grams = _formatGrams(serving.evaluatedGrams);
+    final portion = serving.portionLabel;
+    if (i18n.languageFamily == 'en' &&
+        serving.basis == FoodServingBasis.sourcePortion &&
+        portion != null &&
+        portion.trim().isNotEmpty) {
+      return i18n.tr('food_display.serving_portion', {
+        'portion': portion.trim(),
+        'grams': grams,
+      });
+    }
+    return i18n.tr('food_display.serving_grams', {'grams': grams});
+  }
+
+  String _servingBasisLabel(AppI18n i18n, FoodServingReference serving) =>
+      i18n.tr(
+        serving.basis == FoodServingBasis.sourcePortion
+            ? 'serving.basis.source_portion'
+            : 'serving.basis.category_default',
+      );
+
+  /// What a search result adds: its reference serving and basis, or 100 g.
+  String _defaultAmountLine(AppI18n i18n, FoodItem food) {
+    final serving = foodServingReferenceFor(food);
+    if (!serving.hasServing) return i18n.tr('food_display.adds_per_100g');
+    return i18n.tr('food_display.adds_serving', {
+      'amount': _servingAmount(i18n, serving),
+      'basis': _servingBasisLabel(i18n, serving),
+    });
+  }
+
+  /// Amount line of an added food: its reference serving with the basis, the
+  /// unlabelled 100 g default, or an amount the user set.
+  String _itemAmountLine(AppI18n i18n, MealItem item) {
+    final grams = item.grams;
+    final food = _catalogFood(item.foodId);
+    if (food != null) {
+      final serving = foodServingReferenceFor(food);
+      final servingGrams = serving.grams;
+      if (servingGrams != null && (grams - servingGrams).abs() < 0.05) {
+        return i18n.tr('food_display.item_serving', {
+          'amount': _servingAmount(i18n, serving),
+          'basis': _servingBasisLabel(i18n, serving),
+        });
+      }
+      if (servingGrams == null && (grams - 100).abs() < 0.05) {
+        return i18n.tr('food_display.item_per_100g');
+      }
+    }
+    return i18n.tr('food_display.item_custom', {'grams': _formatGrams(grams)});
+  }
+
+  /// Readable source of a catalogue food, e.g. "USDA FoodData Central ·
+  /// United States". Codes and provenance stay on the detail page.
+  String _sourceLine(AppI18n i18n, FoodItem food) => [
+    i18n.sourceSystemLabel(food.sourceSystem),
+    if (food.jurisdiction.trim().isNotEmpty)
+      i18n.regionLabel(food.jurisdiction),
+  ].join(' · ');
+
+  String _moreContextSummary(AppI18n i18n) {
+    final set = [
+      if (_withIronSupplement) i18n.tr('entry.with_iron_supplement'),
+      if (_withIronMultivitamin) i18n.tr('entry.with_iron_multivitamin'),
+      if (_thickenerType != null) i18n.tr('entry.thickener_$_thickenerType'),
+      if (_enteralFeedMode != null)
+        i18n.tr('entry.enteral_feed_$_enteralFeedMode'),
+    ];
+    return set.isEmpty
+        ? i18n.tr('food_display.more_context_hint')
+        : i18n.tr('food_display.more_context_set', {'items': set.join('; ')});
+  }
+
+  List<Widget> _foodSearchResults(AppI18n i18n, List<FoodItem> foods) {
+    if (_searchCtrl.text.trim().isEmpty) {
+      return [
+        Text(
+          i18n.tr('food_display.search_hint'),
+          key: const ValueKey('entry-food-search-hint'),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ];
+    }
+    if (foods.isEmpty) {
+      return [
+        Card(
+          key: const ValueKey('entry-food-search-results'),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(i18n.tr('common.no_matching_foods')),
+          ),
+        ),
+      ];
+    }
+    final shown = _showAllSearchResults
+        ? foods
+        : foods.take(_searchResultPreviewLimit).toList(growable: false);
+    final addedCounts = <String, int>{};
+    for (final item in _items) {
+      addedCounts[item.foodId] = (addedCounts[item.foodId] ?? 0) + 1;
+    }
+    return [
+      Text(
+        i18n.tr('food_display.results_count', {'count': '${foods.length}'}),
+        key: const ValueKey('entry-food-search-results'),
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      for (final food in shown)
+        Card(
+          key: ValueKey('entry-food-result-${food.id}'),
+          child: Builder(
+            builder: (context) {
+              final textureLine = _foodTextureLine(i18n, food);
+              final added = addedCounts[food.id] ?? 0;
+              return ListTile(
+                title: Text(i18n.foodName(food.id, food.name)),
+                subtitle: Text(
+                  [
+                    _per100gLine(i18n, food),
+                    _defaultAmountLine(i18n, food),
+                    _sourceLine(i18n, food),
+                    ?textureLine,
+                  ].join('\n'),
+                ),
+                isThreeLine: true,
+                trailing: Wrap(
+                  spacing: 4,
+                  children: [
+                    IconButton(
+                      tooltip: i18n.tr('entry.view_food_detail'),
+                      onPressed: () => _openFoodDetail(food),
+                      icon: const Icon(Icons.info_outline),
+                    ),
+                    IconButton(
+                      key: ValueKey('entry-add-food-${food.id}'),
+                      tooltip: i18n.tr('entry.add_food'),
+                      onPressed: () => _addCatalogFood(food),
+                      icon: Badge(
+                        isLabelVisible: added > 0,
+                        label: Text('$added'),
+                        child: Icon(
+                          added > 0
+                              ? Icons.check_circle
+                              : Icons.add_circle_outline,
+                          semanticLabel: added > 0
+                              ? i18n.tr('food_display.added_badge', {
+                                  'count': '$added',
+                                })
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      if (shown.length < foods.length)
+        TextButton(
+          key: const ValueKey('entry-food-search-show-more'),
+          onPressed: () => setState(() => _showAllSearchResults = true),
+          child: Text(
+            i18n.tr('food_display.show_more_results', {
+              'count': '${foods.length - shown.length}',
+            }),
+          ),
+        ),
+    ];
   }
 
   String? _foodTextureLine(AppI18n i18n, FoodItem food) {
@@ -1072,7 +1323,149 @@ class _EntryPageState extends State<EntryPage> {
                 labelText: i18n.tr('entry.search_food'),
                 border: const OutlineInputBorder(),
               ),
-              onChanged: (_) => setState(() {}),
+              onChanged: (_) => setState(() => _showAllSearchResults = false),
+            ),
+            const SizedBox(height: 12),
+            ..._foodSearchResults(i18n, foods),
+            const SizedBox(height: 12),
+            Text(
+              i18n.tr('entry.added_foods'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              i18n.tr('food_display.serving_note'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            if (_items.isEmpty)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(i18n.tr('entry.add_food_prompt')),
+                ),
+              ),
+            for (var i = 0; i < _items.length; i++)
+              Card(
+                key: ValueKey('entry-added-food-$i'),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              i18n.foodName(
+                                _items[i].foodId,
+                                _items[i].foodName,
+                              ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: i18n.tr('common.delete'),
+                            onPressed: () => _removeItem(i),
+                            icon: const Icon(Icons.delete_outline),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _itemAmountLine(i18n, _items[i]),
+                        key: ValueKey('entry-added-food-amount-$i'),
+                      ),
+                      Text(
+                        [
+                          _nutrientText(
+                            i18n,
+                            'food_display.protein',
+                            _itemNutrientValue(
+                              _items[i],
+                              'proteinG',
+                              _items[i].proteinG,
+                            ),
+                          ),
+                          _nutrientText(
+                            i18n,
+                            'food_display.carbs',
+                            _itemNutrientValue(
+                              _items[i],
+                              'carbsG',
+                              _items[i].carbsG,
+                            ),
+                          ),
+                        ].join(' · '),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: [
+                          IconButton(
+                            tooltip: i18n.tr('food_display.decrease_25g'),
+                            onPressed: () => _updateItemQuantity(
+                              i,
+                              _items[i].quantityFactor - 0.25,
+                            ),
+                            icon: const Icon(Icons.remove_circle_outline),
+                          ),
+                          Text(
+                            i18n.tr('food_display.serving_grams', {
+                              'grams': _formatGrams(_items[i].grams),
+                            }),
+                          ),
+                          IconButton(
+                            tooltip: i18n.tr('food_display.increase_25g'),
+                            onPressed: () => _updateItemQuantity(
+                              i,
+                              _items[i].quantityFactor + 0.25,
+                            ),
+                            icon: const Icon(Icons.add_circle_outline),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton(
+                            onPressed: () => _showQuantityEditor(i),
+                            child: Text(i18n.tr('entry.set_quantity')),
+                          ),
+                          OutlinedButton(
+                            key: ValueKey('entry-portion-preview-$i'),
+                            onPressed: () => _showPortionPreview(i),
+                            child: Text(
+                              i18n.languageFamily == 'zh'
+                                  ? '来源份量与缺失信息'
+                                  : 'Source portion and missing data',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      i18n.tr('entry.summary'),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _items.isEmpty
+                          ? i18n.tr('entry.no_foods_yet')
+                          : _formatTotals(i18n),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             Card(
@@ -1154,150 +1547,6 @@ class _EntryPageState extends State<EntryPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      i18n.tr('entry.supplement_context'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(i18n.tr('entry.with_iron_supplement')),
-                      value: _withIronSupplement,
-                      onChanged: (value) {
-                        setState(() {
-                          _withIronSupplement = value ?? false;
-                        });
-                        _inputsChanged();
-                      },
-                    ),
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(i18n.tr('entry.with_iron_multivitamin')),
-                      value: _withIronMultivitamin,
-                      onChanged: (value) {
-                        setState(() {
-                          _withIronMultivitamin = value ?? false;
-                        });
-                        _inputsChanged();
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      i18n.tr('entry.thickener_type'),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final type in <String?>[
-                          null,
-                          'starch_based',
-                          'xanthan_based',
-                        ])
-                          ChoiceChip(
-                            label: Text(
-                              type == null
-                                  ? i18n.tr('entry.none')
-                                  : i18n.tr('entry.thickener_$type'),
-                            ),
-                            selected: _thickenerType == type,
-                            onSelected: (_) {
-                              setState(() => _thickenerType = type);
-                              _inputsChanged();
-                            },
-                          ),
-                      ],
-                    ),
-                    if (_hasCoeventContext) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _coeventTime == null
-                            ? i18n.tr('entry.coevent_time_empty')
-                            : i18n.tr('entry.coevent_time_value', {
-                                'value': _formatDateTime(_coeventTime!),
-                              }),
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: _editCoeventTime,
-                        child: Text(i18n.tr('entry.edit_coevent_time')),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      i18n.tr('entry.enteral_feed_context'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final mode in <String?>[
-                          null,
-                          'continuous',
-                          'bolus',
-                        ])
-                          ChoiceChip(
-                            label: Text(
-                              mode == null
-                                  ? i18n.tr('entry.none')
-                                  : i18n.tr('entry.enteral_feed_$mode'),
-                            ),
-                            selected: _enteralFeedMode == mode,
-                            onSelected: (_) {
-                              setState(() => _enteralFeedMode = mode);
-                              _inputsChanged();
-                            },
-                          ),
-                      ],
-                    ),
-                    if (_hasEnteralFeedContext) ...[
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _enteralFeedFormulaCtrl,
-                        decoration: InputDecoration(
-                          labelText: i18n.tr('entry.enteral_feed_formula'),
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _enteralFeedProteinCtrl,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          labelText: i18n.tr(
-                            'entry.enteral_feed_protein_g_per_day',
-                          ),
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
                       i18n.tr('entry.next_meal_window'),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
@@ -1339,173 +1588,172 @@ class _EntryPageState extends State<EntryPage> {
               ),
             ),
             const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      i18n.tr('entry.summary'),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _items.isEmpty
-                          ? i18n.tr('entry.no_foods_yet')
-                          : _formatTotals(),
-                    ),
-                  ],
+            Theme(
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
+              child: ExpansionTile(
+                key: const ValueKey('entry-more-context'),
+                initiallyExpanded: _hasCoeventContext || _hasEnteralFeedContext,
+                tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+                childrenPadding: EdgeInsets.zero,
+                title: Text(
+                  i18n.tr('food_display.more_context'),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              i18n.tr('common.search_results'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (foods.isEmpty)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(i18n.tr('common.no_matching_foods')),
-                ),
-              ),
-            for (final food in foods)
-              Card(
-                child: Builder(
-                  builder: (context) {
-                    final textureLine = _foodTextureLine(i18n, food);
-                    final per100g = i18n.tr('entry.per_100g', {
-                      'protein':
-                          '${_searchNutrient(i18n, food, 'proteinG', food.proteinG)} ',
-                      'carbs':
-                          '${_searchNutrient(i18n, food, 'carbsG', food.carbsG)} ',
-                    });
-                    return ListTile(
-                      title: Text(i18n.foodName(food.id, food.name)),
-                      subtitle: Text(
-                        '$per100g · F ${_searchNutrient(i18n, food, 'fatG', food.fatG)} · Fiber ${_searchNutrient(i18n, food, 'fiberG', food.fiberG)}'
-                        '\n${food.sourceSystem} · ${food.jurisdiction}${food.sourceFoodCode == null ? '' : ' · ${food.sourceFoodCode}'}'
-                        '${textureLine == null ? '' : '\n$textureLine'}'
-                        '\n${food.description}',
-                      ),
-                      isThreeLine: true,
-                      trailing: Wrap(
-                        spacing: 4,
+                subtitle: Text(_moreContextSummary(i18n)),
+                children: [
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconButton(
-                            tooltip: i18n.tr('entry.view_food_detail'),
-                            onPressed: () => _openFoodDetail(food),
-                            icon: const Icon(Icons.info_outline),
-                          ),
-                          IconButton(
-                            tooltip: i18n.tr('entry.add_food'),
-                            onPressed: () {
-                              _addFood(
-                                MealItem.fromFood(
-                                  food: food,
-                                  quantityFactor: 1.0,
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.add_circle_outline),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            Text(
-              i18n.tr('entry.added_foods'),
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            if (_items.isEmpty)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Text(i18n.tr('entry.add_food_prompt')),
-                ),
-              ),
-            for (var i = 0; i < _items.length; i++)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              i18n.foodName(
-                                _items[i].foodId,
-                                _items[i].foodName,
-                              ),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: i18n.tr('common.delete'),
-                            onPressed: () => _removeItem(i),
-                            icon: const Icon(Icons.delete_outline),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '${_items[i].grams.toStringAsFixed(0)}g · ${i18n.tr('entry.protein')} ${_itemNutrient(_items[i], 'proteinG', _items[i].proteinG)} · ${i18n.tr('entry.carbs')} ${_itemNutrient(_items[i], 'carbsG', _items[i].carbsG)}',
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: [
-                          IconButton(
-                            onPressed: () => _updateItemQuantity(
-                              i,
-                              _items[i].quantityFactor - 0.25,
-                            ),
-                            icon: const Icon(Icons.remove_circle_outline),
-                          ),
                           Text(
-                            '${_items[i].quantityFactor.toStringAsFixed(2)} x',
+                            i18n.tr('entry.supplement_context'),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          IconButton(
-                            onPressed: () => _updateItemQuantity(
-                              i,
-                              _items[i].quantityFactor + 0.25,
+                          const SizedBox(height: 8),
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(i18n.tr('entry.with_iron_supplement')),
+                            value: _withIronSupplement,
+                            onChanged: (value) {
+                              setState(() {
+                                _withIronSupplement = value ?? false;
+                              });
+                              _inputsChanged();
+                            },
+                          ),
+                          CheckboxListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(
+                              i18n.tr('entry.with_iron_multivitamin'),
                             ),
-                            icon: const Icon(Icons.add_circle_outline),
+                            value: _withIronMultivitamin,
+                            onChanged: (value) {
+                              setState(() {
+                                _withIronMultivitamin = value ?? false;
+                              });
+                              _inputsChanged();
+                            },
                           ),
-                          const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: () => _showQuantityEditor(i),
-                            child: Text(i18n.tr('entry.set_quantity')),
+                          const SizedBox(height: 8),
+                          Text(
+                            i18n.tr('entry.thickener_type'),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          OutlinedButton(
-                            key: ValueKey('entry-portion-preview-$i'),
-                            onPressed: () => _showPortionPreview(i),
-                            child: Text(
-                              i18n.languageFamily == 'zh'
-                                  ? '来源份量与缺失信息'
-                                  : 'Source portion and missing data',
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final type in <String?>[
+                                null,
+                                'starch_based',
+                                'xanthan_based',
+                              ])
+                                ChoiceChip(
+                                  label: Text(
+                                    type == null
+                                        ? i18n.tr('entry.none')
+                                        : i18n.tr('entry.thickener_$type'),
+                                  ),
+                                  selected: _thickenerType == type,
+                                  onSelected: (_) {
+                                    setState(() => _thickenerType = type);
+                                    _inputsChanged();
+                                  },
+                                ),
+                            ],
+                          ),
+                          if (_hasCoeventContext) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              _coeventTime == null
+                                  ? i18n.tr('entry.coevent_time_empty')
+                                  : i18n.tr('entry.coevent_time_value', {
+                                      'value': _formatDateTime(_coeventTime!),
+                                    }),
                             ),
-                          ),
+                            const SizedBox(height: 8),
+                            OutlinedButton(
+                              onPressed: _editCoeventTime,
+                              child: Text(i18n.tr('entry.edit_coevent_time')),
+                            ),
+                          ],
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            i18n.tr('entry.enteral_feed_context'),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final mode in <String?>[
+                                null,
+                                'continuous',
+                                'bolus',
+                              ])
+                                ChoiceChip(
+                                  label: Text(
+                                    mode == null
+                                        ? i18n.tr('entry.none')
+                                        : i18n.tr('entry.enteral_feed_$mode'),
+                                  ),
+                                  selected: _enteralFeedMode == mode,
+                                  onSelected: (_) {
+                                    setState(() => _enteralFeedMode = mode);
+                                    _inputsChanged();
+                                  },
+                                ),
+                            ],
+                          ),
+                          if (_hasEnteralFeedContext) ...[
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _enteralFeedFormulaCtrl,
+                              decoration: InputDecoration(
+                                labelText: i18n.tr(
+                                  'entry.enteral_feed_formula',
+                                ),
+                                border: const OutlineInputBorder(),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextField(
+                              controller: _enteralFeedProteinCtrl,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              decoration: InputDecoration(
+                                labelText: i18n.tr(
+                                  'entry.enteral_feed_protein_g_per_day',
+                                ),
+                                border: const OutlineInputBorder(),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
           ],
         ),
       ),
