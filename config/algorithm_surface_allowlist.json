@@ -36,7 +36,8 @@
         "lib/core/i18n/app_i18n_context.dart",
         "lib/core/i18n/app_i18n_full_translations.dart",
         "lib/core/i18n/app_i18n_log_view_translations.dart",
-        "lib/core/i18n/fhir_r4_encounter_copy.dart"
+        "lib/core/i18n/fhir_r4_encounter_copy.dart",
+        "lib/core/i18n/app_i18n_diary_strip_translations.dart"
       ]
     },
     {
@@ -287,7 +288,8 @@
         "lib/features/shared/candidate_serving_macro_line.dart",
         "lib/features/shared/local_storage_stale_page.dart",
         "lib/features/shared/personal_log_view_controls.dart",
-        "lib/features/timeline/timeline_page.dart"
+        "lib/features/timeline/timeline_page.dart",
+        "lib/features/analytics/diary_strip_view.dart"
       ]
     },
     {
@@ -326,6 +328,14 @@
         "lib/features/care_workspace/care_workspace_page.dart",
         "lib/features/care_workspace/visit_report_selection_page.dart",
         "lib/features/observations/observation_editor.dart"
+      ]
+    },
+    {
+      "id": "descriptive_personal_diary_projection",
+      "reason": "The day strip places stored medication intakes, meals and self-reported motor-state entries on a 24-hour axis and counts entries recorded within a fixed lookback after logged meals. Meal protein comes unchanged from the registered protein_trend projection; missing protein stays unknown, nothing is imputed, and the output is never a recommendation, score, rank, prediction or rule input.",
+      "paths": [
+        "lib/domain/entities/personal_diary_strip.dart",
+        "lib/domain/usecases/personal_diary_strip_projector.dart"
       ]
     },
     {

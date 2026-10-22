@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/constants/clinical_evidence_source_seed.dart';
 import '../../core/constants/p0_food_source_seed.dart';
+import '../../core/i18n/app_i18n_context.dart';
 import '../../core/i18n/care_workspace_copy.dart';
 import '../../core/state/app_state.dart';
 import '../../core/services/personal_log_handoff_document_service.dart';
@@ -17,10 +18,12 @@ import '../../domain/entities/care_medication_discussion_outcome.dart';
 import '../../domain/entities/care_medication_list_review.dart';
 import '../../domain/entities/cdss_records.dart';
 import '../../domain/entities/decision_support_followup.dart';
+import '../../domain/entities/personal_log_view.dart';
 import '../../domain/entities/visit_preparation.dart';
 import '../../domain/entities/visit_report_selection.dart';
 import '../../domain/usecases/fhir_r4_medication_statement_collection_mapper.dart';
 import '../../domain/usecases/source_reference_projection.dart';
+import '../analytics/diary_strip_view.dart';
 import '../timeline/medication_assertion_reconciliation_page.dart';
 import 'visit_report_selection_page.dart';
 import 'care_portable_data_page.dart';
@@ -1762,6 +1765,7 @@ class VisitPreparationPreview extends StatefulWidget {
 
 class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
   AppState? _state;
+  LogCivilDate? _diaryShown;
   bool _expired = false;
   bool _copying = false;
   VisitPreparationSourceLease? _sourceLease;
@@ -1939,6 +1943,25 @@ class _VisitPreparationPreviewState extends State<VisitPreparationPreview> {
                             ),
                           ),
                         ),
+                    ],
+                    if (widget.report.diaryStrip case final diary?) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        context.appI18n.tr('diary.title'),
+                        key: const ValueKey('visit-preview-diary'),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      DiaryStripPanel(
+                        projection: diary,
+                        shownDay: _diaryShown ?? diary.end,
+                        latest: diary.end,
+                        earliest: diary.start,
+                        showToday: false,
+                        showMealTitles: false,
+                        onDayChanged: (day) =>
+                            setState(() => _diaryShown = day),
+                      ),
                     ],
                     const SizedBox(height: 12),
                     Text(
