@@ -407,8 +407,32 @@ void main() {
           'rule_decision_weight',
         ]),
       );
-      expect(result.analysisText, contains('weighted'));
+      expect(result.analysisText, contains('rule points'));
+      expect(
+        result.scoreFactors.map((factor) => factor.code),
+        isNot(contains('evidence_support_modifier')),
+        reason: 'evidence availability must not add rule points',
+      );
       expect(result.issues, isNotEmpty);
+      final strongestIssue = result.issues
+          .map((issue) => issue.severity)
+          .reduce((a, b) => a.index >= b.index ? a : b);
+      expect(
+        result.overallSeverity,
+        strongestIssue,
+        reason: 'the headline follows rule decisions, not rule points',
+      );
+      final minuteInstruction = RegExp(
+        r'\d+\s*(minutes?|mins?|分钟)',
+        caseSensitive: false,
+      );
+      for (final action in result.nextActions) {
+        expect(
+          minuteInstruction.hasMatch(action),
+          isFalse,
+          reason: 'next actions must not set medication or meal times: $action',
+        );
+      }
       expect(result.issues.first.detail.contains('回退链'), isFalse);
       expect(result.issues.first.detail, contains('database food variants'));
       expect(result.issues.first.evidence, isNotEmpty);
@@ -849,7 +873,8 @@ void main() {
         userProfile: UserProfile.defaults(),
       );
 
-      expect(result.score, greaterThanOrEqualTo(95));
+      // BLOCK weighs 90; evidence availability no longer adds points.
+      expect(result.score, greaterThanOrEqualTo(90));
       expect(
         result.scoreFactors.map((factor) => factor.code),
         contains('rule_decision_weight'),

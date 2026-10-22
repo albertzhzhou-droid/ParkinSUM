@@ -72,7 +72,11 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'WARN',
       'severity': 'high',
-      'messages': {'zh': '高蛋白餐可能降低左旋多巴吸收或临床反应，建议错峰。'},
+      'messages': {
+        'zh': '高蛋白餐可能降低左旋多巴的吸收或临床反应。',
+        'en':
+            'High-protein meals may reduce levodopa absorption or clinical response.',
+      },
       'actions': [
         {
           'type': 'suggest_reschedule',
@@ -140,7 +144,11 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'WARN',
       'severity': 'high',
-      'messages': {'zh': '铁盐或含铁复合维生素可能与左旋多巴/卡比多巴形成螯合并降低生物利用度，建议分开服用。'},
+      'messages': {
+        'zh': '铁盐或含铁复合维生素可能与左旋多巴/卡比多巴形成螯合并降低生物利用度。',
+        'en':
+            'Iron salts or multivitamins with iron may chelate levodopa/carbidopa and reduce its bioavailability.',
+      },
       'actions': [
         {
           'type': 'separate_by_time',
@@ -335,7 +343,11 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'WARN',
       'severity': 'critical',
-      'messages': {'zh': 'rasagiline 推荐剂量下通常无需普遍限酪胺，但极高酪胺摄入可能引起严重升压反应。'},
+      'messages': {
+        'zh': 'rasagiline 推荐剂量下通常无需普遍限酪胺，但极高酪胺摄入可能引起严重升压反应。',
+        'en':
+            'At recommended doses, rasagiline usually does not require general tyramine restriction, but very high tyramine intake may cause a severe hypertensive reaction.',
+      },
       'actions': [
         {
           'type': 'avoid_food',
@@ -388,7 +400,11 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'WARN',
       'severity': 'critical',
-      'messages': {'zh': 'safinamide 推荐剂量下通常不需常规限酪胺，但极高酪胺摄入仍应避免。'},
+      'messages': {
+        'zh': 'safinamide 在推荐剂量下通常不需常规限制酪胺；其标签提示需注意极高的酪胺摄入。',
+        'en':
+            'At recommended doses, safinamide usually does not require routine tyramine restriction; its label cautions about very high tyramine intake.',
+      },
       'actions': [
         {
           'type': 'avoid_food',
@@ -436,7 +452,11 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'BLOCK',
       'severity': 'critical',
-      'messages': {'zh': 'PEG 制剂与淀粉型增稠剂共混可能降低黏度并增加误吸风险，不应混合。'},
+      'messages': {
+        'zh': '来源警示 PEG 制剂不应与淀粉型增稠剂混合：混合后可能降低黏度并增加误吸风险。',
+        'en':
+            'The source warns that PEG preparations should not be mixed with starch-based thickeners: the mixture may lose viscosity and raise aspiration risk.',
+      },
       'actions': [
         {
           'type': 'avoid_combination',
@@ -491,7 +511,11 @@ const List<Map<String, dynamic>> _baselineCdssRulesRaw = [
     'then': {
       'decision': 'REQUIRE_REVIEW',
       'severity': 'critical',
-      'messages': {'zh': '连续肠内营养可能干扰左旋多巴反应，应由药师与营养团队按蛋白量和喂养窗口评估。'},
+      'messages': {
+        'zh': '连续肠内营养可能干扰左旋多巴反应；通常由药师与营养团队结合蛋白量和喂养时段进行评估。',
+        'en':
+            'Continuous enteral feeding may interfere with levodopa response; this is usually assessed by the pharmacist and nutrition team, taking protein amount and feeding windows into account.',
+      },
       'actions': [
         {
           'type': 'require_manual_review',

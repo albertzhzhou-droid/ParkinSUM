@@ -104,7 +104,11 @@ final class AlgorithmConfigurationIdentity {
   // v81 binds plain-language result copy: missing dose or time is presented
   // as "can't assess yet"; stored scores, severities and rule decisions are
   // unchanged.
-  static const String defaultVersion = '2026.10.20-v81';
+  // v82 binds meal-check safety copy: rule actions render as
+  // source-and-clinician text without minutes, every baseline rule has an
+  // English message, the headline severity follows the rule decisions and
+  // evidence availability no longer adds rule points.
+  static const String defaultVersion = '2026.10.20-v82';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -112,7 +116,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '50ecd06655dfc6ec4d286489820ac3e748e422d7c992c62108e699a6101f0909';
+      'b38d1dab08f9ea95a1974c3b029362f2ce3dc2d76f264f242e97abe6a9b63a38';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
@@ -163,7 +167,7 @@ final class AlgorithmConfigurationIdentity {
     'lib/domain/usecases/runtime_rule_support.dart':
         '704566d904c9ab2bbfe01d841a84486d16d5eb89e80cd4a2411312a80a3de504',
     'lib/core/constants/baseline_cdss_rules.dart':
-        'f8082d6c9eda26ad8f79d5db6a04ee5edc9da7013558625c7422c02771860647',
+        'ad3dc2508ff430a45144c91c7580ef0f0e8194ab1523532c0b457d8c008b2981',
     'lib/core/analysis/nutrition_rules.dart':
         '658a20a20000e7ff6ca1af0d8392ffd7582f8129771f4879f749089d8ac11a75',
     'lib/core/analysis/interaction_engine.dart':

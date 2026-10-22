@@ -216,7 +216,10 @@ void main() {
     final analysis = copy.interactionAnalysis(result);
     final dataNote = copy.dataNote(result.dataNotes.first);
 
-    expect(summary, contains('72'));
+    // A single WARN is moderate: 72 rule points do not make it "high risk".
+    expect(result.overallSeverity, InteractionSeverity.moderate);
+    expect(summary, 'Database-backed checks found 1 advisory item.');
+    expect(summary.toLowerCase(), isNot(contains('high')));
     expect(analysis, contains('28.0 g'));
     expect(analysis.toLowerCase(), contains('diagnosis'));
     expect(dataNote.toLowerCase(), contains('database'));

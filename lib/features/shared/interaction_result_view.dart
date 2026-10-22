@@ -238,6 +238,9 @@ class _ComputationDetails extends StatelessWidget {
           if (awaiting) ...[
             const SizedBox(height: 4),
             Text(i18n.tr('interaction.how_computed_awaiting_note')),
+          ] else if (result.score != null) ...[
+            const SizedBox(height: 4),
+            Text(i18n.tr('interaction.how_computed_points_note')),
           ],
           if (result.scoreFactors.isNotEmpty) ...[
             const SizedBox(height: 10),

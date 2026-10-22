@@ -14,47 +14,45 @@
 /// `RuleMessageSet.forLocale`'s usual chain (exact tag → family → en → zh).
 const Map<String, Map<String, String>> kBaselineCdssRuleTranslations = {
   'pd.ldopa.protein.window.v1': {
-    'ko-KR': '고단백 식사는 레보도파의 흡수나 임상 반응을 감소시킬 수 있으므로 시간을 분리하는 것이 권장됩니다.',
+    'ko-KR': '고단백 식사는 레보도파의 흡수나 임상 반응을 감소시킬 수 있습니다.',
     'hi-IN':
-        'उच्च प्रोटीन भोजन लेवोडोपा अवशोषण या नैदानिक प्रतिक्रिया को कम कर सकता है; समय अलग करने की सिफारिश की जाती है।',
+        'उच्च प्रोटीन भोजन लेवोडोपा अवशोषण या नैदानिक प्रतिक्रिया को कम कर सकता है।',
     'es':
-        'Las comidas ricas en proteínas pueden reducir la absorción de la levodopa o la respuesta clínica; se recomienda separar los horarios.',
+        'Las comidas ricas en proteínas pueden reducir la absorción de la levodopa o la respuesta clínica.',
     'es-MX':
-        'Las comidas altas en proteína pueden reducir la absorción de la levodopa o la respuesta clínica; se recomienda separar los horarios.',
+        'Las comidas altas en proteína pueden reducir la absorción de la levodopa o la respuesta clínica.',
     'vi-VN':
-        'Bữa ăn giàu đạm có thể làm giảm hấp thu levodopa hoặc đáp ứng lâm sàng; nên uống thuốc cách xa bữa ăn.',
-    'th-TH':
-        'อาหารโปรตีนสูงอาจลดการดูดซึมเลโวโดปาหรือการตอบสนองทางคลินิก แนะนำให้แยกเวลารับประทาน',
+        'Bữa ăn giàu đạm có thể làm giảm hấp thu levodopa hoặc đáp ứng lâm sàng.',
+    'th-TH': 'อาหารโปรตีนสูงอาจลดการดูดซึมเลโวโดปาหรือการตอบสนองทางคลินิก',
     'id-ID':
-        'Makanan tinggi protein dapat mengurangi penyerapan levodopa atau respons klinis; disarankan menjarakkan waktu.',
+        'Makanan tinggi protein dapat mengurangi penyerapan levodopa atau respons klinis.',
     'ru-RU':
-        'Пища с высоким содержанием белка может снижать всасывание леводопы или клинический ответ; рекомендуется разнесение во времени.',
+        'Пища с высоким содержанием белка может снижать всасывание леводопы или клинический ответ.',
     'pl-PL':
-        'Posiłki bogate w białko mogą zmniejszać wchłanianie lewodopy lub odpowiedź kliniczną; zaleca się rozdzielenie pór.',
+        'Posiłki bogate w białko mogą zmniejszać wchłanianie lewodopy lub odpowiedź kliniczną.',
     'ar-SA':
-        'قد تقلل الوجبات الغنية بالبروتين من امتصاص الليفودوبا أو الاستجابة السريرية؛ يُوصى بالفصل بين أوقات تناول الدواء والوجبات.',
+        'قد تقلل الوجبات الغنية بالبروتين من امتصاص الليفودوبا أو الاستجابة السريرية.',
   },
   'pd.ldopa.iron.v1': {
-    'ko-KR':
-        '철염이나 철분 함유 종합비타민은 레보도파/카비도파와 킬레이트화되어 생체이용률을 감소시킬 수 있으므로 분리해서 복용하세요.',
+    'ko-KR': '철염이나 철분 함유 종합비타민은 레보도파/카비도파와 킬레이트화되어 생체이용률을 감소시킬 수 있습니다.',
     'hi-IN':
-        'आयरन लवण या आयरन युक्त मल्टीविटामिन लेवोडोपा/कार्बिडोपा से चिलेट बना सकते हैं और जैवउपलब्धता घटा सकते हैं; अलग-अलग समय पर लें।',
+        'आयरन लवण या आयरन युक्त मल्टीविटामिन लेवोडोपा/कार्बिडोपा से चिलेट बना सकते हैं और जैवउपलब्धता घटा सकते हैं।',
     'es':
-        'Las sales de hierro o multivitamínicos con hierro pueden formar quelatos con la levodopa/carbidopa y reducir su biodisponibilidad; tómelos por separado.',
+        'Las sales de hierro o multivitamínicos con hierro pueden formar quelatos con la levodopa/carbidopa y reducir su biodisponibilidad.',
     'es-MX':
-        'Las sales de hierro o multivitamínicos con hierro pueden formar quelatos con la levodopa/carbidopa y reducir su biodisponibilidad; tómelos por separado.',
+        'Las sales de hierro o multivitamínicos con hierro pueden formar quelatos con la levodopa/carbidopa y reducir su biodisponibilidad.',
     'vi-VN':
-        'Muối sắt hoặc đa sinh tố có sắt có thể tạo phức với levodopa/carbidopa và giảm sinh khả dụng; nên uống cách xa nhau.',
+        'Muối sắt hoặc đa sinh tố có sắt có thể tạo phức với levodopa/carbidopa và giảm sinh khả dụng.',
     'th-TH':
-        'เกลือเหล็กหรือวิตามินรวมที่มีธาตุเหล็กอาจจับกับเลโวโดปา/คาร์บิโดปาและลดชีวประสิทธิผล แนะนำให้รับประทานแยกเวลา',
+        'เกลือเหล็กหรือวิตามินรวมที่มีธาตุเหล็กอาจจับกับเลโวโดปา/คาร์บิโดปาและลดชีวประสิทธิผล',
     'id-ID':
-        'Garam besi atau multivitamin yang mengandung besi dapat membentuk kelat dengan levodopa/karbidopa dan menurunkan bioavailabilitas; minum terpisah.',
+        'Garam besi atau multivitamin yang mengandung besi dapat membentuk kelat dengan levodopa/karbidopa dan menurunkan bioavailabilitas.',
     'ru-RU':
-        'Соли железа или поливитамины с железом могут образовывать хелаты с леводопой/карбидопой и снижать биодоступность; принимайте раздельно.',
+        'Соли железа или поливитамины с железом могут образовывать хелаты с леводопой/карбидопой и снижать биодоступность.',
     'pl-PL':
-        'Sole żelaza lub multiwitaminy z żelazem mogą chelatować lewodopę/karbidopę i obniżać biodostępność; przyjmuj je osobno.',
+        'Sole żelaza lub multiwitaminy z żelazem mogą chelatować lewodopę/karbidopę i obniżać biodostępność.',
     'ar-SA':
-        'قد ترتبط أملاح الحديد أو الفيتامينات المتعددة المحتوية على الحديد بالليفودوبا/كاربيدوبا وتقلل التوافر الحيوي؛ يُنصح بالفصل بين الجرعات.',
+        'قد ترتبط أملاح الحديد أو الفيتامينات المتعددة المحتوية على الحديد بالليفودوبا/كاربيدوبا وتقلل التوافر الحيوي.',
   },
   'pd.rasagiline.tyramine.us.v1': {
     'ko-KR':
@@ -80,69 +78,69 @@ const Map<String, Map<String, String>> kBaselineCdssRuleTranslations = {
   },
   'pd.safinamide.tyramine.us.v1': {
     'ko-KR':
-        '권장 용량의 safinamide에서는 일반적으로 티라민 제한이 필요하지 않지만, 극도로 높은 티라민 섭취는 피해야 합니다.',
+        '권장 용량의 safinamide에서는 일반적으로 티라민 제한이 필요하지 않지만, 제품 라벨은 극도로 높은 티라민 섭취에 주의하도록 안내합니다.',
     'hi-IN':
-        'अनुशंसित खुराक पर safinamide के साथ आमतौर पर नियमित टायरामाइन प्रतिबंध आवश्यक नहीं है, परन्तु अत्यधिक टायरामाइन सेवन से बचना चाहिए।',
+        'अनुशंसित खुराक पर safinamide के साथ आमतौर पर नियमित टायरामाइन प्रतिबंध आवश्यक नहीं है; इसका लेबल अत्यधिक टायरामाइन सेवन के बारे में सावधान करता है।',
     'es':
-        'A las dosis recomendadas, safinamide normalmente no requiere restricción habitual de tiramina, pero deben evitarse ingestas muy elevadas.',
+        'A las dosis recomendadas, safinamide normalmente no requiere restricción habitual de tiramina; su ficha técnica advierte sobre ingestas muy elevadas.',
     'es-MX':
-        'A las dosis recomendadas, la safinamida normalmente no requiere restricción habitual de tiramina, pero deben evitarse ingestas muy altas.',
+        'A las dosis recomendadas, la safinamida normalmente no requiere restricción habitual de tiramina; su etiqueta advierte sobre ingestas muy altas.',
     'vi-VN':
-        'Với liều khuyến cáo, safinamide thường không cần kiêng tyramine thường quy, nhưng vẫn nên tránh lượng tyramine rất cao.',
+        'Với liều khuyến cáo, safinamide thường không cần kiêng tyramine thường quy; nhãn thuốc lưu ý về lượng tyramine rất cao.',
     'th-TH':
-        'ที่ขนาดยาแนะนำ safinamide มักไม่จำเป็นต้องจำกัดไทรามีนตามปกติ แต่ควรหลีกเลี่ยงการบริโภคไทรามีนสูงมาก',
+        'ที่ขนาดยาแนะนำ safinamide มักไม่จำเป็นต้องจำกัดไทรามีนตามปกติ ฉลากยาระบุข้อควรระวังเกี่ยวกับการบริโภคไทรามีนสูงมาก',
     'id-ID':
-        'Pada dosis yang direkomendasikan, safinamide umumnya tidak memerlukan pembatasan tiramin rutin, tetapi asupan tiramin yang sangat tinggi tetap harus dihindari.',
+        'Pada dosis yang direkomendasikan, safinamide umumnya tidak memerlukan pembatasan tiramin rutin; labelnya memperingatkan tentang asupan tiramin yang sangat tinggi.',
     'ru-RU':
-        'В рекомендуемых дозах safinamide обычно не требует рутинного ограничения тирамина, но очень высокого потребления следует избегать.',
+        'В рекомендуемых дозах safinamide обычно не требует рутинного ограничения тирамина; в инструкции есть предостережение об очень высоком потреблении тирамина.',
     'pl-PL':
-        'W zalecanych dawkach safinamid zwykle nie wymaga rutynowego ograniczenia tyraminy, ale należy unikać bardzo wysokiego spożycia.',
+        'W zalecanych dawkach safinamid zwykle nie wymaga rutynowego ograniczenia tyraminy; ulotka ostrzega przed bardzo wysokim spożyciem tyraminy.',
     'ar-SA':
-        'في الجرعات الموصى بها، لا يتطلب السافيناميد عادةً تقييدًا روتينيًا للتيرامين، لكن يجب تجنب الكميات المرتفعة جدًا.',
+        'في الجرعات الموصى بها، لا يتطلب السافيناميد عادةً تقييدًا روتينيًا للتيرامين؛ وتنبّه نشرة الدواء إلى الكميات المرتفعة جدًا من التيرامين.',
   },
   'pd.peg.starch_thickener.block.v1': {
     'ko-KR':
-        'PEG 제제와 전분 기반 증점제를 혼합하면 점도가 감소하고 흡인 위험이 증가할 수 있으므로 함께 섞어서는 안 됩니다.',
+        '자료에 따르면 PEG 제제는 전분 기반 증점제와 섞어서는 안 됩니다. 혼합하면 점도가 감소하고 흡인 위험이 증가할 수 있습니다.',
     'hi-IN':
-        'PEG उत्पादों को स्टार्च-आधारित गाढ़ा करने वाले के साथ मिलाने से चिपचिपाहट घट सकती है और आकांक्षा (aspiration) का जोखिम बढ़ सकता है; इन्हें मिलाएँ नहीं।',
+        'स्रोत चेतावनी देता है कि PEG उत्पादों को स्टार्च-आधारित गाढ़ा करने वाले के साथ नहीं मिलाना चाहिए: मिश्रण की चिपचिपाहट घट सकती है और आकांक्षा (aspiration) का जोखिम बढ़ सकता है।',
     'es':
-        'Mezclar productos con PEG y espesantes a base de almidón puede reducir la viscosidad y aumentar el riesgo de aspiración; no deben combinarse.',
+        'La fuente advierte que los productos con PEG no deben mezclarse con espesantes a base de almidón: la mezcla puede perder viscosidad y aumentar el riesgo de aspiración.',
     'es-MX':
-        'Mezclar productos con PEG y espesantes a base de almidón puede reducir la viscosidad y aumentar el riesgo de broncoaspiración; no deben combinarse.',
+        'La fuente advierte que los productos con PEG no deben mezclarse con espesantes a base de almidón: la mezcla puede perder viscosidad y aumentar el riesgo de broncoaspiración.',
     'vi-VN':
-        'Trộn chế phẩm chứa PEG với chất làm đặc gốc tinh bột có thể làm giảm độ nhớt và tăng nguy cơ hít sặc; không được trộn lẫn.',
+        'Nguồn tham khảo cảnh báo không được trộn chế phẩm chứa PEG với chất làm đặc gốc tinh bột: hỗn hợp có thể giảm độ nhớt và tăng nguy cơ hít sặc.',
     'th-TH':
-        'การผสมผลิตภัณฑ์ PEG กับสารเพิ่มความข้นชนิดแป้งอาจทำให้ความหนืดลดลงและเพิ่มความเสี่ยงต่อการสำลัก ห้ามผสมกัน',
+        'แหล่งข้อมูลเตือนว่าไม่ควรผสมผลิตภัณฑ์ PEG กับสารเพิ่มความข้นชนิดแป้ง เพราะอาจทำให้ความหนืดลดลงและเพิ่มความเสี่ยงต่อการสำลัก',
     'id-ID':
-        'Mencampur produk PEG dengan pengental berbasis pati dapat menurunkan viskositas dan meningkatkan risiko aspirasi; jangan dicampur.',
+        'Sumber memperingatkan bahwa produk PEG tidak boleh dicampur dengan pengental berbasis pati: campurannya dapat kehilangan viskositas dan meningkatkan risiko aspirasi.',
     'ru-RU':
-        'Смешивание препаратов PEG с загустителями на основе крахмала может снижать вязкость и повышать риск аспирации; смешивать нельзя.',
+        'Источник предупреждает, что препараты PEG нельзя смешивать с загустителями на основе крахмала: смесь может терять вязкость и повышать риск аспирации.',
     'pl-PL':
-        'Mieszanie preparatów PEG z zagęstnikami skrobiowymi może zmniejszać lepkość i zwiększać ryzyko aspiracji; nie należy ich łączyć.',
+        'Źródło ostrzega, że preparatów PEG nie należy mieszać z zagęstnikami skrobiowymi: mieszanina może tracić lepkość i zwiększać ryzyko aspiracji.',
     'ar-SA':
-        'قد يؤدي مزج مستحضرات PEG مع المثخّنات النشوية إلى انخفاض اللزوجة وزيادة خطر الشفط؛ لا ينبغي خلطها.',
+        'يحذّر المصدر من خلط مستحضرات PEG مع المثخّنات النشوية: قد يفقد المزيج لزوجته ويزيد خطر الشفط.',
   },
   'pd.ldopa.enteral.feed.review.v1': {
     'ko-KR':
-        '지속적 경장영양은 레보도파 반응을 방해할 수 있습니다. 약사와 영양 팀이 단백질 양과 영양 공급 시간 창을 기준으로 평가해야 합니다.',
+        '지속적 경장영양은 레보도파 반응을 방해할 수 있습니다. 보통 약사와 영양 팀이 단백질 양과 영양 공급 시간대를 고려해 평가합니다.',
     'hi-IN':
-        'निरंतर एंटरल पोषण लेवोडोपा प्रतिक्रिया में हस्तक्षेप कर सकता है; प्रोटीन मात्रा और फीडिंग विंडो के अनुसार फार्मासिस्ट और पोषण टीम द्वारा मूल्यांकन कराएँ।',
+        'निरंतर एंटरल पोषण लेवोडोपा प्रतिक्रिया में हस्तक्षेप कर सकता है; आमतौर पर फार्मासिस्ट और पोषण टीम प्रोटीन मात्रा और फीडिंग विंडो को ध्यान में रखकर इसका मूल्यांकन करती है।',
     'es':
-        'La nutrición enteral continua puede interferir con la respuesta a la levodopa; el farmacéutico y el equipo de nutrición deben evaluarla según la cantidad de proteína y la ventana de alimentación.',
+        'La nutrición enteral continua puede interferir con la respuesta a la levodopa; normalmente la evalúan el farmacéutico y el equipo de nutrición, considerando la cantidad de proteína y la ventana de alimentación.',
     'es-MX':
-        'La nutrición enteral continua puede interferir con la respuesta a la levodopa; el farmacéutico y el equipo de nutrición deben evaluarla según la cantidad de proteína y la ventana de alimentación.',
+        'La nutrición enteral continua puede interferir con la respuesta a la levodopa; normalmente la evalúan el farmacéutico y el equipo de nutrición, considerando la cantidad de proteína y la ventana de alimentación.',
     'vi-VN':
-        'Nuôi dưỡng qua đường ruột liên tục có thể can thiệp vào đáp ứng với levodopa; cần dược sĩ và nhóm dinh dưỡng đánh giá theo lượng đạm và khung giờ cho ăn.',
+        'Nuôi dưỡng qua đường ruột liên tục có thể can thiệp vào đáp ứng với levodopa; thường do dược sĩ và nhóm dinh dưỡng đánh giá dựa trên lượng đạm và khung giờ cho ăn.',
     'th-TH':
-        'การให้สารอาหารทางลำไส้แบบต่อเนื่องอาจรบกวนการตอบสนองต่อเลโวโดปา ควรให้ทีมเภสัชกรและโภชนาการประเมินตามปริมาณโปรตีนและช่วงเวลาให้อาหาร',
+        'การให้สารอาหารทางลำไส้แบบต่อเนื่องอาจรบกวนการตอบสนองต่อเลโวโดปา โดยทั่วไปทีมเภสัชกรและโภชนาการจะประเมินโดยพิจารณาปริมาณโปรตีนและช่วงเวลาให้อาหาร',
     'id-ID':
-        'Nutrisi enteral kontinu dapat mengganggu respons levodopa; apoteker dan tim gizi harus mengevaluasinya berdasarkan jumlah protein dan jendela pemberian.',
+        'Nutrisi enteral kontinu dapat mengganggu respons levodopa; biasanya apoteker dan tim gizi menilainya dengan mempertimbangkan jumlah protein dan jendela pemberian.',
     'ru-RU':
-        'Непрерывное энтеральное питание может нарушать ответ на леводопу; фармацевт и нутрициологическая команда должны оценить ситуацию с учётом количества белка и режима кормления.',
+        'Непрерывное энтеральное питание может нарушать ответ на леводопу; обычно это оценивают фармацевт и нутрициологическая команда с учётом количества белка и режима кормления.',
     'pl-PL':
-        'Ciągłe żywienie dojelitowe może zakłócać odpowiedź na lewodopę; farmaceuta i zespół żywieniowy powinni ocenić ilość białka i okno karmienia.',
+        'Ciągłe żywienie dojelitowe może zakłócać odpowiedź na lewodopę; zwykle ocenia to farmaceuta i zespół żywieniowy, uwzględniając ilość białka i okno karmienia.',
     'ar-SA':
-        'قد تتعارض التغذية المعوية المستمرة مع استجابة الليفودوبا؛ يجب أن يقيّمها الصيدلي وفريق التغذية بناءً على كمية البروتين ونافذة التغذية.',
+        'قد تتعارض التغذية المعوية المستمرة مع استجابة الليفودوبا؛ وعادةً ما يقيّمها الصيدلي وفريق التغذية مع مراعاة كمية البروتين ونافذة التغذية.',
   },
   'pd.pramipexole.food.info.v1': {
     'ko-KR':

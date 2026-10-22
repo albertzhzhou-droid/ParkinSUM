@@ -262,9 +262,18 @@ class InteractionResult {
     );
   }
 
+  /// The headline severity follows the rule decisions: the most severe issue
+  /// wins. Rule points are a heuristic sum (protein, timing, context factors)
+  /// and are shown separately; they never raise the headline above what the
+  /// rules decided. Score bands remain only for results without issues.
   InteractionSeverity? get overallSeverity {
     final assessedScore = score;
     if (!hasAssessment || assessedScore == null) return null;
+    if (issues.isNotEmpty) {
+      return issues
+          .map((issue) => issue.severity)
+          .reduce((a, b) => a.index >= b.index ? a : b);
+    }
     if (assessedScore >= 70) return InteractionSeverity.high;
     if (assessedScore >= 30) return InteractionSeverity.moderate;
     return InteractionSeverity.low;
