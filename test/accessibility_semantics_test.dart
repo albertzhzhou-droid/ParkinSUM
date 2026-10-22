@@ -76,20 +76,25 @@ void main() {
     );
   });
 
-  testWidgets('next-meal decision-path icon exposes its meaning', (
-    tester,
-  ) async {
+  testWidgets('next-meal decision path is announced once', (tester) async {
     final i18n = AppI18n.fromLocaleTag('en-US');
     for (final aiUsed in [true, false]) {
       final label = aiUsed
           ? i18n.tr('next_meal.ai_polished')
           : i18n.tr('next_meal.conservative_engine');
+      // The result header construct: a decorative icon beside visible text.
+      // Labelling the icon too made screen readers and page text read the
+      // path twice ("Rule-based list Rule-based list").
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: Icon(
-              aiUsed ? Icons.auto_awesome_rounded : Icons.shield_outlined,
-              semanticLabel: label,
+            body: Row(
+              children: [
+                Icon(
+                  aiUsed ? Icons.auto_awesome_rounded : Icons.shield_outlined,
+                ),
+                Text(label),
+              ],
             ),
           ),
         ),
@@ -97,7 +102,7 @@ void main() {
       expect(
         find.bySemanticsLabel(label),
         findsOneWidget,
-        reason: 'decision-path icon (aiUsed=$aiUsed) must expose "$label"',
+        reason: 'decision path (aiUsed=$aiUsed) must be exposed once',
       );
     }
   });

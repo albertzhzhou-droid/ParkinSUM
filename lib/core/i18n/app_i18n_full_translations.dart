@@ -181,19 +181,19 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.open_next_meal': '다음 식사 열기',
     'library.my_medications': '내 약',
     'library.catalog': '음식과 약',
-    'next_meal.title': '다음 식사 추천',
+    'next_meal.title': '다음 식사 음식 비교',
     'next_meal.subtitle':
         '다음 식사 시간을 정하세요. 보수적 규칙 경로는 후보 순서를 유지하고, 기전 모델은 교육용 시간 중첩 추적만 추가하며 재정렬하지 않습니다. 로컬 AI는 별도의 선택적 안전 목록 재정렬 기능입니다.',
     'next_meal.input_time': '예상 다음 식사 시간',
     'next_meal.use_local_ai': '로컬 AI로 문구 다듬기 (선택)',
     'next_meal.use_local_ai_help':
         '엔진이 이미 통과시킨 후보에 대해서만 localhost의 Ollama/llama.cpp가 재정렬과 설명 다듬기를 수행합니다. 안전 게이트가 차단하면 자동으로 보수 경로로 돌아갑니다.',
-    'next_meal.generate': '추천 생성',
+    'next_meal.generate': '음식 비교',
     'next_meal.generating': '생성 중…',
-    'next_meal.empty': '예상 시간을 설정한 뒤 "추천 생성"을 누르세요. 그 시간 창을 기준으로 다시 평가됩니다.',
+    'next_meal.empty': '예상 시간을 설정한 뒤 "음식 비교"를 누르세요. 그 시간 창을 기준으로 규칙이 다시 비교합니다.',
     'next_meal.why_these': '이렇게 추천한 이유',
     'next_meal.ai_polished': '로컬 AI가 문구를 다듬음',
-    'next_meal.conservative_engine': '충돌 엔진 보수 경로',
+    'next_meal.conservative_engine': '규칙 기반 목록',
     'next_meal.recommendation_path': '추천 경로',
     'next_meal.gate_reasons': '안전 게이트 메모',
     'next_meal.candidates': '상위 후보',
@@ -260,7 +260,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.save_intake_failed': '복용 저장 실패: {error}',
     'timeline.meal_macro_line':
         '합계: 단백질 {protein} g · 탄수 {carbs} g · 지방 {fat} g',
-    'timeline.conflict_line': '충돌 검토: {severity} · 점수 {score}',
+    'timeline.conflict_line': '충돌 검토: {severity} · 규칙 점수 {score}',
     'timeline.meal_window_line': '식사 시간 창: {start} - {end}',
     'timeline.next_meal_window_line': '다음 식사 창: {start} - {end}',
     'timeline.nearest_medication_line': '가장 가까운 약물: {name} ({distance})',
@@ -319,9 +319,9 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'missing.meal_time': '식사 시간',
     'missing.coevent_time': '동반 이벤트 시간',
     'missing.thickener_type': '증점제 종류',
-    'recommend.low_protein': '저단백 우선',
-    'recommend.protein_window_caution': '레보도파 시간 창 부근에서 고단백 섭취는 주의하세요',
-    'recommend.history_low_protein': '최근 기록을 보면 저단백 옵션이 우선됩니다',
+    'recommend.low_protein': '1회 제공량당 단백질이 더 적음',
+    'recommend.protein_window_caution': '단백질이 더 많음; 규칙은 레보도파 시간 부근의 단백질을 표시합니다',
+    'recommend.history_low_protein': '최근 기록한 식사보다 단백질이 적음',
     'recommend.culture_match': '현재 지역 식단 템플릿과 일치합니다',
     'recommend.fallback_chain': '이 지역의 음식 지식은 폴백 체인을 사용 중입니다',
     'recommend.general_friendly': '일반적으로 적합한 옵션',
@@ -647,20 +647,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.open_next_meal': 'अगला भोजन खोलें',
     'library.my_medications': 'मेरी दवाएँ',
     'library.catalog': 'खाद्य और दवाएँ',
-    'next_meal.title': 'अगले भोजन की सिफारिश',
+    'next_meal.title': 'अगले भोजन के खाद्यों की तुलना',
     'next_meal.subtitle':
         'अगले भोजन का समय चुनें। रूढ़िवादी नियम-पथ उम्मीदवारों का क्रम बनाए रखता है; यांत्रिक मॉडल केवल शैक्षिक समय-अतिव्यापन ट्रेस जोड़ता है और क्रम नहीं बदलता। स्थानीय AI अलग, वैकल्पिक सुरक्षित-सूची पुनर्क्रमण है।',
     'next_meal.input_time': 'अगले भोजन का अनुमानित समय',
     'next_meal.use_local_ai': 'स्थानीय AI से शब्द निखारें (वैकल्पिक)',
     'next_meal.use_local_ai_help':
         'केवल localhost पर Ollama/llama.cpp को बुलाता है ताकि इंजन द्वारा पहले से स्वीकृत उम्मीदवारों को पुनर्क्रमित और स्पष्टीकरण लिख सके; सुरक्षा गेट के अवरुद्ध होने पर रूढ़िवादी पथ पर लौटता है।',
-    'next_meal.generate': 'सिफारिश बनाएँ',
+    'next_meal.generate': 'खाद्यों की तुलना करें',
     'next_meal.generating': 'बनाई जा रही है…',
     'next_meal.empty':
-        'अनुमानित समय निर्धारित करें और "सिफारिश बनाएँ" टैप करें; इंजन उस विंडो के अनुसार पुनः मूल्यांकन करेगा।',
+        'अनुमानित समय निर्धारित करें और "खाद्यों की तुलना करें" टैप करें; नियम उस विंडो के अनुसार फिर से तुलना करेंगे।',
     'next_meal.why_these': 'ये क्यों चुने गए',
     'next_meal.ai_polished': 'स्थानीय AI ने शब्द निखारे',
-    'next_meal.conservative_engine': 'संघर्ष इंजन का रूढ़िवादी पथ',
+    'next_meal.conservative_engine': 'नियम-आधारित सूची',
     'next_meal.recommendation_path': 'सिफारिश पथ',
     'next_meal.gate_reasons': 'सुरक्षा गेट नोट्स',
     'next_meal.candidates': 'शीर्ष उम्मीदवार',
@@ -729,7 +729,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.save_intake_failed': 'सेवन सहेजने में विफल: {error}',
     'timeline.meal_macro_line':
         'कुल: प्रोटीन {protein} g · कार्ब्स {carbs} g · वसा {fat} g',
-    'timeline.conflict_line': 'संघर्ष समीक्षा: {severity} · स्कोर {score}',
+    'timeline.conflict_line': 'संघर्ष समीक्षा: {severity} · नियम अंक {score}',
     'timeline.meal_window_line': 'भोजन विंडो: {start} - {end}',
     'timeline.next_meal_window_line': 'अगला भोजन विंडो: {start} - {end}',
     'timeline.nearest_medication_line': 'निकटतम दवा: {name} ({distance})',
@@ -789,11 +789,10 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'missing.meal_time': 'भोजन का समय',
     'missing.coevent_time': 'सह-घटना का समय',
     'missing.thickener_type': 'गाढ़ा करने वाले का प्रकार',
-    'recommend.low_protein': 'कम प्रोटीन को प्राथमिकता',
+    'recommend.low_protein': 'प्रति सर्विंग कम प्रोटीन',
     'recommend.protein_window_caution':
-        'लेवोडोपा विंडो के पास उच्च प्रोटीन से सावधान रहें',
-    'recommend.history_low_protein':
-        'हालिया इतिहास कम-प्रोटीन विकल्पों को प्राथमिकता देने का सुझाव देता है',
+        'अधिक प्रोटीन; नियम लेवोडोपा समय के पास प्रोटीन को चिह्नित करते हैं',
+    'recommend.history_low_protein': 'आपके हाल में दर्ज भोजन से कम प्रोटीन',
     'recommend.culture_match': 'वर्तमान क्षेत्रीय आहार टेम्पलेट से मेल खाता है',
     'recommend.fallback_chain':
         'इस क्षेत्र के लिए भोजन ज्ञान फॉलबैक श्रृंखला का उपयोग कर रहा है',
@@ -1155,21 +1154,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.open_next_meal': 'Abrir próxima comida',
     'library.my_medications': 'Mis medicamentos',
     'library.catalog': 'Alimentos y medicamentos',
-    'next_meal.title': 'Recomendación de la próxima comida',
+    'next_meal.title': 'Comparar alimentos para la próxima comida',
     'next_meal.subtitle':
         'Elija la hora prevista de la próxima comida. La ruta conservadora mantiene el orden de candidatos; el modelo mecanístico solo añade una traza educativa de solapamiento temporal y no reordena. La IA local es un reordenador opcional y separado de lista segura.',
     'next_meal.input_time': 'Hora prevista de la próxima comida',
     'next_meal.use_local_ai': 'Pulir el texto con IA local (opcional)',
     'next_meal.use_local_ai_help':
         'Solo llama a Ollama/llama.cpp en localhost para reordenar y reescribir las explicaciones de los candidatos ya aprobados por el motor; vuelve al camino conservador si la puerta de seguridad lo bloquea.',
-    'next_meal.generate': 'Generar recomendación',
+    'next_meal.generate': 'Comparar alimentos',
     'next_meal.generating': 'Generando…',
     'next_meal.empty':
-        'Defina la hora prevista y toque "Generar recomendación"; el motor reevaluará según esa ventana.',
+        'Defina la hora prevista y toque "Comparar alimentos"; las reglas volverán a comparar según esa ventana.',
     'next_meal.why_these': 'Por qué estas opciones',
     'next_meal.ai_polished': 'Pulido por IA local',
-    'next_meal.conservative_engine':
-        'Camino conservador del motor de conflictos',
+    'next_meal.conservative_engine': 'Lista basada en reglas',
     'next_meal.recommendation_path': 'Camino de recomendación',
     'next_meal.gate_reasons': 'Notas de la puerta de seguridad',
     'next_meal.candidates': 'Mejores candidatos',
@@ -1241,7 +1239,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.meal_macro_line':
         'Totales: proteína {protein} g · carbohidratos {carbs} g · grasa {fat} g',
     'timeline.conflict_line':
-        'Revisión de conflicto: {severity} · puntuación {score}',
+        'Revisión de conflicto: {severity} · {score} puntos de regla',
     'timeline.meal_window_line': 'Ventana de comida: {start} - {end}',
     'timeline.next_meal_window_line':
         'Próxima ventana de comida: {start} - {end}',
@@ -1303,11 +1301,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'missing.meal_time': 'hora de la comida',
     'missing.coevent_time': 'hora del coevento',
     'missing.thickener_type': 'tipo de espesante',
-    'recommend.low_protein': 'Se prefiere menor proteína',
+    'recommend.low_protein': 'Menos proteína por porción',
     'recommend.protein_window_caution':
-        'Tenga precaución con mayor proteína cerca de la ventana de levodopa',
+        'Más proteína; las reglas señalan la proteína cerca de una toma de levodopa',
     'recommend.history_low_protein':
-        'El historial reciente sugiere priorizar opciones con menor proteína',
+        'Menos proteína que sus comidas registradas recientes',
     'recommend.culture_match':
         'Coincide con la plantilla dietética regional actual',
     'recommend.fallback_chain':
@@ -1662,20 +1660,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.open_next_meal': 'Mở bữa kế tiếp',
     'library.my_medications': 'Thuốc của tôi',
     'library.catalog': 'Thực phẩm và thuốc',
-    'next_meal.title': 'Đề xuất bữa kế tiếp',
+    'next_meal.title': 'So sánh thực phẩm cho bữa kế tiếp',
     'next_meal.subtitle':
         'Hãy chọn giờ dự kiến cho bữa kế tiếp. Đường quy tắc thận trọng giữ nguyên thứ tự ứng viên; mô hình cơ chế chỉ thêm dấu vết chồng lấp thời gian mang tính giáo dục và không xếp lại. AI cục bộ là bộ xếp lại danh sách an toàn riêng, tùy chọn.',
     'next_meal.input_time': 'Giờ dự kiến bữa kế tiếp',
     'next_meal.use_local_ai': 'Dùng AI cục bộ làm mượt văn bản (tùy chọn)',
     'next_meal.use_local_ai_help':
         'Chỉ gọi Ollama/llama.cpp trên localhost để sắp xếp lại và viết lại giải thích cho các ứng viên đã được bộ máy phê duyệt; quay về đường dẫn thận trọng khi cổng an toàn chặn.',
-    'next_meal.generate': 'Tạo đề xuất',
+    'next_meal.generate': 'So sánh thực phẩm',
     'next_meal.generating': 'Đang tạo…',
     'next_meal.empty':
-        'Đặt giờ dự kiến rồi chạm "Tạo đề xuất"; bộ máy sẽ đánh giá lại theo khung giờ đó.',
+        'Đặt giờ dự kiến rồi chạm "So sánh thực phẩm"; các quy tắc sẽ so sánh lại theo khung giờ đó.',
     'next_meal.why_these': 'Vì sao chọn những món này',
     'next_meal.ai_polished': 'AI cục bộ đã làm mượt văn bản',
-    'next_meal.conservative_engine': 'Đường dẫn thận trọng của bộ máy xung đột',
+    'next_meal.conservative_engine': 'Danh sách dựa trên quy tắc',
     'next_meal.recommendation_path': 'Đường dẫn đề xuất',
     'next_meal.gate_reasons': 'Ghi chú cổng an toàn',
     'next_meal.candidates': 'Ứng viên hàng đầu',
@@ -1746,7 +1744,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.save_intake_failed': 'Lưu lần uống thất bại: {error}',
     'timeline.meal_macro_line':
         'Tổng: đạm {protein} g · tinh bột {carbs} g · béo {fat} g',
-    'timeline.conflict_line': 'Xem xét xung đột: {severity} · điểm {score}',
+    'timeline.conflict_line':
+        'Xem xét xung đột: {severity} · {score} điểm quy tắc',
     'timeline.meal_window_line': 'Cửa sổ bữa ăn: {start} - {end}',
     'timeline.next_meal_window_line': 'Cửa sổ bữa ăn kế tiếp: {start} - {end}',
     'timeline.nearest_medication_line': 'Thuốc gần nhất: {name} ({distance})',
@@ -1806,11 +1805,10 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'missing.meal_time': 'thời điểm ăn',
     'missing.coevent_time': 'thời điểm sự kiện đồng thời',
     'missing.thickener_type': 'loại chất làm đặc',
-    'recommend.low_protein': 'Ưu tiên ít đạm hơn',
+    'recommend.low_protein': 'Ít đạm hơn mỗi khẩu phần',
     'recommend.protein_window_caution':
-        'Thận trọng với đạm cao gần cửa sổ levodopa',
-    'recommend.history_low_protein':
-        'Lịch sử gần đây gợi ý ưu tiên các lựa chọn ít đạm',
+        'Nhiều đạm hơn; các quy tắc đánh dấu đạm gần thời điểm dùng levodopa',
+    'recommend.history_low_protein': 'Ít đạm hơn các bữa ăn bạn ghi gần đây',
     'recommend.culture_match': 'Khớp với mẫu chế độ ăn vùng hiện tại',
     'recommend.fallback_chain':
         'Kiến thức thực phẩm cho khu vực này đang dùng chuỗi dự phòng',
@@ -2169,20 +2167,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.open_next_meal': 'เปิดมื้อถัดไป',
     'library.my_medications': 'ยาของฉัน',
     'library.catalog': 'อาหารและยา',
-    'next_meal.title': 'คำแนะนำมื้อถัดไป',
+    'next_meal.title': 'เปรียบเทียบอาหารสำหรับมื้อถัดไป',
     'next_meal.subtitle':
         'เลือกเวลามื้อถัดไป เส้นทางกฎแบบระมัดระวังคงลำดับตัวเลือกไว้ แบบจำลองเชิงกลเพิ่มเพียงร่องรอยการทับซ้อนตามเวลาเพื่อการศึกษาและไม่จัดอันดับใหม่ ส่วน AI ในเครื่องเป็นตัวเลือกแยกต่างหากที่จัดลำดับเฉพาะรายการปลอดภัย',
     'next_meal.input_time': 'เวลามื้อถัดไปที่คาดไว้',
     'next_meal.use_local_ai': 'ใช้ AI ในเครื่องปรับสำนวน (ทางเลือก)',
     'next_meal.use_local_ai_help':
         'เรียกเฉพาะ Ollama/llama.cpp บน localhost เพื่อจัดอันดับใหม่และเขียนคำอธิบายของตัวเลือกที่เครื่องยนต์อนุมัติแล้ว และจะกลับไปยังเส้นทางอนุรักษ์เมื่อประตูความปลอดภัยปิดกั้น',
-    'next_meal.generate': 'สร้างคำแนะนำ',
+    'next_meal.generate': 'เปรียบเทียบอาหาร',
     'next_meal.generating': 'กำลังสร้าง…',
     'next_meal.empty':
-        'กำหนดเวลาแล้วแตะ "สร้างคำแนะนำ" เครื่องยนต์จะประเมินใหม่ตามช่วงเวลานั้น',
+        'กำหนดเวลาแล้วแตะ "เปรียบเทียบอาหาร" กฎจะเปรียบเทียบใหม่ตามช่วงเวลานั้น',
     'next_meal.why_these': 'ทำไมจึงเลือกสิ่งเหล่านี้',
     'next_meal.ai_polished': 'AI ในเครื่องปรับสำนวนแล้ว',
-    'next_meal.conservative_engine': 'เส้นทางอนุรักษ์ของเครื่องยนต์ความขัดแย้ง',
+    'next_meal.conservative_engine': 'รายการตามกฎ',
     'next_meal.recommendation_path': 'เส้นทางคำแนะนำ',
     'next_meal.gate_reasons': 'หมายเหตุประตูความปลอดภัย',
     'next_meal.candidates': 'ตัวเลือกอันดับต้น',
@@ -2253,7 +2251,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.save_intake_failed': 'บันทึกการรับประทานล้มเหลว: {error}',
     'timeline.meal_macro_line':
         'รวม: โปรตีน {protein} ก. · คาร์บ {carbs} ก. · ไขมัน {fat} ก.',
-    'timeline.conflict_line': 'ตรวจสอบความขัดแย้ง: {severity} · คะแนน {score}',
+    'timeline.conflict_line':
+        'ตรวจสอบความขัดแย้ง: {severity} · คะแนนกฎ {score}',
     'timeline.meal_window_line': 'ช่วงมื้ออาหาร: {start} - {end}',
     'timeline.next_meal_window_line': 'ช่วงมื้อถัดไป: {start} - {end}',
     'timeline.nearest_medication_line': 'ยาใกล้สุด: {name} ({distance})',
@@ -2313,11 +2312,10 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'missing.meal_time': 'เวลามื้ออาหาร',
     'missing.coevent_time': 'เวลาเหตุการณ์ร่วม',
     'missing.thickener_type': 'ชนิดสารเพิ่มความข้น',
-    'recommend.low_protein': 'ควรเลือกโปรตีนต่ำกว่า',
+    'recommend.low_protein': 'โปรตีนต่อหนึ่งหน่วยบริโภคน้อยกว่า',
     'recommend.protein_window_caution':
-        'ระมัดระวังโปรตีนสูงใกล้ช่วงเวลาเลโวโดปา',
-    'recommend.history_low_protein':
-        'ประวัติล่าสุดแนะนำให้เลือกตัวเลือกโปรตีนต่ำก่อน',
+        'โปรตีนสูงกว่า; กฎจะระบุโปรตีนที่ใกล้เวลาใช้เลโวโดปา',
+    'recommend.history_low_protein': 'โปรตีนน้อยกว่ามื้อที่คุณบันทึกล่าสุด',
     'recommend.culture_match': 'เข้ากับเทมเพลตอาหารภูมิภาคปัจจุบัน',
     'recommend.fallback_chain': 'ความรู้อาหารของภูมิภาคนี้กำลังใช้เชนสำรอง',
     'recommend.general_friendly': 'ตัวเลือกที่เหมาะสมโดยทั่วไป',
@@ -2673,20 +2671,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.open_next_meal': 'Buka makan berikutnya',
     'library.my_medications': 'Obat saya',
     'library.catalog': 'Makanan & obat',
-    'next_meal.title': 'Rekomendasi makan berikutnya',
+    'next_meal.title': 'Bandingkan makanan untuk makan berikutnya',
     'next_meal.subtitle':
         'Pilih perkiraan waktu makan berikutnya. Jalur aturan konservatif mempertahankan urutan kandidat; model mekanistik hanya menambahkan jejak tumpang-tindih waktu edukatif dan tidak mengurutkan ulang. AI lokal adalah pengurut ulang daftar aman yang terpisah dan opsional.',
     'next_meal.input_time': 'Perkiraan waktu makan berikutnya',
     'next_meal.use_local_ai': 'Poles kata dengan AI lokal (opsional)',
     'next_meal.use_local_ai_help':
         'Hanya memanggil Ollama/llama.cpp di localhost untuk menyusun ulang dan menulis ulang penjelasan kandidat yang telah disetujui mesin; kembali ke jalur konservatif saat gerbang keselamatan memblokir.',
-    'next_meal.generate': 'Buat rekomendasi',
+    'next_meal.generate': 'Bandingkan makanan',
     'next_meal.generating': 'Membuat…',
     'next_meal.empty':
-        'Tetapkan waktu lalu ketuk "Buat rekomendasi"; mesin akan menilai ulang sesuai jendela waktu itu.',
+        'Tetapkan waktu lalu ketuk "Bandingkan makanan"; aturan akan membandingkan ulang sesuai jendela waktu itu.',
     'next_meal.why_these': 'Mengapa pilihan ini',
     'next_meal.ai_polished': 'Dipoles oleh AI lokal',
-    'next_meal.conservative_engine': 'Jalur konservatif mesin konflik',
+    'next_meal.conservative_engine': 'Daftar berbasis aturan',
     'next_meal.recommendation_path': 'Jalur rekomendasi',
     'next_meal.gate_reasons': 'Catatan gerbang keselamatan',
     'next_meal.candidates': 'Kandidat teratas',
@@ -2757,7 +2755,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.save_intake_failed': 'Gagal menyimpan konsumsi: {error}',
     'timeline.meal_macro_line':
         'Total: protein {protein} g · karbo {carbs} g · lemak {fat} g',
-    'timeline.conflict_line': 'Tinjauan konflik: {severity} · skor {score}',
+    'timeline.conflict_line':
+        'Tinjauan konflik: {severity} · {score} poin aturan',
     'timeline.meal_window_line': 'Jendela makan: {start} - {end}',
     'timeline.next_meal_window_line':
         'Jendela makan berikutnya: {start} - {end}',
@@ -2818,11 +2817,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'missing.meal_time': 'waktu makan',
     'missing.coevent_time': 'waktu koevent',
     'missing.thickener_type': 'jenis pengental',
-    'recommend.low_protein': 'Lebih disukai protein lebih rendah',
+    'recommend.low_protein': 'Protein lebih rendah per porsi',
     'recommend.protein_window_caution':
-        'Hati-hati dengan protein tinggi di sekitar jendela levodopa',
+        'Protein lebih tinggi; aturan menandai protein di dekat waktu levodopa',
     'recommend.history_low_protein':
-        'Riwayat terbaru menyarankan memprioritaskan opsi rendah protein',
+        'Protein lebih rendah daripada makanan yang baru Anda catat',
     'recommend.culture_match': 'Cocok dengan template diet regional saat ini',
     'recommend.fallback_chain':
         'Pengetahuan makanan untuk wilayah ini menggunakan rantai cadangan',
@@ -3180,20 +3179,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.open_next_meal': 'Открыть следующий приём пищи',
     'library.my_medications': 'Мои лекарства',
     'library.catalog': 'Продукты и лекарства',
-    'next_meal.title': 'Рекомендация на следующий приём пищи',
+    'next_meal.title': 'Сравнение продуктов для следующего приёма пищи',
     'next_meal.subtitle':
         'Укажите предполагаемое время следующего приёма пищи. Консервативный путь правил сохраняет порядок кандидатов; механистическая модель лишь добавляет учебную трассу временного перекрытия и не ранжирует. Локальный ИИ — отдельный опциональный ранжировщик безопасного списка.',
     'next_meal.input_time': 'Планируемое время следующего приёма',
     'next_meal.use_local_ai': 'Полировка текста локальным ИИ (опционально)',
     'next_meal.use_local_ai_help':
         'Обращается только к Ollama/llama.cpp на localhost для переупорядочивания и переписывания объяснений для кандидатов, уже одобренных движком; возвращается на консервативный путь при блокировке защитным шлюзом.',
-    'next_meal.generate': 'Сформировать рекомендацию',
+    'next_meal.generate': 'Сравнить продукты',
     'next_meal.generating': 'Формируется…',
     'next_meal.empty':
-        'Задайте время и нажмите «Сформировать рекомендацию»; движок пересчитает для этого окна.',
+        'Задайте время и нажмите «Сравнить продукты»; правила заново сравнят продукты для этого окна.',
     'next_meal.why_these': 'Почему именно эти варианты',
     'next_meal.ai_polished': 'Отполировано локальным ИИ',
-    'next_meal.conservative_engine': 'Консервативный путь конфликт-движка',
+    'next_meal.conservative_engine': 'Список на основе правил',
     'next_meal.recommendation_path': 'Путь рекомендации',
     'next_meal.gate_reasons': 'Заметки защитного шлюза',
     'next_meal.candidates': 'Лучшие кандидаты',
@@ -3265,7 +3264,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.save_intake_failed': 'Не удалось сохранить приём: {error}',
     'timeline.meal_macro_line':
         'Итого: белки {protein} г · углеводы {carbs} г · жиры {fat} г',
-    'timeline.conflict_line': 'Проверка конфликта: {severity} · оценка {score}',
+    'timeline.conflict_line':
+        'Проверка конфликта: {severity} · баллы правил {score}',
     'timeline.meal_window_line': 'Окно приёма пищи: {start} - {end}',
     'timeline.next_meal_window_line':
         'Окно следующего приёма пищи: {start} - {end}',
@@ -3327,11 +3327,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'missing.meal_time': 'время приёма пищи',
     'missing.coevent_time': 'время сопутствующего события',
     'missing.thickener_type': 'тип загустителя',
-    'recommend.low_protein': 'Предпочтителен меньший белок',
+    'recommend.low_protein': 'Меньше белка в порции',
     'recommend.protein_window_caution':
-        'Будьте осторожны с высоким белком вблизи окна леводопы',
+        'Больше белка; правила отмечают белок рядом со временем приёма леводопы',
     'recommend.history_low_protein':
-        'Недавняя история предполагает приоритет вариантов с меньшим содержанием белка',
+        'Меньше белка, чем в недавно записанных приёмах пищи',
     'recommend.culture_match':
         'Соответствует текущему региональному шаблону питания',
     'recommend.fallback_chain':
@@ -3691,20 +3691,20 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.open_next_meal': 'Otwórz następny posiłek',
     'library.my_medications': 'Moje leki',
     'library.catalog': 'Żywność i leki',
-    'next_meal.title': 'Rekomendacja następnego posiłku',
+    'next_meal.title': 'Porównanie produktów na następny posiłek',
     'next_meal.subtitle':
         'Wybierz przewidywaną godzinę następnego posiłku. Zachowawcza ścieżka reguł utrzymuje kolejność kandydatów; model mechanistyczny dodaje tylko edukacyjny ślad nakładania w czasie i nie zmienia kolejności. Lokalna AI to osobny, opcjonalny moduł listy bezpiecznej.',
     'next_meal.input_time': 'Planowana godzina następnego posiłku',
     'next_meal.use_local_ai': 'Poleruj tekst lokalną AI (opcjonalnie)',
     'next_meal.use_local_ai_help':
         'Wywołuje tylko Ollama/llama.cpp na localhost, aby ponownie uszeregować i przepisać wyjaśnienia kandydatów już zatwierdzonych przez silnik; wraca do ścieżki zachowawczej, gdy bramka bezpieczeństwa zablokuje.',
-    'next_meal.generate': 'Wygeneruj rekomendację',
+    'next_meal.generate': 'Porównaj produkty',
     'next_meal.generating': 'Generowanie…',
     'next_meal.empty':
-        'Ustaw planowany czas i dotknij "Wygeneruj rekomendację"; silnik dokona ponownej oceny dla tego okna.',
+        'Ustaw planowany czas i dotknij "Porównaj produkty"; reguły porównają je ponownie dla tego okna.',
     'next_meal.why_these': 'Dlaczego te propozycje',
     'next_meal.ai_polished': 'Wypolerowano przez lokalną AI',
-    'next_meal.conservative_engine': 'Ścieżka zachowawcza silnika konfliktów',
+    'next_meal.conservative_engine': 'Lista oparta na regułach',
     'next_meal.recommendation_path': 'Ścieżka rekomendacji',
     'next_meal.gate_reasons': 'Notatki bramki bezpieczeństwa',
     'next_meal.candidates': 'Najlepsi kandydaci',
@@ -3775,7 +3775,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.save_intake_failed': 'Nie udało się zapisać przyjęcia: {error}',
     'timeline.meal_macro_line':
         'Razem: białko {protein} g · węglowodany {carbs} g · tłuszcz {fat} g',
-    'timeline.conflict_line': 'Przegląd konfliktu: {severity} · wynik {score}',
+    'timeline.conflict_line':
+        'Przegląd konfliktu: {severity} · punkty reguł {score}',
     'timeline.meal_window_line': 'Okno posiłku: {start} - {end}',
     'timeline.next_meal_window_line':
         'Okno następnego posiłku: {start} - {end}',
@@ -3836,11 +3837,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'missing.meal_time': 'czas posiłku',
     'missing.coevent_time': 'czas współzdarzenia',
     'missing.thickener_type': 'typ zagęstnika',
-    'recommend.low_protein': 'Preferowana niższa zawartość białka',
+    'recommend.low_protein': 'Mniej białka w porcji',
     'recommend.protein_window_caution':
-        'Zachowaj ostrożność z większą ilością białka w pobliżu okna lewodopy',
+        'Więcej białka; reguły oznaczają białko w pobliżu pory przyjęcia lewodopy',
     'recommend.history_low_protein':
-        'Niedawna historia sugeruje priorytet opcji z mniejszą zawartością białka',
+        'Mniej białka niż w ostatnio zapisanych posiłkach',
     'recommend.culture_match':
         'Pasuje do bieżącego regionalnego szablonu diety',
     'recommend.fallback_chain':
@@ -4190,7 +4191,7 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.open_next_meal': 'فتح الوجبة التالية',
     'library.my_medications': 'أدويتي',
     'library.catalog': 'الأطعمة والأدوية',
-    'next_meal.title': 'توصية الوجبة التالية',
+    'next_meal.title': 'مقارنة الأطعمة للوجبة التالية',
     'next_meal.subtitle':
         'حدد الوقت المتوقع للوجبة التالية. يحافظ مسار القواعد المحافظ على ترتيب المرشحات؛ ولا يضيف النموذج الآلي إلا أثرًا تعليميًا للتداخل الزمني ولا يعيد الترتيب. الذكاء الاصطناعي المحلي أداة منفصلة واختيارية لإعادة ترتيب القائمة الآمنة.',
     'next_meal.input_time': 'الوقت المتوقع للوجبة التالية',
@@ -4198,13 +4199,13 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
         'تلميع الصياغة بالذكاء الاصطناعي المحلي (اختياري)',
     'next_meal.use_local_ai_help':
         'يستدعي فقط Ollama/llama.cpp على localhost لإعادة الترتيب وإعادة كتابة شرح المرشحات التي اعتمدها المحرّك مسبقًا؛ ويعود إلى المسار المحافظ عندما تحجبه بوابة الأمان.',
-    'next_meal.generate': 'إنشاء التوصية',
+    'next_meal.generate': 'قارن الأطعمة',
     'next_meal.generating': 'جارٍ الإنشاء…',
     'next_meal.empty':
-        'حدد الوقت المتوقع واضغط «إنشاء التوصية»؛ سيعيد المحرّك التقييم لتلك النافذة.',
+        'حدد الوقت المتوقع واضغط «قارن الأطعمة»؛ ستعيد القواعد المقارنة لتلك النافذة.',
     'next_meal.why_these': 'لماذا هذه الخيارات',
     'next_meal.ai_polished': 'تم التلميع بواسطة الذكاء الاصطناعي المحلي',
-    'next_meal.conservative_engine': 'المسار المحافظ لمحرّك التعارض',
+    'next_meal.conservative_engine': 'قائمة قائمة على القواعد',
     'next_meal.recommendation_path': 'مسار التوصية',
     'next_meal.gate_reasons': 'ملاحظات بوابة الأمان',
     'next_meal.candidates': 'أفضل المرشحات',
@@ -4273,7 +4274,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.save_intake_failed': 'فشل حفظ الجرعة: {error}',
     'timeline.meal_macro_line':
         'الإجمالي: بروتين {protein} جم · كربوهيدرات {carbs} جم · دهون {fat} جم',
-    'timeline.conflict_line': 'مراجعة التعارض: {severity} · النتيجة {score}',
+    'timeline.conflict_line':
+        'مراجعة التعارض: {severity} · نقاط القواعد {score}',
     'timeline.meal_window_line': 'نافذة الوجبة: {start} - {end}',
     'timeline.next_meal_window_line': 'نافذة الوجبة التالية: {start} - {end}',
     'timeline.nearest_medication_line': 'أقرب دواء: {name} ({distance})',
@@ -4332,11 +4334,10 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'missing.meal_time': 'وقت الوجبة',
     'missing.coevent_time': 'وقت الحدث المرافق',
     'missing.thickener_type': 'نوع المثخّن',
-    'recommend.low_protein': 'يفضّل البروتين الأقل',
+    'recommend.low_protein': 'بروتين أقل في الحصة',
     'recommend.protein_window_caution':
-        'احذر من البروتين العالي قرب نافذة الليفودوبا',
-    'recommend.history_low_protein':
-        'يقترح السجل الأخير إعطاء الأولوية لخيارات أقل بروتينًا',
+        'بروتين أعلى؛ تشير القواعد إلى البروتين قرب موعد الليفودوبا',
+    'recommend.history_low_protein': 'بروتين أقل من وجباتك المسجلة مؤخرًا',
     'recommend.culture_match': 'يتطابق مع قالب الحمية الإقليمي الحالي',
     'recommend.fallback_chain':
         'تستخدم معرفة الأطعمة لهذه المنطقة سلسلة احتياطية',

@@ -1014,21 +1014,21 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'observatory.stage.decide': '3 · 决策、安全门与排序',
     'observatory.stage.resolve': '4 · 身份与证据解析',
     'observatory.stage.explain': '5 · 基于来源进行解释',
-    'next_meal.title': '下餐推荐',
+    'next_meal.title': '下一餐食物对比',
     'next_meal.subtitle':
         '先选好预计下一餐的时间。应用会用教育性规则比较目录中的食物，并在每样食物旁说明原因。这些只是帮助了解规则的示例，不是饮食建议。',
     'next_meal.input_time': '预计下一餐时间',
     'next_meal.use_local_ai': '用本地 AI 改写文字（可选）',
     'next_meal.use_local_ai_help':
         '只使用本机运行的模型（Ollama 或 llama.cpp）。它可以改写解释文字，并对规则已经筛选过的食物重新排序，但不能改变规则结果。安全检查阻止时，会显示基于规则的列表。',
-    'next_meal.generate': '生成推荐',
+    'next_meal.generate': '对比食物',
     'next_meal.window_title': '你提供的进餐时间窗（分钟）',
     'next_meal.window_help': '时间窗由你设置，只用于生成教育性机制轨迹；模型不会替你决定进餐时间，也不会改变保守推荐顺序。',
     'next_meal.window_none': '无',
     'next_meal.window_minutes': '{minutes} 分钟',
     'next_meal.generating': '生成中…',
-    'next_meal.empty': '设置好下一餐时间后点击「生成推荐」，引擎会按那个时间窗重新评估。',
-    'next_meal.why_these': '为什么是这几样',
+    'next_meal.empty': '设置好下一餐时间后点击「对比食物」，规则会按那个时间窗重新比较。',
+    'next_meal.why_these': '这些食物如何比较',
     'next_meal.ai_polished': '本地 AI 已润色',
     'next_meal.conservative_engine': '基于规则的列表',
     'next_meal.recommendation_path': '推荐路径',
@@ -1037,8 +1037,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         '食物的顺序由规则检查决定。教育性时间模型只附加轨迹，从不改变顺序。开启本地 AI 时，它只能对规则已筛选过的食物重新排序或改写文字，不能改变规则结果。',
     'next_meal.result_boundary':
         '这些食物是目录中的示例，按粗略的规则顺序列出，这个顺序不是经过验证的排名。这不是饮食或用药建议；做决定前请咨询合格的临床医生。',
-    'next_meal.candidates': '候选食物',
-    'next_meal.no_candidates': '当前条件下没有合适的候选食物，请调整时间或检查食物目录。',
+    'next_meal.candidates': '用于对比的食物',
+    'next_meal.no_candidates': '当前设置下没有可对比的食物。可以调整计划时间或扩充食物目录。',
     'next_meal.error': '生成失败',
     'dashboard.title': '概览',
     'dashboard.status': '状态总览',
@@ -1099,7 +1099,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.select_medication_first': '请先选择药品',
     'timeline.save_intake_failed': '保存服药记录失败：{error}',
     'timeline.meal_macro_line': '合计：蛋白 {protein} g · 碳水 {carbs} g · 脂肪 {fat} g',
-    'timeline.conflict_line': '冲突复核：{severity} · 分数 {score}',
+    'timeline.conflict_line': '冲突复核：{severity} · 规则分 {score}',
     'timeline.conflict_awaiting': '冲突复核：暂时无法评估——请补充{missing}',
     'timeline.meal_window_line': '进食时间窗：{start} - {end}',
     'timeline.next_meal_window_line': '下一餐时间窗：{start} - {end}',
@@ -1782,7 +1782,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.low': '低风险',
     'interaction.moderate': '中风险',
     'interaction.high': '高风险',
-    'interaction.score': '分数 {value}',
+    'interaction.score': '规则分 {value}',
     'interaction.analysis_title': '分析',
     'interaction.key_findings': '关键判断',
     'interaction.next_actions': '下一步建议',
@@ -1790,9 +1790,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.awaiting_inputs': '暂时无法评估——请补充{missing}',
     'interaction.awaiting_inputs_short': '暂时无法评估',
     'interaction.how_computed': '这个结果是怎么得出的？',
-    'interaction.how_computed_score': '规则分数：{score}/100',
+    'interaction.how_computed_score': '规则分：{score}（上限 100）',
+    'interaction.how_computed_points_note':
+        '规则分是下列因素的启发式加总，上限为 100。它不是概率；上方的风险标签依据规则决定，而不是这个数字。',
     'interaction.how_computed_awaiting_note':
-        '缺少输入会让这次检查转为需要复核，而这一复核要求占了已存规则分数的大部分。分数保留在这里供查看，上方不把它显示为风险等级。',
+        '缺少输入会让这次检查转为需要复核，而这一复核要求占了已存规则分的大部分。规则分保留在这里供查看，上方不把它显示为风险等级。',
     'copy.interaction_analysis_missing_inputs_also': '另外还缺少{missing}。',
     'interaction.missing_input': '缺少关键输入',
     'interaction.evidence_count': '证据 {count} 条',
@@ -1802,15 +1804,17 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.evidence_source_family': '来源家族',
     'interaction.evidence_doi': 'DOI',
     'interaction.evidence_link': '来源链接',
-    'interaction.action_reschedule_full':
-        '建议把用药与进餐错开：餐前 {before} 分钟、餐后 {after} 分钟再考虑进食。',
-    'interaction.action_reschedule_before': '建议把用药提前至少 {before} 分钟后再进餐。',
-    'interaction.action_reschedule_generic': '建议重新调整给药与进餐时序。',
-    'interaction.action_separate_by_time': '建议至少错开 {minutes} 分钟。',
-    'interaction.action_avoid_food': '建议避免当前高风险食物或食物组合。',
-    'interaction.action_avoid_combination': '建议不要把当前药品与该组合共同使用。',
-    'interaction.action_switch_thickener': '建议改用更合适的增稠剂或先做人工确认。',
-    'interaction.action_manual_review': '当前最安全的下一步是人工复核。',
+    'interaction.action_timing_source':
+        '所引用的来源说明了食物可能如何影响该药物。本应用不设定用药或进餐时间；时间安排的问题请与合格的临床人员一起复核。',
+    'interaction.action_spacing_source':
+        '所引用的来源说明了两者在相近时间使用时可能相互影响。本应用不设定时间安排；相关问题请与合格的临床人员一起复核。',
+    'interaction.action_food_source':
+        '所引用的来源提示该食物或食物组合与该药物同用时需要注意。调整饮食前请先与合格的临床人员一起复核。',
+    'interaction.action_combination_source':
+        '所引用的来源警示该药物不应与该产品混合。两者一起使用前请先咨询合格的临床人员或药师。',
+    'interaction.action_thickener_source':
+        '增稠剂的选择关系到吞咽安全；增稠剂类型请与合格的临床人员或吞咽专业人员一起复核。',
+    'interaction.action_manual_review': '该结果需要合格的临床人员人工复核后再参考。',
     'decision.block': '阻断',
     'decision.require_review': '需人工复核',
     'decision.discourage': '不建议',
@@ -1842,28 +1846,26 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.historical_note': '历史餐次保护：超过 {window} 小时的非连续肠内营养餐次不会触发当前时序风险。',
     'mealcheck.summary': '数据库支持的食物与药品变体检查共发现 {count} 项提示。',
     'mealcheck.analysis':
-        '引擎已将本餐与 {drugCount} 个激活药品进行检查。最高评估严重度为 {severity}，加权分数为 {score}/100。',
+        '引擎已将本餐与 {drugCount} 个激活药品进行检查。最高规则严重度为 {severity}；各评分因素合计 {score} 个启发式规则分。',
     'mealcheck.analysis_protein': '当前食物列表估算的本餐蛋白约为 {protein} g。',
     'mealcheck.analysis_protein_unknown':
         '本餐蛋白信息不完整或来源存在歧义，无法给出确定总量；蛋白数值与时序评分暂不计算。',
     'mealcheck.analysis_highfat': '当前运行时启发式还将这顿饭判定为相对高脂/高热量。',
-    'mealcheck.analysis_scoring': '本次分数由加权因素组成：{factors}。',
+    'mealcheck.analysis_scoring': '规则分由以下因素组成：{factors}。',
     'mealcheck.analysis_dbfacts':
         '当数据库中存在精确导入观测值时，引擎优先使用数据库真实营养值，而不是只依赖内置 seed。',
     'mealcheck.analysis_context_used': '本次判定还纳入了补充剂、增稠剂或肠内营养等额外上下文。',
     'mealcheck.analysis_evidence': '本次判定直接引用了官方标签或已注册证据来源。',
     'mealcheck.analysis_fallback':
         '部分食物变体通过区域 fallback 链解析，说明当前中国区域的权威覆盖仍未完全补齐。',
-    'mealcheck.analysis_manual_review':
-        '由于本次会话中仍缺少关键运行时输入，当前最安全的下一步是人工复核，而不是直接依赖时序建议。',
-    'mealcheck.analysis_followup': '如果你想得到更具体的时序建议，请先补全药物时间和剂量后再运行检查。',
+    'mealcheck.analysis_manual_review': '请先与合格的临床人员一起复核该结果，再作参考。',
+    'mealcheck.analysis_followup': '补全用药时间和剂量后，规则能检查得更完整；结果仍仅供学习，不构成时间安排建议。',
     'mealcheck.score_factor_rule_decision': '规则决定权重',
     'mealcheck.score_factor_levodopa_interference': '左旋多巴干扰权重',
     'mealcheck.score_factor_protein_timing': '蛋白时序惩罚',
     'mealcheck.score_factor_high_fat': '高脂餐修正',
     'mealcheck.score_factor_iron_levodopa': '铁剂-左旋多巴修正',
     'mealcheck.score_factor_enteral_feed': '连续肠内营养修正',
-    'mealcheck.score_factor_evidence': '证据支持修正',
     'mealcheck.drug_fallback': ' 选中的药品变体来自司法辖区 fallback 链。',
     'mealcheck.food_fallback': ' 部分食物变体来自司法辖区 fallback 链。',
     'mealcheck.db_facts': ' 若可用，已优先使用数据库中的真实食物营养事实。',
@@ -1888,9 +1890,9 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'legacy.severity.low': '低风险',
     'legacy.analysis_followup': '请将其视为轻量级筛查结果；如果需要更具体的建议，请确认精确用药时间。',
     'legacy.analysis_tyramine': '这顿饭还包含在内置目录中被标记为较高酪胺风险的食物。',
-    'recommend.low_protein': '优先选择较低蛋白',
-    'recommend.protein_window_caution': '左旋多巴时间窗附近需谨慎选择高蛋白食物',
-    'recommend.history_low_protein': '结合近期记录，建议优先低蛋白选项',
+    'recommend.low_protein': '每份蛋白较低',
+    'recommend.protein_window_caution': '蛋白较高；规则会标记左旋多巴时间附近的蛋白',
+    'recommend.history_low_protein': '蛋白低于你近期记录的餐食',
     'recommend.culture_match': '符合当前地区饮食模板',
     'recommend.fallback_chain': '当前地区食物知识正在使用 fallback 链',
     'recommend.general_friendly': '由规则检查列出',
@@ -1936,7 +1938,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.missing_input_unknown': '关键信息',
     'copy.interaction_summary_missing_inputs':
         '暂时无法评估：缺少{missing}。补充之前，应用无法判断这顿饭与这种药的时间关系。这既不代表这顿饭没有问题，也不代表这顿饭本身有问题。',
-    'copy.interaction_summary_high': '当前检查结果偏高风险（{score}/100），请先查看原因和下一步操作。',
+    'copy.interaction_summary_high':
+        '规则对这次检查给出了高严重度的提示。请与合格的临床人员一起查看下方原因；这不是医疗建议。',
     'copy.interaction_analysis_missing_inputs':
         '这不是在说这顿饭本身一定危险，而是因为缺少{missing}，无法安全计算食物与药物的时间关系。',
     'copy.interaction_analysis_protein':
@@ -2759,14 +2762,14 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'observatory.stage.decide': '3 · Decide, gate, and rank',
     'observatory.stage.resolve': '4 · Resolve identity and evidence',
     'observatory.stage.explain': '5 · Explain with provenance',
-    'next_meal.title': 'Next-meal recommendation',
+    'next_meal.title': 'Compare next-meal foods',
     'next_meal.subtitle':
         'Pick when you plan to eat next. The app compares foods from its catalog against its educational rules and shows the reasons next to each one. These are examples for exploring the rules, not advice about what to eat.',
     'next_meal.input_time': 'Planned next-meal time',
     'next_meal.use_local_ai': 'Reword with local AI (optional)',
     'next_meal.use_local_ai_help':
         'Uses only a model running on this computer (Ollama or llama.cpp). It may reword explanations and reorder foods the rules have already screened, but it cannot change rule results. If a safety check blocks it, the rule-based list is shown instead.',
-    'next_meal.generate': 'Generate recommendation',
+    'next_meal.generate': 'Compare foods',
     'next_meal.window_title': 'Meal-time window you provide (minutes)',
     'next_meal.window_help':
         'You set the window. It enables an educational mechanistic trace; the model neither chooses your meal time nor changes the conservative recommendation order.',
@@ -2774,8 +2777,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'next_meal.window_minutes': '{minutes} min',
     'next_meal.generating': 'Generating…',
     'next_meal.empty':
-        'Set a planned time and tap "Generate recommendation"; the engine will re-evaluate against that window.',
-    'next_meal.why_these': 'Why these picks',
+        'Set a planned time and tap "Compare foods"; the rules will re-compare against that window.',
+    'next_meal.why_these': 'How these foods compare',
     'next_meal.ai_polished': 'Polished by local AI',
     'next_meal.conservative_engine': 'Rule-based list',
     'next_meal.recommendation_path': 'Recommendation path',
@@ -2784,9 +2787,9 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'The rule-based check sets the order of these foods. The educational timing model only adds a trace; it never changes the order. Local AI, when turned on, may only reorder or reword foods the rules have already screened and cannot change rule results.',
     'next_meal.result_boundary':
         'These foods are examples from the catalog, in a rough rule-based order that is not a validated ranking. This is not meal or medication advice; review decisions with a qualified clinician.',
-    'next_meal.candidates': 'Top candidates',
+    'next_meal.candidates': 'Foods to compare',
     'next_meal.no_candidates':
-        'No suitable candidate under the current constraints. Adjust the planned time or expand the food catalog.',
+        'No foods to compare under the current settings. Adjust the planned time or expand the food catalog.',
     'next_meal.error': 'Generation failed',
     'dashboard.title': 'Dashboard',
     'dashboard.status': 'Overview',
@@ -2851,7 +2854,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.save_intake_failed': 'Failed to save intake: {error}',
     'timeline.meal_macro_line':
         'Totals: protein {protein} g · carbs {carbs} g · fat {fat} g',
-    'timeline.conflict_line': 'Conflict review: {severity} · score {score}',
+    'timeline.conflict_line':
+        'Conflict review: {severity} · {score} rule points',
     'timeline.conflict_awaiting':
         "Conflict review: can't assess yet — add {missing}",
     'timeline.meal_window_line': 'Meal window: {start} - {end}',
@@ -3669,7 +3673,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.low': 'Low risk',
     'interaction.moderate': 'Moderate risk',
     'interaction.high': 'High risk',
-    'interaction.score': 'Score {value}',
+    'interaction.score': '{value} rule points',
     'interaction.analysis_title': 'Analysis',
     'interaction.key_findings': 'Key findings',
     'interaction.next_actions': 'Next actions',
@@ -3677,9 +3681,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.awaiting_inputs': "Can't assess yet — add {missing}",
     'interaction.awaiting_inputs_short': "Can't assess yet",
     'interaction.how_computed': 'How was this computed?',
-    'interaction.how_computed_score': 'Rule score: {score}/100',
+    'interaction.how_computed_score': 'Rule points: {score} (capped at 100)',
+    'interaction.how_computed_points_note':
+        'Rule points are a heuristic sum of the factors below, capped at 100. They are not a probability; the risk label above follows the rule decisions, not this number.',
     'interaction.how_computed_awaiting_note':
-        'Missing inputs send this check to review, and that review adds most of the stored rule score. The score is kept here for inspection; it is not shown above as a risk level.',
+        'Missing inputs send this check to review, and that review adds most of the stored rule points. The points are kept here for inspection; they are not shown above as a risk level.',
     'copy.interaction_analysis_missing_inputs_also':
         'Some required medication information is also missing: {missing}.',
     'interaction.missing_input': 'Missing critical input',
@@ -3690,22 +3696,18 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.evidence_source_family': 'Source family',
     'interaction.evidence_doi': 'DOI',
     'interaction.evidence_link': 'Source link',
-    'interaction.action_reschedule_full':
-        'Consider separating medication and meals by about {before} minutes before meals and {after} minutes after meals.',
-    'interaction.action_reschedule_before':
-        'Consider moving medication at least {before} minutes before eating.',
-    'interaction.action_reschedule_generic':
-        'Consider adjusting medication and meal timing.',
-    'interaction.action_separate_by_time':
-        'Consider separating the two events by at least {minutes} minutes.',
-    'interaction.action_avoid_food':
-        'Consider avoiding the current high-risk food or food combination.',
-    'interaction.action_avoid_combination':
-        'Consider avoiding this medication-food combination.',
-    'interaction.action_switch_thickener':
-        'Consider switching to a safer thickener or confirming manually first.',
+    'interaction.action_timing_source':
+        'The cited source describes how food may affect this medication. This app does not set medication or meal times; review timing questions with a qualified clinician.',
+    'interaction.action_spacing_source':
+        'The cited source describes an interaction when these are taken close together. This app does not set a schedule; review timing questions with a qualified clinician.',
+    'interaction.action_food_source':
+        'The cited source cautions about this food or food combination with this medication. Review it with a qualified clinician before making any diet change.',
+    'interaction.action_combination_source':
+        'The cited source warns against mixing this medication with this product. Check with a qualified clinician or pharmacist before using them together.',
+    'interaction.action_thickener_source':
+        'Thickener choice affects swallowing safety; review the thickener type with a qualified clinician or swallowing specialist.',
     'interaction.action_manual_review':
-        'The safest next step is manual review.',
+        'This result needs manual review by a qualified clinician before it is relied on.',
     'decision.block': 'Block',
     'decision.require_review': 'Require review',
     'decision.discourage': 'Discourage',
@@ -3744,7 +3746,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.summary':
         'Database-backed food and drug variant checks found {count} advisory items.',
     'mealcheck.analysis':
-        'The engine checked this meal against {drugCount} active medication(s). The highest evaluated severity was {severity}, with a score of {score}/100.',
+        'The engine checked this meal against {drugCount} active medication(s). The highest rule severity was {severity}; the score factors add up to {score} heuristic rule points.',
     'mealcheck.analysis_protein':
         'Estimated meal protein from the current item list was about {protein} g.',
     'mealcheck.analysis_protein_unknown':
@@ -3752,7 +3754,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis_highfat':
         'The current operational heuristic also flagged this meal as relatively high fat/high calorie.',
     'mealcheck.analysis_scoring':
-        'The score is weighted from these factors: {factors}.',
+        'The rule points come from these factors: {factors}.',
     'mealcheck.analysis_dbfacts':
         'When exact imported observations were available, the engine used database nutrient facts instead of only in-app seed values.',
     'mealcheck.analysis_context_used':
@@ -3762,9 +3764,9 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis_fallback':
         'Some food variants were resolved through a regional fallback chain, so local authoritative coverage is still incomplete for part of this check.',
     'mealcheck.analysis_manual_review':
-        'Because key runtime inputs are still incomplete in this session, the safest next step is manual review before relying on timing guidance.',
+        'Review this result with a qualified clinician before relying on it.',
     'mealcheck.analysis_followup':
-        'If you want a more specific timing recommendation, complete the medication time and dose fields before running the check again.',
+        'Adding the medication time and dose lets the rules check more of this meal. The result stays educational and is not timing advice.',
     'mealcheck.score_factor_rule_decision': 'Rule decision weight',
     'mealcheck.score_factor_levodopa_interference':
         'Levodopa interference weight',
@@ -3772,7 +3774,6 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.score_factor_high_fat': 'High-fat meal modifier',
     'mealcheck.score_factor_iron_levodopa': 'Iron-levodopa modifier',
     'mealcheck.score_factor_enteral_feed': 'Continuous enteral feed modifier',
-    'mealcheck.score_factor_evidence': 'Evidence support modifier',
     'mealcheck.drug_fallback':
         ' The selected drug variant came from a jurisdiction fallback chain.',
     'mealcheck.food_fallback':
@@ -3820,11 +3821,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'legacy.severity.high': 'High risk',
     'legacy.severity.moderate': 'Moderate risk',
     'legacy.severity.low': 'Low risk',
-    'recommend.low_protein': 'Lower protein preferred',
+    'recommend.low_protein': 'Lower in protein per serving',
     'recommend.protein_window_caution':
-        'Use caution with higher protein near the levodopa window',
+        'Higher in protein; the rules flag protein near a levodopa time',
     'recommend.history_low_protein':
-        'Recent history suggests prioritizing lower-protein options',
+        'Lower in protein than your recent logged meals',
     'recommend.culture_match': 'Matches the current regional diet template',
     'recommend.fallback_chain':
         'Food knowledge for this region is using a fallback chain',
@@ -3891,7 +3892,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.interaction_summary_missing_inputs':
         "Can't assess yet because required medication information is missing: {missing}. Until it is added, the app cannot check how this meal's timing relates to the medication. This is not an all-clear, and it does not mean the meal itself is a problem.",
     'copy.interaction_summary_high':
-        'This check is currently high risk ({score}/100). Review the reason and next step before relying on timing guidance.',
+        'The rules raised a high-severity caution for this check. Review the reasons below with a qualified clinician; this is not medical advice.',
     'copy.interaction_analysis_missing_inputs':
         'This does not mean the meal itself is definitely dangerous. It means required medication information is missing: {missing}. The timing relationship with the medication cannot be evaluated safely until this is completed.',
     'copy.interaction_analysis_protein':
@@ -4201,14 +4202,14 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.open_next_meal': 'Ouvrir le repas suivant',
     'library.my_medications': 'Mes médicaments',
     'library.catalog': 'Aliments et médicaments',
-    'next_meal.title': 'Recommandation du prochain repas',
+    'next_meal.title': 'Comparer des aliments pour le prochain repas',
     'next_meal.subtitle':
         'Choisissez l\'heure prevue du prochain repas. Le chemin de regles conservateur garde l\'ordre des candidats ; le modele mecanistique ajoute seulement une trace temporelle educative et ne reclasse rien. L\'IA locale est un reclassement optionnel et separe sur liste sure.',
     'next_meal.input_time': 'Heure prevue du prochain repas',
     'next_meal.use_local_ai': 'Polir le texte avec l\'IA locale (optionnel)',
     'next_meal.use_local_ai_help':
         'Appelle uniquement Ollama/llama.cpp sur localhost pour reclasser et reformuler les explications des candidats deja approuves par le moteur ; retombe sur le chemin conservateur si la barriere de securite bloque.',
-    'next_meal.generate': 'Generer la recommandation',
+    'next_meal.generate': 'Comparer les aliments',
     'next_meal.window_title': 'Fenetre de repas que vous fournissez (minutes)',
     'next_meal.window_help':
         "Vous definissez la fenetre. Elle active une trace mecanistique educative ; le modele ne choisit pas l'heure du repas et ne change pas l'ordre conservateur des recommandations.",
@@ -4216,10 +4217,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'next_meal.window_minutes': '{minutes} min',
     'next_meal.generating': 'Generation en cours…',
     'next_meal.empty':
-        'Definissez l\'heure prevue puis touchez « Generer la recommandation » ; le moteur reevaluera pour cette fenetre.',
+        'Definissez l\'heure prevue puis touchez « Comparer les aliments » ; les regles compareront de nouveau pour cette fenetre.',
     'next_meal.why_these': 'Pourquoi ces choix',
     'next_meal.ai_polished': 'Texte poli par l\'IA locale',
-    'next_meal.conservative_engine': 'Chemin conservateur du moteur de conflit',
+    'next_meal.conservative_engine': 'Liste basee sur les regles',
     'next_meal.recommendation_path': 'Chemin de recommandation',
     'next_meal.gate_reasons': 'Notes de la barriere de securite',
     'next_meal.how_computed_body':
@@ -4739,7 +4740,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.low': 'Risque faible',
     'interaction.moderate': 'Risque modere',
     'interaction.high': 'Risque eleve',
-    'interaction.score': 'Score {value}',
+    'interaction.score': '{value} points de regle',
     'interaction.analysis_title': 'Analyse',
     'interaction.key_findings': 'Constats cles',
     'interaction.next_actions': 'Actions suivantes',
@@ -4748,9 +4749,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         "Evaluation impossible pour l'instant — ajoutez {missing}",
     'interaction.awaiting_inputs_short': "Evaluation impossible pour l'instant",
     'interaction.how_computed': 'Comment ce resultat a-t-il ete calcule ?',
-    'interaction.how_computed_score': 'Score des regles : {score}/100',
+    'interaction.how_computed_score': 'Points de regle : {score} (plafond 100)',
+    'interaction.how_computed_points_note':
+        "Les points de regle sont une somme heuristique des facteurs ci-dessous, plafonnee a 100. Ce n'est pas une probabilite ; le niveau de risque affiche plus haut suit les decisions des regles, pas ce nombre.",
     'interaction.how_computed_awaiting_note':
-        "Les donnees manquantes envoient ce controle en revue, et cette revue compte pour l'essentiel du score enregistre. Le score reste visible ici pour inspection ; il n'est pas affiche plus haut comme niveau de risque.",
+        "Les donnees manquantes envoient ce controle en revue, et cette revue compte pour l'essentiel des points de regle enregistres. Les points restent visibles ici pour inspection ; ils ne sont pas affiches plus haut comme niveau de risque.",
     'copy.interaction_analysis_missing_inputs_also':
         'Certaines informations requises sur le medicament manquent aussi : {missing}.',
     'interaction.missing_input': 'Entree critique manquante',
@@ -4761,22 +4764,18 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.evidence_source_family': 'Famille de source',
     'interaction.evidence_doi': 'DOI',
     'interaction.evidence_link': 'Lien source',
-    'interaction.action_reschedule_full':
-        'Envisagez de separer la prise du medicament et le repas d environ {before} minutes avant le repas et {after} minutes apres.',
-    'interaction.action_reschedule_before':
-        'Envisagez de prendre le medicament au moins {before} minutes avant de manger.',
-    'interaction.action_reschedule_generic':
-        'Envisagez d ajuster l horaire du medicament et du repas.',
-    'interaction.action_separate_by_time':
-        'Envisagez un decalage d au moins {minutes} minutes.',
-    'interaction.action_avoid_food':
-        'Envisagez d eviter cet aliment ou cette combinaison a haut risque.',
-    'interaction.action_avoid_combination':
-        'Envisagez d eviter cette combinaison medicament-aliment.',
-    'interaction.action_switch_thickener':
-        'Envisagez de changer d epaississant ou de confirmer manuellement.',
+    'interaction.action_timing_source':
+        "La source citee decrit comment l'alimentation peut influencer ce medicament. L'application ne fixe pas les horaires de prise ou de repas ; revoyez les questions d'horaire avec un clinicien qualifie.",
+    'interaction.action_spacing_source':
+        "La source citee decrit une interaction lorsque ces deux elements sont pris a des moments proches. L'application ne fixe pas d'horaire ; revoyez ces questions avec un clinicien qualifie.",
+    'interaction.action_food_source':
+        'La source citee signale une precaution pour cet aliment ou cette combinaison avec ce medicament. Revoyez-la avec un clinicien qualifie avant tout changement alimentaire.',
+    'interaction.action_combination_source':
+        'La source citee met en garde contre le melange de ce medicament avec ce produit. Consultez un clinicien qualifie ou un pharmacien avant de les utiliser ensemble.',
+    'interaction.action_thickener_source':
+        "Le choix de l'epaississant touche la securite de la deglutition ; revoyez le type d'epaississant avec un clinicien qualifie ou un specialiste de la deglutition.",
     'interaction.action_manual_review':
-        'L etape la plus sure est une revue manuelle.',
+        "Ce resultat necessite une revue manuelle par un clinicien qualifie avant d'etre utilise.",
     'decision.block': 'Bloquer',
     'decision.require_review': 'Revue requise',
     'decision.discourage': 'Deconseille',
@@ -4816,7 +4815,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.summary':
         'La verification des variantes alimentaires et medicamenteuses a produit {count} alertes.',
     'mealcheck.analysis':
-        'Le moteur a verifie ce repas par rapport a {drugCount} medicament(s) actif(s). Le niveau de severite le plus eleve evalue etait {severity}, avec un score de {score}/100.',
+        'Le moteur a verifie ce repas par rapport a {drugCount} medicament(s) actif(s). La severite de regle la plus elevee etait {severity} ; les facteurs totalisent {score} points de regle heuristiques.',
     'mealcheck.analysis_protein':
         'La quantite de proteines estimee a partir de la liste actuelle des aliments etait denviron {protein} g.',
     'mealcheck.analysis_protein_unknown':
@@ -4824,7 +4823,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis_highfat':
         'Lheuristique operationnelle actuelle a aussi classe ce repas comme relativement riche en lipides / calories.',
     'mealcheck.analysis_scoring':
-        'Le score est pondere a partir de ces facteurs : {factors}.',
+        'Les points de regle viennent de ces facteurs : {factors}.',
     'mealcheck.analysis_dbfacts':
         'Lorsque des observations importees exactes etaient disponibles, le moteur a utilise les valeurs nutritionnelles de la base au lieu de se limiter aux seeds internes.',
     'mealcheck.analysis_evidence':
@@ -4832,9 +4831,9 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis_fallback':
         'Certaines variantes alimentaires ont ete resolues via une chaine de secours regionale; la couverture faisant autorite reste donc partiellement incomplete pour ce controle.',
     'mealcheck.analysis_manual_review':
-        'Comme des entrees runtime critiques restent incompletes dans cette session, letape la plus sure est une revue manuelle avant de se fier a une recommandation de synchronisation.',
+        'Revoyez ce resultat avec un clinicien qualifie avant de vous y fier.',
     'mealcheck.analysis_followup':
-        'Si vous voulez une recommandation horaire plus precise, renseignez dabord lheure et la dose du medicament puis relancez le controle.',
+        "Renseigner l'heure et la dose du medicament permet aux regles de verifier davantage ce repas. Le resultat reste educatif et ne constitue pas un conseil d'horaire.",
     'mealcheck.score_factor_rule_decision': 'Poids de la decision de regle',
     'mealcheck.score_factor_levodopa_interference':
         'Poids d interference levodopa',
@@ -4843,7 +4842,6 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.score_factor_iron_levodopa': 'Modificateur fer-levodopa',
     'mealcheck.score_factor_enteral_feed':
         'Modificateur nutrition enterale continue',
-    'mealcheck.score_factor_evidence': 'Modificateur preuves',
     'mealcheck.drug_fallback':
         ' La variante de medicament selectionnee provient dune chaine de secours de juridiction.',
     'mealcheck.food_fallback':
@@ -4894,11 +4892,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'legacy.severity.high': 'Risque eleve',
     'legacy.severity.moderate': 'Risque modere',
     'legacy.severity.low': 'Risque faible',
-    'recommend.low_protein': 'Option plus faible en proteines',
+    'recommend.low_protein': 'Plus faible en proteines par portion',
     'recommend.protein_window_caution':
-        'Attention aux aliments plus proteines pres de la fenetre levodopa',
+        "Plus riche en proteines ; les regles signalent les proteines proches d'une prise de levodopa",
     'recommend.history_low_protein':
-        'Lhistorique recent suggere de privilegier des options plus faibles en proteines',
+        'Moins de proteines que vos repas recents enregistres',
     'recommend.culture_match':
         'Correspond au modele alimentaire regional actuel',
     'recommend.fallback_chain':
@@ -4965,7 +4963,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.interaction_summary_missing_inputs':
         "Evaluation impossible pour l'instant : {missing} manque. Tant que ce n'est pas ajoute, l'app ne peut pas verifier le lien entre l'heure de ce repas et le medicament. Ce n'est ni un feu vert, ni un signe que le repas lui-meme pose probleme.",
     'copy.interaction_summary_high':
-        'Ce controle indique actuellement un risque eleve ({score}/100). Verifiez la raison et letape suivante.',
+        "Les regles ont souleve une mise en garde de severite elevee pour ce controle. Revoyez les raisons ci-dessous avec un clinicien qualifie ; ce n'est pas un avis medical.",
     'copy.interaction_analysis_missing_inputs':
         'Cela ne signifie pas que le repas est forcement dangereux. {missing} manque, donc la relation temporelle avec le medicament ne peut pas etre evaluee surement.',
     'copy.interaction_analysis_protein':
@@ -5280,24 +5278,24 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.open_next_meal': '次の食事を開く',
     'library.my_medications': '自分の薬',
     'library.catalog': '食品と薬',
-    'next_meal.title': '次の食事のおすすめ',
+    'next_meal.title': '次の食事の食品比較',
     'next_meal.subtitle':
         '次に食べる予定時刻を選んでください。保守的なルール経路は候補順を維持し、機序モデルは教育用の時間重なりトレースだけを追加して並べ替えません。ローカル AI は別系統の任意の安全リスト内再ランクです。',
     'next_meal.input_time': '次の食事の予定時刻',
     'next_meal.use_local_ai': 'ローカル AI で表現を磨く（任意）',
     'next_meal.use_local_ai_help':
         'localhost の Ollama/llama.cpp だけを呼び出し、エンジンが既に通した候補の再並べ替えと説明文の書き直しを行います。安全ゲートがブロックした場合は保守経路に自動で戻ります。',
-    'next_meal.generate': 'おすすめを生成',
+    'next_meal.generate': '食品を比較',
     'next_meal.window_title': '利用者が指定する食事時間枠（分）',
     'next_meal.window_help':
         '時間枠は利用者が設定し、教育用の機序トレースにだけ使われます。モデルは食事時刻を決めず、保守的な推薦順も変更しません。',
     'next_meal.window_none': 'なし',
     'next_meal.window_minutes': '{minutes} 分',
     'next_meal.generating': '生成中…',
-    'next_meal.empty': '予定時刻を設定して「おすすめを生成」をタップすると、その時間枠で再評価されます。',
+    'next_meal.empty': '予定時刻を設定して「食品を比較」をタップすると、その時間枠で比較し直します。',
     'next_meal.why_these': 'この選び方の理由',
     'next_meal.ai_polished': 'ローカル AI が文章を磨きました',
-    'next_meal.conservative_engine': 'コンフリクトエンジンの保守経路',
+    'next_meal.conservative_engine': 'ルールに基づく一覧',
     'next_meal.recommendation_path': '推奨経路',
     'next_meal.gate_reasons': '安全ゲートのメモ',
     'next_meal.how_computed_body':
@@ -5748,7 +5746,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.low': '低リスク',
     'interaction.moderate': '中リスク',
     'interaction.high': '高リスク',
-    'interaction.score': 'スコア {value}',
+    'interaction.score': 'ルール点数 {value}',
     'interaction.analysis_title': '分析',
     'interaction.key_findings': '主要判断',
     'interaction.next_actions': '次の対応',
@@ -5756,9 +5754,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.awaiting_inputs': 'まだ評価できません — {missing} を入力してください',
     'interaction.awaiting_inputs_short': 'まだ評価できません',
     'interaction.how_computed': 'この結果はどう計算されましたか？',
-    'interaction.how_computed_score': 'ルールスコア：{score}/100',
+    'interaction.how_computed_score': 'ルール点数：{score}（上限 100）',
+    'interaction.how_computed_points_note':
+        'ルール点数は下の要因を足し合わせた経験的な目安で、上限は 100 です。確率ではありません。上のリスク表示はルールの判定に基づき、この数値には基づきません。',
     'interaction.how_computed_awaiting_note':
-        '入力不足によりこの確認はレビュー扱いになり、保存されたルールスコアの大部分はそのレビューによるものです。スコアは確認用にここに残し、上ではリスクの程度として表示しません。',
+        '入力不足によりこの確認はレビュー扱いになり、保存されたルール点数の大部分はそのレビューによるものです。点数は確認用にここに残し、上ではリスクの程度として表示しません。',
     'copy.interaction_analysis_missing_inputs_also':
         '薬に関する必要な情報も一部不足しています：{missing}。',
     'interaction.missing_input': '重要入力が不足',
@@ -5769,17 +5769,18 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'interaction.evidence_source_family': 'ソース系統',
     'interaction.evidence_doi': 'DOI',
     'interaction.evidence_link': 'ソースリンク',
-    'interaction.action_reschedule_full':
-        '服薬と食事は、食前 {before} 分・食後 {after} 分程度あけることを検討してください。',
-    'interaction.action_reschedule_before':
-        '食事前に少なくとも {before} 分あけて服薬することを検討してください。',
-    'interaction.action_reschedule_generic': '服薬と食事の時刻調整を検討してください。',
-    'interaction.action_separate_by_time':
-        '少なくとも {minutes} 分は間隔をあけることを検討してください。',
-    'interaction.action_avoid_food': '現在の高リスク食品または食品組み合わせの回避を検討してください。',
-    'interaction.action_avoid_combination': 'この薬と食品の組み合わせは避けることを検討してください。',
-    'interaction.action_switch_thickener': 'より安全な増粘剤への切替え、または手動確認を検討してください。',
-    'interaction.action_manual_review': '最も安全な次の一手は手動レビューです。',
+    'interaction.action_timing_source':
+        '引用された情報源には、食事がこの薬に与えうる影響が記載されています。本アプリは服薬や食事の時刻を決めません。時刻に関する疑問は資格のある医療専門職と確認してください。',
+    'interaction.action_spacing_source':
+        '引用された情報源には、両者を近い時間に使った場合の相互作用が記載されています。本アプリは時刻を決めません。資格のある医療専門職と確認してください。',
+    'interaction.action_food_source':
+        '引用された情報源は、この食品または食品の組み合わせとこの薬について注意を示しています。食事を変える前に資格のある医療専門職と確認してください。',
+    'interaction.action_combination_source':
+        '引用された情報源は、この薬とこの製品を混ぜないよう警告しています。併用の前に資格のある医療専門職または薬剤師に相談してください。',
+    'interaction.action_thickener_source':
+        '増粘剤の選択は嚥下の安全に関わります。増粘剤の種類は資格のある医療専門職または嚥下の専門家と確認してください。',
+    'interaction.action_manual_review':
+        'この結果は、参考にする前に資格のある医療専門職による手動レビューが必要です。',
     'decision.block': '禁止',
     'decision.require_review': '要確認',
     'decision.discourage': '非推奨',
@@ -5813,13 +5814,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         '履歴食ガード：連続経腸栄養ではない食事は、{window} 時間を超えると現在の時系列リスクを発火しません。',
     'mealcheck.summary': 'データベース由来の食品・薬バリアントチェックで {count} 件の注意が見つかりました。',
     'mealcheck.analysis':
-        'この食事は {drugCount} 件の有効薬に対して評価されました。最も高い評価重症度は {severity} で、スコアは {score}/100 です。',
+        'この食事は {drugCount} 件の有効薬に対して評価されました。最も高いルール重症度は {severity} で、要因の合計は {score} ルール点数（経験的な目安）です。',
     'mealcheck.analysis_protein': '現在の食品一覧から推定された食事たんぱく質量は約 {protein} g でした。',
     'mealcheck.analysis_protein_unknown':
         '情報が不足しているか曖昧なため、食事のたんぱく質量は不明です。量と時系列のスコア要因は計算を保留します。',
     'mealcheck.analysis_highfat':
         '現在の運用ヒューリスティックでは、この食事は比較的高脂肪・高カロリーでもあると判定されました。',
-    'mealcheck.analysis_scoring': 'スコアは次の重み付き要因から構成されます：{factors}。',
+    'mealcheck.analysis_scoring': 'ルール点数は次の要因から構成されます：{factors}。',
     'mealcheck.analysis_dbfacts':
         '正確なインポート済み観測値がある場合、エンジンはアプリ内 seed だけでなくデータベース栄養値を使用しました。',
     'mealcheck.analysis_context_used':
@@ -5827,17 +5828,15 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.analysis_evidence': '今回の判定は、公式ラベルまたは登録済みの根拠ソースを直接参照しています。',
     'mealcheck.analysis_fallback':
         '一部の食品バリアントは地域フォールバックチェーンで解決されており、この判定では地域の権威データがまだ一部不足しています。',
-    'mealcheck.analysis_manual_review':
-        'このセッションでは重要なランタイム入力がまだ不足しているため、時間調整の助言に依存する前に手動レビューを行うのが最も安全です。',
+    'mealcheck.analysis_manual_review': 'この結果を参考にする前に、資格のある医療専門職と確認してください。',
     'mealcheck.analysis_followup':
-        'より具体的な時間アドバイスが必要な場合は、薬の時刻と用量を入力してから再度チェックしてください。',
+        '薬の時刻と用量を入力すると、ルールでこの食事をより詳しく確認できます。結果は教育目的であり、時間についての助言ではありません。',
     'mealcheck.score_factor_rule_decision': 'ルール判定の重み',
     'mealcheck.score_factor_levodopa_interference': 'レボドパ干渉重み',
     'mealcheck.score_factor_protein_timing': 'タンパク質タイミングペナルティ',
     'mealcheck.score_factor_high_fat': '高脂肪食補正',
     'mealcheck.score_factor_iron_levodopa': '鉄-レボドパ補正',
     'mealcheck.score_factor_enteral_feed': '連続経腸栄養補正',
-    'mealcheck.score_factor_evidence': '根拠補正',
     'mealcheck.drug_fallback': ' 選択された薬バリアントは管轄フォールバックから取得されました。',
     'mealcheck.food_fallback': ' 一部の食品バリアントは管轄フォールバックから取得されました。',
     'mealcheck.db_facts': '利用可能な場合は、データベース内の実食品バリアント栄養値を優先使用しました。',
@@ -5873,9 +5872,9 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'legacy.severity.high': '高リスク',
     'legacy.severity.moderate': '中リスク',
     'legacy.severity.low': '低リスク',
-    'recommend.low_protein': '低たんぱくを優先',
-    'recommend.protein_window_caution': 'レボドパ時間帯では高たんぱくに注意',
-    'recommend.history_low_protein': '最近の履歴に基づき、低たんぱくの選択肢を優先',
+    'recommend.low_protein': '1食分あたりのたんぱく質が少なめ',
+    'recommend.protein_window_caution': 'たんぱく質が多め。ルールはレボドパの時刻に近いたんぱく質を表示します',
+    'recommend.history_low_protein': '最近記録した食事よりたんぱく質が少なめ',
     'recommend.culture_match': '現在の地域食事テンプレートに一致',
     'recommend.fallback_chain': 'この地域の食品知識はフォールバックチェーンを使用中',
     'recommend.general_friendly': 'ルールチェックで挙げられた候補',
@@ -5926,7 +5925,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'copy.interaction_summary_missing_inputs':
         'まだ評価できません：{missing} が不足しています。入力されるまで、この食事と薬の時間関係は確認できません。問題がないという意味でも、食事そのものに問題があるという意味でもありません。',
     'copy.interaction_summary_high':
-        '現在の確認結果は高リスク（{score}/100）です。理由と次の操作を確認してください。',
+        'ルールはこの確認に重症度の高い注意を示しました。下の理由を資格のある医療専門職と確認してください。医療上の助言ではありません。',
     'copy.interaction_analysis_missing_inputs':
         'これは食事そのものが必ず危険という意味ではありません。{missing} が不足しているため、薬との時間関係を安全に評価できないという意味です。',
     'copy.interaction_analysis_protein':

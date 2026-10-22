@@ -89,7 +89,10 @@ void main() {
       ],
     );
     expect(en.awaitingMissingInputs(result), isFalse);
-    expect(en.interactionSummary(result), contains('high risk (100/100)'));
+    expect(
+      en.interactionSummary(result),
+      contains('raised a high-severity caution'),
+    );
     final analysis = en.interactionAnalysis(result);
     expect(analysis, contains('also missing: medication time and dose'));
     expect(analysis, isNot(contains('does not mean the meal itself')));
@@ -106,7 +109,10 @@ void main() {
       ],
     );
     expect(en.awaitingMissingInputs(result), isFalse);
-    expect(en.interactionSummary(result), contains('high risk'));
+    expect(
+      en.interactionSummary(result),
+      contains('raised a high-severity caution'),
+    );
   });
 
   test('ok and unassessed results are not "awaiting inputs"', () {
@@ -199,22 +205,22 @@ void main() {
     expect(label, findsOneWidget);
     expect(tester.widget<Text>(label).style?.color, Colors.blueGrey);
     expect(find.text('High risk'), findsNothing);
-    expect(find.text('Score 100'), findsNothing);
+    expect(find.text('100 rule points'), findsNothing);
     expect(
       find.textContaining("Can't assess yet · Require review"),
       findsOneWidget,
     );
 
-    expect(find.text('Rule score: 100/100'), findsNothing);
+    expect(find.text('Rule points: 100 (capped at 100)'), findsNothing);
     expect(find.text('Rule decision weight +70'), findsNothing);
     await tester.ensureVisible(find.text('How was this computed?'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('How was this computed?'));
     await tester.pumpAndSettle();
-    expect(find.text('Rule score: 100/100'), findsOneWidget);
+    expect(find.text('Rule points: 100 (capped at 100)'), findsOneWidget);
     expect(find.text('Rule decision weight +70'), findsOneWidget);
     expect(
-      find.textContaining('it is not shown above as a risk level'),
+      find.textContaining('they are not shown above as a risk level'),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);
@@ -247,7 +253,7 @@ void main() {
     final label = find.text('High risk');
     expect(label, findsWidgets);
     expect(tester.widget<Text>(label.first).style?.color, Colors.red);
-    expect(find.text('Score 95'), findsOneWidget);
+    expect(find.text('95 rule points'), findsOneWidget);
     expect(find.textContaining("Can't assess yet"), findsNothing);
     expect(tester.takeException(), isNull);
   });

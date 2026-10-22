@@ -338,21 +338,31 @@ class DatabaseBackedMealCheckUseCase {
       for (final alert in output.alerts) {
         final severity = _mapSeverity(alert.decision.wireValue);
         final detailBuffer = StringBuffer(alert.explanation);
+        // `tr` trims each note, so sentences need an explicit separator
+        // outside Chinese and Japanese.
+        final noteSeparator =
+            i18n.languageFamily == 'zh' || i18n.languageFamily == 'ja'
+            ? ''
+            : ' ';
         final evidenceTitles = alert.evidenceRecords
             .map((item) => item.title.trim())
             .where((title) => title.isNotEmpty)
             .toSet()
             .toList(growable: false);
         if (resolvedDrug.fallbackUsed) {
-          detailBuffer.write(i18n.tr('mealcheck.drug_fallback'));
+          detailBuffer.write(
+            '$noteSeparator${i18n.tr('mealcheck.drug_fallback')}',
+          );
           dataNotes.add(i18n.tr('mealcheck.drug_fallback').trim());
         }
         if (resolvedFoods.any((variant) => variant.fallbackUsed)) {
-          detailBuffer.write(i18n.tr('mealcheck.food_fallback'));
+          detailBuffer.write(
+            '$noteSeparator${i18n.tr('mealcheck.food_fallback')}',
+          );
           dataNotes.add(i18n.tr('mealcheck.food_fallback').trim());
         }
         if (mealMetrics.usedDatabaseFacts) {
-          detailBuffer.write(i18n.tr('mealcheck.db_facts'));
+          detailBuffer.write('$noteSeparator${i18n.tr('mealcheck.db_facts')}');
           dataNotes.add(i18n.tr('mealcheck.db_facts').trim());
         }
         keyFindings.add(
@@ -360,7 +370,7 @@ class DatabaseBackedMealCheckUseCase {
         );
         nextActions.addAll(
           alert.actions
-              .map((action) => _describeMachineAction(i18n, action))
+              .map((action) => describeMachineAction(i18n, action))
               .where((text) => text.trim().isNotEmpty),
         );
         dataNotes.addAll(_extractMissingInputNotes(i18n, alert.explanation));
@@ -519,37 +529,26 @@ class DatabaseBackedMealCheckUseCase {
     }
   }
 
-  String _describeMachineAction(AppI18n i18n, Map<String, dynamic> action) {
+  /// Turns a rule's machine action into educational text. Rule actions may
+  /// carry timing parameters (minutes before or after meals); those stay in
+  /// the rule record and audit trail and are never rendered as an instruction
+  /// to the user. The text points to the cited source and clinician review.
+  static String describeMachineAction(
+    AppI18n i18n,
+    Map<String, dynamic> action,
+  ) {
     final type = '${action['type'] ?? ''}';
-    final params = action['params'] is Map<String, dynamic>
-        ? action['params'] as Map<String, dynamic>
-        : <String, dynamic>{};
     switch (type) {
       case 'suggest_reschedule':
-        final before = params['preferred_before_meal_min'];
-        final after = params['preferred_after_meal_min'];
-        if (before != null && after != null) {
-          return i18n.tr('interaction.action_reschedule_full', {
-            'before': '$before',
-            'after': '$after',
-          });
-        }
-        if (before != null) {
-          return i18n.tr('interaction.action_reschedule_before', {
-            'before': '$before',
-          });
-        }
-        return i18n.tr('interaction.action_reschedule_generic');
+        return i18n.tr('interaction.action_timing_source');
       case 'separate_by_time':
-        return i18n.tr('interaction.action_separate_by_time', {
-          'minutes': '${params['min_separation_minutes'] ?? 0}',
-        });
+        return i18n.tr('interaction.action_spacing_source');
       case 'avoid_food':
-        return i18n.tr('interaction.action_avoid_food');
+        return i18n.tr('interaction.action_food_source');
       case 'avoid_combination':
-        return i18n.tr('interaction.action_avoid_combination');
+        return i18n.tr('interaction.action_combination_source');
       case 'switch_thickener':
-        return i18n.tr('interaction.action_switch_thickener');
+        return i18n.tr('interaction.action_thickener_source');
       case 'require_manual_review':
         return i18n.tr('interaction.action_manual_review');
       default:
@@ -1131,16 +1130,8 @@ class _MealConflictScoringModel {
       }
     }
 
-    final hasEvidence = inputs.any(
-      (input) =>
-          input.output.alerts.any((alert) => alert.evidenceRecords.isNotEmpty),
-    );
-    _addFactor(
-      factors,
-      code: 'evidence_support_modifier',
-      label: i18n.tr('mealcheck.score_factor_evidence'),
-      points: hasEvidence ? 5 : 0,
-    );
+    // Evidence availability is provenance, not risk: having a cited source
+    // never adds rule points.
 
     final sortedFactors =
         factors.where((factor) => factor.points > 0).toList(growable: false)

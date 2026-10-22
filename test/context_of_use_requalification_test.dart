@@ -95,13 +95,13 @@ void main() {
   });
 
   test(
-    'v81 candidate retains all twenty-nine historical blocked records without new approval',
+    'v82 candidate retains all thirty historical blocked records without new approval',
     () {
       final ledger = currentLedger();
       final historical = ledger.records.first;
       final candidate = ledger.latest;
 
-      expect(ledger.records, hasLength(30));
+      expect(ledger.records, hasLength(31));
       expect(historical.sequence, 1);
       expect(historical.changeKind, 'initial_governed_baseline');
       expect(
@@ -110,7 +110,7 @@ void main() {
       );
       expect(historical.recordedAtUtc, '2026-08-18T00:00:00.000Z');
       expect(historical.decisionBoundary, contains('v52 release refresh'));
-      expect(candidate.sequence, 30);
+      expect(candidate.sequence, 31);
       expect(
         ledger.records[1].currentConfigurationSha256,
         ContextOfUseRequalificationLedger.historicalV53ConfigurationSha256,
@@ -134,7 +134,7 @@ void main() {
       ], reason: 'Exact prior records were frozen before this forward rebind.');
       expect(
         candidate.previousConfigurationSha256,
-        ledger.records[28].currentConfigurationSha256,
+        ledger.records[29].currentConfigurationSha256,
       );
       expect(
         candidate.currentConfigurationSha256,
@@ -192,6 +192,28 @@ void main() {
       );
     },
   );
+  test('all thirty whole records and digests remain exact before v82', () {
+    final frozen =
+        jsonDecode(
+              File(
+                'test/fixtures/governance_history_before_v82.json',
+              ).readAsStringSync(),
+            )
+            as Map<String, dynamic>;
+    final records = currentLedger().records.take(30).toList();
+    expect(
+      records.map((record) => record.toJson()).toList(),
+      frozen['ledger_records'],
+    );
+    expect(
+      records.map((record) => record.recordSha256).toList(),
+      frozen['record_sha256s'],
+    );
+    expect(
+      records.last.currentConfigurationSha256,
+      ContextOfUseRequalificationLedger.historicalV81ConfigurationSha256,
+    );
+  });
   test('all twenty-nine whole records and digests remain exact before v81', () {
     final frozen =
         jsonDecode(

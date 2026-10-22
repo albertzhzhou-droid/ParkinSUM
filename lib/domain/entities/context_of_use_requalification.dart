@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v68';
+  static const String ledgerVersion = '2026.10.20-v69';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '1a9dc3cb3103f28369cf1112e127ecdd10b842e295f960101d7df9b36ca26822';
+  static const String historicalV81ConfigurationSha256 =
       '1f3af5a2a9e437cf22f6f23fad22035cc4135caeb9b73ad5f07a018896edaace';
   static const String historicalV80ConfigurationSha256 =
       '464d03611fef12cadf04504be650816be368e393d614fad4c836162a8010013f';
@@ -1418,7 +1420,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           candidateServingBasisRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV81ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           candidateServingBasisRecord.evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1451,6 +1453,44 @@ final class ContextOfUseRequalificationLedger {
           'independent review, clinical qualification, authenticated '
           'approval or release acceptance. All evidence holds and blocked '
           'promotion remain in force.',
+    );
+    final mealCheckSafetyCopyCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 31,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          plainLanguageCopyCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          plainLanguageCopyCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          plainLanguageCopyCandidateRecord.evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          plainLanguageCopyCandidateRecord.evidenceSynthesisRegistrySha256,
+      semanticDiffSha256: plainLanguageCopyCandidateRecord.semanticDiffSha256,
+      affectedProviderIds: plainLanguageCopyCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          plainLanguageCopyCandidateRecord.affectedPredicateIds,
+      changeClasses: plainLanguageCopyCandidateRecord.changeClasses,
+      modelRisk: plainLanguageCopyCandidateRecord.modelRisk,
+      questionOfInterest: plainLanguageCopyCandidateRecord.questionOfInterest,
+      contextOfUse: plainLanguageCopyCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-10-22T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:meal-check-safety-copy-v82',
+      evidenceDecisions: plainLanguageCopyCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v82 candidate binds meal-check safety copy: rule actions render '
+          'as source-and-clinician text without minutes, every baseline rule '
+          'has an English message, the headline severity follows the rule '
+          'decisions and evidence availability no longer adds rule points. All '
+          'thirty prior whole records and their digests remain exact. The '
+          'change supplies no new scientific evidence, independent review, '
+          'clinical qualification, authenticated approval or release '
+          'acceptance. All evidence holds and blocked promotion remain in '
+          'force.',
     );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
@@ -1489,6 +1529,7 @@ final class ContextOfUseRequalificationLedger {
         proteinArrivalCaloricLiquidCandidateRecord,
         candidateServingBasisRecord,
         plainLanguageCopyCandidateRecord,
+        mealCheckSafetyCopyCandidateRecord,
       ],
     );
   }

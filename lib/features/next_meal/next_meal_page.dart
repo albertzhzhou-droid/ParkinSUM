@@ -552,9 +552,7 @@ class _ResultBlock extends StatelessWidget {
                     : Icons.shield_outlined,
                 size: 20,
                 color: scheme.primary,
-                semanticLabel: result.aiUsed
-                    ? i18n.tr('next_meal.ai_polished')
-                    : i18n.tr('next_meal.conservative_engine'),
+                // Decorative: the adjacent text already names the path.
               ),
               const SizedBox(width: 10),
               Expanded(

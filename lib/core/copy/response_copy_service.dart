@@ -109,10 +109,8 @@ class ResponseCopyService {
         'missing': _joinLabels(_missingInputLabels(result)),
       });
     }
-    if (result.score! >= 70) {
-      return i18n.tr('copy.interaction_summary_high', {
-        'score': '${result.score}',
-      });
+    if (result.overallSeverity == InteractionSeverity.high) {
+      return i18n.tr('copy.interaction_summary_high');
     }
     return interactionText(result.summary);
   }
@@ -164,8 +162,32 @@ class ResponseCopyService {
     if (_containsManualReview(text) || _containsMissingCriticalInputs(text)) {
       return i18n.tr('copy.next_action_complete_med_timing');
     }
+    // Results saved before rule actions became educational text still carry
+    // minute-based timing instructions; show the current wording instead.
+    if (_legacySpacingInstruction.hasMatch(text)) {
+      return i18n.tr('interaction.action_spacing_source');
+    }
+    if (_legacyTimingInstruction.hasMatch(text)) {
+      return i18n.tr('interaction.action_timing_source');
+    }
     return interactionText(text);
   }
+
+  static final _legacySpacingInstruction = RegExp(
+    r'^(Consider separating the two events by at least|建议至少错开|'
+    r'Envisagez un decalage d au moins|少なくとも .* 分は間隔をあける)',
+  );
+
+  static final _legacyTimingInstruction = RegExp(
+    r'^(Consider separating medication and meals|'
+    r'Consider moving medication at least|'
+    r'Consider adjusting medication and meal timing|'
+    r'建议把用药|建议重新调整给药与进餐时序|'
+    r'Envisagez de separer la prise du medicament|'
+    r'Envisagez de prendre le medicament au moins|'
+    r'Envisagez d ajuster l horaire du medicament|'
+    r'服薬と食事は、食前|食事前に少なくとも|服薬と食事の時刻調整)',
+  );
 
   String dataNote(String text) {
     final lower = text.toLowerCase();
