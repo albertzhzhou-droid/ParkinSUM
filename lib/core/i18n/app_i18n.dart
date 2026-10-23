@@ -1,4 +1,5 @@
 import '../constants/reference_food_composition_table.dart';
+import 'app_i18n_diary_strip_translations.dart';
 import 'app_i18n_full_translations.dart';
 import 'app_i18n_log_view_translations.dart';
 
@@ -6112,6 +6113,7 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
       ...?_replayCapsuleSaveTranslations[entry.key],
       ...?_candidateServingTranslations[entry.key],
       ...?_foodDisplayTranslations[entry.key],
+      ...?kDiaryStripTranslations[entry.key],
       'onboarding.medication_search':
           _medicationSearchTranslations[entry.key] ??
           _medicationSearchTranslations['en']!,

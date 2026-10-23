@@ -149,6 +149,13 @@ void main() {
         );
         Navigator.of(tester.element(find.byType(TimelinePage))).pop();
         await tester.pumpAndSettle();
+        // The KPI row sits above the charts; the longer page can leave it
+        // outside the lazily built range after scrolling to the point.
+        await tester.scrollUntilVisible(
+          find.text('20.0 g'),
+          -300,
+          scrollable: find.byType(Scrollable).first,
+        );
         expect(find.text('20.0 g'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },

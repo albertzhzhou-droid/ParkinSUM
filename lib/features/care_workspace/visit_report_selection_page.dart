@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/services/personal_log_handoff_document_service.dart';
 import '../../core/services/personal_log_handoff_text_pdf_renderer.dart';
 import '../../core/state/app_state.dart';
+import '../../domain/entities/personal_diary_strip.dart';
 import '../../domain/entities/personal_log_view.dart';
 import '../../domain/entities/visit_report_selection.dart';
 import '../../domain/usecases/personal_log_date_window_resolver.dart';
@@ -44,6 +45,8 @@ class _VisitReportSelectionPageState extends State<VisitReportSelectionPage> {
   bool _recordNotes = false;
   bool _discussionUpdates = false;
   bool _sourceAssertions = false;
+  bool _diaryStrip = false;
+  int _diaryFilterG = diaryDefaultProteinFilterG;
 
   DateTime get _now => (widget.now ?? DateTime.now)();
   String _t(String zh, String en) =>
@@ -293,6 +296,58 @@ class _VisitReportSelectionPageState extends State<VisitReportSelectionPage> {
           ),
           onChanged: (value) => setState(() => _sourceAssertions = value),
         ),
+        SwitchListTile(
+          key: const ValueKey('visit-include-diary'),
+          value: _diaryStrip,
+          title: Text(
+            _t(
+              '选入日内记录条：用药、进餐与运动状态及计数',
+              'Include the day strip: medication, meals, motor state and counts',
+            ),
+          ),
+          subtitle: Text(
+            _t(
+              '包括所选日期最后 14 天内的全部服药、进餐与运动状态（本人自报）记录，不受下方记录选择的影响；不导出餐名。计数只描述本人记录，不是临床评估。',
+              'Covers every medication intake, meal and self-reported motor-state entry in the last 14 days of these dates, independent of the record choices below; meal names are not exported. The counts describe your own records and are not a clinical assessment.',
+            ),
+          ),
+          onChanged: (value) => setState(() => _diaryStrip = value),
+        ),
+        if (_diaryStrip)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _t(
+                    '计入的餐次：记录的蛋白质不少于',
+                    'Meals counted: protein logged at or above',
+                  ),
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final grams in diaryProteinFilterOptionsG)
+                      ChoiceChip(
+                        key: ValueKey('visit-diary-filter-$grams'),
+                        materialTapTargetSize: MaterialTapTargetSize.padded,
+                        label: Text(_t('$grams 克', '$grams g')),
+                        selected: _diaryFilterG == grams,
+                        onSelected: (_) =>
+                            setState(() => _diaryFilterG = grams),
+                      ),
+                  ],
+                ),
+                Text(
+                  _t(
+                    '此筛选只决定哪些已记录的餐次被计入，不是目标或限量。',
+                    'This filter only chooses which logged meals are counted. It is not a target or a limit.',
+                  ),
+                ),
+              ],
+            ),
+          ),
         for (final entry in rows.entries) _group(entry.key, entry.value),
         const SizedBox(height: 16),
         FilledButton.icon(
@@ -378,6 +433,8 @@ class _VisitReportSelectionPageState extends State<VisitReportSelectionPage> {
         includeRecordNotes: _recordNotes,
         includeDiscussionUpdates: _discussionUpdates,
         includeSourceAssertions: _sourceAssertions,
+        includeDiaryStrip: _diaryStrip,
+        diaryProteinFilterG: _diaryFilterG,
       );
       final report = state.prepareVisit(now: _now, selection: selection);
       final artifact = const PersonalLogHandoffSummaryService()
