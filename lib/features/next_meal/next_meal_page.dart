@@ -486,6 +486,37 @@ class _NextMealPageState extends State<NextMealPage> {
     );
   }
 
+  /// "1 d 18 h", "2 h 5 min" or "40 min".
+  String _span(AppI18n i18n, int minutes) {
+    final m = minutes.abs();
+    if (m >= 24 * 60) {
+      return i18n.tr('planner.span_days_hours', {
+        'days': '${m ~/ (24 * 60)}',
+        'hours': '${(m % (24 * 60)) ~/ 60}',
+      });
+    }
+    if (m >= 60) {
+      return i18n.tr('planner.span_hours_minutes', {
+        'hours': '${m ~/ 60}',
+        'minutes': '${m % 60}',
+      });
+    }
+    return i18n.tr('planner.span_minutes', {'minutes': '$m'});
+  }
+
+  String _when(DateTime instant, String zone) {
+    final shown = _show(instant, zone);
+    final planned = _show(_plannedAt, zone);
+    final clock = plannerClockText(shown);
+    if (shown.year == planned.year &&
+        shown.month == planned.month &&
+        shown.day == planned.day) {
+      return clock;
+    }
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${shown.year}-${two(shown.month)}-${two(shown.day)} $clock';
+  }
+
   Widget _doseContextLine(
     AppI18n i18n,
     NextMealDoseContext doseContext,
@@ -493,23 +524,43 @@ class _NextMealPageState extends State<NextMealPage> {
   ) {
     final intake = doseContext.intake;
     final drug = doseContext.drug;
+    final outOfRange = doseContext.reasons.contains(
+      NextMealUnavailableReason.outsideModeledRange,
+    );
+    final otherReasons = [
+      for (final reason in doseContext.reasons)
+        if (reason != NextMealUnavailableReason.outsideModeledRange) reason,
+    ];
+    final offset = doseContext.offsetMinutes;
     return Column(
       key: const ValueKey('next-meal-dose-context'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (intake != null && drug != null)
+        if (intake != null && drug != null && offset != null)
           Text(
-            i18n.tr('planner.dose_context', {
-              'drug': i18n.medicationName(drug.id, drug.displayName),
-              'time': plannerClockText(_show(intake.takenAt, zone)),
-              'offset': plannerOffsetText(i18n, doseContext.offsetMinutes!),
-            }),
+            outOfRange
+                ? i18n.tr('planner.no_dose_in_window', {
+                    'drug': i18n.medicationName(drug.id, drug.displayName),
+                    'when': _when(intake.takenAt, zone),
+                    'relative': i18n.tr(
+                      offset >= 0
+                          ? 'planner.relative_before'
+                          : 'planner.relative_after',
+                      {'span': _span(i18n, offset)},
+                    ),
+                  })
+                : i18n.tr('planner.dose_context', {
+                    'drug': i18n.medicationName(drug.id, drug.displayName),
+                    'time': _when(intake.takenAt, zone),
+                    'offset': plannerOffsetText(i18n, offset),
+                  }),
+            key: const ValueKey('next-meal-dose-context-text'),
             style: const TextStyle(fontSize: 13, height: 1.35),
           ),
-        if (!doseContext.applicable) ...[
+        if (otherReasons.isNotEmpty) ...[
           const SizedBox(height: 4),
           PlannerChip(
-            label: plannerCantModelText(i18n, doseContext.reasons),
+            label: plannerCantModelText(i18n, otherReasons),
             tone: PlannerChipTone.warn,
             icon: Icons.block_outlined,
           ),

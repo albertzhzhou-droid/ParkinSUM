@@ -2965,6 +2965,31 @@ class AppState extends ChangeNotifier {
     return _nextMealCandidates!;
   }
 
+  /// Candidates for the foods in the user's own meals only, so Today does not
+  /// build the whole catalog's candidate set at startup.
+  List<NextMealCandidate> get familiarNextMealCandidates {
+    final cached = _nextMealCandidates;
+    if (cached != null &&
+        _nextMealCandidatesKey ==
+            Object.hash(foodRepo.revision, identityHashCode(_meals))) {
+      return [
+        for (final c in cached)
+          if (c.familiar) c,
+      ];
+    }
+    final ids = {
+      for (final meal in _meals)
+        for (final item in meal.items) item.foodId,
+    };
+    return nextMealPlanner.buildCandidates(
+      foods: [
+        for (final food in foodRepo.allFoods)
+          if (ids.contains(food.id)) food,
+      ],
+      history: _meals,
+    );
+  }
+
   /// The logged levodopa dose a meal at [plannedAt] is compared with, and
   /// whether the physiology reference model applies to it.
   NextMealDoseContext nextMealDoseContext(DateTime plannedAt) =>

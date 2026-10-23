@@ -692,7 +692,10 @@ Today no longer shows its top three. `NextMealPlanner`
   recorded, not oral immediate release, offset out of range, protein or
   energy unknown, empty plate). The dose compared with is the logged
   levodopa intake nearest to the planned time, the later one on a tie (as in
-  the meal check).
+  the meal check). For a dose logged with a product strength, its release
+  type comes only from that product record's SPL dosage-form term
+  (`resolveIntakeMechanisticFormulation`); the meal check's direction-aware
+  term reads the same resolver.
 - **Order is the user's choice.** The default is neutral: foods the user has
   logged before, then all by name. Other sorts are name, protein per serving,
   modeled brain entry and energy, each reversible; unknown values sort last

@@ -687,6 +687,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       initialIntakeAt: _recordInitialIntake ? _initialIntakeAt : null,
       initialIntakeDoseNote: _doseController.text,
       initialIntakeProductSelection: _initialIntakeProductSelection,
+      initialIntakeProduct: _initialIntakeProduct,
     );
     try {
       final initialDrugId = draft.initialIntakeDrugId;

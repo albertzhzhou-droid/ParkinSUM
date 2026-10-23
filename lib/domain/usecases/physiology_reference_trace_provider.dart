@@ -158,6 +158,32 @@ PhysiologyTimingSummary summarizePhysiologyTiming(
   );
 }
 
+/// The 0–4 h brain-delivery area (mg·min/L) of [meal] at [mealOffsetMin]
+/// with the same arithmetic as [summarizePhysiologyTiming] (same shifted
+/// times, same trapezoid), without copying the series. Used where only the
+/// ratio to no meal is needed.
+double physiologyBrainDeliveryArea(
+  PhysiologyParameterValues values,
+  List<PhysiologyComponent> meal,
+  double? mealOffsetMin, {
+  double horizonMin = 360.0,
+}) {
+  final series = simulatePhysiology(
+    physiologyTimingScenario(meal, mealOffsetMin, horizonMin: horizonMin),
+    values,
+  );
+  final origin = physiologyDoseTimeFor(mealOffsetMin);
+  final ts = series.t;
+  final ys = series['brain_delivery_index'];
+  var total = 0.0;
+  for (var i = 1; i < ts.length; i++) {
+    final a = math.max(ts[i - 1] - origin, 0.0);
+    final b = math.min(ts[i] - origin, physiologyComparisonWindowEndMin);
+    if (b > a) total += 0.5 * (ys[i - 1] + ys[i]) * (b - a);
+  }
+  return total;
+}
+
 /// 5th, 50th and 95th percentile of the seeded draws.
 final class PhysiologyBand {
   final double p05;
@@ -382,6 +408,20 @@ final class PhysiologyCurveComparison {
   });
 }
 
+/// Exact identity of a meal's model inputs, for memoizing results.
+String physiologyMealKey(List<PhysiologyComponent> meal) => [
+  for (final c in meal)
+    [
+      c.name,
+      c.form.name,
+      c.kcal,
+      c.proteinG,
+      c.waterMl,
+      if (c.aminoAcidsG != null)
+        for (final a in physiologyBbbSet) c.aminoAcidsG![a],
+    ].join(':'),
+].join('|');
+
 /// Lazily builds and memoizes reference traces. Deterministic for a given
 /// seed and number of draws.
 final class PhysiologyReferenceTraceProvider {
@@ -493,14 +533,31 @@ final class PhysiologyReferenceTraceProvider {
         meal.isEmpty) {
       return null;
     }
+    // The meal check runs this for every saved meal at start-up; identical
+    // meals at the same offset (a usual breakfast after the usual dose) reuse
+    // the result, which is deterministic for this provider.
+    final key = '${physiologyMealKey(meal)}@$mealOffsetMin';
+    final cached = _effectCache[key];
+    if (cached != null) return cached;
+    if (_effectCache.length >= _effectCacheLimit) _effectCache.clear();
+    return _effectCache[key] = _computeMealTimingEffect(meal, mealOffsetMin);
+  }
+
+  static const int _effectCacheLimit = 1024;
+  final Map<String, PhysiologyMealTimingEffect> _effectCache = {};
+
+  PhysiologyMealTimingEffect _computeMealTimingEffect(
+    List<PhysiologyComponent> meal,
+    double mealOffsetMin,
+  ) {
     double ratio(PhysiologyParameterValues v, PhysiologyTimingSummary ref) =>
-        summarizePhysiologyTiming(
+        physiologyBrainDeliveryArea(
           v,
           meal,
           mealOffsetMin,
-          reference: ref,
           horizonMin: physiologyComparisonWindowEndMin,
-        ).brainDeliveryRelative!;
+        ) /
+        ref.brainDeliveryArea;
     return PhysiologyMealTimingEffect(
       mealOffsetMin: mealOffsetMin,
       central: ratio(_central, _centralReference),
@@ -525,13 +582,13 @@ final class PhysiologyReferenceTraceProvider {
     double mealOffsetMin,
   ) {
     if (!offsetInModeledRange(mealOffsetMin) || meal.isEmpty) return null;
-    return summarizePhysiologyTiming(
-      _central,
-      meal,
-      mealOffsetMin,
-      reference: _centralReference,
-      horizonMin: physiologyComparisonWindowEndMin,
-    ).brainDeliveryRelative!;
+    return physiologyBrainDeliveryArea(
+          _central,
+          meal,
+          mealOffsetMin,
+          horizonMin: physiologyComparisonWindowEndMin,
+        ) /
+        _centralReference.brainDeliveryArea;
   }
 
   /// Brain delivery and plasma levodopa area relative to no meal, with the

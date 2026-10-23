@@ -10117,3 +10117,25 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Delete the planner service, entities, widgets, chart, translations and their tests; restore `next_meal_page.dart`, `dashboard_page.dart`, the meal-check, copy-service, template, label-provider and provider edits, the registry entry, manifests, pinned counts, goldens and docs; then rerun `npm run identity:rebind`.
+
+## 2026-10-23 — NEXT-MEAL-PRODUCT-FORMULATION-20261023 — Doses logged with a product strength can be modeled; doses outside the window are described
+
+### Baseline and scope
+
+- Second commit on `feature/next-meal-planner`, after the planner commit. Found in a live web run with synthetic data: every dose entered through the strength picker showed "Can't model: … release type … not recorded", so the planner's modeled chip and plate chart never appeared through the UI, and a dose two days earlier was compared as "meal 2517 min after the dose". No new drug-side output is added; this makes the existing modeled values reachable as designed.
+
+### Changes
+
+- **Product formulation on the intake.** A dose logged with a product strength (timeline editor or onboarding) now carries the picked openFDA record's own SPL dosage-form term (`spl:TABLET`), its single route and the release type that term states (explicit table: "EXTENDED/DELAYED RELEASE" → modified; TABLET, TABLET FILM COATED/COATED/CHEWABLE/ORALLY DISINTEGRATING, CAPSULE → immediate; anything else unspecified). `resolveIntakeMechanisticFormulation` trusts a selected product's formulation only when it carries that prefix, so intakes saved earlier stay unspecified. Before this, no dose entered through the strength picker could ever be modeled (found in a live web run); `test/next_meal_planner_intake_journey_test.dart` now drives the picker → save → planner path.
+- **Doses outside the window.** When the nearest logged dose is more than 6 h after or 4 h before the planned meal, the planner says no logged dose falls within the modeled window and gives that dose's date, time and distance in days and hours ("1 d 23 h before the planned time"), not a raw minute offset.
+- **Startup.** Today lists familiar foods from candidates built for the user's own logged foods only; its first build measures the same as on `main` (medians about 393 vs 395 ms in a JIT widget probe). Physiology population draws stay lazy (first modeled value), and nothing on Today computes bands.
+
+### Verification and remaining boundaries
+
+- New `test/next_meal_planner_intake_journey_test.dart` (4): the SPL mapping table, a selected product without carried formulation stays unspecified, the timeline picker 25/100 × 1 → confirmed save → intake `spl:TABLET` / `oral` / `immediate` → the planner shows a modeled chip, and an extended-release strength is recorded as `extended_release` and not modeled. `test/next_meal_planner_page_test.dart` adds the out-of-window wording ("1 d 23 h before the planned time", no raw minute count). `test/physiology_reference_model_test.dart` checks that the lean brain-delivery area equals the full summary bit for bit; `npm run physiology:reality` still reports maximum difference 0 against Python.
+- Startup, measured against `main` 331b0b6: web release first rendered frame in headless Chrome, fresh profile, 5 runs each after a warm-up, median 1,449 ms (branch) vs 1,467 ms (main). Today's first build in a JIT widget probe, medians about 393 vs 395 ms. With 90 saved meals each near a product-picked IR dose, bootstrap meal checks take about 5.7 s vs 4.6 s on main (JIT), the difference being the meal check's 100-draw band per meal now that such doses are modeled. Two exact optimizations halve that cost (27.9 → 13.8 ms per meal effect, AOT): integration skips the idle stretch before the first meal or dose (state provably constant, records unchanged) with unboxed typed arrays, and ratios read the brain-delivery area without copying the series; results are memoized per meal composition and offset. A macOS profile run was not possible: the Runner entitlements need a development signing certificate.
+- Boundaries: release type comes only from the product record's SPL term; plain conventional terms are read as immediate release, modified-release terms carry their modifier, anything else stays unspecified. Not timing, dosing or dietary advice.
+
+### Surgical rollback
+
+- Revert this commit; intakes saved with `spl:` forms then read as unspecified again (fail-closed).

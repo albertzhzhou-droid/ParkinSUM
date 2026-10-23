@@ -239,6 +239,23 @@ void main() {
     );
   });
 
+  testWidgets('a dose outside the modeled window is described in days and '
+      'hours, not compared', (tester) async {
+    await _size(tester, 1280);
+    final state = (await tester.runAsync(_fixture))!;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      _host(state, plannedAt: DateTime.utc(2026, 10, 22, 12)),
+    );
+    await tester.pumpAndSettle();
+    final line = _text(tester, 'next-meal-dose-context-text');
+    expect(line, startsWith('No logged dose falls within the modeled window'));
+    expect(line, contains('2026-10-20 13:00'));
+    expect(line, contains('1 d 23 h before the planned time'));
+    expect(line, isNot(contains('min after the dose')));
+    expect(find.textContaining('2820'), findsNothing);
+  });
+
   testWidgets('plate builder: servings steppers, running totals and a live '
       'what-if chart', (tester) async {
     await _size(tester, 1280);

@@ -233,7 +233,17 @@ curves, not a ranking or a recommended time.
    Results are cached per food (or plate), servings and whole-minute offset.
    The modeled value requires an oral immediate-release levodopa intake with
    a confirmed dose bound to it; the ratios themselves do not depend on the
-   dose. A food whose physical form is not recorded (206 of 244 catalog foods
+   dose. A dose logged with a product strength carries that product record's
+   own form, route and release type (`withProductFormulation` in
+   `intake_dose_context_builder.dart`): the openFDA SPL dosage-form term is
+   stored as `spl:<TERM>` and mapped by an explicit table. A term with
+   "EXTENDED RELEASE" or "DELAYED RELEASE" is modified release; TABLET,
+   TABLET FILM COATED, TABLET COATED, TABLET CHEWABLE, TABLET ORALLY
+   DISINTEGRATING and CAPSULE are conventional (immediate) release; any
+   other term, or an intake saved before this, stays unspecified and the
+   planner says so. Nothing is inferred from a medication or product name.
+   When no logged dose is within the modeled window the planner says so and
+   gives the nearest dose's distance in days and hours instead of comparing. A food whose physical form is not recorded (206 of 244 catalog foods
    today) is modeled twice, as solid and as liquid, and shown as the range
    between the two with the union of their bands, rather than guessed.
 6. **Cover more formulations.** Levodopa/benserazide shares the same PK

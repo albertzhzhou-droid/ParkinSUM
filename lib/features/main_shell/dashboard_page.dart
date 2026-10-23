@@ -315,7 +315,7 @@ class DashboardPage extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final familiar = state.nextMealPlanner
         .arrange(
-          state.nextMealCandidates.where((c) => c.familiar).toList(),
+          state.familiarNextMealCandidates,
           filter: const NextMealFilter(),
           sort: NextMealSortKey.name,
           descending: false,

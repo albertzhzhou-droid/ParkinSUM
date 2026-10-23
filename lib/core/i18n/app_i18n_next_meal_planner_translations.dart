@@ -49,14 +49,24 @@ const Map<String, Map<String, String>> kNextMealPlannerTranslations = {
     'planner.offset_before': 'meal {minutes} min before the dose',
     'planner.offset_same': 'meal at the dose time',
     'planner.cant_model': "Can't model: {reason}",
+    'planner.no_dose_in_window':
+        'No logged dose falls within the modeled window (a meal from 6 h '
+        'before to 4 h after a dose). The nearest logged dose, {drug} at '
+        '{when}, was {relative} the planned time.',
+    'planner.relative_before': '{span} before',
+    'planner.relative_after': '{span} after',
+    'planner.span_days_hours': '{days} d {hours} h',
+    'planner.span_hours_minutes': '{hours} h {minutes} min',
+    'planner.span_minutes': '{minutes} min',
     'planner.reason.no_levodopa_medication':
         'no levodopa medicine is in your list',
     'planner.reason.no_logged_dose': 'no levodopa dose is logged',
     'planner.reason.dose_not_confirmed':
         'the nearest logged dose has no confirmed amount',
     'planner.reason.formulation_unknown':
-        'the release type (immediate or extended) of this dose is not '
-        'recorded',
+        'the nearest logged dose has no release type (immediate or '
+        'extended) from a product record; log it with its product strength '
+        'to record one',
     'planner.reason.not_oral_immediate_release':
         'the model covers oral immediate-release levodopa only',
     'planner.reason.outside_modeled_range':
@@ -261,10 +271,18 @@ const Map<String, Map<String, String>> kNextMealPlannerTranslations = {
     'planner.offset_before': '进餐在服药前 {minutes} 分钟',
     'planner.offset_same': '进餐与服药同时',
     'planner.cant_model': '无法建模：{reason}',
+    'planner.no_dose_in_window':
+        '没有已记录的服药落在模型范围内（进餐在服药前 6 小时到服药后 4 小时之间）。最近一次已记录服药是 {when} 的 {drug}，在计划时间{relative}。',
+    'planner.relative_before': '之前 {span}',
+    'planner.relative_after': '之后 {span}',
+    'planner.span_days_hours': '{days} 天 {hours} 小时',
+    'planner.span_hours_minutes': '{hours} 小时 {minutes} 分钟',
+    'planner.span_minutes': '{minutes} 分钟',
     'planner.reason.no_levodopa_medication': '你的用药列表中没有左旋多巴类药物',
     'planner.reason.no_logged_dose': '没有已记录的左旋多巴服药',
     'planner.reason.dose_not_confirmed': '最近一次服药记录没有已确认的剂量',
-    'planner.reason.formulation_unknown': '这次服药的释放类型（速释或缓释）未记录',
+    'planner.reason.formulation_unknown':
+        '最近一次服药没有来自产品记录的释放类型（速释或缓释）；记录服药时选择产品规格即可记录',
     'planner.reason.not_oral_immediate_release': '该模型只涵盖口服速释左旋多巴',
     'planner.reason.outside_modeled_range': '进餐在最近一次服药前 6 小时以上或服药后 4 小时以上',
     'planner.reason.missing_protein': '蛋白质未知',
