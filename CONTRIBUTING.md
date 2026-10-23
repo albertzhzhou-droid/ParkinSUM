@@ -71,17 +71,18 @@ complete with no skipped or TODO result.
 ## Algorithm Configuration Identity
 
 Do not bump the algorithm configuration identity by hand, and never on two
-branches in parallel: both would edit the same governance files and create the
-same `test/fixtures/governance_history_before_vN.json`. Leave the identity,
-context-of-use ledger, plan, attestations and queue sentences alone in feature
-commits. At merge time, rebase onto `origin/main` and run
+branches in parallel: both would edit the same governance files and append
+conflicting lines to the governance history chain
+(`config/governance_ledger.jsonl`). Leave the identity, context-of-use ledger,
+chain, plan, attestations and queue sentences alone in feature commits. At merge time, rebase onto `origin/main` and run
 
 ```sh
 npm run identity:rebind -- --title "<short noun phrase>" --reason "<binds …>"
 ```
 
 then commit the result as its own last commit (drop and redo it after any
-further rebase). The tool is idempotent and verifies the result with the
+further rebase; `npm run identity:rebind -- --reapply ORIG_HEAD` redoes a dropped
+rebind with its recorded title and reason). The tool is idempotent and verifies the result with the
 existing governance tests; see [docs/IDENTITY_REBIND.md](docs/IDENTITY_REBIND.md).
 
 If your change is documentation-only and local tooling is unavailable, say so in

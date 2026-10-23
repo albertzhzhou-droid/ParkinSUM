@@ -463,38 +463,31 @@ void main() {
         final rebuilt = utf8.encode(_rebuildFixture(chain, entry, records));
 
         expect(rebuilt.length, fixture['bytes'], reason: '${fixture['path']}');
-        expect(sha256.convert(rebuilt).toString(), fixture['sha256']);
-        final file = File(fixture['path']! as String);
-        expect(file.readAsBytesSync(), rebuilt, reason: file.path);
-      }
-    });
-
-    test('every record and digest of every fixture equals the chain', () {
-      final fixtures = Directory('test/fixtures')
-          .listSync()
-          .whereType<File>()
-          .where((f) => f.path.contains('governance_history_before_v'))
-          .toList();
-      expect(fixtures, hasLength(migrated.length));
-      for (final file in fixtures) {
-        final version = int.parse(
-          RegExp(r'before_v(\d+)\.json$').firstMatch(file.path)!.group(1)!,
-        );
-        final frozen = jsonDecode(file.readAsStringSync()) as Map;
-        final snapshot = chain.snapshotBefore(version);
         expect(
-          frozen['records'] ?? frozen['ledger_records'],
-          snapshot.records,
-          reason: file.path,
+          sha256.convert(rebuilt).toString(),
+          fixture['sha256'],
+          reason: '${fixture['path']}',
         );
+        final snapshot = chain.snapshotBefore(
+          entry['before_identity_version']! as int,
+        );
+        final frozen = jsonDecode(utf8.decode(rebuilt)) as Map;
+        expect(frozen['records'] ?? frozen['ledger_records'], snapshot.records);
         expect(
           frozen['record_sha256'] ??
               frozen['ledger_record_sha256'] ??
               frozen['record_sha256s'],
           snapshot.recordSha256s,
-          reason: file.path,
         );
       }
+    });
+
+    test('the chain replaced the fixtures; none is written again', () {
+      final reintroduced = Directory('test/fixtures')
+          .listSync()
+          .map((entity) => entity.path)
+          .where((path) => path.contains('governance_history_before_v'));
+      expect(reintroduced, isEmpty);
     });
   });
 }
