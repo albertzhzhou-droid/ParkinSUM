@@ -32,6 +32,7 @@ import 'mechanistic_event_ledger_authorization.dart';
 import 'mechanistic_event_ledger_builder.dart';
 import 'mechanistic_replay_capsule_service.dart';
 import 'medication_entry_validator.dart';
+import 'physiology_reference_trace_provider.dart';
 import 'time_axis_builder.dart';
 import 'variant_resolver.dart';
 import 'qualified_nutrient_point_selection.dart';
@@ -63,6 +64,10 @@ class DatabaseBackedMealCheckUseCase {
   final MechanisticReplayCapsuleRoundTripper _replayRoundTripper;
   late final AlgorithmConfigurationIdentity _algorithmConfigurationIdentity;
 
+  /// Physical-unit reference model. It only contributes a descriptive data
+  /// note; scores, severities and rule decisions never read it.
+  final PhysiologyReferenceTraceProvider physiologyReference;
+
   DatabaseBackedMealCheckUseCase({
     required this.variantResolver,
     required this.clinicalDecisionSupportService,
@@ -78,7 +83,10 @@ class DatabaseBackedMealCheckUseCase {
     MechanisticLedgerAuthorizer? ledgerAuthorizer,
     MechanisticReplayCapsuleRoundTripper? replayRoundTripper,
     AlgorithmConfigurationIdentity? algorithmConfigurationIdentity,
-  }) : foodRepository = foodRepository ?? FoodRepository.createDefault(),
+    PhysiologyReferenceTraceProvider? physiologyReference,
+  }) : physiologyReference =
+           physiologyReference ?? PhysiologyReferenceTraceProvider.shared,
+       foodRepository = foodRepository ?? FoodRepository.createDefault(),
        mechanisticEngine = mechanisticEngine ?? MechanisticConflictEngine(),
        mealCompositionNormalizer =
            mealCompositionNormalizer ?? MealCompositionNormalizer(),
@@ -409,12 +417,19 @@ class DatabaseBackedMealCheckUseCase {
       }
     }
 
+    final physiologyNotes = _physiologyTimingNotes(
+      i18n: i18n,
+      meal: meal,
+      activeDrugs: activeDrugs,
+      intakes: intakes,
+    );
     if (issues.isEmpty) {
       return InteractionResult.ok(
         mealId: meal.id,
         message: i18n.tr('mealcheck.no_conflict'),
-      ).copyWith(followupPrompts: followupPrompts);
+      ).copyWith(followupPrompts: followupPrompts, dataNotes: physiologyNotes);
     }
+    dataNotes.addAll(physiologyNotes);
     final scoreResult = scoring.score(scoreInputs);
 
     return InteractionResult(
@@ -849,6 +864,90 @@ class DatabaseBackedMealCheckUseCase {
     }
   }
 
+  MealComposition _normalizedComposition(Meal meal) {
+    final components = <FoodComponent>[];
+    for (var index = 0; index < meal.items.length; index++) {
+      final item = meal.items[index];
+      components.add(
+        mealItemToFoodComponent(
+          item,
+          componentId: 'meal_${meal.id}_${index}_${item.foodId}',
+          catalogMatch: foodRepository.getById(item.foodId),
+        ),
+      );
+    }
+    return mealCompositionNormalizer.normalize(
+      mealId: 'comp_${meal.id}',
+      components: components,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Physiology reference note (descriptive, never scored).
+  // ---------------------------------------------------------------------------
+
+  /// Direction-aware modeled brain delivery of this meal timing relative to
+  /// no meal, for the nearest intake of an oral immediate-release
+  /// levodopa-like medicine. Empty when an input the reference model needs is
+  /// missing or the meal falls outside the modeled window. The ratio does not
+  /// depend on the dose, so no personal dose is read.
+  List<String> _physiologyTimingNotes({
+    required AppI18n i18n,
+    required Meal meal,
+    required List<DrugDefinition> activeDrugs,
+    required List<Intake> intakes,
+  }) {
+    for (final drug in activeDrugs) {
+      final levodopaLike =
+          drug.genericName.toLowerCase().contains('levodopa') ||
+          drug.tags.contains(DrugTag.levodopaLike);
+      if (!levodopaLike) continue;
+      final intake = _nearestIntakeForDrug(
+        drug.id,
+        intakes,
+        meal.effectiveOccurredAt,
+      );
+      if (intake == null) continue;
+      final formulation = resolveIntakeMechanisticFormulation(
+        intake: intake,
+        drug: drug,
+      );
+      if (formulation.route != 'oral' ||
+          !const {
+            'immediate',
+            'immediate_release',
+          }.contains(formulation.releaseType)) {
+        continue;
+      }
+      final components = physiologyComponentsFromMeal(
+        _normalizedComposition(meal),
+      );
+      if (components == null) return const [];
+      final offsetMinutes =
+          meal.effectiveOccurredAt.difference(intake.takenAt).inSeconds / 60.0;
+      final effect = physiologyReference.mealTimingEffect(
+        components,
+        offsetMinutes,
+      );
+      if (effect == null) return const [];
+      String percent(double ratio) => (ratio * 100).round().toString();
+      final median = percent(effect.band.p50);
+      return [
+        i18n.tr(
+          int.parse(median) < 100
+              ? 'mealcheck.physiology_timing_lower'
+              : 'mealcheck.physiology_timing_similar',
+          {
+            'percent': median,
+            'low': percent(effect.band.p05),
+            'high': percent(effect.band.p95),
+          },
+        ),
+      ];
+    }
+    return const [];
+  }
+
   // ---------------------------------------------------------------------------
   // Mechanistic trace (additive, non-authoritative).
   // ---------------------------------------------------------------------------
@@ -908,21 +1007,7 @@ class DatabaseBackedMealCheckUseCase {
 
     if (medInputs.isEmpty) return null;
 
-    final components = <FoodComponent>[];
-    for (var index = 0; index < meal.items.length; index++) {
-      final item = meal.items[index];
-      components.add(
-        mealItemToFoodComponent(
-          item,
-          componentId: 'meal_${meal.id}_${index}_${item.foodId}',
-          catalogMatch: foodRepository.getById(item.foodId),
-        ),
-      );
-    }
-    final composition = mealCompositionNormalizer.normalize(
-      mealId: 'comp_${meal.id}',
-      components: components,
-    );
+    final composition = _normalizedComposition(meal);
 
     final context = timeAxisBuilder.build(
       now: referenceTime,

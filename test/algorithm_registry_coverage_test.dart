@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/domain/entities/algorithm_trace_node.dart';
 import 'package:parkinsum_companion/domain/usecases/algorithm_observatory_service.dart';
 import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
+import 'package:parkinsum_companion/domain/usecases/physiology_reference_trace_provider.dart';
 
 Iterable<AlgorithmTraceNode> _traceNodes(AlgorithmTraceNode root) sync* {
   yield root;
@@ -147,15 +148,29 @@ void main() {
         .map((entry) => entry.id)
         .toSet();
     final providerContract = AlgorithmObservatoryService.traceProviderContract;
+    const physiologyContract =
+        PhysiologyReferenceTraceProvider.traceProviderContract;
 
-    expect(liveIds, equals(providerContract.algorithmIds.toSet()));
+    expect(
+      liveIds,
+      equals({
+        for (final provider in AlgorithmObservatoryService.routeTraceProviders)
+          ...provider.algorithmIds,
+      }),
+    );
     expect(
       AlgorithmRegistry.all
           .where((entry) => entry.hasLiveTrace)
           .map((entry) => entry.traceProviderId)
           .toSet(),
-      {providerContract.providerId},
+      {providerContract.providerId, physiologyContract.providerId},
     );
+    // The physiology reference provider traces its own fixed scenarios.
+    final physiologyRows = PhysiologyReferenceTraceProvider(
+      draws: 5,
+    ).observatoryRows;
+    expect(physiologyRows, hasLength(4));
+    expect(physiologyRows.every((row) => row.central.cmaxMgPerL > 0), isTrue);
 
     final service = AlgorithmObservatoryService();
     final observedLiveIds = <String>{};
@@ -178,7 +193,7 @@ void main() {
       if (snapshot.conflict.hasModeledOutput) {
         expect(
           traceIds,
-          containsAll(liveIds),
+          containsAll(providerContract.algorithmIds),
           reason:
               '${scenario.name} produced modeled output and must expose every live layer',
         );
@@ -204,7 +219,7 @@ void main() {
 
     expect(
       observedLiveIds,
-      equals(liveIds),
+      equals(providerContract.algorithmIds.toSet()),
       reason:
           'The production scenario union must exercise every algorithm advertised as live; an abstained scenario need not fabricate downstream nodes.',
     );

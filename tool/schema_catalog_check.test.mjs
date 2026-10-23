@@ -61,7 +61,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.match(followupLedger.compatibility, /unclassified/);
   assert.match(followupLedger.compatibility, /migrate to v3/);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
-  assert.equal(catalog.schemas.length, 201);
+  assert.equal(catalog.schemas.length, 202);
   const catalogChangeDiff = schemaById(
     catalog,
     'parkinsum.catalog-version-change-diff',
@@ -281,7 +281,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned')
       .length,
-    195,
+    196,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned')
@@ -708,7 +708,7 @@ test('owner observation audit schema stays supplemental to engine input identity
     'parkinsum.personal-observation-event-ledger',
   );
   assert.equal(schema.currentVersion, 2);
-  assert.equal(catalog.schemas.length, 201);
+  assert.equal(catalog.schemas.length, 202);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
   assert.equal(
     schema.source,
@@ -747,10 +747,10 @@ test('open-source influence inventory schema v7 matches its source and catalog p
 test('open-source drift decision and ledger schemas are versioned governance artifacts', () => {
   const { catalog, failures } = baseline();
   const source = readFileSync('tool/open_source_drift_decision_ledger.mjs', 'utf8');
-  assert.equal(catalog.schemas.length, 201);
+  assert.equal(catalog.schemas.length, 202);
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned').length,
-    195,
+    196,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned').length,

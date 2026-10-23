@@ -9,7 +9,7 @@ import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
 void main() {
   AlgorithmTraceSurfaceManifest current() => AlgorithmTraceSurfaceManifest(
     algorithms: AlgorithmRegistry.all,
-    providers: const [AlgorithmObservatoryService.traceProviderContract],
+    providers: AlgorithmObservatoryService.routeTraceProviders,
   );
 
   test(
@@ -21,11 +21,30 @@ void main() {
       );
 
       expect(reviewed, manifest.toJson());
-      expect(manifest.algorithms, hasLength(65));
-      expect(manifest.liveCount, 14);
+      expect(manifest.algorithms, hasLength(66));
+      expect(manifest.liveCount, 15);
       expect(manifest.staticOnlyCount, 51);
       expect(manifest.sha256Digest, matches(RegExp(r'^[a-f0-9]{64}$')));
-      final provider = manifest.providers.single;
+      expect(manifest.providers, hasLength(2));
+      final provider = manifest.providers.singleWhere(
+        (entry) =>
+            entry.providerId ==
+            AlgorithmTraceProviderIds.productionObservatorySnapshot,
+      );
+      final physiology = manifest.providers.singleWhere(
+        (entry) =>
+            entry.providerId ==
+            AlgorithmTraceProviderIds.physiologyReferenceTimingComparison,
+      );
+      expect(physiology.routeId, provider.routeId);
+      expect(
+        physiology.uiSurfaceKeysByAlgorithm['physiology_reference_model'],
+        'chart-panel-physiology-reference',
+      );
+      expect(
+        manifest.dispositionFor('physiology_reference_model'),
+        AlgorithmTraceSurfaceDisposition.productionTrace,
+      );
       expect(provider.routeId, 'app-tools.observatory');
       expect(
         provider.routeSourcePath,

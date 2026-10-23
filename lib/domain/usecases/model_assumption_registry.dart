@@ -24,6 +24,8 @@ enum ModelSourceType {
   analyticalStudy,
   // Published food-composition reference dataset.
   referenceDataset,
+  // Laboratory animal experiment; transfer to humans is an assumption.
+  animalStudy,
 }
 
 class ModelAssumption {
@@ -1002,6 +1004,176 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-10-08',
   );
 
+  // Physiology reference model (Stage B Dart port) sources, 2026-10-22.
+  static const ModelAssumption tougasLowFatControls = ModelAssumption(
+    sourceId: 'src.tougas.gastric.lowfat_controls.2000',
+    title:
+        'Assessment of gastric emptying using a low fat meal: establishment '
+        'of international control values',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In 123 healthy volunteers from 11 centres, median retention of a '
+        'labelled low-fat egg-substitute meal was 69%, 24% and 1.2% at 60, '
+        '120 and 240 min (95th percentiles 90%, 60%, 10%).',
+    limitation:
+        'Healthy volunteers and one standardized meal; the physiology '
+        'reference uses the medians only to calibrate its solid grinding '
+        'rate, which they therefore do not validate.',
+    citationText:
+        'Tougas G. et al. Assessment of gastric emptying using a low fat '
+        'meal: establishment of international control values. Am J '
+        'Gastroenterol 95(6):1456–1462, 2000. PMID:10894578. '
+        'doi:10.1111/j.1572-0241.2000.02076.x.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption elashoffPowerExponential = ModelAssumption(
+    sourceId: 'src.elashoff.gastric.powerexp.1982',
+    title: 'Analysis of gastric emptying data',
+    sourceType: ModelSourceType.modelPaper,
+    mechanismSupported:
+        'Solid gastric emptying follows a lag followed by near-linear '
+        'emptying, summarized by the power-exponential curve.',
+    limitation:
+        'A curve-fitting method, not a mechanism; the physiology reference '
+        'reproduces its shape with two grinding stages in series.',
+    citationText:
+        'Elashoff J.D., Reedy T.J., Meyer J.H. Analysis of gastric emptying '
+        'data. Gastroenterology 83(6):1306–1312, 1982. PMID:7129034.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption othmanLevodopaPopPk = ModelAssumption(
+    sourceId: 'src.othman.levodopa.poppk.2014',
+    title:
+        'Population pharmacokinetics of levodopa in subjects with advanced '
+        "Parkinson's disease: levodopa-carbidopa intestinal gel infusion vs. "
+        'oral tablets',
+    sourceType: ModelSourceType.modelPaper,
+    mechanismSupported:
+        'Oral levodopa-carbidopa tablets: mean absorption time about 25 min, '
+        'apparent oral clearance 24.8 L/h, steady-state volume 131 L.',
+    limitation:
+        'Advanced Parkinson cohort on frequent dosing; the physiology '
+        'reference keeps a one-compartment simplification and uses the '
+        'values as population-typical anchors only.',
+    citationText:
+        'Othman A.A., Dutta S. Population pharmacokinetics of levodopa in '
+        "subjects with advanced Parkinson's disease. Br J Clin Pharmacol "
+        '78(1):94–105, 2014. PMID:24433449. doi:10.1111/bcp.12324.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption simonLevodopaPkpd = ModelAssumption(
+    sourceId: 'src.simon.levodopa.pkpd.2016',
+    title:
+        'A combined pharmacokinetic/pharmacodynamic model of levodopa motor '
+        "response and dyskinesia in Parkinson's disease patients",
+    sourceType: ModelSourceType.modelPaper,
+    mechanismSupported:
+        'One-compartment levodopa model with clearance 36.6 L/h and '
+        'between-subject variability of 38% on clearance and 122% on the '
+        'absorption rate constant.',
+    limitation:
+        'Thirty patients with peak-dose dyskinesia after one large dose; the '
+        'physiology reference uses only the clearance anchor and the '
+        'variability magnitudes. Its motor-response layer is excluded.',
+    citationText:
+        'Simon N. et al. A combined pharmacokinetic/pharmacodynamic model of '
+        "levodopa motor response and dyskinesia in Parkinson's disease "
+        'patients. Eur J Clin Pharmacol 72(4):423–430, 2016. PMID:26936272. '
+        'doi:10.1007/s00228-016-2034-0.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption carterProteinDistribution = ModelAssumption(
+    sourceId: 'src.carter.protein_redistribution.1989',
+    title:
+        'Amount and distribution of dietary protein affects clinical '
+        "response to levodopa in Parkinson's disease",
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Mean daytime plasma large neutral amino acids were 732, 640 and 542 '
+        'nmol/mL on 1.6 g/kg, 0.8 g/kg evenly distributed and 0.8 g/kg '
+        'evening-restricted protein; hourly plasma levodopa did not differ.',
+    limitation:
+        'Five patients; meal schedules and energy are not in the abstract. '
+        'Two diets calibrate the effective amino-acid volume; the '
+        'evening-restricted diet is a known gap of the reference.',
+    citationText:
+        'Carter J.H., Nutt J.G., Woodward W.R., Hatcher L.F., Trotman T.L. '
+        'Amount and distribution of dietary protein affects clinical '
+        "response to levodopa in Parkinson's disease. Neurology "
+        '39(4):552–556, 1989. PMID:2648188. doi:10.1212/wnl.39.4.552.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption boirieFastSlowProtein = ModelAssumption(
+    sourceId: 'src.boirie.fast_slow_protein.1997',
+    title:
+        'Slow and fast dietary proteins differently modulate postprandial '
+        'protein accretion',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Whey protein gave a large, short rise in plasma amino acids; casein '
+        'a prolonged moderate plateau, probably through slower gastric '
+        'emptying, at identical leucine intake.',
+    limitation:
+        'Healthy adults and two milk proteins; used as a direction-only '
+        'check because the abstract reports no plasma magnitudes.',
+    citationText:
+        'Boirie Y. et al. Slow and fast dietary proteins differently '
+        'modulate postprandial protein accretion. Proc Natl Acad Sci U S A '
+        '94(26):14930–14935, 1997. PMID:9405716. '
+        'doi:10.1073/pnas.94.26.14930.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption smithBbbKinetics = ModelAssumption(
+    sourceId: 'src.smith.bbb_neutral_amino_acid_kinetics.1987',
+    title:
+        'Kinetics of neutral amino acid transport across the blood-brain '
+        'barrier',
+    sourceType: ModelSourceType.animalStudy,
+    mechanismSupported:
+        'A complete set of blood-brain-barrier neutral amino acid transport '
+        'constants (Vmax, Km) for predicting competitive influx from plasma.',
+    limitation:
+        'Anesthetized rats with in situ brain perfusion, not humans. The '
+        'transcribed Km values are still marked "verify" until re-checked '
+        'against the paper\'s table.',
+    citationText:
+        'Smith Q.R., Momma S., Aoyagi M., Rapoport S.I. Kinetics of neutral '
+        'amino acid transport across the blood-brain barrier. J Neurochem '
+        '49(5):1651–1658, 1987. PMID:3668544. '
+        'doi:10.1111/j.1471-4159.1987.tb01039.x.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
+  static const ModelAssumption pardridgeHumanBbbTransport = ModelAssumption(
+    sourceId: 'src.pardridge.bbb_amino_acid_transport.1986',
+    title: 'Neutral amino acid transport at the human blood-brain barrier',
+    sourceType: ModelSourceType.review,
+    mechanismSupported:
+        'In isolated human brain capillaries the Km of phenylalanine '
+        'transport is approximately the value found in rats in vivo.',
+    limitation:
+        'One amino acid in isolated microvessels; it supports carrying the '
+        'rat Km set over to humans only as an assumption with variability.',
+    citationText:
+        'Pardridge W.M., Choi T.B. Neutral amino acid transport at the human '
+        'blood-brain barrier. Fed Proc 45(7):2073–2078, 1986. PMID:3519291.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-22',
+  );
+
   static const List<ModelAssumption> all = [
     sinemetLabel,
     sinemetExtendedLabel,
@@ -1050,6 +1222,14 @@ class ModelAssumptionRegistry {
     usdaFdcRelease2025,
     usdaFndds20172018,
     nlmRxnorm20241202,
+    tougasLowFatControls,
+    elashoffPowerExponential,
+    othmanLevodopaPopPk,
+    simonLevodopaPkpd,
+    carterProteinDistribution,
+    boirieFastSlowProtein,
+    smithBbbKinetics,
+    pardridgeHumanBbbTransport,
   ];
 
   static ModelAssumption? byId(String sourceId) {

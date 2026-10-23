@@ -57,6 +57,7 @@ import '../../domain/usecases/target_population_transportability_simulator.dart'
 import '../../domain/usecases/transportability_bias_function_sensitivity_simulator.dart';
 import '../../domain/usecases/dosage_note_parser.dart';
 import '../shared/dose_expression_status_card.dart';
+import 'physiology_reference_panel.dart';
 
 extension _AlgorithmObservatoryI18n on BuildContext {
   AppI18n get appI18n =>
@@ -168,7 +169,7 @@ class _AlgorithmObservatoryPageState extends State<AlgorithmObservatoryPage> {
     _service = widget.service ?? AlgorithmObservatoryService();
     _traceSurfaceManifest = AlgorithmTraceSurfaceManifest(
       algorithms: AlgorithmRegistry.all,
-      providers: const [AlgorithmObservatoryService.traceProviderContract],
+      providers: AlgorithmObservatoryService.routeTraceProviders,
     );
     _resultRootManifest = _loadResultRootManifest();
     _snapshots = {
@@ -450,6 +451,8 @@ class _AlgorithmObservatoryPageState extends State<AlgorithmObservatoryPage> {
               _GastricStructuralUncertaintyPanel(snapshot: _snapshot),
               const SizedBox(height: 14),
               _AbsorptionCompetitionPanel(snapshot: _snapshot),
+              const SizedBox(height: 14),
+              PhysiologyReferencePanel(),
               const SizedBox(height: 14),
               _ConflictPanel(snapshot: _snapshot),
               const SizedBox(height: 14),
@@ -782,7 +785,8 @@ class _TraceSurfaceManifestPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = manifest.providers.single;
+    final providers = [...manifest.providers]
+      ..sort((left, right) => left.providerId.compareTo(right.providerId));
     return PaperCard(
       key: const Key('observatory-trace-surface-manifest'),
       child: Semantics(
@@ -791,7 +795,7 @@ class _TraceSurfaceManifestPanel extends StatelessWidget {
           'live': '${manifest.liveCount}',
           'total': '${manifest.algorithms.length}',
           'static': '${manifest.staticOnlyCount}',
-          'provider': provider.providerId,
+          'provider': providers.map((p) => p.providerId).join(', '),
           'schema': '${AlgorithmTraceSurfaceManifest.schemaVersion}',
         }),
         child: Column(
@@ -845,27 +849,29 @@ class _TraceSurfaceManifestPanel extends StatelessWidget {
                 context.appI18n.tr('observatory.trace_surface.details'),
               ),
               children: [
-                _traceContractLine(
-                  context,
-                  'observatory.trace_surface.provider',
-                  provider.providerId,
-                ),
-                _traceContractLine(
-                  context,
-                  'observatory.trace_surface.fixture',
-                  '${provider.fixtureSchema} · ${provider.fixtureRevision}',
-                ),
-                _traceContractLine(
-                  context,
-                  'observatory.trace_surface.lifecycle',
-                  provider.lifecycle,
-                ),
-                _traceContractLine(
-                  context,
-                  'observatory.trace_surface.route',
-                  provider.routeId,
-                ),
-                const SizedBox(height: 6),
+                for (final provider in providers) ...[
+                  _traceContractLine(
+                    context,
+                    'observatory.trace_surface.provider',
+                    provider.providerId,
+                  ),
+                  _traceContractLine(
+                    context,
+                    'observatory.trace_surface.fixture',
+                    '${provider.fixtureSchema} · ${provider.fixtureRevision}',
+                  ),
+                  _traceContractLine(
+                    context,
+                    'observatory.trace_surface.lifecycle',
+                    provider.lifecycle,
+                  ),
+                  _traceContractLine(
+                    context,
+                    'observatory.trace_surface.route',
+                    provider.routeId,
+                  ),
+                  const SizedBox(height: 6),
+                ],
                 Text(
                   context.appI18n.tr(
                     'observatory.trace_surface.classification_boundary',
