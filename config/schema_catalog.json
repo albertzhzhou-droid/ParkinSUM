@@ -197,6 +197,23 @@
       ]
     },
     {
+      "id": "parkinsum.governance-ledger-chain",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "One canonical JSON line per entry in config/governance_ledger.jsonl. Record entries carry one whole context-of-use ledger record and its digest; checkpoint entries mark each identity bump with the snapshot digest of the prior ledger and its provenance. Every entry links to the previous entry_sha256 from a zero genesis. Edited, re-hashed, reordered or deleted lines, broken links, unpinned checkpoints and head or length drift fail closed. Entries are append-only; a new entry kind or field meaning requires a new schema version. A verified chain is change control over stored history, not evidence, review, validation or approval.",
+      "source": "lib/domain/entities/governance_ledger_chain.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
       "id": "parkinsum.prospective-model-credibility-plan",
       "surfaceKind": "governance-artifact",
       "versionStatus": "versioned",

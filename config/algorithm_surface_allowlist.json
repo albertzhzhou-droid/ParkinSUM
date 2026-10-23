@@ -218,6 +218,7 @@
         "lib/domain/entities/configuration_baseline_registry.dart",
         "lib/domain/entities/algorithm_trace_node.dart",
         "lib/domain/entities/context_of_use_requalification.dart",
+        "lib/domain/entities/governance_ledger_chain.dart",
         "lib/domain/entities/evidence_currency.dart",
         "lib/domain/entities/evidence_synthesis.dart",
         "lib/domain/entities/gastric_high_precision_reference_contract.dart"
