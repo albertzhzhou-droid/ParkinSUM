@@ -345,6 +345,16 @@ Residual risks:
   serving". It only speeds up logging and is editable; a logged amount that is
   left at the default is still an assumption about what was eaten, and meal
   totals and rule checks use whatever amount is saved.
+- Iteration 8 (2026-10-22) ports the physiology reference model to Dart as
+  a trace-only provider. The meal check may add one data note giving the
+  modeled 0–4 h brain entry of levodopa for that meal timing as a percentage
+  of no meal, with a population band. It is a population-typical curve from
+  a prototype checked against published group data, with the blood-brain
+  barrier Km set (rat) and fasting amino-acid values still marked "verify";
+  it is not a prediction for the person, not a motor response and not a
+  timing instruction. The note can differ for a meal before or after a dose
+  while the heuristic score, which ignores direction, stays the same until
+  that penalty is replaced in a reviewed change.
 
 Required mitigation:
 

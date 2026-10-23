@@ -6,12 +6,15 @@ import 'package:provider/provider.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/paper_theme.dart';
+import '../../domain/entities/personal_diary_strip.dart';
 import '../../domain/entities/personal_log_view.dart';
+import '../../domain/usecases/personal_diary_strip_projector.dart';
 import '../../domain/usecases/personal_log_date_window_resolver.dart';
 import '../../domain/usecases/personal_log_view_projector.dart';
 import '../shared/personal_log_view_controls.dart';
 import '../timeline/timeline_page.dart';
 import '../../domain/entities/timeline_event.dart';
+import 'diary_strip_view.dart';
 
 /// Insights — descriptive summaries of the user's own entries.
 ///
@@ -37,6 +40,27 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
   PersonalLogDateWindow? _customSelection;
   String? _scopeOwner;
   int? _scopeEpoch;
+
+  /// Day strip view state: the last of its seven days, the day shown with
+  /// lanes, and the meal-protein display filter. None of it is persisted.
+  LogCivilDate? _diaryEnd;
+  LogCivilDate? _diaryShown;
+  int _diaryFilterG = PersonalDiaryStripProjector.defaultProteinFilterG;
+  static const _diaryDays = 7;
+
+  void _showDiaryDay(LogCivilDate day, LogCivilDate today) {
+    setState(() {
+      final shown = day.compareTo(today) > 0 ? today : day;
+      final end = _diaryEnd ?? today;
+      if (shown.compareTo(end) > 0) {
+        _diaryEnd = shown;
+      } else if (shown.compareTo(end.addDays(-_diaryDays + 1)) < 0) {
+        final later = shown.addDays(_diaryDays - 1);
+        _diaryEnd = later.compareTo(today) > 0 ? today : later;
+      }
+      _diaryShown = shown;
+    });
+  }
 
   @override
   void initState() {
@@ -197,6 +221,8 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
         (_scopeOwner != state.currentUserId ||
             _scopeEpoch != state.mealDraftSessionEpoch)) {
       _customSelection = null;
+      _diaryEnd = null;
+      _diaryShown = null;
     }
     _scopeOwner = state.currentUserId;
     _scopeEpoch = state.mealDraftSessionEpoch;
@@ -205,8 +231,10 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
     final resolver = PersonalLogDateWindowResolver();
     final zone = state.userProfile.timezone;
     late final ResolvedLogWindow window;
+    late final LogCivilDate today;
+    late final DiaryStripProjection diary;
     try {
-      final today = resolver.dateAt(now, zone);
+      today = resolver.dateAt(now, zone);
       final selection = _customSelection == null
           ? PersonalLogDateWindow(
               start: today.addDays(-_days + 1),
@@ -219,6 +247,22 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
               zoneId: zone,
             );
       window = resolver.resolve(selection, asOf: now);
+      final diaryEnd = _diaryEnd == null || _diaryEnd!.compareTo(today) > 0
+          ? today
+          : _diaryEnd!;
+      diary = const PersonalDiaryStripProjector().project(
+        endDay: diaryEnd,
+        dayCount: _diaryDays,
+        zoneId: zone,
+        asOf: now,
+        meals: state.meals,
+        intakes: state.intakes,
+        observations: state.observations,
+        foods: state.foodRepo.allFoods,
+        medications: state.medRepo.allDrugs,
+        proteinFilterG: _diaryFilterG,
+        resolver: resolver,
+      );
     } on FormatException {
       return Scaffold(
         appBar: PaperAppBar(title: Text(i18n.tr('insights.title'))),
@@ -386,6 +430,7 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
             ),
           ),
           const SizedBox(height: 18),
+          const SizedBox(height: 18),
           PaperReveal(
             order: 2,
             storageId: 'insights-2',
@@ -466,6 +511,25 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
                       _DaypartTable(events: events),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          PaperCard(
+            key: const ValueKey('insights-diary-strip'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                PaperSectionHeader(title: i18n.tr('diary.title')),
+                const SizedBox(height: 8),
+                DiaryStripPanel(
+                  projection: diary,
+                  shownDay: _diaryShown ?? diary.end,
+                  latest: today,
+                  onDayChanged: (day) => _showDiaryDay(day, today),
+                  onFilterChanged: (grams) =>
+                      setState(() => _diaryFilterG = grams),
                 ),
               ],
             ),

@@ -109,6 +109,39 @@ The runtime registry now also contains the following primary/consensus records:
 - `src.camilleri.ge.variation.2012` — Camilleri et al., *Neurogastroenterol
   Motil* 24:1076-e562, PMID:22747676.
 
+### 2026-10-22 physiology reference model (Stage B)
+
+Registered for the parameter set of the physiology reference model
+(`lib/domain/entities/physiology_reference_parameters.dart`, mirroring
+`tool/physiology_reference/parameters.json`) and its Dart port. Values,
+units, statuses and boundaries: `docs/design/PHYSIOLOGY_MODEL_V2.md`. The
+blood-brain-barrier Km set and the fasting plasma amino-acid values keep the
+status "verify". The model also cites `src.brener.glucose_emptying.1983`,
+`src.camilleri.ge.variation.2012`, `src.nutt.onoff.1984`,
+`src.contin.levodopa.pk.2010`, `src.abell.ges.consensus.2008` and
+`src.usda.sr_legacy.2018`, listed above.
+
+- `src.tougas.gastric.lowfat_controls.2000` — Tougas et al., *Am J
+  Gastroenterol* 95:1456–1462, doi:10.1111/j.1572-0241.2000.02076.x,
+  PMID:10894578. (Distinct from the simplified-scintigraphy paper
+  `src.tougas.gastric.scintigraphy.2000`, PMID:10638563.)
+- `src.elashoff.gastric.powerexp.1982` — Elashoff, Reedy, and Meyer,
+  *Gastroenterology* 83:1306–1312, PMID:7129034.
+- `src.othman.levodopa.poppk.2014` — Othman and Dutta, *Br J Clin Pharmacol*
+  78:94–105, doi:10.1111/bcp.12324, PMID:24433449.
+- `src.simon.levodopa.pkpd.2016` — Simon et al., *Eur J Clin Pharmacol*
+  72:423–430, doi:10.1007/s00228-016-2034-0, PMID:26936272.
+- `src.carter.protein_redistribution.1989` — Carter, Nutt, Woodward,
+  Hatcher, and Trotman, *Neurology* 39:552–556, doi:10.1212/wnl.39.4.552,
+  PMID:2648188.
+- `src.boirie.fast_slow_protein.1997` — Boirie et al., *Proc Natl Acad Sci
+  U S A* 94:14930–14935, doi:10.1073/pnas.94.26.14930, PMID:9405716.
+- `src.smith.bbb_neutral_amino_acid_kinetics.1987` — Smith, Momma, Aoyagi,
+  and Rapoport, *J Neurochem* 49:1651–1658,
+  doi:10.1111/j.1471-4159.1987.tb01039.x, PMID:3668544 (rat).
+- `src.pardridge.bbb_amino_acid_transport.1986` — Pardridge and Choi, *Fed
+  Proc* 45:2073–2078, PMID:3519291.
+
 ### 2026-10-20 gastric physics update
 
 Registered for the calorie-regulated liquid delivery rate

@@ -205,8 +205,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.logged_meals': '기록된 식사: {count}',
     'dashboard.active_drugs': '활성 약물: {count}',
     'dashboard.logged_intakes': '약물 복용 기록: {count}',
-    'dashboard.recommendations': '추천',
-    'dashboard.no_recommendations': '추천이 아직 없습니다',
+    'dashboard.recommendations': '다음 식사 음식 비교',
+    'dashboard.no_recommendations': '아직 비교할 음식이 없습니다',
     'dashboard.recommendation_path': '추천 경로',
     'dashboard.recommendation_template':
         '활성 템플릿: {region} · {mealSlot} · {texture}',
@@ -246,6 +246,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.medication': '약물',
     'timeline.active_medication_option': '{name} (활성)',
     'timeline.dosage_note': '용량 메모',
+    'package_dose.strength_title': '제품 함량',
+    'package_dose.strength_help':
+        '내장 제품 카탈로그의 함량입니다. 함량을 골라도 용량이 정해지지 않으며, 아래에서 단위 수를 선택하세요.',
+    'package_dose.quantity_title': '이번 복용 단위 수({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source': '출처: {source} · 조회: {retrieved} · {url}',
     'timeline.package_dose_derivation':
         '계산: {strength} × {quantity} {unit} = {amount} {resultUnit}',
@@ -672,8 +677,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.logged_meals': 'दर्ज भोजन: {count}',
     'dashboard.active_drugs': 'सक्रिय दवाइयाँ: {count}',
     'dashboard.logged_intakes': 'दवा सेवन: {count}',
-    'dashboard.recommendations': 'सिफारिशें',
-    'dashboard.no_recommendations': 'अभी कोई सिफारिश नहीं',
+    'dashboard.recommendations': 'अगले भोजन के खाद्यों की तुलना',
+    'dashboard.no_recommendations': 'अभी तुलना के लिए कोई खाद्य नहीं',
     'dashboard.recommendation_path': 'सिफारिश पथ',
     'dashboard.recommendation_template':
         'सक्रिय टेम्पलेट: {region} · {mealSlot} · {texture}',
@@ -714,6 +719,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.medication': 'दवा',
     'timeline.active_medication_option': '{name} (सक्रिय)',
     'timeline.dosage_note': 'खुराक नोट',
+    'package_dose.strength_title': 'उत्पाद की शक्ति',
+    'package_dose.strength_help':
+        'अंतर्निहित उत्पाद कैटलॉग में सूचीबद्ध शक्तियाँ। शक्ति चुनने से खुराक तय नहीं होती; नीचे इकाइयों की संख्या चुनें।',
+    'package_dose.quantity_title': 'इस खुराक में इकाइयाँ ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'स्रोत: {source} · प्राप्त: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -1179,8 +1189,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.logged_meals': 'Comidas registradas: {count}',
     'dashboard.active_drugs': 'Medicamentos activos: {count}',
     'dashboard.logged_intakes': 'Tomas de medicamentos: {count}',
-    'dashboard.recommendations': 'Recomendaciones',
-    'dashboard.no_recommendations': 'Aún no hay recomendaciones',
+    'dashboard.recommendations': 'Comparar alimentos para la próxima comida',
+    'dashboard.no_recommendations': 'Aún no hay alimentos para comparar',
     'dashboard.recommendation_path': 'Ruta de recomendación',
     'dashboard.recommendation_template':
         'Plantilla activa: {region} · {mealSlot} · {texture}',
@@ -1223,6 +1233,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.medication': 'Medicamento',
     'timeline.active_medication_option': '{name} (activo)',
     'timeline.dosage_note': 'Nota de dosificación',
+    'package_dose.strength_title': 'Concentración del producto',
+    'package_dose.strength_help':
+        'Concentraciones del catálogo de productos incluido. Elegir una no fija una dosis; elige el número de unidades abajo.',
+    'package_dose.quantity_title': 'Unidades en esta dosis ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Fuente: {source} · Consultado: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -1685,8 +1700,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'dashboard.logged_meals': 'Bữa ăn đã ghi: {count}',
     'dashboard.active_drugs': 'Thuốc đang dùng: {count}',
     'dashboard.logged_intakes': 'Số lần uống thuốc: {count}',
-    'dashboard.recommendations': 'Gợi ý',
-    'dashboard.no_recommendations': 'Chưa có gợi ý',
+    'dashboard.recommendations': 'So sánh thực phẩm cho bữa kế tiếp',
+    'dashboard.no_recommendations': 'Chưa có thực phẩm để so sánh',
     'dashboard.recommendation_path': 'Đường dẫn gợi ý',
     'dashboard.recommendation_template':
         'Mẫu đang dùng: {region} · {mealSlot} · {texture}',
@@ -1729,6 +1744,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslations = {
     'timeline.medication': 'Thuốc',
     'timeline.active_medication_option': '{name} (đang dùng)',
     'timeline.dosage_note': 'Ghi chú liều',
+    'package_dose.strength_title': 'Hàm lượng sản phẩm',
+    'package_dose.strength_help':
+        'Các hàm lượng có trong danh mục sản phẩm tích hợp. Chọn hàm lượng không đặt liều; hãy chọn số đơn vị bên dưới.',
+    'package_dose.quantity_title': 'Số đơn vị trong liều này ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Nguồn: {source} · Thời điểm truy xuất: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -2192,8 +2212,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.logged_meals': 'มื้ออาหารที่บันทึก: {count}',
     'dashboard.active_drugs': 'ยาที่ใช้อยู่: {count}',
     'dashboard.logged_intakes': 'การรับประทานยา: {count}',
-    'dashboard.recommendations': 'คำแนะนำ',
-    'dashboard.no_recommendations': 'ยังไม่มีคำแนะนำ',
+    'dashboard.recommendations': 'เปรียบเทียบอาหารสำหรับมื้อถัดไป',
+    'dashboard.no_recommendations': 'ยังไม่มีอาหารให้เปรียบเทียบ',
     'dashboard.recommendation_path': 'เส้นทางคำแนะนำ',
     'dashboard.recommendation_template':
         'เทมเพลตที่ใช้: {region} · {mealSlot} · {texture}',
@@ -2236,6 +2256,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.medication': 'ยา',
     'timeline.active_medication_option': '{name} (ใช้อยู่)',
     'timeline.dosage_note': 'บันทึกขนาดยา',
+    'package_dose.strength_title': 'ความแรงของผลิตภัณฑ์',
+    'package_dose.strength_help':
+        'ความแรงจากแคตตาล็อกผลิตภัณฑ์ในแอป การเลือกความแรงไม่ได้กำหนดขนาดยา โปรดเลือกจำนวนหน่วยด้านล่าง',
+    'package_dose.quantity_title': 'จำนวนหน่วยในครั้งนี้ ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'แหล่งที่มา: {source} · เวลาที่ดึงข้อมูล: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -2696,8 +2721,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.logged_meals': 'Makanan tercatat: {count}',
     'dashboard.active_drugs': 'Obat aktif: {count}',
     'dashboard.logged_intakes': 'Konsumsi obat: {count}',
-    'dashboard.recommendations': 'Rekomendasi',
-    'dashboard.no_recommendations': 'Belum ada rekomendasi',
+    'dashboard.recommendations': 'Bandingkan makanan untuk makan berikutnya',
+    'dashboard.no_recommendations': 'Belum ada makanan untuk dibandingkan',
     'dashboard.recommendation_path': 'Jalur rekomendasi',
     'dashboard.recommendation_template':
         'Template aktif: {region} · {mealSlot} · {texture}',
@@ -2740,6 +2765,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.medication': 'Obat',
     'timeline.active_medication_option': '{name} (aktif)',
     'timeline.dosage_note': 'Catatan dosis',
+    'package_dose.strength_title': 'Kekuatan produk',
+    'package_dose.strength_help':
+        'Kekuatan dari katalog produk bawaan. Memilih kekuatan tidak menetapkan dosis; pilih jumlah unit di bawah.',
+    'package_dose.quantity_title': 'Unit dalam dosis ini ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Sumber: {source} · Diambil: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -3204,8 +3234,9 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.logged_meals': 'Записано приёмов пищи: {count}',
     'dashboard.active_drugs': 'Активные лекарства: {count}',
     'dashboard.logged_intakes': 'Приёмы лекарств: {count}',
-    'dashboard.recommendations': 'Рекомендации',
-    'dashboard.no_recommendations': 'Пока нет рекомендаций',
+    'dashboard.recommendations':
+        'Сравнение продуктов для следующего приёма пищи',
+    'dashboard.no_recommendations': 'Пока нет продуктов для сравнения',
     'dashboard.recommendation_path': 'Путь рекомендаций',
     'dashboard.recommendation_template':
         'Активный шаблон: {region} · {mealSlot} · {texture}',
@@ -3249,6 +3280,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.medication': 'Лекарство',
     'timeline.active_medication_option': '{name} (активный)',
     'timeline.dosage_note': 'Заметка о дозе',
+    'package_dose.strength_title': 'Дозировка препарата',
+    'package_dose.strength_help':
+        'Дозировки из встроенного каталога препаратов. Выбор дозировки не задаёт дозу; выберите количество единиц ниже.',
+    'package_dose.quantity_title': 'Единиц в этой дозе ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Источник: {source} · Получено: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -3716,8 +3752,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.logged_meals': 'Zarejestrowane posiłki: {count}',
     'dashboard.active_drugs': 'Aktywne leki: {count}',
     'dashboard.logged_intakes': 'Przyjęcia leków: {count}',
-    'dashboard.recommendations': 'Rekomendacje',
-    'dashboard.no_recommendations': 'Brak rekomendacji',
+    'dashboard.recommendations': 'Porównanie produktów na następny posiłek',
+    'dashboard.no_recommendations': 'Brak produktów do porównania',
     'dashboard.recommendation_path': 'Ścieżka rekomendacji',
     'dashboard.recommendation_template':
         'Aktywny szablon: {region} · {mealSlot} · {texture}',
@@ -3760,6 +3796,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.medication': 'Lek',
     'timeline.active_medication_option': '{name} (aktywny)',
     'timeline.dosage_note': 'Notatka o dawce',
+    'package_dose.strength_title': 'Moc produktu',
+    'package_dose.strength_help':
+        'Moce z wbudowanego katalogu produktów. Wybór mocy nie ustala dawki; wybierz liczbę jednostek poniżej.',
+    'package_dose.quantity_title': 'Jednostki w tej dawce ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Źródło: {source} · Pobrano: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -4217,8 +4258,8 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'dashboard.logged_meals': 'الوجبات المسجلة: {count}',
     'dashboard.active_drugs': 'الأدوية النشطة: {count}',
     'dashboard.logged_intakes': 'جرعات الأدوية: {count}',
-    'dashboard.recommendations': 'التوصيات',
-    'dashboard.no_recommendations': 'لا توجد توصيات بعد',
+    'dashboard.recommendations': 'مقارنة الأطعمة للوجبة التالية',
+    'dashboard.no_recommendations': 'لا توجد أطعمة للمقارنة بعد',
     'dashboard.recommendation_path': 'مسار التوصية',
     'dashboard.recommendation_template':
         'القالب النشط: {region} · {mealSlot} · {texture}',
@@ -4259,6 +4300,11 @@ const Map<String, Map<String, String>> kFullLocaleUiTranslationsExtra = {
     'timeline.medication': 'دواء',
     'timeline.active_medication_option': '{name} (نشط)',
     'timeline.dosage_note': 'ملاحظة الجرعة',
+    'package_dose.strength_title': 'تركيز المنتج',
+    'package_dose.strength_help':
+        'تركيزات من كتالوج المنتجات المدمج. اختيار التركيز لا يحدد جرعة؛ اختر عدد الوحدات أدناه.',
+    'package_dose.quantity_title': 'الوحدات في هذه الجرعة ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'المصدر: {source} · وقت الاسترجاع: {retrieved} · {url}',
     'timeline.package_dose_derivation':

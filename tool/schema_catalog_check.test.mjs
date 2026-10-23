@@ -61,7 +61,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.match(followupLedger.compatibility, /unclassified/);
   assert.match(followupLedger.compatibility, /migrate to v3/);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
-  assert.equal(catalog.schemas.length, 201);
+  assert.equal(catalog.schemas.length, 203);
   const catalogChangeDiff = schemaById(
     catalog,
     'parkinsum.catalog-version-change-diff',
@@ -281,7 +281,7 @@ test('committed catalog covers every required and discovered schema surface', ()
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned')
       .length,
-    195,
+    197,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned')
@@ -708,7 +708,7 @@ test('owner observation audit schema stays supplemental to engine input identity
     'parkinsum.personal-observation-event-ledger',
   );
   assert.equal(schema.currentVersion, 2);
-  assert.equal(catalog.schemas.length, 201);
+  assert.equal(catalog.schemas.length, 203);
   assert.equal(catalog.schemas.length, requiredSchemaSurfaces.length);
   assert.equal(
     schema.source,
@@ -744,13 +744,24 @@ test('open-source influence inventory schema v7 matches its source and catalog p
   assert.ok(!failures.some((failure) => failure.includes(id)), failures.join('\n'));
 });
 
+test('governance ledger chain schema is a versioned governance artifact', () => {
+  const { catalog, failures } = baseline();
+  const schema = schemaById(catalog, 'parkinsum.governance-ledger-chain');
+  assert.equal(schema.currentVersion, 1);
+  assert.equal(schema.surfaceKind, 'governance-artifact');
+  assert.equal(schema.source, 'lib/domain/entities/governance_ledger_chain.dart');
+  assert.match(schema.compatibility, /config\/governance_ledger\.jsonl/);
+  assert.match(schema.compatibility, /not evidence, review, validation or approval/);
+  assert.deepEqual(failures, []);
+});
+
 test('open-source drift decision and ledger schemas are versioned governance artifacts', () => {
   const { catalog, failures } = baseline();
   const source = readFileSync('tool/open_source_drift_decision_ledger.mjs', 'utf8');
-  assert.equal(catalog.schemas.length, 201);
+  assert.equal(catalog.schemas.length, 203);
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus !== 'unversioned').length,
-    195,
+    197,
   );
   assert.equal(
     catalog.schemas.filter((schema) => schema.versionStatus === 'unversioned').length,

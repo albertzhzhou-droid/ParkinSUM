@@ -1,3 +1,4 @@
+import 'personal_diary_strip.dart';
 import 'personal_log_view.dart';
 
 /// Explicit, report-only choices. They never alter stored records or CDSS input.
@@ -13,6 +14,8 @@ final class VisitReportSelection {
     required this.includeRecordNotes,
     required this.includeDiscussionUpdates,
     required this.includeSourceAssertions,
+    this.includeDiaryStrip = false,
+    this.diaryProteinFilterG = diaryDefaultProteinFilterG,
   }) : intakeIds = _ids(intakeIds, 20000),
        observationIds = _ids(observationIds, 128),
        questionNoteIds = _ids(questionNoteIds, 60),
@@ -20,6 +23,9 @@ final class VisitReportSelection {
        followupPromptIds = _ids(followupPromptIds, 128) {
     if (window.calendarDays < 1 || window.calendarDays > 366) {
       throw const FormatException('Visit report date range exceeds its limit.');
+    }
+    if (!diaryProteinFilterOptionsG.contains(diaryProteinFilterG)) {
+      throw const FormatException('Unsupported diary protein display filter.');
     }
   }
 
@@ -34,6 +40,13 @@ final class VisitReportSelection {
   final bool includeDiscussionUpdates;
   final bool includeSourceAssertions;
 
+  /// Adds the day strip of every intake, meal and motor-state entry in the
+  /// last days of [window], independent of the record choices above.
+  final bool includeDiaryStrip;
+
+  /// Meal-protein display filter for the strip's counts; not a target.
+  final int diaryProteinFilterG;
+
   Map<String, Object?> toJson() => {
     'startDate': window.start.toString(),
     'endDateInclusive': window.endInclusive.toString(),
@@ -47,6 +60,8 @@ final class VisitReportSelection {
     'includeRecordNotes': includeRecordNotes,
     'includeDiscussionUpdates': includeDiscussionUpdates,
     'includeSourceAssertions': includeSourceAssertions,
+    'includeDiaryStrip': includeDiaryStrip,
+    'diaryProteinFilterG': diaryProteinFilterG,
   };
 
   static Set<String> _ids(Iterable<String> values, int limit) {

@@ -4,12 +4,14 @@
 // On a branch rebased onto the merge target (default origin/main) whose
 // identity still equals the target's vN, it performs the bump to vN+1 exactly
 // as the hand-made rebinds did (v80 -> v81 in 20fc7f6): next identity version
-// with a comment, one appended blocked context-of-use ledger record, the
-// frozen governance_history_before_vN+1.json fixture, the plan/attestation
-// version rebinds, the queue sentences, the release-probe version and the
-// tests that name them. On a tree already at vN+1 it only refreshes digests.
-// Every digest comes from production code (tool/identity_rebind_probe.dart)
-// or from the existing pin printers; nothing is re-implemented here.
+// with a comment, one appended blocked context-of-use ledger record, one
+// checkpoint and one record appended to the hash-chained governance ledger
+// (config/governance_ledger.jsonl) with its pins, the plan/attestation version
+// rebinds, the queue sentences, the release-probe version and the tests that
+// name them. On a tree already at vN+1 it only refreshes digests. Every digest
+// comes from production code (tool/identity_rebind_probe.dart,
+// tool/governance_ledger_chain.dart) or from the existing pin printers; nothing
+// is re-implemented here.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -29,8 +31,9 @@ export const FILES = Object.freeze({
   executionTest: 'test/credibility_evidence_execution_attestation_test.dart',
   planTest: 'test/prospective_model_credibility_plan_test.dart',
   replayGolden: 'test/goldens/mechanistic_replay.md',
+  chain: 'config/governance_ledger.jsonl',
+  chainPins: 'lib/domain/entities/governance_ledger_chain.dart',
 });
-export const fixturePath = (number) => `test/fixtures/governance_history_before_v${number}.json`;
 export const QUEUE_ITEMS = Object.freeze({
   identity: 'algorithm_configuration_identity_digest',
   ledger: 'context_of_use_change_requalification_ledger',
@@ -42,7 +45,7 @@ export const VERIFY_TESTS = [
   'test/context_of_use_requalification_test.dart', 'test/credibility_evidence_execution_attestation_test.dart',
   'test/prospective_model_credibility_plan_test.dart', 'test/algorithm_configuration_change_impact_test.dart',
   'test/parkinsum_algorithm_sdk_test.dart', 'test/algorithm_contract_independent_oracle_attestation_test.dart',
-  'test/algorithm_relation_domain_sampling_attestation_test.dart', 'test/goldens_test.dart',
+  'test/algorithm_relation_domain_sampling_attestation_test.dart', 'test/goldens_test.dart', 'test/governance_ledger_chain_test.dart',
 ];
 export const VERIFY_SCRIPTS = ['algorithm:contracts:independent', 'algorithm:contracts:sampling', 'cou:requalification',
   'algorithm:configuration-impact', 'credibility:prospective', 'credibility:execution', 'upgrade:queue'];
@@ -79,6 +82,17 @@ export function replaceConst(source, name, value) {
   const matches = source.match(pattern) ?? [];
   if (matches.length !== 1) throw new Error(`Expected one constant ${name}, found ${matches.length}`);
   return source.replace(pattern, (_, head, __, tail) => `${head}${value}${tail}`);
+}
+export function readIntConst(source, name) {
+  const match = new RegExp(`static const int ${name} = (\\d+);`).exec(source);
+  if (!match) throw new Error(`Missing constant ${name}`);
+  return Number(match[1]);
+}
+export function replaceIntConst(source, name, value) {
+  const pattern = new RegExp(`(static const int ${name} = )\\d+(;)`, 'g');
+  const matches = source.match(pattern) ?? [];
+  if (matches.length !== 1) throw new Error(`Expected one constant ${name}, found ${matches.length}`);
+  return source.replace(pattern, (_, head, tail) => `${head}${value}${tail}`);
 }
 export function replaceOnce(source, from, to, label) {
   const count = source.split(from).length - 1;
@@ -187,24 +201,7 @@ export function bumpLedgerTest(source, { fromNumber, toNumber, priorRecordCount:
     `'v${toNumber} candidate retains all ${numberWords(count)} historical blocked records without new approval'`, 'ledger test title');
   next = replaceOnce(next, `expect(ledger.records, hasLength(${count}));`, `expect(ledger.records, hasLength(${count + 1}));`, 'ledger length');
   next = replaceOnce(next, `expect(candidate.sequence, ${count});`, `expect(candidate.sequence, ${count + 1});`, 'candidate sequence');
-  next = replaceOnce(next, `ledger.records[${count - 2}].currentConfigurationSha256,`, `ledger.records[${count - 1}].currentConfigurationSha256,`, 'candidate predecessor');
-  // New frozen-history test goes above the newest existing one.
-  const anchor = next.indexOf(`remain exact before v${fromNumber}'`);
-  if (anchor < 0) throw new Error(`No frozen-history test for v${fromNumber}`);
-  const start = next.lastIndexOf('\n  test(', anchor) + 1;
-  const frozen = [
-    `  test('all ${numberWords(count)} whole records and digests remain exact before v${toNumber}', () {`,
-    '    final frozen =',
-    `        jsonDecode(File('${fixturePath(toNumber)}').readAsStringSync())`,
-    '            as Map<String, dynamic>;',
-    `    final records = currentLedger().records.take(${count}).toList();`,
-    "    expect(records.map((record) => record.toJson()).toList(), frozen['ledger_records']);",
-    "    expect(records.map((record) => record.recordSha256).toList(), frozen['record_sha256s']);",
-    `    expect(records.last.currentConfigurationSha256, ContextOfUseRequalificationLedger.historicalV${fromNumber}ConfigurationSha256);`,
-    '  });',
-    '',
-  ].join('\n');
-  return `${next.slice(0, start)}${frozen}${next.slice(start)}`;
+  return replaceOnce(next, `ledger.records[${count - 2}].currentConfigurationSha256,`, `ledger.records[${count - 1}].currentConfigurationSha256,`, 'candidate predecessor');
 }
 
 export function bumpExecutionTest(source, { fromNumber, toNumber, fromVersion, toVersion }) {
@@ -234,6 +231,63 @@ export function bumpQueue(text, { fromNumber, toNumber, sentences }) {
     item.currentGap = `The current v${toNumber} candidate ${sentences[key]} Previous candidate history: The v${fromNumber} candidate ${item.currentGap.slice(head.length)}`;
   }
   return `${JSON.stringify(queue, null, 2)}\n`;
+}
+
+// ---- Governance ledger chain (lines and digests come from production code) ----
+
+// JSON Lines without any hashing: the tool only reads what the Dart chain wrote.
+export function parseChain(text) {
+  return text.split('\n').filter((line) => line && !/^(<{7}|={7}|>{7}|\|{7})( |$)/.test(line)).map((line) => JSON.parse(line));
+}
+export const chainCheckpoint = (entries, beforeIdentityVersion) =>
+  entries.find((entry) => entry.entry_kind === 'checkpoint' && entry.before_identity_version === beforeIdentityVersion);
+
+// The provenance a bump records in its checkpoint; title and reason let
+// --reapply redo the same bump on a newer base.
+export function checkpointProvenance({ baseSha, baseVersion, frozenSha, fromNumber, toNumber, title, reason }) {
+  return { source_commit: baseSha, source_configuration_version: baseVersion, source_configuration_sha256: frozenSha,
+    boundary: `Complete v${fromNumber} ledger before the v${toNumber} ${title} rebind; no new validation, evidence or review is asserted.`,
+    rebind_title: title, rebind_reason: reason };
+}
+
+// The rebind a branch appended: its checkpoint entries that the base lacks.
+export function ownRebind(baseChainText, branchChainText) {
+  const known = new Set(parseChain(baseChainText).map((entry) => entry.entry_sha256));
+  const own = parseChain(branchChainText).filter((entry) => entry.entry_kind === 'checkpoint' && !known.has(entry.entry_sha256));
+  if (own.length !== 1) throw new Error(`Expected one checkpoint of this branch beyond the base chain, found ${own.length}`);
+  const { rebind_title: title, rebind_reason: reason } = own[0].provenance ?? {};
+  if (!title || !reason) throw new Error(`The v${own[0].before_identity_version} checkpoint records no rebind title and reason; pass --title and --reason`);
+  return { title, reason, beforeIdentityVersion: own[0].before_identity_version };
+}
+
+export function chainPinRow({ before_identity_version: before, record_count: count, snapshot_sha256: snapshot, entry_sha256: entry }) {
+  return ['    GovernanceLedgerCheckpointPin(', `      beforeIdentityVersion: ${before},`, `      recordCount: ${count},`,
+    `      snapshotSha256: '${snapshot}',`, `      entrySha256: '${entry}',`,
+    `      lastConfigurationSha256: ContextOfUseRequalificationLedger.historicalV${before - 1}ConfigurationSha256,`, '    ),'].join('\n');
+}
+export function pinnedCheckpoints(source) {
+  return [...source.matchAll(/GovernanceLedgerCheckpointPin\(\s*beforeIdentityVersion: (\d+),\s*recordCount: (\d+),\s*snapshotSha256:\s*'([0-9a-f]{64})',\s*entrySha256:\s*'([0-9a-f]{64})',/g)]
+    .map(([, before, count, snapshot, entry]) => ({ before_identity_version: Number(before), record_count: Number(count), snapshot_sha256: snapshot, entry_sha256: entry }));
+}
+
+// Binds the chain pins: head and length always, plus a row for every new
+// checkpoint. A pinned checkpoint that moved means history was rewritten.
+export function bindChainPins(source, pins) {
+  const pinned = new Map(pinnedCheckpoints(source).map((pin) => [pin.before_identity_version, pin]));
+  const rows = [];
+  for (const checkpoint of pins.checkpoints) {
+    const existing = pinned.get(checkpoint.before_identity_version);
+    if (!existing) rows.push(chainPinRow(checkpoint));
+    else if (JSON.stringify(existing) !== JSON.stringify(checkpoint)) throw new Error(`The pinned v${checkpoint.before_identity_version} checkpoint changed; earlier chain history must never be rewritten`);
+  }
+  let next = replaceIntConst(source, 'expectedEntryCount', pins.entry_count);
+  next = replaceConst(next, 'expectedHeadSha256', pins.head_sha256);
+  if (!rows.length) return next;
+  const open = 'static const List<GovernanceLedgerCheckpointPin> checkpointPins = [';
+  const start = next.indexOf(open);
+  const end = next.indexOf('\n  ];', start);
+  if (start < 0 || end < 0) throw new Error('checkpointPins list not found');
+  return `${next.slice(0, end)}\n${rows.join('\n')}${next.slice(end)}`;
 }
 
 // ---- Digest refresh (both modes; a no-op when already bound) ----
@@ -279,6 +333,10 @@ function probe(cwd, flags = []) {
   if (start < 0) throw new Error('identity_rebind_probe.dart printed no result');
   return JSON.parse(output.slice(start));
 }
+function chainTool(cwd, args) {
+  const output = run('dart', ['run', 'tool/governance_ledger_chain.dart', ...args], cwd, { quiet: true });
+  return JSON.parse(output.trim().split('\n').at(-1));
+}
 function printedPins(output) {
   const start = output.lastIndexOf('{\n  "expected');
   if (start < 0) throw new Error('Pin printer emitted no pins');
@@ -288,7 +346,7 @@ function printedPins(output) {
 const USAGE = `Usage: npm run identity:rebind -- --reason "<clause>" [options]
   --reason "<clause>"      what this identity binds, lower-case, completing "The vN candidate …"
                            (e.g. "binds plain-language result copy; stored scores are unchanged")
-  --title "<noun phrase>"  short name for the ledger event, release artifact and fixture boundary
+  --title "<noun phrase>"  short name for the ledger event, release artifact and chain checkpoint
                            (default "software identity rebind")
   --base <ref>             merge target the branch is rebased onto (default origin/main)
   --version-date YYYY.MM.DD  date prefix for the new identity, ledger, plan and attestation versions
@@ -296,6 +354,8 @@ const USAGE = `Usage: npm run identity:rebind -- --reason "<clause>" [options]
   --recorded-at YYYY-MM-DD  ledger record date (default: today, UTC)
   --no-verify              skip the governance tests and gates run after the rebind
   --allow-unchanged        bump even though no registered source or configuration changed
+  --reapply <ref>          redo the rebind that <ref> carries (e.g. ORIG_HEAD after a rebase that dropped
+                           it): title and reason are read from its appended governance-chain checkpoint
 Bumps base vN to vN+1 when the tree is still at vN; when the tree is already at vN+1 it only
 refreshes digests, so running it again is a no-op unless sources changed.`;
 
@@ -305,12 +365,13 @@ export function parseArgs(argv) {
     const arg = argv[index];
     const value = () => { const next = argv[++index]; if (next === undefined) throw new Error(`${arg} needs a value`); return next; };
     if (arg === '--reason') options.reason = value();
-    else if (arg === '--title') options.title = value();
+    else if (arg === '--title') { options.title = value(); options.titleGiven = true; }
     else if (arg === '--base') options.base = value();
     else if (arg === '--version-date') options.versionDate = value();
     else if (arg === '--recorded-at') options.recordedAt = value();
     else if (arg === '--no-verify') options.verify = false;
     else if (arg === '--allow-unchanged') options.allowUnchanged = true;
+    else if (arg === '--reapply') options.reapply = value();
     else if (arg === '--help') options.help = true;
     else throw new Error(`Unknown argument ${arg}`);
   }
@@ -344,6 +405,14 @@ export async function rebind(options, { cwd = process.cwd(), log = (line) => con
   log(`identity:rebind ${mode === 'bump' ? `bump ${baseVersion} -> v${base.number + 1}` : `refresh digests of ${treeVersion}`} (base ${options.base} ${baseSha.slice(0, 7)})`);
   const toNumber = base.number + 1;
 
+  if (options.reapply) {
+    if (mode !== 'bump') throw new Error(`--reapply needs the governance files at ${options.base}'s ${baseVersion}; drop the old rebind commit first.`);
+    const own = ownRebind(git(['show', `${baseSha}:${FILES.chain}`], cwd), git(['show', `${options.reapply}:${FILES.chain}`], cwd));
+    if (!options.reason) options.reason = own.reason;
+    if (!options.titleGiven) options.title = own.title;
+    log(`  reapplying "${options.title}" (recorded for v${own.beforeIdentityVersion} in ${options.reapply}) as v${toNumber}`);
+  }
+
   if (mode === 'bump') {
     if (!options.reason) throw new Error('A bump needs --reason "<clause>".');
     // The identity file itself may carry legitimate branch edits (implementation
@@ -354,19 +423,20 @@ export async function rebind(options, { cwd = process.cwd(), log = (line) => con
     const treeQueue = JSON.parse(read('queue'));
     for (const id of Object.values(QUEUE_ITEMS)) if (baseQueue.items.find((item) => item.id === id)?.currentGap !== treeQueue.items.find((item) => item.id === id)?.currentGap) handEdited.push(`${FILES.queue} (${id})`);
     if (handEdited.length) throw new Error(`These governance files differ from ${options.base}; branches must not hand-bump the identity:\n  ${handEdited.join('\n  ')}\nRestore them (git checkout ${options.base} -- <files>) and rerun.`);
-    if (existsSync(resolve(cwd, fixturePath(toNumber)))) throw new Error(`${fixturePath(toNumber)} already exists`);
+    if (chainCheckpoint(parseChain(read('chain')), toNumber)) throw new Error(`${FILES.chain} already marks the v${toNumber} bump`);
 
-    // 1. Freeze the complete current ledger, read through production code.
-    const before = probe(cwd, ['--ledger']);
+    // 1. Mark the bump in the governance chain: one checkpoint naming the
+    //    complete current ledger, sealed by production code.
+    const before = probe(cwd);
     const ledgerSource = read('ledger');
     const frozenSha = readConst(ledgerSource, 'expectedCurrentConfigurationSha256');
-    const priorRecordCount = before.ledger_records.length;
     if (before.pinned_source_bundle_sha256 === before.source_bundle_sha256 && before.configuration_sha256 === frozenSha && !options.allowUnchanged) {
       throw new Error('No registered algorithm source or configuration changed since the base identity, so a bump would only add an empty ledger record. Pass --allow-unchanged to bump anyway.');
     }
-    const fixture = { source_commit: baseSha, source_configuration_version: baseVersion, source_configuration_sha256: frozenSha,
-      boundary: `Frozen complete v${base.number} ledger before the v${toNumber} ${options.title} rebind; no new validation, evidence or review is asserted.`,
-      ledger_records: before.ledger_records, record_sha256s: before.record_sha256s };
+    const provenance = checkpointProvenance({ baseSha, baseVersion, frozenSha, fromNumber: base.number, toNumber, title: options.title, reason: options.reason });
+    const marked = chainTool(cwd, ['checkpoint', '--before-version', String(toNumber), '--provenance', JSON.stringify(provenance)]);
+    changed.add(FILES.chain);
+    const priorRecordCount = marked.record_count;
 
     // 2. Advance the identity and bind the actual registered-source bundle.
     const toVersion = `${options.versionDate ?? base.prefix}-v${toNumber}`;
@@ -389,13 +459,12 @@ export async function rebind(options, { cwd = process.cwd(), log = (line) => con
     write(FILES.releaseProbe, bumpReleaseProbe(read('releaseProbe'), ctx));
     write(FILES.ledgerTest, bumpLedgerTest(read('ledgerTest'), ctx));
     write(FILES.executionTest, bumpExecutionTest(read('executionTest'), ctx));
-    write(fixturePath(toNumber), `${JSON.stringify(fixture, null, 2)}\n`);
-    log(`  ledger record ${priorRecordCount + 1} (${ledger.variable}); ${priorRecordCount} prior records frozen in ${fixturePath(toNumber)}`);
+    log(`  ledger record ${priorRecordCount + 1} (${ledger.variable}); the v${toNumber} checkpoint names the ${priorRecordCount} prior records in ${FILES.chain}`);
     log(`  plan ${plan.from} -> ${plan.to}; attestation ${execution.from} -> ${execution.to}`);
   } else {
     const ledgerSource = read('ledger');
-    if (!new RegExp(`static const String historicalV${base.number}ConfigurationSha256`).test(ledgerSource) || !existsSync(resolve(cwd, fixturePath(toNumber)))) {
-      throw new Error(`Tree is at ${treeVersion} but lacks the v${toNumber} ledger rebind or ${fixturePath(toNumber)}; it was not produced by this tool.`);
+    if (!new RegExp(`static const String historicalV${base.number}ConfigurationSha256`).test(ledgerSource) || !chainCheckpoint(parseChain(read('chain')), toNumber)) {
+      throw new Error(`Tree is at ${treeVersion} but lacks the v${toNumber} ledger rebind or its ${FILES.chain} checkpoint; it was not produced by this tool.`);
     }
     if (options.reason) log('  already bound; --reason is not re-applied (edit the prose by hand if it must change)');
   }
@@ -406,6 +475,11 @@ export async function rebind(options, { cwd = process.cwd(), log = (line) => con
   const bound = probe(cwd, ['--impact']);
   const digests = { configurationSha256: bound.configuration_sha256, sourceBundleSha256: bound.source_bundle_sha256 };
   write(FILES.ledger, replaceConst(read('ledger'), 'expectedCurrentConfigurationSha256', digests.configurationSha256));
+  // The new record follows the last checkpoint; only that tail is rewritten.
+  const chainBefore = read('chain');
+  const chainPins = chainTool(cwd, ['sync']);
+  if (read('chain') !== chainBefore) changed.add(FILES.chain);
+  write(FILES.chainPins, bindChainPins(read('chainPins'), chainPins));
   write(FILES.plan, replaceConst(read('plan'), 'expectedConfigurationSha256', digests.configurationSha256));
   write(FILES.execution, replaceConst(replaceConst(read('execution'), 'expectedConfigurationSha256', digests.configurationSha256), 'expectedAlgorithmSourceBundleSha256', digests.sourceBundleSha256));
   write(FILES.impact, replaceConst(replaceConst(read('impact'), 'baselineFixtureSha256Pin', bound.impact_baseline_sha256), 'currentFixtureSha256Pin', digests.configurationSha256));

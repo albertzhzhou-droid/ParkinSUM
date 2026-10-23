@@ -172,7 +172,7 @@ void main() {
       find.byKey(const Key('observatory-dependency-closure-summary')),
       findsOneWidget,
     );
-    expect(find.textContaining('65 / 65 stable roots'), findsOneWidget);
+    expect(find.textContaining('66 / 66 stable roots'), findsOneWidget);
     expect(
       find.textContaining('declared Analyzer target 14.5.0'),
       findsOneWidget,
@@ -314,7 +314,7 @@ void main() {
       find.byKey(const Key('observatory-trace-surface-manifest')),
       findsOneWidget,
     );
-    expect(find.textContaining('14 / 65'), findsOneWidget);
+    expect(find.textContaining('15 / 66'), findsOneWidget);
     await tester.tap(
       find.byKey(const Key('observatory-trace-surface-details')),
     );
@@ -472,8 +472,8 @@ void main() {
     final coverageSummary = tester.widget<Text>(
       find.byKey(const Key('observatory-configuration-coverage-summary')),
     );
-    expect(coverageSummary.data, contains('65 registered'));
-    expect(coverageSummary.data, contains('17 field + source bound'));
+    expect(coverageSummary.data, contains('66 registered'));
+    expect(coverageSummary.data, contains('18 field + source bound'));
     expect(coverageSummary.data, contains('48 source-bundle only'));
     expect(
       coverageSummary.data,
@@ -1324,7 +1324,7 @@ void main() {
     expect(find.text('7 · Mathematical invariant + unit gate'), findsOneWidget);
     expect(find.text('23 / 23 checks passed'), findsOneWidget);
     expect(
-      find.text('22 / 65 algorithms under executable gate'),
+      find.text('22 / 66 algorithms under executable gate'),
       findsOneWidget,
     );
     expect(
@@ -1363,8 +1363,8 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('8 / 8 contracts passed'), findsOneWidget);
-    expect(find.text('Combined coverage 30 / 65 algorithms'), findsOneWidget);
-    expect(find.text('35 algorithms remain uncovered'), findsOneWidget);
+    expect(find.text('Combined coverage 30 / 66 algorithms'), findsOneWidget);
+    expect(find.text('36 algorithms remain uncovered'), findsOneWidget);
     for (final id in <String>[
       'runtime_rule_support.path_permutation',
       'catalog_resolution.input_permutation',
@@ -1944,7 +1944,7 @@ void main() {
     final liveAlgorithms = AlgorithmRegistry.all
         .where((descriptor) => descriptor.hasLiveTrace)
         .toList(growable: false);
-    expect(liveAlgorithms, hasLength(14));
+    expect(liveAlgorithms, hasLength(15));
     expect(
       find.text(
         'Showing ${liveAlgorithms.length} of ${AlgorithmRegistry.all.length} algorithms',
@@ -2205,9 +2205,9 @@ void main() {
         find.byKey(const Key('chart-panel-absorption-competition')),
         findsNothing,
       );
-      expect(
+      await _scrollLazyListUntilBuilt(
+        tester,
         find.byKey(const Key('observatory-conflict-overlap-unavailable')),
-        findsOneWidget,
       );
       await _scrollLazyListUntilBuilt(
         tester,

@@ -34,7 +34,7 @@ import '../../domain/usecases/intake_dose_context_builder.dart';
 import '../../domain/usecases/administration_dose_confirmation_coordinator.dart';
 import '../../domain/usecases/medication_package_dose_calculator.dart';
 import '../entry/entry_page.dart';
-import '../medications/medication_product_picker.dart';
+import '../shared/package_dose_selector.dart';
 import '../observations/observation_editor.dart';
 import '../shared/interaction_result_view.dart';
 import '../shared/dose_expression_status_card.dart';
@@ -2229,7 +2229,6 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
   bool _doseConfirmationInvalidated = false;
   AdministrationDoseAssertionSource _doseAssertionSource =
       AdministrationDoseAssertionSource.typed;
-  static const _packageDoseCalculator = MedicationPackageDoseCalculator();
   bool _isSaving = false;
 
   @override
@@ -2286,9 +2285,6 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
     return '$mm/$dd $hh:$min';
   }
 
-  String _formatPackageQuantity(double value) =>
-      value % 1 == 0 ? value.toInt().toString() : value.toString();
-
   Future<void> _editTakenAt() async {
     final picked = await _pickDateTime(_takenAt);
     if (picked == null) return;
@@ -2306,44 +2302,28 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
     if (source != null) _doseAssertionSource = source;
   }
 
-  Future<void> _pickProduct() async {
-    final state = context.read<AppState>();
-    final drug = state.medRepo.getById(_drugId ?? '');
-    final product = await showMedicationProductPicker(
-      context,
-      initialQuery: drug?.genericName ?? '',
-    );
-    if (product == null || !mounted) return;
+  void _selectProduct(MedicationProductPack product) {
     setState(() {
+      // A dose calculated from the previous product no longer applies.
+      if (_doseAssertionSource ==
+          AdministrationDoseAssertionSource.packageDerived) {
+        _dosageCtrl.clear();
+      }
       _selectedProduct = product;
       _productSelection = MedicationProductSelection.fromPack(product);
-      _invalidateDoseConfirmation();
+      _invalidateDoseConfirmation(
+        source: AdministrationDoseAssertionSource.typed,
+      );
     });
   }
 
-  MedicationIngredientStrength? _quickDoseIngredient() {
-    final product = _selectedProduct;
-    if (product == null) return null;
-    return _packageDoseCalculator.preferredIngredient(product);
-  }
-
-  void _applyPackageUnitQuantity(double quantity) {
-    final product = _selectedProduct;
-    if (product == null) return;
-    final dose = _packageDoseCalculator.fromConfirmedQuantity(
-      product,
-      quantity,
-    );
-    if (dose == null) return;
+  void _applyPackageDose(
+    MedicationProductPack product,
+    ConfirmedPackageDose dose,
+  ) {
     _dosageCtrl.text = dose.dosageNote;
     setState(() {
-      _productSelection = MedicationProductSelection.fromPack(product)
-          .withConfirmedQuantity(
-            doseBasisIngredient: dose.ingredientName,
-            unitQuantity: dose.packageUnitQuantity,
-            unitLabel: dose.packageUnitLabel,
-            doseDerivation: dose.derivation,
-          );
+      _productSelection = packageDoseSelection(product, dose);
       _invalidateDoseConfirmation(
         source: AdministrationDoseAssertionSource.packageDerived,
       );
@@ -2537,118 +2517,16 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
                     }),
                   ),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  key: const ValueKey<String>('select-medication-product'),
-                  onPressed: _pickProduct,
-                  icon: const Icon(Icons.qr_code_scanner),
-                  label: Text(i18n.tr('catalog.title')),
+                PackageDoseSelector(
+                  i18n: i18n,
+                  drug: selectedDrugId == null
+                      ? null
+                      : state.medRepo.getById(selectedDrugId),
+                  product: _selectedProduct,
+                  selection: _productSelection,
+                  onProductSelected: _selectProduct,
+                  onDoseSelected: _applyPackageDose,
                 ),
-                if (_productSelection != null) ...[
-                  const SizedBox(height: 8),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _productSelection!.displayName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            <String>[
-                                  _productSelection!.strengthDisplay,
-                                  _productSelection!.labelerName ?? '',
-                                  _productSelection!.identifierValue,
-                                  _productSelection!.packageDescription,
-                                ]
-                                .where((item) => item.trim().isNotEmpty)
-                                .join('\n'),
-                          ),
-                          if (_productSelection!.sourceSystem != null &&
-                              _productSelection!.sourceUrl != null) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              i18n.tr('timeline.package_dose_source', {
-                                'source': _productSelection!.sourceSystem!,
-                                'url': _productSelection!.sourceUrl!,
-                                'retrieved':
-                                    _productSelection!.sourceRetrievedAtUtc ??
-                                    i18n.tr(
-                                      'timeline.package_dose_retrieval_unknown',
-                                    ),
-                              }),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                          if (_quickDoseIngredient() != null) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 4,
-                              children: <double>[0.5, 1, 1.5, 2]
-                                  .map(
-                                    (quantity) => ActionChip(
-                                      label: Text(
-                                        '${quantity % 1 == 0 ? quantity.toInt() : quantity} ×',
-                                      ),
-                                      onPressed: () =>
-                                          _applyPackageUnitQuantity(quantity),
-                                    ),
-                                  )
-                                  .toList(growable: false),
-                            ),
-                          ],
-                          if (_productSelection!.doseDerivation != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              i18n.tr('timeline.package_dose_derivation', {
-                                'strength': _productSelection!
-                                    .doseDerivation!
-                                    .sourceRawStrength,
-                                'quantity': _formatPackageQuantity(
-                                  _productSelection!
-                                      .doseDerivation!
-                                      .packageUnitQuantity,
-                                ),
-                                'unit': _productSelection!
-                                    .doseDerivation!
-                                    .packageUnitLabel,
-                                'amount': _formatPackageQuantity(
-                                  _productSelection!
-                                      .doseDerivation!
-                                      .resultValue,
-                                ),
-                                'resultUnit': _productSelection!
-                                    .doseDerivation!
-                                    .resultUnit,
-                              }),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            if (_productSelection!
-                                    .doseDerivation!
-                                    .denominatorDisposition ==
-                                'assumed_one_discrete_dosage_unit') ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                i18n.tr(
-                                  'timeline.package_dose_assumed_denominator',
-                                  {
-                                    'unit': _productSelection!
-                                        .doseDerivation!
-                                        .packageUnitLabel,
-                                  },
-                                ),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 12),
                 TextField(
                   key: const ValueKey<String>('intake-dose-note'),

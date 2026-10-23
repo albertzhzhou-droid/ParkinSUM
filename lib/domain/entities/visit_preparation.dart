@@ -4,6 +4,7 @@ import 'care_medication_discussion_entry.dart';
 import 'care_medication_discussion_outcome.dart';
 import 'care_medication_list_review.dart';
 import 'medication_assertion_reconciliation.dart';
+import 'personal_diary_strip.dart';
 
 const visitPreparationMaxMedications = 128;
 const visitPreparationMaxItems = 128;
@@ -17,6 +18,9 @@ const visitPreparationMaxMedicationAssertionEdgesPerReview = 128;
 const visitPreparationAgendaMaxItemsPerSection = 2;
 const visitPreparationAgendaMaxLineRunes = 160;
 const visitPreparationMaxTextLength = 12000;
+
+/// The day strip covers at most the last 14 days of the selected range.
+const visitPreparationDiaryMaxDays = 14;
 
 /// A user-supplied discussion item. Status is descriptive, never an instruction
 /// to alter medication. It deliberately does not depend on a feedback model.
@@ -93,6 +97,8 @@ class VisitPreparationSnapshot {
     this.currentSelectionIncluded = true,
     this.sourceAssertionsIncluded = true,
     this.discussionUpdatesIncluded = true,
+    this.diaryStrip,
+    this.diaryDoseTextOmitted = false,
   }) : activeDrugIds = visitStrings(
          activeDrugIds,
          limit: visitPreparationMaxMedications,
@@ -135,6 +141,9 @@ class VisitPreparationSnapshot {
        userNotes = visitStrings(userNotes, limit: 64) {
     if (unreviewedMedicationAssertionIntakeCount < 0) {
       throw ArgumentError('Unreviewed medication assertion count is invalid.');
+    }
+    if ((diaryStrip?.days.length ?? 0) > visitPreparationDiaryMaxDays) {
+      throw ArgumentError('Visit diary strip exceeds its day limit.');
     }
     if ((!currentSelectionIncluded &&
             (this.activeDrugIds.isNotEmpty ||
@@ -212,6 +221,12 @@ class VisitPreparationSnapshot {
   final bool currentSelectionIncluded;
   final bool sourceAssertionsIncluded;
   final bool discussionUpdatesIncluded;
+
+  /// Null when the day strip was not selected for this report.
+  final DiaryStripProjection? diaryStrip;
+
+  /// True when entered dose text was left out with the attached notes.
+  final bool diaryDoseTextOmitted;
 }
 
 class VisitCatalogEvidence {
@@ -516,6 +531,7 @@ class VisitPreparationReport {
     required Iterable<VisitMedicationListReviewStatus>
     medicationListReviewStatuses,
     required this.plainText,
+    this.diaryStrip,
   }) : currentMedications = visitBoundedList(
          currentMedications,
          visitPreparationMaxMedications,
@@ -574,6 +590,10 @@ class VisitPreparationReport {
   }
 
   final DateTime generatedAt;
+
+  /// The selected day strip, shown in the preview; its text is in
+  /// [agendaText] and [plainText].
+  final DiaryStripProjection? diaryStrip;
   final List<VisitMedicationSummary> currentMedications;
   final List<VisitMedicationSummary> historicalMedications;
   final List<VisitDuplicateIngredientCheck> duplicateIngredientChecks;

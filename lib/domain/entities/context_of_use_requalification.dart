@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v69';
+  static const String ledgerVersion = '2026.10.20-v70';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'b9313c07d8790700b518c1e76cd17ffa0cad4e792e000b2df4eb43b8f52996f9';
+  static const String historicalV82ConfigurationSha256 =
       '1a9dc3cb3103f28369cf1112e127ecdd10b842e295f960101d7df9b36ca26822';
   static const String historicalV81ConfigurationSha256 =
       '1f3af5a2a9e437cf22f6f23fad22035cc4135caeb9b73ad5f07a018896edaace';
@@ -287,6 +289,12 @@ final class ContextOfUseRequalificationLedger {
       'c0a34a359397ce0405474b1ca006067e58ecc7f0b7a13d65ca03c4df92ba5d40';
   static const String historicalV73ConfigurationSha256 =
       'eaca417fdd38ab1179050eb235a09f2d19b9ace0b7ee97fd5e3b1fd3a1a712ab';
+  static const String historicalV72ConfigurationSha256 =
+      '6b5354220771a6d8a8aeb561cb3cfebe026daf1bf479807ce1766caf95b6a64f';
+  static const String historicalV71ConfigurationSha256 =
+      'bbb0c3c47e057c001a579357019ccba6a4831100672f76e53fa709597eed5d78';
+  static const String historicalV70ConfigurationSha256 =
+      '04c4fdaf52cf10a6380962b90c0fa3688919ca2a9a1c7835fe78970088c1f212';
   static const String historicalV69ConfigurationSha256 =
       '9d11461bbadee06329cc25c218306603bc392a8d2833cbe4eeaf3967ee7d183d';
   static const String historicalV68ConfigurationSha256 =
@@ -958,8 +966,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           atomicImportProductDetailsCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256:
-          '04c4fdaf52cf10a6380962b90c0fa3688919ca2a9a1c7835fe78970088c1f212',
+      currentConfigurationSha256: historicalV70ConfigurationSha256,
       evidenceCurrencyRegistrySha256: atomicImportProductDetailsCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: atomicImportProductDetailsCandidateRecord
@@ -994,8 +1001,7 @@ final class ContextOfUseRequalificationLedger {
           previousConfigurationSha256:
               reviewedActivationCandidateRecord.currentConfigurationSha256,
           currentManifestSha256: expectedCurrentManifestSha256,
-          currentConfigurationSha256:
-              'bbb0c3c47e057c001a579357019ccba6a4831100672f76e53fa709597eed5d78',
+          currentConfigurationSha256: historicalV71ConfigurationSha256,
           evidenceCurrencyRegistrySha256:
               reviewedActivationCandidateRecord.evidenceCurrencyRegistrySha256,
           evidenceSynthesisRegistrySha256:
@@ -1029,8 +1035,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           reviewedProductIntegrationCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256:
-          '6b5354220771a6d8a8aeb561cb3cfebe026daf1bf479807ce1766caf95b6a64f',
+      currentConfigurationSha256: historicalV72ConfigurationSha256,
       evidenceCurrencyRegistrySha256: reviewedProductIntegrationCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: reviewedProductIntegrationCandidateRecord
@@ -1462,7 +1467,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           plainLanguageCopyCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV82ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           plainLanguageCopyCandidateRecord.evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1492,6 +1497,49 @@ final class ContextOfUseRequalificationLedger {
           'acceptance. All evidence holds and blocked promotion remain in '
           'force.',
     );
+    final physiologyReferenceTraceProviderCandidateRecord =
+        ContextOfUseRequalificationRecord(
+          sequence: 32,
+          changeKind: 'software_identity_candidate_rebind',
+          previousManifestSha256:
+              mealCheckSafetyCopyCandidateRecord.currentManifestSha256,
+          previousConfigurationSha256:
+              mealCheckSafetyCopyCandidateRecord.currentConfigurationSha256,
+          currentManifestSha256: expectedCurrentManifestSha256,
+          currentConfigurationSha256: expectedCurrentConfigurationSha256,
+          evidenceCurrencyRegistrySha256:
+              mealCheckSafetyCopyCandidateRecord.evidenceCurrencyRegistrySha256,
+          evidenceSynthesisRegistrySha256: mealCheckSafetyCopyCandidateRecord
+              .evidenceSynthesisRegistrySha256,
+          semanticDiffSha256:
+              mealCheckSafetyCopyCandidateRecord.semanticDiffSha256,
+          affectedProviderIds:
+              mealCheckSafetyCopyCandidateRecord.affectedProviderIds,
+          affectedPredicateIds:
+              mealCheckSafetyCopyCandidateRecord.affectedPredicateIds,
+          changeClasses: mealCheckSafetyCopyCandidateRecord.changeClasses,
+          modelRisk: mealCheckSafetyCopyCandidateRecord.modelRisk,
+          questionOfInterest:
+              mealCheckSafetyCopyCandidateRecord.questionOfInterest,
+          contextOfUse: mealCheckSafetyCopyCandidateRecord.contextOfUse,
+          author: 'automated-local-software-integration',
+          recordedAtUtc: '2026-10-22T00:00:00.000Z',
+          releaseArtifact:
+              'unreleased-worktree:physiology-reference-trace-provider-v83',
+          evidenceDecisions:
+              mealCheckSafetyCopyCandidateRecord.evidenceDecisions,
+          releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+          approvalSignature: null,
+          decisionBoundary:
+              'The v83 candidate binds the physical-unit physiology reference '
+              'model as a trace-only provider, its Observatory panel and a '
+              'descriptive direction-aware meal-timing note; scores, rule '
+              'decisions and recommendation order are unchanged. All thirty-one '
+              'prior whole records and their digests remain exact. The change '
+              'supplies no new scientific evidence, independent review, clinical '
+              'qualification, authenticated approval or release acceptance. All '
+              'evidence holds and blocked promotion remain in force.',
+        );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1530,6 +1578,7 @@ final class ContextOfUseRequalificationLedger {
         candidateServingBasisRecord,
         plainLanguageCopyCandidateRecord,
         mealCheckSafetyCopyCandidateRecord,
+        physiologyReferenceTraceProviderCandidateRecord,
       ],
     );
   }

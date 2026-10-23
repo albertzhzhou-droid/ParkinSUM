@@ -4,6 +4,9 @@ import '../entities/care_medication_discussion_entry.dart';
 import '../entities/care_medication_discussion_outcome.dart';
 import '../entities/care_medication_list_review.dart';
 import '../entities/medication_assertion_reconciliation.dart';
+import '../entities/personal_diary_strip.dart';
+import '../entities/personal_log_view.dart';
+import '../entities/personal_observation.dart';
 import '../entities/visit_preparation.dart';
 
 /// Builds a bounded visit agenda from explicit current selections and clearly
@@ -639,6 +642,15 @@ class VisitPreparationService {
         '${tr('来源：', 'Sources: ')}${sources(item.sourceIds)}',
       );
     }
+    final diary = snapshot.diaryStrip;
+    if (diary != null) {
+      _writeDiary(
+        buffer,
+        diary,
+        chinese: chinese,
+        doseTextOmitted: snapshot.diaryDoseTextOmitted,
+      );
+    }
     buffer.writeln(
       tr(
         '用户补充问题（可记录非处方药或补充剂，仍待核实）',
@@ -792,6 +804,25 @@ class VisitPreparationService {
         ),
       );
     }
+    if (diary != null) {
+      agenda
+        ..writeln(
+          tr(
+            '日内记录条计数（本人记录，${diary.start} — ${diary.end}）',
+            'Day-strip counts (own records, ${diary.start} — ${diary.end})',
+          ),
+        )
+        ..writeln(_diaryBoundary(chinese: chinese));
+      for (final count in diary.counts) {
+        agenda.writeln('- ${_diaryCount(diary, count, chinese: chinese)}');
+      }
+      agenda.writeln(
+        tr(
+          '逐日记录见下方详细清单。',
+          'Entries for each day are in the full checklist below.',
+        ),
+      );
+    }
     writeAgendaSection(
       agenda,
       tr('用户补充问题', 'Additional user questions'),
@@ -835,6 +866,7 @@ class VisitPreparationService {
       agendaText: agenda.toString(),
       medicationListReviewStatuses: medicationListReviewStatuses,
       plainText: text,
+      diaryStrip: diary,
     );
   }
 
@@ -1058,6 +1090,114 @@ class VisitPreparationService {
       ..writeln(
         '  ${tr('来源：', 'Sources: ')}${_sources(row.sourceIds, chinese: chinese)}',
       );
+  }
+
+  static String _diaryBoundary({required bool chinese}) => chinese
+      ? '以下为本人记录，按声明时区的时刻排列；不是临床评估，不说明因果关系，也不作预测，记录之间的时间不作推断。蛋白质筛选只决定计入哪些餐次，不是目标。'
+      : "These are the account holder's own entries by time of day in the declared zone. They are not a clinical assessment, do not show cause and do not predict anything; nothing is inferred between entries. The protein filter only chooses which logged meals are counted; it is not a target.";
+
+  static String _diaryState(
+    SelfReportedMotorState state, {
+    required bool chinese,
+  }) => switch (state) {
+    SelfReportedMotorState.on => 'ON',
+    SelfReportedMotorState.off => 'OFF',
+    SelfReportedMotorState.uncertain => chinese ? '“不确定”' : 'Uncertain',
+  };
+
+  static String _diaryCount(
+    DiaryStripProjection diary,
+    DiaryMotorCount count, {
+    required bool chinese,
+  }) {
+    final state = _diaryState(count.state, chinese: chinese);
+    final grams = diary.proteinFilterG;
+    final hours = diary.lookbackHours;
+    final base = chinese
+        ? '在记录蛋白质不少于 $grams 克的一餐之后 $hours 小时内记录的 $state：'
+              '${count.total} 条中有 ${count.afterFilteredMeal} 条。'
+        : '$state entries recorded within $hours h after a meal logged with '
+              'at least $grams g protein: ${count.afterFilteredMeal} of '
+              '${count.total}.';
+    if (count.unclassified == 0) return base;
+    return chinese
+        ? '$base另有 ${count.unclassified} 条无法归类，因为之前 $hours 小时内有一餐蛋白质未知。'
+        : '$base ${count.unclassified} more could not be counted either way '
+              'because a meal in the $hours h before had unknown protein.';
+  }
+
+  static void _writeDiary(
+    StringBuffer buffer,
+    DiaryStripProjection diary, {
+    required bool chinese,
+    required bool doseTextOmitted,
+  }) {
+    String tr(String zh, String en) => chinese ? zh : en;
+    String clock(int minute) =>
+        '${(minute ~/ 60).toString().padLeft(2, '0')}:'
+        '${(minute % 60).toString().padLeft(2, '0')}';
+    String joined(List<String> rows) =>
+        rows.isEmpty ? tr('无记录', 'None recorded') : rows.join('; ');
+    buffer
+      ..writeln(
+        tr(
+          '日内记录条：用药、进餐与运动状态（本人记录）',
+          'Day strip: medication, meals and motor state (own records)',
+        ),
+      )
+      ..writeln(_diaryBoundary(chinese: chinese))
+      ..writeln(
+        '${tr('日期', 'Dates')}: ${diary.start} — ${diary.end} (${diary.zoneId})',
+      )
+      ..writeln(
+        tr(
+          '包括这些日期内的全部服药、进餐与运动状态（本人自报）记录，不受上方记录选择的影响；不导出餐名和附注。',
+          'Includes every medication intake, meal and self-reported motor-state entry on these dates, independent of the record choices above. Meal names and attached notes are not exported.',
+        ),
+      );
+    for (final day in diary.days.reversed) {
+      if (day.isEmpty) {
+        buffer.writeln('- ${day.date}: ${tr('无记录', 'no entries')}');
+        continue;
+      }
+      final doses = [
+        for (final dose in day.doses)
+          '${clock(dose.minuteOfDay)} ${visitText(dose.medicationName)}, '
+              '${dose.doseText == null ? (doseTextOmitted ? tr('剂量未显示：未记录，或所填文字由本次选择省略', 'dose not shown: not recorded, or entered text omitted by this selection') : tr('未记录剂量', 'dose not recorded')) : visitText(dose.doseText!)}',
+      ];
+      final meals = [
+        for (final meal in day.meals)
+          '${clock(meal.minuteOfDay)} ${switch (meal.proteinStatus) {
+            LoggedProteinStatus.known when meal.proteinG != null => tr('蛋白质 ${meal.proteinG!.toStringAsFixed(1)} 克', 'protein ${meal.proteinG!.toStringAsFixed(1)} g'),
+            LoggedProteinStatus.invalid => tr('蛋白质数值无效', 'protein value invalid'),
+            _ => tr('蛋白质未知', 'protein unknown'),
+          }}',
+      ];
+      final motor = [
+        for (final mark in day.motor)
+          '${clock(mark.minuteOfDay)} ${_diaryState(mark.state, chinese: chinese)}',
+      ];
+      buffer
+        ..writeln('- ${day.date}')
+        ..writeln('  ${tr('用药', 'Medication')}: ${joined(doses)}')
+        ..writeln('  ${tr('进餐', 'Meals')}: ${joined(meals)}')
+        ..writeln(
+          '  ${tr('运动状态（本人自报）', 'Motor state (self-reported)')}: ${joined(motor)}'
+          '${day.motorWithoutState == 0 ? '' : tr('；另有 ${day.motorWithoutState} 条为未知或未测量', '; ${day.motorWithoutState} more saved as unknown or not measured')}',
+        );
+    }
+    buffer.writeln(tr('计数', 'Counts'));
+    for (final count in diary.counts) {
+      buffer.writeln('- ${_diaryCount(diary, count, chinese: chinese)}');
+    }
+    if (diary.futureRecordCount > 0) {
+      buffer.writeln(
+        tr(
+          '这些日期内另有 ${diary.futureRecordCount} 条未来时间记录未纳入。',
+          '${diary.futureRecordCount} future-dated entries on these dates are not included.',
+        ),
+      );
+    }
   }
 
   static int _compareIntakes(VisitIntakeEvidence a, VisitIntakeEvidence b) {

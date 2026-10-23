@@ -4,6 +4,13 @@ import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/medication_product_pack.dart';
 import '../../core/services/medication_product_catalog.dart';
 
+/// The bundled openFDA product snapshot the picker searches.
+Future<MedicationProductCatalog> loadBundledMedicationProductCatalog(
+  BuildContext context,
+) => DefaultAssetBundle.of(context)
+    .loadString('assets/data/common_medication_products_openfda.json')
+    .then(MedicationProductCatalog.fromOpenFdaSnapshot);
+
 Future<MedicationProductPack?> showMedicationProductPicker(
   BuildContext context, {
   String initialQuery = '',
@@ -40,9 +47,7 @@ class _MedicationProductPickerPageState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _catalogFuture ??= DefaultAssetBundle.of(context)
-        .loadString('assets/data/common_medication_products_openfda.json')
-        .then(MedicationProductCatalog.fromOpenFdaSnapshot);
+    _catalogFuture ??= loadBundledMedicationProductCatalog(context);
   }
 
   @override
