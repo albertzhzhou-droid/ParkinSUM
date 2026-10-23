@@ -93,6 +93,7 @@ export const requiredSchemaSurfaces = Object.freeze([
   ['parkinsum.capability-activation-state', 'lib/core/services/capability_rollout_service.dart'],
   ['parkinsum.mechanistic-applicability-manifest', 'lib/domain/entities/mechanistic_medication_applicability.dart'],
   ['parkinsum.context-of-use-requalification-ledger', 'lib/domain/entities/context_of_use_requalification.dart'],
+  ['parkinsum.governance-ledger-chain', 'lib/domain/entities/governance_ledger_chain.dart'],
   ['parkinsum.prospective-model-credibility-plan', 'lib/domain/entities/prospective_model_credibility_plan.dart'],
   ['parkinsum.credibility-evidence-execution-attestation', 'lib/domain/entities/credibility_evidence_execution_attestation.dart'],
   ['parkinsum.credibility-protocol-transparency-ledger', 'lib/domain/entities/credibility_protocol_transparency_ledger.dart'],

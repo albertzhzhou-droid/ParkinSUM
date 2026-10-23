@@ -289,6 +289,12 @@ final class ContextOfUseRequalificationLedger {
       'c0a34a359397ce0405474b1ca006067e58ecc7f0b7a13d65ca03c4df92ba5d40';
   static const String historicalV73ConfigurationSha256 =
       'eaca417fdd38ab1179050eb235a09f2d19b9ace0b7ee97fd5e3b1fd3a1a712ab';
+  static const String historicalV72ConfigurationSha256 =
+      '6b5354220771a6d8a8aeb561cb3cfebe026daf1bf479807ce1766caf95b6a64f';
+  static const String historicalV71ConfigurationSha256 =
+      'bbb0c3c47e057c001a579357019ccba6a4831100672f76e53fa709597eed5d78';
+  static const String historicalV70ConfigurationSha256 =
+      '04c4fdaf52cf10a6380962b90c0fa3688919ca2a9a1c7835fe78970088c1f212';
   static const String historicalV69ConfigurationSha256 =
       '9d11461bbadee06329cc25c218306603bc392a8d2833cbe4eeaf3967ee7d183d';
   static const String historicalV68ConfigurationSha256 =
@@ -960,8 +966,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           atomicImportProductDetailsCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256:
-          '04c4fdaf52cf10a6380962b90c0fa3688919ca2a9a1c7835fe78970088c1f212',
+      currentConfigurationSha256: historicalV70ConfigurationSha256,
       evidenceCurrencyRegistrySha256: atomicImportProductDetailsCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: atomicImportProductDetailsCandidateRecord
@@ -996,8 +1001,7 @@ final class ContextOfUseRequalificationLedger {
           previousConfigurationSha256:
               reviewedActivationCandidateRecord.currentConfigurationSha256,
           currentManifestSha256: expectedCurrentManifestSha256,
-          currentConfigurationSha256:
-              'bbb0c3c47e057c001a579357019ccba6a4831100672f76e53fa709597eed5d78',
+          currentConfigurationSha256: historicalV71ConfigurationSha256,
           evidenceCurrencyRegistrySha256:
               reviewedActivationCandidateRecord.evidenceCurrencyRegistrySha256,
           evidenceSynthesisRegistrySha256:
@@ -1031,8 +1035,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           reviewedProductIntegrationCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256:
-          '6b5354220771a6d8a8aeb561cb3cfebe026daf1bf479807ce1766caf95b6a64f',
+      currentConfigurationSha256: historicalV72ConfigurationSha256,
       evidenceCurrencyRegistrySha256: reviewedProductIntegrationCandidateRecord
           .evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256: reviewedProductIntegrationCandidateRecord
