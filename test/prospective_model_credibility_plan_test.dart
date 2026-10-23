@@ -20,7 +20,7 @@ void main() {
     expect(plan.integrityReasons, isEmpty);
     expect(
       plan.configurationSha256,
-      'b9313c07d8790700b518c1e76cd17ffa0cad4e792e000b2df4eb43b8f52996f9',
+      '63bb983915c2f6517878da99ecd497f4990dda44f9718ed77cc956046de1de5f',
     );
     expect(plan.goals, hasLength(CredibilityFactor.values.length));
     expect(

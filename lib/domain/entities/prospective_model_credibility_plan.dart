@@ -218,11 +218,11 @@ final class CredibilityAdequacyDecision {
 final class ProspectiveModelCredibilityPlan {
   static const String schema = 'parkinsum.prospective-model-credibility-plan/1';
   static const int schemaVersion = 1;
-  static const String planVersion = '2026.10.20-v66';
+  static const String planVersion = '2026.10.20-v67';
   static const String expectedManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedConfigurationSha256 =
-      'b9313c07d8790700b518c1e76cd17ffa0cad4e792e000b2df4eb43b8f52996f9';
+      '63bb983915c2f6517878da99ecd497f4990dda44f9718ed77cc956046de1de5f';
 
   final String planId;
   final String releaseArtifact;

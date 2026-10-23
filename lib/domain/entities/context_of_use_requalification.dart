@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v70';
+  static const String ledgerVersion = '2026.10.20-v71';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      '63bb983915c2f6517878da99ecd497f4990dda44f9718ed77cc956046de1de5f';
+  static const String historicalV83ConfigurationSha256 =
       'b9313c07d8790700b518c1e76cd17ffa0cad4e792e000b2df4eb43b8f52996f9';
   static const String historicalV82ConfigurationSha256 =
       '1a9dc3cb3103f28369cf1112e127ecdd10b842e295f960101d7df9b36ca26822';
@@ -1506,7 +1508,7 @@ final class ContextOfUseRequalificationLedger {
           previousConfigurationSha256:
               mealCheckSafetyCopyCandidateRecord.currentConfigurationSha256,
           currentManifestSha256: expectedCurrentManifestSha256,
-          currentConfigurationSha256: expectedCurrentConfigurationSha256,
+          currentConfigurationSha256: historicalV83ConfigurationSha256,
           evidenceCurrencyRegistrySha256:
               mealCheckSafetyCopyCandidateRecord.evidenceCurrencyRegistrySha256,
           evidenceSynthesisRegistrySha256: mealCheckSafetyCopyCandidateRecord
@@ -1535,6 +1537,55 @@ final class ContextOfUseRequalificationLedger {
               'model as a trace-only provider, its Observatory panel and a '
               'descriptive direction-aware meal-timing note; scores, rule '
               'decisions and recommendation order are unchanged. All thirty-one '
+              'prior whole records and their digests remain exact. The change '
+              'supplies no new scientific evidence, independent review, clinical '
+              'qualification, authenticated approval or release acceptance. All '
+              'evidence holds and blocked promotion remain in force.',
+        );
+    final nextMealPlannerAndDirectionAwareTimingCandidateRecord =
+        ContextOfUseRequalificationRecord(
+          sequence: 33,
+          changeKind: 'software_identity_candidate_rebind',
+          previousManifestSha256:
+              physiologyReferenceTraceProviderCandidateRecord
+                  .currentManifestSha256,
+          previousConfigurationSha256:
+              physiologyReferenceTraceProviderCandidateRecord
+                  .currentConfigurationSha256,
+          currentManifestSha256: expectedCurrentManifestSha256,
+          currentConfigurationSha256: expectedCurrentConfigurationSha256,
+          evidenceCurrencyRegistrySha256:
+              physiologyReferenceTraceProviderCandidateRecord
+                  .evidenceCurrencyRegistrySha256,
+          evidenceSynthesisRegistrySha256:
+              physiologyReferenceTraceProviderCandidateRecord
+                  .evidenceSynthesisRegistrySha256,
+          semanticDiffSha256: physiologyReferenceTraceProviderCandidateRecord
+              .semanticDiffSha256,
+          affectedProviderIds: physiologyReferenceTraceProviderCandidateRecord
+              .affectedProviderIds,
+          affectedPredicateIds: physiologyReferenceTraceProviderCandidateRecord
+              .affectedPredicateIds,
+          changeClasses:
+              physiologyReferenceTraceProviderCandidateRecord.changeClasses,
+          modelRisk: physiologyReferenceTraceProviderCandidateRecord.modelRisk,
+          questionOfInterest: physiologyReferenceTraceProviderCandidateRecord
+              .questionOfInterest,
+          contextOfUse:
+              physiologyReferenceTraceProviderCandidateRecord.contextOfUse,
+          author: 'automated-local-software-integration',
+          recordedAtUtc: '2026-10-23T00:00:00.000Z',
+          releaseArtifact:
+              'unreleased-worktree:next-meal-planner-and-direction-aware-timing-v84',
+          evidenceDecisions:
+              physiologyReferenceTraceProviderCandidateRecord.evidenceDecisions,
+          releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+          approvalSignature: null,
+          decisionBoundary:
+              'The v84 candidate binds the next-meal planner, the direction-aware '
+              'protein-timing term, product formulation on intakes, nutrition-only '
+              'alternatives and the manual-review and timing-copy fixes; the '
+              'legacy ranker is kept for replay and audit only. All thirty-two '
               'prior whole records and their digests remain exact. The change '
               'supplies no new scientific evidence, independent review, clinical '
               'qualification, authenticated approval or release acceptance. All '
@@ -1579,6 +1630,7 @@ final class ContextOfUseRequalificationLedger {
         plainLanguageCopyCandidateRecord,
         mealCheckSafetyCopyCandidateRecord,
         physiologyReferenceTraceProviderCandidateRecord,
+        nextMealPlannerAndDirectionAwareTimingCandidateRecord,
       ],
     );
   }
