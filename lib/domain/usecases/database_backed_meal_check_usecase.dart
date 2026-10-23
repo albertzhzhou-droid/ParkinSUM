@@ -250,6 +250,10 @@ class DatabaseBackedMealCheckUseCase {
     dataNotes.addAll(_buildMealContextNotes(i18n, meal));
     final scoring = _MealConflictScoringModel(i18n: i18n);
     final scoreInputs = <_DrugMealScoreInput>[];
+    final modeledTimings = {
+      for (final drug in activeDrugs)
+        drug.id: _modeledTiming(meal: meal, drug: drug, intakes: intakes),
+    };
     final supplementalRules =
         await importedLabelRuleProvider?.loadRules() ??
         const <RuleRegistryEntry>[];
@@ -340,6 +344,7 @@ class DatabaseBackedMealCheckUseCase {
           mealMetrics: mealMetrics,
           resolvedDrug: resolvedDrug,
           output: output,
+          modeledTiming: modeledTimings[drug.id]?.effect,
         ),
       );
 
@@ -419,9 +424,8 @@ class DatabaseBackedMealCheckUseCase {
 
     final physiologyNotes = _physiologyTimingNotes(
       i18n: i18n,
-      meal: meal,
       activeDrugs: activeDrugs,
-      intakes: intakes,
+      modeledTimings: modeledTimings,
     );
     if (issues.isEmpty) {
       return InteractionResult.ok(
@@ -565,7 +569,19 @@ class DatabaseBackedMealCheckUseCase {
       case 'switch_thickener':
         return i18n.tr('interaction.action_thickener_source');
       case 'require_manual_review':
-        return i18n.tr('interaction.action_manual_review');
+        // A review the engine adds because inputs are missing asks for those
+        // inputs; any other review (for example a rule's own review queue)
+        // asks for clinician review.
+        final params = action['params'];
+        final missingInputs =
+            params is Map &&
+            (params['missing_fields'] != null ||
+                '${params['reason'] ?? ''}'.startsWith('missing_'));
+        return i18n.tr(
+          missingInputs
+              ? 'copy.next_action_complete_med_timing'
+              : 'interaction.action_manual_review',
+        );
       default:
         return '';
     }
@@ -883,52 +899,67 @@ class DatabaseBackedMealCheckUseCase {
   }
 
   // ---------------------------------------------------------------------------
-  // Physiology reference note (descriptive, never scored).
+  // Physiology reference timing (descriptive note and the direction-aware
+  // protein-timing score term).
   // ---------------------------------------------------------------------------
 
-  /// Direction-aware modeled brain delivery of this meal timing relative to
-  /// no meal, for the nearest intake of an oral immediate-release
-  /// levodopa-like medicine. Empty when an input the reference model needs is
-  /// missing or the meal falls outside the modeled window. The ratio does not
-  /// depend on the dose, so no personal dose is read.
-  List<String> _physiologyTimingNotes({
-    required AppI18n i18n,
+  /// Modeled brain delivery of this meal timing relative to no meal for the
+  /// nearest intake of [drug] when it is an oral immediate-release
+  /// levodopa-like medicine. The ratio does not depend on the dose, so no
+  /// personal dose is read.
+  _ModeledTiming _modeledTiming({
     required Meal meal,
-    required List<DrugDefinition> activeDrugs,
+    required DrugDefinition drug,
     required List<Intake> intakes,
   }) {
+    final levodopaLike =
+        drug.genericName.toLowerCase().contains('levodopa') ||
+        drug.tags.contains(DrugTag.levodopaLike);
+    if (!levodopaLike) return const _ModeledTiming.skipped();
+    final intake = _nearestIntakeForDrug(
+      drug.id,
+      intakes,
+      meal.effectiveOccurredAt,
+    );
+    if (intake == null) return const _ModeledTiming.skipped();
+    final formulation = resolveIntakeMechanisticFormulation(
+      intake: intake,
+      drug: drug,
+    );
+    if (formulation.route != 'oral' ||
+        !const {
+          'immediate',
+          'immediate_release',
+        }.contains(formulation.releaseType)) {
+      return const _ModeledTiming.skipped();
+    }
+    final components = physiologyComponentsFromMeal(
+      _normalizedComposition(meal),
+    );
+    if (components == null) return const _ModeledTiming.notModeled();
+    final offsetMinutes =
+        meal.effectiveOccurredAt.difference(intake.takenAt).inSeconds / 60.0;
+    final effect = physiologyReference.mealTimingEffect(
+      components,
+      offsetMinutes,
+    );
+    return effect == null
+        ? const _ModeledTiming.notModeled()
+        : _ModeledTiming.modeled(effect);
+  }
+
+  /// One descriptive note for the first levodopa-like medicine the model
+  /// applies to. Empty when an input the reference model needs is missing or
+  /// the meal falls outside the modeled window.
+  List<String> _physiologyTimingNotes({
+    required AppI18n i18n,
+    required List<DrugDefinition> activeDrugs,
+    required Map<String, _ModeledTiming> modeledTimings,
+  }) {
     for (final drug in activeDrugs) {
-      final levodopaLike =
-          drug.genericName.toLowerCase().contains('levodopa') ||
-          drug.tags.contains(DrugTag.levodopaLike);
-      if (!levodopaLike) continue;
-      final intake = _nearestIntakeForDrug(
-        drug.id,
-        intakes,
-        meal.effectiveOccurredAt,
-      );
-      if (intake == null) continue;
-      final formulation = resolveIntakeMechanisticFormulation(
-        intake: intake,
-        drug: drug,
-      );
-      if (formulation.route != 'oral' ||
-          !const {
-            'immediate',
-            'immediate_release',
-          }.contains(formulation.releaseType)) {
-        continue;
-      }
-      final components = physiologyComponentsFromMeal(
-        _normalizedComposition(meal),
-      );
-      if (components == null) return const [];
-      final offsetMinutes =
-          meal.effectiveOccurredAt.difference(intake.takenAt).inSeconds / 60.0;
-      final effect = physiologyReference.mealTimingEffect(
-        components,
-        offsetMinutes,
-      );
+      final timing = modeledTimings[drug.id]!;
+      if (timing.skipped) continue;
+      final effect = timing.effect;
       if (effect == null) return const [];
       String percent(double ratio) => (ratio * 100).round().toString();
       final median = percent(effect.band.p50);
@@ -1124,6 +1155,10 @@ class _DrugMealScoreInput {
   final ResolvedDrugVariant resolvedDrug;
   final EngineRunOutput output;
 
+  /// Physiology reference comparison for this drug's nearest intake, or null
+  /// when the model does not apply.
+  final PhysiologyMealTimingEffect? modeledTiming;
+
   const _DrugMealScoreInput({
     required this.drug,
     required this.intake,
@@ -1131,7 +1166,22 @@ class _DrugMealScoreInput {
     required this.mealMetrics,
     required this.resolvedDrug,
     required this.output,
+    required this.modeledTiming,
   });
+}
+
+/// Physiology reference timing for one drug: [skipped] when the model is not
+/// about this drug or intake (not levodopa-like, no intake, not oral
+/// immediate release); otherwise [effect], null when a meal input is missing
+/// or the offset is outside the modeled range.
+final class _ModeledTiming {
+  const _ModeledTiming.skipped() : skipped = true, effect = null;
+  const _ModeledTiming.notModeled() : skipped = false, effect = null;
+  const _ModeledTiming.modeled(PhysiologyMealTimingEffect this.effect)
+    : skipped = false;
+
+  final bool skipped;
+  final PhysiologyMealTimingEffect? effect;
 }
 
 class _MealConflictScoreResult {
@@ -1179,10 +1229,15 @@ class _MealConflictScoringModel {
           label: i18n.tr('mealcheck.score_factor_levodopa_interference'),
           points: 12 + excess.clamp(0, 15).round(),
         );
+        final modeled = input.modeledTiming;
         _addFactor(
           factors,
           code: 'protein_timing_penalty',
-          label: i18n.tr('mealcheck.score_factor_protein_timing'),
+          label: modeled == null
+              ? i18n.tr('mealcheck.score_factor_protein_timing')
+              : i18n.tr('mealcheck.score_factor_protein_timing_modeled', {
+                  'percent': (modeled.band.p50 * 100).round().toString(),
+                }),
           points: _proteinTimingPenalty(input),
         );
       }
@@ -1238,7 +1293,34 @@ class _MealConflictScoringModel {
         input.resolvedDrug.selectedVariantId.toLowerCase().contains('ldopa');
   }
 
+  /// Largest protein-timing term, the maximum of the earlier distance table.
+  static const int proteinTimingMaxPoints = 24;
+
+  /// Modeled reduction (1 − brain delivery relative to no meal) at which the
+  /// term reaches [proteinTimingMaxPoints].
+  static const double proteinTimingFullScaleReduction = 0.30;
+
+  /// Direction-aware protein-timing term.
+  ///
+  /// When the physiology reference model applies (oral immediate-release
+  /// levodopa-like intake, meal energy, protein and form known, offset from
+  /// 6 h before to 4 h after the dose) the term follows the median of the
+  /// seeded population band of 0–4 h brain delivery relative to no meal, r:
+  ///
+  ///   points = round(24 × clamp((1 − r) / 0.30, 0, 1))
+  ///
+  /// so r ≥ 1 gives 0, r = 0.85 gives 12 and r ≤ 0.70 gives 24. A meal
+  /// before the dose and one the same distance after it can therefore score
+  /// differently. Otherwise the earlier direction-blind distance table is
+  /// the fallback: 10 without an intake, then 24 / 16 / 8 / 0 for at most
+  /// 60 / 120 / 180 / more minutes between meal and intake.
   int _proteinTimingPenalty(_DrugMealScoreInput input) {
+    final modeled = input.modeledTiming;
+    if (modeled != null) {
+      final reduction =
+          (1 - modeled.band.p50) / proteinTimingFullScaleReduction;
+      return (proteinTimingMaxPoints * reduction.clamp(0.0, 1.0)).round();
+    }
     final intake = input.intake;
     if (intake == null) {
       return 10;

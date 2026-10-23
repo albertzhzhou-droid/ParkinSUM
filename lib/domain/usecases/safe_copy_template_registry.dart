@@ -278,9 +278,9 @@ class SafeCopyTemplateRegistry {
       defaultLocale: 'en',
       localizedText: {
         'en':
-            'This meal contains about {protein} g of protein and may '
-            'compete with {drug} during absorption. Consider scheduling '
-            'higher-protein meals away from dosing time.',
+            'This meal contains about {protein} g of protein, which may '
+            'compete with {drug} for absorption. Review timing questions '
+            'with a qualified clinician.',
       },
       requiredPlaceholders: ['protein', 'drug'],
       allowedPlaceholders: ['protein', 'drug'],

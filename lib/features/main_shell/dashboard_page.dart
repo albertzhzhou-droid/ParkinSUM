@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/paper_theme.dart';
-import '../../domain/entities/food_recommendation.dart';
+import '../../domain/entities/next_meal_plan.dart';
 import '../../domain/entities/personal_observation.dart';
 import '../../domain/entities/protein_trend_point.dart';
 import '../../domain/entities/timeline_event.dart';
 import '../entry/entry_page.dart';
-import '../next_meal/candidate_set_snapshot_card.dart';
-import '../shared/candidate_serving_macro_line.dart';
+import '../next_meal/next_meal_planner_widgets.dart';
 import '../timeline/timeline_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -47,50 +45,6 @@ class DashboardPage extends StatelessWidget {
     return event.title;
   }
 
-  String _localizedRecommendationBreakdown(
-    AppI18n i18n,
-    FoodRecommendation recommendation,
-  ) {
-    final safety = (recommendation.scoreBreakdown['safety_score'] as num?) ?? 0;
-    final schedule =
-        (recommendation.scoreBreakdown['medication_schedule_fit'] as num?) ?? 0;
-    final facts =
-        (recommendation.scoreBreakdown['database_fact_coverage'] as num?) ?? 0;
-    final contextPenalty =
-        (recommendation.scoreBreakdown['context_penalty_points'] as num?) ?? 0;
-    final timingPenalty =
-        (recommendation.scoreBreakdown['levodopa_window_penalty'] as num?) ?? 0;
-    final swallowingPenalty =
-        (recommendation.scoreBreakdown['swallowing_texture_penalty'] as num?) ??
-        0;
-    final templateAffinity =
-        (recommendation.scoreBreakdown['template_texture_affinity'] as num?) ??
-        0;
-    return i18n.tr('dashboard.recommendation_score_line', {
-      'safety': safety.toStringAsFixed(2),
-      'schedule': schedule.toStringAsFixed(2),
-      'facts': facts.toStringAsFixed(2),
-      'context': contextPenalty.toStringAsFixed(1),
-      'timing': timingPenalty.toStringAsFixed(1),
-      'swallowing': swallowingPenalty.toStringAsFixed(1),
-      'template': templateAffinity.toStringAsFixed(2),
-    });
-  }
-
-  String? _localizedFoodTextureSummary(
-    AppI18n i18n,
-    FoodRecommendation recommendation,
-  ) {
-    final food = recommendation.food;
-    if (food.textureClass == null && food.iddsiLevel == null) {
-      return null;
-    }
-    return i18n.foodTextureSummary(
-      textureClass: food.textureClass,
-      iddsiLevel: food.iddsiLevel,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
@@ -99,24 +53,10 @@ class DashboardPage extends StatelessWidget {
     final observationsById = {
       for (final item in state.observations) item.id: item,
     };
-    final rankPresentationWithheld =
-        state.recommendationRankPresentationWithheld;
-    final recommendations = rankPresentationWithheld
-        ? const <FoodRecommendation>[]
-        : state.recommendations.take(3).toList();
     final trend = state.proteinTrend;
-    final copy = ResponseCopyService(i18n: i18n);
     final navigate = PaperShellScope.maybeOf(context)?.navigate;
 
-    final nextMealPlate = _buildRecommendationPlate(
-      context,
-      state,
-      i18n,
-      copy,
-      recommendations,
-      navigate,
-      rankPresentationWithheld,
-    );
+    final nextMealPlate = _buildPlannerPlate(context, state, i18n, navigate);
     final proteinCard = _buildProteinCard(context, state, i18n, trend);
     final timelineCard = _buildTimelineCard(
       context,
@@ -363,102 +303,74 @@ class DashboardPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRecommendationPlate(
+  /// Entry to the Next-meal planner. The legacy ranker no longer orders
+  /// anything on Today: foods the user logged before are listed by name, as
+  /// in the planner's neutral default order.
+  Widget _buildPlannerPlate(
     BuildContext context,
     AppState state,
     AppI18n i18n,
-    ResponseCopyService copy,
-    List<FoodRecommendation> recommendations,
     ValueChanged<String>? navigate,
-    bool rankPresentationWithheld,
   ) {
     final text = Theme.of(context).textTheme;
-    final hasTemplate =
-        state.recommendationTemplateCountryCode != null &&
-        state.recommendationTemplateMealSlot != null &&
-        state.recommendationTemplateTextureLevel != null;
+    final familiar = state.nextMealPlanner
+        .arrange(
+          state.nextMealCandidates.where((c) => c.familiar).toList(),
+          filter: const NextMealFilter(),
+          sort: NextMealSortKey.name,
+          descending: false,
+          textureMode: state.userProfile.swallowingTextureMode,
+          nameOf: (c) => i18n.foodName(c.food.id, c.food.name),
+        )
+        .take(3)
+        .toList();
     return PaperPlate(
+      key: const ValueKey('today-planner-card'),
       padding: const EdgeInsets.fromLTRB(18, 18, 18, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           PaperSectionHeader(
-            eyebrow: i18n.tr('dashboard.recommendation_path'),
+            eyebrow: i18n.tr('planner.today_card_eyebrow'),
             title: i18n.tr('dashboard.recommendations'),
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              PaperPill(
-                label: copy.recommendationPath(
-                  state.recommendationDecisionPath,
-                ),
-                tone: PaperTone.accent,
-                icon: Icons.alt_route_rounded,
-              ),
-              PaperPill(
-                label: state.recommendationAiUsed
-                    ? i18n.tr('dashboard.ai_used')
-                    : i18n.tr('dashboard.ai_not_used'),
-                icon: state.recommendationAiUsed
-                    ? Icons.auto_awesome_outlined
-                    : Icons.rule_rounded,
-              ),
-            ],
-          ),
-          if (hasTemplate) ...[
-            const SizedBox(height: 8),
-            Text(
-              i18n.tr('dashboard.recommendation_template', {
-                'region': i18n.regionLabel(
-                  state.recommendationTemplateCountryCode!,
-                ),
-                'mealSlot': i18n.mealSlotLabel(
-                  state.recommendationTemplateMealSlot!,
-                ),
-                'texture': i18n.textureClassLabel(
-                  state.recommendationTemplateTextureLevel!,
-                ),
-              }),
-              style: text.bodySmall,
-            ),
-          ],
+          const SizedBox(height: 8),
+          Text(i18n.tr('planner.today_card_intro'), style: text.bodySmall),
           const SizedBox(height: 12),
-          if (rankPresentationWithheld)
-            const RankedFoodPresentationWithheldNotice()
-          else if (recommendations.isEmpty)
+          if (familiar.isEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: _EmptyLine(
                 icon: Icons.inbox_outlined,
                 text: i18n.tr('dashboard.no_recommendations'),
               ),
+            )
+          else ...[
+            Text(
+              i18n.tr('planner.today_card_familiar'),
+              style: text.labelMedium?.copyWith(color: Paper.inkMuted),
             ),
-          for (var i = 0; i < recommendations.length; i++) ...[
-            if (i > 0) const Divider(height: 1),
-            _RecommendationRow(
-              name: i18n.foodName(
-                recommendations[i].food.id,
-                recommendations[i].food.name,
+            const SizedBox(height: 4),
+            for (var i = 0; i < familiar.length; i++) ...[
+              if (i > 0) const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      i18n.foodName(familiar[i].food.id, familiar[i].food.name),
+                      style: text.titleSmall,
+                    ),
+                    Text(
+                      '${plannerServingText(i18n, familiar[i])} · '
+                      '${plannerProteinText(i18n, familiar[i].proteinG)}',
+                      style: text.bodySmall?.copyWith(color: Paper.inkMuted),
+                    ),
+                  ],
+                ),
               ),
-              decision: i18n.decisionLabel(recommendations[i].decision),
-              macros: candidateServingMacroLine(i18n, recommendations[i].food),
-              provenance:
-                  '${i18n.sourceSystemLabel(recommendations[i].food.sourceSystem)} · ${i18n.regionLabel(recommendations[i].jurisdiction)}',
-              breakdown: _localizedRecommendationBreakdown(
-                i18n,
-                recommendations[i],
-              ),
-              texture: _localizedFoodTextureSummary(i18n, recommendations[i]),
-              reasons: [
-                for (final reason in recommendations[i].reasons.take(3))
-                  copy.recommendationMessage(reason),
-              ],
-              showLabel: i18n.tr('dashboard.show_details'),
-              hideLabel: i18n.tr('dashboard.hide_details'),
-            ),
+            ],
           ],
           if (navigate != null) ...[
             const SizedBox(height: 4),
@@ -839,143 +751,6 @@ class _KpiCell extends StatelessWidget {
   }
 }
 
-/// A recommendation as one compact row; the score breakdown, texture note
-/// and reasons fold out on demand instead of always filling the page.
-class _RecommendationRow extends StatefulWidget {
-  const _RecommendationRow({
-    required this.name,
-    required this.decision,
-    required this.macros,
-    required this.provenance,
-    required this.breakdown,
-    required this.texture,
-    required this.reasons,
-    required this.showLabel,
-    required this.hideLabel,
-  });
-
-  final String name;
-  final String decision;
-  final String macros;
-  final String provenance;
-  final String breakdown;
-  final String? texture;
-  final List<String> reasons;
-  final String showLabel;
-  final String hideLabel;
-
-  @override
-  State<_RecommendationRow> createState() => _RecommendationRowState();
-}
-
-class _RecommendationRowState extends State<_RecommendationRow> {
-  bool _expanded = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Semantics(
-          button: true,
-          expanded: _expanded,
-          hint: _expanded ? widget.hideLabel : widget.showLabel,
-          child: InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
-            borderRadius: BorderRadius.circular(Paper.radiusSm),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(widget.name, style: text.titleSmall),
-                        const SizedBox(height: 2),
-                        Text(
-                          widget.macros,
-                          style: const TextStyle(
-                            fontFamily: Paper.mono,
-                            fontSize: 11.5,
-                            color: Paper.inkSecondary,
-                          ),
-                        ),
-                        Text(
-                          widget.provenance,
-                          style: const TextStyle(
-                            fontFamily: Paper.mono,
-                            fontSize: 10.5,
-                            letterSpacing: 0.4,
-                            color: Paper.inkMuted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  PaperPill(label: widget.decision),
-                  const SizedBox(width: 4),
-                  AnimatedRotation(
-                    turns: _expanded ? 0.5 : 0,
-                    duration: const Duration(milliseconds: 150),
-                    child: const Icon(
-                      Icons.expand_more_rounded,
-                      size: 20,
-                      color: Paper.inkMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          alignment: Alignment.topCenter,
-          child: !_expanded
-              ? const SizedBox(width: double.infinity)
-              : Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    decoration: BoxDecoration(
-                      color: Paper.surfaceSunken,
-                      borderRadius: BorderRadius.circular(Paper.radiusSm),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.breakdown,
-                          style: const TextStyle(
-                            fontFamily: Paper.mono,
-                            fontSize: 11.5,
-                            height: 1.5,
-                            color: Paper.inkSecondary,
-                          ),
-                        ),
-                        if (widget.texture != null) ...[
-                          const SizedBox(height: 4),
-                          Text(widget.texture!, style: text.bodySmall),
-                        ],
-                        if (widget.reasons.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          for (final reason in widget.reasons) _Bullet(reason),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Rounded icon tile used as a list leading mark.
 class _ToneTile extends StatelessWidget {
   const _ToneTile({
     required this.icon,
@@ -999,40 +774,6 @@ class _ToneTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(Paper.radiusSm + 1),
       ),
       child: Icon(icon, size: size * 0.52, color: foreground),
-    );
-  }
-}
-
-/// A bullet line with a small gilt lozenge.
-class _Bullet extends StatelessWidget {
-  const _Bullet(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 7, right: 10),
-            child: Transform.rotate(
-              angle: 0.785398,
-              child: Container(width: 5, height: 5, color: Paper.gilt),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              text,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Paper.inkSecondary),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

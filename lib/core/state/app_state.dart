@@ -38,6 +38,7 @@ import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
 import '../../domain/entities/food_recommendation.dart';
 import '../models/food_item.dart';
+import '../../domain/entities/next_meal_plan.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
 import '../../domain/entities/food_rank_sensitivity_assessment.dart';
 import '../../domain/entities/time_axis_events.dart'
@@ -51,6 +52,7 @@ import '../../domain/entities/runtime_context.dart';
 import '../../domain/entities/medication_assertion_reconciliation.dart';
 import '../../domain/usecases/knowledge_base_release_service.dart';
 import '../../domain/usecases/local_ai_recommendation_adapter.dart';
+import '../../domain/usecases/next_meal_planner.dart';
 import '../../domain/usecases/administration_dose_confirmation_coordinator.dart';
 import '../../domain/usecases/fhir_r5_dose_quantity_preview_service.dart';
 import '../../domain/usecases/medication_assertion_reconciliation_service.dart';
@@ -2941,6 +2943,42 @@ class AppState extends ChangeNotifier {
       );
     }
   }
+
+  /// Next-meal planner: descriptive values per reference serving and the
+  /// physiology reference comparison for a time the user picks. Its order is
+  /// always the user's sort choice; it never uses the legacy ranker.
+  late final NextMealPlanner nextMealPlanner = NextMealPlanner();
+  List<NextMealCandidate>? _nextMealCandidates;
+  Object? _nextMealCandidatesKey;
+
+  /// One candidate per catalog food at its reference serving, with how often
+  /// the user logged it. Rebuilt when foods or meals change.
+  List<NextMealCandidate> get nextMealCandidates {
+    final key = Object.hash(foodRepo.revision, identityHashCode(_meals));
+    if (_nextMealCandidates == null || _nextMealCandidatesKey != key) {
+      _nextMealCandidates = nextMealPlanner.buildCandidates(
+        foods: foodRepo.allFoods,
+        history: _meals,
+      );
+      _nextMealCandidatesKey = key;
+    }
+    return _nextMealCandidates!;
+  }
+
+  /// The logged levodopa dose a meal at [plannedAt] is compared with, and
+  /// whether the physiology reference model applies to it.
+  NextMealDoseContext nextMealDoseContext(DateTime plannedAt) =>
+      nextMealPlanner.doseContext(
+        plannedAt: plannedAt,
+        drugs: _drugsForMealCheck(),
+        intakes: _intakes,
+        ownerScope: _authUserId ?? _userProfile.patientId,
+        observedAt: DateTime.now(),
+      );
+
+  /// Planned-time anchors taken from logged levodopa doses only.
+  NextMealTimeAnchors nextMealTimeAnchors(DateTime now) => nextMealPlanner
+      .anchors(now: now, drugs: _drugsForMealCheck(), intakes: _intakes);
 
   /// Compute a *fresh* next-meal recommendation for a user-supplied target
   /// time. Distinct from `_refreshRecommendations()` (which is implicit,

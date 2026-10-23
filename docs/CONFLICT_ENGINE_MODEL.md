@@ -635,8 +635,9 @@ scenario: `mealComponentCount`, `gastricEmptyingAssumptions`,
   surfaced in
   `MechanisticCandidateScore.sampledWindowSummary` for trace and UI.
 - May calculate an analysis-only composite score, but the production
-  recommendation path does not use that score to reorder foods. The UI aligns
-  every candidate trace to the existing conservative heuristic order.
+  recommendation path does not use that score to reorder foods. Since the
+  Next-meal planner (§18b) no page shows the heuristic order; the planner's
+  audit section lists candidate traces by food name.
 - Returns `insufficient_context` for *every* candidate when the
   medication context is invalid — never pretends to optimize against a
   bare numeric dose.
@@ -666,6 +667,51 @@ final order, in which case it reports `local_ai_safe_candidate_rerank`;
 This is an executable decision-influence ceiling, not a disclaimer. A future
 change to ranking requires a separately reviewed context of use, governed
 calibration/validation evidence, and a versioned promotion contract.
+
+## 18b. Next-meal planner (user-chosen order)
+
+The Next-meal page no longer shows the legacy 16-weight heuristic order, and
+Today no longer shows its top three. `NextMealPlanner`
+(`lib/domain/usecases/next_meal_planner.dart`, algorithm
+`next_meal_planner`) replaces both as the source of what the user sees:
+
+- **Candidate set.** One entry per catalog food (duplicate ids and duplicate
+  source records keep the first), at its reference serving (§18a). Values
+  are per serving and unknown values stay null: protein, carbohydrate, fat,
+  energy (source value, else 4/4/9 kcal/g when all three macronutrients are
+  known, marked "calculated"), LNAA (measured when all six competing amino
+  acids are present, else estimated from protein with the physiology model's
+  mixed-protein composition), physical form and a six-field data-completeness
+  count (protein, carbohydrate, fat, energy, serving, texture).
+- **Modeled values** come from the physiology reference model
+  (`docs/design/PHYSIOLOGY_MODEL_V2.md`, item 5): brain delivery and plasma
+  levodopa area relative to no meal for the planned meal-to-dose offset, with
+  the seeded population band. Each value has a state: available, bracketed
+  (unrecorded physical form, solid to liquid) or unavailable with reasons
+  (no levodopa medicine, no logged dose, dose not confirmed, release type not
+  recorded, not oral immediate release, offset out of range, protein or
+  energy unknown, empty plate). The dose compared with is the logged
+  levodopa intake nearest to the planned time, the later one on a tie (as in
+  the meal check).
+- **Order is the user's choice.** The default is neutral: foods the user has
+  logged before, then all by name. Other sorts are name, protein per serving,
+  modeled brain entry and energy, each reversible; unknown values sort last
+  in both directions. Filters: food group, texture (liquid, soft, regular,
+  not recorded), region, the profile's swallowing-texture setting (a food
+  without a recorded texture is never hidden by it) and complete data only.
+  No badge, label or default order calls a food recommended or best.
+- **Plate.** Totals add per serving (an unknown value is counted, not added
+  as 0); the plate's modeled effect is computed on the whole plate, not
+  summed per food.
+- **Legacy scorer.** `GetFoodRecommendationsUseCase` and the orchestrator stay
+  for replay and audit (`legacy_food_recommendations` is labelled "replay and
+  audit only"). The planner's collapsed "Audit: legacy engine trace" section
+  can run the orchestrator for the planned time and lists its mechanistic
+  candidate traces by name. The dashboard's background refresh still
+  computes the legacy result for replay; nothing displays its order.
+- **Meal check.** The database meal check's protein-timing score term is now
+  direction-aware: it follows the same modeled brain delivery relative to no
+  meal (mapping and fallback in `docs/design/PHYSIOLOGY_MODEL_V2.md`, item 4).
 
 ## 18a. Candidate serving basis
 

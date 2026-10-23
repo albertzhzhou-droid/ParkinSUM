@@ -17,8 +17,8 @@ void main() {
       );
       expect(report.compatibilityAccepted, isTrue);
       expect(report.analysisContextCount, greaterThan(0));
-      expect(report.roots, hasLength(66));
-      expect(report.acceptedRootCount, 66);
+      expect(report.roots, hasLength(67));
+      expect(report.acceptedRootCount, 67);
       expect(report.heldAlgorithmIds, isEmpty);
       expect(report.environmentHoldReasons, isEmpty);
       expect(

@@ -28,7 +28,7 @@ Educational/research prototype. **Deterministic copy compilation + validation on
 | legacy_high_protein_strong | informational | en | High protein timing may strongly affect levodopa absorption |
 | legacy_high_protein_strong_detail | informational | en | This meal contains about 40.0 g of protein, which is in a higher-risk range. Taking it close to Sample may compete more strongly for absorption. |
 | legacy_high_protein | informational | en | Protein may affect medication absorption |
-| legacy_high_protein_detail | informational | en | This meal contains about 25.0 g of protein and may compete with Sample during absorption. Consider scheduling higher-protein meals away from dosing time. |
+| legacy_high_protein_detail | informational | en | This meal contains about 25.0 g of protein, which may compete with Sample for absorption. Review timing questions with a qualified clinician. |
 | legacy_tyramine | informational | en | Possible high-tyramine food risk |
 | legacy_tyramine_detail | informational | en | This meal includes foods marked as high tyramine. Combined with Sample, it may increase adverse-effect risk. |
 | legacy_mineral | informational | en | Meal timing note for mineral supplements |
