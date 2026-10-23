@@ -1,4 +1,5 @@
 import '../constants/reference_food_composition_table.dart';
+import 'app_i18n_advanced_dishes_translations.dart';
 import 'app_i18n_diary_strip_translations.dart';
 import 'app_i18n_next_meal_planner_translations.dart';
 import 'app_i18n_full_translations.dart';
@@ -6144,6 +6145,8 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
       ...?_foodDisplayTranslations[entry.key],
       ...?kDiaryStripTranslations[entry.key],
       ...?kNextMealPlannerTranslations[entry.key],
+      ...?kAdvancedDishesUiTranslations[entry.key],
+      ...?_advancedDishCatalogTranslations[entry.key],
       'onboarding.medication_search':
           _medicationSearchTranslations[entry.key] ??
           _medicationSearchTranslations['en']!,
@@ -6155,6 +6158,8 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
           : kInteractionReviewEnglish),
     },
 };
+
+final _advancedDishCatalogTranslations = advancedDishCatalogTranslations();
 
 /// Placeholder of the medications-only onboarding search field.
 const _medicationSearchTranslations = <String, String>{
