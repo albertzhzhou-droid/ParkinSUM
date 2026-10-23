@@ -528,7 +528,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'onboarding.initial_intake_time': '服药时间',
     'onboarding.change_time': '更改时间',
     'onboarding.initial_intake_note': '剂量备注',
-    'onboarding.initial_intake_note_help': '例如 100 mg，或留空；组合强度不会当作单次剂量。',
+    'onboarding.initial_intake_note_help':
+        '也可直接输入单次剂量，例如 100 mg，或留空；25/100 这类组合强度不是剂量，可在上方选择规格和单位数量。',
     'onboarding.no_medications_available': '当前药品目录为空。',
     'onboarding.step_preferences': '饮食与安全偏好',
     'onboarding.step_preferences_subtitle': '设置饮食地区、质地安全和内容覆盖',
@@ -1046,8 +1047,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': '已记录餐次：{count}',
     'dashboard.active_drugs': '已激活药品：{count}',
     'dashboard.logged_intakes': '已记录服药：{count}',
-    'dashboard.recommendations': '推荐',
-    'dashboard.no_recommendations': '暂无推荐',
+    'dashboard.recommendations': '下一餐食物对比',
+    'dashboard.no_recommendations': '暂无可对比的食物',
     'dashboard.recommendation_path': '教育性示例',
     'dashboard.recommendation_template':
         '当前模板：{region} · {mealSlot} · {texture}',
@@ -1087,6 +1088,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.medication': '药品',
     'timeline.active_medication_option': '{name}（已激活）',
     'timeline.dosage_note': '剂量说明',
+    'package_dose.strength_title': '产品规格',
+    'package_dose.strength_help': '来自内置药品目录的规格。选择规格不会设定剂量；请在下方选择本次的单位数量。',
+    'package_dose.quantity_title': '本次单位数量（{unit}）',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source': '来源：{source} · 获取时间：{retrieved} · {url}',
     'timeline.package_dose_derivation':
         '换算依据：{strength} × {quantity} {unit} = {amount} {resultUnit}',
@@ -2140,7 +2145,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'onboarding.change_time': 'Change time',
     'onboarding.initial_intake_note': 'Dose note',
     'onboarding.initial_intake_note_help':
-        'For example 100 mg, or blank; combination strength is not treated as an administration dose.',
+        'Or type one dose, for example 100 mg, or leave blank. A combination strength such as 25/100 is not a dose; pick the strength and units above instead.',
     'onboarding.no_medications_available':
         'No medications are available in the catalog.',
     'onboarding.step_preferences': 'Diet and safety preferences',
@@ -2801,8 +2806,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': 'Logged meals: {count}',
     'dashboard.active_drugs': 'Active medications: {count}',
     'dashboard.logged_intakes': 'Medication intakes: {count}',
-    'dashboard.recommendations': 'Recommendations',
-    'dashboard.no_recommendations': 'No recommendations yet',
+    'dashboard.recommendations': 'Compare next-meal foods',
+    'dashboard.no_recommendations': 'No foods to compare yet',
     'dashboard.recommendation_path': 'Educational examples',
     'dashboard.recommendation_template':
         'Active template: {region} · {mealSlot} · {texture}',
@@ -2844,6 +2849,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.medication': 'Medication',
     'timeline.active_medication_option': '{name} (active)',
     'timeline.dosage_note': 'Dosage note',
+    'package_dose.strength_title': 'Product strength',
+    'package_dose.strength_help':
+        'Strengths listed in the bundled product catalog. Choosing one does not set a dose; pick the number of units below.',
+    'package_dose.quantity_title': 'Units in this dose ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Source: {source} · Retrieved: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -4245,8 +4255,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': 'Repas enregistres : {count}',
     'dashboard.active_drugs': 'Medicaments actifs : {count}',
     'dashboard.logged_intakes': 'Prises de medicaments : {count}',
-    'dashboard.recommendations': 'Recommandations',
-    'dashboard.no_recommendations': 'Aucune recommandation pour le moment',
+    'dashboard.recommendations': 'Comparer des aliments pour le prochain repas',
+    'dashboard.no_recommendations': 'Aucun aliment à comparer pour le moment',
+    'package_dose.strength_title': 'Dosage du produit',
+    'package_dose.strength_help':
+        'Dosages du catalogue de produits intégré. Choisir un dosage ne fixe pas de dose ; choisissez le nombre d’unités ci-dessous.',
+    'package_dose.quantity_title': 'Unités pour cette prise ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'dashboard.recommendation_path': 'Chemin de recommandation',
     'dashboard.recommendation_template':
         'Modele actif : {region} · {mealSlot} · {texture}',
@@ -5323,8 +5338,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': '記録済み食事: {count}',
     'dashboard.active_drugs': '有効な薬: {count}',
     'dashboard.logged_intakes': '服薬記録: {count}',
-    'dashboard.recommendations': '推奨',
-    'dashboard.no_recommendations': 'まだ推奨はありません',
+    'dashboard.recommendations': '次の食事の食品比較',
+    'dashboard.no_recommendations': '比較できる食品はまだありません',
+    'package_dose.strength_title': '製品の含量',
+    'package_dose.strength_help':
+        '同梱の製品カタログにある含量です。含量を選んでも用量は決まりません。下で単位数を選んでください。',
+    'package_dose.quantity_title': 'この1回分の単位数（{unit}）',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'dashboard.recommendation_path': '推薦経路',
     'dashboard.recommendation_template':
         '現在のテンプレート：{region} · {mealSlot} · {texture}',

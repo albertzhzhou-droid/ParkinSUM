@@ -287,6 +287,7 @@
         "lib/features/settings/settings_capability_page.dart",
         "lib/features/shared/candidate_serving_macro_line.dart",
         "lib/features/shared/local_storage_stale_page.dart",
+        "lib/features/shared/package_dose_selector.dart",
         "lib/features/shared/personal_log_view_controls.dart",
         "lib/features/timeline/timeline_page.dart",
         "lib/features/analytics/diary_strip_view.dart"
