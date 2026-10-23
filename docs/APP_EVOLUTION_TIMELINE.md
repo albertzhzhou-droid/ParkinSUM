@@ -10139,3 +10139,26 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Revert this commit; intakes saved with `spl:` forms then read as unspecified again (fail-closed).
+
+## 2026-10-23 — NEXT-MEAL-ALTERNATIVES-20261023 — Alternatives flashcards, region scope, availability evidence and variety rotation (nutrition only)
+
+### Baseline and scope
+
+- Third commit on `feature/next-meal-planner`, after the product-formulation fix. Requested: flashcard alternatives "of the same nutritional position" when a food is not available, alternatives and candidates shaped by the onboarding country, availability read from the user's imported and logged meals, and optional rotation cycles for variety. Per the user's scope correction everything here is nutrition-only: no new dose- or levodopa-based output, and the alternatives show no modeled-effect delta.
+
+### Changes
+
+- **Alternatives flashcards.** Every food card has "Alternatives (n)" and every plate item an alternatives button. The deck shows one alternative at a time with previous / next buttons and "2 of 6", the deltas against the original (protein g, energy kcal, LNAA g, texture, data completeness), a closeness percentage and the food's evidence line. "Swap" replaces the plate item (servings kept); on a food card the action adds the alternative to the plate. Position rule and closeness formula as in CONFLICT_ENGINE_MODEL §18b.
+- **Region.** Regions come from the content-jurisdiction override, else the onboarding registration and diet regions. By default the list shows foods with regional evidence (catalog source for the region, or the user's own meals) and states "N foods with no evidence for your region are hidden" next to an "Include other regions" switch; in the default order region foods follow familiar ones, and alternatives put regional evidence first. The onboarding region helper now says the choice also shapes the planner.
+- **Availability evidence.** Each card says "Seen in N of your logged or imported meals" or "Listed in <source> (<region>)" (or that there is no evidence for the region), and an "Available in my region" filter keeps foods seen in the user's own meals.
+- **Variety cycles.** "Vary my meals" (Off, 3, 7, 14 days) moves foods eaten within that window after the others in any sort; an optional switch hides them. Cards show "Last eaten today / 1 day ago / N days ago". Copy states it is a display order the user turned on, not advice.
+- **Advanced link.** A link to the Advanced dishes page (`next-meal/advanced`) appears once that shell route exists, so it stays hidden until the sibling branch is merged.
+
+### Verification and remaining boundaries
+
+- `test/next_meal_planner_test.dart` (26) adds alternatives (position, formula, deterministic order, regional evidence first, unknown values) and region / availability / variety (user regions, region toggle, own-meal availability, rotation, hide filter, and the cycle restarting when a food is reused). `test/next_meal_planner_page_test.dart` (14) adds flashcards (previous / next / swap, nutrition-only deltas), the region notice and toggle, evidence lines and the available filter, the rotation and hide switch, and the deck at 375 px in light and dark with ≥ 44 px targets.
+- Boundaries: the bundled catalog covers US and FR only; meals restored from portable packages count as the user's meals; variety settings are not persisted. Not dietary advice.
+
+### Surgical rollback
+
+- Revert this commit; the planner keeps its earlier list, plate and compare.

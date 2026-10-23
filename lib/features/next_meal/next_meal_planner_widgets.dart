@@ -7,6 +7,7 @@ import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/food_serving_reference.dart';
 import '../../domain/entities/next_meal_plan.dart';
 import '../../domain/entities/personal_diary_strip.dart';
+import '../../domain/usecases/next_meal_planner.dart';
 import 'next_meal_plate_chart.dart';
 
 // Presentation of the Next-meal planner. Values come from NextMealPlanner;
@@ -815,6 +816,11 @@ class PlannerFoodCard extends StatelessWidget {
     required this.pinned,
     required this.onTogglePlate,
     required this.onTogglePin,
+    this.evidenceText,
+    this.lastEatenText,
+    this.alternativesCount,
+    this.onToggleAlternatives,
+    this.alternativesDeck,
   });
 
   final AppI18n i18n;
@@ -825,6 +831,15 @@ class PlannerFoodCard extends StatelessWidget {
   final bool pinned;
   final VoidCallback onTogglePlate;
   final VoidCallback onTogglePin;
+
+  /// Regional or own-meal evidence, nutrition only.
+  final String? evidenceText;
+  final String? lastEatenText;
+  final int? alternativesCount;
+  final VoidCallback? onToggleAlternatives;
+
+  /// Shown under the card when the user opened its alternatives.
+  final Widget? alternativesDeck;
 
   @override
   Widget build(BuildContext context) {
@@ -909,6 +924,14 @@ class PlannerFoodCard extends StatelessWidget {
               ),
             ],
           ),
+          if (evidenceText != null || lastEatenText != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              [?evidenceText, ?lastEatenText].join(' · '),
+              key: ValueKey('next-meal-evidence-${c.id}'),
+              style: TextStyle(fontSize: 12, color: palette.muted),
+            ),
+          ],
           const SizedBox(height: 8),
           KeyedSubtree(
             key: ValueKey('next-meal-effect-${c.id}'),
@@ -953,8 +976,20 @@ class PlannerFoodCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (onToggleAlternatives != null)
+                TextButton.icon(
+                  key: ValueKey('next-meal-alternatives-${c.id}'),
+                  onPressed: onToggleAlternatives,
+                  icon: const Icon(Icons.style_outlined),
+                  label: Text(
+                    i18n.tr('planner.alternatives', {
+                      'count': '${alternativesCount ?? 0}',
+                    }),
+                  ),
+                ),
             ],
           ),
+          ?alternativesDeck,
         ],
       ),
     );
@@ -991,6 +1026,8 @@ class PlannerPlateItemRow extends StatelessWidget {
     required this.onLess,
     required this.onMore,
     required this.onRemove,
+    this.onAlternatives,
+    this.alternativesDeck,
   });
 
   final AppI18n i18n;
@@ -999,6 +1036,8 @@ class PlannerPlateItemRow extends StatelessWidget {
   final VoidCallback? onLess;
   final VoidCallback? onMore;
   final VoidCallback onRemove;
+  final VoidCallback? onAlternatives;
+  final Widget? alternativesDeck;
 
   @override
   Widget build(BuildContext context) {
@@ -1007,50 +1046,61 @@ class PlannerPlateItemRow extends StatelessWidget {
         ? item.servings.toStringAsFixed(0)
         : item.servings.toStringAsFixed(1);
     final grams = item.candidate.serving.evaluatedGrams * item.servings;
+    final row = Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                '${i18n.tr('planner.servings', {'count': servings})} · '
+                '${grams.toStringAsFixed(0)} g · '
+                '${plannerProteinText(i18n, item.candidate.proteinG == null ? null : item.candidate.proteinG! * item.servings)}',
+                style: TextStyle(fontSize: 12, color: palette.muted),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          key: ValueKey('next-meal-less-${item.candidate.id}'),
+          tooltip: i18n.tr('planner.servings_less', {'name': name}),
+          onPressed: onLess,
+          icon: const Icon(Icons.remove_circle_outline),
+        ),
+        IconButton(
+          key: ValueKey('next-meal-more-${item.candidate.id}'),
+          tooltip: i18n.tr('planner.servings_more', {'name': name}),
+          onPressed: onMore,
+          icon: const Icon(Icons.add_circle_outline),
+        ),
+        if (onAlternatives != null)
+          IconButton(
+            key: ValueKey('next-meal-plate-alternatives-${item.candidate.id}'),
+            tooltip: i18n.tr('planner.alternatives_title'),
+            onPressed: onAlternatives,
+            icon: const Icon(Icons.style_outlined),
+          ),
+        IconButton(
+          key: ValueKey('next-meal-remove-${item.candidate.id}'),
+          tooltip: i18n.tr('planner.remove', {'name': name}),
+          onPressed: onRemove,
+          icon: const Icon(Icons.close_rounded),
+        ),
+      ],
+    );
     return Padding(
       key: ValueKey('next-meal-plate-item-${item.candidate.id}'),
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  '${i18n.tr('planner.servings', {'count': servings})} · '
-                  '${grams.toStringAsFixed(0)} g · '
-                  '${plannerProteinText(i18n, item.candidate.proteinG == null ? null : item.candidate.proteinG! * item.servings)}',
-                  style: TextStyle(fontSize: 12, color: palette.muted),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            key: ValueKey('next-meal-less-${item.candidate.id}'),
-            tooltip: i18n.tr('planner.servings_less', {'name': name}),
-            onPressed: onLess,
-            icon: const Icon(Icons.remove_circle_outline),
-          ),
-          IconButton(
-            key: ValueKey('next-meal-more-${item.candidate.id}'),
-            tooltip: i18n.tr('planner.servings_more', {'name': name}),
-            onPressed: onMore,
-            icon: const Icon(Icons.add_circle_outline),
-          ),
-          IconButton(
-            key: ValueKey('next-meal-remove-${item.candidate.id}'),
-            tooltip: i18n.tr('planner.remove', {'name': name}),
-            onPressed: onRemove,
-            icon: const Icon(Icons.close_rounded),
-          ),
-        ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [row, ?alternativesDeck],
       ),
     );
   }
@@ -1263,5 +1313,268 @@ class PlannerCompareColumn extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Alternatives (nutrition only) and evidence lines.
+// -----------------------------------------------------------------------------
+
+String _signed(double value, int digits) {
+  final text = value.abs().toStringAsFixed(digits);
+  if (double.parse(text) == 0) return '±$text';
+  return value > 0 ? '+$text' : '−$text';
+}
+
+/// "Seen in 3 of your logged or imported meals", "Listed in USDA FoodData
+/// Central (United States)" or "No evidence for United States".
+String plannerEvidenceText(
+  AppI18n i18n,
+  NextMealCandidate c,
+  Set<String> regions,
+) {
+  if (c.familiar) {
+    return i18n.tr('planner.evidence_seen', {'count': '${c.timesLogged}'});
+  }
+  if (regions.contains(c.food.jurisdiction.toUpperCase())) {
+    return i18n.tr('planner.evidence_listed', {
+      'source': i18n.sourceSystemLabel(c.food.sourceSystem),
+      'region': i18n.regionLabel(c.food.jurisdiction),
+    });
+  }
+  return i18n.tr('planner.evidence_none', {
+    'regions': regions.map(i18n.regionLabel).join(', '),
+  });
+}
+
+/// "Last eaten 2 days ago", or null when the food is not in the user's meals.
+String? plannerLastEatenText(AppI18n i18n, int? days) => switch (days) {
+  null => null,
+  0 => i18n.tr('planner.last_eaten_today'),
+  1 => i18n.tr('planner.last_eaten_one'),
+  _ => i18n.tr('planner.last_eaten_days', {'days': '$days'}),
+};
+
+/// A deck of alternatives in the same nutritional position, one card at a
+/// time, moved with previous / next buttons (no swipe-only control).
+class PlannerAlternativesDeck extends StatelessWidget {
+  const PlannerAlternativesDeck({
+    super.key,
+    required this.i18n,
+    required this.deckKey,
+    required this.original,
+    required this.alternatives,
+    required this.index,
+    required this.regions,
+    required this.nameOf,
+    required this.onIndex,
+    required this.actionLabel,
+    required this.actionSemantics,
+    required this.onAction,
+    required this.onClose,
+  });
+
+  final AppI18n i18n;
+  final String deckKey;
+  final NextMealCandidate original;
+  final List<NextMealAlternative> alternatives;
+  final int index;
+  final Set<String> regions;
+  final String Function(NextMealCandidate) nameOf;
+  final ValueChanged<int> onIndex;
+  final String actionLabel;
+  final String Function(NextMealCandidate) actionSemantics;
+  final ValueChanged<NextMealCandidate> onAction;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = PlannerPalette.of(context);
+    final p0 = original.proteinG;
+    final e0 = original.energyKcal;
+    Widget frame(List<Widget> children) => Container(
+      key: ValueKey('next-meal-alternatives-$deckKey'),
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 8, 12),
+      decoration: BoxDecoration(
+        color: palette.sunken,
+        borderRadius: BorderRadius.circular(Paper.radiusMd),
+        border: Border.all(color: palette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    i18n.tr('planner.alternatives_title'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                key: ValueKey('next-meal-alt-close-$deckKey'),
+                tooltip: i18n.tr('planner.alt_close'),
+                onPressed: onClose,
+                icon: const Icon(Icons.close_rounded),
+              ),
+            ],
+          ),
+          ...children,
+        ],
+      ),
+    );
+    if (alternatives.isEmpty) {
+      return frame([
+        Text(
+          i18n.tr('planner.alternatives_none'),
+          style: TextStyle(fontSize: 13, color: palette.muted),
+        ),
+      ]);
+    }
+    final i = index.clamp(0, alternatives.length - 1);
+    final alt = alternatives[i];
+    final c = alt.candidate;
+    final name = nameOf(c);
+    final position = i18n.tr('planner.alt_position', {
+      'index': '${i + 1}',
+      'count': '${alternatives.length}',
+    });
+    return frame([
+      Row(
+        children: [
+          IconButton(
+            key: ValueKey('next-meal-alt-prev-$deckKey'),
+            tooltip: i18n.tr('planner.alt_previous'),
+            onPressed: i > 0 ? () => onIndex(i - 1) : null,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          Expanded(
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                position,
+                key: ValueKey('next-meal-alt-position-$deckKey'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: palette.muted),
+              ),
+            ),
+          ),
+          IconButton(
+            key: ValueKey('next-meal-alt-next-$deckKey'),
+            tooltip: i18n.tr('planner.alt_next'),
+            onPressed: i < alternatives.length - 1
+                ? () => onIndex(i + 1)
+                : null,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
+      ),
+      Container(
+        key: ValueKey('next-meal-alt-card-$deckKey-${c.id}'),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: palette.surface,
+          borderRadius: BorderRadius.circular(Paper.radiusSm),
+          border: Border.all(color: palette.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
+            Text(
+              plannerServingText(i18n, c),
+              style: TextStyle(fontSize: 12, color: palette.muted),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                PlannerChip(
+                  label: i18n.tr('planner.delta_protein', {
+                    'value': _signed(alt.proteinDeltaG, 1),
+                  }),
+                  tone: PlannerChipTone.protein,
+                ),
+                PlannerChip(
+                  label: i18n.tr('planner.delta_energy', {
+                    'value': _signed(alt.energyDeltaKcal, 0),
+                  }),
+                  tone: PlannerChipTone.energy,
+                ),
+                PlannerChip(
+                  label: alt.lnaaDeltaG == null
+                      ? i18n.tr('planner.delta_lnaa_unknown')
+                      : i18n.tr('planner.delta_lnaa', {
+                          'value': _signed(alt.lnaaDeltaG!, 2),
+                        }),
+                ),
+                PlannerChip(
+                  label: alt.sameTexture
+                      ? i18n.tr('planner.delta_texture_same')
+                      : i18n.tr('planner.delta_texture', {
+                          'texture': plannerTextureText(i18n, c.food),
+                        }),
+                  icon: Icons.texture_rounded,
+                ),
+                PlannerChip(
+                  label: i18n.tr('planner.delta_data', {
+                    'present': '${c.presentFieldCount}',
+                    'total': '${NextMealDataFields.all.length}',
+                    'value': alt.completenessDelta == 0
+                        ? '±0'
+                        : (alt.completenessDelta > 0
+                              ? '+${alt.completenessDelta}'
+                              : '−${-alt.completenessDelta}'),
+                  }),
+                  semanticsLabel: plannerCompletenessSemantics(i18n, c),
+                ),
+                PlannerChip(
+                  label: i18n.tr('planner.alt_closeness', {
+                    'score': '${(alt.closeness * 100).round()}',
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              plannerEvidenceText(i18n, c, regions),
+              style: TextStyle(fontSize: 12, color: palette.muted),
+            ),
+            const SizedBox(height: 8),
+            Semantics(
+              button: true,
+              label: actionSemantics(c),
+              excludeSemantics: true,
+              child: FilledButton.tonal(
+                key: ValueKey('next-meal-alt-action-$deckKey'),
+                onPressed: () => onAction(c),
+                child: Text(actionLabel),
+              ),
+            ),
+          ],
+        ),
+      ),
+      if (p0 != null && e0 != null) ...[
+        const SizedBox(height: 8),
+        Text(
+          i18n.tr('planner.alternatives_rule', {
+            'protein': NextMealPlanner.proteinTolerance(p0).toStringAsFixed(1),
+            'energy': NextMealPlanner.energyTolerance(e0).toStringAsFixed(0),
+          }),
+          style: TextStyle(fontSize: 11, color: palette.muted, height: 1.35),
+        ),
+      ],
+    ]);
   }
 }

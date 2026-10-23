@@ -19,6 +19,7 @@ import '../../core/models/drug_definition.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/intake.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/user_profile.dart';
 import '../entities/meal_composition.dart';
 import '../entities/next_meal_plan.dart';
 import '../entities/time_axis_events.dart';
@@ -545,6 +546,142 @@ final class NextMealPlanner {
     };
   }
 
+  // ---------------------------------------------------------------------------
+  // Region, availability and variety (nutrition only).
+  // ---------------------------------------------------------------------------
+
+  /// The user's regions: the content-jurisdiction override when set, else
+  /// the registration and diet-profile regions from onboarding.
+  static Set<String> userRegions(UserProfile profile) {
+    final override = [
+      for (final code in profile.contentJurisdictionOverride)
+        if (code.trim().isNotEmpty) code.trim().toUpperCase(),
+    ];
+    if (override.isNotEmpty) return override.toSet();
+    return {
+      profile.registrationRegion.trim().toUpperCase(),
+      if (profile.dietProfileRegion != null &&
+          profile.dietProfileRegion!.trim().isNotEmpty)
+        profile.dietProfileRegion!.trim().toUpperCase(),
+    }..remove('');
+  }
+
+  /// The food's catalog source covers one of [regions].
+  static bool listedInRegion(NextMealCandidate c, Set<String> regions) =>
+      regions.contains(c.food.jurisdiction.toUpperCase());
+
+  /// Regional evidence: listed in a source for one of [regions], or seen in
+  /// the user's own logged or imported meals.
+  static bool hasRegionalEvidence(NextMealCandidate c, Set<String> regions) =>
+      c.familiar || listedInRegion(c, regions);
+
+  /// Whole days between the last meal with this food and [now] (0 = today),
+  /// or null when the food is not in the user's meals.
+  static int? daysSinceLastEaten(NextMealCandidate c, DateTime now) {
+    final last = c.lastLoggedAt;
+    if (last == null) return null;
+    final days = now.difference(last).inHours ~/ 24;
+    return days < 0 ? 0 : days;
+  }
+
+  /// Protein tolerance for the same nutritional position: max(3 g, 30 %).
+  static double proteinTolerance(double proteinG) =>
+      (proteinG * 0.30) > 3.0 ? proteinG * 0.30 : 3.0;
+
+  /// Energy tolerance: max(60 kcal, 30 %).
+  static double energyTolerance(double energyKcal) =>
+      (energyKcal * 0.30) > 60.0 ? energyKcal * 0.30 : 60.0;
+
+  /// LNAA scale for closeness: max(0.3 g, 30 %).
+  static double lnaaTolerance(double lnaaG) =>
+      (lnaaG * 0.30) > 0.3 ? lnaaG * 0.30 : 0.3;
+
+  /// Closeness of [alternative] to [original], 0–1:
+  ///
+  ///   1 − 0.5·|Δprotein|/tolP − 0.3·|Δenergy|/tolE − 0.2·min(1, |ΔLNAA|/tolL)
+  ///
+  /// with the tolerances of the original; an unknown LNAA counts as the
+  /// full 0.2. A similarity, not a judgement that one food is better.
+  static double alternativeCloseness(
+    NextMealCandidate original,
+    NextMealCandidate alternative,
+  ) {
+    final p0 = original.proteinG!;
+    final e0 = original.energyKcal!;
+    final dp = (alternative.proteinG! - p0).abs() / proteinTolerance(p0);
+    final de = (alternative.energyKcal! - e0).abs() / energyTolerance(e0);
+    final l0 = original.lnaaG;
+    final l1 = alternative.lnaaG;
+    final dl = l0 == null || l1 == null
+        ? 1.0
+        : ((l1 - l0).abs() / lnaaTolerance(l0)).clamp(0.0, 1.0);
+    final score = 1.0 - 0.5 * dp - 0.3 * de - 0.2 * dl;
+    return score.clamp(0.0, 1.0).toDouble();
+  }
+
+  /// Foods in the same nutritional position as [original]: the same food
+  /// group, protein and energy per serving within [proteinTolerance] and
+  /// [energyTolerance], and a texture the profile's setting does not
+  /// exclude. Ordered by regional evidence, then closeness, then name and id.
+  /// Empty when the original's protein or energy is unknown.
+  List<NextMealAlternative> alternativesFor(
+    NextMealCandidate original,
+    List<NextMealCandidate> pool, {
+    required String textureMode,
+    required Set<String> regions,
+    required String Function(NextMealCandidate) nameOf,
+    int limit = 8,
+  }) {
+    final p0 = original.proteinG;
+    final e0 = original.energyKcal;
+    if (p0 == null || e0 == null) return const [];
+    final originalName = nameOf(original).toLowerCase();
+    final found = <NextMealAlternative>[];
+    for (final c in pool) {
+      final p = c.proteinG;
+      final e = c.energyKcal;
+      if (c.id == original.id ||
+          c.food.category != original.food.category ||
+          p == null ||
+          e == null ||
+          nameOf(c).toLowerCase() == originalName ||
+          (p - p0).abs() > proteinTolerance(p0) ||
+          (e - e0).abs() > energyTolerance(e0) ||
+          excludedByTextureProfile(c.food, textureMode)) {
+        continue;
+      }
+      final l0 = original.lnaaG;
+      final l1 = c.lnaaG;
+      found.add(
+        NextMealAlternative(
+          candidate: c,
+          closeness: alternativeCloseness(original, c),
+          proteinDeltaG: p - p0,
+          energyDeltaKcal: e - e0,
+          lnaaDeltaG: l0 == null || l1 == null ? null : l1 - l0,
+          sameTexture:
+              textureFilterValue(c.food) == textureFilterValue(original.food) &&
+              c.food.iddsiLevel == original.food.iddsiLevel,
+          completenessDelta: c.presentFieldCount - original.presentFieldCount,
+          regionalEvidence: hasRegionalEvidence(c, regions),
+        ),
+      );
+    }
+    final names = {for (final a in found) a.candidate.id: nameOf(a.candidate)};
+    found.sort((a, b) {
+      if (a.regionalEvidence != b.regionalEvidence) {
+        return a.regionalEvidence ? -1 : 1;
+      }
+      final c = b.closeness.compareTo(a.closeness);
+      if (c != 0) return c;
+      final n = names[a.candidate.id]!.toLowerCase().compareTo(
+        names[b.candidate.id]!.toLowerCase(),
+      );
+      return n != 0 ? n : a.candidate.id.compareTo(b.candidate.id);
+    });
+    return List.unmodifiable(found.take(limit));
+  }
+
   /// Filters, then orders by [sort] (ties by name, then id). [nameOf] gives
   /// the display name; [effectOf] the modeled effect for that sort.
   List<NextMealCandidate> arrange(
@@ -555,8 +692,16 @@ final class NextMealPlanner {
     required String textureMode,
     required String Function(NextMealCandidate) nameOf,
     NextMealModeledEffect? Function(NextMealCandidate)? effectOf,
+    Set<String> regions = const {},
+    DateTime? now,
+    int rotateUsedWithinDays = 0,
   }) {
     final query = filter.query.trim().toLowerCase();
+    bool usedWithin(NextMealCandidate c, int days) {
+      final days0 = now == null ? null : daysSinceLastEaten(c, now);
+      return days > 0 && days0 != null && days0 < days;
+    }
+
     final kept = [
       for (final c in candidates)
         if ((filter.groups.isEmpty ||
@@ -568,6 +713,11 @@ final class NextMealPlanner {
             (!filter.matchTextureProfile ||
                 !excludedByTextureProfile(c.food, textureMode)) &&
             (!filter.completeDataOnly || c.completeData) &&
+            (regions.isEmpty ||
+                filter.includeOtherRegions ||
+                hasRegionalEvidence(c, regions)) &&
+            (!filter.seenInMyMealsOnly || c.familiar) &&
+            !usedWithin(c, filter.hideUsedWithinDays) &&
             (query.isEmpty ||
                 nameOf(c).toLowerCase().contains(query) ||
                 c.food.searchableText.toLowerCase().contains(query)))
@@ -592,10 +742,23 @@ final class NextMealPlanner {
         values[c.id] = pick(c);
       }
     }
+    final inRegion = {
+      for (final c in kept) c.id: hasRegionalEvidence(c, regions),
+    };
+    final recent = {
+      for (final c in kept) c.id: usedWithin(c, rotateUsedWithinDays),
+    };
     kept.sort((a, b) {
+      // "Vary my meals", when the user turns it on: foods eaten within the
+      // chosen days go after the others, in any sort.
+      if (recent[a.id] != recent[b.id]) return recent[a.id]! ? 1 : -1;
       switch (sort) {
         case NextMealSortKey.familiarThenName:
           if (a.familiar != b.familiar) return a.familiar ? -1 : 1;
+          // The user's onboarding region comes next in the default order.
+          if (regions.isNotEmpty && inRegion[a.id] != inRegion[b.id]) {
+            return inRegion[a.id]! ? -1 : 1;
+          }
           final n = byName(a, b);
           return descending ? -n : n;
         case NextMealSortKey.name:

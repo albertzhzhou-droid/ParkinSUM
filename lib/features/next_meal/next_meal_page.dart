@@ -15,6 +15,7 @@ import '../../domain/usecases/next_meal_planner.dart';
 import '../../domain/usecases/personal_diary_strip_projector.dart';
 import '../../domain/usecases/personal_log_date_window_resolver.dart';
 import '../entry/entry_page.dart';
+import '../main_shell/main_tab_route.dart';
 import '../shared/mechanistic_trace_view.dart';
 import 'next_meal_plate_chart.dart';
 import 'next_meal_planner_widgets.dart';
@@ -123,6 +124,18 @@ class _NextMealPageState extends State<NextMealPage> {
   final List<NextMealPlateItem> _plate = [];
   final List<_Pinned> _pinned = [];
   int _plateNumber = 0;
+
+  /// Open alternatives deck: `food-$id` or `plate-$id`.
+  String? _altDeck;
+  int _altIndex = 0;
+
+  /// "Vary my meals" window in days; 0 is off.
+  int _varietyDays = 0;
+  bool _hideRecent = false;
+  static const List<int> _varietyChoices = [0, 3, 7, 14];
+
+  /// The Advanced dishes page's shell route; linked only once it exists.
+  static const String _advancedRouteId = 'next-meal/advanced';
 
   NextMealRecommendationResult? _legacy;
   bool _legacyRunning = false;
@@ -258,6 +271,58 @@ class _NextMealPageState extends State<NextMealPage> {
     _pin(_PinnedPlate(++_plateNumber, List.unmodifiable(_plate)));
   }
 
+  void _toggleDeck(String key) => setState(() {
+    if (_altDeck == key) {
+      _altDeck = null;
+    } else {
+      _altDeck = key;
+      _altIndex = 0;
+    }
+  });
+
+  /// Replaces a plate item with an alternative, keeping its servings. If the
+  /// alternative is already on the plate the two are merged.
+  void _swap(String fromId, NextMealCandidate to) {
+    debugPrint('[NextMeal] plate:swap');
+    setState(() {
+      final index = _plateIndex(fromId);
+      if (index < 0) return;
+      final servings = _plate[index].servings;
+      final existing = _plateIndex(to.id);
+      if (existing >= 0) {
+        _plate.removeAt(index);
+      } else {
+        _plate[index] = NextMealPlateItem(to, servings);
+      }
+      _altDeck = null;
+    });
+  }
+
+  Widget _deck(
+    AppI18n i18n, {
+    required String deckKey,
+    required NextMealCandidate original,
+    required List<NextMealAlternative> alternatives,
+    required Set<String> regions,
+    required String Function(NextMealCandidate) nameOf,
+    required String actionLabel,
+    required String Function(NextMealCandidate) actionSemantics,
+    required ValueChanged<NextMealCandidate> onAction,
+  }) => PlannerAlternativesDeck(
+    i18n: i18n,
+    deckKey: deckKey,
+    original: original,
+    alternatives: alternatives,
+    index: _altIndex,
+    regions: regions,
+    nameOf: nameOf,
+    onIndex: (value) => setState(() => _altIndex = value),
+    actionLabel: actionLabel,
+    actionSemantics: actionSemantics,
+    onAction: onAction,
+    onClose: () => setState(() => _altDeck = null),
+  );
+
   Future<void> _saveDraft(AppState state) async {
     final i18n = context.appI18n;
     debugPrint('[NextMeal] draft:open items=${_plate.length}');
@@ -329,6 +394,8 @@ class _NextMealPageState extends State<NextMealPage> {
       }
     }
     final doseContext = state.nextMealDoseContext(_plannedAt);
+    final regions = NextMealPlanner.userRegions(state.userProfile);
+    final now = _now();
     String nameOf(NextMealCandidate c) => i18n.foodName(c.food.id, c.food.name);
     final arranged = planner.arrange(
       candidates,
@@ -340,7 +407,33 @@ class _NextMealPageState extends State<NextMealPage> {
       effectOf: _sort == NextMealSortKey.modeledBrainEntry
           ? (c) => planner.candidateEffect(c, doseContext)
           : null,
+      regions: regions,
+      now: now,
+      rotateUsedWithinDays: _varietyDays,
     );
+    final hiddenByRegion = _filter.includeOtherRegions
+        ? 0
+        : planner
+                  .arrange(
+                    candidates,
+                    filter: _filter.copyWith(includeOtherRegions: true),
+                    sort: NextMealSortKey.name,
+                    descending: false,
+                    textureMode: state.userProfile.swallowingTextureMode,
+                    nameOf: nameOf,
+                    regions: regions,
+                    now: now,
+                  )
+                  .length -
+              arranged.length;
+    List<NextMealAlternative> alternativesFor(NextMealCandidate c) =>
+        planner.alternativesFor(
+          c,
+          candidates,
+          textureMode: state.userProfile.swallowingTextureMode,
+          regions: regions,
+          nameOf: nameOf,
+        );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -380,14 +473,29 @@ class _NextMealPageState extends State<NextMealPage> {
               contextLine: _doseContextLine(i18n, doseContext, zone),
             ),
             const SizedBox(height: 12),
-            _plateCard(state, i18n, planner, doseContext, nameOf),
+            _plateCard(
+              state,
+              i18n,
+              planner,
+              doseContext,
+              nameOf,
+              alternativesFor,
+              regions,
+            ),
           ],
           secondary: [
             if (_pinned.isNotEmpty) ...[
               _compareCard(i18n, planner, doseContext, byId, nameOf),
               const SizedBox(height: 12),
             ],
-            _browserControls(state, i18n, candidates, arranged.length),
+            _browserControls(
+              state,
+              i18n,
+              candidates,
+              arranged.length,
+              regions,
+              hiddenByRegion,
+            ),
             const SizedBox(height: 10),
             if (arranged.isEmpty)
               PlannerCard(
@@ -412,6 +520,31 @@ class _NextMealPageState extends State<NextMealPage> {
                   pinned: _isPinnedFood(c.id),
                   onTogglePlate: () => _togglePlate(c),
                   onTogglePin: () => _togglePinFood(c),
+                  evidenceText: plannerEvidenceText(i18n, c, regions),
+                  lastEatenText: plannerLastEatenText(
+                    i18n,
+                    NextMealPlanner.daysSinceLastEaten(c, now),
+                  ),
+                  alternativesCount: alternativesFor(c).length,
+                  onToggleAlternatives: () => _toggleDeck('food-${c.id}'),
+                  alternativesDeck: _altDeck == 'food-${c.id}'
+                      ? _deck(
+                          i18n,
+                          deckKey: 'food-${c.id}',
+                          original: c,
+                          alternatives: alternativesFor(c),
+                          regions: regions,
+                          nameOf: nameOf,
+                          actionLabel: i18n.tr('planner.add_to_plate'),
+                          actionSemantics: (alt) => i18n.tr(
+                            'planner.alt_add_named',
+                            {'name': nameOf(alt)},
+                          ),
+                          onAction: (alt) {
+                            if (_plateIndex(alt.id) < 0) _togglePlate(alt);
+                          },
+                        )
+                      : null,
                 ),
               ),
             if (arranged.length > _visible)
@@ -575,6 +708,8 @@ class _NextMealPageState extends State<NextMealPage> {
     NextMealPlanner planner,
     NextMealDoseContext doseContext,
     String Function(NextMealCandidate) nameOf,
+    List<NextMealAlternative> Function(NextMealCandidate) alternativesFor,
+    Set<String> regions,
   ) {
     final totals = planner.plateTotals(_plate);
     final curves = _plate.isEmpty
@@ -620,6 +755,23 @@ class _NextMealPageState extends State<NextMealPage> {
                     )
                   : null,
               onRemove: () => _togglePlate(item.candidate),
+              onAlternatives: () => _toggleDeck('plate-${item.candidate.id}'),
+              alternativesDeck: _altDeck == 'plate-${item.candidate.id}'
+                  ? _deck(
+                      i18n,
+                      deckKey: 'plate-${item.candidate.id}',
+                      original: item.candidate,
+                      alternatives: alternativesFor(item.candidate),
+                      regions: regions,
+                      nameOf: nameOf,
+                      actionLabel: i18n.tr('planner.alt_swap'),
+                      actionSemantics: (alt) => i18n.tr(
+                        'planner.alt_swap_named',
+                        {'from': nameOf(item.candidate), 'to': nameOf(alt)},
+                      ),
+                      onAction: (alt) => _swap(item.candidate.id, alt),
+                    )
+                  : null,
             ),
           if (_plate.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -803,8 +955,13 @@ class _NextMealPageState extends State<NextMealPage> {
     AppI18n i18n,
     List<NextMealCandidate> candidates,
     int shownCount,
+    Set<String> userRegions,
+    int hiddenByRegion,
   ) {
     final palette = PlannerPalette.of(context);
+    final navigate = PaperShellScope.maybeOf(context)?.navigate;
+    final advancedAvailable =
+        MainTabRoute.fromId(_advancedRouteId).id == _advancedRouteId;
     final regions = {
       for (final c in candidates) c.food.jurisdiction.toUpperCase(),
     }.toList()..sort();
@@ -856,6 +1013,96 @@ class _NextMealPageState extends State<NextMealPage> {
             ),
             onChanged: (value) => update(_filter.copyWith(query: value)),
           ),
+          const SizedBox(height: 10),
+          if (userRegions.isNotEmpty) ...[
+            Text(
+              i18n.tr('planner.region_scope', {
+                'regions': userRegions.map(i18n.regionLabel).join(', '),
+              }),
+              key: const ValueKey('next-meal-region-scope'),
+              style: const TextStyle(fontSize: 13),
+            ),
+            SwitchListTile(
+              key: const ValueKey('next-meal-include-other-regions'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(i18n.tr('planner.include_other_regions')),
+              subtitle: hiddenByRegion > 0
+                  ? Text(
+                      i18n.tr('planner.other_regions_hidden', {
+                        'count': '$hiddenByRegion',
+                      }),
+                      key: const ValueKey('next-meal-other-regions-hidden'),
+                    )
+                  : null,
+              value: _filter.includeOtherRegions,
+              onChanged: (value) =>
+                  update(_filter.copyWith(includeOtherRegions: value)),
+            ),
+          ],
+          Text(
+            i18n.tr('planner.variety_title'),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final days in _varietyChoices)
+                ChoiceChip(
+                  key: ValueKey('next-meal-variety-$days'),
+                  label: Text(
+                    days == 0
+                        ? i18n.tr('planner.variety_off')
+                        : i18n.tr('planner.variety_days', {'days': '$days'}),
+                  ),
+                  selected: _varietyDays == days,
+                  onSelected: (_) => setState(() {
+                    _varietyDays = days;
+                    if (days == 0) _hideRecent = false;
+                    _filter = _filter.copyWith(
+                      hideUsedWithinDays: _hideRecent ? days : 0,
+                    );
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _varietyDays == 0
+                ? i18n.tr('planner.variety_note_off')
+                : i18n.tr('planner.variety_note', {'days': '$_varietyDays'}),
+            key: const ValueKey('next-meal-variety-note'),
+            style: TextStyle(fontSize: 12, color: palette.muted, height: 1.35),
+          ),
+          if (_varietyDays > 0)
+            SwitchListTile(
+              key: const ValueKey('next-meal-variety-hide'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                i18n.tr('planner.variety_hide', {'days': '$_varietyDays'}),
+              ),
+              value: _hideRecent,
+              onChanged: (value) => setState(() {
+                _hideRecent = value;
+                _filter = _filter.copyWith(
+                  hideUsedWithinDays: value ? _varietyDays : 0,
+                );
+                _visible = _pageSize;
+              }),
+            ),
+          if (advancedAvailable && navigate != null) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const ValueKey('next-meal-advanced-link'),
+                onPressed: () => navigate(_advancedRouteId),
+                icon: const Icon(Icons.soup_kitchen_outlined),
+                label: Text(i18n.tr('planner.advanced_link')),
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Wrap(
             crossAxisAlignment: WrapCrossAlignment.center,
@@ -973,6 +1220,14 @@ class _NextMealPageState extends State<NextMealPage> {
                 ),
             ]),
             const SizedBox(height: 4),
+            SwitchListTile(
+              key: const ValueKey('next-meal-filter-available'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(i18n.tr('planner.filter_available')),
+              value: _filter.seenInMyMealsOnly,
+              onChanged: (value) =>
+                  update(_filter.copyWith(seenInMyMealsOnly: value)),
+            ),
             SwitchListTile(
               key: const ValueKey('next-meal-filter-complete'),
               contentPadding: EdgeInsets.zero,

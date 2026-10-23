@@ -3,12 +3,14 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
 import 'package:parkinsum_companion/core/models/administration_dose_confirmation.dart';
 import 'package:parkinsum_companion/core/models/intake.dart';
 import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/core/services/services.dart';
 import 'package:parkinsum_companion/core/state/app_state.dart';
 import 'package:parkinsum_companion/domain/entities/next_meal_plan.dart';
+import 'package:parkinsum_companion/domain/usecases/next_meal_planner.dart';
 import 'package:parkinsum_companion/features/entry/entry_page.dart';
 import 'package:parkinsum_companion/features/next_meal/next_meal_page.dart';
 import 'package:provider/provider.dart';
@@ -146,6 +148,7 @@ String _text(WidgetTester tester, String key) =>
     tester.widget<Text>(find.byKey(ValueKey(key))).data!;
 
 void main() {
+  _newScopeTests();
   testWidgets('food cards show serving, chips, source, data and a modeled '
       'effect for the planned time', (tester) async {
     await _size(tester, 1280);
@@ -393,9 +396,12 @@ void main() {
     await _tap(tester, find.byKey(const ValueKey('next-meal-sort')));
     await tester.tap(find.text('Protein per serving').last);
     await tester.pumpAndSettle();
-    final byProtein = [
-      ...state.nextMealCandidates.where((c) => c.proteinG != null),
-    ]..sort((a, b) => b.proteinG!.compareTo(a.proteinG!));
+    // The default scope is the profile's region (US) plus the user's foods.
+    bool inScope(NextMealCandidate c) =>
+        NextMealPlanner.hasRegionalEvidence(c, const {'US'});
+    final scoped = state.nextMealCandidates.where(inScope).toList();
+    final byProtein = [...scoped.where((c) => c.proteinG != null)]
+      ..sort((a, b) => b.proteinG!.compareTo(a.proteinG!));
     expect(
       find.byKey(ValueKey('next-meal-food-${byProtein.first.id}')),
       findsOneWidget,
@@ -409,15 +415,13 @@ void main() {
       tester,
       find.byKey(const ValueKey('next-meal-filter-group-dairy')),
     );
-    final dairy = state.nextMealCandidates
-        .where((c) => c.food.category.name == 'dairy')
-        .length;
+    final dairy = scoped.where((c) => c.food.category.name == 'dairy').length;
     expect(
       _text(tester, 'next-meal-result-count'),
       '$dairy of $dairy foods shown',
     );
     await _tap(tester, find.byKey(const ValueKey('next-meal-filter-complete')));
-    final complete = state.nextMealCandidates
+    final complete = scoped
         .where((c) => c.food.category.name == 'dairy' && c.completeData)
         .length;
     expect(
@@ -427,7 +431,7 @@ void main() {
     await _tap(tester, find.byKey(const ValueKey('next-meal-filters-clear')));
     expect(
       _text(tester, 'next-meal-result-count'),
-      '24 of ${state.nextMealCandidates.length} foods shown',
+      '24 of ${scoped.length} foods shown',
     );
     await tester.enterText(
       find.byKey(const ValueKey('next-meal-search')),
@@ -483,6 +487,14 @@ void main() {
       await _tap(tester, find.byKey(const ValueKey('next-meal-add-food_tofu')));
       await _tap(tester, find.byKey(const ValueKey('next-meal-pin-food_tofu')));
       await _tap(tester, find.byKey(const ValueKey('next-meal-filters')));
+      await _tap(
+        tester,
+        find.byKey(const ValueKey('next-meal-plate-alternatives-food_tofu')),
+      );
+      await _tap(
+        tester,
+        find.byKey(const ValueKey('next-meal-alt-next-plate-food_tofu')),
+      );
       expect(tester.takeException(), isNull);
       await _reveal(
         tester,
@@ -501,6 +513,10 @@ void main() {
         'next-meal-more-food_tofu',
         'next-meal-save-draft',
         'next-meal-sort-reverse',
+        'next-meal-alt-prev-plate-food_tofu',
+        'next-meal-alt-next-plate-food_tofu',
+        'next-meal-alt-action-plate-food_tofu',
+        'next-meal-variety-3',
       ]) {
         await _reveal(tester, find.byKey(ValueKey(key)));
         final size = tester.getSize(find.byKey(ValueKey(key)));
@@ -509,6 +525,183 @@ void main() {
       }
     });
   }
+}
+
+void _newScopeTests() {
+  testWidgets('alternatives flashcards: previous, next and swap on the plate', (
+    tester,
+  ) async {
+    await _size(tester, 1280);
+    final state = (await tester.runAsync(_fixture))!;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(_host(state));
+    await tester.pumpAndSettle();
+    final en = AppI18n.fromLocaleTag('en-US');
+    final tofu = state.nextMealCandidates.firstWhere(
+      (c) => c.id == 'food_tofu',
+    );
+    final alts = state.nextMealPlanner.alternativesFor(
+      tofu,
+      state.nextMealCandidates,
+      textureMode: 'unrestricted',
+      regions: const {'US'},
+      nameOf: (c) => en.foodName(c.food.id, c.food.name),
+    );
+    expect(alts.length, greaterThan(1));
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('next-meal-alternatives-food_tofu')),
+        matching: find.text('Alternatives (${alts.length})'),
+      ),
+      findsOneWidget,
+    );
+    await _tap(tester, find.byKey(const ValueKey('next-meal-add-food_tofu')));
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('next-meal-plate-alternatives-food_tofu')),
+    );
+    const deck = 'plate-food_tofu';
+    String position() => _text(tester, 'next-meal-alt-position-$deck');
+    expect(position(), '1 of ${alts.length}');
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byKey(const ValueKey('next-meal-alt-prev-$deck')),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      find.byKey(ValueKey('next-meal-alt-card-$deck-${alts[0].candidate.id}')),
+      findsOneWidget,
+    );
+    // Deltas are nutrition only: protein, energy, LNAA, texture, data.
+    final card = find.byKey(
+      ValueKey('next-meal-alt-card-$deck-${alts[0].candidate.id}'),
+    );
+    for (final label in ['Protein ', 'Energy ', 'Data ', 'Closeness ']) {
+      expect(
+        find.descendant(of: card, matching: find.textContaining(label)),
+        findsWidgets,
+        reason: label,
+      );
+    }
+    expect(
+      find.descendant(of: card, matching: find.textContaining('brain')),
+      findsNothing,
+    );
+    await _tap(tester, find.byKey(const ValueKey('next-meal-alt-next-$deck')));
+    expect(position(), '2 of ${alts.length}');
+    await _tap(tester, find.byKey(const ValueKey('next-meal-alt-prev-$deck')));
+    expect(position(), '1 of ${alts.length}');
+    await _tap(tester, find.byKey(const ValueKey('next-meal-alt-next-$deck')));
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('next-meal-alt-action-$deck')),
+    );
+    final swapped = alts[1].candidate.id;
+    expect(
+      find.byKey(const ValueKey('next-meal-plate-item-food_tofu')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(ValueKey('next-meal-plate-item-$swapped')),
+      findsOneWidget,
+    );
+    expect(
+      tester
+          .getSize(
+            find.byKey(ValueKey('next-meal-plate-alternatives-$swapped')),
+          )
+          .height,
+      greaterThanOrEqualTo(44),
+    );
+  });
+
+  testWidgets('region scope hides foods without regional evidence behind a '
+      'toggle and says how many', (tester) async {
+    await _size(tester, 1280);
+    final state = (await tester.runAsync(_fixture))!;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(_host(state));
+    await tester.pumpAndSettle();
+    final total = state.nextMealCandidates.length;
+    final scoped = state.nextMealCandidates
+        .where((c) => NextMealPlanner.hasRegionalEvidence(c, const {'US'}))
+        .length;
+    expect(scoped, lessThan(total));
+    expect(_text(tester, 'next-meal-region-scope'), contains('United States'));
+    expect(
+      _text(tester, 'next-meal-other-regions-hidden'),
+      '${total - scoped} foods with no evidence for your region are hidden.',
+    );
+    expect(
+      _text(tester, 'next-meal-result-count'),
+      '24 of $scoped foods shown',
+    );
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('next-meal-include-other-regions')),
+    );
+    expect(_text(tester, 'next-meal-result-count'), '24 of $total foods shown');
+  });
+
+  testWidgets('availability evidence and the available-in-my-region filter', (
+    tester,
+  ) async {
+    await _size(tester, 1280);
+    final state = (await tester.runAsync(_fixture))!;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(_host(state));
+    await tester.pumpAndSettle();
+    expect(
+      _text(tester, 'next-meal-evidence-food_tofu'),
+      'Seen in 1 of your logged or imported meals · Last eaten today',
+    );
+    final listed = state.nextMealCandidates.firstWhere(
+      (c) => !c.familiar && c.food.jurisdiction == 'US',
+    );
+    await _reveal(
+      tester,
+      find.byKey(ValueKey('next-meal-evidence-${listed.id}')),
+    );
+    expect(
+      _text(tester, 'next-meal-evidence-${listed.id}'),
+      startsWith('Listed in USDA FoodData Central (United States)'),
+    );
+    await _tap(tester, find.byKey(const ValueKey('next-meal-filters')));
+    await _tap(
+      tester,
+      find.byKey(const ValueKey('next-meal-filter-available')),
+    );
+    expect(_text(tester, 'next-meal-result-count'), '1 of 1 foods shown');
+  });
+
+  testWidgets('vary my meals is an opt-in order and filter', (tester) async {
+    await _size(tester, 1280);
+    final state = (await tester.runAsync(_fixture))!;
+    addTearDown(state.dispose);
+    await tester.pumpWidget(_host(state));
+    await tester.pumpAndSettle();
+    expect(_shownIds(tester).first, 'food_tofu');
+    expect(_text(tester, 'next-meal-variety-note'), contains('Off.'));
+    await _tap(tester, find.byKey(const ValueKey('next-meal-variety-3')));
+    expect(
+      _text(tester, 'next-meal-variety-note'),
+      contains('It is not advice.'),
+    );
+    // Tofu was eaten today, so it moves after the others.
+    expect(_shownIds(tester).first, isNot('food_tofu'));
+    await _tap(tester, find.byKey(const ValueKey('next-meal-variety-hide')));
+    expect(
+      find.byKey(const ValueKey('next-meal-food-food_tofu')),
+      findsNothing,
+    );
+    await _tap(tester, find.byKey(const ValueKey('next-meal-variety-0')));
+    expect(_shownIds(tester).first, 'food_tofu');
+    // The Advanced link waits for its route to exist.
+    expect(find.byKey(const ValueKey('next-meal-advanced-link')), findsNothing);
+  });
 }
 
 double _totalProtein(WidgetTester tester) {

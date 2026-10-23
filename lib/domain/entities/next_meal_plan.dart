@@ -315,6 +315,9 @@ final class NextMealFilter {
     this.matchTextureProfile = false,
     this.completeDataOnly = false,
     this.query = '',
+    this.includeOtherRegions = false,
+    this.seenInMyMealsOnly = false,
+    this.hideUsedWithinDays = 0,
   });
 
   final Set<FoodCategory> groups;
@@ -327,13 +330,28 @@ final class NextMealFilter {
   final bool completeDataOnly;
   final String query;
 
+  /// Show foods without regional evidence (see
+  /// `NextMealPlanner.hasRegionalEvidence`). Off by default; the page states
+  /// how many foods it leaves out.
+  final bool includeOtherRegions;
+
+  /// "Available in my region": only foods seen in the user's own logged or
+  /// imported meals.
+  final bool seenInMyMealsOnly;
+
+  /// Hide foods eaten within this many days; 0 is off.
+  final int hideUsedWithinDays;
+
   bool get active =>
       groups.isNotEmpty ||
       textures.isNotEmpty ||
       regions.isNotEmpty ||
       matchTextureProfile ||
       completeDataOnly ||
-      query.trim().isNotEmpty;
+      query.trim().isNotEmpty ||
+      includeOtherRegions ||
+      seenInMyMealsOnly ||
+      hideUsedWithinDays > 0;
 
   NextMealFilter copyWith({
     Set<FoodCategory>? groups,
@@ -342,6 +360,9 @@ final class NextMealFilter {
     bool? matchTextureProfile,
     bool? completeDataOnly,
     String? query,
+    bool? includeOtherRegions,
+    bool? seenInMyMealsOnly,
+    int? hideUsedWithinDays,
   }) => NextMealFilter(
     groups: groups ?? this.groups,
     textures: textures ?? this.textures,
@@ -349,6 +370,9 @@ final class NextMealFilter {
     matchTextureProfile: matchTextureProfile ?? this.matchTextureProfile,
     completeDataOnly: completeDataOnly ?? this.completeDataOnly,
     query: query ?? this.query,
+    includeOtherRegions: includeOtherRegions ?? this.includeOtherRegions,
+    seenInMyMealsOnly: seenInMyMealsOnly ?? this.seenInMyMealsOnly,
+    hideUsedWithinDays: hideUsedWithinDays ?? this.hideUsedWithinDays,
   );
 }
 
@@ -361,4 +385,35 @@ final class NextMealTimeAnchors {
 
   /// The earliest levodopa intake logged after now.
   final DateTime? nextDoseAt;
+}
+
+/// One food in the same nutritional position as another, with the
+/// differences per serving (alternative minus original). Nutrition only.
+final class NextMealAlternative {
+  const NextMealAlternative({
+    required this.candidate,
+    required this.closeness,
+    required this.proteinDeltaG,
+    required this.energyDeltaKcal,
+    required this.lnaaDeltaG,
+    required this.sameTexture,
+    required this.completenessDelta,
+    required this.regionalEvidence,
+  });
+
+  final NextMealCandidate candidate;
+
+  /// 0–1; see `NextMealPlanner.alternativeCloseness`. A similarity to the
+  /// original, not a ranking of better foods.
+  final double closeness;
+  final double proteinDeltaG;
+  final double energyDeltaKcal;
+
+  /// Null when either LNAA value is unknown.
+  final double? lnaaDeltaG;
+  final bool sameTexture;
+
+  /// Present data fields of the alternative minus those of the original.
+  final int completenessDelta;
+  final bool regionalEvidence;
 }

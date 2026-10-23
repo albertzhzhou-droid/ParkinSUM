@@ -712,6 +712,28 @@ Today no longer shows its top three. `NextMealPlanner`
   can run the orchestrator for the planned time and lists its mechanistic
   candidate traces by name. The dashboard's background refresh still
   computes the legacy result for replay; nothing displays its order.
+- **Alternatives (nutrition only).** `alternativesFor` lists foods in the
+  same nutritional position: the same food group, protein per serving within
+  ±max(3 g, 30 %) and energy within ±max(60 kcal, 30 %) of the original, and
+  a texture the profile's swallowing setting does not exclude. Closeness is
+  1 − 0.5·|Δprotein|/tolP − 0.3·|Δenergy|/tolE − 0.2·min(1, |ΔLNAA|/tolL)
+  (tolL = max(0.3 g, 30 %); unknown LNAA counts the full 0.2), clamped to
+  0–1. The deck is ordered by regional evidence, then closeness, then name and
+  id, and shows only nutrition deltas (protein, energy, LNAA, texture, data
+  completeness). It is a similarity, not a judgement that a food is better.
+- **Region and availability.** The user's regions are the content
+  jurisdiction override when set, else the onboarding registration and diet
+  regions. A food has regional evidence when its catalog source covers one
+  of them (for example USDA FoodData Central for US, CIQUAL for FR) or when
+  it appears in the user's own logged or imported meals. By default only such
+  foods are listed and the page states how many others wait behind "Include
+  other regions"; in the default order they follow familiar foods.
+  "Available in my region" keeps foods seen in the user's own meals.
+- **Variety.** "Vary my meals" (off by default; 3, 7 or 14 days) moves
+  foods eaten within that many days after the others in any sort, and an
+  optional switch hides them. Last-eaten dates come from the user's meals,
+  so reusing a food restarts its cycle. It is a display order the user turns
+  on, not advice.
 - **Meal check.** The database meal check's protein-timing score term is now
   direction-aware: it follows the same modeled brain delivery relative to no
   meal (mapping and fallback in `docs/design/PHYSIOLOGY_MODEL_V2.md`, item 4).

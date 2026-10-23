@@ -501,4 +501,233 @@ void main() {
       expect(values, orderedEquals([...values]..sort()));
     });
   });
+
+  group('alternatives (nutrition only)', () {
+    String nameOf(NextMealCandidate c) => c.food.name;
+    final p = planner();
+    NextMealCandidate c(
+      String id, {
+      FoodCategory category = FoodCategory.protein,
+      double protein = 10,
+      double energy = 150,
+      String? texture = 'soft',
+      String jurisdiction = 'US',
+      Set<String> missing = const {},
+    }) => p.candidateFor(
+      _food(
+        id,
+        name: id,
+        category: category,
+        protein: protein,
+        energy: energy,
+        texture: texture,
+        jurisdiction: jurisdiction,
+        missing: missing,
+      ),
+    );
+
+    test(
+      'same group, protein and energy within tolerance, texture allowed',
+      () {
+        final original = c('orig');
+        final scale = original.proteinG! / 10;
+        final pool = [
+          original,
+          c('close', protein: 10.5),
+          c('far_protein', protein: 10 + 3.5 / scale * 2),
+          c('other_group', category: FoodCategory.dairy),
+          c('solid', texture: 'regular'),
+          c('unknown', missing: {'proteinG'}),
+        ];
+        final alts = p.alternativesFor(
+          original,
+          pool,
+          textureMode: 'soft_or_liquid',
+          regions: const {'US'},
+          nameOf: nameOf,
+        );
+        expect(alts.map((a) => a.candidate.id), ['close']);
+        expect(alts.single.proteinDeltaG, closeTo(0.5 * scale, 1e-9));
+        expect(alts.single.sameTexture, isTrue);
+      },
+    );
+
+    test('closeness follows the documented formula and orders the deck', () {
+      final original = c('orig');
+      final a = c('a_near', protein: 10.2);
+      final b = c('b_further', protein: 11.0, energy: 170);
+      final closeness = NextMealPlanner.alternativeCloseness(original, b);
+      final p0 = original.proteinG!;
+      final e0 = original.energyKcal!;
+      final expected =
+          1 -
+          0.5 *
+              (b.proteinG! - p0).abs() /
+              NextMealPlanner.proteinTolerance(p0) -
+          0.3 *
+              (b.energyKcal! - e0).abs() /
+              NextMealPlanner.energyTolerance(e0) -
+          0.2 *
+              ((b.lnaaG! - original.lnaaG!).abs() /
+                      NextMealPlanner.lnaaTolerance(original.lnaaG!))
+                  .clamp(0.0, 1.0);
+      expect(closeness, closeTo(expected, 1e-12));
+      final alts = p.alternativesFor(
+        original,
+        [b, a, original],
+        textureMode: 'unrestricted',
+        regions: const {'US'},
+        nameOf: nameOf,
+      );
+      expect(alts.map((x) => x.candidate.id), ['a_near', 'b_further']);
+      // Deterministic across calls.
+      expect(
+        p
+            .alternativesFor(
+              original,
+              [a, original, b],
+              textureMode: 'unrestricted',
+              regions: const {'US'},
+              nameOf: nameOf,
+            )
+            .map((x) => x.closeness),
+        alts.map((x) => x.closeness),
+      );
+    });
+
+    test('regional evidence comes before closeness', () {
+      final original = c('orig');
+      final alts = p.alternativesFor(
+        original,
+        [
+          c('fr_near', protein: 10.1, jurisdiction: 'FR'),
+          c('us_far', protein: 11.5),
+        ],
+        textureMode: 'unrestricted',
+        regions: const {'US'},
+        nameOf: nameOf,
+      );
+      expect(alts.map((x) => x.candidate.id), ['us_far', 'fr_near']);
+      expect(alts.last.regionalEvidence, isFalse);
+    });
+
+    test('no position without known protein and energy', () {
+      expect(
+        p.alternativesFor(
+          c('orig', missing: {'proteinG'}),
+          [c('x')],
+          textureMode: 'unrestricted',
+          regions: const {'US'},
+          nameOf: nameOf,
+        ),
+        isEmpty,
+      );
+    });
+  });
+
+  group('region, availability and variety', () {
+    final now = DateTime.utc(2026, 10, 20, 12);
+    Meal meal(String id, String foodId, DateTime at) => Meal(
+      id: id,
+      eatenAt: at,
+      title: id,
+      items: [
+        MealItem.fromFood(food: _food(foodId, name: foodId), quantityFactor: 1),
+      ],
+    );
+    final foods = [
+      _food('us_a', name: 'Apple', jurisdiction: 'US'),
+      _food('us_b', name: 'Bean', jurisdiction: 'US'),
+      _food('fr_c', name: 'Cheese', jurisdiction: 'FR'),
+      _food('fr_d', name: 'Dates', jurisdiction: 'FR'),
+    ];
+
+    List<String> ids(
+      List<Meal> history, {
+      NextMealFilter filter = const NextMealFilter(),
+      int rotate = 0,
+      NextMealSortKey sort = NextMealSortKey.familiarThenName,
+    }) {
+      final p = planner();
+      return p
+          .arrange(
+            p.buildCandidates(foods: foods, history: history),
+            filter: filter,
+            sort: sort,
+            descending: false,
+            textureMode: 'unrestricted',
+            nameOf: (c) => c.food.name,
+            regions: const {'US'},
+            now: now,
+            rotateUsedWithinDays: rotate,
+          )
+          .map((c) => c.id)
+          .toList();
+    }
+
+    test('user regions: override, else registration and diet region', () {
+      final profile = UserProfile.defaults().copyWith(
+        registrationRegion: 'CA',
+        dietProfileRegion: 'FR',
+      );
+      expect(NextMealPlanner.userRegions(profile), {'CA', 'FR'});
+      expect(
+        NextMealPlanner.userRegions(
+          profile.copyWith(contentJurisdictionOverride: ['cn', ' ']),
+        ),
+        {'CN'},
+      );
+    });
+
+    test('foods without regional evidence wait behind a toggle', () {
+      final history = [
+        meal('m1', 'fr_d', now.subtract(const Duration(days: 5))),
+      ];
+      // Seen in the user's own meals counts as regional evidence.
+      expect(ids(history), ['fr_d', 'us_a', 'us_b']);
+      expect(
+        ids(history, filter: const NextMealFilter(includeOtherRegions: true)),
+        ['fr_d', 'us_a', 'us_b', 'fr_c'],
+      );
+      expect(
+        ids(history, filter: const NextMealFilter(seenInMyMealsOnly: true)),
+        ['fr_d'],
+      );
+    });
+
+    test('variety rotation moves recent foods back until the days pass', () {
+      final eatenApple = [
+        meal('m1', 'us_a', now.subtract(const Duration(days: 1))),
+      ];
+      expect(ids(eatenApple, sort: NextMealSortKey.name), ['us_a', 'us_b']);
+      expect(ids(eatenApple, sort: NextMealSortKey.name, rotate: 3), [
+        'us_b',
+        'us_a',
+      ]);
+      expect(
+        ids(eatenApple, filter: const NextMealFilter(hideUsedWithinDays: 3)),
+        ['us_b'],
+      );
+      // After the window the food is back in its place ...
+      final older = [meal('m1', 'us_a', now.subtract(const Duration(days: 4)))];
+      expect(ids(older, sort: NextMealSortKey.name, rotate: 3), [
+        'us_a',
+        'us_b',
+      ]);
+      // ... and reusing it starts its cycle again.
+      final reused = [
+        ...older,
+        meal('m2', 'us_a', now.subtract(const Duration(hours: 2))),
+      ];
+      expect(ids(reused, sort: NextMealSortKey.name, rotate: 3), [
+        'us_b',
+        'us_a',
+      ]);
+      final candidate = planner()
+          .buildCandidates(foods: foods, history: reused)
+          .firstWhere((c) => c.id == 'us_a');
+      expect(NextMealPlanner.daysSinceLastEaten(candidate, now), 0);
+      expect(candidate.timesLogged, 2);
+    });
+  });
 }
