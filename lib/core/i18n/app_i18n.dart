@@ -523,7 +523,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'onboarding.active_medications_help':
         '请选择正在使用、需要参与餐食冲突检查的药物。也可以先跳过，之后在药品页补充。',
     'onboarding.record_initial_intake': '记录最近一次服药',
-    'onboarding.record_initial_intake_help': '如果刚刚或今天已经服药，记录时间可以让下一餐推荐立即考虑时间窗。',
+    'onboarding.record_initial_intake_help':
+        '如果刚刚或今天已经服药，记录时间后，下一餐规划页可以立即把这次服药显示在时间轴上。',
     'onboarding.initial_intake_drug': '服药药物',
     'onboarding.initial_intake_drug_help': '只列出本步骤已选择的激活药物。',
     'onboarding.initial_intake_time': '服药时间',
@@ -2140,7 +2141,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Select medications that should participate in meal-conflict checks. You can skip this and add them later from the medication page.',
     'onboarding.record_initial_intake': 'Record most recent intake',
     'onboarding.record_initial_intake_help':
-        'If a dose was taken recently or today, its time lets next-meal recommendations consider the timing window immediately.',
+        'If a dose was taken recently or today, recording its time lets the meal planner show it on the timeline right away.',
     'onboarding.initial_intake_drug': 'Intake medication',
     'onboarding.initial_intake_drug_help':
         'Only medications selected above are listed.',
