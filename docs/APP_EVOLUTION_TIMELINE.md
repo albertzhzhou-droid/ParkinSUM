@@ -10222,3 +10222,26 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Drop the rebind commit (or `git checkout main --` the 15 rebind-owned files), then revert the feature commit's files listed above and delete `lib/domain/usecases/physiology_nutrition_outputs.dart`. No stored data or migration is involved.
+
+
+## 2026-10-24 — STAGE-D-INTEGRATION-20261024 — Integration of planner, Advanced dishes and physiology v3; two copy fixes
+
+### Baseline and scope
+
+- Branch `stage-d/next-meal-nutrition` from local `main` `331b0b6`, merging `feature/next-meal-planner` (`3ad5eaa`), `feature/advanced-dishes` (`cd00f9e`) and `model/physiology-realism` (`699b519`, identity `2026.10.20-v85`). Copy-only changes below; no algorithm source, rule parameter, score, schema or governance pin changed.
+
+### Changes
+
+- `lib/core/i18n/app_i18n.dart`: the onboarding "Record most recent intake" help (en, zh) no longer says the dose time lets "next-meal recommendations" consider the timing window; it says recording the time lets the meal planner show the dose on its timeline. The planner names no recommended food or time.
+- `lib/features/next_meal/advanced_dishes_page.dart`: the second-script dish name is shown only on Chinese pages (as the English name). English pages showed the Chinese name, which rendered as empty boxes until the CJK font loaded.
+- Timeline conflict between the Advanced dishes and physiology v3 entries resolved by keeping both, in merge order.
+
+### Verification and remaining boundaries
+
+- Live web release (`PARKINSUM_BACKEND=local`), fresh synthetic profile: onboarding with a 25/100 tablet strength dose → planner food cards show the modeled chip; region scope ("Foods for United States", 20 out-of-region foods hidden) and alternatives flashcards (8 cards, prev/next, deltas) work; the Advanced link opens `/app/next-meal/advanced`; Banana oatmeal per-serving values were recomputed by hand from the catalog and match.
+- `test/goldens_test.dart` and localization tests pass after the copy edit; `test/advanced_dishes_page_test.dart` passes (12) and `flutter analyze` is clean after the dish-name edit. Full `npm run verify:pr` on the merged tree: 24 passed, 0 failed, 3 skipped (Gradle and Go CQL steps unavailable locally, and the aggregate gate that refuses incomplete runs); governance gates and committed-golden drift check passed.
+- Legacy ranker reason strings (for example "a lower-protein option is preferred") remain in the retired orchestrator used by replay and audit; the planner does not display them. Not changed here.
+
+### Surgical rollback
+
+- Revert the two copy commits and this entry; the merges are independent and can be reverted individually with `git revert -m 1`.
