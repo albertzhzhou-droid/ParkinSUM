@@ -6,6 +6,7 @@ import '../../core/i18n/app_i18n_context.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';
+import '../../core/state/dish_plate_handoff.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/mechanistic_candidate_score.dart';
 import '../../domain/entities/next_meal_plan.dart';
@@ -157,12 +158,54 @@ class _NextMealPageState extends State<NextMealPage> {
             microseconds: now.microsecond,
           ),
         );
+    DishPlateHandoff.instance.addListener(_takeDishPlate);
+    // A request offered before this page was first built.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _takeDishPlate());
   }
 
   @override
   void dispose() {
+    DishPlateHandoff.instance.removeListener(_takeDishPlate);
     _search.dispose();
     super.dispose();
+  }
+
+  /// Adds the catalog foods of a dish sent from Next meal → Advanced. Each
+  /// food's grams become servings of its reference serving (100 g without
+  /// one), rounded to the plate step and kept within the plate limits.
+  void _takeDishPlate() {
+    if (!mounted || DishPlateHandoff.instance.pending == null) return;
+    final request = DishPlateHandoff.instance.take();
+    if (request == null) return;
+    final byId = {
+      for (final c in context.read<AppState>().nextMealCandidates) c.id: c,
+    };
+    var added = 0;
+    setState(() {
+      for (final item in request.items) {
+        final candidate = byId[item.foodId];
+        if (candidate == null) continue;
+        final step = NextMealPlanner.servingStep;
+        final servings =
+            (item.grams / (candidate.serving.grams ?? 100) / step).round() *
+            step;
+        final index = _plateIndex(candidate.id);
+        final total = (index < 0 ? 0 : _plate[index].servings) + servings;
+        final clamped = total
+            .clamp(NextMealPlanner.minServings, NextMealPlanner.maxServings)
+            .toDouble();
+        if (index < 0) {
+          _plate.add(NextMealPlateItem(candidate, clamped));
+        } else {
+          _plate[index] = _plate[index].withServings(clamped);
+        }
+        added++;
+      }
+    });
+    debugPrint(
+      '[NextMeal] dish_plate:taken dish=${request.dishId} '
+      'added=$added of ${request.items.length}',
+    );
   }
 
   // ---------------------------------------------------------------------------

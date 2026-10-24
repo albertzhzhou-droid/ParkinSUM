@@ -15,6 +15,7 @@ import '../entry/entry_page.dart';
 import '../entry/synthetic_meal_journey_page.dart';
 import '../import/import_page.dart';
 import '../legal/privacy_disclaimer_page.dart';
+import '../next_meal/advanced_dishes_page.dart';
 import '../reminders/reminder_center_page.dart';
 import '../settings/personal_log_handoff_page.dart';
 import '../settings/portable_data_package_page.dart';
@@ -30,7 +31,7 @@ import '../timeline/timeline_page.dart';
 /// index all read this list, so a page is reachable in one step from
 /// anywhere instead of only through the settings grid.
 
-enum AppToolGroup { evidence, data, operations, account }
+enum AppToolGroup { meals, evidence, data, operations, account }
 
 class AppTool {
   const AppTool({
@@ -41,6 +42,7 @@ class AppTool {
     required this.builder,
     this.subtitle,
     this.keywords = const [],
+    this.shellRouteId,
   });
 
   final String id;
@@ -51,11 +53,16 @@ class AppTool {
   final WidgetBuilder builder;
   final List<String> keywords;
 
+  /// A main-shell route (`MainTabRoute` id) that shows this tool inside the
+  /// shell. The shell navigates there; elsewhere [open] pushes [builder].
+  final String? shellRouteId;
+
   Future<void> open(BuildContext context) =>
       Navigator.of(context).push(MaterialPageRoute<void>(builder: builder));
 }
 
 String appToolGroupLabel(AppI18n i18n, AppToolGroup group) => switch (group) {
+  AppToolGroup.meals => i18n.tr('shell.group.meals'),
   AppToolGroup.evidence => i18n.tr('shell.group.evidence'),
   AppToolGroup.data => i18n.tr('shell.group.data'),
   AppToolGroup.operations => i18n.tr('shell.group.operations'),
@@ -229,6 +236,28 @@ List<AppTool> appTools(AppI18n i18n) {
       label: i18n.tr('privacy.title'),
       keywords: const ['disclaimer', 'legal', 'boundary'],
       builder: (_) => const PrivacyDisclaimerPage(),
+    ),
+    // Shown first in the sidebar (its group leads `_sections`); last here so
+    // the settings index keeps its existing order.
+    AppTool(
+      id: 'advanced-dishes',
+      group: AppToolGroup.meals,
+      icon: Icons.soup_kitchen_outlined,
+      label: i18n.tr('dishes.title'),
+      subtitle: i18n.tr('dishes.subtitle'),
+      keywords: const [
+        'dish',
+        'recipe',
+        'preparation',
+        'cook',
+        'ingredients',
+        'texture',
+        'iddsi',
+        '菜',
+        '做法',
+      ],
+      shellRouteId: AdvancedDishesPage.routeId,
+      builder: (_) => const AdvancedDishesPage(),
     ),
   ];
 }
