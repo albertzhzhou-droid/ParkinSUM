@@ -64,6 +64,10 @@ const Map<String, String> physiologySeriesUnits = {
   'brain_delivery_index': 'mg/L',
   'leu_umol_per_l': 'µmol/L',
   'phe_umol_per_l': 'µmol/L',
+  'tyr_umol_per_l': 'µmol/L',
+  'trp_umol_per_l': 'µmol/L',
+  'lnaa6_appearance_umol_per_min': 'µmol/min',
+  'insulin_effect': 'fraction',
 };
 
 /// Dose time in the simulation: late enough that a meal up to [offset]

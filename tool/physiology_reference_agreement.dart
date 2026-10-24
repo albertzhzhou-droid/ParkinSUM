@@ -11,6 +11,7 @@ library;
 import 'dart:math' as math;
 
 import 'package:parkinsum_companion/domain/entities/physiology_reference_parameters.dart';
+import 'package:parkinsum_companion/domain/usecases/physiology_nutrition_outputs.dart';
 import 'package:parkinsum_companion/domain/usecases/physiology_reference_model.dart';
 import 'package:parkinsum_companion/domain/usecases/physiology_reference_trace_provider.dart';
 
@@ -71,6 +72,9 @@ PhysiologyComponent physiologyComponentFromSpec(Map<String, dynamic> spec) {
       (key, value) => MapEntry(key, (value as num).toDouble()),
     ),
     waterMl: (spec['water_ml'] as num).toDouble(),
+    carbohydrateG: (spec['carbohydrate_g'] as num?)?.toDouble(),
+    fatG: (spec['fat_g'] as num?)?.toDouble(),
+    proteinType: spec['protein_type'] as String,
   );
 }
 
@@ -99,8 +103,13 @@ PhysiologyScenario physiologyScenarioFromSpec(Map<String, dynamic> spec) {
     tEndMin: d(spec['t_end_min']),
     dtMin: d(spec['dt_min']),
     recordEveryMin: d(spec['record_every_min']),
+    habitualProteinGPerKgDay: (spec['habitual_protein_g_per_kg_day'] as num?)
+        ?.toDouble(),
   );
 }
+
+/// Wurtman 2003 sampling times (min after breakfast).
+const List<double> _wurtmanSampleTimes = [40.0, 80.0, 120.0, 240.0];
 
 /// Carter 1989 sampling times: hourly 08:00–21:00 on day two.
 final List<double> _carterSampleTimes = [
@@ -157,6 +166,38 @@ Map<String, double> physiologyDerivedQuantities(
     out['boirie.${name}_leu_peak_min'] = t;
     out['boirie.${name}_leu_peak_umol_per_l'] = y;
   }
+  final baseLeu = PhysiologyParameterValues.central().map(
+    'aa.fasting_plasma_umol_per_l',
+  )['leu']!;
+  out['shaham.leucine_fall_120_min'] =
+      1 - curves['shaham_glucose']!.at('leu_umol_per_l', 120.0) / baseLeu;
+  final carb = curves['wurtman_carbohydrate']!;
+  final prot = curves['wurtman_protein']!;
+  for (final t in _wurtmanSampleTimes) {
+    for (final key in ['tyr_umol_per_l', 'trp_umol_per_l']) {
+      final ownC = carb.at(key, t);
+      final ownP = prot.at(key, t);
+      out['wurtman.${key.substring(0, 3)}_ratio_difference_${t.toInt()}_min'] =
+          (ownC / (carb.at('lnaa6_umol_per_l', t) - ownC)) /
+              (ownP / (prot.at('lnaa6_umol_per_l', t) - ownP)) -
+          1;
+    }
+  }
+  for (final k in ['whey', 'soy', 'casein']) {
+    out['tang.${k}_leu_peak_umol_per_l'] = curves['tang_$k']!
+        .peak('leu_umol_per_l')
+        .$2;
+  }
+  out['bos.soy_lnaa6_peak_min'] = curves['bos_soy']!
+      .peak('lnaa6_umol_per_l')
+      .$1;
+  out['bos.milk_lnaa6_peak_min'] = curves['bos_milk']!
+      .peak('lnaa6_umol_per_l')
+      .$1;
+  out['moore.633_kcal_solid_retention_60_min'] = curves['moore_633']!.at(
+    'stomach_retention_solid',
+    60.0,
+  );
   return out;
 }
 
@@ -344,6 +385,94 @@ PhysiologyAgreementReport comparePhysiologyAgreement(
     final values = dart.band.toList();
     for (var i = 0; i < 3; i++) {
       check('meal_timing_effects', '$id.band[$i]', band[i], values[i]);
+    }
+  }
+
+  final nutritionConvention =
+      fixture['nutrition_convention'] as Map<String, dynamic>;
+  if ((nutritionConvention['horizon_min'] as num) !=
+      physiologyNutritionHorizonMin) {
+    failures.add('nutrition_convention differs from the Dart provider');
+  }
+  final nutrition = PhysiologyNutritionProvider(
+    draws: nutritionConvention['draws'] as int,
+    seed: nutritionConvention['seed'] as int,
+  );
+  for (final raw in fixture['nutrition_outputs'] as List) {
+    final entry = raw as Map<String, dynamic>;
+    final id = entry['id'] as String;
+    final meal = [
+      for (final component in entry['meal'] as List)
+        physiologyComponentFromSpec(component as Map<String, dynamic>),
+    ];
+    final summary = nutrition.summarize(meal);
+    final load = entry['competing_lnaa_load'] as Map<String, dynamic>;
+    check(
+      'nutrition_outputs',
+      '$id.load.ingested',
+      load['ingested_umol'],
+      summary.load.ingestedUmol,
+    );
+    check(
+      'nutrition_outputs',
+      '$id.load.digestible',
+      load['digestible_umol'],
+      summary.load.digestibleUmol,
+    );
+    final rows = load['components'] as List;
+    if (rows.length != summary.load.components.length) {
+      failures.add('$id.load.components: count differs');
+    }
+    for (
+      var i = 0;
+      i < rows.length && i < summary.load.components.length;
+      i++
+    ) {
+      final row = rows[i] as Map<String, dynamic>;
+      final dart = summary.load.components[i];
+      check(
+        'nutrition_outputs',
+        '$id.load[$i].ingested',
+        row['ingested_umol'],
+        dart.ingestedUmol,
+      );
+      check(
+        'nutrition_outputs',
+        '$id.load[$i].digestible',
+        row['digestible_umol'],
+        dart.digestibleUmol,
+      );
+      const basisNames = {
+        PhysiologyProfileBasis.measured: 'measured',
+        PhysiologyProfileBasis.proteinTypeTable: 'protein_type_table',
+        PhysiologyProfileBasis.mixedDefault: 'mixed_default',
+      };
+      if (row['profile_basis'] != basisNames[dart.profileBasis] ||
+          row['name'] != dart.name) {
+        failures.add('$id.load[$i]: name or profile basis differs');
+      }
+    }
+    final central = entry['central'] as Map<String, dynamic>;
+    final bands = entry['bands_p05_p50_p95'] as Map<String, dynamic>;
+    if (central.length != PhysiologyMealResponse.keys.length) {
+      failures.add('$id.central: keys differ');
+    }
+    for (final key in PhysiologyMealResponse.keys) {
+      check(
+        'nutrition_outputs',
+        '$id.central.$key',
+        central[key],
+        summary.central[key],
+      );
+      final expected = bands[key] as List;
+      for (var i = 0; i < 3; i++) {
+        check(
+          'nutrition_outputs',
+          '$id.bands.$key[$i]',
+          expected[i],
+          summary.bands[key]![i],
+        );
+      }
     }
   }
 

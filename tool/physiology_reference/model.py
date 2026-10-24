@@ -1,4 +1,4 @@
-"""Reference physiology model (v2 prototype) for ParkinSUM.
+"""Reference physiology model (v3 prototype) for ParkinSUM.
 
 Educational research artifact. Not a medical device, not a patient prediction,
 and not dosing, timing or dietary advice. It simulates *population-typical*
@@ -15,13 +15,26 @@ Structure (all quantities carry units; see parameters.json for provenance):
              liquids with energy: emptiable immediately
              the emptiable pool leaves at a calorie-limited rate
                R = R_max * P / (P + E50)        [kcal/min]
+             (isocaloric fat, protein and carbohydrate slow emptying equally,
+             Hunt & Stubbs 1975, so fat acts through its energy)
              water and dissolved drug: first-order, slowed by the energy
              still in the stomach  k = k_fast / (1 + F / F50)
   levodopa   tablet -> dissolved in gastric liquid -> absorptive gut segment
-             -> one plasma compartment (apparent CL/F, V/F)
-  amino acids  duodenal delivery follows each component's emptied energy;
-             digestion/absorption first-order; splanchnic first-pass fraction;
-             one plasma pool per amino acid relaxing to its fasting value
+             -> one plasma compartment (apparent CL/F, V/F). Unchanged from
+             v2; v3 extends only the nutrition side.
+  amino acids  each component's amino acids (measured profile, else its
+             protein type's FDC profile, else a mixed-protein default) leave
+             the stomach with its emptied energy; the truly ileal-digestible
+             fraction of its protein type is absorbed first order at that
+             type's rate; a per-amino-acid splanchnic first-pass fraction
+             reaches plasma; one plasma pool per amino acid relaxes to a
+             target that insulin action lowers:
+               dC/dt = f*A/V - k_out * (C - Cb * (1 - s * Emax * E))
+             k_out scales with the oxidative disposal of a stated habitual
+             protein intake (population reference otherwise)
+  insulin    carbohydrate emptied with each component is absorbed first
+             order; insulin action I follows the absorption rate with a
+             first-order delay; E = I / (I + I50)
   brain entry  competitive Michaelis-Menten at the blood-brain barrier.
              The levodopa entry rate relative to the same plasma level in the
              fasting state is  B = (1 + sum Cb_i/Km_i) / (1 + sum C_i/Km_i)
@@ -51,6 +64,12 @@ MW = {
 LNAA_SIX = ("leu", "ile", "val", "phe", "tyr", "trp")
 BBB_SET = LNAA_SIX + ("met", "his")
 KCAL_PER_G = {"protein": 4.0, "carbohydrate": 4.0, "fat": 9.0}
+PROTEIN_TYPES = ("mixed", "whey", "casein", "soy", "meat", "egg", "cereal")
+
+SERIES_KEYS = ("t", "stomach_kcal", "stomach_retention_solid", "energy_out_kcal_per_min", "water_ml",
+               "levodopa_mg_per_l", "lnaa6_umol_per_l", "brain_entry_index", "brain_delivery_index",
+               "leu_umol_per_l", "phe_umol_per_l", "tyr_umol_per_l", "trp_umol_per_l",
+               "lnaa6_appearance_umol_per_min", "insulin_effect")
 
 
 def load_parameters(path: Optional[str] = None) -> Dict[str, dict]:
@@ -65,21 +84,45 @@ def values(params: Dict[str, dict]) -> Dict[str, object]:
 
 @dataclass
 class Component:
-    """One food component of a meal. Amounts are for the portion eaten."""
+    """One food component of a meal. Amounts are for the portion eaten.
+
+    Missing is not zero: an omitted amino-acid profile falls back to the
+    protein type's table (or the mixed default), and omitted carbohydrate to
+    a stated share of non-protein energy; neither is read as 0 g.
+    """
 
     name: str
     form: str  # "solid" | "liquid" | "water" | "coagulating"
     kcal: float = 0.0
     protein_g: float = 0.0
-    # grams of each amino acid in the portion; defaults to a mixed-protein
-    # composition scaled by protein_g when omitted.
+    # grams of each amino acid in the portion (a measured profile).
     amino_acids_g: Optional[Dict[str, float]] = None
     water_ml: float = 0.0
+    carbohydrate_g: Optional[float] = None
+    fat_g: Optional[float] = None
+    protein_type: str = "mixed"  # one of PROTEIN_TYPES
 
-    def aa_grams(self, composition: Dict[str, float]) -> Dict[str, float]:
+    def profile_basis(self) -> str:
+        if self.amino_acids_g is not None:
+            return "measured"
+        return "mixed_default" if self.protein_type == "mixed" else "protein_type_table"
+
+    def aa_grams(self, v: Dict[str, object]) -> Dict[str, float]:
         if self.amino_acids_g is not None:
             return {a: self.amino_acids_g.get(a, 0.0) for a in BBB_SET}
-        return {a: self.protein_g * composition[a] for a in BBB_SET}
+        if self.protein_type == "mixed":
+            composition = v["aa.mixed_protein_composition_g_per_g"]
+            return {a: self.protein_g * float(composition[a]) for a in BBB_SET}
+        table = v["aa.composition_by_protein_type_g_per_g"]
+        return {a: self.protein_g * float(table[f"{self.protein_type}.{a}"]) for a in BBB_SET}
+
+    def carbohydrate_grams(self, default_share: float) -> float:
+        if self.carbohydrate_g is not None:
+            return self.carbohydrate_g
+        non_protein = max(self.kcal - KCAL_PER_G["protein"] * self.protein_g, 0.0)
+        if self.fat_g is not None:
+            return max(non_protein - KCAL_PER_G["fat"] * self.fat_g, 0.0) / KCAL_PER_G["carbohydrate"]
+        return default_share * non_protein / KCAL_PER_G["carbohydrate"]
 
 
 @dataclass
@@ -92,7 +135,7 @@ class Meal:
 class Dose:
     time_min: float
     levodopa_mg: float
-    formulation: str = "ir"  # only immediate release is executable in v0
+    formulation: str = "ir"  # only immediate release is executable
 
 
 @dataclass
@@ -110,6 +153,9 @@ class Scenario:
     t_end_min: float = 360.0
     dt_min: float = 0.25
     record_every_min: float = 1.0
+    # Habitual daily protein intake that sets amino-acid disposal; None uses
+    # the population reference intake.
+    habitual_protein_g_per_kg_day: Optional[float] = None
 
 
 @dataclass
@@ -118,7 +164,23 @@ class _ComponentState:
     s1: float
     s2: float
     p: float
-    aa_umol: Dict[str, float]
+    aa_umol: List[float]  # digestible µmol of each amino acid
+    carb_g: float
+    k_dig: float
+    gut_aa: List[float]
+    solid: bool
+
+
+def habitual_loss(table: Dict[str, float], intake: float) -> float:
+    """Fasting nitrogen loss at a habitual intake: linear interpolation in the
+    Price 1994 table, held flat beyond its ends."""
+    pts = sorted((float(k), float(x)) for k, x in table.items())
+    if intake <= pts[0][0]:
+        return pts[0][1]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if intake <= x1:
+            return y0 + (y1 - y0) * (intake - x0) / (x1 - x0)
+    return pts[-1][1]
 
 
 def simulate(scenario: Scenario, v: Dict[str, object]) -> Dict[str, List[float]]:
@@ -135,30 +197,40 @@ def simulate(scenario: Scenario, v: Dict[str, object]) -> Dict[str, List[float]]
     cl = float(v["levodopa.apparent_clearance_l_per_h"]) / 60.0  # L/min
     vd = float(v["levodopa.apparent_volume_l"])
     k_el = cl / vd
-    k_dig = math.log(2) / float(v["aa.digestion_absorption_half_time_min"])
     v_aa = float(v["aa.plasma_distribution_volume_l"])
     k_out = math.log(2) / float(v["aa.plasma_relaxation_half_time_min"])
-    f_sys = v["aa.systemic_fraction"]
-    c_base = v["aa.fasting_plasma_umol_per_l"]
-    km = v["bbb.km_umol_per_l"]
-    composition = v["aa.mixed_protein_composition_g_per_g"]
+    if scenario.habitual_protein_g_per_kg_day is not None:
+        table = v["aa.habitual_fasting_nitrogen_loss_mg_per_kg_day"]
+        k_out *= habitual_loss(table, scenario.habitual_protein_g_per_kg_day) / habitual_loss(
+            table, float(v["aa.reference_habitual_protein_g_per_kg_day"]))
+    f_sys = [float(v["aa.systemic_fraction"][a]) for a in BBB_SET]
+    c_base = [float(v["aa.fasting_plasma_umol_per_l"][a]) for a in BBB_SET]
+    km = [float(v["bbb.km_umol_per_l"][a]) for a in BBB_SET]
+    dig_half = v["aa.digestion_half_time_by_protein_type_min"]
+    tid = v["aa.true_ileal_digestibility_by_protein_type"]
+    k_carb = math.log(2) / float(v["insulin.carbohydrate_absorption_half_time_min"])
+    k_ins = math.log(2) / float(v["insulin.action_half_time_min"])
+    i50 = float(v["insulin.half_effect_carbohydrate_g_per_min"])
+    e_max = float(v["insulin.max_lnaa_target_reduction"])
+    sens = [float(v["insulin.lnaa_sensitivity"][a]) for a in BBB_SET]
+    carb_share = float(v["insulin.default_carbohydrate_energy_share"])
+    n = len(BBB_SET)
 
     comps: List[_ComponentState] = []
     water_ml = 0.0
     tablet = dissolved = gut = plasma_mg = 0.0
-    gut_aa = {a: 0.0 for a in BBB_SET}
-    conc = {a: float(c_base[a]) for a in BBB_SET}
-    denom_base = 1.0 + sum(float(c_base[a]) / float(km[a]) for a in BBB_SET)
+    gut_carb = insulin = 0.0
+    conc = list(c_base)
+    absorbed = [0.0] * n
+    denom_base = 1.0
+    for i in range(n):
+        denom_base += c_base[i] / km[i]
 
     meals = sorted(scenario.meals, key=lambda m: m.time_min)
     doses = sorted(scenario.doses, key=lambda d: d.time_min)
     mi = di = 0
 
-    out: Dict[str, List[float]] = {k: [] for k in (
-        "t", "stomach_kcal", "stomach_retention_solid", "energy_out_kcal_per_min",
-        "water_ml", "levodopa_mg_per_l", "lnaa6_umol_per_l", "brain_entry_index",
-        "brain_delivery_index", "leu_umol_per_l", "phe_umol_per_l",
-    )}
+    out: Dict[str, List[float]] = {k: [] for k in SERIES_KEYS}
     solid_e0 = 0.0
     steps = int(round(scenario.t_end_min / dt))
     rec_stride = max(1, int(round(scenario.record_every_min / dt)))
@@ -170,32 +242,47 @@ def simulate(scenario: Scenario, v: Dict[str, object]) -> Dict[str, List[float]]
                 if c.form == "water":
                     water_ml += c.water_ml
                     continue
-                aa = {a: g / MW[a] * 1e6 for a, g in c.aa_grams(composition).items()}
+                if c.protein_type not in PROTEIN_TYPES:
+                    raise ValueError(f"unknown protein type {c.protein_type!r}")
+                grams = c.aa_grams(v)
+                digestible = float(tid[c.protein_type])
+                aa = [grams[a] / MW[a] * 1e6 * digestible for a in BBB_SET]
                 kcal = max(c.kcal, 1e-9)
+                k_dig = math.log(2) / float(dig_half[c.protein_type])
+                carb = c.carbohydrate_grams(carb_share)
                 if c.form in ("solid", "coagulating"):
-                    comps.append(_ComponentState(kcal, kcal, 0.0, 0.0, aa))
+                    comps.append(_ComponentState(kcal, kcal, 0.0, 0.0, aa, carb, k_dig, [0.0] * n, True))
                     solid_e0 += kcal
                 else:
-                    comps.append(_ComponentState(kcal, 0.0, 0.0, kcal, aa))
+                    comps.append(_ComponentState(kcal, 0.0, 0.0, kcal, aa, carb, k_dig, [0.0] * n, False))
                 water_ml += c.water_ml
             mi += 1
         while di < len(doses) and doses[di].time_min <= t + 1e-9:
             if doses[di].formulation != "ir":
-                raise ValueError("only immediate-release levodopa is executable in v0")
+                raise ValueError("only immediate-release levodopa is executable")
             tablet += doses[di].levodopa_mg
             di += 1
 
-        p_tot = sum(c.p for c in comps)
-        fed = sum(c.s1 + c.s2 + c.p for c in comps)
+        p_tot = 0.0
+        fed = 0.0
+        for c in comps:
+            p_tot += c.p
+            fed += c.s1 + c.s2 + c.p
         out_tot = r_max * p_tot / (p_tot + e50) if p_tot > 0 else 0.0
         k_liq = k_fast / (1.0 + fed / f50)
+        effect = insulin / (insulin + i50) if insulin > 0 else 0.0
 
-        delivery = {a: 0.0 for a in BBB_SET}
+        carb_in = 0.0
+        for i in range(n):
+            absorbed[i] = 0.0
         for c in comps:
             out_c = out_tot * (c.p / p_tot) if p_tot > 0 else 0.0
             frac = out_c / c.e0
-            for a in BBB_SET:
-                delivery[a] += frac * c.aa_umol[a]
+            carb_in += frac * c.carb_g
+            for i in range(n):
+                taken = c.k_dig * c.gut_aa[i]
+                absorbed[i] += taken
+                c.gut_aa[i] += (frac * c.aa_umol[i] - taken) * dt
             d_s1 = -k_t * c.s1
             d_s2 = k_t * c.s1 - k_t * c.s2
             d_p = k_t * c.s2 - out_c
@@ -203,7 +290,10 @@ def simulate(scenario: Scenario, v: Dict[str, object]) -> Dict[str, List[float]]
             c.s2 += d_s2 * dt
             c.p = max(0.0, c.p + d_p * dt)
 
-        infusion = sum(i.mg_per_min for i in scenario.infusions if i.start_min <= t < i.end_min)
+        infusion = 0.0
+        for inf in scenario.infusions:
+            if inf.start_min <= t < inf.end_min:
+                infusion += inf.mg_per_min
         d_tab = -k_dis * tablet
         d_dis = k_dis * tablet - k_liq * dissolved
         d_gut = k_liq * dissolved - ka * gut
@@ -214,29 +304,111 @@ def simulate(scenario: Scenario, v: Dict[str, object]) -> Dict[str, List[float]]
         plasma_mg += d_pl * dt
         water_ml += -k_liq * water_ml * dt
 
-        for a in BBB_SET:
-            absorbed = k_dig * gut_aa[a]
-            gut_aa[a] += (delivery[a] - absorbed) * dt
-            conc[a] += (float(f_sys[a]) * absorbed / v_aa
-                        - k_out * (conc[a] - float(c_base[a]))) * dt
+        carb_abs = k_carb * gut_carb
+        gut_carb += (carb_in - carb_abs) * dt
+        insulin += k_ins * (carb_abs - insulin) * dt
+
+        appearance = 0.0
+        for i in range(n):
+            arriving = f_sys[i] * absorbed[i]
+            if i < 6:
+                appearance += arriving
+            target = c_base[i] * max(0.0, 1.0 - sens[i] * e_max * effect)
+            conc[i] += (arriving / v_aa - k_out * (conc[i] - target)) * dt
 
         if step % rec_stride == 0:
-            denom = 1.0 + sum(conc[a] / float(km[a]) for a in BBB_SET)
+            denom = 1.0
+            for i in range(n):
+                denom += conc[i] / km[i]
             b = denom_base / denom
             c_ld = plasma_mg / vd
-            solid_left = sum(c.s1 + c.s2 + c.p for c in comps if c.e0 > 0)
+            solid_left = 0.0
+            for c in comps:
+                if c.solid:
+                    solid_left += c.s1 + c.s2 + c.p
+            lnaa6 = 0.0
+            for i in range(6):
+                lnaa6 += conc[i]
             out["t"].append(t)
             out["stomach_kcal"].append(fed)
             out["stomach_retention_solid"].append(solid_left / solid_e0 if solid_e0 else 0.0)
             out["energy_out_kcal_per_min"].append(out_tot)
             out["water_ml"].append(water_ml)
             out["levodopa_mg_per_l"].append(c_ld)
-            out["lnaa6_umol_per_l"].append(sum(conc[a] for a in LNAA_SIX))
+            out["lnaa6_umol_per_l"].append(lnaa6)
             out["brain_entry_index"].append(b)
             out["brain_delivery_index"].append(c_ld * b)
-            out["leu_umol_per_l"].append(conc["leu"])
-            out["phe_umol_per_l"].append(conc["phe"])
+            out["leu_umol_per_l"].append(conc[0])
+            out["phe_umol_per_l"].append(conc[3])
+            out["tyr_umol_per_l"].append(conc[4])
+            out["trp_umol_per_l"].append(conc[5])
+            out["lnaa6_appearance_umol_per_min"].append(appearance)
+            out["insulin_effect"].append(effect)
     return out
+
+
+# ------------------------------------------------- nutrition-only outputs
+
+def competing_lnaa_load(components: List[Component], v: Dict[str, object]) -> Dict[str, object]:
+    """Competing large neutral amino acids in a serving or plate, from
+    composition alone (no simulation): the six LNAAs as ingested and as
+    truly ileal-digestible µmol, with the profile basis of each component.
+    Water-only components carry none."""
+    tid = v["aa.true_ileal_digestibility_by_protein_type"]
+    rows = []
+    total = digestible = 0.0
+    for c in components:
+        if c.form == "water":
+            continue
+        grams = c.aa_grams(v)
+        umol = 0.0
+        for a in LNAA_SIX:
+            umol += grams[a] / MW[a] * 1e6
+        d = umol * float(tid[c.protein_type])
+        total += umol
+        digestible += d
+        rows.append({"name": c.name, "ingested_umol": umol, "digestible_umol": d,
+                     "profile_basis": c.profile_basis()})
+    return {"ingested_umol": total, "digestible_umol": digestible, "components": rows}
+
+
+def meal_response(series: Dict[str, List[float]], meal_time: float, horizon: float = 240.0) -> Dict[str, float]:
+    """Plasma LNAA rise and amino-acid appearance timing after a meal at
+    `meal_time`, over [meal_time, meal_time + horizon]. Times are relative
+    to the meal. Requires the series to start at or before the meal."""
+    ts = series["t"]
+    lnaa = series["lnaa6_umol_per_l"]
+    appear = series["lnaa6_appearance_umol_per_min"]
+    pre = at(series, "lnaa6_umol_per_l", meal_time)
+    t1 = meal_time + horizon
+    best_t, best = meal_time, -math.inf
+    peak_t, peak_a = meal_time, -math.inf
+    for t, y, a in zip(ts, lnaa, appear):
+        if meal_time <= t <= t1:
+            if y > best:
+                best_t, best = t, y
+            if a > peak_a:
+                peak_t, peak_a = t, a
+    rise_area = 0.0
+    cum = [0.0]
+    for i in range(1, len(ts)):
+        a, b = max(ts[i - 1], meal_time), min(ts[i], t1)
+        step = 0.0
+        if b > a:
+            rise_area += 0.5 * (lnaa[i - 1] + lnaa[i] - 2.0 * pre) * (b - a)
+            step = 0.5 * (appear[i - 1] + appear[i]) * (b - a)
+        cum.append(cum[-1] + step)
+    total = cum[-1]
+    half_t = math.nan
+    if total > 0:
+        for t, c_ in zip(ts, cum):
+            if c_ >= total / 2:
+                half_t = t - meal_time
+                break
+    return {"lnaa6_pre_umol_per_l": pre, "lnaa6_peak_rise_umol_per_l": best - pre,
+            "lnaa6_peak_time_min": best_t - meal_time, "lnaa6_rise_area_umol_min_per_l": rise_area,
+            "appearance_umol": total, "appearance_half_time_min": half_t,
+            "appearance_peak_time_min": peak_t - meal_time}
 
 
 # ---------------------------------------------------------------- summaries
@@ -276,7 +448,8 @@ def area(series: Dict[str, List[float]], key: str, t0: float, t1: float) -> floa
 # ------------------------------------------------- population variability
 
 def sample_population(params: Dict[str, dict], n: int, seed: int) -> List[Dict[str, object]]:
-    """Seeded log-normal draws for parameters that declare `iiv_cv`.
+    """Seeded log-normal draws for parameters that declare `iiv_cv`; a table
+    shares one factor.
 
     Deterministic for a given seed, so replays stay byte-stable. Draws describe
     published between-person spread; they are not estimates for any person.

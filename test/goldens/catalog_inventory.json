@@ -7,7 +7,7 @@
     "rules": 12,
     "copy_templates": 25,
     "replay_scenarios": 42,
-    "model_assumptions": 55
+    "model_assumptions": 70
   },
   "source_documents_not_live": 6,
   "catalog_entries_with_placeholder_source_code": 22,
@@ -131,9 +131,9 @@
     {
       "dimension": "evidence level (model assumptions)",
       "distinct_values": 4,
-      "total": 55,
+      "total": 70,
       "counts": {
-        "mechanism": 50,
+        "mechanism": 65,
         "label": 2,
         "regulatoryGuidance": 2,
         "prototypeHeuristic": 1
