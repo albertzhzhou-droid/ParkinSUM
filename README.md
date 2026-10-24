@@ -16,6 +16,17 @@
 ones, interact with the timing of levodopa, a common Parkinson's disease
 medication?**
 
+## Start here
+
+- **Explore the prototype:** follow [Run locally](#run-locally) with synthetic data.
+- **Understand the evidence:** read [capabilities and limitations](docs/CAPABILITY_MATRIX.md)
+  and [evidence scope](docs/EVIDENCE_SCOPE.md).
+- **Contribute:** use the [contribution guide](CONTRIBUTING.md) and
+  [Code of Conduct](CODE_OF_CONDUCT.md).
+- **Report a problem:** use a minimal synthetic reproduction for public bugs;
+  report vulnerabilities through the [security policy](SECURITY.md) and conduct
+  concerns through the [private reporting process](CODE_OF_CONDUCT.md#reporting).
+
 ## What you can do in the app
 
 - **Keep a simple log.** Record meals, medication doses and observations in one
@@ -116,15 +127,24 @@ flowchart LR
 
 ## Run locally
 
-Use the Flutter version pinned in [CI](.github/workflows/ci.yml), a compatible
-Dart SDK (`>=3.11.0 <4.0.0`), and Node.js/npm for repository checks.
+Use Flutter **3.47.0**, pinned in [CI](.github/workflows/ci.yml), with its
+bundled Dart SDK, and Node.js **22**/npm for repository checks. The
+[pubspec](pubspec.yaml) retains a Dart source-language floor of `3.11`, but the
+resolved dependencies in [pubspec.lock](pubspec.lock) require Dart **3.13**;
+a standalone Dart 3.11 SDK is not sufficient. Install Python 3 only if you want
+to serve the static showcase below.
 
 ```sh
 git clone https://github.com/albertzhzhou-droid/ParkinSUM.git
 cd ParkinSUM
 flutter pub get
+flutter devices
 flutter run -d chrome --dart-define=PARKINSUM_BACKEND=local
 ```
+
+Chrome must be installed and listed by `flutter devices`. The clone URL above
+points to the upstream project; contributors should clone their own fork when
+they need a branch they can push.
 
 Complete onboarding using a fresh synthetic profile. Open **Today** for the
 workspace or **Algorithm Observatory** for fixed, non-personal scenarios.
@@ -138,6 +158,10 @@ python3 -m http.server 8000
 ```
 
 ## Verify a change
+
+For documentation-only changes, follow the scoped review guidance in
+[CONTRIBUTING.md](CONTRIBUTING.md#documentation-only-changes). For app changes,
+start with:
 
 ```sh
 npm ci
@@ -226,6 +250,13 @@ or treat unfinished research as a shipped capability.
 | `config/` | Versioned governance, schema, source, and release inventories. |
 | `test/` / `tool/` | Synthetic tests, replay runners, verification, and operator tools. |
 | `docs/` | Public documentation, research boundaries, and iteration history. |
+
+## License
+
+Project code is distributed under the [Apache License 2.0](LICENSE). Bundled fonts,
+data sources, and other third-party materials retain their own notices and
+access conditions; review [source access and licenses](docs/SOURCE_ACCESS_AND_LICENSES.md)
+before reusing them.
 
 ## Releases and contact
 
