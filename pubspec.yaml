@@ -18,7 +18,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
 
-  cupertino_icons: ^1.0.9
+  cupertino_icons: ^2.0.0
 
   # 状态管理（代码里用到 Provider / ChangeNotifierProxyProvider）
   provider: ^6.1.2
