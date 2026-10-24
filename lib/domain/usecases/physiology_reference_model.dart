@@ -1,5 +1,5 @@
 /// Pure-Dart port of the physiology reference model
-/// (`tool/physiology_reference/model.py`), Stage B.
+/// (`tool/physiology_reference/model.py`), v3.
 ///
 /// Educational research prototype. It simulates population-typical curves in
 /// physical units for synthetic scenarios: not a prediction for any person,
@@ -14,9 +14,18 @@
 ///                and dissolved drug empty first-order, slowed by the energy
 ///                still in the stomach: k = k_fast/(1 + F/F50).
 ///   levodopa     IR tablet → dissolved → absorptive gut → one plasma
-///                compartment [mg/L].
-///   amino acids  one plasma pool per amino acid [µmol/L], fed by each
-///                component's emptied energy, relaxing to its fasting value.
+///                compartment [mg/L]. Unchanged from v2.
+///   amino acids  each component's amino acids (measured profile, else its
+///                protein type's FDC profile, else the mixed default) leave
+///                with its emptied energy; the truly ileal-digestible part
+///                is absorbed at the protein type's rate; a per-amino-acid
+///                splanchnic fraction reaches one plasma pool per amino acid
+///                [µmol/L], which relaxes to a target lowered by insulin
+///                action, dC/dt = f·A/V − k_out·(C − Cb·(1 − s·Emax·E)), at a
+///                rate set by habitual protein intake when one is stated.
+///   insulin      carbohydrate emptied with each component is absorbed
+///                first order; insulin action follows with a first-order
+///                delay; E = I/(I + I50).
 ///   brain entry  B = (1 + ΣCb/Km)/(1 + ΣC/Km): levodopa entry relative to
 ///                the same plasma level when fasting.
 ///
@@ -55,19 +64,45 @@ const List<String> physiologyLnaaSix = [
 /// Every amino acid competing with levodopa at the blood-brain barrier.
 const List<String> physiologyBbbSet = [...physiologyLnaaSix, 'met', 'his'];
 
+/// Protein types with their own amino-acid profile, true ileal digestibility
+/// and digestion rate; 'mixed' is the default.
+const List<String> physiologyProteinTypes = [
+  'mixed',
+  'whey',
+  'casein',
+  'soy',
+  'meat',
+  'egg',
+  'cereal',
+];
+
+/// Where a component's amino-acid grams come from.
+enum PhysiologyProfileBasis { measured, proteinTypeTable, mixedDefault }
+
 enum PhysiologyComponentForm { solid, liquid, water, coagulating }
 
 /// One food component of a meal; amounts are for the portion eaten.
+///
+/// Missing is not zero: an omitted amino-acid profile falls back to the
+/// protein type's table (or the mixed default) and omitted carbohydrate to a
+/// stated share of non-protein energy; neither is read as 0 g.
 final class PhysiologyComponent {
   final String name;
   final PhysiologyComponentForm form;
   final double kcal;
   final double proteinG;
 
-  /// Grams of each amino acid in the portion; null uses the mixed-protein
-  /// composition scaled by [proteinG].
+  /// Grams of each amino acid in the portion (a measured profile); null uses
+  /// the protein type's table, or the mixed-protein composition for 'mixed'.
   final Map<String, double>? aminoAcidsG;
   final double waterMl;
+
+  /// Grams of available carbohydrate and fat; null when unknown.
+  final double? carbohydrateG;
+  final double? fatG;
+
+  /// One of [physiologyProteinTypes].
+  final String proteinType;
 
   const PhysiologyComponent(
     this.name,
@@ -76,14 +111,39 @@ final class PhysiologyComponent {
     this.proteinG = 0.0,
     this.aminoAcidsG,
     this.waterMl = 0.0,
+    this.carbohydrateG,
+    this.fatG,
+    this.proteinType = 'mixed',
   });
 
-  Map<String, double> aminoAcidGrams(Map<String, double> composition) {
+  PhysiologyProfileBasis get profileBasis => aminoAcidsG != null
+      ? PhysiologyProfileBasis.measured
+      : proteinType == 'mixed'
+      ? PhysiologyProfileBasis.mixedDefault
+      : PhysiologyProfileBasis.proteinTypeTable;
+
+  Map<String, double> aminoAcidGrams(PhysiologyParameterValues v) {
     final explicit = aminoAcidsG;
+    if (explicit != null) {
+      return {for (final a in physiologyBbbSet) a: explicit[a] ?? 0.0};
+    }
+    if (proteinType == 'mixed') {
+      final composition = v.map('aa.mixed_protein_composition_g_per_g');
+      return {for (final a in physiologyBbbSet) a: proteinG * composition[a]!};
+    }
+    final table = v.map('aa.composition_by_protein_type_g_per_g');
     return {
-      for (final a in physiologyBbbSet)
-        a: explicit != null ? (explicit[a] ?? 0.0) : proteinG * composition[a]!,
+      for (final a in physiologyBbbSet) a: proteinG * table['$proteinType.$a']!,
     };
+  }
+
+  double carbohydrateGrams(double defaultShare) {
+    final carbohydrate = carbohydrateG;
+    if (carbohydrate != null) return carbohydrate;
+    final nonProtein = math.max(kcal - 4.0 * proteinG, 0.0);
+    final fat = fatG;
+    if (fat != null) return math.max(nonProtein - 9.0 * fat, 0.0) / 4.0;
+    return defaultShare * nonProtein / 4.0;
   }
 }
 
@@ -115,6 +175,10 @@ final class PhysiologyScenario {
   final double dtMin;
   final double recordEveryMin;
 
+  /// Habitual daily protein intake (g/kg/day) that sets amino-acid disposal;
+  /// null uses the population reference intake.
+  final double? habitualProteinGPerKgDay;
+
   const PhysiologyScenario({
     this.meals = const [],
     this.doses = const [],
@@ -122,6 +186,7 @@ final class PhysiologyScenario {
     this.tEndMin = 360.0,
     this.dtMin = 0.25,
     this.recordEveryMin = 1.0,
+    this.habitualProteinGPerKgDay,
   });
 }
 
@@ -168,6 +233,10 @@ final class PhysiologySeries {
     'brain_delivery_index',
     'leu_umol_per_l',
     'phe_umol_per_l',
+    'tyr_umol_per_l',
+    'trp_umol_per_l',
+    'lnaa6_appearance_umol_per_min',
+    'insulin_effect',
   ];
 
   final Map<String, List<double>> values;
@@ -243,9 +312,38 @@ final class _ComponentState {
   double s2;
   double p;
 
-  /// µmol of each amino acid, indexed like [physiologyBbbSet].
+  /// Digestible µmol of each amino acid, indexed like [physiologyBbbSet].
   final Float64List aaUmol;
-  _ComponentState(this.e0, this.s1, this.s2, this.p, this.aaUmol);
+  final double carbG;
+  final double kDig;
+  final Float64List gutAa;
+  final bool solid;
+  _ComponentState(
+    this.e0,
+    this.s1,
+    this.s2,
+    this.p,
+    this.aaUmol,
+    this.carbG,
+    this.kDig,
+    this.gutAa,
+    this.solid,
+  );
+}
+
+/// Fasting nitrogen loss at a habitual intake: linear interpolation in the
+/// Price 1994 table, held flat beyond its ends.
+double physiologyHabitualLoss(Map<String, double> table, double intake) {
+  final points = [
+    for (final entry in table.entries) (double.parse(entry.key), entry.value),
+  ]..sort((a, b) => a.$1.compareTo(b.$1));
+  if (intake <= points.first.$1) return points.first.$2;
+  for (var i = 1; i < points.length; i++) {
+    final (x0, y0) = points[i - 1];
+    final (x1, y1) = points[i];
+    if (intake <= x1) return y0 + (y1 - y0) * (intake - x0) / (x1 - x0);
+  }
+  return points.last.$2;
 }
 
 /// Explicit-Euler integration on a fixed grid. Deterministic.
@@ -260,6 +358,8 @@ PhysiologySeries simulatePhysiology(
   const n = 8; // aminoAcids.length
   const leu = 0; // index of 'leu'
   const phe = 3; // index of 'phe'
+  const tyr = 4; // index of 'tyr'
+  const trp = 5; // index of 'trp'
   const lnaaCount = 6; // physiologyLnaaSix is the first six
   // Typed arrays hold the same doubles as plain lists; they only avoid boxing.
   Float64List indexed(Map<String, double> byName) =>
@@ -276,13 +376,29 @@ PhysiologySeries simulatePhysiology(
   final cl = v['levodopa.apparent_clearance_l_per_h'] / 60.0; // L/min
   final vd = v['levodopa.apparent_volume_l'];
   final kEl = cl / vd;
-  final kDig = math.ln2 / v['aa.digestion_absorption_half_time_min'];
   final vAa = v['aa.plasma_distribution_volume_l'];
-  final kOut = math.ln2 / v['aa.plasma_relaxation_half_time_min'];
+  var kOut = math.ln2 / v['aa.plasma_relaxation_half_time_min'];
+  final habitual = scenario.habitualProteinGPerKgDay;
+  if (habitual != null) {
+    final table = v.map('aa.habitual_fasting_nitrogen_loss_mg_per_kg_day');
+    kOut *=
+        physiologyHabitualLoss(table, habitual) /
+        physiologyHabitualLoss(
+          table,
+          v['aa.reference_habitual_protein_g_per_kg_day'],
+        );
+  }
   final fSys = indexed(v.map('aa.systemic_fraction'));
   final cBase = indexed(v.map('aa.fasting_plasma_umol_per_l'));
   final km = indexed(v.map('bbb.km_umol_per_l'));
-  final composition = v.map('aa.mixed_protein_composition_g_per_g');
+  final digHalf = v.map('aa.digestion_half_time_by_protein_type_min');
+  final tid = v.map('aa.true_ileal_digestibility_by_protein_type');
+  final kCarb = math.ln2 / v['insulin.carbohydrate_absorption_half_time_min'];
+  final kIns = math.ln2 / v['insulin.action_half_time_min'];
+  final i50 = v['insulin.half_effect_carbohydrate_g_per_min'];
+  final eMax = v['insulin.max_lnaa_target_reduction'];
+  final sens = indexed(v.map('insulin.lnaa_sensitivity'));
+  final carbShare = v['insulin.default_carbohydrate_energy_share'];
 
   final comps = <_ComponentState>[];
   var waterMl = 0.0;
@@ -290,14 +406,14 @@ PhysiologySeries simulatePhysiology(
   var dissolved = 0.0;
   var gut = 0.0;
   var plasmaMg = 0.0;
-  final gutAa = Float64List(n);
+  var gutCarb = 0.0;
+  var insulin = 0.0;
   final conc = Float64List.fromList(cBase);
-  final delivery = Float64List(n);
-  var baseLoad = 0.0;
+  final absorbed = Float64List(n);
+  var denomBase = 1.0;
   for (var i = 0; i < n; i++) {
-    baseLoad += cBase[i] / km[i];
+    denomBase += cBase[i] / km[i];
   }
-  final denomBase = 1.0 + baseLoad;
 
   final meals = [...scenario.meals]
     ..sort((x, y) => x.timeMin.compareTo(y.timeMin));
@@ -311,16 +427,22 @@ PhysiologySeries simulatePhysiology(
   final steps = (scenario.tEndMin / dt).round();
   final recStride = math.max(1, (scenario.recordEveryMin / dt).round());
 
-  void record(double t, double fed, double outTot) {
-    var load = 0.0;
+  void record(
+    double t,
+    double fed,
+    double outTot,
+    double effect,
+    double appearance,
+  ) {
+    var denom = 1.0;
     for (var i = 0; i < n; i++) {
-      load += conc[i] / km[i];
+      denom += conc[i] / km[i];
     }
-    final b = denomBase / (1.0 + load);
+    final b = denomBase / denom;
     final cLd = plasmaMg / vd;
     var solidLeft = 0.0;
     for (final c in comps) {
-      if (c.e0 > 0) solidLeft += c.s1 + c.s2 + c.p;
+      if (c.solid) solidLeft += c.s1 + c.s2 + c.p;
     }
     var lnaa6 = 0.0;
     for (var i = 0; i < lnaaCount; i++) {
@@ -339,12 +461,17 @@ PhysiologySeries simulatePhysiology(
     out['brain_delivery_index']!.add(cLd * b);
     out['leu_umol_per_l']!.add(conc[leu]);
     out['phe_umol_per_l']!.add(conc[phe]);
+    out['tyr_umol_per_l']!.add(conc[tyr]);
+    out['trp_umol_per_l']!.add(conc[trp]);
+    out['lnaa6_appearance_umol_per_min']!.add(appearance);
+    out['insulin_effect']!.add(effect);
   }
 
   // Before the first meal, dose or infusion every Euler step leaves the
-  // state exactly as it is (all amounts are zero and amino acids sit at
-  // their fasting values), so those steps are recorded without integrating.
-  // The recorded values are the same as integrating them would give.
+  // state exactly as it is (all amounts are zero, insulin action is zero and
+  // amino acids sit at their fasting values), so those steps are recorded
+  // without integrating. The recorded values are the same as integrating them
+  // would give.
   var firstEvent = double.infinity;
   if (meals.isNotEmpty) firstEvent = math.min(firstEvent, meals.first.timeMin);
   if (doses.isNotEmpty) firstEvent = math.min(firstEvent, doses.first.timeMin);
@@ -353,9 +480,9 @@ PhysiologySeries simulatePhysiology(
   }
   var start = 0;
   while (start <= steps && start * dt + 1e-9 < firstEvent) {
-    // With nothing in the stomach the loop's stomach energy and emptying
-    // rate are both 0.0.
-    if (start % recStride == 0) record(start * dt, 0.0, 0.0);
+    // With nothing in the stomach the loop's stomach energy, emptying rate,
+    // insulin effect and amino-acid appearance are all 0.0.
+    if (start % recStride == 0) record(start * dt, 0.0, 0.0, 0.0, 0.0);
     start++;
   }
 
@@ -367,18 +494,51 @@ PhysiologySeries simulatePhysiology(
           waterMl += c.waterMl;
           continue;
         }
-        final grams = c.aminoAcidGrams(composition);
+        if (!physiologyProteinTypes.contains(c.proteinType)) {
+          throw ArgumentError.value(c.proteinType, 'proteinType', 'unknown');
+        }
+        final grams = c.aminoAcidGrams(v);
+        final digestible = tid[c.proteinType]!;
         final aa = Float64List.fromList([
           for (final a in aminoAcids)
-            grams[a]! / physiologyAminoAcidMolecularWeights[a]! * 1e6,
+            grams[a]! /
+                physiologyAminoAcidMolecularWeights[a]! *
+                1e6 *
+                digestible,
         ]);
         final kcal = math.max(c.kcal, 1e-9);
+        final kDig = math.ln2 / digHalf[c.proteinType]!;
+        final carb = c.carbohydrateGrams(carbShare);
         if (c.form == PhysiologyComponentForm.solid ||
             c.form == PhysiologyComponentForm.coagulating) {
-          comps.add(_ComponentState(kcal, kcal, 0.0, 0.0, aa));
+          comps.add(
+            _ComponentState(
+              kcal,
+              kcal,
+              0.0,
+              0.0,
+              aa,
+              carb,
+              kDig,
+              Float64List(n),
+              true,
+            ),
+          );
           solidE0 += kcal;
         } else {
-          comps.add(_ComponentState(kcal, 0.0, 0.0, kcal, aa));
+          comps.add(
+            _ComponentState(
+              kcal,
+              0.0,
+              0.0,
+              kcal,
+              aa,
+              carb,
+              kDig,
+              Float64List(n),
+              false,
+            ),
+          );
         }
         waterMl += c.waterMl;
       }
@@ -397,13 +557,18 @@ PhysiologySeries simulatePhysiology(
     }
     final outTot = pTot > 0 ? rMax * pTot / (pTot + e50) : 0.0;
     final kLiq = kFast / (1.0 + fed / f50);
+    final effect = insulin > 0 ? insulin / (insulin + i50) : 0.0;
 
-    delivery.fillRange(0, n, 0.0);
+    var carbIn = 0.0;
+    absorbed.fillRange(0, n, 0.0);
     for (final c in comps) {
       final outC = pTot > 0 ? outTot * (c.p / pTot) : 0.0;
       final frac = outC / c.e0;
+      carbIn += frac * c.carbG;
       for (var i = 0; i < n; i++) {
-        delivery[i] += frac * c.aaUmol[i];
+        final taken = c.kDig * c.gutAa[i];
+        absorbed[i] += taken;
+        c.gutAa[i] += (frac * c.aaUmol[i] - taken) * dt;
       }
       final dS1 = -kT * c.s1;
       final dS2 = kT * c.s1 - kT * c.s2;
@@ -427,13 +592,19 @@ PhysiologySeries simulatePhysiology(
     plasmaMg += dPl * dt;
     waterMl += -kLiq * waterMl * dt;
 
+    final carbAbs = kCarb * gutCarb;
+    gutCarb += (carbIn - carbAbs) * dt;
+    insulin += kIns * (carbAbs - insulin) * dt;
+
+    var appearance = 0.0;
     for (var i = 0; i < n; i++) {
-      final absorbed = kDig * gutAa[i];
-      gutAa[i] += (delivery[i] - absorbed) * dt;
-      conc[i] += (fSys[i] * absorbed / vAa - kOut * (conc[i] - cBase[i])) * dt;
+      final arriving = fSys[i] * absorbed[i];
+      if (i < lnaaCount) appearance += arriving;
+      final target = cBase[i] * math.max(0.0, 1.0 - sens[i] * eMax * effect);
+      conc[i] += (arriving / vAa - kOut * (conc[i] - target)) * dt;
     }
 
-    if (step % recStride == 0) record(t, fed, outTot);
+    if (step % recStride == 0) record(t, fed, outTot, effect, appearance);
   }
   return PhysiologySeries._(out);
 }

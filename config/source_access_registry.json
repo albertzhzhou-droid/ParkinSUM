@@ -4778,6 +4778,501 @@
       ],
       "last_policy_reviewed": "2026-10-22",
       "notes": "PMID 3519291. Human phenylalanine Km close to rat values."
+    },
+    {
+      "source_id": "src.matthews.splanchnic_leu_phe.1993",
+      "display_name": "Matthews, Marano, and Campbell \u2014 splanchnic bed utilization of leucine and phenylalanine in humans (1993)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Postabsorptive tracer infusion in 14 healthy adults, not a protein meal; other amino acids are assumed."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.matthews.splanchnic_leu_phe.1993"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 8430779; doi:10.1152/ajpendo.1993.264.1.E109. Source of aa.systemic_fraction for leucine and phenylalanine."
+    },
+    {
+      "source_id": "src.shaham.glucose_challenge.2008",
+      "display_name": "Shaham et al. \u2014 metabolic profiling of the human response to a glucose challenge (2008)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Young healthy adults after an overnight fast, glucose drink only; mixed-meal insulin responses differ."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.shaham.glucose_challenge.2008"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 18682704; doi:10.1038/msb.2008.50. Calibration target of insulin.max_lnaa_target_reduction; the half-maximal time is an independent check."
+    },
+    {
+      "source_id": "src.wurtman.carbohydrate_protein_breakfast.2003",
+      "display_name": "Wurtman et al. \u2014 effects of normal meals rich in carbohydrates or proteins on plasma tryptophan and tyrosine ratios (2003)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Nine subjects; fat content and meal form are not in the abstract."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.wurtman.carbohydrate_protein_breakfast.2003"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 12499331; doi:10.1093/ajcn/77.1.128. Independent check of the insulin and amino-acid model."
+    },
+    {
+      "source_id": "src.fernstrom.diurnal_lnaa_protein.1979",
+      "display_name": "Fernstrom et al. \u2014 diurnal variations in plasma tryptophan, tyrosine and other neutral amino acids: effect of dietary protein intake (1979)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Egg-protein formula diets in normal subjects; magnitudes are not in the abstract, so the check is directional."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.fernstrom.diurnal_lnaa_protein.1979"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 573061; doi:10.1093/ajcn/32.9.1912. Direction check and support for insulin.lnaa_sensitivity."
+    },
+    {
+      "source_id": "src.price.nitrogen_diurnal_cycling.1994",
+      "display_name": "Price et al. \u2014 nitrogen homeostasis in man: influence of protein intake on the amplitude of diurnal cycling of body nitrogen (1994)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Adults fed hourly meals; mapping nitrogen loss to plasma amino-acid relaxation is a modeling choice."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.price.nitrogen_diurnal_cycling.1994"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 8306557; doi:10.1042/cs0860091. Source of aa.habitual_fasting_nitrogen_loss_mg_per_kg_day."
+    },
+    {
+      "source_id": "src.gaudichon.milk_protein_ileal.1999",
+      "display_name": "Gaudichon et al. \u2014 net postprandial utilization of [15N]-labeled milk protein nitrogen is influenced by diet composition in humans (1999)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Purified milk protein; whey and casein are not separated."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.gaudichon.milk_protein_ileal.1999"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 10203566; doi:10.1093/jn/129.4.890. Source of aa.true_ileal_digestibility_by_protein_type for whey and casein."
+    },
+    {
+      "source_id": "src.mariotti.soy_ileal.1999",
+      "display_name": "Mariotti et al. \u2014 nutritional value of [15N]-soy protein isolate assessed from ileal digestibility and postprandial protein utilization in humans (1999)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Ten healthy volunteers, soy isolate with sucrose."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.mariotti.soy_ileal.1999"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 10539774; doi:10.1093/jn/129.11.1992. Source of aa.true_ileal_digestibility_by_protein_type for soy."
+    },
+    {
+      "source_id": "src.evenepoel.egg_ileal.1998",
+      "display_name": "Evenepoel et al. \u2014 digestibility of cooked and raw egg protein in humans as assessed by stable isotope techniques (1998)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Five ileostomy patients."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.evenepoel.egg_ileal.1998"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 9772141; doi:10.1093/jn/128.10.1716. Source of aa.true_ileal_digestibility_by_protein_type for egg (cooked)."
+    },
+    {
+      "source_id": "src.oberli.meat_ileal.2015",
+      "display_name": "Oberli et al. \u2014 high true ileal digestibility but not postprandial utilization of nitrogen from bovine meat protein in humans is moderately decreased by high-temperature, long-duration cooking (2015)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Sixteen young adults with an ileal tube; the model uses the mean of the two cooking conditions."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.oberli.meat_ileal.2015"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 26290008; doi:10.3945/jn.115.216838. Source of aa.true_ileal_digestibility_by_protein_type for meat."
+    },
+    {
+      "source_id": "src.bos.wheat_ileal.2005",
+      "display_name": "Bos et al. \u2014 postprandial metabolic utilization of wheat protein in humans (2005)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Wheat toast in 14 healthy adults; other cereals are assumed similar."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.bos.wheat_ileal.2005"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 15640465; doi:10.1093/ajcn/81.1.87. Source of aa.true_ileal_digestibility_by_protein_type for cereal."
+    },
+    {
+      "source_id": "src.bos.soy_milk_kinetics.2003",
+      "display_name": "Bos et al. \u2014 postprandial kinetics of dietary amino acids are the main determinant of their metabolism after soy or milk protein ingestion in humans (2003)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Meal composition beyond energy is not in the abstract; kept as a known gap in timing."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.bos.soy_milk_kinetics.2003"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 12730415; doi:10.1093/jn/133.5.1308. Order of aa.digestion_half_time_by_protein_type; known-gap timing check."
+    },
+    {
+      "source_id": "src.tang.whey_soy_casein.2009",
+      "display_name": "Tang et al. \u2014 ingestion of whey hydrolysate, casein, or soy protein isolate: effects on mixed muscle protein synthesis at rest and following resistance exercise in young men (2009)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Eighteen young men in three groups; used for ordering only."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.tang.whey_soy_casein.2009"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 19589961; doi:10.1152/japplphysiol.00076.2009. Order of aa.digestion_half_time_by_protein_type."
+    },
+    {
+      "source_id": "src.pennings.minced_beef.2013",
+      "display_name": "Pennings et al. \u2014 minced beef is more rapidly digested and absorbed than beef steak, resulting in greater postprandial protein retention in older men (2013)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Ten older men; texture is not a model input, so the meat half-time stands for typical cooked meat."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.pennings.minced_beef.2013"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 23636241; doi:10.3945/ajcn.112.051201. Support for the slow meat digestion half-time."
+    },
+    {
+      "source_id": "src.moore.meal_weight_calories.1984",
+      "display_name": "Moore et al. \u2014 influence of meal weight and caloric content on gastric emptying of meals in man (1984)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Nine healthy men, lettuce-and-oil meals; the liquid finding is a known gap of the model."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.moore.meal_weight_calories.1984"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 6723483; doi:10.1007/BF01296271. Direction check of calorie-limited solid emptying and a known gap for liquids."
+    },
+    {
+      "source_id": "src.blackburn.guar_emptying.1984",
+      "display_name": "Blackburn, Holgate, and Read \u2014 does guar gum improve post-prandial hyperglycaemia in humans by reducing small intestinal contact area? (1984)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Healthy volunteers; viscous fibre is not a model input."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.blackburn.guar_emptying.1984"
+      ],
+      "last_policy_reviewed": "2026-10-23",
+      "notes": "PMID 6089862; doi:10.1079/bjn19840088. Known-gap checks of glucose-drink emptying and viscous-fibre slowing."
     }
   ]
 }

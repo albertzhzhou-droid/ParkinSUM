@@ -319,6 +319,7 @@ class AlgorithmRegistry {
       sourcePath: 'lib/domain/usecases/physiology_reference_model.dart',
       additionalSourcePaths: [
         'lib/domain/entities/physiology_reference_parameters.dart',
+        'lib/domain/usecases/physiology_nutrition_outputs.dart',
         'lib/domain/usecases/physiology_reference_trace_provider.dart',
         'lib/features/algorithm_observatory/physiology_reference_panel.dart',
       ],

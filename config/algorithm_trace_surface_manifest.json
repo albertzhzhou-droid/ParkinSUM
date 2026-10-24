@@ -5,7 +5,7 @@
   "algorithm_count": 67,
   "production_trace_count": 15,
   "static_contract_only_count": 52,
-  "registry_surface_sha256": "3de07d176ad0a8a9adfad7a41aa8ce4c40b18f0079b8b4a4925319b40f3ad8e5",
+  "registry_surface_sha256": "dd33d553af4d33fd0403c3c400efd54d7a27773fa8e64b03cbcf7c1a7c0a2ba3",
   "providers": [
     {
       "provider_id": "observatory.physiology-reference-timing/1",
@@ -147,5 +147,5 @@
     "timeline_projection",
     "variant_resolver"
   ],
-  "manifest_sha256": "3ea1ad16cce5f654695a9184ceb27beffc3dc61be21a0b7b14671839bb20f205"
+  "manifest_sha256": "87c5fd19b5849e19650f2363cea6435bbd6bac428734be4d8ff4cf311af00f1d"
 }
