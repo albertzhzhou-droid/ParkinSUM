@@ -37,7 +37,10 @@
         "lib/core/i18n/app_i18n_full_translations.dart",
         "lib/core/i18n/app_i18n_log_view_translations.dart",
         "lib/core/i18n/fhir_r4_encounter_copy.dart",
-        "lib/core/i18n/app_i18n_diary_strip_translations.dart"
+        "lib/core/i18n/app_i18n_diary_strip_translations.dart",
+        "lib/core/i18n/app_i18n_next_meal_planner_translations.dart",
+        "lib/core/constants/dish_catalog.dart",
+        "lib/core/i18n/app_i18n_advanced_dishes_translations.dart"
       ]
     },
     {
@@ -202,7 +205,8 @@
         "lib/domain/entities/signed_capability_manifest.dart",
         "lib/domain/entities/source_metadata.dart",
         "lib/domain/entities/source_version_drift.dart",
-        "lib/domain/entities/synthetic_scenario_fuzzer.dart"
+        "lib/domain/entities/synthetic_scenario_fuzzer.dart",
+        "lib/domain/entities/dish_recipe.dart"
       ]
     },
     {
@@ -275,6 +279,8 @@
         "lib/features/medications/medication_page.dart",
         "lib/features/medications/medication_product_picker.dart",
         "lib/features/next_meal/next_meal_page.dart",
+        "lib/features/next_meal/next_meal_planner_widgets.dart",
+        "lib/features/next_meal/next_meal_plate_chart.dart",
         "lib/features/onboarding/onboarding_flow.dart",
         "lib/features/onboarding/onboarding_page.dart",
         "lib/features/reminders/reminder_center_page.dart",
@@ -291,7 +297,9 @@
         "lib/features/shared/package_dose_selector.dart",
         "lib/features/shared/personal_log_view_controls.dart",
         "lib/features/timeline/timeline_page.dart",
-        "lib/features/analytics/diary_strip_view.dart"
+        "lib/features/analytics/diary_strip_view.dart",
+        "lib/features/next_meal/advanced_dishes_page.dart",
+        "lib/features/next_meal/advanced_dishes_widgets.dart"
       ]
     },
     {
@@ -338,6 +346,14 @@
       "paths": [
         "lib/domain/entities/personal_diary_strip.dart",
         "lib/domain/usecases/personal_diary_strip_projector.dart"
+      ]
+    },
+    {
+      "id": "catalog_derived_dish_view",
+      "reason": "The Advanced dishes page multiplies each catalog food's per-100 g protein, energy, fat, available carbohydrate, fibre and complete six-LNAA source profile by fixed curated ingredient grams and adds the known values per serving. Unknown fields, ingredients without a catalog food and foods without an edible-mass basis are counted as unknown and never added as zero. The plate hand-off only carries the resolved catalog foods and grams to the Next-meal page. Nothing is scored, ranked, filtered by nutrient, predicted or passed to a rule, and no value is a target.",
+      "paths": [
+        "lib/domain/usecases/dish_nutrition_view.dart",
+        "lib/core/state/dish_plate_handoff.dart"
       ]
     },
     {

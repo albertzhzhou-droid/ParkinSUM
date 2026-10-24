@@ -112,7 +112,16 @@ final class AlgorithmConfigurationIdentity {
   // provider, its Observatory panel and a descriptive direction-aware
   // meal-timing note; scores, rule decisions and recommendation order are
   // unchanged.
-  static const String defaultVersion = '2026.10.20-v83';
+  // v84 binds the next-meal planner, the direction-aware protein-timing term,
+  // product formulation on intakes, nutrition-only alternatives and the
+  // manual-review and timing-copy fixes; the legacy ranker is kept for replay
+  // and audit only.
+  // v85 binds the v3 nutrition side of the physiology reference model
+  // (protein-type amino-acid profiles and digestibility, splanchnic first pass,
+  // insulin action and habitual-intake disposal) on top of the Next-meal
+  // planner; levodopa curves are unchanged, while modeled brain-delivery ratios
+  // and the protein-timing score term follow the new amino-acid side.
+  static const String defaultVersion = '2026.10.20-v85';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -120,7 +129,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '71f5bd8b24d1e88634c2dd54fdeaf3d74d38f8ee7cd7444058fcedc388e7cde0';
+      'd1124024d1d5882b04e1e8c2bdc02e4c107e9f4389355f0fca972bcbbad1ccf1';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.

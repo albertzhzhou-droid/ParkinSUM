@@ -55,7 +55,7 @@ void main() {
     );
   });
 
-  test('combined executable and mathematical coverage is 30 of 66', () async {
+  test('combined executable and mathematical coverage is 30 of 67', () async {
     final executable = await gate.run();
     final mathematical = const MechanisticModelVerificationGate().run();
     final combined = <String>{
@@ -63,18 +63,19 @@ void main() {
       ...mathematical.coveredAlgorithmIds,
     };
 
-    expect(AlgorithmRegistry.all, hasLength(66));
+    expect(AlgorithmRegistry.all, hasLength(67));
     expect(mathematical.checks, hasLength(23));
     expect(mathematical.coveredAlgorithmIds, hasLength(22));
     expect(
       AlgorithmRegistry.all.length - mathematical.coveredAlgorithmIds.length,
-      44,
+      45,
     );
     expect(executable.coveredAlgorithmIds, hasLength(8));
     expect(combined, hasLength(30));
     // physiology_reference_model is gated by `npm run physiology:reality`
-    // (published-data checks and cross-runtime agreement), not here.
-    expect(AlgorithmRegistry.all.length - combined.length, 36);
+    // (published-data checks and cross-runtime agreement), and
+    // next_meal_planner by its own unit and widget tests, not here.
+    expect(AlgorithmRegistry.all.length - combined.length, 37);
   });
 
   test(

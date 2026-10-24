@@ -223,13 +223,13 @@ final class CredibilityEvidenceExecutionAttestation {
   static const String schema =
       'parkinsum.credibility-evidence-execution-attestation/1';
   static const int schemaVersion = 1;
-  static const String attestationVersion = '2026.10.20-v65';
+  static const String attestationVersion = '2026.10.20-v67';
   static const String expectedManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedConfigurationSha256 =
-      'b9313c07d8790700b518c1e76cd17ffa0cad4e792e000b2df4eb43b8f52996f9';
+      '89da3b0b534b8031ddb7187b35762dedb99dc887a107e1bf7cfb0c71f951d088';
   static const String expectedAlgorithmSourceBundleSha256 =
-      '71f5bd8b24d1e88634c2dd54fdeaf3d74d38f8ee7cd7444058fcedc388e7cde0';
+      'd1124024d1d5882b04e1e8c2bdc02e4c107e9f4389355f0fca972bcbbad1ccf1';
 
   final String attestationId;
   final String prospectivePlanSha256;

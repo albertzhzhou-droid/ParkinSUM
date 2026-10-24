@@ -1174,6 +1174,224 @@ class ModelAssumptionRegistry {
     lastReviewed: '2026-10-22',
   );
 
+  static const ModelAssumption matthewsSplanchnicLeuPhe = ModelAssumption(
+    sourceId: 'src.matthews.splanchnic_leu_phe.1993',
+    title: 'Splanchnic bed utilization of leucine and phenylalanine in humans',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'The splanchnic bed sequesters 17–21% of enteral leucine and 29% of enteral phenylalanine on the first pass.',
+    limitation:
+        'Postabsorptive tracer infusion in 14 healthy adults, not a protein meal; other amino acids are assumed.',
+    citationText:
+        'Matthews D.E., Marano M.A., Campbell R.G. Splanchnic bed utilization of leucine and phenylalanine in humans. Am J Physiol 264(1 Pt 1):E109–E118, 1993. PMID:8430779. doi:10.1152/ajpendo.1993.264.1.E109.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption shahamGlucoseChallenge = ModelAssumption(
+    sourceId: 'src.shaham.glucose_challenge.2008',
+    title: 'Metabolic profiling of the human response to a glucose challenge',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'After 75 g oral glucose, plasma leucine/isoleucine fall 33% over 2 h (amino acids 14–36%), half-maximal at 50–72 min, through insulin action.',
+    limitation:
+        'Young healthy adults after an overnight fast, glucose drink only; mixed-meal insulin responses differ.',
+    citationText:
+        'Shaham O. et al. Metabolic profiling of the human response to a glucose challenge. Mol Syst Biol 4:214, 2008. PMID:18682704. doi:10.1038/msb.2008.50.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption
+  wurtmanCarbohydrateProteinBreakfast = ModelAssumption(
+    sourceId: 'src.wurtman.carbohydrate_protein_breakfast.2003',
+    title:
+        'Effects of normal meals rich in carbohydrates or proteins on plasma tryptophan and tyrosine ratios',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Carbohydrate- and protein-rich breakfasts differ in plasma tryptophan:LNAA (median 54%) and tyrosine:LNAA (median 28%) ratios; insulin rose only after the carbohydrate meal.',
+    limitation:
+        'Nine subjects; fat content and meal form are not in the abstract.',
+    citationText:
+        'Wurtman R.J., Wurtman J.J., Regan M.M., McDermott J.M., Tsay R.H., Breu J.J. Effects of normal meals rich in carbohydrates or proteins on plasma tryptophan and tyrosine ratios. Am J Clin Nutr 77(1):128–132, 2003. PMID:12499331. doi:10.1093/ajcn/77.1.128.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption fernstromDiurnalLnaa = ModelAssumption(
+    sourceId: 'src.fernstrom.diurnal_lnaa_protein.1979',
+    title:
+        'Diurnal variations in plasma tryptophan, tyrosine and other neutral amino acids: effect of dietary protein intake',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'A protein-free diet lowers plasma large neutral amino acids in the late morning and afternoon; levels vary directly with dietary protein.',
+    limitation:
+        'Egg-protein formula diets in normal subjects; magnitudes are not in the abstract, so the check is directional.',
+    citationText:
+        'Fernstrom J.D., Wurtman R.J., Hammarstrom-Wiklund B., Rand W.M., Munro H.N., Davidson C.S. Diurnal variations in plasma tryptophan, tyrosine and other neutral amino acids: effect of dietary protein intake. Am J Clin Nutr 32(9):1912–1922, 1979. PMID:573061. doi:10.1093/ajcn/32.9.1912.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption priceNitrogenCycling = ModelAssumption(
+    sourceId: 'src.price.nitrogen_diurnal_cycling.1994',
+    title:
+        'Nitrogen homeostasis in man: influence of protein intake on the amplitude of diurnal cycling of body nitrogen',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'After 12 days on 0.36–2.31 g protein/kg/day, fasting nitrogen losses rise with habitual intake (47, 60, 95, 140 mg/kg/day): oxidative disposal adapts to intake.',
+    limitation:
+        'Adults fed hourly meals; mapping nitrogen loss to plasma amino-acid relaxation is a modeling choice.',
+    citationText:
+        'Price G.M., Halliday D., Pacy P.J., Quevedo M.R., Millward D.J. Nitrogen homeostasis in man: influence of protein intake on the amplitude of diurnal cycling of body nitrogen. Clin Sci 86(1):91–102, 1994. PMID:8306557. doi:10.1042/cs0860091.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption gaudichonMilkIleal = ModelAssumption(
+    sourceId: 'src.gaudichon.milk_protein_ileal.1999',
+    title:
+        'Net postprandial utilization of [15N]-labeled milk protein nitrogen is influenced by diet composition in humans',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'True ileal digestibility of milk protein is 94.5–94.8% with or without fat or sucrose.',
+    limitation: 'Purified milk protein; whey and casein are not separated.',
+    citationText:
+        'Gaudichon C. et al. Net postprandial utilization of [15N]-labeled milk protein nitrogen is influenced by diet composition in humans. J Nutr 129(4):890–895, 1999. PMID:10203566. doi:10.1093/jn/129.4.890.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption mariottiSoyIleal = ModelAssumption(
+    sourceId: 'src.mariotti.soy_ileal.1999',
+    title:
+        'Nutritional value of [15N]-soy protein isolate assessed from ileal digestibility and postprandial protein utilization in humans',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'True oro-ileal digestibility of soy protein isolate nitrogen is 91%.',
+    limitation: 'Ten healthy volunteers, soy isolate with sucrose.',
+    citationText:
+        'Mariotti F. et al. Nutritional value of [15N]-soy protein isolate assessed from ileal digestibility and postprandial protein utilization in humans. J Nutr 129(11):1992–1997, 1999. PMID:10539774. doi:10.1093/jn/129.11.1992.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption evenepoelEggIleal = ModelAssumption(
+    sourceId: 'src.evenepoel.egg_ileal.1998',
+    title:
+        'Digestibility of cooked and raw egg protein in humans as assessed by stable isotope techniques',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'True ileal digestibility of cooked egg protein is 90.9% (raw 51.3%).',
+    limitation: 'Five ileostomy patients.',
+    citationText:
+        'Evenepoel P. et al. Digestibility of cooked and raw egg protein in humans as assessed by stable isotope techniques. J Nutr 128(10):1716–1722, 1998. PMID:9772141. doi:10.1093/jn/128.10.1716.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption oberliMeatIleal = ModelAssumption(
+    sourceId: 'src.oberli.meat_ileal.2015',
+    title:
+        'High true ileal digestibility but not postprandial utilization of nitrogen from bovine meat protein in humans is moderately decreased by high-temperature, long-duration cooking',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'True ileal digestibility of bovine meat protein is 94.1% (55 °C, 5 min) and 90.1% (90 °C, 30 min).',
+    limitation:
+        'Sixteen young adults with an ileal tube; the model uses the mean of the two cooking conditions.',
+    citationText:
+        'Oberli M. et al. High true ileal digestibility but not postprandial utilization of nitrogen from bovine meat protein in humans is moderately decreased by high-temperature, long-duration cooking. J Nutr 145(10):2221–2228, 2015. PMID:26290008. doi:10.3945/jn.115.216838.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption bosWheatIleal = ModelAssumption(
+    sourceId: 'src.bos.wheat_ileal.2005',
+    title: 'Postprandial metabolic utilization of wheat protein in humans',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Real ileal digestibility of wheat protein nitrogen is 90.3%.',
+    limitation:
+        'Wheat toast in 14 healthy adults; other cereals are assumed similar.',
+    citationText:
+        'Bos C. et al. Postprandial metabolic utilization of wheat protein in humans. Am J Clin Nutr 81(1):87–94, 2005. PMID:15640465. doi:10.1093/ajcn/81.1.87.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption bosSoyMilkKinetics = ModelAssumption(
+    sourceId: 'src.bos.soy_milk_kinetics.2003',
+    title:
+        'Postprandial kinetics of dietary amino acids are the main determinant of their metabolism after soy or milk protein ingestion in humans',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'In a mixed meal, dietary amino acids peak at 2.5 h after soy and 3.9 h after milk protein.',
+    limitation:
+        'Meal composition beyond energy is not in the abstract; kept as a known gap in timing.',
+    citationText:
+        'Bos C. et al. Postprandial kinetics of dietary amino acids are the main determinant of their metabolism after soy or milk protein ingestion in humans. J Nutr 133(5):1308–1315, 2003. PMID:12730415. doi:10.1093/jn/133.5.1308.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption tangWheySoyCasein = ModelAssumption(
+    sourceId: 'src.tang.whey_soy_casein.2009',
+    title:
+        'Ingestion of whey hydrolysate, casein, or soy protein isolate: effects on mixed muscle protein synthesis at rest and following resistance exercise in young men',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Whey hydrolysate raises blood leucine more than soy or micellar casein at equal essential amino acids.',
+    limitation: 'Eighteen young men in three groups; used for ordering only.',
+    citationText:
+        'Tang J.E., Moore D.R., Kujbida G.W., Tarnopolsky M.A., Phillips S.M. Ingestion of whey hydrolysate, casein, or soy protein isolate: effects on mixed muscle protein synthesis at rest and following resistance exercise in young men. J Appl Physiol 107(3):987–992, 2009. PMID:19589961. doi:10.1152/japplphysiol.00076.2009.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption penningsMincedBeef = ModelAssumption(
+    sourceId: 'src.pennings.minced_beef.2013',
+    title:
+        'Minced beef is more rapidly digested and absorbed than beef steak, resulting in greater postprandial protein retention in older men',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Beef protein-derived phenylalanine appears in the circulation more slowly from steak than from minced beef (6-h availability 49% vs 61%).',
+    limitation:
+        'Ten older men; texture is not a model input, so the meat half-time stands for typical cooked meat.',
+    citationText:
+        'Pennings B. et al. Minced beef is more rapidly digested and absorbed than beef steak, resulting in greater postprandial protein retention in older men. Am J Clin Nutr 98(1):121–128, 2013. PMID:23636241. doi:10.3945/ajcn.112.051201.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption mooreMealWeightCalories = ModelAssumption(
+    sourceId: 'src.moore.meal_weight_calories.1984',
+    title:
+        'Influence of meal weight and caloric content on gastric emptying of meals in man',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'Added calories (salad oil) slow solid emptying of lettuce meals; liquid emptying is not influenced by meal calories.',
+    limitation:
+        'Nine healthy men, lettuce-and-oil meals; the liquid finding is a known gap of the model.',
+    citationText:
+        'Moore J.G. et al. Influence of meal weight and caloric content on gastric emptying of meals in man. Dig Dis Sci 29(6):513–519, 1984. PMID:6723483. doi:10.1007/BF01296271.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
+  static const ModelAssumption blackburnGuarEmptying = ModelAssumption(
+    sourceId: 'src.blackburn.guar_emptying.1984',
+    title:
+        'Does guar gum improve post-prandial hyperglycaemia in humans by reducing small intestinal contact area?',
+    sourceType: ModelSourceType.primaryHumanStudy,
+    mechanismSupported:
+        'A 250 mL 200 g/L glucose drink half-empties in 73 min; guar gum at 36 g/L slows it to 115 min, while 22.5 g/L does not change emptying.',
+    limitation: 'Healthy volunteers; viscous fibre is not a model input.',
+    citationText:
+        'Blackburn N.A., Holgate A.M., Read N.W. Does guar gum improve post-prandial hyperglycaemia in humans by reducing small intestinal contact area?. Br J Nutr 52(2):197–204, 1984. PMID:6089862. doi:10.1079/bjn19840088.',
+    evidenceLevel: ModelEvidenceLevel.mechanism,
+    lastReviewed: '2026-10-23',
+  );
+
   static const List<ModelAssumption> all = [
     sinemetLabel,
     sinemetExtendedLabel,
@@ -1230,6 +1448,21 @@ class ModelAssumptionRegistry {
     boirieFastSlowProtein,
     smithBbbKinetics,
     pardridgeHumanBbbTransport,
+    matthewsSplanchnicLeuPhe,
+    shahamGlucoseChallenge,
+    wurtmanCarbohydrateProteinBreakfast,
+    fernstromDiurnalLnaa,
+    priceNitrogenCycling,
+    gaudichonMilkIleal,
+    mariottiSoyIleal,
+    evenepoelEggIleal,
+    oberliMeatIleal,
+    bosWheatIleal,
+    bosSoyMilkKinetics,
+    tangWheySoyCasein,
+    penningsMincedBeef,
+    mooreMealWeightCalories,
+    blackburnGuarEmptying,
   ];
 
   static ModelAssumption? byId(String sourceId) {

@@ -109,6 +109,33 @@ The runtime registry now also contains the following primary/consensus records:
 - `src.camilleri.ge.variation.2012` — Camilleri et al., *Neurogastroenterol
   Motil* 24:1076-e562, PMID:22747676.
 
+### 2026-10-23 physiology reference model v3 (nutrition side)
+
+Registered for the v3 nutrition parameters of the physiology reference model
+(`tool/physiology_reference/parameters.json`, mirrored in
+`lib/domain/entities/physiology_reference_parameters.dart`): protein-type
+amino-acid profiles, true ileal digestibility, splanchnic first pass, insulin
+action and habitual-intake disposal. Details: `docs/design/PHYSIOLOGY_MODEL_V2.md`.
+Protein-type profiles cite `src.usda.fdc.full_download.2025_04_24` and
+`src.fdc.api.amino_acid_fields`; the isocaloric-emptying check cites
+`src.hunt_stubbs.energy_density.1975`, listed below.
+
+- `src.matthews.splanchnic_leu_phe.1993` — Matthews, Marano, and Campbell, *Am J Physiol* 264(1 Pt 1):E109–E118, doi:10.1152/ajpendo.1993.264.1.E109, PMID:8430779.
+- `src.shaham.glucose_challenge.2008` — Shaham et al., *Mol Syst Biol* 4:214, doi:10.1038/msb.2008.50, PMID:18682704.
+- `src.wurtman.carbohydrate_protein_breakfast.2003` — Wurtman et al., *Am J Clin Nutr* 77(1):128–132, doi:10.1093/ajcn/77.1.128, PMID:12499331.
+- `src.fernstrom.diurnal_lnaa_protein.1979` — Fernstrom et al., *Am J Clin Nutr* 32(9):1912–1922, doi:10.1093/ajcn/32.9.1912, PMID:573061.
+- `src.price.nitrogen_diurnal_cycling.1994` — Price et al., *Clin Sci* 86(1):91–102, doi:10.1042/cs0860091, PMID:8306557.
+- `src.gaudichon.milk_protein_ileal.1999` — Gaudichon et al., *J Nutr* 129(4):890–895, doi:10.1093/jn/129.4.890, PMID:10203566.
+- `src.mariotti.soy_ileal.1999` — Mariotti et al., *J Nutr* 129(11):1992–1997, doi:10.1093/jn/129.11.1992, PMID:10539774.
+- `src.evenepoel.egg_ileal.1998` — Evenepoel et al., *J Nutr* 128(10):1716–1722, doi:10.1093/jn/128.10.1716, PMID:9772141.
+- `src.oberli.meat_ileal.2015` — Oberli et al., *J Nutr* 145(10):2221–2228, doi:10.3945/jn.115.216838, PMID:26290008.
+- `src.bos.wheat_ileal.2005` — Bos et al., *Am J Clin Nutr* 81(1):87–94, doi:10.1093/ajcn/81.1.87, PMID:15640465.
+- `src.bos.soy_milk_kinetics.2003` — Bos et al., *J Nutr* 133(5):1308–1315, doi:10.1093/jn/133.5.1308, PMID:12730415.
+- `src.tang.whey_soy_casein.2009` — Tang et al., *J Appl Physiol* 107(3):987–992, doi:10.1152/japplphysiol.00076.2009, PMID:19589961.
+- `src.pennings.minced_beef.2013` — Pennings et al., *Am J Clin Nutr* 98(1):121–128, doi:10.3945/ajcn.112.051201, PMID:23636241.
+- `src.moore.meal_weight_calories.1984` — Moore et al., *Dig Dis Sci* 29(6):513–519, doi:10.1007/BF01296271, PMID:6723483.
+- `src.blackburn.guar_emptying.1984` — Blackburn, Holgate, and Read, *Br J Nutr* 52(2):197–204, doi:10.1079/bjn19840088, PMID:6089862.
+
 ### 2026-10-22 physiology reference model (Stage B)
 
 Registered for the parameter set of the physiology reference model

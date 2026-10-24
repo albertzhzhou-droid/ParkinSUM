@@ -22,15 +22,15 @@ void main() {
   AlgorithmResultRootManifest current() =>
       AlgorithmResultRootManifest.fromJson(decodedManifest());
 
-  test('reviewed manifest is an exact stable map for all 66 algorithms', () {
+  test('reviewed manifest is an exact stable map for all 67 algorithms', () {
     final manifest = current();
     manifest.validateAgainstRegistry(registrySources());
 
-    expect(manifest.entries, hasLength(66));
+    expect(manifest.entries, hasLength(67));
     expect(manifest.packageName, 'parkinsum_companion');
     expect(
       manifest.sha256Digest,
-      '4fa37d1658e917b3f4d8184f3eb167e0a25cb5cf3b644a62f7f2d8839afee870',
+      '91e0165bb913716fe0b00afb8e13071e5d8e97a6884d5b4f0fdba5c932c5a216',
     );
     expect(manifest.toJson(), decodedManifest());
     expect(manifest.canonicalJson, isNot(contains(Directory.current.path)));

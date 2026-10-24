@@ -20,6 +20,10 @@ class OnboardingDraft {
   /// derivation is recorded only when the dose note came from that pick.
   final MedicationProductSelection? initialIntakeProductSelection;
 
+  /// The product record behind [initialIntakeProductSelection]; its form,
+  /// route and release type are carried onto the intake.
+  final MedicationProductPack? initialIntakeProduct;
+
   const OnboardingDraft({
     required this.registrationRegion,
     required this.displayLocale,
@@ -32,6 +36,7 @@ class OnboardingDraft {
     required this.initialIntakeAt,
     required this.initialIntakeDoseNote,
     this.initialIntakeProductSelection,
+    this.initialIntakeProduct,
   });
 
   UserProfile buildProfile(
@@ -61,7 +66,7 @@ class OnboardingDraft {
     final drugId = initialIntakeDrugId;
     final takenAt = initialIntakeAt;
     if (drugId == null || takenAt == null) return null;
-    return IntakeDoseContextBuilder()
+    final intake = IntakeDoseContextBuilder()
         .build(
           id: intakeId,
           drugId: drugId,
@@ -70,6 +75,13 @@ class OnboardingDraft {
           drug: drug,
         )
         .copyWith(productSelection: initialIntakeProductSelection);
+    final product = initialIntakeProduct;
+    final selection = initialIntakeProductSelection;
+    return product != null &&
+            selection != null &&
+            selection.packId == product.id
+        ? withProductFormulation(intake, product)
+        : intake;
   }
 
   static List<String> parseJurisdictionOverride(String text) {

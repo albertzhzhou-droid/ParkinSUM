@@ -99,9 +99,9 @@ final class GovernanceLedgerChain {
   static const String checkpointKind = 'checkpoint';
 
   // Pins written by `npm run identity:rebind`; see docs/IDENTITY_REBIND.md.
-  static const int expectedEntryCount = 54;
+  static const int expectedEntryCount = 58;
   static const String expectedHeadSha256 =
-      'a588f80c17fa7b2119889e69151091c965089940266096550ba68bbd53fff498';
+      '5a8c2737de6d294af0f6e1a17fbee0dfa53e3fbd0d0de2e3e39b7943c068ed77';
   static const List<GovernanceLedgerCheckpointPin> checkpointPins = [
     GovernanceLedgerCheckpointPin(
       beforeIdentityVersion: 62,
@@ -322,6 +322,26 @@ final class GovernanceLedgerChain {
           '687d203b1c65d437f84bc196b1be1a5be2e958cc203753ffc03dc971a59bd729',
       lastConfigurationSha256:
           ContextOfUseRequalificationLedger.historicalV82ConfigurationSha256,
+    ),
+    GovernanceLedgerCheckpointPin(
+      beforeIdentityVersion: 84,
+      recordCount: 32,
+      snapshotSha256:
+          '071530c386c90ef218c9da7807452b2c90d4a3ce608a36ecb53e83511cf1ddab',
+      entrySha256:
+          '453517aa51dde51872d72739546347577b1be2d5c1702d74fbe55fedaed80b06',
+      lastConfigurationSha256:
+          ContextOfUseRequalificationLedger.historicalV83ConfigurationSha256,
+    ),
+    GovernanceLedgerCheckpointPin(
+      beforeIdentityVersion: 85,
+      recordCount: 33,
+      snapshotSha256:
+          'e0101e43aca94d96d240f10c7096520caa732401b5cda864d6622b930d8d2373',
+      entrySha256:
+          'fb993b5a38f5fec276d6c274cc87d722a8b13aabf139c724adc0dc6678738465',
+      lastConfigurationSha256:
+          ContextOfUseRequalificationLedger.historicalV84ConfigurationSha256,
     ),
   ];
 

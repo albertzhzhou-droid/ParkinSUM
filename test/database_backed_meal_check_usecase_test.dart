@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
+import 'package:parkinsum_companion/core/copy/response_copy_service.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
 import 'package:parkinsum_companion/core/analysis/food_repository.dart';
 import 'package:parkinsum_companion/core/db/cdss_database.dart';
@@ -601,7 +603,7 @@ void main() {
       expect(result.issues, isNotEmpty);
       expect(
         result.issues.first.detail,
-        contains('official label requires separation from meals'),
+        contains('official label for this medicine includes meal-timing'),
       );
       expect(
         result.issues.first.evidence.first.title,
@@ -1025,11 +1027,21 @@ void main() {
         ),
         isTrue,
       );
+      // The rule's own review keeps its clinician-review wording; it is not
+      // presented as "add the medication time and dose".
+      final copy = ResponseCopyService(i18n: AppI18n.fromLocaleTag('en-US'));
+      expect(
+        result.nextActions.map(copy.nextAction),
+        contains(
+          'This result needs manual review by a qualified clinician before '
+          'it is relied on.',
+        ),
+      );
     },
   );
 
   test(
-    'adds a direction-aware physiology reference note without changing the score',
+    'physiology reference note and protein-timing term are direction-aware',
     () async {
       final db = QueryBackedCdssDatabase({
         'region_jurisdiction_map': [
@@ -1146,13 +1158,31 @@ void main() {
       int percent(InteractionResult result) => int.parse(
         RegExp(r'about (\d+)%').firstMatch(note(result)!)!.group(1)!,
       );
-      // The note sees direction; the score's timing penalty does not (yet).
+      // The note and the protein-timing term both see direction: the same
+      // meal 30 min before the dose lowers modeled brain delivery more than
+      // 30 min after it, and the term follows the documented mapping
+      // round(24 × clamp((1 − r) / 0.30, 0, 1)) of the band median r.
       expect(percent(mealBeforeDose), lessThan(percent(mealAfterDose)));
-      expect(mealBeforeDose.score, mealAfterDose.score);
+      InteractionScoreFactor timing(InteractionResult result) => result
+          .scoreFactors
+          .singleWhere((f) => f.code == 'protein_timing_penalty');
+      for (final result in [mealBeforeDose, mealAfterDose]) {
+        final factor = timing(result);
+        expect(factor.label, contains('modeled brain entry about'));
+        final r = percent(result) / 100;
+        expect(
+          factor.points,
+          closeTo(
+            (24 * ((1 - r) / 0.30).clamp(0.0, 1.0)),
+            0.5 + 24 * 0.005 / 0.30,
+          ),
+        );
+      }
       expect(
-        mealBeforeDose.scoreFactors.map((f) => '${f.code}:${f.points}'),
-        mealAfterDose.scoreFactors.map((f) => '${f.code}:${f.points}'),
+        timing(mealBeforeDose).points,
+        greaterThan(timing(mealAfterDose).points),
       );
+      expect(mealBeforeDose.score!, greaterThan(mealAfterDose.score!));
       expect(mealBeforeDose.issues.length, mealAfterDose.issues.length);
     },
   );
