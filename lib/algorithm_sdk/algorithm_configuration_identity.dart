@@ -116,7 +116,12 @@ final class AlgorithmConfigurationIdentity {
   // product formulation on intakes, nutrition-only alternatives and the
   // manual-review and timing-copy fixes; the legacy ranker is kept for replay
   // and audit only.
-  static const String defaultVersion = '2026.10.20-v84';
+  // v85 binds the v3 nutrition side of the physiology reference model
+  // (protein-type amino-acid profiles and digestibility, splanchnic first pass,
+  // insulin action and habitual-intake disposal) on top of the Next-meal
+  // planner; levodopa curves are unchanged, while modeled brain-delivery ratios
+  // and the protein-timing score term follow the new amino-acid side.
+  static const String defaultVersion = '2026.10.20-v85';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -124,7 +129,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'f080610fb9b7959b3a691ca4fddddd77b7b51466211722b41a4ec20100362e44';
+      'd1124024d1d5882b04e1e8c2bdc02e4c107e9f4389355f0fca972bcbbad1ccf1';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
