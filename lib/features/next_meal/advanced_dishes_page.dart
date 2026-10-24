@@ -532,7 +532,9 @@ class _DishCard extends StatelessWidget {
     final dish = nutrition.dish;
     final family = i18n.languageFamily;
     final name = dish.name.forFamily(family);
-    final otherName = family == 'zh' ? dish.name.en : dish.name.zh;
+    // Only Chinese pages carry the English name as a secondary line; other
+    // languages show the one name rather than a second script.
+    final otherName = family == 'zh' ? dish.name.en : null;
     final protein = nutrition.total(DishNutrient.protein);
     final energy = nutrition.total(DishNutrient.energy);
     final minutes = i18n.tr('dishes.minutes', {
@@ -584,7 +586,7 @@ class _DishCard extends StatelessWidget {
                             color: p.ink,
                           ),
                         ),
-                        if (otherName != name)
+                        if (otherName != null && otherName != name)
                           Text(
                             otherName,
                             style: TextStyle(fontSize: 12.5, color: p.muted),
@@ -707,7 +709,9 @@ class DishDetailBody extends StatelessWidget {
     final dish = nutrition.dish;
     final family = i18n.languageFamily;
     final name = dish.name.forFamily(family);
-    final otherName = family == 'zh' ? dish.name.en : dish.name.zh;
+    // Only Chinese pages carry the English name as a secondary line; other
+    // languages show the one name rather than a second script.
+    final otherName = family == 'zh' ? dish.name.en : null;
     final option = dish.textureOption;
     final muted = TextStyle(fontSize: 13, height: 1.45, color: p.muted);
     return Column(
@@ -729,7 +733,7 @@ class DishDetailBody extends StatelessWidget {
             ),
           ),
         ],
-        if (otherName != name)
+        if (otherName != null && otherName != name)
           Text(otherName, style: TextStyle(fontSize: 14, color: p.muted)),
         const SizedBox(height: 10),
         Wrap(
