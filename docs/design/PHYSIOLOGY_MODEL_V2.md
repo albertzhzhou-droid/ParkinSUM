@@ -160,8 +160,12 @@ curves, not a ranking or a recommended time.
      timing comparison: a synthetic 100 mg immediate-release dose at minute
      0, a meal at an offset, 0–4 h areas relative to the same draw with no
      meal, 100 seeded draws (seed 20261020). It is registered as
-     `physiology_reference_model` with its own trace-provider contract and
-     changes no score, rule outcome or recommendation order.
+     `physiology_reference_model` with its own trace-provider contract. It
+     changes no rule outcome and orders nothing; since step 4 its band
+     median sets the meal check's protein-timing score term, and since step 5
+     it feeds the Next-meal planner. A measured amino-acid profile with all
+     eight competing amino acids now replaces the mixed-protein composition
+     for that food (`physiologyComponentFromFood`).
    The v79 stomach in the shipped engine is unchanged; the two still agree on
    the regression checks (water does not move protein timing; the 300 kcal
    shake half-empties at 70.4 min there and 74 min here).
@@ -190,23 +194,58 @@ curves, not a ranking or a recommended time.
      12,295 numbers. On the development machine (macOS, CPython 3.9) the
      largest difference is 0; CPython 3.12 sums floats with compensation, so
      CI may differ in the last digits, well inside the tolerance.
-4. **Direction-aware timing (descriptive).** For a logged meal and the
-   nearest intake of an oral immediate-release levodopa-like medicine, the
-   meal check adds one data note: "In this educational model, this meal
-   timing lowers modeled brain entry of levodopa to about X% of no meal
-   (population band a–b%, over the 4 hours after the dose)…". It reads the
-   meal's energy, protein and physical form and the meal-to-dose offset, never
-   the dose, and is omitted when an input is missing or the meal is more than
-   6 h before or 4 h after the dose. The user-facing score still uses the
-   direction-blind `_proteinTimingPenalty`
-   (`database_backed_meal_check_usecase.dart`): a meal 30 min before and 30
-   min after the dose score the same while the note differs. **Follow-up this
-   unblocks:** replace that penalty with the modeled brain-delivery ratio and
-   its band, under a configuration-identity bump and a replay review.
-5. **Build the what-if view.** Let a user move a meal relative to a dose and
-   see the curves with population bands, with no ranking and no "best time".
-   This replaces the 0-100 score and the ranked list as the place where the
-   model is visible.
+4. **Direction-aware timing (done).** For a logged meal and the nearest
+   intake of an oral immediate-release levodopa-like medicine, the meal check
+   adds one data note: "In this educational model, this meal timing lowers
+   modeled brain entry of levodopa to about X% of no meal (population band
+   a–b%, over the 4 hours after the dose)…". It reads the meal's energy,
+   protein and physical form and the meal-to-dose offset, never the dose, and
+   is omitted when an input is missing or the meal is more than 6 h before or
+   4 h after the dose. The same comparison now sets the score's
+   protein-timing term (`_proteinTimingPenalty`,
+   `database_backed_meal_check_usecase.dart`), which was direction-blind:
+
+       points = round(24 × clamp((1 − r) / 0.30, 0, 1))
+
+   where r is the median of the seeded band of 0–4 h brain delivery relative
+   to no meal. r ≥ 1 gives 0, r = 0.85 gives 12 and r ≤ 0.70 gives 24 (24 was
+   the old table's maximum, so the term keeps its scale). The factor label
+   names the modeled percentage. When the model does not apply (no intake,
+   not oral immediate release, a missing meal input, offset out of range) the
+   earlier distance table is the fallback: 10 without an intake, else
+   24 / 16 / 8 / 0 for ≤ 60 / ≤ 120 / ≤ 180 / > 180 min. A meal 30 min before
+   the dose now scores higher than the same meal 30 min after it
+   (`test/database_backed_meal_check_usecase_test.dart`). The term only
+   applies above the existing protein threshold, as before.
+5. **Build the what-if view (done: Next-meal planner).** The Next-meal page
+   is now a planner: the user picks a time with −15 / +15 buttons, a typed
+   time or anchors taken from logged doses, browses foods at a reference
+   serving as cards, builds a plate with serving steppers and sees plasma
+   levodopa and the brain-entry index against no meal with population bands,
+   updated live as the time moves. There is no ranking and no "best time";
+   the list's order is the user's sort choice. `NextMealPlanner`
+   (`lib/domain/usecases/next_meal_planner.dart`, registered as
+   `next_meal_planner`) reads the provider through three entry points:
+   `centralBrainDeliveryRelative` (one run, used for list sorting),
+   `mealTimingComparison` (central plus band of brain delivery and plasma
+   area, used for card chips and compare) and `compareCurves` (per-time
+   5th–95th percentile curves on a 5-minute grid, used for the plate chart).
+   Results are cached per food (or plate), servings and whole-minute offset.
+   The modeled value requires an oral immediate-release levodopa intake with
+   a confirmed dose bound to it; the ratios themselves do not depend on the
+   dose. A dose logged with a product strength carries that product record's
+   own form, route and release type (`withProductFormulation` in
+   `intake_dose_context_builder.dart`): the openFDA SPL dosage-form term is
+   stored as `spl:<TERM>` and mapped by an explicit table. A term with
+   "EXTENDED RELEASE" or "DELAYED RELEASE" is modified release; TABLET,
+   TABLET FILM COATED, TABLET COATED, TABLET CHEWABLE, TABLET ORALLY
+   DISINTEGRATING and CAPSULE are conventional (immediate) release; any
+   other term, or an intake saved before this, stays unspecified and the
+   planner says so. Nothing is inferred from a medication or product name.
+   When no logged dose is within the modeled window the planner says so and
+   gives the nearest dose's distance in days and hours instead of comparing. A food whose physical form is not recorded (206 of 244 catalog foods
+   today) is modeled twice, as solid and as liquid, and shown as the range
+   between the two with the union of their bands, rather than guessed.
 6. **Cover more formulations.** Levodopa/benserazide shares the same PK
    structure; its published concentration-effect C50 differs (Trocóniz et al.
    1998), which only matters for an excluded PD layer. Entacapone changes

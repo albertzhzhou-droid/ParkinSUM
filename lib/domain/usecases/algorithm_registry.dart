@@ -324,8 +324,10 @@ class AlgorithmRegistry {
       ],
       userVisibleImpact:
           'Adds a descriptive, direction-aware meal-timing note and an '
-          'Observatory comparison in physical units; it never changes a '
-          'score, rule outcome or recommendation order.',
+          'Observatory comparison in physical units, sets the meal check\'s '
+          'protein-timing score term when it applies, and gives the '
+          'Next-meal planner its modeled comparison and plate chart; it '
+          'never changes a rule outcome or orders foods.',
       inputs:
           'Meal energy, protein and physical form; meal offset from a '
           'synthetic 100 mg immediate-release levodopa dose',
@@ -401,7 +403,10 @@ class AlgorithmRegistry {
       sourcePath:
           'lib/domain/usecases/next_meal_recommendation_orchestrator.dart',
       userVisibleImpact:
-          'Selects a conservative or consented AI path and withholds order claims when bounded nutrient-range replays reveal unresolved ranking sensitivity.',
+          'Runs for replay, audit and the Next-meal planner\'s labelled audit '
+          'trace; it no longer orders a page. Selects a conservative or '
+          'consented AI path and withholds order claims when bounded '
+          'nutrient-range replays reveal unresolved ranking sensitivity.',
       inputs:
           'Gate status, candidate snapshot, source-bound nutrient intervals, production score breakpoints, consent, and local endpoint',
       outputs:
@@ -416,6 +421,32 @@ class AlgorithmRegistry {
       ],
       limitation:
           'Sensitivity replays are bounded stress tests, not probabilities or stability guarantees. Local AI may reorder only a whitelist and cannot bypass safety gates; AI order is not covered by the heuristic replay.',
+    ),
+    AlgorithmDescriptor(
+      id: 'next_meal_planner',
+      name: 'Next-meal planner (descriptive values, user-chosen order)',
+      stage: AlgorithmStage.decide,
+      visualization: AlgorithmVisualization.scoreBreakdown,
+      sourcePath: 'lib/domain/usecases/next_meal_planner.dart',
+      additionalSourcePaths: ['lib/domain/entities/next_meal_plan.dart'],
+      userVisibleImpact:
+          'Builds the Next-meal food set at reference servings, plate totals, '
+          'and the modeled brain-entry and plasma comparison with no meal for '
+          'a time the user picks, each with availability reasons. Orders '
+          'foods only by the user\'s sort choice; the default is foods logged '
+          'before, then by name.',
+      inputs:
+          'Catalog foods, logged meals, medications, logged intakes with '
+          'dose confirmation, planned time, filters and sort choice',
+      outputs:
+          'Per-serving protein, energy and LNAA, data completeness, plate '
+          'totals, modeled brain delivery and plasma area relative to no meal '
+          'with seeded population bands, and curves for the plate chart',
+      hasLiveTrace: false,
+      limitation:
+          'Descriptive and population-typical. A food without a recorded form '
+          'is bracketed between solid and liquid instead of guessed. No food '
+          'or time is called best; not timing, dosing or dietary advice.',
     ),
     AlgorithmDescriptor(
       id: 'runtime_rule_engine',
@@ -447,7 +478,10 @@ class AlgorithmRegistry {
         'lib/domain/usecases/qualified_nutrient_point_selection.dart',
       ],
       userVisibleImpact:
-          'Combines catalog facts, deterministic rules, and mechanistic trace.',
+          'Combines catalog facts, deterministic rules, and mechanistic trace. '
+          'Its protein-timing term follows modeled brain delivery relative to '
+          'no meal (direction-aware) when the physiology reference model '
+          'applies, else the earlier distance table.',
       inputs: 'Meal, medication, catalog snapshot, and rules',
       outputs: 'Rendered interaction result and audit evidence',
       hasLiveTrace: false,
@@ -512,7 +546,7 @@ class AlgorithmRegistry {
     ),
     AlgorithmDescriptor(
       id: 'legacy_food_recommendations',
-      name: 'Legacy food recommendation scorer',
+      name: 'Legacy food recommendation scorer (replay and audit only)',
       stage: AlgorithmStage.decide,
       visualization: AlgorithmVisualization.scoreBreakdown,
       sourcePath: 'lib/domain/usecases/get_food_recommendations_usecase.dart',
@@ -520,9 +554,11 @@ class AlgorithmRegistry {
         'lib/domain/usecases/legacy_food_recommendation_parameters.dart',
       ],
       userVisibleImpact:
-          'Scores legacy food candidates by nutrition, timing, region, repetition, and provenance.',
+          'Kept for replay and audit only: it no longer orders Next meal or '
+          'Today. Its scores appear in replay tooling and the planner\'s '
+          'labelled audit trace, which lists foods by name.',
       inputs: 'History, catalog foods, medications, and user profile',
-      outputs: 'Ranked legacy candidate explanations',
+      outputs: 'Legacy candidate scores and explanations for replay',
       hasLiveTrace: false,
       limitation:
           'Bounded 0–100 compatibility points are heuristic, not a probability, and remain subordinate to safety and mechanistic gates.',

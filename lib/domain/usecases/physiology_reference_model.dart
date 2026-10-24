@@ -26,6 +26,7 @@
 library;
 
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import '../entities/physiology_reference_parameters.dart';
 
@@ -243,7 +244,7 @@ final class _ComponentState {
   double p;
 
   /// µmol of each amino acid, indexed like [physiologyBbbSet].
-  final List<double> aaUmol;
+  final Float64List aaUmol;
   _ComponentState(this.e0, this.s1, this.s2, this.p, this.aaUmol);
 }
 
@@ -260,8 +261,9 @@ PhysiologySeries simulatePhysiology(
   const leu = 0; // index of 'leu'
   const phe = 3; // index of 'phe'
   const lnaaCount = 6; // physiologyLnaaSix is the first six
-  List<double> indexed(Map<String, double> byName) =>
-      List<double>.unmodifiable([for (final a in aminoAcids) byName[a]!]);
+  // Typed arrays hold the same doubles as plain lists; they only avoid boxing.
+  Float64List indexed(Map<String, double> byName) =>
+      Float64List.fromList([for (final a in aminoAcids) byName[a]!]);
 
   final dt = scenario.dtMin;
   final kT = v['stomach.solid_trituration_rate_per_min'];
@@ -288,9 +290,9 @@ PhysiologySeries simulatePhysiology(
   var dissolved = 0.0;
   var gut = 0.0;
   var plasmaMg = 0.0;
-  final gutAa = List<double>.filled(n, 0.0);
-  final conc = List<double>.of(cBase);
-  final delivery = List<double>.filled(n, 0.0);
+  final gutAa = Float64List(n);
+  final conc = Float64List.fromList(cBase);
+  final delivery = Float64List(n);
   var baseLoad = 0.0;
   for (var i = 0; i < n; i++) {
     baseLoad += cBase[i] / km[i];
@@ -309,7 +311,55 @@ PhysiologySeries simulatePhysiology(
   final steps = (scenario.tEndMin / dt).round();
   final recStride = math.max(1, (scenario.recordEveryMin / dt).round());
 
-  for (var step = 0; step <= steps; step++) {
+  void record(double t, double fed, double outTot) {
+    var load = 0.0;
+    for (var i = 0; i < n; i++) {
+      load += conc[i] / km[i];
+    }
+    final b = denomBase / (1.0 + load);
+    final cLd = plasmaMg / vd;
+    var solidLeft = 0.0;
+    for (final c in comps) {
+      if (c.e0 > 0) solidLeft += c.s1 + c.s2 + c.p;
+    }
+    var lnaa6 = 0.0;
+    for (var i = 0; i < lnaaCount; i++) {
+      lnaa6 += conc[i];
+    }
+    out['t']!.add(t);
+    out['stomach_kcal']!.add(fed);
+    out['stomach_retention_solid']!.add(
+      solidE0 != 0 ? solidLeft / solidE0 : 0.0,
+    );
+    out['energy_out_kcal_per_min']!.add(outTot);
+    out['water_ml']!.add(waterMl);
+    out['levodopa_mg_per_l']!.add(cLd);
+    out['lnaa6_umol_per_l']!.add(lnaa6);
+    out['brain_entry_index']!.add(b);
+    out['brain_delivery_index']!.add(cLd * b);
+    out['leu_umol_per_l']!.add(conc[leu]);
+    out['phe_umol_per_l']!.add(conc[phe]);
+  }
+
+  // Before the first meal, dose or infusion every Euler step leaves the
+  // state exactly as it is (all amounts are zero and amino acids sit at
+  // their fasting values), so those steps are recorded without integrating.
+  // The recorded values are the same as integrating them would give.
+  var firstEvent = double.infinity;
+  if (meals.isNotEmpty) firstEvent = math.min(firstEvent, meals.first.timeMin);
+  if (doses.isNotEmpty) firstEvent = math.min(firstEvent, doses.first.timeMin);
+  for (final infusion in scenario.infusions) {
+    firstEvent = math.min(firstEvent, infusion.startMin);
+  }
+  var start = 0;
+  while (start <= steps && start * dt + 1e-9 < firstEvent) {
+    // With nothing in the stomach the loop's stomach energy and emptying
+    // rate are both 0.0.
+    if (start % recStride == 0) record(start * dt, 0.0, 0.0);
+    start++;
+  }
+
+  for (var step = start; step <= steps; step++) {
     final t = step * dt;
     while (mi < meals.length && meals[mi].timeMin <= t + 1e-9) {
       for (final c in meals[mi].components) {
@@ -318,10 +368,10 @@ PhysiologySeries simulatePhysiology(
           continue;
         }
         final grams = c.aminoAcidGrams(composition);
-        final aa = [
+        final aa = Float64List.fromList([
           for (final a in aminoAcids)
             grams[a]! / physiologyAminoAcidMolecularWeights[a]! * 1e6,
-        ];
+        ]);
         final kcal = math.max(c.kcal, 1e-9);
         if (c.form == PhysiologyComponentForm.solid ||
             c.form == PhysiologyComponentForm.coagulating) {
@@ -383,35 +433,7 @@ PhysiologySeries simulatePhysiology(
       conc[i] += (fSys[i] * absorbed / vAa - kOut * (conc[i] - cBase[i])) * dt;
     }
 
-    if (step % recStride == 0) {
-      var load = 0.0;
-      for (var i = 0; i < n; i++) {
-        load += conc[i] / km[i];
-      }
-      final b = denomBase / (1.0 + load);
-      final cLd = plasmaMg / vd;
-      var solidLeft = 0.0;
-      for (final c in comps) {
-        if (c.e0 > 0) solidLeft += c.s1 + c.s2 + c.p;
-      }
-      var lnaa6 = 0.0;
-      for (var i = 0; i < lnaaCount; i++) {
-        lnaa6 += conc[i];
-      }
-      out['t']!.add(t);
-      out['stomach_kcal']!.add(fed);
-      out['stomach_retention_solid']!.add(
-        solidE0 != 0 ? solidLeft / solidE0 : 0.0,
-      );
-      out['energy_out_kcal_per_min']!.add(outTot);
-      out['water_ml']!.add(waterMl);
-      out['levodopa_mg_per_l']!.add(cLd);
-      out['lnaa6_umol_per_l']!.add(lnaa6);
-      out['brain_entry_index']!.add(b);
-      out['brain_delivery_index']!.add(cLd * b);
-      out['leu_umol_per_l']!.add(conc[leu]);
-      out['phe_umol_per_l']!.add(conc[phe]);
-    }
+    if (step % recStride == 0) record(t, fed, outTot);
   }
   return PhysiologySeries._(out);
 }

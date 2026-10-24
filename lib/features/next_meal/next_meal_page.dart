@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:timezone/timezone.dart' as tz;
 
-import '../../core/copy/response_copy_service.dart';
 import '../../core/i18n/app_i18n_context.dart';
+import '../../core/models/food_item.dart';
+import '../../core/models/meal.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/mechanistic_candidate_score.dart';
+import '../../domain/entities/next_meal_plan.dart';
 import '../../domain/entities/next_meal_recommendation_models.dart';
-import '../../domain/entities/food_rank_sensitivity_assessment.dart';
-import 'candidate_set_snapshot_card.dart';
-import '../shared/candidate_serving_macro_line.dart';
+import '../../domain/entities/personal_diary_strip.dart';
+import '../../domain/usecases/next_meal_planner.dart';
+import '../../domain/usecases/personal_diary_strip_projector.dart';
+import '../../domain/usecases/personal_log_date_window_resolver.dart';
+import '../entry/entry_page.dart';
+import '../main_shell/main_tab_route.dart';
 import '../shared/mechanistic_trace_view.dart';
+import 'next_meal_plate_chart.dart';
+import 'next_meal_planner_widgets.dart';
 
-/// Exact, one-to-one projection of model traces onto the heuristic order that
-/// the result says is authoritative. Missing, duplicate, or extra ids are
-/// withheld rather than guessed into a position.
+/// Exact, one-to-one projection of model traces onto an id order. Missing,
+/// duplicate, or extra ids are withheld rather than guessed into a position.
+/// The planner's audit section uses it with foods sorted by name.
 class MechanisticCandidateTraceAlignment {
   final List<MechanisticCandidateScore> alignedScores;
   final List<String> missingRecommendationIds;
@@ -68,107 +76,365 @@ MechanisticCandidateTraceAlignment alignMechanisticCandidateTraces({
   );
 }
 
-/// 下餐推荐：保守规则负责主排序，机制模型只提供教育性 trace；本地 AI
-/// 可在安全门允许时重排规则已筛选的候选或润色文案。
-///
-/// 用户先选下一餐的预计时间 → 引擎按那个时间窗 + 当前药历 + 最近上下文重算，
-/// 然后输出 5 条候选 + 一段"为什么这样推"的解释段落（多语言）。
+/// Next-meal planner: pick a time, browse foods at a reference serving as
+/// cards, build a plate and compare it with "no meal" in the physiology
+/// reference model. The order of the food list is always the user's sort
+/// choice (neutral by default), and nothing is called best or recommended.
+/// Educational prototype; synthetic data in demos.
 class NextMealPage extends StatefulWidget {
-  const NextMealPage({super.key});
+  const NextMealPage({super.key, this.clock, this.initialPlannedAt});
+
+  /// Current time; injectable for tests and captures.
+  final DateTime Function()? clock;
+
+  /// Starting planned time; defaults to the current time (no suggested time).
+  final DateTime? initialPlannedAt;
 
   @override
   State<NextMealPage> createState() => _NextMealPageState();
 }
 
-class _NextMealPageState extends State<NextMealPage> {
-  /// User-selected target meal time. Defaults to "now + 2h" rounded down to
-  /// the nearest 5 minutes so the picker shows a clean value.
-  late DateTime _targetTime;
-  bool _useLocalAi = false;
-  bool _generating = false;
-  NextMealRecommendationResult? _result;
-  String? _error;
+sealed class _Pinned {
+  const _Pinned();
+}
 
-  /// User-defined window length (minutes) starting at the target time.
-  /// Required for an educational per-candidate mechanistic trace — the engine
-  /// never picks the window or changes the authoritative rule order. 0 means
-  /// no trace window.
-  int _windowMinutes = 60;
-  static const List<int> _windowChoices = [0, 30, 60, 90];
+final class _PinnedFood extends _Pinned {
+  const _PinnedFood(this.foodId);
+  final String foodId;
+}
+
+final class _PinnedPlate extends _Pinned {
+  const _PinnedPlate(this.number, this.items);
+  final int number;
+  final List<NextMealPlateItem> items;
+}
+
+class _NextMealPageState extends State<NextMealPage> {
+  static const int _pageSize = 24;
+  static const int _maxPinned = 3;
+
+  final _resolver = PersonalLogDateWindowResolver();
+  final _search = TextEditingController();
+  late DateTime _plannedAt;
+  NextMealSortKey _sort = NextMealSortKey.familiarThenName;
+  bool _descending = false;
+  NextMealFilter _filter = const NextMealFilter();
+  bool _showFilters = false;
+  int _visible = _pageSize;
+  final List<NextMealPlateItem> _plate = [];
+  final List<_Pinned> _pinned = [];
+  int _plateNumber = 0;
+
+  /// Open alternatives deck: `food-$id` or `plate-$id`.
+  String? _altDeck;
+  int _altIndex = 0;
+
+  /// "Vary my meals" window in days; 0 is off.
+  int _varietyDays = 0;
+  bool _hideRecent = false;
+  static const List<int> _varietyChoices = [0, 3, 7, 14];
+
+  /// The Advanced dishes page's shell route; linked only once it exists.
+  static const String _advancedRouteId = 'next-meal/advanced';
+
+  NextMealRecommendationResult? _legacy;
+  bool _legacyRunning = false;
+  String? _legacyError;
+
+  DateTime _now() => (widget.clock ?? DateTime.now)();
 
   @override
   void initState() {
     super.initState();
-    final base = DateTime.now().add(const Duration(hours: 2));
-    _targetTime = DateTime(
-      base.year,
-      base.month,
-      base.day,
-      base.hour,
-      base.minute - (base.minute % 5),
-    );
-    // Default the AI toggle to whatever the user already consented to during
-    // onboarding. They can still flip it per-generation.
-    final state = context.read<AppState>();
-    _useLocalAi = state.userProfile.hasCurrentLocalAiConsent;
-  }
-
-  Future<void> _pickTargetTime() async {
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _targetTime,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 30)),
-    );
-    if (pickedDate == null) return;
-    if (!mounted) return;
-    final pickedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(_targetTime),
-    );
-    if (pickedTime == null) return;
-    setState(() {
-      _targetTime = DateTime(
-        pickedDate.year,
-        pickedDate.month,
-        pickedDate.day,
-        pickedTime.hour,
-        pickedTime.minute,
-      );
-    });
-  }
-
-  Future<void> _generate() async {
-    debugPrint('[NextMeal] generate:start');
-    setState(() {
-      _generating = true;
-      _error = null;
-    });
-    try {
-      final result = await context
-          .read<AppState>()
-          .requestNextMealRecommendation(
-            nextMealAt: _targetTime,
-            useLocalAi: _useLocalAi,
-            windowDuration: _windowMinutes > 0
-                ? Duration(minutes: _windowMinutes)
-                : null,
-          );
-      if (!mounted) return;
-      setState(() => _result = result);
-      debugPrint('[NextMeal] generate:done');
-    } catch (error) {
-      if (!mounted) return;
-      setState(() => _error = '$error');
-      debugPrint('[NextMeal] generate:error type=${error.runtimeType}');
-    } finally {
-      if (mounted) setState(() => _generating = false);
-    }
+    final now = _now();
+    _plannedAt =
+        widget.initialPlannedAt ??
+        now.subtract(
+          Duration(
+            minutes: now.minute % 5,
+            seconds: now.second,
+            milliseconds: now.millisecond,
+            microseconds: now.microsecond,
+          ),
+        );
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Time in the profile's zone (the diary convention); local time when the
+  // zone is unavailable.
+  // ---------------------------------------------------------------------------
+
+  DateTime _show(DateTime instant, String zone) {
+    try {
+      return _resolver.displayTime(instant, zone);
+    } on FormatException {
+      return instant.toLocal();
+    }
+  }
+
+  DateTime _atClock(String zone, int hour, int minute) {
+    final day = _show(_plannedAt, zone);
+    try {
+      return tz.TZDateTime(
+        _resolver.location(zone),
+        day.year,
+        day.month,
+        day.day,
+        hour,
+        minute,
+      );
+    } on FormatException {
+      return DateTime(day.year, day.month, day.day, hour, minute);
+    }
+  }
+
+  String _plannedText(String zone) {
+    final planned = _show(_plannedAt, zone);
+    final now = _show(_now(), zone);
+    final clock = plannerClockText(planned);
+    final sameDay =
+        planned.year == now.year &&
+        planned.month == now.month &&
+        planned.day == now.day;
+    if (sameDay) return clock;
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${planned.year}-${two(planned.month)}-${two(planned.day)} $clock';
+  }
+
+  void _setPlanned(DateTime value) {
+    debugPrint('[NextMeal] planned:set');
+    setState(() => _plannedAt = value);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Plate and compare.
+  // ---------------------------------------------------------------------------
+
+  int _plateIndex(String id) => _plate.indexWhere((i) => i.candidate.id == id);
+
+  void _togglePlate(NextMealCandidate c) {
+    setState(() {
+      final index = _plateIndex(c.id);
+      if (index >= 0) {
+        _plate.removeAt(index);
+      } else {
+        _plate.add(NextMealPlateItem(c, 1));
+      }
+    });
+  }
+
+  void _stepServings(String id, double delta) {
+    setState(() {
+      final index = _plateIndex(id);
+      if (index < 0) return;
+      final next = (_plate[index].servings + delta).clamp(
+        NextMealPlanner.minServings,
+        NextMealPlanner.maxServings,
+      );
+      _plate[index] = _plate[index].withServings(next.toDouble());
+    });
+  }
+
+  bool _isPinnedFood(String id) =>
+      _pinned.any((p) => p is _PinnedFood && p.foodId == id);
+
+  void _pin(_Pinned entry) {
+    if (_pinned.length >= _maxPinned) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(content: Text(context.appI18n.tr('planner.pin_full'))),
+        );
+      return;
+    }
+    setState(() => _pinned.add(entry));
+  }
+
+  void _togglePinFood(NextMealCandidate c) {
+    if (_isPinnedFood(c.id)) {
+      setState(
+        () => _pinned.removeWhere((p) => p is _PinnedFood && p.foodId == c.id),
+      );
+    } else {
+      _pin(_PinnedFood(c.id));
+    }
+  }
+
+  void _pinPlate() {
+    if (_plate.isEmpty) return;
+    _pin(_PinnedPlate(++_plateNumber, List.unmodifiable(_plate)));
+  }
+
+  void _toggleDeck(String key) => setState(() {
+    if (_altDeck == key) {
+      _altDeck = null;
+    } else {
+      _altDeck = key;
+      _altIndex = 0;
+    }
+  });
+
+  /// Replaces a plate item with an alternative, keeping its servings. If the
+  /// alternative is already on the plate the two are merged.
+  void _swap(String fromId, NextMealCandidate to) {
+    debugPrint('[NextMeal] plate:swap');
+    setState(() {
+      final index = _plateIndex(fromId);
+      if (index < 0) return;
+      final servings = _plate[index].servings;
+      final existing = _plateIndex(to.id);
+      if (existing >= 0) {
+        _plate.removeAt(index);
+      } else {
+        _plate[index] = NextMealPlateItem(to, servings);
+      }
+      _altDeck = null;
+    });
+  }
+
+  Widget _deck(
+    AppI18n i18n, {
+    required String deckKey,
+    required NextMealCandidate original,
+    required List<NextMealAlternative> alternatives,
+    required Set<String> regions,
+    required String Function(NextMealCandidate) nameOf,
+    required String actionLabel,
+    required String Function(NextMealCandidate) actionSemantics,
+    required ValueChanged<NextMealCandidate> onAction,
+  }) => PlannerAlternativesDeck(
+    i18n: i18n,
+    deckKey: deckKey,
+    original: original,
+    alternatives: alternatives,
+    index: _altIndex,
+    regions: regions,
+    nameOf: nameOf,
+    onIndex: (value) => setState(() => _altIndex = value),
+    actionLabel: actionLabel,
+    actionSemantics: actionSemantics,
+    onAction: onAction,
+    onClose: () => setState(() => _altDeck = null),
+  );
+
+  Future<void> _saveDraft(AppState state) async {
     final i18n = context.appI18n;
+    debugPrint('[NextMeal] draft:open items=${_plate.length}');
+    final meal = Meal(
+      id: 'planner_${_plannedAt.millisecondsSinceEpoch}',
+      eatenAt: _plannedAt,
+      occurredAt: _plannedAt,
+      timeSource: 'user_exact',
+      title: i18n.tr('planner.draft_title'),
+      items: [
+        for (final item in _plate)
+          MealItem.fromFood(
+            food: item.candidate.food,
+            quantityFactor:
+                item.candidate.serving.evaluatedGrams * item.servings / 100,
+          ).copyWith(
+            foodName: i18n.foodName(
+              item.candidate.food.id,
+              item.candidate.food.name,
+            ),
+          ),
+      ],
+    );
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => EntryPage(reuseMeal: meal)));
+  }
+
+  Future<void> _runLegacy(AppState state) async {
+    setState(() {
+      _legacyRunning = true;
+      _legacyError = null;
+    });
+    try {
+      final result = await state.requestNextMealRecommendation(
+        nextMealAt: _plannedAt,
+        useLocalAi: false,
+        windowDuration: const Duration(minutes: 60),
+      );
+      if (!mounted) return;
+      setState(() => _legacy = result);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _legacyError = '$error');
+    } finally {
+      if (mounted) setState(() => _legacyRunning = false);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build.
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.watch<AppState>();
+    final i18n = context.appI18n;
+    final planner = state.nextMealPlanner;
+    final zone = state.userProfile.timezone;
+    final candidates = state.nextMealCandidates;
+    final byId = {for (final c in candidates) c.id: c};
+    // Plate items follow catalog updates by id.
+    for (var i = _plate.length - 1; i >= 0; i--) {
+      final fresh = byId[_plate[i].candidate.id];
+      if (fresh == null) {
+        _plate.removeAt(i);
+      } else if (!identical(fresh, _plate[i].candidate)) {
+        _plate[i] = NextMealPlateItem(fresh, _plate[i].servings);
+      }
+    }
+    final doseContext = state.nextMealDoseContext(_plannedAt);
+    final regions = NextMealPlanner.userRegions(state.userProfile);
+    final now = _now();
+    String nameOf(NextMealCandidate c) => i18n.foodName(c.food.id, c.food.name);
+    final arranged = planner.arrange(
+      candidates,
+      filter: _filter,
+      sort: _sort,
+      descending: _descending,
+      textureMode: state.userProfile.swallowingTextureMode,
+      nameOf: nameOf,
+      effectOf: _sort == NextMealSortKey.modeledBrainEntry
+          ? (c) => planner.candidateEffect(c, doseContext)
+          : null,
+      regions: regions,
+      now: now,
+      rotateUsedWithinDays: _varietyDays,
+    );
+    final hiddenByRegion = _filter.includeOtherRegions
+        ? 0
+        : planner
+                  .arrange(
+                    candidates,
+                    filter: _filter.copyWith(includeOtherRegions: true),
+                    sort: NextMealSortKey.name,
+                    descending: false,
+                    textureMode: state.userProfile.swallowingTextureMode,
+                    nameOf: nameOf,
+                    regions: regions,
+                    now: now,
+                  )
+                  .length -
+              arranged.length;
+    List<NextMealAlternative> alternativesFor(NextMealCandidate c) =>
+        planner.alternativesFor(
+          c,
+          candidates,
+          textureMode: state.userProfile.swallowingTextureMode,
+          regions: regions,
+          nameOf: nameOf,
+        );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: PaperAppBar(
@@ -177,763 +443,888 @@ class _NextMealPageState extends State<NextMealPage> {
       ),
       body: SafeArea(
         bottom: false,
-        // Controls stay beside the results on wide screens, so changing the
-        // time or window never scrolls the answer out of view.
         child: PaperSplit(
-          secondaryKey: ValueKey<String>(
-            _error != null
-                ? 'next-meal-state-error'
-                : _result != null
-                ? 'next-meal-state-result'
-                : _generating
-                ? 'next-meal-state-generating'
-                : 'next-meal-state-idle',
-          ),
-          primaryWidth: 400,
+          secondaryKey: const ValueKey('next-meal-browser-scroll'),
+          primaryWidth: 420,
           primary: [
-            _SubtitleBlock(i18n: i18n),
-            const SizedBox(height: 16),
-            _ControlsCard(
-              i18n: i18n,
-              targetTime: _targetTime,
-              useLocalAi: _useLocalAi,
-              generating: _generating,
-              onPickTime: _pickTargetTime,
-              onToggleAi: (value) => setState(() => _useLocalAi = value),
-              onGenerate: _generate,
+            Text(
+              i18n.tr('planner.subtitle'),
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: PlannerPalette.of(context).muted,
+              ),
             ),
             const SizedBox(height: 12),
-            PaperCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('next_meal.window_title'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Paper.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    i18n.tr('next_meal.window_help'),
-                    style: TextStyle(fontSize: 11, color: Paper.inkMuted),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final m in _windowChoices)
-                        ChoiceChip(
-                          label: Text(
-                            m == 0
-                                ? i18n.tr('next_meal.window_none')
-                                : i18n.tr('next_meal.window_minutes', {
-                                    'minutes': '$m',
-                                  }),
-                          ),
-                          selected: _windowMinutes == m,
-                          onSelected: (_) => setState(() => _windowMinutes = m),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
+            _dayStrip(state, i18n, zone),
+            const SizedBox(height: 12),
+            PlannerTimeCard(
+              i18n: i18n,
+              plannedText: _plannedText(zone),
+              onStep: (minutes) =>
+                  _setPlanned(_plannedAt.add(Duration(minutes: minutes))),
+              onTyped: (hour, minute) {
+                _setPlanned(_atClock(zone, hour, minute));
+                return true;
+              },
+              anchors: state.nextMealTimeAnchors(_now()),
+              onAnchor: (anchor, plus) =>
+                  _setPlanned(anchor.add(Duration(minutes: plus))),
+              contextLine: _doseContextLine(i18n, doseContext, zone),
+            ),
+            const SizedBox(height: 12),
+            _plateCard(
+              state,
+              i18n,
+              planner,
+              doseContext,
+              nameOf,
+              alternativesFor,
+              regions,
             ),
           ],
           secondary: [
-            if (_error != null) _ErrorCard(i18n: i18n, error: _error!),
-            if (_result != null)
-              // A fresh result settles into view each time it is generated.
-              PaperReveal(
-                key: ObjectKey(_result),
-                child: _ResultBlock(
-                  i18n: i18n,
-                  result: _result!,
-                  windowProvided: _windowMinutes > 0,
+            if (_pinned.isNotEmpty) ...[
+              _compareCard(i18n, planner, doseContext, byId, nameOf),
+              const SizedBox(height: 12),
+            ],
+            _browserControls(
+              state,
+              i18n,
+              candidates,
+              arranged.length,
+              regions,
+              hiddenByRegion,
+            ),
+            const SizedBox(height: 10),
+            if (arranged.isEmpty)
+              PlannerCard(
+                child: Text(
+                  i18n.tr('planner.no_results'),
+                  key: const ValueKey('next-meal-no-results'),
                 ),
               ),
-            if (_result == null && !_generating && _error == null)
-              _EmptyCard(i18n: i18n),
+            for (final c in arranged.take(_visible))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: PlannerFoodCard(
+                  i18n: i18n,
+                  candidate: c,
+                  name: nameOf(c),
+                  effect: planner.candidateEffect(
+                    c,
+                    doseContext,
+                    withBand: true,
+                  ),
+                  onPlate: _plateIndex(c.id) >= 0,
+                  pinned: _isPinnedFood(c.id),
+                  onTogglePlate: () => _togglePlate(c),
+                  onTogglePin: () => _togglePinFood(c),
+                  evidenceText: plannerEvidenceText(i18n, c, regions),
+                  lastEatenText: plannerLastEatenText(
+                    i18n,
+                    NextMealPlanner.daysSinceLastEaten(c, now),
+                  ),
+                  alternativesCount: alternativesFor(c).length,
+                  onToggleAlternatives: () => _toggleDeck('food-${c.id}'),
+                  alternativesDeck: _altDeck == 'food-${c.id}'
+                      ? _deck(
+                          i18n,
+                          deckKey: 'food-${c.id}',
+                          original: c,
+                          alternatives: alternativesFor(c),
+                          regions: regions,
+                          nameOf: nameOf,
+                          actionLabel: i18n.tr('planner.add_to_plate'),
+                          actionSemantics: (alt) => i18n.tr(
+                            'planner.alt_add_named',
+                            {'name': nameOf(alt)},
+                          ),
+                          onAction: (alt) {
+                            if (_plateIndex(alt.id) < 0) _togglePlate(alt);
+                          },
+                        )
+                      : null,
+                ),
+              ),
+            if (arranged.length > _visible)
+              Center(
+                child: OutlinedButton(
+                  key: const ValueKey('next-meal-show-more'),
+                  onPressed: () => setState(() => _visible += _pageSize),
+                  child: Text(
+                    i18n.tr('planner.show_more', {
+                      'count':
+                          '${(arranged.length - _visible).clamp(0, _pageSize)}',
+                    }),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
+            Text(
+              i18n.tr('planner.boundary'),
+              key: const ValueKey('next-meal-result-boundary'),
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.4,
+                color: PlannerPalette.of(context).muted,
+              ),
+            ),
+            const SizedBox(height: 8),
+            _auditSection(state, i18n, nameOf),
           ],
         ),
       ),
     );
   }
-}
 
-class _SubtitleBlock extends StatelessWidget {
-  final AppI18n i18n;
-  const _SubtitleBlock({required this.i18n});
-
-  @override
-  Widget build(BuildContext context) {
-    return PaperCard(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.auto_awesome_outlined,
-            size: 22,
-            color: Paper.inkMuted,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              i18n.tr('next_meal.subtitle'),
-              style: const TextStyle(
-                color: Paper.inkMuted,
-                fontSize: 13,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
+  Widget _dayStrip(AppState state, AppI18n i18n, String zone) {
+    final now = _now();
+    DiaryDay? day;
+    var nowMinute = now.hour * 60 + now.minute;
+    int? plannedMinute;
+    try {
+      final today = _resolver.dateAt(now, zone);
+      day = const PersonalDiaryStripProjector()
+          .project(
+            endDay: today,
+            dayCount: 1,
+            zoneId: zone,
+            asOf: now,
+            meals: state.meals,
+            intakes: state.intakes,
+            observations: const [],
+            foods: state.foodRepo.allFoods,
+            medications: state.medRepo.allDrugs,
+            resolver: _resolver,
+          )
+          .days
+          .single;
+      final shownNow = _resolver.displayTime(now, zone);
+      nowMinute = shownNow.hour * 60 + shownNow.minute;
+      if (_resolver.dateAt(_plannedAt, zone).compareTo(today) == 0) {
+        final planned = _resolver.displayTime(_plannedAt, zone);
+        plannedMinute = planned.hour * 60 + planned.minute;
+      }
+    } on FormatException {
+      day = null;
+    } on ArgumentError {
+      day = null;
+    }
+    return PlannerDayStrip(
+      i18n: i18n,
+      day: day,
+      nowMinute: nowMinute,
+      plannedMinute: plannedMinute,
     );
   }
-}
 
-class _ControlsCard extends StatelessWidget {
-  final AppI18n i18n;
-  final DateTime targetTime;
-  final bool useLocalAi;
-  final bool generating;
-  final VoidCallback onPickTime;
-  final ValueChanged<bool> onToggleAi;
-  final VoidCallback onGenerate;
-
-  const _ControlsCard({
-    required this.i18n,
-    required this.targetTime,
-    required this.useLocalAi,
-    required this.generating,
-    required this.onPickTime,
-    required this.onToggleAi,
-    required this.onGenerate,
-  });
-
-  String _formatTime(DateTime dt) {
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${dt.year}-${two(dt.month)}-${two(dt.day)} '
-        '${two(dt.hour)}:${two(dt.minute)}';
+  /// "1 d 18 h", "2 h 5 min" or "40 min".
+  String _span(AppI18n i18n, int minutes) {
+    final m = minutes.abs();
+    if (m >= 24 * 60) {
+      return i18n.tr('planner.span_days_hours', {
+        'days': '${m ~/ (24 * 60)}',
+        'hours': '${(m % (24 * 60)) ~/ 60}',
+      });
+    }
+    if (m >= 60) {
+      return i18n.tr('planner.span_hours_minutes', {
+        'hours': '${m ~/ 60}',
+        'minutes': '${m % 60}',
+      });
+    }
+    return i18n.tr('planner.span_minutes', {'minutes': '$m'});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return PaperCard(
-      padding: const EdgeInsets.all(18),
+  String _when(DateTime instant, String zone) {
+    final shown = _show(instant, zone);
+    final planned = _show(_plannedAt, zone);
+    final clock = plannerClockText(shown);
+    if (shown.year == planned.year &&
+        shown.month == planned.month &&
+        shown.day == planned.day) {
+      return clock;
+    }
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${shown.year}-${two(shown.month)}-${two(shown.day)} $clock';
+  }
+
+  Widget _doseContextLine(
+    AppI18n i18n,
+    NextMealDoseContext doseContext,
+    String zone,
+  ) {
+    final intake = doseContext.intake;
+    final drug = doseContext.drug;
+    final outOfRange = doseContext.reasons.contains(
+      NextMealUnavailableReason.outsideModeledRange,
+    );
+    final otherReasons = [
+      for (final reason in doseContext.reasons)
+        if (reason != NextMealUnavailableReason.outsideModeledRange) reason,
+    ];
+    final offset = doseContext.offsetMinutes;
+    return Column(
+      key: const ValueKey('next-meal-dose-context'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (intake != null && drug != null && offset != null)
+          Text(
+            outOfRange
+                ? i18n.tr('planner.no_dose_in_window', {
+                    'drug': i18n.medicationName(drug.id, drug.displayName),
+                    'when': _when(intake.takenAt, zone),
+                    'relative': i18n.tr(
+                      offset >= 0
+                          ? 'planner.relative_before'
+                          : 'planner.relative_after',
+                      {'span': _span(i18n, offset)},
+                    ),
+                  })
+                : i18n.tr('planner.dose_context', {
+                    'drug': i18n.medicationName(drug.id, drug.displayName),
+                    'time': _when(intake.takenAt, zone),
+                    'offset': plannerOffsetText(i18n, offset),
+                  }),
+            key: const ValueKey('next-meal-dose-context-text'),
+            style: const TextStyle(fontSize: 13, height: 1.35),
+          ),
+        if (otherReasons.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          PlannerChip(
+            label: plannerCantModelText(i18n, otherReasons),
+            tone: PlannerChipTone.warn,
+            icon: Icons.block_outlined,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _plateCard(
+    AppState state,
+    AppI18n i18n,
+    NextMealPlanner planner,
+    NextMealDoseContext doseContext,
+    String Function(NextMealCandidate) nameOf,
+    List<NextMealAlternative> Function(NextMealCandidate) alternativesFor,
+    Set<String> regions,
+  ) {
+    final totals = planner.plateTotals(_plate);
+    final curves = _plate.isEmpty
+        ? null
+        : planner.plateCurves(_plate, doseContext);
+    return PlannerCard(
+      key: const ValueKey('next-meal-plate'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            i18n.tr('next_meal.input_time'),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Paper.inkMuted,
-              letterSpacing: -0.1,
-            ),
-          ),
-          const SizedBox(height: 8),
           Semantics(
-            button: true,
-            label: i18n.tr('next_meal.input_time'),
-            value: _formatTime(targetTime),
-            excludeSemantics: true,
-            child: OutlinedButton(
-              key: const ValueKey('next-meal-time-picker'),
-              onPressed: onPickTime,
-              style: OutlinedButton.styleFrom(
-                alignment: AlignmentDirectional.centerStart,
-                padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Paper.radiusMd),
-                ),
+            header: true,
+            child: Text(
+              i18n.tr('planner.plate_title'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 6),
+          if (_plate.isEmpty)
+            Text(
+              i18n.tr('planner.plate_empty'),
+              key: const ValueKey('next-meal-plate-empty'),
+              style: TextStyle(
+                fontSize: 13,
+                color: PlannerPalette.of(context).muted,
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _formatTime(targetTime),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Paper.ink,
-                        letterSpacing: -0.1,
+            ),
+          for (final item in _plate)
+            PlannerPlateItemRow(
+              i18n: i18n,
+              item: item,
+              name: nameOf(item.candidate),
+              onLess: item.servings > NextMealPlanner.minServings
+                  ? () => _stepServings(
+                      item.candidate.id,
+                      -NextMealPlanner.servingStep,
+                    )
+                  : null,
+              onMore: item.servings < NextMealPlanner.maxServings
+                  ? () => _stepServings(
+                      item.candidate.id,
+                      NextMealPlanner.servingStep,
+                    )
+                  : null,
+              onRemove: () => _togglePlate(item.candidate),
+              onAlternatives: () => _toggleDeck('plate-${item.candidate.id}'),
+              alternativesDeck: _altDeck == 'plate-${item.candidate.id}'
+                  ? _deck(
+                      i18n,
+                      deckKey: 'plate-${item.candidate.id}',
+                      original: item.candidate,
+                      alternatives: alternativesFor(item.candidate),
+                      regions: regions,
+                      nameOf: nameOf,
+                      actionLabel: i18n.tr('planner.alt_swap'),
+                      actionSemantics: (alt) => i18n.tr(
+                        'planner.alt_swap_named',
+                        {'from': nameOf(item.candidate), 'to': nameOf(alt)},
                       ),
-                    ),
-                  ),
-                  const Icon(
-                    Icons.event_outlined,
-                    size: 20,
-                    color: Paper.inkMuted,
-                  ),
-                ],
-              ),
+                      onAction: (alt) => _swap(item.candidate.id, alt),
+                    )
+                  : null,
             ),
-          ),
-          const SizedBox(height: 16),
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: Text(
-              i18n.tr('next_meal.use_local_ai'),
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: Paper.ink,
+          if (_plate.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            PlannerTotals(i18n: i18n, totals: totals),
+            const SizedBox(height: 12),
+            if (curves != null && curves.effect.modeled)
+              NextMealPlateChart(
+                curves: curves,
+                i18n: i18n,
+                draws: planner.physiology.draws,
+                seed: planner.physiology.seed,
+              )
+            else if (curves != null)
+              KeyedSubtree(
+                key: const ValueKey('next-meal-plate-not-modeled'),
+                child: PlannerEffectLine(i18n: i18n, effect: curves.effect),
               ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const ValueKey('next-meal-pin-plate'),
+                  onPressed: _pinPlate,
+                  icon: const Icon(Icons.push_pin_outlined),
+                  label: Text(i18n.tr('planner.pin_plate')),
+                ),
+                FilledButton.icon(
+                  key: const ValueKey('next-meal-save-draft'),
+                  onPressed: () => _saveDraft(state),
+                  icon: const Icon(Icons.edit_note_rounded),
+                  label: Text(i18n.tr('planner.save_draft')),
+                ),
+              ],
             ),
-            subtitle: Text(
-              i18n.tr('next_meal.use_local_ai_help'),
-              style: const TextStyle(
+            const SizedBox(height: 6),
+            Text(
+              i18n.tr('planner.save_draft_note'),
+              style: TextStyle(
                 fontSize: 12,
-                color: Paper.inkMuted,
-                height: 1.35,
-              ),
-            ),
-            value: useLocalAi,
-            onChanged: generating ? null : onToggleAi,
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: PaperButton(
-              key: const ValueKey('next-meal-generate'),
-              onPressed: generating ? null : onGenerate,
-              leadingIcon: generating ? null : Icons.auto_fix_high_rounded,
-              label: Text(
-                generating
-                    ? i18n.tr('next_meal.generating')
-                    : i18n.tr('next_meal.generate'),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyCard extends StatelessWidget {
-  final AppI18n i18n;
-  const _EmptyCard({required this.i18n});
-
-  @override
-  Widget build(BuildContext context) {
-    return PaperCard(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 28),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.restaurant_menu_outlined,
-            size: 40,
-            color: Paper.inkMuted,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            i18n.tr('next_meal.empty'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Paper.inkMuted,
-              height: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorCard extends StatelessWidget {
-  final AppI18n i18n;
-  final String error;
-  const _ErrorCard({required this.i18n, required this.error});
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      key: const ValueKey('next-meal-error'),
-      liveRegion: true,
-      child: PaperCard(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 22,
-              color: Colors.red.withValues(alpha: 0.85),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    i18n.tr('next_meal.error'),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.red.withValues(alpha: 0.85),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    error,
-                    style: const TextStyle(fontSize: 12, color: Paper.inkMuted),
-                  ),
-                ],
+                color: PlannerPalette.of(context).muted,
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
-}
 
-class _ResultBlock extends StatelessWidget {
-  final AppI18n i18n;
-  final NextMealRecommendationResult result;
-  final bool windowProvided;
-  const _ResultBlock({
-    required this.i18n,
-    required this.result,
-    required this.windowProvided,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final copy = ResponseCopyService(i18n: i18n);
-    final scheme = Theme.of(context).colorScheme;
-    final rankPresentationWithheld = shouldWithholdRankedFoodPresentation(
-      candidateSetSha256: result.candidateSetSnapshot.sha256Digest,
-      assessment: result.rankSensitivityAssessment,
-    );
-    final explanationLines = rankPresentationWithheld
-        ? const <String>[]
-        : result.explanations
-              .where((line) => line.trim().isNotEmpty)
-              .map(copy.recommendationMessage)
-              .toList(growable: false);
-    final gateLines = result.gateReasons
-        .where((line) => line.trim().isNotEmpty)
-        .map(copy.recommendationMessage)
-        .toList(growable: false);
-    final traceAlignment = alignMechanisticCandidateTraces(
-      recommendationFoodIds: rankPresentationWithheld
-          ? const <String>[]
-          : result.recommendations
-                .take(5)
-                .map((recommendation) => recommendation.food.id)
-                .toList(growable: false),
-      candidateScores:
-          result.mechanisticCandidateScores ??
-          const <MechanisticCandidateScore>[],
-    );
-
-    return Column(
-      key: const ValueKey('next-meal-result'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Rule-based or AI-reworded list; the engine path is under
-        // "How was this computed?".
-        PaperCard(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(
-                result.aiUsed
-                    ? Icons.auto_awesome_rounded
-                    : Icons.shield_outlined,
-                size: 20,
-                color: scheme.primary,
-                // Decorative: the adjacent text already names the path.
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  result.aiUsed
-                      ? i18n.tr('next_meal.ai_polished')
-                      : i18n.tr('next_meal.conservative_engine'),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Paper.ink,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        if (rankPresentationWithheld) ...[
-          const SizedBox(height: 10),
-          const RankedFoodPresentationWithheldNotice(),
-        ],
-        if (explanationLines.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          PaperCard(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  i18n.tr('next_meal.why_these'),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Paper.ink,
-                    letterSpacing: -0.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                for (final line in explanationLines)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '• ',
-                          style: TextStyle(color: Paper.inkMuted),
-                        ),
-                        Expanded(
-                          child: Text(
-                            line,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Paper.ink,
-                              height: 1.45,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
+  Widget _compareCard(
+    AppI18n i18n,
+    NextMealPlanner planner,
+    NextMealDoseContext doseContext,
+    Map<String, NextMealCandidate> byId,
+    String Function(NextMealCandidate) nameOf,
+  ) {
+    final columns = <Widget>[];
+    for (final entry in List.of(_pinned)) {
+      switch (entry) {
+        case _PinnedFood(:final foodId):
+          final c = byId[foodId];
+          if (c == null) continue;
+          final items = [NextMealPlateItem(c, 1)];
+          columns.add(
+            PlannerCompareColumn(
+              key: ValueKey('next-meal-compare-food-$foodId'),
+              i18n: i18n,
+              title: nameOf(c),
+              subtitle: plannerServingText(i18n, c),
+              totals: planner.plateTotals(items),
+              effect: planner.plateEffect(items, doseContext),
+              dataText: i18n.tr('planner.completeness', {
+                'present': '${c.presentFieldCount}',
+                'total': '${NextMealDataFields.all.length}',
+              }),
+              onUnpin: () => setState(() => _pinned.remove(entry)),
             ),
-          ),
-        ],
-        const SizedBox(height: 12),
-        if (!rankPresentationWithheld) ...[
-          Text(
-            i18n.tr('next_meal.candidates'),
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Paper.inkMuted,
-              letterSpacing: -0.1,
+          );
+        case _PinnedPlate(:final number, :final items):
+          final present = items.fold<int>(
+            0,
+            (sum, i) => sum + i.candidate.presentFieldCount,
+          );
+          columns.add(
+            PlannerCompareColumn(
+              key: ValueKey('next-meal-compare-plate-$number'),
+              i18n: i18n,
+              title: i18n.tr('planner.plate_label', {'n': '$number'}),
+              subtitle: items.map((i) => nameOf(i.candidate)).join(', '),
+              totals: planner.plateTotals(items),
+              effect: planner.plateEffect(items, doseContext),
+              dataText: i18n.tr('planner.completeness', {
+                'present': '$present',
+                'total': '${NextMealDataFields.all.length * items.length}',
+              }),
+              onUnpin: () => setState(() => _pinned.remove(entry)),
+            ),
+          );
+      }
+    }
+    return PlannerCard(
+      key: const ValueKey('next-meal-compare'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              i18n.tr('planner.compare_title'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            i18n.tr('serving.basis_note'),
-            key: const ValueKey('next-meal-serving-basis-note'),
-            style: const TextStyle(
-              fontSize: 11,
-              color: Paper.inkMuted,
-              height: 1.35,
+            i18n.tr('planner.compare_hint'),
+            style: TextStyle(
+              fontSize: 12,
+              color: PlannerPalette.of(context).muted,
             ),
           ),
           const SizedBox(height: 8),
-        ],
-        if (!rankPresentationWithheld && result.recommendations.isEmpty)
-          PaperCard(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 22),
-            child: Text(
-              i18n.tr('next_meal.no_candidates'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Paper.inkMuted, fontSize: 13),
-            ),
-          ),
-        if (!rankPresentationWithheld)
-          for (final rec in result.recommendations.take(5))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: PaperCard(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Side by side when there is room, stacked on a phone.
+              final wide = constraints.maxWidth >= 560;
+              if (!wide) {
+                return Column(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            i18n.foodName(rec.food.id, rec.food.name),
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Paper.ink,
-                              letterSpacing: -0.1,
-                            ),
-                          ),
-                        ),
-                        _DecisionChip(
-                          label: i18n.decisionLabel(rec.decision),
-                          tone: rec.decision,
-                        ),
-                      ],
-                    ),
-                    CandidateRankUncertaintyBadge(
-                      candidateId: rec.food.id,
-                      candidateSetSha256:
-                          result.candidateSetSnapshot.sha256Digest,
-                      assessment: result.rankSensitivityAssessment,
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      candidateServingMacroLine(i18n, rec.food),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Paper.inkMuted,
+                    for (final column in columns)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: SizedBox(width: double.infinity, child: column),
                       ),
-                    ),
-                    if (rec.reasons.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      for (final reason in rec.reasons.take(3))
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Text(
-                            '· ${copy.recommendationMessage(reason)}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Paper.ink,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                    ],
                   ],
-                ),
-              ),
-            ),
-        const SizedBox(height: 4),
-        Text(
-          i18n.tr('next_meal.result_boundary'),
-          key: const ValueKey('next-meal-result-boundary'),
-          style: const TextStyle(
-            fontSize: 12,
-            color: Paper.inkMuted,
-            height: 1.4,
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < columns.length; i++) ...[
+                    if (i > 0) const SizedBox(width: 8),
+                    Expanded(child: columns[i]),
+                  ],
+                  for (var i = columns.length; i < _maxPinned; i++) ...[
+                    const SizedBox(width: 8),
+                    const Expanded(child: SizedBox()),
+                  ],
+                ],
+              );
+            },
           ),
-        ),
-        const SizedBox(height: 8),
-        // Engine detail: path, candidate-set snapshot, gate notes and the
-        // educational traces. Safety notices above stay visible.
-        Theme(
-          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            key: const ValueKey('next-meal-how-computed'),
-            tilePadding: EdgeInsets.zero,
-            expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-            shape: const Border(),
-            collapsedShape: const Border(),
-            title: Text(
-              i18n.tr('interaction.how_computed'),
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Paper.ink,
-              ),
-            ),
-            children: [
-              Text(
-                i18n.tr('next_meal.how_computed_body'),
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Paper.inkMuted,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${i18n.tr('next_meal.recommendation_path')}: '
-                '${i18n.recommendationPathLabel(result.decisionPath)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Paper.inkMuted,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 10),
-              CandidateSetSnapshotCard(
-                snapshot: result.candidateSetSnapshot,
-                rankSensitivityAssessment: result.rankSensitivityAssessment,
-              ),
-              if (gateLines.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                PaperCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.shield_outlined,
-                            size: 18,
-                            color: scheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          // Must flex: this label is far longer in some locales
-                          // (fr is ~2x en) and overflowed the row without it.
-                          Expanded(
-                            child: Text(
-                              i18n.tr('next_meal.gate_reasons'),
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Paper.ink,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      for (final line in gateLines)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 3),
-                          child: Text(
-                            '• $line',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Paper.inkMuted,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-              if (result.mechanisticTrace != null) ...[
-                const SizedBox(height: 12),
-                MechanisticConflictTraceCard(
-                  typedResult: result.mechanisticTrace,
-                ),
-              ],
-              if (!rankPresentationWithheld &&
-                  traceAlignment.alignedScores.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                const Text(
-                  'Model trace per candidate (educational)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Paper.inkMuted,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                for (final s in traceAlignment.alignedScores)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: MechanisticCandidateScoreLine(score: s),
-                  ),
-              ],
-              if (!rankPresentationWithheld &&
-                  (result.mechanisticCandidateScores?.isNotEmpty ?? false) &&
-                  !traceAlignment.complete) ...[
-                const SizedBox(height: 4),
-                const Text(
-                  'Some candidate trace rows were withheld because an exact '
-                  'one-to-one ID match with the displayed heuristic order could '
-                  'not be established.',
-                  key: ValueKey('next-meal-trace-alignment-withheld'),
-                  style: TextStyle(fontSize: 11, color: Paper.inkMuted),
-                ),
-              ],
-              if (result.rankerUsed != null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Recommendation ranker: ${result.rankerUsed} · '
-                  'mechanistic trace changes order: no',
-                  style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
-                ),
-              ],
-              if (result.rankerEligibility != null &&
-                  result.rankerEligibility!.fallbackReasons.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  result.rankerEligibility!.fallbackReasons.contains(
-                        'mechanistic_trace_only_not_validated_for_ranking',
-                      )
-                      ? 'The mechanistic model is an educational trace only and '
-                            'does not reorder recommendations. Trace limitations: '
-                            '${result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ').isEmpty ? 'none beyond the trace-only boundary' : result.rankerEligibility!.fallbackReasons.where((reason) => reason != 'mechanistic_trace_only_not_validated_for_ranking').join(', ')}.'
-                      : 'The mechanistic trace is unavailable for this request '
-                            '(${result.rankerEligibility!.fallbackReasons.join(', ')}).',
-                  style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
-                ),
-              ],
-              if (result.mechanisticCandidateScores == null &&
-                  result.rankerEligibility == null) ...[
-                const SizedBox(height: 6),
-                Text(
-                  !windowProvided
-                      ? 'No meal-time window was provided, so no per-candidate '
-                            'mechanistic trace was generated. Recommendations remain '
-                            'on the conservative heuristic. This is not medical advice.'
-                      : 'The mechanistic trace is unavailable for this request '
-                            '(insufficient or out-of-domain context). Recommendations '
-                            'remain on the conservative heuristic. '
-                            'This is not medical advice.',
-                  style: const TextStyle(fontSize: 11, color: Paper.inkMuted),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
-}
 
-class _DecisionChip extends StatelessWidget {
-  final String label;
-  final String tone;
-  const _DecisionChip({required this.label, required this.tone});
+  String _sortLabel(AppI18n i18n, NextMealSortKey key) => i18n.tr(switch (key) {
+    NextMealSortKey.familiarThenName => 'planner.sort.familiar_then_name',
+    NextMealSortKey.name => 'planner.sort.name',
+    NextMealSortKey.proteinPerServing => 'planner.sort.protein',
+    NextMealSortKey.modeledBrainEntry => 'planner.sort.modeled',
+    NextMealSortKey.energy => 'planner.sort.energy',
+  });
 
-  Color _toneColor(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    switch (tone.toLowerCase()) {
-      case 'block':
-      case 'discourage':
-        return Colors.red.withValues(alpha: 0.85);
-      case 'warn':
-      case 'require_review':
-        return Colors.orange.withValues(alpha: 0.85);
-      case 'info':
-      case 'defer':
-        return scheme.primary;
-      // No rule flag is not an all-clear, so it is not shown in green.
-      case 'allow':
-      default:
-        return Paper.inkMuted;
-    }
+  String _directionLabel(AppI18n i18n) {
+    final byName =
+        _sort == NextMealSortKey.name ||
+        _sort == NextMealSortKey.familiarThenName;
+    return i18n.tr(
+      byName
+          ? (_descending ? 'planner.sort_z_a' : 'planner.sort_a_z')
+          : (_descending
+                ? 'planner.sort_descending'
+                : 'planner.sort_ascending'),
+    );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final color = _toneColor(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        border: Border.all(color: color.withValues(alpha: 0.45)),
-        borderRadius: BorderRadius.circular(Paper.radiusXl),
+  Widget _browserControls(
+    AppState state,
+    AppI18n i18n,
+    List<NextMealCandidate> candidates,
+    int shownCount,
+    Set<String> userRegions,
+    int hiddenByRegion,
+  ) {
+    final palette = PlannerPalette.of(context);
+    final navigate = PaperShellScope.maybeOf(context)?.navigate;
+    final advancedAvailable =
+        MainTabRoute.fromId(_advancedRouteId).id == _advancedRouteId;
+    final regions = {
+      for (final c in candidates) c.food.jurisdiction.toUpperCase(),
+    }.toList()..sort();
+    final textureMode = state.userProfile.swallowingTextureMode;
+    void update(NextMealFilter next) => setState(() {
+      _filter = next;
+      _visible = _pageSize;
+    });
+    Set<T> toggled<T>(Set<T> set, T value) =>
+        set.contains(value) ? ({...set}..remove(value)) : {...set, value};
+    final activeFilters =
+        _filter.groups.length +
+        _filter.textures.length +
+        _filter.regions.length +
+        (_filter.completeDataOnly ? 1 : 0) +
+        (_filter.matchTextureProfile ? 1 : 0);
+
+    Widget section(String title, List<Widget> chips) => Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontSize: 12, color: palette.muted)),
+          const SizedBox(height: 4),
+          Wrap(spacing: 6, runSpacing: 6, children: chips),
+        ],
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: color,
-          letterSpacing: 0.2,
+    );
+
+    return PlannerCard(
+      key: const ValueKey('next-meal-browser-controls'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              i18n.tr('planner.browser_title'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const ValueKey('next-meal-search'),
+            controller: _search,
+            decoration: InputDecoration(
+              labelText: i18n.tr('planner.search'),
+              prefixIcon: const Icon(Icons.search_rounded),
+            ),
+            onChanged: (value) => update(_filter.copyWith(query: value)),
+          ),
+          const SizedBox(height: 10),
+          if (userRegions.isNotEmpty) ...[
+            Text(
+              i18n.tr('planner.region_scope', {
+                'regions': userRegions.map(i18n.regionLabel).join(', '),
+              }),
+              key: const ValueKey('next-meal-region-scope'),
+              style: const TextStyle(fontSize: 13),
+            ),
+            SwitchListTile(
+              key: const ValueKey('next-meal-include-other-regions'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(i18n.tr('planner.include_other_regions')),
+              subtitle: hiddenByRegion > 0
+                  ? Text(
+                      i18n.tr('planner.other_regions_hidden', {
+                        'count': '$hiddenByRegion',
+                      }),
+                      key: const ValueKey('next-meal-other-regions-hidden'),
+                    )
+                  : null,
+              value: _filter.includeOtherRegions,
+              onChanged: (value) =>
+                  update(_filter.copyWith(includeOtherRegions: value)),
+            ),
+          ],
+          Text(
+            i18n.tr('planner.variety_title'),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final days in _varietyChoices)
+                ChoiceChip(
+                  key: ValueKey('next-meal-variety-$days'),
+                  label: Text(
+                    days == 0
+                        ? i18n.tr('planner.variety_off')
+                        : i18n.tr('planner.variety_days', {'days': '$days'}),
+                  ),
+                  selected: _varietyDays == days,
+                  onSelected: (_) => setState(() {
+                    _varietyDays = days;
+                    if (days == 0) _hideRecent = false;
+                    _filter = _filter.copyWith(
+                      hideUsedWithinDays: _hideRecent ? days : 0,
+                    );
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _varietyDays == 0
+                ? i18n.tr('planner.variety_note_off')
+                : i18n.tr('planner.variety_note', {'days': '$_varietyDays'}),
+            key: const ValueKey('next-meal-variety-note'),
+            style: TextStyle(fontSize: 12, color: palette.muted, height: 1.35),
+          ),
+          if (_varietyDays > 0)
+            SwitchListTile(
+              key: const ValueKey('next-meal-variety-hide'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(
+                i18n.tr('planner.variety_hide', {'days': '$_varietyDays'}),
+              ),
+              value: _hideRecent,
+              onChanged: (value) => setState(() {
+                _hideRecent = value;
+                _filter = _filter.copyWith(
+                  hideUsedWithinDays: value ? _varietyDays : 0,
+                );
+                _visible = _pageSize;
+              }),
+            ),
+          if (advancedAvailable && navigate != null) ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const ValueKey('next-meal-advanced-link'),
+                onPressed: () => navigate(_advancedRouteId),
+                icon: const Icon(Icons.soup_kitchen_outlined),
+                label: Text(i18n.tr('planner.advanced_link')),
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 220, maxWidth: 320),
+                child: DropdownButtonFormField<NextMealSortKey>(
+                  key: const ValueKey('next-meal-sort'),
+                  initialValue: _sort,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: i18n.tr('planner.sort_label'),
+                  ),
+                  items: [
+                    for (final key in NextMealSortKey.values)
+                      DropdownMenuItem(
+                        value: key,
+                        child: Text(_sortLabel(i18n, key)),
+                      ),
+                  ],
+                  onChanged: (key) => setState(() {
+                    if (key == null) return;
+                    _sort = key;
+                    _descending =
+                        key == NextMealSortKey.proteinPerServing ||
+                        key == NextMealSortKey.energy;
+                  }),
+                ),
+              ),
+              OutlinedButton.icon(
+                key: const ValueKey('next-meal-sort-reverse'),
+                onPressed: () => setState(() => _descending = !_descending),
+                icon: const Icon(Icons.swap_vert_rounded),
+                label: Text(_directionLabel(i18n)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            i18n.tr('planner.sort_note'),
+            style: TextStyle(fontSize: 12, color: palette.muted, height: 1.35),
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              TextButton.icon(
+                key: const ValueKey('next-meal-filters'),
+                onPressed: () => setState(() => _showFilters = !_showFilters),
+                icon: Icon(
+                  _showFilters
+                      ? Icons.expand_less_rounded
+                      : Icons.filter_list_rounded,
+                ),
+                label: Text(
+                  activeFilters == 0
+                      ? i18n.tr('planner.filters')
+                      : '${i18n.tr('planner.filters')} ($activeFilters)',
+                ),
+              ),
+              if (_filter.active)
+                TextButton(
+                  key: const ValueKey('next-meal-filters-clear'),
+                  onPressed: () {
+                    _search.clear();
+                    update(const NextMealFilter());
+                  },
+                  child: Text(i18n.tr('planner.filter_clear')),
+                ),
+            ],
+          ),
+          if (_showFilters) ...[
+            section(i18n.tr('planner.filter_group'), [
+              for (final group in FoodCategory.values)
+                FilterChip(
+                  key: ValueKey('next-meal-filter-group-${group.name}'),
+                  label: Text(i18n.tr('planner.group.${group.name}')),
+                  selected: _filter.groups.contains(group),
+                  onSelected: (_) => update(
+                    _filter.copyWith(groups: toggled(_filter.groups, group)),
+                  ),
+                ),
+            ]),
+            section(i18n.tr('planner.filter_texture'), [
+              for (final (value, key) in const [
+                (NextMealTextureFilter.liquid, 'planner.texture_liquid'),
+                (NextMealTextureFilter.soft, 'planner.texture_soft'),
+                (NextMealTextureFilter.regular, 'planner.texture_regular'),
+                (NextMealTextureFilter.unknown, 'planner.texture_unknown'),
+              ])
+                FilterChip(
+                  key: ValueKey('next-meal-filter-texture-$value'),
+                  label: Text(i18n.tr(key)),
+                  selected: _filter.textures.contains(value),
+                  onSelected: (_) => update(
+                    _filter.copyWith(
+                      textures: toggled(_filter.textures, value),
+                    ),
+                  ),
+                ),
+            ]),
+            section(i18n.tr('planner.filter_region'), [
+              for (final region in regions)
+                FilterChip(
+                  key: ValueKey('next-meal-filter-region-$region'),
+                  label: Text(i18n.regionLabel(region)),
+                  selected: _filter.regions.contains(region),
+                  onSelected: (_) => update(
+                    _filter.copyWith(regions: toggled(_filter.regions, region)),
+                  ),
+                ),
+            ]),
+            const SizedBox(height: 4),
+            SwitchListTile(
+              key: const ValueKey('next-meal-filter-available'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(i18n.tr('planner.filter_available')),
+              value: _filter.seenInMyMealsOnly,
+              onChanged: (value) =>
+                  update(_filter.copyWith(seenInMyMealsOnly: value)),
+            ),
+            SwitchListTile(
+              key: const ValueKey('next-meal-filter-complete'),
+              contentPadding: EdgeInsets.zero,
+              title: Text(i18n.tr('planner.filter_complete')),
+              value: _filter.completeDataOnly,
+              onChanged: (value) =>
+                  update(_filter.copyWith(completeDataOnly: value)),
+            ),
+            if (textureMode != 'unrestricted')
+              SwitchListTile(
+                key: const ValueKey('next-meal-filter-profile'),
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  i18n.tr('planner.filter_profile', {
+                    'mode': i18n.textureModeLabel(textureMode),
+                  }),
+                ),
+                value: _filter.matchTextureProfile,
+                onChanged: (value) =>
+                    update(_filter.copyWith(matchTextureProfile: value)),
+              ),
+          ],
+          const SizedBox(height: 4),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              i18n.tr('planner.result_count', {
+                'shown': '${shownCount < _visible ? shownCount : _visible}',
+                'total': '$shownCount',
+              }),
+              key: const ValueKey('next-meal-result-count'),
+              style: TextStyle(fontSize: 12, color: palette.muted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _auditSection(
+    AppState state,
+    AppI18n i18n,
+    String Function(NextMealCandidate) nameOf,
+  ) {
+    final legacy = _legacy;
+    final scores = [...?legacy?.mechanisticCandidateScores]
+      ..sort((a, b) => a.candidateName.compareTo(b.candidateName));
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: const ValueKey('next-meal-audit'),
+        tilePadding: EdgeInsets.zero,
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        title: Text(
+          i18n.tr('planner.audit_title'),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
         ),
+        children: [
+          Text(
+            i18n.tr('planner.audit_body'),
+            style: const TextStyle(fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton(
+              key: const ValueKey('next-meal-audit-run'),
+              onPressed: _legacyRunning ? null : () => _runLegacy(state),
+              child: Text(
+                _legacyRunning
+                    ? i18n.tr('planner.audit_running')
+                    : i18n.tr('planner.audit_run'),
+              ),
+            ),
+          ),
+          if (_legacyError != null) ...[
+            const SizedBox(height: 6),
+            Text(_legacyError!, style: const TextStyle(fontSize: 12)),
+          ],
+          if (legacy?.mechanisticTrace != null) ...[
+            const SizedBox(height: 10),
+            MechanisticConflictTraceCard(typedResult: legacy!.mechanisticTrace),
+          ],
+          if (scores.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              i18n.tr('planner.audit_candidates'),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 6),
+            for (final score in scores)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: MechanisticCandidateScoreLine(score: score),
+              ),
+          ],
+        ],
       ),
     );
   }

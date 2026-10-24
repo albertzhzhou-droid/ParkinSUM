@@ -21,9 +21,9 @@ void main() {
       );
 
       expect(reviewed, manifest.toJson());
-      expect(manifest.algorithms, hasLength(66));
+      expect(manifest.algorithms, hasLength(67));
       expect(manifest.liveCount, 15);
-      expect(manifest.staticOnlyCount, 51);
+      expect(manifest.staticOnlyCount, 52);
       expect(manifest.sha256Digest, matches(RegExp(r'^[a-f0-9]{64}$')));
       expect(manifest.providers, hasLength(2));
       final provider = manifest.providers.singleWhere(

@@ -39,13 +39,13 @@ Future<void> main() async {
   );
 
   final coveragePassed =
-      registeredIds.length == 66 &&
+      registeredIds.length == 67 &&
       mathematicalReport.checks.length == 23 &&
       mathematicalReport.coveredAlgorithmIds.length == 22 &&
-      mathematicalUncoveredIds.length == 44 &&
+      mathematicalUncoveredIds.length == 45 &&
       executableReport.coveredAlgorithmIds.length == 8 &&
       combinedCoveredIds.length == 30 &&
-      uncoveredIds.length == 36;
+      uncoveredIds.length == 37;
   stdout.writeln(
     'Algorithm executable contracts: '
     '${executableReport.passedCheckCount}/${executableReport.checks.length} checks; '

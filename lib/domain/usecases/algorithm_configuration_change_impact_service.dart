@@ -19,9 +19,9 @@ import 'mechanistic_next_meal_scorer.dart';
 /// of both identities' self-declared digests.
 final class AlgorithmConfigurationChangeImpactService {
   static const String baselineFixtureSha256Pin =
-      'a175882cb693fe75c9ee01fc9cb4e3bd6d7d4f0fc416b8cb28117cd127a9d41e';
+      'a84af7070f3433bcb863e71c382d8b2db713097409ba90d28c018cc875041530';
   static const String currentFixtureSha256Pin =
-      'b9313c07d8790700b518c1e76cd17ffa0cad4e792e000b2df4eb43b8f52996f9';
+      '63bb983915c2f6517878da99ecd497f4990dda44f9718ed77cc956046de1de5f';
   static const String boundary =
       'This comparison uses a manufactured, deterministic prior configuration '
       'to exercise change control. It is not repository history, clinical '

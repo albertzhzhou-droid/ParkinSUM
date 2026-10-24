@@ -2,10 +2,10 @@
   "$schema": "parkinsum.algorithm-trace-surface-manifest/1",
   "schema_version": 1,
   "classification_boundary": "production_trace means a fixed synthetic fixture executed the real application engine and emitted an algorithm-bound trace node; it is not clinical calibration, patient evidence, benefit, safety, or medical advice. static_contract_only means a visible, source-linked audit representation exists but no production scenario trace is claimed.",
-  "algorithm_count": 66,
+  "algorithm_count": 67,
   "production_trace_count": 15,
-  "static_contract_only_count": 51,
-  "registry_surface_sha256": "c807e19dd42c3394f667999a7938845748a573ecb048a781bb83386f0d2fa922",
+  "static_contract_only_count": 52,
+  "registry_surface_sha256": "3de07d176ad0a8a9adfad7a41aa8ce4c40b18f0079b8b4a4925319b40f3ad8e5",
   "providers": [
     {
       "provider_id": "observatory.physiology-reference-timing/1",
@@ -130,6 +130,7 @@
     "medication_catalog_search",
     "medication_metadata_adapter",
     "metadata_completeness_gate",
+    "next_meal_planner",
     "package_dose_calculator",
     "product_response_copy_policy",
     "recommendation_orchestrator",
@@ -146,5 +147,5 @@
     "timeline_projection",
     "variant_resolver"
   ],
-  "manifest_sha256": "ca89852cb1dc724c0d59d3d862d8f39bef547aa9564a2f42f89043a30368babb"
+  "manifest_sha256": "3ea1ad16cce5f654695a9184ceb27beffc3dc61be21a0b7b14671839bb20f205"
 }

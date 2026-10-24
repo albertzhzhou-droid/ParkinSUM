@@ -2356,7 +2356,7 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
       _isSaving = true;
     });
     final state = context.read<AppState>();
-    final intake = IntakeDoseContextBuilder()
+    var intake = IntakeDoseContextBuilder()
         .build(
           id: widget.initialIntake?.id ?? state.newId('intake'),
           drugId: drugId,
@@ -2365,6 +2365,25 @@ class _IntakeEditorPageState extends State<IntakeEditorPage> {
           drug: state.medRepo.getById(drugId),
         )
         .copyWith(productSelection: _productSelection);
+    // The picked product record states its own form, route and release type;
+    // an edited intake keeps the ones it was saved with for the same product.
+    final selected = _selectedProduct;
+    final initial = widget.initialIntake;
+    if (_productSelection != null &&
+        selected != null &&
+        _productSelection!.packId == selected.id) {
+      intake = withProductFormulation(intake, selected);
+    } else if (_productSelection != null &&
+        initial != null &&
+        initial.productSelection?.packId == _productSelection!.packId &&
+        (initial.dosageForm?.startsWith(productDosageFormTermPrefix) ??
+            false)) {
+      intake = intake.copyWith(
+        dosageForm: initial.dosageForm,
+        route: initial.route,
+        releaseType: initial.releaseType,
+      );
+    }
     try {
       final save = await state.saveIntakeWithDoseConfirmation(
         draft: intake,

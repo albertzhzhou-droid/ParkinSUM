@@ -635,8 +635,9 @@ scenario: `mealComponentCount`, `gastricEmptyingAssumptions`,
   surfaced in
   `MechanisticCandidateScore.sampledWindowSummary` for trace and UI.
 - May calculate an analysis-only composite score, but the production
-  recommendation path does not use that score to reorder foods. The UI aligns
-  every candidate trace to the existing conservative heuristic order.
+  recommendation path does not use that score to reorder foods. Since the
+  Next-meal planner (§18b) no page shows the heuristic order; the planner's
+  audit section lists candidate traces by food name.
 - Returns `insufficient_context` for *every* candidate when the
   medication context is invalid — never pretends to optimize against a
   bare numeric dose.
@@ -666,6 +667,76 @@ final order, in which case it reports `local_ai_safe_candidate_rerank`;
 This is an executable decision-influence ceiling, not a disclaimer. A future
 change to ranking requires a separately reviewed context of use, governed
 calibration/validation evidence, and a versioned promotion contract.
+
+## 18b. Next-meal planner (user-chosen order)
+
+The Next-meal page no longer shows the legacy 16-weight heuristic order, and
+Today no longer shows its top three. `NextMealPlanner`
+(`lib/domain/usecases/next_meal_planner.dart`, algorithm
+`next_meal_planner`) replaces both as the source of what the user sees:
+
+- **Candidate set.** One entry per catalog food (duplicate ids and duplicate
+  source records keep the first), at its reference serving (§18a). Values
+  are per serving and unknown values stay null: protein, carbohydrate, fat,
+  energy (source value, else 4/4/9 kcal/g when all three macronutrients are
+  known, marked "calculated"), LNAA (measured when all six competing amino
+  acids are present, else estimated from protein with the physiology model's
+  mixed-protein composition), physical form and a six-field data-completeness
+  count (protein, carbohydrate, fat, energy, serving, texture).
+- **Modeled values** come from the physiology reference model
+  (`docs/design/PHYSIOLOGY_MODEL_V2.md`, item 5): brain delivery and plasma
+  levodopa area relative to no meal for the planned meal-to-dose offset, with
+  the seeded population band. Each value has a state: available, bracketed
+  (unrecorded physical form, solid to liquid) or unavailable with reasons
+  (no levodopa medicine, no logged dose, dose not confirmed, release type not
+  recorded, not oral immediate release, offset out of range, protein or
+  energy unknown, empty plate). The dose compared with is the logged
+  levodopa intake nearest to the planned time, the later one on a tie (as in
+  the meal check). For a dose logged with a product strength, its release
+  type comes only from that product record's SPL dosage-form term
+  (`resolveIntakeMechanisticFormulation`); the meal check's direction-aware
+  term reads the same resolver.
+- **Order is the user's choice.** The default is neutral: foods the user has
+  logged before, then all by name. Other sorts are name, protein per serving,
+  modeled brain entry and energy, each reversible; unknown values sort last
+  in both directions. Filters: food group, texture (liquid, soft, regular,
+  not recorded), region, the profile's swallowing-texture setting (a food
+  without a recorded texture is never hidden by it) and complete data only.
+  No badge, label or default order calls a food recommended or best.
+- **Plate.** Totals add per serving (an unknown value is counted, not added
+  as 0); the plate's modeled effect is computed on the whole plate, not
+  summed per food.
+- **Legacy scorer.** `GetFoodRecommendationsUseCase` and the orchestrator stay
+  for replay and audit (`legacy_food_recommendations` is labelled "replay and
+  audit only"). The planner's collapsed "Audit: legacy engine trace" section
+  can run the orchestrator for the planned time and lists its mechanistic
+  candidate traces by name. The dashboard's background refresh still
+  computes the legacy result for replay; nothing displays its order.
+- **Alternatives (nutrition only).** `alternativesFor` lists foods in the
+  same nutritional position: the same food group, protein per serving within
+  ±max(3 g, 30 %) and energy within ±max(60 kcal, 30 %) of the original, and
+  a texture the profile's swallowing setting does not exclude. Closeness is
+  1 − 0.5·|Δprotein|/tolP − 0.3·|Δenergy|/tolE − 0.2·min(1, |ΔLNAA|/tolL)
+  (tolL = max(0.3 g, 30 %); unknown LNAA counts the full 0.2), clamped to
+  0–1. The deck is ordered by regional evidence, then closeness, then name and
+  id, and shows only nutrition deltas (protein, energy, LNAA, texture, data
+  completeness). It is a similarity, not a judgement that a food is better.
+- **Region and availability.** The user's regions are the content
+  jurisdiction override when set, else the onboarding registration and diet
+  regions. A food has regional evidence when its catalog source covers one
+  of them (for example USDA FoodData Central for US, CIQUAL for FR) or when
+  it appears in the user's own logged or imported meals. By default only such
+  foods are listed and the page states how many others wait behind "Include
+  other regions"; in the default order they follow familiar foods.
+  "Available in my region" keeps foods seen in the user's own meals.
+- **Variety.** "Vary my meals" (off by default; 3, 7 or 14 days) moves
+  foods eaten within that many days after the others in any sort, and an
+  optional switch hides them. Last-eaten dates come from the user's meals,
+  so reusing a food restarts its cycle. It is a display order the user turns
+  on, not advice.
+- **Meal check.** The database meal check's protein-timing score term is now
+  direction-aware: it follows the same modeled brain delivery relative to no
+  meal (mapping and fallback in `docs/design/PHYSIOLOGY_MODEL_V2.md`, item 4).
 
 ## 18a. Candidate serving basis
 

@@ -292,4 +292,46 @@ void main() {
       );
     });
   });
+
+  test('the lean brain-delivery area equals the full summary exactly', () {
+    const meal = [
+      PhysiologyComponent(
+        'synthetic',
+        PhysiologyComponentForm.solid,
+        kcal: 420,
+        proteinG: 28,
+      ),
+      PhysiologyComponent(
+        'drink',
+        PhysiologyComponentForm.liquid,
+        kcal: 90,
+        proteinG: 4,
+        waterMl: 200,
+      ),
+    ];
+    final values = [
+      PhysiologyParameterValues.central(),
+      ...samplePhysiologyPopulation(3, 7),
+    ];
+    for (final v in values) {
+      for (final offset in [-300.0, -45.5, 0.0, 30.0, 239.0]) {
+        final full = summarizePhysiologyTiming(
+          v,
+          meal,
+          offset,
+          horizonMin: physiologyComparisonWindowEndMin,
+        );
+        expect(
+          physiologyBrainDeliveryArea(
+            v,
+            meal,
+            offset,
+            horizonMin: physiologyComparisonWindowEndMin,
+          ),
+          full.brainDeliveryArea,
+          reason: 'offset $offset',
+        );
+      }
+    }
+  });
 }

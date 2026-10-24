@@ -37,7 +37,8 @@
         "lib/core/i18n/app_i18n_full_translations.dart",
         "lib/core/i18n/app_i18n_log_view_translations.dart",
         "lib/core/i18n/fhir_r4_encounter_copy.dart",
-        "lib/core/i18n/app_i18n_diary_strip_translations.dart"
+        "lib/core/i18n/app_i18n_diary_strip_translations.dart",
+        "lib/core/i18n/app_i18n_next_meal_planner_translations.dart"
       ]
     },
     {
@@ -275,6 +276,8 @@
         "lib/features/medications/medication_page.dart",
         "lib/features/medications/medication_product_picker.dart",
         "lib/features/next_meal/next_meal_page.dart",
+        "lib/features/next_meal/next_meal_planner_widgets.dart",
+        "lib/features/next_meal/next_meal_plate_chart.dart",
         "lib/features/onboarding/onboarding_flow.dart",
         "lib/features/onboarding/onboarding_page.dart",
         "lib/features/reminders/reminder_center_page.dart",

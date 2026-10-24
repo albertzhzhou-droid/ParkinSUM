@@ -92,7 +92,25 @@ void main() {
     expect(copy.interactionSummary(result), contains('剂量'));
     expect(copy.interactionAnalysis(result), contains('不是在说这顿饭本身一定危险'));
     expect(copy.keyFinding(result.keyFindings.first), contains('无法完成时序判断'));
-    expect(copy.nextAction(result.nextActions.first), contains('补充本次用药时间和剂量'));
+    // Saved before missing-input reviews had their own action text.
+    expect(
+      copy.nextActionFor(result, result.nextActions.first),
+      contains('补充本次用药时间和剂量'),
+    );
+    // A current result carries the missing-input action itself, so its
+    // manual-review line is a rule-requested review and keeps its wording.
+    final current = result.copyWith(
+      nextActions: [
+        AppI18n.fromLocaleTag(
+          'zh-CN',
+        ).tr('copy.next_action_complete_med_timing'),
+        AppI18n.fromLocaleTag('zh-CN').tr('interaction.action_manual_review'),
+      ],
+    );
+    expect(current.nextActions.map((a) => copy.nextActionFor(current, a)), [
+      contains('补充本次用药时间和剂量'),
+      AppI18n.fromLocaleTag('zh-CN').tr('interaction.action_manual_review'),
+    ]);
     expect(copy.dataNote(result.dataNotes.first), contains('备用地区数据'));
     expect(copy.issueDetail(result.issues.first), contains('不能安全判断'));
   });

@@ -10086,3 +10086,79 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Restore the 22 fixtures and the 22 fixture tests from `cd54310`, revert the rebind tool, probe, gate, catalog, allowlist, preflight and doc edits, and delete the four new files and this entry. The ledger records and identity need no change.
+
+## 2026-10-23 — NEXT-MEAL-PLANNER-20261023 — Next meal becomes a planner; direction-aware protein-timing term
+
+### Baseline and scope
+
+- Branch `feature/next-meal-planner`, rebased onto local `main` `331b0b6` (physiology port, diary strip, dose picker and the hash-chained governance ledger merged; identity `2026.10.20-v83`). Next meal showed a time picker and a text list of five foods in the legacy 16-weight heuristic order; Today showed that order's top three. The meal check's protein-timing term was direction-blind (`.abs()` of the meal-to-dose distance).
+- Boundary kept: no food or time is called best, recommended or safe; no default "good" time; no order the user did not choose; synthetic data only in tests and captures.
+
+### Changes
+
+- **Planner service.** New `NextMealPlanner` (`lib/domain/usecases/next_meal_planner.dart`, entities in `lib/domain/entities/next_meal_plan.dart`), registered as `next_meal_planner` (67 algorithms; static contract only). One candidate per food at its reference serving; per-serving protein, carbohydrate, fat, energy (source value or 4/4/9 kcal/g, marked calculated), LNAA (measured when all six present, else estimated from protein) and a six-field data-completeness count; familiarity from the user's own meals. The dose compared with is the logged levodopa intake nearest the planned time (later one on a tie, as in the meal check). Modeled brain delivery and plasma area relative to no meal come from the physiology provider with availability states: available, bracketed (form not recorded, so solid and liquid are both modeled and the range is shown) or unavailable with reasons (no levodopa medicine, no logged dose, dose not confirmed, release type not recorded, not oral IR, offset outside −6 h…+4 h, protein or energy unknown, empty plate). Deterministic (provider seed 20261020, 100 draws); central values for the list, bands for chips and the plate, curves for the chart; cached per food or plate, servings and whole-minute offset. Plate totals add per serving and count unknown values instead of adding 0.
+- **Physiology provider.** `physiologyComponentFromFood` (optional assumed form; a measured amino-acid profile with all eight competing amino acids replaces the mixed-protein composition), `centralBrainDeliveryRelative`, `mealTimingComparison` (brain delivery and plasma area with bands) and `compareCurves` (5-minute grid, per-time 5th–95th percentiles for plasma levodopa and the brain-entry index, plate and no meal).
+- **Next meal page.** Today strip (logged doses, meals, now and planned markers, protein so far and per meal, "not targets"); planned time with −15 / +15 buttons, a typed HH:MM and anchors from logged doses (at last dose, 30 min after it, at the next logged dose; disabled with a reason when absent); food cards with serving and basis, protein/energy/LNAA chips, texture and IDDSI, readable source, data completeness and the modeled chip or "Can't model: …"; plate builder with ½-serving steppers, running totals and a what-if chart (plate vs no meal with bands, dose and meal-start markers, text semantics and a printed summary) that follows the planned time live; compare of up to three pinned foods or plates on the same rows; sort (logged before then name — the default —, name, protein, modeled brain entry, energy; reversible, unknown last) and filters (food group, texture, region, the profile's texture setting, complete data only). "Save plate as a meal draft" opens meal entry prefilled with the plate and time; nothing is logged until the user saves there. A collapsed "Audit: legacy engine trace" runs the old orchestrator on demand and lists its mechanistic traces by name. Buttons only, ≥ 44 px targets, no animation, brightness-aware colours; en and zh copy (other families fall back to English).
+- **Today.** The legacy top-three card is replaced by a planner entry card listing up to three foods the user logged before, by name.
+- **Legacy ranker.** `legacy_food_recommendations` is labelled "replay and audit only"; the orchestrator remains for replay and the audit section. Nothing displays its order.
+- **Meal check, direction-aware timing.** `_proteinTimingPenalty` now uses the physiology comparison when it applies: points = round(24 × clamp((1 − r) / 0.30, 0, 1)), r = band median of 0–4 h brain delivery relative to no meal; the factor label names the modeled percentage. Fallback: the earlier distance table. The physiology note and the term share one computation.
+- **Manual review (B.1).** A require-manual-review action asks for the time and dose only when the engine raised it for missing inputs (`missing_fields` or a `missing_*` reason); a rule's own review (the continuous enteral-feed rule) shows "This result needs manual review by a qualified clinician before it is relied on." `ResponseCopyService.nextActionFor` keeps results saved before this change reading as before.
+- **Timing copy (B.2).** The legacy protein detail (template, en/fr/ja) ends "Review timing questions with a qualified clinician." instead of scheduling advice; imported-label meal-window rules say the label includes meal-timing wording and point to Evidence, keeping the minutes in rule parameters only. Also "打开下餐推荐" → "打开下一餐规划", "Open next meal" → "Open the meal planner".
+
+### Verification and remaining boundaries
+
+- Identity `2026.10.20-v83` → `v84` via `npm run identity:rebind` in the chain format (ledger record 33 and its checkpoint appended to `config/governance_ledger.jsonl`; configuration `6a2caa87…cbf6`). Registry 67 algorithms (15 live traces, 52 static contracts; executable and mathematical coverage 30 / 67).
+- Gates on the final tree: `npm run verify:pr` 24 passed, 0 failed, 3 skipped (the CQF JVM preparation and CQL comparison need Gradle and Go locally; the aggregate required-status gate refuses incomplete runs). Its full `flutter test` run: 3,307 passed, 2 skipped, 0 failed. `npm run physiology:reality` passes.
+- New tests: `test/next_meal_planner_test.dart` (19: candidate set and dedupe, missing values, 4/4/9 energy, familiarity, every dose-context reason, available / bracketed / unavailable effects, direction, determinism across instances, additive plate totals, curves and bands, sort and filters) and `test/next_meal_planner_page_test.dart` (9: cards, can't-model states and disabled anchors, plate steppers and live chart, typed time and anchors, compare limit, sort and filters, draft hand-off with nothing logged, 375 px light and dark with ≥ 44 px targets). Extended: meal-check direction-aware term and enteral review next action, awaiting-inputs presentation (B.1, en and zh), safety-copy scans of every template, the legacy engine in en/zh/fr/ja and imported-label rules (B.2), saved-result next actions, the WCAG keyboard journey on the new time stepper, and the 66 → 67 / 51 → 52 / 44 → 45 / 36 → 37 / 48 → 49 registry pins.
+- Goldens: explanation-copy row for the legacy protein detail; localization-lint `surface_count` 10,070 → 10,406 (planner keys in en and zh, the modeled-factor label in en/zh/fr/ja); the replay golden changes only its identity line (all scenario digests unchanged).
+- Synthetic captures (desktop 1440 px and 375 px, light Paper theme and a dark `ThemeData`; the app has no dark theme) were rendered from an uncommitted harness and reviewed by the agent; they are in the session notes, not `docs/assets/screenshots/`.
+- Boundaries: population-typical model with "verify" parameters; 206 of 244 catalog foods have no recorded form and are bracketed; band computation is synchronous (about 30 ms per uncached food on a desktop VM); a future dose must be logged to anchor to it. Not a prediction for any person and not timing, dosing or dietary advice.
+
+### Surgical rollback
+
+- Delete the planner service, entities, widgets, chart, translations and their tests; restore `next_meal_page.dart`, `dashboard_page.dart`, the meal-check, copy-service, template, label-provider and provider edits, the registry entry, manifests, pinned counts, goldens and docs; then rerun `npm run identity:rebind`.
+
+## 2026-10-23 — NEXT-MEAL-PRODUCT-FORMULATION-20261023 — Doses logged with a product strength can be modeled; doses outside the window are described
+
+### Baseline and scope
+
+- Second commit on `feature/next-meal-planner`, after the planner commit. Found in a live web run with synthetic data: every dose entered through the strength picker showed "Can't model: … release type … not recorded", so the planner's modeled chip and plate chart never appeared through the UI, and a dose two days earlier was compared as "meal 2517 min after the dose". No new drug-side output is added; this makes the existing modeled values reachable as designed.
+
+### Changes
+
+- **Product formulation on the intake.** A dose logged with a product strength (timeline editor or onboarding) now carries the picked openFDA record's own SPL dosage-form term (`spl:TABLET`), its single route and the release type that term states (explicit table: "EXTENDED/DELAYED RELEASE" → modified; TABLET, TABLET FILM COATED/COATED/CHEWABLE/ORALLY DISINTEGRATING, CAPSULE → immediate; anything else unspecified). `resolveIntakeMechanisticFormulation` trusts a selected product's formulation only when it carries that prefix, so intakes saved earlier stay unspecified. Before this, no dose entered through the strength picker could ever be modeled (found in a live web run); `test/next_meal_planner_intake_journey_test.dart` now drives the picker → save → planner path.
+- **Doses outside the window.** When the nearest logged dose is more than 6 h after or 4 h before the planned meal, the planner says no logged dose falls within the modeled window and gives that dose's date, time and distance in days and hours ("1 d 23 h before the planned time"), not a raw minute offset.
+- **Startup.** Today lists familiar foods from candidates built for the user's own logged foods only; its first build measures the same as on `main` (medians about 393 vs 395 ms in a JIT widget probe). Physiology population draws stay lazy (first modeled value), and nothing on Today computes bands.
+
+### Verification and remaining boundaries
+
+- New `test/next_meal_planner_intake_journey_test.dart` (4): the SPL mapping table, a selected product without carried formulation stays unspecified, the timeline picker 25/100 × 1 → confirmed save → intake `spl:TABLET` / `oral` / `immediate` → the planner shows a modeled chip, and an extended-release strength is recorded as `extended_release` and not modeled. `test/next_meal_planner_page_test.dart` adds the out-of-window wording ("1 d 23 h before the planned time", no raw minute count). `test/physiology_reference_model_test.dart` checks that the lean brain-delivery area equals the full summary bit for bit; `npm run physiology:reality` still reports maximum difference 0 against Python.
+- Startup, measured against `main` 331b0b6: web release first rendered frame in headless Chrome, fresh profile, 5 runs each after a warm-up, median 1,449 ms (branch) vs 1,467 ms (main). Today's first build in a JIT widget probe, medians about 393 vs 395 ms. With 90 saved meals each near a product-picked IR dose, bootstrap meal checks take about 5.7 s vs 4.6 s on main (JIT), the difference being the meal check's 100-draw band per meal now that such doses are modeled. Two exact optimizations halve that cost (27.9 → 13.8 ms per meal effect, AOT): integration skips the idle stretch before the first meal or dose (state provably constant, records unchanged) with unboxed typed arrays, and ratios read the brain-delivery area without copying the series; results are memoized per meal composition and offset. A macOS profile run was not possible: the Runner entitlements need a development signing certificate.
+- Boundaries: release type comes only from the product record's SPL term; plain conventional terms are read as immediate release, modified-release terms carry their modifier, anything else stays unspecified. Not timing, dosing or dietary advice.
+
+### Surgical rollback
+
+- Revert this commit; intakes saved with `spl:` forms then read as unspecified again (fail-closed).
+
+## 2026-10-23 — NEXT-MEAL-ALTERNATIVES-20261023 — Alternatives flashcards, region scope, availability evidence and variety rotation (nutrition only)
+
+### Baseline and scope
+
+- Third commit on `feature/next-meal-planner`, after the product-formulation fix. Requested: flashcard alternatives "of the same nutritional position" when a food is not available, alternatives and candidates shaped by the onboarding country, availability read from the user's imported and logged meals, and optional rotation cycles for variety. Per the user's scope correction everything here is nutrition-only: no new dose- or levodopa-based output, and the alternatives show no modeled-effect delta.
+
+### Changes
+
+- **Alternatives flashcards.** Every food card has "Alternatives (n)" and every plate item an alternatives button. The deck shows one alternative at a time with previous / next buttons and "2 of 6", the deltas against the original (protein g, energy kcal, LNAA g, texture, data completeness), a closeness percentage and the food's evidence line. "Swap" replaces the plate item (servings kept); on a food card the action adds the alternative to the plate. Position rule and closeness formula as in CONFLICT_ENGINE_MODEL §18b.
+- **Region.** Regions come from the content-jurisdiction override, else the onboarding registration and diet regions. By default the list shows foods with regional evidence (catalog source for the region, or the user's own meals) and states "N foods with no evidence for your region are hidden" next to an "Include other regions" switch; in the default order region foods follow familiar ones, and alternatives put regional evidence first. The onboarding region helper now says the choice also shapes the planner.
+- **Availability evidence.** Each card says "Seen in N of your logged or imported meals" or "Listed in <source> (<region>)" (or that there is no evidence for the region), and an "Available in my region" filter keeps foods seen in the user's own meals.
+- **Variety cycles.** "Vary my meals" (Off, 3, 7, 14 days) moves foods eaten within that window after the others in any sort; an optional switch hides them. Cards show "Last eaten today / 1 day ago / N days ago". Copy states it is a display order the user turned on, not advice.
+- **Advanced link.** A link to the Advanced dishes page (`next-meal/advanced`) appears once that shell route exists, so it stays hidden until the sibling branch is merged.
+
+### Verification and remaining boundaries
+
+- `test/next_meal_planner_test.dart` (26) adds alternatives (position, formula, deterministic order, regional evidence first, unknown values) and region / availability / variety (user regions, region toggle, own-meal availability, rotation, hide filter, and the cycle restarting when a food is reused). `test/next_meal_planner_page_test.dart` (14) adds flashcards (previous / next / swap, nutrition-only deltas), the region notice and toggle, evidence lines and the available filter, the rotation and hide switch, and the deck at 375 px in light and dark with ≥ 44 px targets.
+- Boundaries: the bundled catalog covers US and FR only; meals restored from portable packages count as the user's meals; variety settings are not persisted. Not dietary advice.
+
+### Surgical rollback
+
+- Revert this commit; the planner keeps its earlier list, plate and compare.
