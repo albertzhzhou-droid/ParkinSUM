@@ -154,7 +154,7 @@
     "@playwright/cli": "0.1.22",
     "cql-exec-fhir": "2.2.0",
     "cql-execution": "3.3.2",
-    "firebase": "^12.17.1",
+    "firebase": "^13.1.0",
     "firebase-tools": "15.34.0"
   }
 }
