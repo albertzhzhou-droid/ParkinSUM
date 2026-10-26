@@ -31,6 +31,48 @@ copy a draft issue from [docs/issues/](docs/issues/).
 - Design caregiver-oriented onboarding copy or screen flow notes.
 - Add README screenshots or demo video captured with synthetic data only.
 
+## Branch and Pull Request Workflow
+
+1. Fork the repository if you do not have push access, then clone your fork.
+   Add the original project as an `upstream` remote if needed.
+2. Start from an updated default branch and create a focused branch **before**
+   editing files:
+
+   ```sh
+   git switch main
+   git pull --ff-only
+   git switch -c docs/describe-your-change
+   ```
+
+3. Keep the diff focused. Review `AGENTS.md` before editing; it requires exactly
+   one entry in [the iteration timeline](docs/APP_EVOLUTION_TIMELINE.md) per
+   iteration, including the baseline, verification, remaining limits, and
+   rollback scope. Preserve unrelated local changes.
+4. Run the applicable checks below, review `git diff --check` and `git diff`,
+   then stage only the intended files and commit them.
+5. Push the branch to your fork (or a repository where you have push access):
+
+   ```sh
+   git push -u origin docs/describe-your-change
+   ```
+
+6. Open a pull request against the upstream default branch. Complete the
+   [PR template](.github/PULL_REQUEST_TEMPLATE.md), describe the visible change,
+   and report checks as passed, failed, or not run with the reason. A pushed
+   branch alone does not create a pull request.
+
+## Documentation-only Changes
+
+Check relative links, heading anchors, command names, toolchain versions, and
+claims against the tracked source. Keep historical release records dated; do
+not present an old verification result as a fresh run. Use synthetic examples
+and preserve the educational, non-clinical scope.
+
+Run `git diff --check` and `npm run public:preflight` for a documentation change.
+The complete `npm run verify:pr` workflow below remains the submission check;
+if you cannot run it, explicitly list the omitted checks and why in the PR.
+A manual documentation review does not establish that app tests or builds pass.
+
 ## Pull Request Expectations
 
 Every pull request should state whether it touches:
