@@ -9973,3 +9973,30 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 - Revert the app, copy and rule files, the new and edited tests, and the localization-lint golden.
 - Restore identity `2026.10.20-v81` with its digests, the `baseline_cdss_rules.dart` fingerprint and `knowledgePrototypeBaselineDigest`, CoU v68/plan v64/attestation v63 (removing ledger record 31 and `test/fixtures/governance_history_before_v82.json`), the impact-service, oracle and sampling pins, the queue sentences, the release-probe version, the replay golden header, and this entry.
 - Preserve every unrelated file.
+
+
+## 2026-10-23 — COMMUNITY-DOCS-20261023 — Contributor entry points and conduct process
+
+### Baseline and scope
+
+- Branch `docs/community-documentation-refresh`, created before edits from committed HEAD `4c05a49f6c2043508d5a0c3d67cfb5059b5ada03`; cached `origin/main` points to the same commit. A live public-main refresh was attempted but failed because the configured proxy at port 8080 could not be reached. The cached reference is not evidence of current public GitHub state.
+- Documentation only; no app, persisted schema, package version, algorithm configuration identity, or governance identity changes.
+
+### Changes
+
+- `README.md`: add reader entry points, contributor/conduct/security routes, clarify CI-pinned Flutter 3.47.0 and Node 22 and resolved Dart 3.13 requirements, Chrome prerequisites, fork guidance, scoped documentation checks, and Apache 2.0/third-party license pointers.
+- `CONTRIBUTING.md`: document branch-before-edit workflow, focused commits, push and manual PR creation, timeline requirements, and documentation review/check reporting.
+- `CODE_OF_CONDUCT.md`: clarify accessibility and privacy expectations, minimum-information private reports, anti-retaliation, proportional enforcement, reconsideration and maintainer conflicts.
+- This timeline records the iteration. Existing upstream project/release URLs and historical release dates are preserved.
+
+### Verification and remaining boundaries
+
+- `npm run public:preflight`: passed, 0 blockers, 21 warnings, 4 informational findings. Generated report remains separate from tracked documentation.
+- `git diff --check`: passed. Reviewed toolchain statements against `pubspec.yaml`, `pubspec.lock`, and `.github/workflows/ci.yml`; license against `LICENSE`; reporting address against existing conduct/security policies.
+- Relative file links in the three edited root documents checked locally. External links were not verified because remote connectivity is unavailable.
+- Full `npm run verify:pr`, Flutter analysis/tests and platform builds were not run: this iteration changes documentation only and Flutter/Dart are unavailable on PATH. These checks are not claimed as passing.
+- Conduct procedures describe maintainer expectations; they do not establish independent review capacity or a response-time guarantee. PR creation is reserved for the user.
+
+### Surgical rollback
+
+- Revert only this iteration’s changes to `README.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and this timeline entry. Preserve unrelated work and generated artifacts.
