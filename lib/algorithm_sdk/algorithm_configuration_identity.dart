@@ -123,7 +123,9 @@ final class AlgorithmConfigurationIdentity {
   // and the protein-timing score term follow the new amino-acid side.
   // v86 binds app meals reaching physiology reference model v3 with catalog
   // carbohydrate, fat and protein type.
-  static const String defaultVersion = '2026.10.20-v86';
+  // v87 binds the curated physical form as eaten and the planner's plate
+  // nutrition panel; stored scores are unchanged.
+  static const String defaultVersion = '2026.10.20-v87';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -131,7 +133,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      '8b0d752935421666ead624c612b0ff6ad9cd82902455ff790d7a4020a86129fd';
+      'af26180a5dc768780eee1670510dc7dce710fcb9b95c185b6dc16c50b0df2a00';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.

@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v73';
+  static const String ledgerVersion = '2026.10.20-v74';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'e4452fe7aa1cb6d14c30d9052f4adf60a2d20821bf6a249e8c7759910082236a';
+  static const String historicalV86ConfigurationSha256 =
       'b622e741fdd9434e2deb8accfe7a07ea3216f155145e88eaead4f70cb4721d70';
   static const String historicalV85ConfigurationSha256 =
       '89da3b0b534b8031ddb7187b35762dedb99dc887a107e1bf7cfb0c71f951d088';
@@ -1663,7 +1665,7 @@ final class ContextOfUseRequalificationLedger {
           physiologyReferenceModelV3NutritionSideCandidateRecord
               .currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV86ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           physiologyReferenceModelV3NutritionSideCandidateRecord
               .evidenceCurrencyRegistrySha256,
@@ -1697,6 +1699,43 @@ final class ContextOfUseRequalificationLedger {
           'The v86 candidate binds app meals reaching physiology reference '
           'model v3 with catalog carbohydrate, fat and protein type. All '
           'thirty-four prior whole records and their digests remain exact. The '
+          'change supplies no new scientific evidence, independent review, '
+          'clinical qualification, authenticated approval or release '
+          'acceptance. All evidence holds and blocked promotion remain in '
+          'force.',
+    );
+    final plateAminoAcidResponseCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 36,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          appMealCompositionCandidateRecord.currentManifestSha256,
+      previousConfigurationSha256:
+          appMealCompositionCandidateRecord.currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          appMealCompositionCandidateRecord.evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          appMealCompositionCandidateRecord.evidenceSynthesisRegistrySha256,
+      semanticDiffSha256: appMealCompositionCandidateRecord.semanticDiffSha256,
+      affectedProviderIds:
+          appMealCompositionCandidateRecord.affectedProviderIds,
+      affectedPredicateIds:
+          appMealCompositionCandidateRecord.affectedPredicateIds,
+      changeClasses: appMealCompositionCandidateRecord.changeClasses,
+      modelRisk: appMealCompositionCandidateRecord.modelRisk,
+      questionOfInterest: appMealCompositionCandidateRecord.questionOfInterest,
+      contextOfUse: appMealCompositionCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-11-02T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:plate-amino-acid-response-v87',
+      evidenceDecisions: appMealCompositionCandidateRecord.evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v87 candidate binds the curated physical form as eaten and the '
+          'planner\'s plate nutrition panel; stored scores are unchanged. All '
+          'thirty-five prior whole records and their digests remain exact. The '
           'change supplies no new scientific evidence, independent review, '
           'clinical qualification, authenticated approval or release '
           'acceptance. All evidence holds and blocked promotion remain in '
@@ -1744,6 +1783,7 @@ final class ContextOfUseRequalificationLedger {
         nextMealPlannerAndDirectionAwareTimingCandidateRecord,
         physiologyReferenceModelV3NutritionSideCandidateRecord,
         appMealCompositionCandidateRecord,
+        plateAminoAcidResponseCandidateRecord,
       ],
     );
   }

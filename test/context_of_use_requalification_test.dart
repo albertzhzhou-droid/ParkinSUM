@@ -94,13 +94,13 @@ void main() {
   });
 
   test(
-    'v86 candidate retains all thirty-four historical blocked records without new approval',
+    'v87 candidate retains all thirty-five historical blocked records without new approval',
     () {
       final ledger = currentLedger();
       final historical = ledger.records.first;
       final candidate = ledger.latest;
 
-      expect(ledger.records, hasLength(35));
+      expect(ledger.records, hasLength(36));
       expect(historical.sequence, 1);
       expect(historical.changeKind, 'initial_governed_baseline');
       expect(
@@ -109,7 +109,7 @@ void main() {
       );
       expect(historical.recordedAtUtc, '2026-08-18T00:00:00.000Z');
       expect(historical.decisionBoundary, contains('v52 release refresh'));
-      expect(candidate.sequence, 35);
+      expect(candidate.sequence, 36);
       expect(
         ledger.records[1].currentConfigurationSha256,
         ContextOfUseRequalificationLedger.historicalV53ConfigurationSha256,
@@ -133,7 +133,7 @@ void main() {
       ], reason: 'Exact prior records were frozen before this forward rebind.');
       expect(
         candidate.previousConfigurationSha256,
-        ledger.records[33].currentConfigurationSha256,
+        ledger.records[34].currentConfigurationSha256,
       );
       expect(
         candidate.currentConfigurationSha256,
