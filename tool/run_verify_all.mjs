@@ -29,7 +29,7 @@ export const GATES = [
   { id: 'mechanistic_lossless_replay', script: 'mechanistic:lossless-replay', what: 'Lossless replay envelopes, independent cross-runtime canonicalization and pinned rule/history/DST conformance' },
   { id: 'portable_schema_migration', script: 'portable:schema-migration', what: 'Frozen portable-schema validators, deterministic migration receipts, and independent cross-runtime conformance' },
   { id: 'portable_schema_fuzz', script: 'portable:schema-fuzz', what: 'Fixed-seed portable-schema parser differential campaign and corpus-level privacy-reviewed synthetic regression corpus' },
-  { id: 'algorithm_dependency_compatibility', script: 'algorithm:dependency-compatibility', what: 'Exact analyzer lock, stable 66-root identity, session consistency, and fail-closed compatibility HOLD gate' },
+  { id: 'algorithm_dependency_compatibility', script: 'algorithm:dependency-compatibility', what: 'Exact analyzer lock, stable 67-root identity, session consistency, and fail-closed compatibility HOLD gate' },
   { id: 'algorithm_trace_surface', script: 'algorithm:trace-surface', what: 'Versioned production-trace provider, fixture, route, UI-surface, and static-only disposition manifest' },
   { id: 'algorithm_executable_contracts', script: 'algorithm:contracts', what: 'Non-numerical executable contracts and metamorphic mutations' },
   { id: 'algorithm_contract_independent_oracle', script: 'algorithm:contracts:independent', what: 'Independent cross-runtime relation, mutation, and scheduler oracle' },

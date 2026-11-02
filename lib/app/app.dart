@@ -544,6 +544,11 @@ class _ParkinSUMRouterDelegate extends RouterDelegate<MainTabRoute>
     if (navigator != null && navigator.canPop() && await navigator.maybePop()) {
       return true;
     }
+    // A sub-route (Next meal → Advanced) steps back to its tab first.
+    if (_route.id != _route.tab.id) {
+      selectTab(_route.tab.id);
+      return true;
+    }
     if (_route.id != MainTabRoute.home.id) {
       selectTab(MainTabRoute.home.id);
       return true;

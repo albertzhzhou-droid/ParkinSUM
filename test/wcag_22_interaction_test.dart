@@ -270,20 +270,28 @@ void main() {
       logicalSize: const Size(320, 700),
     );
     expectNoWidgetErrors(reason: 'recommendation controls broke at 200% text');
-    final timePicker = find.byKey(const ValueKey('next-meal-time-picker'));
+    // The planned time moves with buttons; Enter on the focused "+15"
+    // button moves it 15 minutes later.
+    final plus = find.byKey(const ValueKey('next-meal-time-plus'));
     await tester.scrollUntilVisible(
-      timePicker,
+      plus,
       180,
       scrollable: find.byType(Scrollable).first,
     );
+    final before = tester
+        .widget<Text>(find.byKey(const ValueKey('next-meal-planned-time')))
+        .data;
     FocusManager.instance.primaryFocus?.unfocus();
     await tester.pump();
-    await _tabUntilFocused(tester, timePicker, maxTabs: 30);
+    await _tabUntilFocused(tester, plus, maxTabs: 30);
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.byType(DatePickerDialog), findsOneWidget);
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump(const Duration(milliseconds: 300));
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('next-meal-planned-time')))
+          .data,
+      isNot(before),
+    );
     await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     semantics.dispose();

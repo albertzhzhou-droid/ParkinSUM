@@ -24,6 +24,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TOUGAS = {60.0: 0.69, 120.0: 0.24, 240.0: 0.012}
 NUTT_DELAY_MIN = 34.0
 CARTER = {"high": 732.0, "even": 640.0}
+SHAHAM_LEU_FALL = 0.33  # fraction at 120 min after 75 g glucose
 
 
 def golden(f, lo, hi, iters=40):
@@ -54,6 +55,23 @@ def fit_trituration(v):
     return golden(loss, 0.005, 0.5)
 
 
+def shaham_fall(v):
+    s = simulate(scenarios.shaham_glucose(), v)
+    base = float(v["aa.fasting_plasma_umol_per_l"]["leu"])
+    return 1.0 - at(s, "leu_umol_per_l", 120.0) / base
+
+
+def fit_insulin(v):
+    lo, hi = 0.0, 1.0  # the fall grows with the maximal reduction
+    for _ in range(50):
+        mid = 0.5 * (lo + hi)
+        if shaham_fall(dict(v, **{"insulin.max_lnaa_target_reduction": mid})) < SHAHAM_LEU_FALL:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
 def fed_delay(v, f50):
     vv = dict(v, **{"stomach.fed_liquid_slowing_half_kcal": f50})
     fasting, fed = scenarios.nutt_meal_scenarios()
@@ -80,20 +98,24 @@ def carter_daytime_mean(v, diet):
 
 
 def fit_amino_acid_pool(v):
-    """Plasma rise above fasting is linear in 1/V, so V has a closed-form
-    least-squares fit to the two evenly distributed diets.
+    """Least-squares fit of the effective plasma volume V to Carter's two
+    evenly distributed diets.
+
+    Each daytime mean is  M(V) = M_inf + R / V: absorbed amino acids raise
+    plasma linearly in 1/V, while the insulin term lowers the relaxation
+    target independently of V. M_inf comes from a run with no absorbed rise,
+    R from a run with V = 1 L. One parameter, two diets: the residual is a
+    genuine test. The evening-restricted diet stays independent.
 
     The relaxation half-time is NOT fitted: two daily means of evenly spread
-    diets cannot identify it (every half-time from 45 to 180 min fits them
-    equally), so it stays a declared physiological prior in parameters.json.
+    diets cannot identify it, so it stays a declared physiological prior.
     """
-    base = sum(float(v["aa.fasting_plasma_umol_per_l"][a]) for a in
-               ("leu", "ile", "val", "phe", "tyr", "trp"))
-    vv = dict(v, **{"aa.plasma_distribution_volume_l": 1.0})
-    rise = {d: carter_daytime_mean(vv, d) - base for d in CARTER}
-    target = {d: CARTER[d] - base for d in CARTER}
+    m_inf = {d: carter_daytime_mean(dict(v, **{"aa.plasma_distribution_volume_l": 1e12}), d) for d in CARTER}
+    rise = {d: carter_daytime_mean(dict(v, **{"aa.plasma_distribution_volume_l": 1.0}), d) - m_inf[d]
+            for d in CARTER}
+    target = {d: CARTER[d] - m_inf[d] for d in CARTER}
     if min(target.values()) <= 0:
-        raise ValueError("fasting baseline exceeds a Carter target")
+        raise ValueError("insulin-lowered baseline exceeds a Carter target")
     inv_v = sum(rise[d] * target[d] for d in CARTER) / sum(rise[d] ** 2 for d in CARTER)
     err = sum((rise[d] * inv_v - target[d]) ** 2 for d in CARTER)
     return float(v["aa.plasma_relaxation_half_time_min"]), 1.0 / inv_v, err
@@ -113,14 +135,18 @@ def main():
         f"{int(t)} min {at(s, 'stomach_retention_solid', t):.1%} (target {y:.1%})"
         for t, y in TOUGAS.items()))
 
+    e_max = fit_insulin(v)
+    v["insulin.max_lnaa_target_reduction"] = e_max
+    print(f"insulin max target reduction {e_max:.4f}; leucine fall at 120 min {shaham_fall(v):.1%} "
+          f"(target {SHAHAM_LEU_FALL:.0%})")
+
     f50 = fit_fed_slowing(v)
     v["stomach.fed_liquid_slowing_half_kcal"] = f50
     print(f"fed liquid slowing half {f50:.1f} kcal; delay {fed_delay(v, f50):.1f} min (target {NUTT_DELAY_MIN})")
 
     half, vol, err = fit_amino_acid_pool(v)
-    v["aa.plasma_relaxation_half_time_min"] = half
     v["aa.plasma_distribution_volume_l"] = vol
-    print(f"amino-acid pool: relaxation half-time {half:.0f} min, volume {vol:.1f} L (sq err {err:.1f})")
+    print(f"amino-acid pool: relaxation half-time {half:.0f} min (prior), volume {vol:.1f} L (sq err {err:.1f})")
     for d in ("high", "even", "evening"):
         print(f"  Carter {d}: daytime mean six-LNAA {carter_daytime_mean(v, d):.0f} umol/L")
 
@@ -132,6 +158,7 @@ def main():
             "stomach.solid_trituration_rate_per_min": round(k_t, 4),
             "stomach.fed_liquid_slowing_half_kcal": round(f50, 1),
             "aa.plasma_distribution_volume_l": round(vol, 1),
+            "insulin.max_lnaa_target_reduction": round(e_max, 4),
         }
         for p in data["parameters"]:
             if p["id"] in fitted:

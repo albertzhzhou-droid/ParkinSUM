@@ -2,7 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:parkinsum_companion/core/constants/baseline_cdss_rules.dart';
 import 'package:parkinsum_companion/core/copy/response_copy_service.dart';
 import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
+import 'package:parkinsum_companion/core/analysis/interaction_engine.dart';
+import 'package:parkinsum_companion/core/db/cdss_database.dart';
+import 'package:parkinsum_companion/core/models/drug_definition.dart';
+import 'package:parkinsum_companion/core/models/food_item.dart';
+import 'package:parkinsum_companion/core/models/meal.dart';
 import 'package:parkinsum_companion/domain/usecases/database_backed_meal_check_usecase.dart';
+import 'package:parkinsum_companion/domain/usecases/imported_label_rule_provider.dart';
+import 'package:parkinsum_companion/domain/usecases/rule_registry_compiler.dart';
+import 'package:parkinsum_companion/domain/usecases/safe_copy_template_registry.dart';
 
 /// Safety-copy integrity for the meal check and the next-meal page.
 ///
@@ -29,6 +37,14 @@ final _directive = RegExp(
   r'considere|tome|separe|espere|debe)\b|'
   r'建议|应当|应该|错开|提前|検討|してください|あけ|nên|hãy|ควร|sebaiknya|'
   r'следует|принимайте|należy|przyjmuj|يجب|يُنصح|चाहिए|하세요|권장',
+  caseSensitive: false,
+);
+
+/// Scheduling advice without a minute quantity, in the languages the legacy
+/// engine and the imported-label rules ship.
+final _scheduling = RegExp(
+  r'consider scheduling|away from dosing|requires separation|'
+  r'programmer les repas|loin de la prise|離して|错峰|错开',
   caseSensitive: false,
 );
 
@@ -283,4 +299,115 @@ void main() {
       expect(i18n.tr('dashboard.recommendations'), i18n.tr('next_meal.title'));
     }
   });
+
+  test('no safe-copy template states a timing instruction', () {
+    for (final template in const SafeCopyTemplateRegistry().templates) {
+      for (final entry in template.localizedText.entries) {
+        final where = '${template.templateId}/${entry.key}';
+        expect(_isMinuteInstruction(entry.value), isFalse, reason: where);
+        expect(_scheduling.hasMatch(entry.value), isFalse, reason: where);
+      }
+    }
+  });
+
+  test('the legacy engine describes protein without scheduling advice', () {
+    final meal = Meal(
+      id: 'synthetic_high_protein',
+      eatenAt: DateTime.utc(2026, 1, 1, 12),
+      title: 'Synthetic meal',
+      items: [
+        MealItem(
+          foodId: 'food_synthetic_protein',
+          foodName: 'Synthetic protein food',
+          foodCategory: FoodCategory.protein,
+          quantityFactor: 2,
+          foodTags: const [],
+          proteinPer100g: 20,
+          carbsPer100g: 0,
+          fatPer100g: 2,
+          fiberPer100g: 0,
+          sodiumPer100g: 50,
+        ),
+      ],
+    );
+    final drug = DrugDefinition(
+      id: 'drug_synthetic_levodopa',
+      genericName: 'carbidopa/levodopa',
+      brandNames: const [],
+      tags: const [DrugTag.levodopaLike],
+      notes: '',
+    );
+    for (final locale in ['en-US', 'zh-CN', 'fr-FR', 'ja-JP']) {
+      final result = InteractionEngine().evaluateMealWithDrugs(
+        meal: meal,
+        drugs: [drug],
+        localeTag: locale,
+      );
+      expect(result.issues, isNotEmpty, reason: locale);
+      for (final issue in result.issues) {
+        for (final text in [issue.title, issue.detail]) {
+          expect(_scheduling.hasMatch(text), isFalse, reason: '$locale: $text');
+          expect(_isMinuteInstruction(text), isFalse, reason: '$locale: $text');
+        }
+      }
+    }
+  });
+
+  test('imported label meal-window rules carry no timing statement', () async {
+    final db = _TablesDatabase({
+      'drug_label_section': [
+        {
+          'section_id': 'section_synthetic',
+          'drug_product_variant_id': 'DRUG_SYNTHETIC#US#DAILYMED#drug_x',
+          'source_doc_id': 'doc_synthetic',
+          'section_key': 'administration',
+          'section_title': 'Administration',
+          'section_text': 'Synthetic label text.',
+        },
+      ],
+      'source_document': [
+        {
+          'source_doc_id': 'doc_synthetic',
+          'title': 'Synthetic label fact',
+          'origin_url': 'https://example.test/synthetic',
+          'source_family': 'DAILYMED',
+          'raw_payload':
+              '{"label_facts":[{"fact_type":"meal_window_before_after",'
+              '"label":"Meal timing window","value_text":"synthetic",'
+              '"payload":{"before_minutes":60,"after_minutes":120}}]}',
+        },
+      ],
+    });
+    final rules = await ImportedLabelRuleProvider(
+      database: db,
+      compiler: RuleRegistryCompiler(),
+    ).loadRules();
+    expect(rules, isNotEmpty);
+    for (final rule in rules) {
+      for (final entry in rule.thenClause.messages.asLocaleMap().entries) {
+        final where = '${rule.ruleId}/${entry.key}';
+        expect(_isMinuteInstruction(entry.value), isFalse, reason: where);
+        expect(_scheduling.hasMatch(entry.value), isFalse, reason: where);
+        expect(entry.value, isNot(contains('60')), reason: where);
+      }
+    }
+  });
+}
+
+/// Read-only tables for the imported-label rule provider; it only reads.
+class _TablesDatabase implements CdssDatabase {
+  _TablesDatabase(this.tables);
+
+  final Map<String, List<Map<String, Object?>>> tables;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<List<Map<String, Object?>>> queryTable(String table) async =>
+      tables[table] ?? const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnsupportedError('${invocation.memberName} is not used here');
 }

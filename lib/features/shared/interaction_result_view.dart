@@ -168,7 +168,7 @@ class InteractionSummaryCard extends StatelessWidget {
             for (final action in result.nextActions.take(6))
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text('• ${copy.nextAction(action)}'),
+                child: Text('• ${copy.nextActionFor(result, action)}'),
               ),
           ],
           if (result.issues.isNotEmpty) ...[

@@ -75,6 +75,9 @@ class ResponseCopyService {
     return hasMissingInputIssue &&
         result.nextActions.every(
           (action) =>
+              _isCompleteInputsAction(action) ||
+              // Results saved before missing-input reviews had their own
+              // action text still carry the manual-review sentence.
               _containsManualReview(action) ||
               _containsMissingCriticalInputs(action),
         );
@@ -159,7 +162,10 @@ class ResponseCopyService {
   }
 
   String nextAction(String text) {
-    if (_containsManualReview(text) || _containsMissingCriticalInputs(text)) {
+    // Only a missing-input action asks for the time and dose; a review a
+    // rule requests on its own (for example a continuous enteral feed) keeps
+    // its clinician-review wording.
+    if (_isCompleteInputsAction(text) || _containsMissingCriticalInputs(text)) {
       return i18n.tr('copy.next_action_complete_med_timing');
     }
     // Results saved before rule actions became educational text still carry
@@ -171,6 +177,21 @@ class ResponseCopyService {
       return i18n.tr('interaction.action_timing_source');
     }
     return interactionText(text);
+  }
+
+  /// [nextAction] in the context of its result. A result saved before
+  /// missing-input reviews had their own action text carries the
+  /// manual-review sentence for missing inputs; when such a result names
+  /// missing inputs and has no current missing-input action, that line still
+  /// asks for the time and dose. In a current result a manual-review line is
+  /// a review the rule requested and keeps its wording.
+  String nextActionFor(InteractionResult result, String text) {
+    if (_containsManualReview(text) &&
+        _hasMissingCriticalInputs(result) &&
+        !result.nextActions.any(_isCompleteInputsAction)) {
+      return i18n.tr('copy.next_action_complete_med_timing');
+    }
+    return nextAction(text);
   }
 
   static final _legacySpacingInstruction = RegExp(
@@ -378,6 +399,16 @@ class ResponseCopyService {
         lower.contains('重要な入力が不足') ||
         lower.contains('donnees critiques manquent');
   }
+
+  /// The engine's missing-input action text in any shipped language.
+  static final Set<String> _completeInputsActionTexts = {
+    for (final strings in AppI18n.translationDictionary.values)
+      if (strings['copy.next_action_complete_med_timing'] case final text?)
+        text.trim(),
+  };
+
+  bool _isCompleteInputsAction(String text) =>
+      _completeInputsActionTexts.contains(text.trim());
 
   bool _containsManualReview(String text) {
     final lower = text.toLowerCase();

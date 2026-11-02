@@ -151,9 +151,12 @@ class ImportedLabelRuleProvider {
         'decision': 'WARN',
         'severity': 'high',
         'messages': {
-          'zh': '该官方标签要求与进餐错峰：至少餐前 $before 分钟、餐后 $after 分钟。',
+          // The label's minute values stay in the condition and action
+          // parameters for audit; the message does not restate them as an
+          // instruction.
+          'zh': '导入的该药官方标签包含与进餐时间相关的表述。标签原文见“证据”；时间安排问题请与合格的临床医生或药师确认。',
           'en':
-              'The official label requires separation from meals by at least $before minutes before and $after minutes after.',
+              'The imported official label for this medicine includes meal-timing wording. The cited label text is under Evidence; review timing questions with a qualified clinician or pharmacist.',
         },
         'actions': [
           {

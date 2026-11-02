@@ -40,7 +40,7 @@ void main() {
       first.changes.expand((change) => change.affectedAlgorithmIds).toSet(),
       {'gastric_emptying', 'levodopa_absorption_opportunity'},
     );
-    expect(first.relationships, hasLength(66));
+    expect(first.relationships, hasLength(67));
     expect(first.replayDeltas, hasLength(15));
     expect(
       first.replayDeltas.map((delta) => delta.comparison).toSet(),

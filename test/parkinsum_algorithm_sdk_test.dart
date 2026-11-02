@@ -735,9 +735,9 @@ void main() {
       final coverage = identity.configurationCoverageManifest;
 
       expect(coverage.entries, hasLength(AlgorithmRegistry.all.length));
-      expect(coverage.entries, hasLength(66));
+      expect(coverage.entries, hasLength(67));
       expect(coverage.fieldAndSourceBoundCount, 18);
-      expect(coverage.sourceBundleOnlyCount, 48);
+      expect(coverage.sourceBundleOnlyCount, 49);
       expect(
         coverage.entries.map((entry) => entry.algorithmId),
         orderedEquals(

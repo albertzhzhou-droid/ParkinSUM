@@ -13,6 +13,7 @@ import 'dashboard_page.dart';
 import '../analytics/analytics_page.dart';
 import '../medications/medication_page.dart';
 import '../catalog/catalog_page.dart';
+import '../next_meal/advanced_dishes_page.dart';
 import '../next_meal/next_meal_page.dart';
 import '../timeline/timeline_page.dart';
 import 'lazy_indexed_stack.dart';
@@ -66,7 +67,7 @@ class _MainShellState extends State<MainShell> {
   ];
 
   static int _chapterIndexFor(MainTabRoute route) =>
-      route == MainTabRoute.catalog ? 4 : _chapterRoutes.indexOf(route);
+      route == MainTabRoute.catalog ? 4 : _chapterRoutes.indexOf(route.tab);
 
   @override
   void initState() {
@@ -106,7 +107,31 @@ class _MainShellState extends State<MainShell> {
     final width = MediaQuery.sizeOf(context).width;
     final useSidebar = width >= MainShell.sidebarBreakpoint;
 
-    final page = LazyIndexedStack(index: route.index, builders: _pageBuilders);
+    // A sub-route (Next meal → Advanced) covers its tab's page, which stays
+    // mounted offstage so its state survives the round trip.
+    final advanced = route == MainTabRoute.nextMealAdvanced;
+    final page = Stack(
+      children: [
+        Positioned.fill(
+          child: Offstage(
+            offstage: advanced,
+            child: TickerMode(
+              enabled: !advanced,
+              child: LazyIndexedStack(
+                index: route.index,
+                builders: _pageBuilders,
+              ),
+            ),
+          ),
+        ),
+        if (advanced)
+          Positioned.fill(
+            child: AdvancedDishesPage(
+              onBack: () => _selectRoute(MainTabRoute.nextMeal),
+            ),
+          ),
+      ],
+    );
 
     Widget sidebar({required bool extended, required bool inDrawer}) =>
         PaperSidebar(
@@ -197,15 +222,24 @@ class _MainShellState extends State<MainShell> {
     action();
   }
 
-  void _openTool(String id) {
-    final tool = appTools(context.appI18n).firstWhere((t) => t.id == id);
-    tool.open(context);
+  void _openTool(String id) =>
+      _open(appTools(context.appI18n).firstWhere((t) => t.id == id));
+
+  /// Shows a tool inside the shell when it has a shell route, else pushes it.
+  void _open(AppTool tool) {
+    final routeId = tool.shellRouteId;
+    if (routeId == null) {
+      tool.open(context);
+    } else {
+      _selectRoute(MainTabRoute.fromId(routeId));
+    }
   }
 
   List<PaperSidebarSection> _sections(AppI18n i18n) {
     final tools = appTools(i18n);
     return [
       for (final group in const [
+        AppToolGroup.meals,
         AppToolGroup.evidence,
         AppToolGroup.data,
         AppToolGroup.operations,
@@ -219,7 +253,7 @@ class _MainShellState extends State<MainShell> {
                 key: ValueKey('tool-${tool.id}'),
                 icon: tool.icon,
                 label: tool.label,
-                onPressed: () => _run(() => tool.open(context)),
+                onPressed: () => _run(() => _open(tool)),
               ),
           ],
         ),
@@ -292,7 +326,7 @@ class _MainShellState extends State<MainShell> {
           label: tool.label,
           group: appToolGroupLabel(i18n, tool.group),
           keywords: tool.keywords,
-          run: () => tool.open(context),
+          run: () => _open(tool),
         ),
     ];
     _run(() {});
