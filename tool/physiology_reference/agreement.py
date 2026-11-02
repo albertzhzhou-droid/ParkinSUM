@@ -31,6 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from model import (PROTEIN_TYPE_BY_CATALOG_SOURCE, SERIES_KEYS, Component, Dose, Meal, Scenario, area, at,  # noqa: E402
                    competing_lnaa_load, component_from_food, composition_defaults, load_parameters, meal_response,
+                   nutrition_component_from_food,
                    peak, percentile, sample_population, simulate, trough, values)
 import scenarios  # noqa: E402
 
@@ -139,11 +140,33 @@ def nutrition_summary(v, meal):
 
 
 def food(name, form="solid", protein=None, carbohydrate=None, fat=None, kcal=None, portion=100.0,
-         source="USDA_FDC", catalog_source=None, amino_acids=None):
+         source="USDA_FDC", catalog_source=None, amino_acids=None, catalog_form=None):
     """A meal-converter input, in the app's per-portion field names."""
     return {"name": name, "physical_form": form, "protein_grams": protein, "carbohydrate_grams": carbohydrate,
             "fat_grams": fat, "calories": kcal, "portion_grams": portion, "source_doc_id": source,
-            "catalog_protein_source": catalog_source, "amino_acids_g": amino_acids}
+            "catalog_protein_source": catalog_source, "amino_acids_g": amino_acids,
+            "catalog_physical_form": catalog_form}
+
+
+def nutrition_form_meals():
+    """Foods through the nutrition converter: a curated form fills an unknown
+    stored form and never replaces a known one.
+    """
+    rice = food("rice", "unknown", protein=4.0, carbohydrate=45.0, fat=0.5, kcal=205.0, portion=160.0,
+                catalog_source="grain", catalog_form="solid")
+    juice = food("juice", "unknown", protein=1.0, carbohydrate=26.0, fat=0.5, kcal=112.0, portion=250.0,
+                 catalog_form="liquid")
+    oil = food("oil", "unknown", protein=0.0, carbohydrate=0.0, fat=14.0, kcal=124.0, portion=14.0)
+    yogurt = food("yogurt", "solid", protein=8.0, carbohydrate=12.0, fat=3.0, kcal=143.0, portion=170.0,
+                  catalog_form="liquid")
+    return [
+        ("nutrition_curated_solid", None, [rice]),
+        ("nutrition_curated_liquid", None, [juice]),
+        ("nutrition_stored_form_wins", None, [yogurt]),
+        ("nutrition_no_form_abstains", None, [oil]),
+        ("nutrition_no_form_assumed_solid", "solid", [rice, oil]),
+        ("nutrition_no_form_assumed_liquid", "liquid", [juice, oil]),
+    ]
 
 
 def app_meals():
@@ -312,21 +335,23 @@ def build():
                           "bands_p05_p50_p95": {k: band([r[k] for r in per]) for k in central}})
 
     conversions = []
-    for case_id, assumed_form, foods in app_meals():
-        converted = [component_from_food(f, assumed_form) for f in foods]
-        entry = {"id": case_id, "assumed_form": assumed_form, "foods": foods}
-        if None in converted:
-            conversions.append({**entry, "meal": None})
-            continue
-        central = nutrition_summary(v, converted)
-        per = [nutrition_summary(p, converted) for p in population]
-        conversions.append({**entry, "meal": [component_spec(c) for c in converted],
-                            "carbohydrate_grams": [c.carbohydrate_grams(
-                                float(v["insulin.default_carbohydrate_energy_share"])) for c in converted],
-                            "carbohydrate_basis": [c.carbohydrate_basis() for c in converted],
-                            "composition_defaults": composition_defaults(converted),
-                            "competing_lnaa_load": competing_lnaa_load(converted, v), "central": central,
-                            "bands_p05_p50_p95": {k: band([r[k] for r in per]) for k in central}})
+    for converter, convert, meals in (("meal", component_from_food, app_meals()),
+                                      ("nutrition", nutrition_component_from_food, nutrition_form_meals())):
+        for case_id, assumed_form, foods in meals:
+            converted = [convert(f, assumed_form) for f in foods]
+            entry = {"id": case_id, "converter": converter, "assumed_form": assumed_form, "foods": foods}
+            if None in converted:
+                conversions.append({**entry, "meal": None})
+                continue
+            central = nutrition_summary(v, converted)
+            per = [nutrition_summary(p, converted) for p in population]
+            conversions.append({**entry, "meal": [component_spec(c) for c in converted],
+                                "carbohydrate_grams": [c.carbohydrate_grams(
+                                    float(v["insulin.default_carbohydrate_energy_share"])) for c in converted],
+                                "carbohydrate_basis": [c.carbohydrate_basis() for c in converted],
+                                "composition_defaults": composition_defaults(converted),
+                                "competing_lnaa_load": competing_lnaa_load(converted, v), "central": central,
+                                "bands_p05_p50_p95": {k: band([r[k] for r in per]) for k in central}})
 
     with open(os.path.join(HERE, "parameters.json"), encoding="utf-8") as fh:
         version = json.load(fh)["parameter_set_version"]

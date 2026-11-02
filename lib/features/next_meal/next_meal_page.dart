@@ -819,6 +819,12 @@ class _NextMealPageState extends State<NextMealPage> {
           if (_plate.isNotEmpty) ...[
             const SizedBox(height: 8),
             PlannerTotals(i18n: i18n, totals: totals),
+            const SizedBox(height: 8),
+            PlannerPlateNutritionPanel(
+              i18n: i18n,
+              nutrition: planner.plateNutrition(_plate),
+              nameOf: nameOf,
+            ),
             const SizedBox(height: 12),
             if (curves != null && curves.effect.modeled)
               NextMealPlateChart(

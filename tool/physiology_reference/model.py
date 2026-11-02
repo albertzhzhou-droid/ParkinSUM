@@ -179,6 +179,13 @@ def component_from_food(food: Dict[str, object], assumed_form: Optional[str] = N
                      protein_type=PROTEIN_TYPE_BY_CATALOG_SOURCE.get(food["catalog_protein_source"], "mixed"))
 
 
+def nutrition_component_from_food(food: Dict[str, object], assumed_form: Optional[str] = None) -> Optional[Component]:
+    """Mirrors physiologyNutritionComponentFromFood: the curated form as eaten
+    applies where the stored form is unknown, for nutrition outputs only.
+    """
+    return component_from_food(food, food["catalog_physical_form"] or assumed_form)
+
+
 def composition_defaults(meal: List[Component]) -> Dict[str, int]:
     """Mirrors physiologyCompositionDefaults: how many foods of a meal fell
     back to a stated default for each input. A food without protein has no

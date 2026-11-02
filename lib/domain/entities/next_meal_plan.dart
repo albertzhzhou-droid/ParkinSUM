@@ -145,6 +145,78 @@ final class NextMealNutrientTotal {
   bool get complete => unknownItemCount == 0;
 }
 
+/// A modeled range; [low] equals [high] when nothing widens it.
+final class NextMealRange {
+  const NextMealRange(this.low, this.high);
+
+  final double low;
+  final double high;
+}
+
+/// One food's part of a plate's digestible large neutral amino acids.
+final class NextMealFoodAminoAcidShare {
+  const NextMealFoodAminoAcidShare(this.candidate, this.mmol, this.fraction);
+
+  final NextMealCandidate candidate;
+  final double mmol;
+
+  /// Of the plate's digestible total; 0 when the plate has none.
+  final double fraction;
+}
+
+/// Modeled amino-acid response to a plate over the four hours after eating.
+/// Reads no medicine, dose or time of day. Population-typical, not a
+/// prediction for any person.
+final class NextMealPlateNutrition {
+  const NextMealPlateNutrition.modeled({
+    required double this.digestibleMmol,
+    required NextMealRange this.peakRiseUmolPerL,
+    required NextMealRange this.peakTimeMin,
+    required this.halfAppearedMin,
+    required this.shares,
+    required this.foods,
+    required this.foodsWithoutForm,
+    required PhysiologyCompositionDefaults this.compositionDefaults,
+    required this.draws,
+    required this.seed,
+  }) : reasons = const [];
+
+  const NextMealPlateNutrition.unavailable(this.reasons)
+    : digestibleMmol = null,
+      peakRiseUmolPerL = null,
+      peakTimeMin = null,
+      halfAppearedMin = null,
+      shares = const [],
+      foods = 0,
+      foodsWithoutForm = 0,
+      compositionDefaults = null,
+      draws = 0,
+      seed = 0;
+
+  final List<NextMealUnavailableReason> reasons;
+  final double? digestibleMmol;
+
+  /// 5th to 95th percentile; across both forms when a form is unknown.
+  final NextMealRange? peakRiseUmolPerL;
+  final NextMealRange? peakTimeMin;
+
+  /// Null when the plate has no amino acids to appear.
+  final NextMealRange? halfAppearedMin;
+
+  /// Largest first.
+  final List<NextMealFoodAminoAcidShare> shares;
+  final int foods;
+
+  /// Foods modeled as solid and as liquid because neither the stored form nor
+  /// a curated one is known.
+  final int foodsWithoutForm;
+  final PhysiologyCompositionDefaults? compositionDefaults;
+  final int draws;
+  final int seed;
+
+  bool get modeled => reasons.isEmpty;
+}
+
 /// Running totals of a plate.
 final class NextMealPlateTotals {
   const NextMealPlateTotals({

@@ -10304,3 +10304,30 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Drop the rebind commit, then revert the feature commit. No stored data or migration is involved; `catalogProteinSource` is never persisted.
+
+
+## 2026-11-02 — PLATE-NUTRITION-20261102 — Curated food form and a plate amino-acid panel
+
+### Baseline and scope
+
+- Branch `nutrition/plate-amino-acid-response` from `stage-d/next-meal-nutrition` `c68569e`. Nutrition side only, following the decision that drug-side outputs stay as they are. Closes two boundaries of APP-MEAL-COMPOSITION-20261102: most foods had no recorded form, and no app surface read `PhysiologyNutritionProvider`.
+
+### Changes
+
+- `tool/data/reference_food_curation.json`: new `form` key, the physical form as eaten. 183 solid, 23 liquid, 18 unstated where preparation decides or the food is not eaten as such. `tool/reference_food_composition_codegen.dart` refuses a record without the key; `ReferenceFoodCompositionRow.physicalForm` carries it.
+- `lib/domain/usecases/catalog_food_to_candidate.dart`, `lib/domain/entities/meal_composition.dart`: `curatedPhysicalFormForFoodItem` and the unserialized `FoodComponent.catalogPhysicalForm`. `textureClass` was not used: it sets the IDDSI level and the thickener check.
+- `lib/domain/usecases/physiology_reference_trace_provider.dart`: `physiologyNutritionComponentFromFood` uses the curated form where the stored one is unknown. `physiologyComponentFromFood`, which the meal check and timing comparisons use, is unchanged, so their coverage and values do not move.
+- `lib/domain/usecases/next_meal_planner.dart`, `lib/domain/entities/next_meal_plan.dart`: `NextMealPlanner.plateNutrition` returns the digestible LNAA load, each food's share and the plasma rise, peak time and half-appearance time as 5th to 95th percentile ranges. It takes no dose context. Foods with no form at all are modeled both ways and each range spans both. 50 draws, cached by plate: a plate edit took about 160 ms at 100 draws on a desktop VM.
+- `lib/features/next_meal/next_meal_planner_widgets.dart`, `next_meal_page.dart`: `PlannerPlateNutritionPanel` under the plate totals, with per-food bars, the boundary sentence, the bracket note and the defaults sentence. en and zh, like the rest of the planner's copy.
+- `tool/physiology_reference/`: `nutrition_component_from_food` and six fixture cases, run through the real Dart converter.
+- `docs/design/PHYSIOLOGY_MODEL_V2.md`: the two form sources, which output reads which, and why.
+
+### Verification and remaining boundaries
+
+- `test/next_meal_plate_nutrition_test.dart` pins the curation counts, that texture, IDDSI and the stored form are unchanged for all 224 records, that the timing converter ignores the curated form, that it is not serialized, the plate results, and that the panel's copy names no medicine or dose.
+- Coverage: nutrition outputs have a form for 208 of 244 foods, up from 38. Timing comparisons stay at 38. The earlier 206 of 244 and 188 of 224 are both right: the first is the whole catalog, the second the USDA subset.
+- Boundaries: 36 foods stay bracketed, 18 of them CIQUAL records with no curated entry, which include common foods. Single-meal amino-acid magnitudes stay unvalidated. Logged meals do not show the panel. Not a prediction for any person and not dietary advice.
+
+### Surgical rollback
+
+- Drop the rebind commit, then revert the feature commit. No stored data or migration is involved; `catalogPhysicalForm` is never persisted.

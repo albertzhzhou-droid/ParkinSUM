@@ -6,7 +6,8 @@
 //   Hugging Face mirror ULM-DS-Lab/food-composition-matrix
 //   (usda_sr_legacy_2018_wide.csv), which pivots FDC food_nutrient.csv
 //   without imputation.
-// - tool/data/reference_food_curation.json: names, group, state, texture.
+// - tool/data/reference_food_curation.json: names, group, state, texture,
+//   form.
 //
 // The generator never edits a nutrient value.
 // test/reference_food_composition_table_test.dart re-parses both inputs and
@@ -265,6 +266,13 @@ String renderReferenceTable({
     if (texture != null && texture != 'liquid' && texture != 'soft') {
       throw FormatException('Unknown texture $texture (${row.fdcId})');
     }
+    if (!meta.containsKey('form')) {
+      throw FormatException('Missing form (${row.fdcId})');
+    }
+    final form = meta['form'] as String?;
+    if (form != null && form != 'solid' && form != 'liquid') {
+      throw FormatException('Unknown form $form (${row.fdcId})');
+    }
     out
       ..writeln('      ReferenceFoodCompositionRow(')
       ..writeln('        fdcId: ${row.fdcId},')
@@ -277,6 +285,9 @@ String renderReferenceTable({
       )
       ..writeln(
         '        textureClass: ${texture == null ? 'null' : _dartString(texture)},',
+      )
+      ..writeln(
+        '        physicalForm: ${form == null ? 'null' : _dartString(form)},',
       );
     for (final entry in _numericFields.entries) {
       out.writeln(

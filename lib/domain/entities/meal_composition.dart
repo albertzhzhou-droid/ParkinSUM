@@ -98,6 +98,12 @@ final class FoodComponent {
   /// mechanistic replay does not read it.
   final ProteinSourceType? catalogProteinSource;
 
+  /// The curated catalog record's form as eaten; null when it has none. Only
+  /// the physiology model's nutrition outputs read it, so [physicalForm] and
+  /// everything built on it stay as they are. Not serialized: mechanistic
+  /// replay does not read it.
+  final MealPhysicalForm? catalogPhysicalForm;
+
   /// Actual per-food amino-acid profile when available (preferred over the
   /// protein-source proxy). Null when not extracted.
   final AminoAcidProfile? aminoAcidProfile;
@@ -132,6 +138,7 @@ final class FoodComponent {
     required this.sourceDocId,
     this.proteinSource = ProteinSourceType.unknown,
     this.catalogProteinSource,
+    this.catalogPhysicalForm,
     this.aminoAcidProfile,
     this.portionBasis,
   });

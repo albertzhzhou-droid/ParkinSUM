@@ -3,6 +3,7 @@ import '../../core/models/meal.dart';
 import '../entities/food_serving_reference.dart';
 import '../entities/meal_composition.dart';
 import '../entities/protein_source.dart';
+import '../entities/reference_food_composition.dart';
 import '../entities/time_axis_events.dart';
 import 'food_composition_interdependency_model.dart' show referenceRowsByFdcId;
 import 'food_serving_reference_resolver.dart';
@@ -25,16 +26,32 @@ ProteinSourceType proteinSourceForFoodItem(FoodItem item) =>
 /// subset, from its curated group and official record; null for any other
 /// food. Never read from a display name, alias or logged text.
 ProteinSourceType? curatedProteinSourceForFoodItem(FoodItem item) {
-  final fdcId = item.sourceSystem.startsWith('USDA_FDC')
-      ? int.tryParse(item.sourceFoodCode ?? '')
-      : null;
-  final reference = fdcId == null ? null : referenceRowsByFdcId[fdcId];
+  final reference = _curatedReferenceRow(item);
   return reference == null
       ? null
       : proteinSourceForReferenceGroup(
           reference.group,
           reference.sourceDescription,
         );
+}
+
+/// Physical form as eaten of a record in the curated reference subset; null
+/// for any other food and where preparation decides the form. Read only by
+/// the physiology model's nutrition outputs. Separate from
+/// [textureClassToPhysicalForm]: texture also sets the IDDSI level, and the
+/// form feeds the gastric model and the meal check, which do not change.
+MealPhysicalForm? curatedPhysicalFormForFoodItem(FoodItem item) =>
+    switch (_curatedReferenceRow(item)?.physicalForm) {
+      'solid' => MealPhysicalForm.solid,
+      'liquid' => MealPhysicalForm.liquid,
+      _ => null,
+    };
+
+ReferenceFoodCompositionRow? _curatedReferenceRow(FoodItem item) {
+  final fdcId = item.sourceSystem.startsWith('USDA_FDC')
+      ? int.tryParse(item.sourceFoodCode ?? '')
+      : null;
+  return fdcId == null ? null : referenceRowsByFdcId[fdcId];
 }
 
 /// Pure adapter from a runtime `FoodItem` (seed catalog OR DB-projected) to
@@ -104,6 +121,7 @@ CandidateFood foodItemToCandidateFood(
         sourceDocId: item.sourceSystem,
         proteinSource: proteinSource,
         catalogProteinSource: curatedProteinSourceForFoodItem(item),
+        catalogPhysicalForm: curatedPhysicalFormForFoodItem(item),
         // Prefer the actual amino-acid profile when present; null → the LNAA
         // layer falls back to the protein-source proxy.
         aminoAcidProfile: aminoAcidProfile,

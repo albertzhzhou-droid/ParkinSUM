@@ -375,6 +375,17 @@ PhysiologyComponent? physiologyComponentFromFood(
   );
 }
 
+/// Reference-model component for the nutrition outputs. These read no medicine
+/// or dose, so they may use the curated form as eaten where the stored form is
+/// unknown; timing comparisons keep [physiologyComponentFromFood].
+PhysiologyComponent? physiologyNutritionComponentFromFood(
+  FoodComponent food, {
+  MealPhysicalForm? assumedForm,
+}) => physiologyComponentFromFood(
+  food,
+  assumedForm: food.catalogPhysicalForm ?? assumedForm,
+);
+
 /// How many foods of a meal fell back to a stated default, per input. A food
 /// without protein has no protein type or amino-acid profile to default.
 final class PhysiologyCompositionDefaults {

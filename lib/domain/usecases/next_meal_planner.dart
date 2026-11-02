@@ -27,6 +27,7 @@ import 'administration_dose_confirmation_coordinator.dart';
 import 'catalog_food_to_candidate.dart';
 import 'food_serving_reference_resolver.dart';
 import 'intake_dose_context_builder.dart';
+import 'physiology_nutrition_outputs.dart';
 import 'physiology_reference_model.dart';
 import 'physiology_reference_trace_provider.dart';
 
@@ -34,11 +35,14 @@ final class NextMealPlanner {
   NextMealPlanner({
     PhysiologyReferenceTraceProvider? physiology,
     AdministrationDoseConfirmationCoordinator? doseConfirmation,
+    PhysiologyNutritionProvider? nutrition,
   }) : physiology = physiology ?? PhysiologyReferenceTraceProvider.shared,
+       nutrition = nutrition ?? PhysiologyNutritionProvider(draws: 50),
        _doseConfirmation =
            doseConfirmation ?? AdministrationDoseConfirmationCoordinator();
 
   final PhysiologyReferenceTraceProvider physiology;
+  final PhysiologyNutritionProvider nutrition;
   final AdministrationDoseConfirmationCoordinator _doseConfirmation;
 
   /// Plate servings move in these steps, from [minServings] to [maxServings].
@@ -50,6 +54,7 @@ final class NextMealPlanner {
   final Map<String, double?> _centralCache = {};
   final Map<String, PhysiologyMealTimingComparison?> _bandCache = {};
   final Map<String, PhysiologyCurveComparison?> _curveCache = {};
+  final Map<String, PhysiologyNutritionSummary?> _nutritionCache = {};
 
   /// Competing LNAA grams per gram of protein of the model's protein type.
   static double _lnaaShare(String proteinType) =>
@@ -315,6 +320,101 @@ final class NextMealPlanner {
     withBand: withBand,
   );
 
+  /// Modeled amino-acid response to the whole plate. Reads no medicine, dose
+  /// or time of day, so it does not need a dose context. A curated form as
+  /// eaten applies where the stored form is unknown; foods with neither are
+  /// modeled as solid and as liquid and each range spans both.
+  NextMealPlateNutrition plateNutrition(List<NextMealPlateItem> items) {
+    final eaten = [
+      for (final item in items)
+        if (item.servings > 0) item,
+    ];
+    if (eaten.isEmpty) {
+      return const NextMealPlateNutrition.unavailable([
+        NextMealUnavailableReason.emptyPlate,
+      ]);
+    }
+    final reasons = <NextMealUnavailableReason>[
+      if (eaten.any((i) => i.candidate.proteinG == null))
+        NextMealUnavailableReason.missingProtein,
+      if (eaten.any((i) => i.candidate.energyKcal == null))
+        NextMealUnavailableReason.missingEnergy,
+    ];
+    if (reasons.isNotEmpty) return NextMealPlateNutrition.unavailable(reasons);
+
+    bool formMissing(NextMealPlateItem i) =>
+        i.candidate.physicalForm == MealPhysicalForm.unknown &&
+        i.candidate.component.catalogPhysicalForm == null;
+    final withoutForm = eaten.where(formMissing).length;
+    final ordered = [...eaten]
+      ..sort((a, b) => a.candidate.id.compareTo(b.candidate.id));
+    final baseKey = [
+      for (final item in ordered)
+        '${_componentKey(item.candidate.component)}x${item.servings}',
+    ].join('|');
+    final summaries = <PhysiologyNutritionSummary>[];
+    List<PhysiologyComponent>? first;
+    for (final assumed
+        in withoutForm > 0
+            ? const [MealPhysicalForm.solid, MealPhysicalForm.liquid]
+            : const [MealPhysicalForm.unknown]) {
+      final components = [
+        for (final item in ordered)
+          _scaled(
+            physiologyNutritionComponentFromFood(
+              item.candidate.component,
+              assumedForm: assumed,
+            )!,
+            item.servings,
+          ),
+      ];
+      first ??= components;
+      summaries.add(
+        _cached(
+          _nutritionCache,
+          '${assumed.name}|$baseKey',
+          () => nutrition.summarize(components),
+        )!,
+      );
+    }
+
+    NextMealRange span(String key) => NextMealRange(
+      _min([for (final s in summaries) s.bands[key]![0]]),
+      _max([for (final s in summaries) s.bands[key]![2]]),
+    );
+    // Forms change the timing of a load, not its size.
+    final load = summaries.first.load;
+    final rows = load.components.iterator;
+    final shares = <NextMealFoodAminoAcidShare>[];
+    for (var i = 0; i < ordered.length; i++) {
+      if (first![i].form == PhysiologyComponentForm.water) continue;
+      rows.moveNext();
+      final umol = rows.current.digestibleUmol;
+      shares.add(
+        NextMealFoodAminoAcidShare(
+          ordered[i].candidate,
+          umol / 1000,
+          load.digestibleUmol > 0 ? umol / load.digestibleUmol : 0,
+        ),
+      );
+    }
+    shares.sort((a, b) => b.mmol.compareTo(a.mmol));
+    return NextMealPlateNutrition.modeled(
+      digestibleMmol: load.digestibleUmol / 1000,
+      peakRiseUmolPerL: span('lnaa6_peak_rise_umol_per_l'),
+      peakTimeMin: span('lnaa6_peak_time_min'),
+      halfAppearedMin: load.digestibleUmol > 0
+          ? span('appearance_half_time_min')
+          : null,
+      shares: List.unmodifiable(shares),
+      foods: eaten.length,
+      foodsWithoutForm: withoutForm,
+      compositionDefaults: physiologyCompositionDefaults(first!),
+      draws: nutrition.draws,
+      seed: nutrition.seed,
+    );
+  }
+
   /// Brain delivery of the whole plate relative to no meal. Foods without a
   /// recorded form are modeled as solid and as liquid and the value is the
   /// range between the two.
@@ -487,6 +587,7 @@ final class NextMealPlanner {
   static String _componentKey(FoodComponent c) => [
     c.id,
     c.physicalForm.name,
+    c.catalogPhysicalForm?.name,
     c.proteinGrams,
     c.carbohydrateGrams,
     c.fatGrams,

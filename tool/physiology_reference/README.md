@@ -24,7 +24,7 @@ npm run physiology:reality                                 # reality checks + fi
 | `calibrate.py` | Fits the four calibrated parameters to their named targets only |
 | `reality_checks.py` | 28 checks labelled calibrated, independent, structural or known gap; non-zero exit on failure |
 | `whatif.py` | Meal-offset comparison with 5th-95th percentile bands and a theme-aware SVG |
-| `agreement.py` | Includes `component_from_food` cases, the Python mirror of the app's meal converter (full, partial and missing composition). Writes or checks `test/fixtures/physiology_reference_agreement.json`, which the Dart port (`lib/domain/usecases/physiology_reference_model.dart`) must reproduce |
+| `agreement.py` | Includes `component_from_food` and `nutrition_component_from_food` cases, the Python mirrors of the app's meal converters (full, partial and missing composition; a curated form filling an unknown stored form). Writes or checks `test/fixtures/physiology_reference_agreement.json`, which the Dart port (`lib/domain/usecases/physiology_reference_model.dart`) must reproduce |
 
 Outputs are population-typical curves for synthetic scenarios. They are not
 predictions for any person and not dosing, timing or dietary advice.

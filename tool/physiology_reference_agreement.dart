@@ -89,6 +89,7 @@ FoodComponent physiologyFoodFromSpec(Map<String, dynamic> spec) {
     (key, value) => MapEntry(key, (value as num).toDouble()),
   );
   final catalogSource = spec['catalog_protein_source'] as String?;
+  final catalogForm = spec['catalog_physical_form'] as String?;
   return FoodComponent(
     id: spec['name'] as String,
     name: spec['name'] as String,
@@ -105,6 +106,9 @@ FoodComponent physiologyFoodFromSpec(Map<String, dynamic> spec) {
     catalogProteinSource: catalogSource == null
         ? null
         : ProteinSourceType.values.byName(catalogSource),
+    catalogPhysicalForm: catalogForm == null
+        ? null
+        : MealPhysicalForm.values.byName(catalogForm),
     aminoAcidProfile: amino == null
         ? null
         : AminoAcidProfile(
@@ -537,13 +541,17 @@ PhysiologyAgreementReport comparePhysiologyAgreement(
     final entry = raw as Map<String, dynamic>;
     final id = entry['id'] as String;
     final assumed = entry['assumed_form'] as String?;
+    final assumedForm = assumed == null
+        ? null
+        : MealPhysicalForm.values.byName(assumed);
+    final convert = entry['converter'] == 'nutrition'
+        ? physiologyNutritionComponentFromFood
+        : physiologyComponentFromFood;
     final converted = [
       for (final food in entry['foods'] as List)
-        physiologyComponentFromFood(
+        convert(
           physiologyFoodFromSpec(food as Map<String, dynamic>),
-          assumedForm: assumed == null
-              ? null
-              : MealPhysicalForm.values.byName(assumed),
+          assumedForm: assumedForm,
         ),
     ];
     final expected = entry['meal'] as List?;

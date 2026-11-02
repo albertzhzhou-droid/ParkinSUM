@@ -302,7 +302,7 @@ Python: timing 21 ms, nutrition 11 ms, a two-day Carter scenario 131 ms.
      Observatory rows with their bands, and six meal-timing effects:
      12,295 numbers in v2. v3 adds the Shaham, Wurtman, Tang, Bos and Moore
      scenarios, their derived quantities and the nutrition outputs with
-     bands for five synthetic meals: 24,597 numbers, and 25,174 with the 18
+     bands for five synthetic meals: 24,597 numbers, and 25,367 with the 24
      synthetic app-meal converter cases. On the development machine
      (macOS, CPython 3.9) the largest difference is 0; CPython 3.12 sums floats with compensation, so
      CI may differ in the last digits, well inside the tolerance.
@@ -362,11 +362,13 @@ Python: timing 21 ms, nutrition 11 ms, a two-day Carter scenario 131 ms.
    not extend the drug side (formulations, decarboxylase inhibitors, COMT
    inhibitors, drug pharmacokinetics). Only immediate-release levodopa is
    executable, as in v2; anything else is refused.
-7. **Use the nutrition outputs (v3).** The Next-meal planner can read the
-   competing-LNAA load, plasma LNAA rise and appearance timing with bands
-   (`PhysiologyNutritionProvider`) instead of, or next to, the brain-delivery
-   ratio. The meal converter now passes real composition (see "App meal
-   inputs"); no app surface reads these outputs yet.
+7. **Use the nutrition outputs (v3).** The Next-meal planner's plate card
+   shows the digestible LNAA load, each food's share, the plasma LNAA rise and
+   amino-acid appearance timing with bands (`PlannerPlateNutritionPanel`,
+   `NextMealPlanner.plateNutrition`), next to the brain-delivery ratio. It
+   reads no medicine, dose or time of day, so it shows with or without a
+   logged dose. See "App meal inputs" for the form it uses. The panel uses 50
+   draws: a plate edit recomputes it synchronously.
 
 ## App meal inputs
 
@@ -402,6 +404,25 @@ whatever it is called.
 
 `whey` and `casein` are therefore not reached from the catalog today. They need
 a curated per-food field, not a rule on the group.
+
+Physical form has two sources, and which one applies depends on the output:
+
+| Output | Reads | Foods of 244 with a form |
+| --- | --- | --- |
+| Timing comparisons (meal check, planner chips and curves) | `FoodComponent.physicalForm`, from `textureClass` | 38 |
+| Nutrition outputs (plate panel) | `physicalForm`, else `catalogPhysicalForm`, the curated form as eaten | 208 |
+
+`physicalForm` was not widened, on purpose: it also feeds the gastric model and
+the meal check's score, and the decision of 2026-10-23 keeps drug-side outputs
+as they are. A curated `form` key was added instead of filling `textureClass`,
+which sets the IDDSI level and the thickener check. The form is curated for 206
+of the 224 USDA records. The other 18 stay unstated because preparation decides
+the form or the food is not eaten as such: oils and butter, raw egg, protein
+powders, syrups, honey, sugar, salt, flour, gluten and cornmeal. Oils matter
+most: the liquid path counts the portion as water. Dry grains and pulses are
+`solid`, as eaten cooked. Of the 20 CIQUAL foods, 18 have no form and stay
+bracketed; curating them is the next step. Foods with neither form are modeled
+as solid and as liquid and each range spans both.
 
 Carbohydrate must be available carbohydrate. The USDA paths subtract fibre,
 CIQUAL states it that way, and the China CDC convention is unverified, so those

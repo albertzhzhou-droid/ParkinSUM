@@ -1194,6 +1194,214 @@ class PlannerTotals extends StatelessWidget {
   }
 }
 
+/// Modeled amino-acid response to the plate. Nutrition only: it reads no
+/// medicine, dose or time of day, so it shows with or without a logged dose.
+class PlannerPlateNutritionPanel extends StatelessWidget {
+  const PlannerPlateNutritionPanel({
+    super.key,
+    required this.i18n,
+    required this.nutrition,
+    required this.nameOf,
+  });
+
+  final AppI18n i18n;
+  final NextMealPlateNutrition nutrition;
+  final String Function(NextMealCandidate) nameOf;
+
+  String _rounded(double value) => value.round().toString();
+
+  // The model steps in minutes but its spread is wider than that.
+  String _minutes(NextMealRange range) => i18n.tr('planner.nutrition_minutes', {
+    'low': '${(range.low / 5).round() * 5}',
+    'high': '${(range.high / 5).round() * 5}',
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = PlannerPalette.of(context);
+    final muted = TextStyle(fontSize: 12, color: palette.muted);
+    final title = Text(
+      i18n.tr('planner.nutrition_title'),
+      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+    );
+    Widget box(List<Widget> children) => Container(
+      key: const ValueKey('next-meal-plate-nutrition'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: palette.sunken,
+        borderRadius: BorderRadius.circular(Paper.radiusSm),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+    if (!nutrition.modeled) {
+      return box([
+        title,
+        const SizedBox(height: 4),
+        Text(
+          i18n.tr('planner.nutrition_unavailable', {
+            'reason': nutrition.reasons
+                .map((r) => i18n.tr('planner.reason.${r.wireName}'))
+                .join('; '),
+          }),
+          style: muted,
+        ),
+      ]);
+    }
+    final peak = nutrition.peakRiseUmolPerL!;
+    final half = nutrition.halfAppearedMin;
+    final rows = [
+      (
+        'planner.nutrition_load',
+        i18n.tr('planner.nutrition_load_value', {
+          'value': nutrition.digestibleMmol!.toStringAsFixed(1),
+        }),
+      ),
+      if (half != null) ...[
+        (
+          'planner.nutrition_peak',
+          i18n.tr('planner.nutrition_peak_value', {
+            'low': _rounded(peak.low),
+            'high': _rounded(peak.high),
+          }),
+        ),
+        ('planner.nutrition_peak_time', _minutes(nutrition.peakTimeMin!)),
+        ('planner.nutrition_half', _minutes(half)),
+      ],
+    ];
+    final defaults = physiologyCompositionDefaultsText(
+      i18n,
+      nutrition.compositionDefaults!,
+    );
+    return box([
+      title,
+      const SizedBox(height: 2),
+      Text(i18n.tr('planner.nutrition_boundary'), style: muted),
+      const SizedBox(height: 4),
+      for (final (key, value) in rows)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  i18n.tr(key),
+                  style: TextStyle(fontSize: 13, color: palette.muted),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      if (nutrition.shares.length > 1 && half != null) ...[
+        const SizedBox(height: 6),
+        Text(
+          i18n.tr('planner.nutrition_by_food'),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
+        for (final share in nutrition.shares)
+          _PlannerNutritionShareRow(
+            i18n: i18n,
+            share: share,
+            name: nameOf(share.candidate),
+          ),
+      ],
+      const SizedBox(height: 4),
+      if (half != null)
+        Text(
+          i18n.tr('planner.nutrition_range_note', {
+            'draws': '${nutrition.draws}',
+            'seed': '${nutrition.seed}',
+          }),
+          style: muted,
+        ),
+      if (nutrition.foodsWithoutForm > 0)
+        Text(
+          i18n.tr('planner.nutrition_no_form', {
+            'count': '${nutrition.foodsWithoutForm}',
+            'total': '${nutrition.foods}',
+          }),
+          key: const ValueKey('next-meal-nutrition-no-form'),
+          style: muted,
+        ),
+      if (defaults != null) Text(defaults, style: muted),
+    ]);
+  }
+}
+
+class _PlannerNutritionShareRow extends StatelessWidget {
+  const _PlannerNutritionShareRow({
+    required this.i18n,
+    required this.share,
+    required this.name,
+  });
+
+  final AppI18n i18n;
+  final NextMealFoodAminoAcidShare share;
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = PlannerPalette.of(context);
+    final value = i18n.tr('planner.nutrition_share_value', {
+      'value': share.mmol.toStringAsFixed(1),
+      'percent': '${(share.fraction * 100).round()}',
+    });
+    return Semantics(
+      label: '$name: $value',
+      excludeSemantics: true,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  value,
+                  style: TextStyle(fontSize: 12, color: palette.muted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 2),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: share.fraction.clamp(0.0, 1.0),
+                minHeight: 4,
+                color: palette.info,
+                backgroundColor: palette.border,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 // -----------------------------------------------------------------------------
 // Compare.
 // -----------------------------------------------------------------------------

@@ -277,6 +277,15 @@ void main() {
     await _tap(tester, find.byKey(const ValueKey('next-meal-more-food_tofu')));
     expect(find.textContaining('1.5 × serving'), findsOneWidget);
     expect(_totalProtein(tester), closeTo(protein1 * 1.5, 0.11));
+    final nutrition = find.byKey(const ValueKey('next-meal-plate-nutrition'));
+    expect(nutrition, findsOneWidget);
+    expect(
+      find.descendant(
+        of: nutrition,
+        matching: find.textContaining('50 simulated adults'),
+      ),
+      findsOneWidget,
+    );
 
     final chart = find.byKey(const ValueKey('next-meal-chart-brain-entry'));
     expect(chart, findsOneWidget);
