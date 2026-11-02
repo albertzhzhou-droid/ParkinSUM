@@ -79,6 +79,7 @@
     "assertion:reconciliation": "dart run tool/run_medication_assertion_reconciliation_check.dart",
     "gastric:structures": "dart run tool/run_gastric_structural_uncertainty_check.dart && node --test tool/gastric_identifiability_experiment.test.mjs && node tool/run_gastric_identifiability_check.mjs",
     "gastric:precision": "node tool/gastric_high_precision_reference_check.mjs",
+    "physiology:reality": "python3 -I tool/physiology_reference/reality_checks.py --json build/physiology_reference/report.json && python3 -I tool/physiology_reference/agreement.py --check --json build/physiology_reference/fixture_freshness.json && dart run tool/run_physiology_reference_agreement.dart && flutter test test/physiology_reference_agreement_test.dart",
     "privacy:preflight": "node tool/run_local_privacy_preflight.mjs",
     "privacy:store": "node --test tool/store_privacy_contract_check.test.mjs tool/runtime_network_platform_policy.test.mjs && node tool/store_privacy_contract_check.mjs",
     "source:access": "node tool/run_source_access_contract_check.mjs",

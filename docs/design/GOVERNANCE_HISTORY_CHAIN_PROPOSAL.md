@@ -1,7 +1,8 @@
 # Proposal: replace frozen history fixtures with one hash-chained ledger file
 
-Status: proposal only. Nothing here is implemented; the frozen fixtures and
-their tests are unchanged. Engineering change control, not evidence or review.
+Status: implemented on branch `audit/governance-ledger-chain` (identity v83,
+32 ledger records); see "As implemented" at the end. Engineering change control,
+not evidence or review. The measurements below are from the proposal date.
 
 ## What the fixtures guarantee today
 
@@ -100,3 +101,39 @@ growth, no new file path.
 4. Delete the 20 fixtures and teach `identity:rebind` to append instead.
 5. Keep the deleted fixtures recoverable from git history; nothing about the
    historical records themselves changes.
+
+## As implemented
+
+Implemented at identity v83 with 32 records and 22 fixtures (`before_v62` …
+`before_v83`, 62,883 lines, 3,010,226 bytes). Differences from the proposal above:
+
+- **Location and shape.** The chain is `config/governance_ledger.jsonl` (54
+  lines, 203,190 bytes, 6.7 % of the fixtures; a bump appends two lines, about
+  6 KB). Version boundaries are lines of the chain itself: a `checkpoint` line
+  before each bump's record carries the snapshot digest and record count of the
+  ledger before the bump and the fixture header as normalized provenance. `record` lines carry
+  `identity_version`, so `snapshotAt(N)` names the ledger as of any vN and
+  `snapshotBefore(N)` the ledger before a bump.
+- **Pins.** `lib/domain/entities/governance_ledger_chain.dart` pins the length,
+  the head and, per checkpoint, the record count, snapshot digest, checkpoint
+  `entry_sha256` and the `historicalVNConfigurationSha256` its last record must
+  carry. Records 19–21 now reference new `historicalV70`–`V72` constants (values
+  unchanged) so every checkpoint links to a pin.
+- **Verification in production code.** `GovernanceLedgerChain.verify` runs in
+  `test/governance_ledger_chain_test.dart` and in the `cou:requalification`
+  gate, which now fails when the chain fails. Reasons name the offending line.
+  Negative tests cover an edited line, an edited and re-hashed line, a fully
+  re-sealed rewrite, reordering, deletion of a record, a checkpoint or the
+  newest line, a broken link, non-canonical or malformed lines, a wrong
+  linkage pin and a duplicated checkpoint.
+- **Lossless migration.** Each migrated checkpoint keeps the fixture's path,
+  size, sha256 and key layout (the 10 header shapes map onto one provenance
+  shape), and the test rebuilds all 22 fixtures byte for byte from the chain and
+  checks their sha256. The commit that adds the chain keeps the fixtures and
+  their 22 tests and proves both agree; the next commit deletes them. The 22
+  fixture tests are replaced by 22 chain tests (see the timeline entry for the
+  measured run).
+- **Rebind.** `npm run identity:rebind` appends a checkpoint and a record and
+  updates the pins instead of writing a fixture and a test. `--reapply <ref>`
+  redoes a dropped rebind from the title and reason its checkpoint recorded;
+  docs/IDENTITY_REBIND.md documents the merge workflow.

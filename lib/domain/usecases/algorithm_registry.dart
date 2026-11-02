@@ -312,6 +312,37 @@ class AlgorithmRegistry {
           'A unitless proxy; normal-diet LNAA variation was not important in most participants in one small study.',
     ),
     AlgorithmDescriptor(
+      id: 'physiology_reference_model',
+      name: 'Physiology reference model (physical units)',
+      stage: AlgorithmStage.model,
+      visualization: AlgorithmVisualization.liveCurve,
+      sourcePath: 'lib/domain/usecases/physiology_reference_model.dart',
+      additionalSourcePaths: [
+        'lib/domain/entities/physiology_reference_parameters.dart',
+        'lib/domain/usecases/physiology_reference_trace_provider.dart',
+        'lib/features/algorithm_observatory/physiology_reference_panel.dart',
+      ],
+      userVisibleImpact:
+          'Adds a descriptive, direction-aware meal-timing note and an '
+          'Observatory comparison in physical units; it never changes a '
+          'score, rule outcome or recommendation order.',
+      inputs:
+          'Meal energy, protein and physical form; meal offset from a '
+          'synthetic 100 mg immediate-release levodopa dose',
+      outputs:
+          'Plasma levodopa (mg/L), plasma amino acids (µmol/L), gastric '
+          'energy delivery (kcal/min), brain-entry index and 0–4 h brain '
+          'delivery relative to no meal with seeded population bands',
+      hasLiveTrace: true,
+      traceProviderId:
+          AlgorithmTraceProviderIds.physiologyReferenceTimingComparison,
+      limitation:
+          'Population-typical curves from a research prototype checked '
+          'against published group data; Km and fasting amino-acid values '
+          'are still "verify". Not a prediction for any person, not a motor '
+          'response and not timing, dosing or dietary advice.',
+    ),
+    AlgorithmDescriptor(
       id: 'protein_distribution',
       name: 'Protein distribution model',
       stage: AlgorithmStage.model,

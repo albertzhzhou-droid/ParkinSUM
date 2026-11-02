@@ -1,5 +1,6 @@
 import '../../core/models/drug_definition.dart';
 import '../../core/models/intake.dart';
+import '../../core/models/medication_product_pack.dart';
 import '../../core/models/user_profile.dart';
 import '../../domain/usecases/intake_dose_context_builder.dart';
 
@@ -15,6 +16,10 @@ class OnboardingDraft {
   final DateTime? initialIntakeAt;
   final String initialIntakeDoseNote;
 
+  /// The product and unit count the person picked, if any. Its dose
+  /// derivation is recorded only when the dose note came from that pick.
+  final MedicationProductSelection? initialIntakeProductSelection;
+
   const OnboardingDraft({
     required this.registrationRegion,
     required this.displayLocale,
@@ -26,6 +31,7 @@ class OnboardingDraft {
     required this.initialIntakeDrugId,
     required this.initialIntakeAt,
     required this.initialIntakeDoseNote,
+    this.initialIntakeProductSelection,
   });
 
   UserProfile buildProfile(
@@ -55,13 +61,15 @@ class OnboardingDraft {
     final drugId = initialIntakeDrugId;
     final takenAt = initialIntakeAt;
     if (drugId == null || takenAt == null) return null;
-    return IntakeDoseContextBuilder().build(
-      id: intakeId,
-      drugId: drugId,
-      takenAt: takenAt,
-      dosageNote: initialIntakeDoseNote.trim(),
-      drug: drug,
-    );
+    return IntakeDoseContextBuilder()
+        .build(
+          id: intakeId,
+          drugId: drugId,
+          takenAt: takenAt,
+          dosageNote: initialIntakeDoseNote.trim(),
+          drug: drug,
+        )
+        .copyWith(productSelection: initialIntakeProductSelection);
   }
 
   static List<String> parseJurisdictionOverride(String text) {

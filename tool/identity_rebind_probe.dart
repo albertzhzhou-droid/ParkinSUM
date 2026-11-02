@@ -6,8 +6,6 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:parkinsum_companion/algorithm_sdk/algorithm_configuration_identity.dart';
-import 'package:parkinsum_companion/domain/entities/context_of_use_requalification.dart';
-import 'package:parkinsum_companion/domain/entities/mechanistic_medication_applicability.dart';
 import 'package:parkinsum_companion/domain/usecases/algorithm_configuration_change_impact_service.dart';
 import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
 
@@ -59,21 +57,6 @@ void main(List<String> arguments) {
   };
   if (arguments.contains('--impact')) {
     result['impact_baseline_sha256'] = impactBaselineSha256();
-  }
-  if (arguments.contains('--ledger')) {
-    // Same construction as test/context_of_use_requalification_test.dart.
-    final ledger = ContextOfUseRequalificationLedger.current(
-      manifest: MechanisticApplicabilityManifest.current,
-      configurationSha256: identity.sha256Digest,
-      evidenceAsOfUtc: DateTime.parse('2026-08-19T00:00:00Z'),
-    );
-    result['ledger_version'] = ContextOfUseRequalificationLedger.ledgerVersion;
-    result['ledger_records'] = [
-      for (final record in ledger.records) record.toJson(),
-    ];
-    result['record_sha256s'] = [
-      for (final record in ledger.records) record.recordSha256,
-    ];
   }
   stdout.writeln(jsonEncode(result));
 }

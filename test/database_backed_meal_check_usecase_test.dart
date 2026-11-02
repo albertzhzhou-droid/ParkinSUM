@@ -21,6 +21,7 @@ import 'package:parkinsum_companion/domain/usecases/database_backed_meal_check_u
 import 'package:parkinsum_companion/domain/usecases/fact_conflict_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/imported_label_rule_provider.dart';
 import 'package:parkinsum_companion/domain/usecases/meal_composition_normalizer.dart';
+import 'package:parkinsum_companion/domain/usecases/physiology_reference_trace_provider.dart';
 import 'package:parkinsum_companion/domain/usecases/rule_registry_compiler.dart';
 import 'package:parkinsum_companion/domain/usecases/runtime_rule_engine.dart';
 import 'package:parkinsum_companion/domain/usecases/variant_resolver.dart';
@@ -1024,6 +1025,135 @@ void main() {
         ),
         isTrue,
       );
+    },
+  );
+
+  test(
+    'adds a direction-aware physiology reference note without changing the score',
+    () async {
+      final db = QueryBackedCdssDatabase({
+        'region_jurisdiction_map': [
+          {
+            'region_code': 'US',
+            'jurisdiction_chain_json': '["US","GLOBAL"]',
+            'food_source_priority_json': '["USDA_FDC","GLOBAL"]',
+            'drug_source_priority_json': '["DAILYMED","GLOBAL"]',
+          },
+        ],
+        'food_variant': [
+          {
+            'food_variant_id': 'FOOD_SALMON#US#USDA_FDC#food_salmon',
+            'food_concept_id': 'FOOD_SALMON',
+            'jurisdiction': 'US',
+            'source_family': 'USDA_FDC',
+            'source_food_code': 'food_salmon',
+            'is_authoritative_for_region': 1,
+          },
+        ],
+        'drug_product_variant': [
+          {
+            'drug_product_variant_id':
+                'DRUG_LDOPA#US#DAILYMED#drug_levodopa_carbidopa',
+            'drug_concept_id': 'DRUG_LDOPA',
+            'jurisdiction': 'US',
+            'regulator': 'DAILYMED',
+            'external_product_code': 'drug_levodopa_carbidopa',
+            'route': 'oral',
+            'dosage_form': 'tablet',
+            'release_type': 'immediate',
+          },
+        ],
+      });
+      final provider = PhysiologyReferenceTraceProvider(draws: 20);
+      final useCase = DatabaseBackedMealCheckUseCase(
+        variantResolver: VariantResolver(database: db),
+        clinicalDecisionSupportService: ClinicalDecisionSupportService(
+          database: db,
+          factConflictEngine: FactConflictEngine(),
+          runtimeRuleEngine: RuntimeRuleEngine(),
+        ),
+        compiledRules: RuleRegistryCompiler().compileJsonList(
+          baselineCdssRules,
+          rulesVersion: 'test_rules',
+        ),
+        physiologyReference: provider,
+      );
+      final mealTime = DateTime.utc(2026, 4, 28, 12);
+      Future<InteractionResult> check(Duration doseAfterMeal) => useCase(
+        meal: Meal(
+          id: 'meal_tofu',
+          eatenAt: mealTime,
+          recordedAt: mealTime,
+          occurredAt: mealTime,
+          timeSource: 'user_exact',
+          title: 'Protein meal',
+          items: [
+            MealItem(
+              // Default catalog entry with energy, protein and texture, so
+              // the reference model has every input it needs.
+              foodId: 'food_ref_usda_172475',
+              foodName: 'Firm tofu',
+              foodCategory: FoodCategory.protein,
+              quantityFactor: 2.5,
+              foodTags: const [],
+              proteinPer100g: 17.27,
+              carbsPer100g: 2.8,
+              fatPer100g: 8.7,
+              fiberPer100g: 0,
+              sodiumPer100g: 70,
+            ),
+          ],
+        ),
+        activeDrugs: [
+          DrugDefinition(
+            id: 'drug_levodopa_carbidopa',
+            genericName: 'carbidopa/levodopa',
+            brandNames: ['Sinemet'],
+            tags: const [DrugTag.levodopaLike],
+            notes: '',
+            route: 'oral',
+            dosageForm: 'tablet',
+            releaseType: 'immediate',
+          ),
+        ],
+        intakes: [
+          Intake(
+            id: 'intake',
+            drugId: 'drug_levodopa_carbidopa',
+            takenAt: mealTime.add(doseAfterMeal),
+            dosageNote: '',
+          ),
+        ],
+        userProfile: UserProfile.defaults(),
+        now: mealTime.add(const Duration(minutes: 45)),
+      );
+
+      String? note(InteractionResult result) => result.dataNotes
+          .where((line) => line.startsWith('In this educational model'))
+          .singleOrNull;
+      final mealBeforeDose = await check(const Duration(minutes: 30));
+      final mealAfterDose = await check(const Duration(minutes: -30));
+
+      for (final result in [mealBeforeDose, mealAfterDose]) {
+        expect(note(result), isNotNull);
+        expect(note(result), contains('of no meal (population band'));
+        expect(note(result), contains('not a prediction for you'));
+        expect(
+          result.keyFindings.followedBy(result.nextActions),
+          everyElement(isNot(contains('educational model'))),
+        );
+      }
+      int percent(InteractionResult result) => int.parse(
+        RegExp(r'about (\d+)%').firstMatch(note(result)!)!.group(1)!,
+      );
+      // The note sees direction; the score's timing penalty does not (yet).
+      expect(percent(mealBeforeDose), lessThan(percent(mealAfterDose)));
+      expect(mealBeforeDose.score, mealAfterDose.score);
+      expect(
+        mealBeforeDose.scoreFactors.map((f) => '${f.code}:${f.points}'),
+        mealAfterDose.scoreFactors.map((f) => '${f.code}:${f.points}'),
+      );
+      expect(mealBeforeDose.issues.length, mealAfterDose.issues.length);
     },
   );
 

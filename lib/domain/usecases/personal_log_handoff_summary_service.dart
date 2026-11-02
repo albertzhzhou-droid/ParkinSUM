@@ -230,6 +230,7 @@ final class PersonalLogHandoffSummaryService {
       '${tr('当前选择及自查', 'Current selections and self-checks')}: ${selection.includeCurrentMedications ? tr('选入', 'included') : tr('省略', 'omitted')}',
       '${tr('来源陈述', 'Source assertions')}: ${selection.includeSourceAssertions ? tr('选入', 'included') : tr('省略，未在此报告检查', 'omitted; not checked for this report')}',
       '${tr('讨论更新', 'Discussion updates')}: ${selection.includeDiscussionUpdates ? tr('选入', 'included') : tr('省略', 'omitted')}',
+      '${tr('日内记录条', 'Day strip')}: ${selection.includeDiaryStrip ? tr('选入；蛋白质筛选 ${selection.diaryProteinFilterG} 克仅用于计数，不是目标', 'included; the ${selection.diaryProteinFilterG} g protein filter is for counts only, not a target') : tr('省略', 'omitted')}',
       '${tr('所选摄入证据', 'Selected intake evidence')}: ${selection.intakeIds.length}. ${tr('清单按每种药品的最近所选记录摘要，不推断当前用药。', 'The checklist summarizes the latest selected record per medicine; it does not infer current use.')}',
       tr(
         '未选记录保留在本地，不附入报告。',

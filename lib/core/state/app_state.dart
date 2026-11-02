@@ -32,6 +32,7 @@ import '../../domain/usecases/decision_support_followup_service.dart';
 import '../../domain/entities/visit_preparation.dart';
 import '../../domain/entities/visit_report_selection.dart';
 import '../../domain/usecases/personal_log_date_window_resolver.dart';
+import '../../domain/usecases/personal_diary_strip_projector.dart';
 import '../../domain/usecases/visit_preparation_service.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_backend.dart';
@@ -592,6 +593,9 @@ class AppState extends ChangeNotifier {
               'care': _careWorkspace?.toJson(),
               'activeDrugIds': _activeDrugIds,
               'intakes': _intakes.map((intake) => intake.toJson()).toList(),
+              // Meals and catalogue protein feed the optional day strip.
+              'meals': _meals.map((meal) => meal.toJson()).toList(),
+              'foodRevision': foodRepo.revision,
               'medicationRevision': medRepo.revision,
               'currentPromptIds': currentPrompts,
             }),
@@ -799,10 +803,36 @@ class AppState extends ChangeNotifier {
             ? '问题仅列最近60条，另有${recentNotes.length - 60}条未纳入。'
             : 'Only the latest 60 questions are included; ${recentNotes.length - 60} omitted.',
     ];
+    // The strip is opt-in and covers every entry of its kinds in the last
+    // days of the range; entered dose text follows the attached-notes choice.
+    final diaryStrip = selection == null || !selection.includeDiaryStrip
+        ? null
+        : const PersonalDiaryStripProjector().project(
+            endDay: selection.window.endInclusive,
+            dayCount: min(
+              selection.window.calendarDays,
+              visitPreparationDiaryMaxDays,
+            ),
+            zoneId: selection.window.zoneId,
+            asOf: at,
+            meals: _meals,
+            intakes: selection.includeRecordNotes
+                ? _intakes
+                : _intakes
+                      .map((intake) => intake.copyWith(dosageNote: ''))
+                      .toList(),
+            observations: observations,
+            foods: foodRepo.allFoods,
+            medications: services.medicationRepository.allDrugs,
+            proteinFilterG: selection.diaryProteinFilterG,
+          );
     return const VisitPreparationService().create(
       generatedAt: at,
       chinese: chinese,
       snapshot: VisitPreparationSnapshot(
+        diaryStrip: diaryStrip,
+        diaryDoseTextOmitted:
+            diaryStrip != null && !selection!.includeRecordNotes,
         currentSelectionIncluded: selection?.includeCurrentMedications ?? true,
         sourceAssertionsIncluded: selection?.includeSourceAssertions ?? true,
         discussionUpdatesIncluded: selection?.includeDiscussionUpdates ?? true,

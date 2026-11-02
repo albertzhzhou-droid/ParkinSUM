@@ -1,4 +1,5 @@
 import '../constants/reference_food_composition_table.dart';
+import 'app_i18n_diary_strip_translations.dart';
 import 'app_i18n_full_translations.dart';
 import 'app_i18n_log_view_translations.dart';
 
@@ -527,7 +528,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'onboarding.initial_intake_time': '服药时间',
     'onboarding.change_time': '更改时间',
     'onboarding.initial_intake_note': '剂量备注',
-    'onboarding.initial_intake_note_help': '例如 100 mg，或留空；组合强度不会当作单次剂量。',
+    'onboarding.initial_intake_note_help':
+        '也可直接输入单次剂量，例如 100 mg，或留空；25/100 这类组合强度不是剂量，可在上方选择规格和单位数量。',
     'onboarding.no_medications_available': '当前药品目录为空。',
     'onboarding.step_preferences': '饮食与安全偏好',
     'onboarding.step_preferences_subtitle': '设置饮食地区、质地安全和内容覆盖',
@@ -1045,8 +1047,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': '已记录餐次：{count}',
     'dashboard.active_drugs': '已激活药品：{count}',
     'dashboard.logged_intakes': '已记录服药：{count}',
-    'dashboard.recommendations': '推荐',
-    'dashboard.no_recommendations': '暂无推荐',
+    'dashboard.recommendations': '下一餐食物对比',
+    'dashboard.no_recommendations': '暂无可对比的食物',
     'dashboard.recommendation_path': '教育性示例',
     'dashboard.recommendation_template':
         '当前模板：{region} · {mealSlot} · {texture}',
@@ -1086,6 +1088,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.medication': '药品',
     'timeline.active_medication_option': '{name}（已激活）',
     'timeline.dosage_note': '剂量说明',
+    'package_dose.strength_title': '产品规格',
+    'package_dose.strength_help': '来自内置药品目录的规格。选择规格不会设定剂量；请在下方选择本次的单位数量。',
+    'package_dose.quantity_title': '本次单位数量（{unit}）',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source': '来源：{source} · 获取时间：{retrieved} · {url}',
     'timeline.package_dose_derivation':
         '换算依据：{strength} × {quantity} {unit} = {amount} {resultUnit}',
@@ -1844,6 +1850,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.historical_analysis':
         '引擎没有把这顿历史餐继续当作“当前正在消化的风险”。本餐距现在约 {hours} 小时，当前工程活跃窗口为 {window} 小时；因此不再因旧餐次生成当前高风险。',
     'mealcheck.historical_note': '历史餐次保护：超过 {window} 小时的非连续肠内营养餐次不会触发当前时序风险。',
+    'mealcheck.physiology_timing_lower':
+        '在这个教育性模型中，这一进餐时间会使模型估算的左旋多巴入脑量降至无进餐时的约 {percent}%（人群范围 {low}–{high}%，服药后 4 小时内）。这些是人群典型的模型曲线，不是对你的预测，也不是服药时间建议。',
+    'mealcheck.physiology_timing_similar':
+        '在这个教育性模型中，这一进餐时间下模型估算的左旋多巴入脑量约为无进餐时的 {percent}%（人群范围 {low}–{high}%，服药后 4 小时内）。这些是人群典型的模型曲线，不是对你的预测，也不是服药时间建议。',
     'mealcheck.summary': '数据库支持的食物与药品变体检查共发现 {count} 项提示。',
     'mealcheck.analysis':
         '引擎已将本餐与 {drugCount} 个激活药品进行检查。最高规则严重度为 {severity}；各评分因素合计 {score} 个启发式规则分。',
@@ -2135,7 +2145,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'onboarding.change_time': 'Change time',
     'onboarding.initial_intake_note': 'Dose note',
     'onboarding.initial_intake_note_help':
-        'For example 100 mg, or blank; combination strength is not treated as an administration dose.',
+        'Or type one dose, for example 100 mg, or leave blank. A combination strength such as 25/100 is not a dose; pick the strength and units above instead.',
     'onboarding.no_medications_available':
         'No medications are available in the catalog.',
     'onboarding.step_preferences': 'Diet and safety preferences',
@@ -2796,8 +2806,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': 'Logged meals: {count}',
     'dashboard.active_drugs': 'Active medications: {count}',
     'dashboard.logged_intakes': 'Medication intakes: {count}',
-    'dashboard.recommendations': 'Recommendations',
-    'dashboard.no_recommendations': 'No recommendations yet',
+    'dashboard.recommendations': 'Compare next-meal foods',
+    'dashboard.no_recommendations': 'No foods to compare yet',
     'dashboard.recommendation_path': 'Educational examples',
     'dashboard.recommendation_template':
         'Active template: {region} · {mealSlot} · {texture}',
@@ -2839,6 +2849,11 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'timeline.medication': 'Medication',
     'timeline.active_medication_option': '{name} (active)',
     'timeline.dosage_note': 'Dosage note',
+    'package_dose.strength_title': 'Product strength',
+    'package_dose.strength_help':
+        'Strengths listed in the bundled product catalog. Choosing one does not set a dose; pick the number of units below.',
+    'package_dose.quantity_title': 'Units in this dose ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'timeline.package_dose_source':
         'Source: {source} · Retrieved: {retrieved} · {url}',
     'timeline.package_dose_derivation':
@@ -3743,6 +3758,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'The engine did not treat this historical meal as an active current digestion risk. The meal is about {hours} hours old, while the current operational activity window is {window} hours, so it no longer produces a current high-risk alert.',
     'mealcheck.historical_note':
         'Historical-meal guard: non-continuous-enteral meals older than {window} hours do not trigger current timing risk.',
+    'mealcheck.physiology_timing_lower':
+        'In this educational model, this meal timing lowers modeled brain entry of levodopa to about {percent}% of no meal (population band {low}–{high}%, over the 4 hours after the dose). These are population-typical model curves, not a prediction for you and not timing advice.',
+    'mealcheck.physiology_timing_similar':
+        'In this educational model, this meal timing leaves modeled brain entry of levodopa at about {percent}% of no meal (population band {low}–{high}%, over the 4 hours after the dose). These are population-typical model curves, not a prediction for you and not timing advice.',
     'mealcheck.summary':
         'Database-backed food and drug variant checks found {count} advisory items.',
     'mealcheck.analysis':
@@ -4236,8 +4255,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': 'Repas enregistres : {count}',
     'dashboard.active_drugs': 'Medicaments actifs : {count}',
     'dashboard.logged_intakes': 'Prises de medicaments : {count}',
-    'dashboard.recommendations': 'Recommandations',
-    'dashboard.no_recommendations': 'Aucune recommandation pour le moment',
+    'dashboard.recommendations': 'Comparer des aliments pour le prochain repas',
+    'dashboard.no_recommendations': 'Aucun aliment à comparer pour le moment',
+    'package_dose.strength_title': 'Dosage du produit',
+    'package_dose.strength_help':
+        'Dosages du catalogue de produits intégré. Choisir un dosage ne fixe pas de dose ; choisissez le nombre d’unités ci-dessous.',
+    'package_dose.quantity_title': 'Unités pour cette prise ({unit})',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'dashboard.recommendation_path': 'Chemin de recommandation',
     'dashboard.recommendation_template':
         'Modele actif : {region} · {mealSlot} · {texture}',
@@ -4812,6 +4836,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Le moteur ne traite pas ce repas historique comme un risque digestif encore actif. Le repas date denviron {hours} heures, alors que la fenetre operationnelle active actuelle est de {window} heures; il ne genere donc plus dalerte de risque eleve actuelle.',
     'mealcheck.historical_note':
         'Garde-fou repas historique : les repas hors nutrition enterale continue de plus de {window} heures ne declenchent pas de risque horaire actuel.',
+    'mealcheck.physiology_timing_lower':
+        'Dans ce modèle éducatif, ce moment de repas abaisse l’entrée cérébrale modélisée de la lévodopa à environ {percent} % de celle sans repas (plage de population {low}–{high} %, sur les 4 heures suivant la prise). Ce sont des courbes de modèle typiques d’une population, ni une prédiction pour vous ni un conseil d’horaire.',
+    'mealcheck.physiology_timing_similar':
+        'Dans ce modèle éducatif, ce moment de repas laisse l’entrée cérébrale modélisée de la lévodopa à environ {percent} % de celle sans repas (plage de population {low}–{high} %, sur les 4 heures suivant la prise). Ce sont des courbes de modèle typiques d’une population, ni une prédiction pour vous ni un conseil d’horaire.',
     'mealcheck.summary':
         'La verification des variantes alimentaires et medicamenteuses a produit {count} alertes.',
     'mealcheck.analysis':
@@ -5310,8 +5338,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.logged_meals': '記録済み食事: {count}',
     'dashboard.active_drugs': '有効な薬: {count}',
     'dashboard.logged_intakes': '服薬記録: {count}',
-    'dashboard.recommendations': '推奨',
-    'dashboard.no_recommendations': 'まだ推奨はありません',
+    'dashboard.recommendations': '次の食事の食品比較',
+    'dashboard.no_recommendations': '比較できる食品はまだありません',
+    'package_dose.strength_title': '製品の含量',
+    'package_dose.strength_help':
+        '同梱の製品カタログにある含量です。含量を選んでも用量は決まりません。下で単位数を選んでください。',
+    'package_dose.quantity_title': 'この1回分の単位数（{unit}）',
+    'package_dose.result': '= {amount} {unit} {ingredient}',
     'dashboard.recommendation_path': '推薦経路',
     'dashboard.recommendation_template':
         '現在のテンプレート：{region} · {mealSlot} · {texture}',
@@ -5812,6 +5845,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'エンジンは、この履歴食を現在も消化中のリスクとして扱いません。本食は現在から約 {hours} 時間前で、現在の運用上のアクティブ時間枠は {window} 時間です。そのため、古い食事だけでは現在の高リスク警告を出しません。',
     'mealcheck.historical_note':
         '履歴食ガード：連続経腸栄養ではない食事は、{window} 時間を超えると現在の時系列リスクを発火しません。',
+    'mealcheck.physiology_timing_lower':
+        'この教育用モデルでは、この食事のタイミングにより、モデル上のレボドパの脳内移行が食事なしの場合の約{percent}%に下がります（集団の範囲 {low}–{high}%、服用後4時間）。これは集団の典型的なモデル曲線であり、あなたへの予測や服用時間の助言ではありません。',
+    'mealcheck.physiology_timing_similar':
+        'この教育用モデルでは、この食事のタイミングでのモデル上のレボドパの脳内移行は、食事なしの場合の約{percent}%です（集団の範囲 {low}–{high}%、服用後4時間）。これは集団の典型的なモデル曲線であり、あなたへの予測や服用時間の助言ではありません。',
     'mealcheck.summary': 'データベース由来の食品・薬バリアントチェックで {count} 件の注意が見つかりました。',
     'mealcheck.analysis':
         'この食事は {drugCount} 件の有効薬に対して評価されました。最も高いルール重症度は {severity} で、要因の合計は {score} ルール点数（経験的な目安）です。',
@@ -6096,6 +6133,7 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
       ...?_replayCapsuleSaveTranslations[entry.key],
       ...?_candidateServingTranslations[entry.key],
       ...?_foodDisplayTranslations[entry.key],
+      ...?kDiaryStripTranslations[entry.key],
       'onboarding.medication_search':
           _medicationSearchTranslations[entry.key] ??
           _medicationSearchTranslations['en']!,

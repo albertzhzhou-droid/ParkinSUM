@@ -1,7 +1,9 @@
 # Physiology reference model v2 (prototype)
 
 Status: research prototype in `tool/physiology_reference/` (Python standard
-library). Nothing in the app reads it yet. Educational only: it simulates
+library), ported to Dart as a trace-only provider in Stage B (see "Path into
+the app"). No score, rule outcome or recommendation order reads it.
+Educational only: it simulates
 population-typical curves for synthetic scenarios. It is not a prediction for
 any person, not a clinical cutoff, and not dosing, timing or dietary advice.
 Review any health decision with a qualified clinician.
@@ -144,23 +146,68 @@ curves, not a ranking or a recommended time.
 
 ## Path into the app
 
-1. **Port the stomach.** Identity v79 already weights arrival by protein and
-   regulates energy-containing liquids. What remains is solid grinding lag
-   calibrated to Tougas 2000, one shared calorie-limited pool for solids and
-   liquids, and fed-state slowing of the dissolved drug. Port these as a trace
-   provider beside the current one; the two must agree on the regression
-   checks, as v79 and this reference already do.
-2. **Carry units in traces.** Use mg/L, µmol/L and kcal/min, and drop scaled
-   display lines such as the "arrival rate ×40" series.
-3. **Gate on reality.** Run `reality_checks.py` in CI, and require the Dart
-   port to match this reference within a stated tolerance on every scenario.
-   The repository already uses this cross-runtime pattern for numerical
-   oracles.
-4. **Build the what-if view.** Let a user move a meal relative to a dose and
+1. **Port the model (Stage B, done as a trace provider).** The whole
+   reference, not only the stomach, now runs in Dart:
+   - `lib/domain/entities/physiology_reference_parameters.dart` mirrors
+     `parameters.json` value for value, with unit, status, source text and
+     registered source ids; a test fails if the two drift apart. The Km set
+     and the fasting amino-acid values keep the status "verify".
+   - `lib/domain/usecases/physiology_reference_model.dart` integrates the same
+     equations in the same operation order, and reproduces CPython's seeded
+     random stream (MT19937 and `random.gauss`), so population bands match
+     the reference draw for draw.
+   - `lib/domain/usecases/physiology_reference_trace_provider.dart` builds the
+     timing comparison: a synthetic 100 mg immediate-release dose at minute
+     0, a meal at an offset, 0–4 h areas relative to the same draw with no
+     meal, 100 seeded draws (seed 20261020). It is registered as
+     `physiology_reference_model` with its own trace-provider contract and
+     changes no score, rule outcome or recommendation order.
+   The v79 stomach in the shipped engine is unchanged; the two still agree on
+   the regression checks (water does not move protein timing; the 300 kcal
+   shake half-empties at 70.4 min there and 74 min here).
+2. **Carry units in traces (done for the new provider).** Every series
+   declares its unit (mg/L, µmol/L, kcal/min, kcal, mL, ratio). The
+   Algorithm Observatory shows a new panel, "Physiology reference model
+   (physical units)", with plasma levodopa, plasma LNAA and the brain-entry
+   index for no meal and a meal 60 min before, with, and 60 min after the
+   dose, a band table, and the light/dark palette of `whatif.py`. The scaled
+   "×40" lines of the shipped gastric panel remain until that engine is
+   replaced.
+3. **Gate on reality (done).** `npm run physiology:reality` is a verify:all
+   gate (`physiology_reality`), so CI enforces it:
+   - `reality_checks.py` (15 checks; 14 pass, 1 known gap);
+   - `agreement.py --check`, which recomputes
+     `test/fixtures/physiology_reference_agreement.json` and fails when the
+     committed fixture no longer matches the Python model;
+   - `tool/run_physiology_reference_agreement.dart` and
+     `test/physiology_reference_agreement_test.dart`, which require the Dart
+     port to reproduce every fixture number within 1e-9 relative plus 1e-12
+     absolute. The fixture covers a fasting dose, the meal with the dose, the
+     meal 60 min before and after, the Tougas meal, the Brener drink, the three
+     Carter diets, the Nutt phenylalanine, leucine and glycine loads, whey and
+     casein, the 21 reality-check quantities derived from them, the
+     Observatory rows with their bands, and six meal-timing effects:
+     12,295 numbers. On the development machine (macOS, CPython 3.9) the
+     largest difference is 0; CPython 3.12 sums floats with compensation, so
+     CI may differ in the last digits, well inside the tolerance.
+4. **Direction-aware timing (descriptive).** For a logged meal and the
+   nearest intake of an oral immediate-release levodopa-like medicine, the
+   meal check adds one data note: "In this educational model, this meal
+   timing lowers modeled brain entry of levodopa to about X% of no meal
+   (population band a–b%, over the 4 hours after the dose)…". It reads the
+   meal's energy, protein and physical form and the meal-to-dose offset, never
+   the dose, and is omitted when an input is missing or the meal is more than
+   6 h before or 4 h after the dose. The user-facing score still uses the
+   direction-blind `_proteinTimingPenalty`
+   (`database_backed_meal_check_usecase.dart`): a meal 30 min before and 30
+   min after the dose score the same while the note differs. **Follow-up this
+   unblocks:** replace that penalty with the modeled brain-delivery ratio and
+   its band, under a configuration-identity bump and a replay review.
+5. **Build the what-if view.** Let a user move a meal relative to a dose and
    see the curves with population bands, with no ranking and no "best time".
    This replaces the 0-100 score and the ranked list as the place where the
    model is visible.
-5. **Cover more formulations.** Levodopa/benserazide shares the same PK
+6. **Cover more formulations.** Levodopa/benserazide shares the same PK
    structure; its published concentration-effect C50 differs (Trocóniz et al.
    1998), which only matters for an excluded PD layer. Entacapone changes
    clearance and timing. Controlled- and extended-release forms need a release
@@ -180,7 +227,7 @@ curves, not a ranking or a recommended time.
 ## Sources
 
 - Brener W et al. Gastroenterology 1983;85:76-82. PMID 6852464.
-- Tougas G et al. Am J Gastroenterol 2000;95:1456-62. DOI 10.1111/j.1572-0241.2000.02076.x.
+- Tougas G et al. Am J Gastroenterol 2000;95:1456-62. DOI 10.1111/j.1572-0241.2000.02076.x. PMID 10894578 (registered as `src.tougas.gastric.lowfat_controls.2000`; not the simplified-scintigraphy paper PMID 10638563).
 - Abell TL et al. Am J Gastroenterol 2008;103:753-63. DOI 10.1111/j.1572-0241.2007.01636.x.
 - Elashoff JD et al. Gastroenterology 1982;83:1306-12. PMID 7129034.
 - Nutt JG et al. N Engl J Med 1984;310:483-8. DOI 10.1056/NEJM198402233100802.

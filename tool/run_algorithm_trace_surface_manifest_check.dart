@@ -8,7 +8,7 @@ import 'package:parkinsum_companion/domain/usecases/algorithm_registry.dart';
 void main(List<String> arguments) {
   final manifest = AlgorithmTraceSurfaceManifest(
     algorithms: AlgorithmRegistry.all,
-    providers: const [AlgorithmObservatoryService.traceProviderContract],
+    providers: AlgorithmObservatoryService.routeTraceProviders,
   );
   final actual = manifest.toJson();
 

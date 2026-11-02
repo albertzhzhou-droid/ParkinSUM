@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:parkinsum_companion/algorithm_sdk/algorithm_configuration_identity.dart';
 import 'package:parkinsum_companion/domain/entities/context_of_use_requalification.dart';
+import 'package:parkinsum_companion/domain/entities/governance_ledger_chain.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_medication_applicability.dart';
 
 void main() {
@@ -14,8 +15,13 @@ void main() {
     evidenceAsOfUtc: evidenceAsOfUtc,
   );
   final integrityReasons = ledger.integrityReasons;
+  final chainFile = File(GovernanceLedgerChain.path);
+  final chain = GovernanceLedgerChain.parse(
+    chainFile.existsSync() ? chainFile.readAsStringSync() : '',
+  ).verify(ledger.records);
   final pass =
       ledger.integrityVerified &&
+      chain.verified &&
       !ledger.canPromoteResearchTraceOnly &&
       ledger.incompleteRequiredEvidence.isNotEmpty &&
       ledger.latest.releaseDisposition ==
@@ -25,6 +31,10 @@ void main() {
     'report_type': 'parkinsum_context_of_use_requalification',
     'pass': pass,
     'ledger': ledger.toJson(),
+    'governance_ledger_chain': {
+      'path': GovernanceLedgerChain.path,
+      ...chain.toJson(),
+    },
     'not_clinically_validated': true,
     'not_regulatory_review': true,
     'not_external_approval': true,
@@ -45,6 +55,9 @@ void main() {
     '**Evidence status as of:** `${evidenceAsOfUtc.toIso8601String()}`',
     '**Semantic diff:** `${ledger.currentImpact.semanticDiffSha256}`',
     '**Record:** `${ledger.latest.recordSha256}`',
+    '**History chain:** ${chain.verified ? 'verified' : 'FAILED'}; '
+        '${chain.entryCount} entries, ${chain.recordCount} records, head '
+        '`${chain.headSha256}` (`${GovernanceLedgerChain.path}`)',
     '',
     '## Evidence status',
     '',
@@ -63,10 +76,10 @@ void main() {
     '',
     '## Integrity findings',
     '',
-    if (integrityReasons.isEmpty)
+    if (integrityReasons.isEmpty && chain.verified)
       '- none'
     else
-      for (final reason in integrityReasons) '- $reason',
+      for (final reason in [...integrityReasons, ...chain.reasons]) '- $reason',
     '',
     '## Boundary',
     '',
@@ -86,7 +99,8 @@ void main() {
     '${pass ? 'pass' : 'FAILED'}; disposition='
     '${ledger.latest.releaseDisposition.name}; incomplete='
     '${ledger.incompleteRequiredEvidence.length}; integrity='
-    '${integrityReasons.length}.',
+    '${integrityReasons.length}; chain='
+    '${chain.verified ? 'verified' : 'FAILED'} (${chain.entryCount} entries).',
   );
   stdout.writeln('Report: ${output.path}/latest.json');
   stdout.writeln('Report: ${output.path}/latest.md');

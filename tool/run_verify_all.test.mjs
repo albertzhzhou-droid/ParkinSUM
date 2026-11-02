@@ -29,12 +29,12 @@ ${code}`);
   return { cwd, gate, run };
 }
 
-test('all existing 55 identities have explicit contracts; goldens remain default', () => {
+test('all existing 56 identities have explicit contracts; goldens remain default', () => {
   const gates = defaultGates();
-  assert.equal(gates.length, 55);
-  assert.equal(defaultGates(true).length, 54);
+  assert.equal(gates.length, 56);
+  assert.equal(defaultGates(true).length, 55);
   assert.equal(gates.at(-1).id, 'committed_goldens');
-  assert.equal(gates.filter((gate) => gate.output.mode === 'json_files').length, 44);
+  assert.equal(gates.filter((gate) => gate.output.mode === 'json_files').length, 45);
   assert.equal(gates.filter((gate) => gate.output.mode !== 'json_files').length, 11);
   for (const gate of gates) assert.ok(outputDeclaration(gate.id));
 });

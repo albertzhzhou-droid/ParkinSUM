@@ -24,6 +24,7 @@ import 'mechanistic_event_ledger_authorization.dart';
 import 'mechanistic_event_ledger_builder.dart';
 import 'mechanistic_replay_capsule_service.dart';
 import 'mechanistic_next_meal_scorer.dart';
+import 'physiology_reference_trace_provider.dart';
 import 'medication_entry_validator.dart';
 import 'input_quality_gate.dart';
 import 'gastric_structural_uncertainty_service.dart';
@@ -119,6 +120,12 @@ class AlgorithmObservatoryService {
       'test/mechanistic_replay_capsule_test.dart',
     ],
   );
+
+  /// Every provider whose traces the Observatory route renders.
+  static const List<AlgorithmTraceProviderContract> routeTraceProviders = [
+    traceProviderContract,
+    PhysiologyReferenceTraceProvider.traceProviderContract,
+  ];
 
   final MealCompositionNormalizer normalizer;
   final MedicationEntryValidator medicationValidator;

@@ -70,7 +70,7 @@ const sensitiveFilenamePatterns = [
 ];
 
 const textFilePattern =
-  /\.(md|txt|json|yaml|yml|mjs|js|dart|sh|html|css|xml|plist|rules|lock|gitignore)$/i;
+  /\.(md|txt|json|jsonl|yaml|yml|mjs|js|dart|sh|html|css|xml|plist|rules|lock|gitignore)$/i;
 // The canonical append-only evolution timeline now exceeds 1 MiB. Scan it in
 // full while retaining a bounded, fail-closed limit for larger tracked text.
 const maxScanBytes = 4 * 1024 * 1024;

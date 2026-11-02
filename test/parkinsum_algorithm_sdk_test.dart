@@ -615,7 +615,7 @@ void main() {
           'competition.$prefix.$type',
     };
 
-    expect(manifest.records, hasLength(145));
+    expect(manifest.records, hasLength(146));
     expect(
       manifest.records.map((record) => record.parameterId),
       orderedEquals(
@@ -735,8 +735,8 @@ void main() {
       final coverage = identity.configurationCoverageManifest;
 
       expect(coverage.entries, hasLength(AlgorithmRegistry.all.length));
-      expect(coverage.entries, hasLength(65));
-      expect(coverage.fieldAndSourceBoundCount, 17);
+      expect(coverage.entries, hasLength(66));
+      expect(coverage.fieldAndSourceBoundCount, 18);
       expect(coverage.sourceBundleOnlyCount, 48);
       expect(
         coverage.entries.map((entry) => entry.algorithmId),

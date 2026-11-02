@@ -197,6 +197,23 @@
       ]
     },
     {
+      "id": "parkinsum.governance-ledger-chain",
+      "surfaceKind": "governance-artifact",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "One canonical JSON line per entry in config/governance_ledger.jsonl. Record entries carry one whole context-of-use ledger record and its digest; checkpoint entries mark each identity bump with the snapshot digest of the prior ledger and its provenance. Every entry links to the previous entry_sha256 from a zero genesis. Edited, re-hashed, reordered or deleted lines, broken links, unpinned checkpoints and head or length drift fail closed. Entries are append-only; a new entry kind or field meaning requires a new schema version. A verified chain is change control over stored history, not evidence, review, validation or approval.",
+      "source": "lib/domain/entities/governance_ledger_chain.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
+        },
+        {
+          "kind": "dart-int-constant",
+          "symbol": "schemaVersion"
+        }
+      ]
+    },
+    {
       "id": "parkinsum.prospective-model-credibility-plan",
       "surfaceKind": "governance-artifact",
       "versionStatus": "versioned",
@@ -1468,7 +1485,7 @@
       "surfaceKind": "public-envelope",
       "versionStatus": "versioned",
       "currentVersion": 3,
-      "compatibility": "Schema v3 retains the v2 parseable-dose versus confirmation-, assertion-, and as-of-gated result eligibility boundary and adds an optional, user-selected, date-bounded personal-observations section for symptom, self-reported motor-state, and blood-pressure records. That section is omitted by default, preserves occurrence and entry timestamps, original timezone, source, status, entered values, units and posture, excludes record and recorder identifiers, and limits free-text notes to detailed redaction. It calculates no trend, diagnosis, threshold interpretation, treatment response, or causal relationship. Generated artifacts bind the selected source revision and explicit schema version; incompatible semantic or rendering changes require a new version. This is not a medical-record or IPS conformance claim.",
+      "compatibility": "Schema v3 retains the v2 parseable-dose versus confirmation-, assertion-, and as-of-gated result eligibility boundary and adds an optional, user-selected, date-bounded personal-observations section for symptom, self-reported motor-state, and blood-pressure records. That section is omitted by default, preserves occurrence and entry timestamps, original timezone, source, status, entered values, units and posture, excludes record and recorder identifiers, and limits free-text notes to detailed redaction. It calculates no trend, diagnosis, threshold interpretation, treatment response, or causal relationship. The visit-preparation report kind may add an opt-in, additive day-strip section (medication intakes, meal protein with unknown kept as unknown, and self-reported motor states by time of day for at most 14 days) with descriptive counts of motor-state entries after meals at a user-chosen protein display filter; its selection keys are includeDiaryStrip and diaryProteinFilterG, and the counts make no causal, predictive or target claim. Generated artifacts bind the selected source revision and explicit schema version; incompatible semantic or rendering changes require a new version. This is not a medical-record or IPS conformance claim.",
       "source": "lib/domain/usecases/personal_log_handoff_summary_service.dart",
       "versionEvidence": [
         {
@@ -2951,6 +2968,19 @@
         {
           "kind": "dart-int-constant",
           "symbol": "userPortableDataCompactSchemaVersion"
+        }
+      ]
+    },
+    {
+      "id": "parkinsum.physiology-reference-trace",
+      "surfaceKind": "runtime-contract",
+      "versionStatus": "versioned",
+      "currentVersion": 1,
+      "compatibility": "Synthetic timing comparison of the physiology reference model in physical units (mg/L, µmol/L, kcal/min): dose convention, 0-4 h window, seeded population draws and per-series units define fixture revision synthetic-physiology-reference-v1. Incompatible changes to the convention, units or band definitions require a new schema version and a reviewed trace-surface manifest update. Trace-only; not patient evidence, a prediction for any person, or timing, dosing or dietary advice.",
+      "source": "lib/domain/usecases/physiology_reference_trace_provider.dart",
+      "versionEvidence": [
+        {
+          "kind": "schema-uri"
         }
       ]
     }

@@ -1,6 +1,6 @@
 {
   "registry_type": "source_access_registry",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "not_clinically_calibrated": true,
   "not_legal_advice": true,
   "not_license_clearance": true,
@@ -1413,9 +1413,13 @@
       "documentation_refs": [
         "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
         "docs/MECHANISTIC_INVARIANT_AND_UNIT_GATE_RESEARCH_2026-08-26.md",
-        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md"
+        "docs/GASTRIC_STRUCTURAL_UNCERTAINTY_SHADOW_ENSEMBLE_RESEARCH_2026-08-27.md",
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
       ],
-      "bibliography_refs": [],
+      "bibliography_refs": [
+        "src.elashoff.gastric.powerexp.1982"
+      ],
       "last_policy_reviewed": "2026-08-17",
       "notes": "DOI 10.1016/S0016-5085(82)80145-5; canonical power-exponential model lineage."
     },
@@ -1692,9 +1696,13 @@
         "Thirty selected patients with advanced Parkinson disease and peak-dose dyskinesia under a study-specific dose and endpoint; population variability and effect-site estimates are not individual predictions or broadly transportable parameters."
       ],
       "documentation_refs": [
-        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md"
+        "docs/STRUCTURAL_UNCERTAINTY_AND_COMPLETE_MODEL_RESEARCH_2026-08-17.md",
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
       ],
-      "bibliography_refs": [],
+      "bibliography_refs": [
+        "src.simon.levodopa.pkpd.2016"
+      ],
       "last_policy_reviewed": "2026-08-17",
       "notes": "PMID 26936272; population PK/effect-site boundary source."
     },
@@ -4572,6 +4580,204 @@
       ],
       "last_policy_reviewed": "2026-10-08",
       "notes": "Verbatim complete concept blocks in tool/data/rxnorm_2024-12-02/; Current Prescribable Content needs no UMLS license."
+    },
+    {
+      "source_id": "src.tougas.gastric.lowfat_controls.2000",
+      "display_name": "Tougas et al. \u2014 low-fat meal gastric-emptying international control values (2000)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "123 healthy volunteers and one standardized low-fat meal; the medians calibrate the physiology reference's solid grinding rate and therefore do not validate it."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.tougas.gastric.lowfat_controls.2000"
+      ],
+      "last_policy_reviewed": "2026-10-22",
+      "notes": "PMID 10894578; doi:10.1111/j.1572-0241.2000.02076.x. Distinct from src.tougas.gastric.scintigraphy.2000 (PMID 10638563, 69 volunteers). Calibrates stomach.solid_trituration_rate_per_min."
+    },
+    {
+      "source_id": "src.othman.levodopa.poppk.2014",
+      "display_name": "Othman & Dutta \u2014 population pharmacokinetics of oral and intestinal-gel levodopa (2014)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Advanced Parkinson cohort; the physiology reference keeps a one-compartment simplification and uses the clearance and absorption-time anchors only."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.othman.levodopa.poppk.2014"
+      ],
+      "last_policy_reviewed": "2026-10-22",
+      "notes": "PMID 24433449; doi:10.1111/bcp.12324. Anchors levodopa clearance, absorption time and the one-compartment volume upgrade path."
+    },
+    {
+      "source_id": "src.carter.protein_redistribution.1989",
+      "display_name": "Carter et al. \u2014 amount and distribution of dietary protein and levodopa response (1989)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Five patients; meal schedules and energy are assumed. Two diets calibrate the effective amino-acid volume and the evening-restricted diet remains a known gap."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.carter.protein_redistribution.1989"
+      ],
+      "last_policy_reviewed": "2026-10-22",
+      "notes": "PMID 2648188; doi:10.1212/wnl.39.4.552. Calibrates aa.plasma_distribution_volume_l; the levodopa-unchanged result motivates excluding gut transporter competition."
+    },
+    {
+      "source_id": "src.boirie.fast_slow_protein.1997",
+      "display_name": "Boirie et al. \u2014 slow and fast dietary proteins (1997)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Healthy adults and two milk proteins; used as a direction-only check because the abstract reports no plasma magnitudes."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.boirie.fast_slow_protein.1997"
+      ],
+      "last_policy_reviewed": "2026-10-22",
+      "notes": "PMID 9405716; doi:10.1073/pnas.94.26.14930. Independent direction check of whey versus casein plasma leucine."
+    },
+    {
+      "source_id": "src.smith.bbb_neutral_amino_acid_kinetics.1987",
+      "display_name": "Smith et al. \u2014 kinetics of neutral amino acid transport across the blood-brain barrier (1987)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "Anesthetized rats with in situ perfusion, not humans; the transcribed Km set keeps status verify until re-checked against the paper's table."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.smith.bbb_neutral_amino_acid_kinetics.1987"
+      ],
+      "last_policy_reviewed": "2026-10-22",
+      "notes": "PMID 3668544; doi:10.1111/j.1471-4159.1987.tb01039.x. Source of bbb.km_umol_per_l (status verify)."
+    },
+    {
+      "source_id": "src.pardridge.bbb_amino_acid_transport.1986",
+      "display_name": "Pardridge & Choi \u2014 neutral amino acid transport at the human blood-brain barrier (1986)",
+      "owner": "Peer-reviewed literature",
+      "jurisdiction": "Global",
+      "source_family": "model_assumption",
+      "data_domain": "model_assumption",
+      "access_method": "documentation_only",
+      "requires_api_key": false,
+      "requires_account": false,
+      "license_review_needed": false,
+      "legal_review_needed": false,
+      "implementation_status": "documentation_only",
+      "allowed_for_fixture": true,
+      "allowed_for_live_smoke": false,
+      "allowed_for_production": false,
+      "allowed_for_public_demo": false,
+      "can_support_mechanism_evidence_alone": true,
+      "can_support_identity_or_coding": false,
+      "can_support_source_quality_scoring": false,
+      "known_limitations": [
+        "One amino acid in isolated human brain microvessels; supports carrying rat Km values to humans only as an assumption with variability."
+      ],
+      "documentation_refs": [
+        "docs/design/PHYSIOLOGY_MODEL_V2.md",
+        "Bibliographies.md"
+      ],
+      "bibliography_refs": [
+        "src.pardridge.bbb_amino_acid_transport.1986"
+      ],
+      "last_policy_reviewed": "2026-10-22",
+      "notes": "PMID 3519291. Human phenylalanine Km close to rat values."
     }
   ]
 }

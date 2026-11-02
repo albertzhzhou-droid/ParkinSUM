@@ -267,13 +267,20 @@ void main() {
     });
     for (final localeTag in ['en-US', 'zh-CN']) {
       final i18n = AppI18n.fromLocaleTag(localeTag);
-      for (final key in ['next_meal.title', 'next_meal.generate']) {
+      for (final key in [
+        'next_meal.title',
+        'next_meal.generate',
+        // Today's example-food card uses the same comparison wording.
+        'dashboard.recommendations',
+        'dashboard.no_recommendations',
+      ]) {
         expect(
           i18n.tr(key),
           isNot(matches(RegExp('ecommend|推荐'))),
           reason: '$localeTag/$key',
         );
       }
+      expect(i18n.tr('dashboard.recommendations'), i18n.tr('next_meal.title'));
     }
   });
 }

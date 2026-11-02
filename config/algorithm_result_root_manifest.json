@@ -536,6 +536,17 @@
       "declaration_name": null
     },
     {
+      "algorithm_id": "physiology_reference_model",
+      "logical_root_id": "algorithm-root/physiology_reference_model",
+      "result_sink_id": "algorithm-result-sink/physiology_reference_model",
+      "source_path": "lib/domain/usecases/physiology_reference_model.dart",
+      "canonical_package_uri": "package:parkinsum_companion/domain/usecases/physiology_reference_model.dart",
+      "library_uri": "package:parkinsum_companion/domain/usecases/physiology_reference_model.dart",
+      "declaration_kind": "library",
+      "enclosing_declaration": null,
+      "declaration_name": null
+    },
+    {
       "algorithm_id": "product_response_copy_policy",
       "logical_root_id": "algorithm-root/product_response_copy_policy",
       "result_sink_id": "algorithm-result-sink/product_response_copy_policy",

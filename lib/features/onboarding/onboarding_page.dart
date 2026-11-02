@@ -5,11 +5,14 @@ import '../../core/i18n/app_i18n.dart';
 import '../../core/constants/profile_options.dart';
 import '../../core/models/drug_definition.dart';
 import '../../core/models/administration_dose_confirmation.dart';
+import '../../core/models/medication_product_pack.dart';
 import '../../core/state/app_state.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/usecases/explanation_copy_service.dart';
+import '../../domain/usecases/medication_package_dose_calculator.dart';
 import '../shared/dose_expression_status_card.dart';
 import '../shared/administration_dose_confirmation_panel.dart';
+import '../shared/package_dose_selector.dart';
 import 'onboarding_flow.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -38,6 +41,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
   bool _confirmInitialIntakeDose = false;
   String? _initialIntakeDrugId;
   DateTime? _initialIntakeAt;
+  MedicationProductPack? _initialIntakeProduct;
+  MedicationProductSelection? _initialIntakeProductSelection;
+  AdministrationDoseAssertionSource _initialDoseAssertionSource =
+      AdministrationDoseAssertionSource.typed;
 
   @override
   void didChangeDependencies() {
@@ -293,7 +300,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
                 onChanged: (value) => setState(() {
                   _recordInitialIntake = value;
-                  if (!value) _confirmInitialIntakeDose = false;
+                  if (!value) {
+                    _confirmInitialIntakeDose = false;
+                    _clearInitialIntakeProduct();
+                  }
                   _initialIntakeDrugId ??= _activeDrugIds.first;
                   _initialIntakeAt ??= DateTime.now();
                 }),
@@ -317,6 +327,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   onChanged: (value) => setState(() {
                     _initialIntakeDrugId = value;
                     _confirmInitialIntakeDose = false;
+                    _clearInitialIntakeProduct();
                   }),
                 ),
                 const SizedBox(height: 12),
@@ -330,10 +341,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     child: Text(i18n.tr('onboarding.change_time')),
                   ),
                 ),
+                const SizedBox(height: 8),
+                PackageDoseSelector(
+                  i18n: i18n,
+                  drug: state.medRepo.getById(
+                    _initialIntakeDrugId ?? _activeDrugIds.first,
+                  ),
+                  product: _initialIntakeProduct,
+                  selection: _initialIntakeProductSelection,
+                  onProductSelected: _selectInitialIntakeProduct,
+                  onDoseSelected: _applyInitialIntakePackageDose,
+                ),
                 TextField(
+                  key: const ValueKey('onboarding-initial-intake-dose'),
                   controller: _doseController,
                   onChanged: (_) => setState(() {
                     _confirmInitialIntakeDose = false;
+                    _initialIntakeProductSelection =
+                        _initialIntakeProductSelection?.withoutDoseDerivation();
+                    _initialDoseAssertionSource =
+                        AdministrationDoseAssertionSource.typed;
                   }),
                   decoration: InputDecoration(
                     labelText: i18n.tr('onboarding.initial_intake_note'),
@@ -570,6 +597,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
             _initialIntakeDrugId = _activeDrugIds.isEmpty
                 ? null
                 : _activeDrugIds.first;
+            _confirmInitialIntakeDose = false;
+            _clearInitialIntakeProduct();
           }
           if (_activeDrugIds.isEmpty) {
             _recordInitialIntake = false;
@@ -577,6 +606,42 @@ class _OnboardingPageState extends State<OnboardingPage> {
         }
       }),
     );
+  }
+
+  /// Drops a chosen product and any dose calculated from it; a typed dose
+  /// note stays as typed.
+  void _clearInitialIntakeProduct() {
+    if (_initialDoseAssertionSource ==
+        AdministrationDoseAssertionSource.packageDerived) {
+      _doseController.clear();
+    }
+    _initialIntakeProduct = null;
+    _initialIntakeProductSelection = null;
+    _initialDoseAssertionSource = AdministrationDoseAssertionSource.typed;
+  }
+
+  void _selectInitialIntakeProduct(MedicationProductPack product) {
+    setState(() {
+      _confirmInitialIntakeDose = false;
+      _clearInitialIntakeProduct();
+      _initialIntakeProduct = product;
+      _initialIntakeProductSelection = MedicationProductSelection.fromPack(
+        product,
+      );
+    });
+  }
+
+  void _applyInitialIntakePackageDose(
+    MedicationProductPack product,
+    ConfirmedPackageDose dose,
+  ) {
+    _doseController.text = dose.dosageNote;
+    setState(() {
+      _confirmInitialIntakeDose = false;
+      _initialIntakeProductSelection = packageDoseSelection(product, dose);
+      _initialDoseAssertionSource =
+          AdministrationDoseAssertionSource.packageDerived;
+    });
   }
 
   StepState _stepState(int step) {
@@ -621,6 +686,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       initialIntakeDrugId: _recordInitialIntake ? _initialIntakeDrugId : null,
       initialIntakeAt: _recordInitialIntake ? _initialIntakeAt : null,
       initialIntakeDoseNote: _doseController.text,
+      initialIntakeProductSelection: _initialIntakeProductSelection,
     );
     try {
       final initialDrugId = draft.initialIntakeDrugId;
@@ -639,7 +705,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
         activeDrugIds: draft.activeDrugIds,
         initialIntake: intake,
         confirmInitialIntakeDose: _confirmInitialIntakeDose,
-        initialDoseAssertionSource: AdministrationDoseAssertionSource.typed,
+        initialDoseAssertionSource: _initialDoseAssertionSource,
       );
     } catch (error) {
       if (!mounted) return;

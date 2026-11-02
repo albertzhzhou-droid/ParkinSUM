@@ -108,7 +108,11 @@ final class AlgorithmConfigurationIdentity {
   // source-and-clinician text without minutes, every baseline rule has an
   // English message, the headline severity follows the rule decisions and
   // evidence availability no longer adds rule points.
-  static const String defaultVersion = '2026.10.20-v82';
+  // v83 binds the physical-unit physiology reference model as a trace-only
+  // provider, its Observatory panel and a descriptive direction-aware
+  // meal-timing note; scores, rule decisions and recommendation order are
+  // unchanged.
+  static const String defaultVersion = '2026.10.20-v83';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -116,7 +120,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'b38d1dab08f9ea95a1974c3b029362f2ce3dc2d76f264f242e97abe6a9b63a38';
+      '71f5bd8b24d1e88634c2dd54fdeaf3d74d38f8ee7cd7444058fcedc388e7cde0';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.

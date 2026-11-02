@@ -198,7 +198,8 @@ def main():
     if args.json:
         os.makedirs(os.path.dirname(os.path.abspath(args.json)), exist_ok=True)
         with open(args.json, "w", encoding="utf-8") as fh:
-            json.dump({"parameter_set_version": json.load(open(os.path.join(
+            json.dump({"schema": "parkinsum.physiology-reference-reality-checks/1", "pass": not failed,
+                       "parameter_set_version": json.load(open(os.path.join(
                 os.path.dirname(os.path.abspath(__file__)), "parameters.json")))["parameter_set_version"],
                 "checks": checks, "failing": failed}, fh, indent=2)
     sys.exit(1 if failed else 0)
