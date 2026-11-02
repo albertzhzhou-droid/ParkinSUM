@@ -29,8 +29,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from model import (SERIES_KEYS, Component, Dose, Meal, Scenario, area, at, competing_lnaa_load,  # noqa: E402
-                   load_parameters, meal_response, peak, percentile, sample_population, simulate, trough, values)
+from model import (PROTEIN_TYPE_BY_CATALOG_SOURCE, SERIES_KEYS, Component, Dose, Meal, Scenario, area, at,  # noqa: E402
+                   competing_lnaa_load, component_from_food, composition_defaults, load_parameters, meal_response,
+                   peak, percentile, sample_population, simulate, trough, values)
 import scenarios  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -135,6 +136,66 @@ def nutrition_meals():
 def nutrition_summary(v, meal):
     s = simulate(Scenario(meals=[Meal(0.0, meal)], t_end_min=NUTRITION_HORIZON_MIN), v)
     return meal_response(s, 0.0, NUTRITION_HORIZON_MIN)
+
+
+def food(name, form="solid", protein=None, carbohydrate=None, fat=None, kcal=None, portion=100.0,
+         source="USDA_FDC", catalog_source=None, amino_acids=None):
+    """A meal-converter input, in the app's per-portion field names."""
+    return {"name": name, "physical_form": form, "protein_grams": protein, "carbohydrate_grams": carbohydrate,
+            "fat_grams": fat, "calories": kcal, "portion_grams": portion, "source_doc_id": source,
+            "catalog_protein_source": catalog_source, "amino_acids_g": amino_acids}
+
+
+def app_meals():
+    """Synthetic foods through the app's meal converter: full, partial and
+    missing composition. The `known_*` and `default_*` pairs differ only in
+    carbohydrate, fat and protein source, so they show what real composition
+    changes; energy, protein and form are equal.
+    """
+    measured = {"leu": 2.1, "ile": 1.2, "val": 1.3, "phe": 1.0, "tyr": 0.8, "trp": 0.3, "met": 0.6, "his": 0.7}
+    return [
+        ("known_beef_rice", None, [
+            food("beef", protein=30.0, carbohydrate=0.0, fat=12.0, kcal=228.0, catalog_source="meat"),
+            food("rice", protein=4.0, carbohydrate=45.0, fat=0.5, kcal=200.0, catalog_source="grain")]),
+        ("default_beef_rice", None, [
+            food("beef", protein=30.0, kcal=228.0), food("rice", protein=4.0, kcal=200.0)]),
+        ("known_tofu_drink", None, [
+            food("soy drink", form="liquid", protein=7.0, carbohydrate=3.0, fat=4.0, kcal=75.0, portion=240.0,
+                 catalog_source="soy")]),
+        ("default_tofu_drink", None, [
+            food("soy drink", form="liquid", protein=7.0, kcal=75.0, portion=240.0)]),
+        ("measured_egg", None, [
+            food("egg", protein=12.6, carbohydrate=0.7, fat=9.5, kcal=143.0, catalog_source="egg",
+                 amino_acids=measured)]),
+        ("measured_without_a_type", None, [
+            food("yogurt", protein=12.6, carbohydrate=7.0, fat=3.0, kcal=130.0, catalog_source="dairy",
+                 amino_acids=measured)]),
+        ("sources_without_a_type", None, [
+            food("milk", form="liquid", protein=8.0, carbohydrate=12.0, fat=8.0, kcal=150.0, portion=244.0,
+                 catalog_source="dairy"),
+            food("cod", protein=18.0, carbohydrate=0.0, fat=0.7, kcal=82.0, catalog_source="fish"),
+            food("lentils", protein=9.0, carbohydrate=12.0, fat=0.4, kcal=116.0, catalog_source="legume")]),
+        ("fat_without_carbohydrate", None, [food("snack", protein=5.0, fat=10.0, kcal=200.0)]),
+        ("carbohydrate_without_fat", None, [food("snack", protein=5.0, carbohydrate=30.0, kcal=200.0)]),
+        ("energy_and_protein_only", None, [food("snack", protein=5.0, kcal=200.0)]),
+        ("energy_from_macros", None, [
+            food("seed food", protein=10.0, carbohydrate=20.0, fat=5.0, catalog_source="grain")]),
+        ("carbohydrate_convention_unverified", None, [
+            food("regional food", protein=5.0, carbohydrate=30.0, fat=4.0, kcal=200.0,
+                 source="CHINA_CDC_FOOD_PLATFORM", catalog_source="grain")]),
+        ("impossible_amounts_are_missing", None, [
+            food("bad record", protein=5.0, carbohydrate=-3.0, fat=-1.0, kcal=200.0)]),
+        ("unknown_form_assumed_liquid", "liquid", [
+            food("broth", form="unknown", protein=2.0, carbohydrate=1.0, fat=0.5, kcal=20.0, portion=200.0)]),
+        ("no_protein_no_type_to_default", None, [
+            food("sugar", protein=0.0, carbohydrate=25.0, fat=0.0, kcal=100.0),
+            food("egg", protein=12.6, carbohydrate=0.7, fat=9.5, kcal=143.0, catalog_source="egg",
+                 amino_acids=measured),
+            food("water", form="liquid", protein=0.0, carbohydrate=0.0, fat=0.0, kcal=0.0, portion=250.0)]),
+        ("missing_energy_not_modeled", None, [food("unknown energy", protein=5.0, carbohydrate=20.0)]),
+        ("missing_protein_not_modeled", None, [food("unknown protein", carbohydrate=20.0, fat=1.0, kcal=100.0)]),
+        ("unknown_form_not_modeled", None, [food("unknown form", form="unknown", protein=5.0, kcal=100.0)]),
+    ]
 
 
 def curve_case(case_id, sc, sample_every_min, v):
@@ -250,6 +311,23 @@ def build():
                           "competing_lnaa_load": competing_lnaa_load(meal, v), "central": central,
                           "bands_p05_p50_p95": {k: band([r[k] for r in per]) for k in central}})
 
+    conversions = []
+    for case_id, assumed_form, foods in app_meals():
+        converted = [component_from_food(f, assumed_form) for f in foods]
+        entry = {"id": case_id, "assumed_form": assumed_form, "foods": foods}
+        if None in converted:
+            conversions.append({**entry, "meal": None})
+            continue
+        central = nutrition_summary(v, converted)
+        per = [nutrition_summary(p, converted) for p in population]
+        conversions.append({**entry, "meal": [component_spec(c) for c in converted],
+                            "carbohydrate_grams": [c.carbohydrate_grams(
+                                float(v["insulin.default_carbohydrate_energy_share"])) for c in converted],
+                            "carbohydrate_basis": [c.carbohydrate_basis() for c in converted],
+                            "composition_defaults": composition_defaults(converted),
+                            "competing_lnaa_load": competing_lnaa_load(converted, v), "central": central,
+                            "bands_p05_p50_p95": {k: band([r[k] for r in per]) for k in central}})
+
     with open(os.path.join(HERE, "parameters.json"), encoding="utf-8") as fh:
         version = json.load(fh)["parameter_set_version"]
     return {
@@ -268,6 +346,8 @@ def build():
         "nutrition_convention": {"horizon_min": NUTRITION_HORIZON_MIN, "meal_time_min": 0.0, "seed": SEED,
                                  "draws": DRAWS},
         "nutrition_outputs": nutrition,
+        "app_meal_convention": {"protein_type_by_catalog_source": PROTEIN_TYPE_BY_CATALOG_SOURCE},
+        "app_meal_conversions": conversions,
     }
 
 

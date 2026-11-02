@@ -10274,3 +10274,33 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Revert the two copy commits and this entry; the merges are independent and can be reverted individually with `git revert -m 1`.
+
+
+## 2026-11-02 — APP-MEAL-COMPOSITION-20261102 — App meals reach physiology reference model v3 with real composition
+
+### Baseline and scope
+
+- Branch `model/app-meal-composition` from `stage-d/next-meal-nutrition` `cab72d7`. Nutrition side only; no new drug-side output. Follow-up to the physiology v3 boundary "the meal converter does not yet pass carbohydrate, fat or protein type".
+
+### Changes
+
+- `lib/domain/usecases/physiology_reference_trace_provider.dart`: the converter used by logged meals, planner plates and single food cards now passes available carbohydrate, fat and a protein type. The meal memo key includes them, so two meals that differ only in composition no longer share a cached result. New `physiologyCompositionDefaults` counts the foods that used a stated default, per input.
+- `lib/domain/entities/meal_composition.dart`, `lib/domain/usecases/catalog_food_to_candidate.dart`: `FoodComponent.catalogProteinSource` holds the curated reference record's protein source and is never inferred from a name. It is not serialized, so replay capsules are unchanged. `proteinSource` and its name inference still serve the older LNAA proxy; the physiology model no longer depends on it.
+- Protein-type mapping: meat and poultry `meat` (14 foods), egg `egg` (6), grain `cereal` (33), soy records `soy` (14). Dairy, fish, other legumes and everything else stay on the stated `mixed` default: the dairy group holds ricotta, human milk and whey powder, so it does not establish casein or whey. The 20 CIQUAL foods have no curated record and stay `mixed` whatever they are called.
+- Carbohydrate: a negative or non-finite amount counts as missing. China CDC carbohydrate has no verified convention, so it is not read as available and the energy remainder applies, following the rule on `CarbohydrateConvention.unverified`.
+- `lib/domain/usecases/next_meal_planner.dart`: plate scaling carries carbohydrate, fat and protein type; the cache key includes the type; the estimated LNAA chip uses the protein type's table when there is one. Effects carry the defaults used.
+- Disclosure: `lib/core/i18n/physiology_composition_defaults_copy.dart` and `mealcheck.physiology_default*` (en, zh, fr, ja). The meal-check physiology note appends the sentence to the same note, so it cannot be cut off from its value; `PlannerEffectLine` shows it under the value on cards, plates and curves. Nothing is shown when every input was stated.
+- `tool/physiology_reference/model.py`, `agreement.py`: `component_from_food` and `composition_defaults` mirror the converter; fixture section `app_meal_conversions` holds 18 cases of full, partial and missing composition. `tool/physiology_reference_agreement.dart` runs them through the real Dart converter.
+- `docs/design/PHYSIOLOGY_MODEL_V2.md`: new "App meal inputs" section with the before and after of every input.
+- `config/algorithm_surface_allowlist.json` lists the new copy file as localization; the localization lint golden moves from 11,574 to 11,590 surfaces (16 new strings, no new finding).
+
+### Verification and remaining boundaries
+
+- Levodopa curves, emptying, plasma areas and bands are bit-identical between a meal with stated composition and one with defaults at equal energy, protein and form (`test/physiology_app_meal_composition_test.dart`).
+- Brain-entry values do move, as intended. 30 min before a dose the central ratio moves by a median 2.4 points across the 244 built-in foods (95th percentile 7.5, largest 19.5). Olive oil falls from 106% to 87% because the old default credited it with carbohydrate it does not contain. The meal check's protein-timing score term and the planner chips follow that ratio.
+- Agreement: 25,174 values (577 new), max difference 0. Seven mutations of the fixes (planner scaling of type and carbohydrate, both cache keys, name-inferred source, dairy as casein, unverified carbohydrate) each fail a test.
+- Boundaries: `whey` and `casein` are not reached from the catalog; they need a curated per-food field. Most catalog foods have no recorded form (188 of 224), so a logged meal containing one is still not modeled by the meal check; the planner brackets them. No app surface reads `PhysiologyNutritionProvider` yet. Single-meal amino-acid magnitudes stay unvalidated.
+
+### Surgical rollback
+
+- Drop the rebind commit, then revert the feature commit. No stored data or migration is involved; `catalogProteinSource` is never persisted.

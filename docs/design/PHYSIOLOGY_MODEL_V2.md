@@ -302,7 +302,8 @@ Python: timing 21 ms, nutrition 11 ms, a two-day Carter scenario 131 ms.
      Observatory rows with their bands, and six meal-timing effects:
      12,295 numbers in v2. v3 adds the Shaham, Wurtman, Tang, Bos and Moore
      scenarios, their derived quantities and the nutrition outputs with
-     bands for five synthetic meals: 24,597 numbers. On the development machine
+     bands for five synthetic meals: 24,597 numbers, and 25,174 with the 18
+     synthetic app-meal converter cases. On the development machine
      (macOS, CPython 3.9) the largest difference is 0; CPython 3.12 sums floats with compensation, so
      CI may differ in the last digits, well inside the tolerance.
 4. **Direction-aware timing (done).** For a logged meal and the nearest
@@ -364,9 +365,63 @@ Python: timing 21 ms, nutrition 11 ms, a two-day Carter scenario 131 ms.
 7. **Use the nutrition outputs (v3).** The Next-meal planner can read the
    competing-LNAA load, plasma LNAA rise and appearance timing with bands
    (`PhysiologyNutritionProvider`) instead of, or next to, the brain-delivery
-   ratio. The meal converter does not yet pass carbohydrate grams, fat grams
-   or a protein type, so app meals use the default carbohydrate share and the
-   mixed profile until it does.
+   ratio. The meal converter now passes real composition (see "App meal
+   inputs"); no app surface reads these outputs yet.
+
+## App meal inputs
+
+`physiologyComponentFromFood` is the one converter for logged meals (meal
+check), planner plates and single food cards. A logged meal and a catalog food
+take the same path, except that a logged item without a catalog match has no
+recorded form and is not modeled.
+
+| Model input | Before | Now | When missing |
+| --- | --- | --- | --- |
+| Energy, protein, physical form | Passed | Unchanged | Not modeled; the planner brackets an unknown form as solid and as liquid, and the meal check says nothing |
+| Measured amino-acid profile | Passed | Unchanged | Protein type's table, else the mixed composition |
+| Carbohydrate | Default share of non-protein energy | The food's available carbohydrate | Energy left after protein and fat when fat is stated, else the stated 55% share |
+| Fat | Not passed | Passed (used only to derive missing carbohydrate) | The stated share |
+| Protein type | `mixed` | The curated record's type | `mixed` |
+
+Protein type reads `FoodComponent.catalogProteinSource`: the curated reference
+record's group and official record, the classification the LNAA calibration
+uses. `proteinSource` is not read, because it is inferred from names and
+aliases outside the curated subset. A food with no curated record is `mixed`
+whatever it is called.
+
+| Catalog source | Foods of 224 | Model type |
+| --- | --- | --- |
+| Meat and poultry groups | 14 | `meat` |
+| Egg | 6 | `egg` |
+| Grain | 33 | `cereal` |
+| Soy records | 14 | `soy` |
+| Dairy | 23 | `mixed`: the group does not separate casein from whey (it holds ricotta, human milk and whey powder) |
+| Fish and seafood | 19 | `mixed`: no table of its own, and no other group's is borrowed |
+| Other legumes | 13 | `mixed`: soy isolate is not a stand-in |
+| All other groups | 102 | `mixed` |
+
+`whey` and `casein` are therefore not reached from the catalog today. They need
+a curated per-food field, not a rule on the group.
+
+Carbohydrate must be available carbohydrate. The USDA paths subtract fibre,
+CIQUAL states it that way, and the China CDC convention is unverified, so those
+values are not read as available and the energy remainder applies. A negative
+or non-finite amount counts as missing.
+
+The meal check and the planner both name the defaults used, with a count per
+input (`physiologyCompositionDefaults`), and say a missing value is not counted
+as 0. Plain water is not a food here, and a food without protein has no protein
+type or profile to default. Of the 244 built-in foods, 165 use the default
+protein type, 43 the default amino-acid profile and 3 estimated carbohydrate.
+
+Passing composition does not touch the drug side: emptying reads energy only,
+so levodopa curves, peaks and plasma areas are bit-identical for two meals with
+equal energy, protein and form. Brain-entry values do move, since they read
+plasma amino acids. 30 min before a dose the central ratio moves by a median
+2.4 points across the built-in foods (95th percentile 7.5, largest 19.5).
+Olive oil falls from 106% to 87% because the old default credited it with
+carbohydrate it does not contain, so no insulin lowering follows. The meal
+check's protein-timing score term and the planner chips follow that ratio.
 
 ## Verification still needed
 

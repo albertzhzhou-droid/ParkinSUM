@@ -17,6 +17,8 @@ import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/mechanistic_medication_applicability.dart';
 import 'package:parkinsum_companion/domain/entities/rule_registry_models.dart';
 import 'package:parkinsum_companion/domain/entities/runtime_context.dart';
+import 'package:parkinsum_companion/core/constants/reference_food_catalog.dart';
+import 'package:parkinsum_companion/domain/entities/protein_source.dart';
 import 'package:parkinsum_companion/domain/usecases/catalog_food_to_candidate.dart';
 import 'package:parkinsum_companion/domain/usecases/clinical_decision_support_service.dart';
 import 'package:parkinsum_companion/domain/usecases/database_backed_meal_check_usecase.dart';
@@ -1091,9 +1093,12 @@ void main() {
         physiologyReference: provider,
       );
       final mealTime = DateTime.utc(2026, 4, 28, 12);
-      Future<InteractionResult> check(Duration doseAfterMeal) => useCase(
+      Future<InteractionResult> check(
+        Duration doseAfterMeal, {
+        String foodId = 'food_ref_usda_172475',
+      }) => useCase(
         meal: Meal(
-          id: 'meal_tofu',
+          id: 'meal_$foodId',
           eatenAt: mealTime,
           recordedAt: mealTime,
           occurredAt: mealTime,
@@ -1103,7 +1108,7 @@ void main() {
             MealItem(
               // Default catalog entry with energy, protein and texture, so
               // the reference model has every input it needs.
-              foodId: 'food_ref_usda_172475',
+              foodId: foodId,
               foodName: 'Firm tofu',
               foodCategory: FoodCategory.protein,
               quantityFactor: 2.5,
@@ -1150,11 +1155,26 @@ void main() {
         expect(note(result), isNotNull);
         expect(note(result), contains('of no meal (population band'));
         expect(note(result), contains('not a prediction for you'));
+        // Tofu states carbohydrate, type and profile: nothing to disclose.
+        expect(note(result), isNot(contains('stated defaults')));
         expect(
           result.keyFindings.followedBy(result.nextActions),
           everyElement(isNot(contains('educational model'))),
         );
       }
+      // Same note, so the disclosure stays with the value it qualifies. The
+      // catalog's dairy group does not establish a model protein type.
+      final dairy = buildReferenceFoodCatalog().firstWhere(
+        (food) =>
+            food.textureClass != null &&
+            curatedProteinSourceForFoodItem(food) == ProteinSourceType.dairy,
+      );
+      final undisclosed = await check(
+        const Duration(minutes: 30),
+        foodId: dairy.id,
+      );
+      expect(note(undisclosed), contains('protein type (1 of 1 foods)'));
+      expect(note(undisclosed), contains('not counted as 0'));
       int percent(InteractionResult result) => int.parse(
         RegExp(r'about (\d+)%').firstMatch(note(result)!)!.group(1)!,
       );

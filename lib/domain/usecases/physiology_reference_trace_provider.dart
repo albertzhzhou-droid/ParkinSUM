@@ -15,6 +15,7 @@ import 'dart:math' as math;
 import '../entities/algorithm_descriptor.dart';
 import '../entities/meal_composition.dart';
 import '../entities/physiology_reference_parameters.dart';
+import '../entities/protein_source.dart';
 import '../entities/time_axis_events.dart';
 import 'physiology_reference_model.dart';
 
@@ -301,11 +302,42 @@ Map<String, double>? physiologyMeasuredAminoAcids(FoodComponent food) {
   return {for (final e in values.entries) e.key: e.value!};
 }
 
+/// Catalog protein sources with a model protein type. Every other source
+/// stays on the stated 'mixed' default: the dairy group does not separate
+/// casein from whey (it holds ricotta and human milk), and fish and non-soy
+/// legumes have no table of their own. Mirrors the reference's
+/// `PROTEIN_TYPE_BY_CATALOG_SOURCE`.
+const Map<ProteinSourceType, String> physiologyProteinTypeByCatalogSource = {
+  ProteinSourceType.meat: 'meat',
+  ProteinSourceType.egg: 'egg',
+  ProteinSourceType.grain: 'cereal',
+  ProteinSourceType.soy: 'soy',
+};
+
+/// Sources whose carbohydrate convention (available or including fibre) is
+/// not verified; a conversion abstains rather than guesses, so their value is
+/// not read as available carbohydrate.
+const Set<String> physiologyCarbohydrateUnverifiedSources = {
+  'CHINA_CDC_FOOD_PLATFORM',
+};
+
+/// Model protein type of [food]. Reads the curated catalog record only, never
+/// a name.
+String physiologyProteinType(FoodComponent food) =>
+    physiologyProteinTypeByCatalogSource[food.catalogProteinSource] ?? 'mixed';
+
+/// A stored amount, or null when it cannot be one (never read as 0).
+double? _presentGrams(double? value) =>
+    value != null && value.isFinite && value >= 0 ? value : null;
+
 /// Reference-model component for one food, or null when energy, protein or
 /// the physical form is missing. [assumedForm] replaces an unknown form; the
 /// Next-meal planner uses it to bracket a food as solid and as liquid rather
-/// than guess. A measured profile with all eight competing amino acids is
-/// used as is; otherwise the reference's mixed-protein composition applies.
+/// than guess. Stated carbohydrate and fat and the catalog's protein type are
+/// passed through; what is missing stays null, so the model applies its
+/// stated defaults and [physiologyCompositionDefaults] can say so. A measured
+/// profile with all eight competing amino acids is used as is; otherwise the
+/// protein type's table or the mixed-protein composition applies.
 PhysiologyComponent? physiologyComponentFromFood(
   FoodComponent food, {
   MealPhysicalForm? assumedForm,
@@ -334,13 +366,60 @@ PhysiologyComponent? physiologyComponentFromFood(
     proteinG: protein,
     aminoAcidsG: physiologyMeasuredAminoAcids(food),
     waterMl: waterMl,
+    carbohydrateG:
+        physiologyCarbohydrateUnverifiedSources.contains(food.sourceDocId)
+        ? null
+        : _presentGrams(food.carbohydrateGrams),
+    fatG: _presentGrams(food.fatGrams),
+    proteinType: physiologyProteinType(food),
+  );
+}
+
+/// How many foods of a meal fell back to a stated default, per input. A food
+/// without protein has no protein type or amino-acid profile to default.
+final class PhysiologyCompositionDefaults {
+  /// Foods in the meal; plain water is not counted.
+  final int foods;
+  final int carbohydrate;
+  final int proteinType;
+  final int aminoAcids;
+
+  const PhysiologyCompositionDefaults({
+    required this.foods,
+    required this.carbohydrate,
+    required this.proteinType,
+    required this.aminoAcids,
+  });
+
+  bool get anyUsed => carbohydrate > 0 || proteinType > 0 || aminoAcids > 0;
+}
+
+PhysiologyCompositionDefaults physiologyCompositionDefaults(
+  List<PhysiologyComponent> meal,
+) {
+  final foods = [
+    for (final c in meal)
+      if (c.form != PhysiologyComponentForm.water) c,
+  ];
+  final withProtein = [
+    for (final c in foods)
+      if (c.proteinG > 0) c,
+  ];
+  return PhysiologyCompositionDefaults(
+    foods: foods.length,
+    carbohydrate: foods
+        .where((c) => c.carbohydrateBasis != PhysiologyCarbohydrateBasis.stated)
+        .length,
+    proteinType: withProtein.where((c) => c.proteinType == 'mixed').length,
+    aminoAcids: withProtein
+        .where((c) => c.profileBasis != PhysiologyProfileBasis.measured)
+        .length,
   );
 }
 
 /// Reference-model components for a normalized meal, or null when an input
 /// the model needs (energy, protein or physical form) is missing for any
-/// food. A measured amino-acid profile is used only when it has all eight
-/// competing amino acids; otherwise the mixed-protein composition applies.
+/// food. See [physiologyComponentFromFood] for what each food passes.
 List<PhysiologyComponent>? physiologyComponentsFromMeal(
   MealComposition composition,
 ) {
@@ -421,6 +500,9 @@ String physiologyMealKey(List<PhysiologyComponent> meal) => [
       c.kcal,
       c.proteinG,
       c.waterMl,
+      c.carbohydrateG,
+      c.fatG,
+      c.proteinType,
       if (c.aminoAcidsG != null)
         for (final a in physiologyBbbSet) c.aminoAcidsG![a],
     ].join(':'),

@@ -79,6 +79,11 @@ const List<String> physiologyProteinTypes = [
 /// Where a component's amino-acid grams come from.
 enum PhysiologyProfileBasis { measured, proteinTypeTable, mixedDefault }
 
+/// Where a component's carbohydrate grams come from: the food's stated value,
+/// the energy left after protein and fat, or a stated share of non-protein
+/// energy.
+enum PhysiologyCarbohydrateBasis { stated, energyRemainder, defaultShare }
+
 enum PhysiologyComponentForm { solid, liquid, water, coagulating }
 
 /// One food component of a meal; amounts are for the portion eaten.
@@ -121,6 +126,12 @@ final class PhysiologyComponent {
       : proteinType == 'mixed'
       ? PhysiologyProfileBasis.mixedDefault
       : PhysiologyProfileBasis.proteinTypeTable;
+
+  PhysiologyCarbohydrateBasis get carbohydrateBasis => carbohydrateG != null
+      ? PhysiologyCarbohydrateBasis.stated
+      : fatG != null
+      ? PhysiologyCarbohydrateBasis.energyRemainder
+      : PhysiologyCarbohydrateBasis.defaultShare;
 
   Map<String, double> aminoAcidGrams(PhysiologyParameterValues v) {
     final explicit = aminoAcidsG;

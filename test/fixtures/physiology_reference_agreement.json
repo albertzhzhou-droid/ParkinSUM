@@ -1,4 +1,1820 @@
 {
+ "app_meal_convention": {
+  "protein_type_by_catalog_source": {
+   "egg": "egg",
+   "grain": "cereal",
+   "meat": "meat",
+   "soy": "soy"
+  }
+ },
+ "app_meal_conversions": [
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     124.85,
+     148.0,
+     156.05
+    ],
+    "appearance_peak_time_min": [
+     134.8,
+     189.0,
+     240.0
+    ],
+    "appearance_umol": [
+     22321.775855423704,
+     33829.32638667218,
+     44626.011497966625
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     115.08810858366573,
+     342.4730806072688,
+     711.6148444697787
+    ],
+    "lnaa6_peak_time_min": [
+     179.8,
+     240.0,
+     240.0
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     12187.6101806896,
+     41616.37763044296,
+     96267.2898292851
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated",
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    0.0,
+    45.0
+   ],
+   "central": {
+    "appearance_half_time_min": 148.0,
+    "appearance_peak_time_min": 187.0,
+    "appearance_umol": 37330.991862342,
+    "lnaa6_peak_rise_umol_per_l": 366.37249298082224,
+    "lnaa6_peak_time_min": 236.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 46833.29179554289
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 55856.00421091434,
+      "ingested_umol": 60647.12726483642,
+      "name": "beef",
+      "profile_basis": "protein_type_table"
+     },
+     {
+      "digestible_umol": 6667.8344139096835,
+      "ingested_umol": 7384.091266788132,
+      "name": "rice",
+      "profile_basis": "protein_type_table"
+     }
+    ],
+    "digestible_umol": 62523.83862482402,
+    "ingested_umol": 68031.21853162454
+   },
+   "composition_defaults": {
+    "amino_acids": 2,
+    "carbohydrate": 0,
+    "foods": 2,
+    "protein_type": 0
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 228.0,
+     "carbohydrate_grams": 0.0,
+     "catalog_protein_source": "meat",
+     "fat_grams": 12.0,
+     "name": "beef",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 30.0,
+     "source_doc_id": "USDA_FDC"
+    },
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": 45.0,
+     "catalog_protein_source": "grain",
+     "fat_grams": 0.5,
+     "name": "rice",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 4.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "known_beef_rice",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 0.0,
+     "fat_g": 12.0,
+     "form": "solid",
+     "kcal": 228.0,
+     "name": "beef",
+     "protein_g": 30.0,
+     "protein_type": "meat",
+     "water_ml": 0.0
+    },
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 45.0,
+     "fat_g": 0.5,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "rice",
+     "protein_g": 4.0,
+     "protein_type": "cereal",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     117.95,
+     144.0,
+     152.05
+    ],
+    "appearance_peak_time_min": [
+     120.9,
+     174.0,
+     225.0
+    ],
+    "appearance_umol": [
+     24109.590388944765,
+     34764.32592219732,
+     43861.10439342575
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     123.63799811253634,
+     355.72364779487344,
+     717.1959782172153
+    ],
+    "lnaa6_peak_time_min": [
+     175.8,
+     240.0,
+     240.0
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     17012.043097967624,
+     45944.83251221094,
+     97494.726011698
+    ]
+   },
+   "carbohydrate_basis": [
+    "default_share",
+    "default_share"
+   ],
+   "carbohydrate_grams": [
+    14.850000000000001,
+    25.3
+   ],
+   "central": {
+    "appearance_half_time_min": 143.0,
+    "appearance_peak_time_min": 172.0,
+    "appearance_umol": 38202.14288138623,
+    "lnaa6_peak_rise_umol_per_l": 374.03946804840496,
+    "lnaa6_peak_time_min": 229.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 51266.74122636761
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 52722.22005755503,
+      "ingested_umol": 57306.76093212503,
+      "name": "beef",
+      "profile_basis": "mixed_default"
+     },
+     {
+      "digestible_umol": 7029.629341007337,
+      "ingested_umol": 7640.90145761667,
+      "name": "rice",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 59751.849398562365,
+    "ingested_umol": 64947.6623897417
+   },
+   "composition_defaults": {
+    "amino_acids": 2,
+    "carbohydrate": 2,
+    "foods": 2,
+    "protein_type": 2
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 228.0,
+     "carbohydrate_grams": null,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "beef",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 30.0,
+     "source_doc_id": "USDA_FDC"
+    },
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": null,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "rice",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 4.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "default_beef_rice",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": null,
+     "form": "solid",
+     "kcal": 228.0,
+     "name": "beef",
+     "protein_g": 30.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    },
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": null,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "rice",
+     "protein_g": 4.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     32.95,
+     47.0,
+     63.05
+    ],
+    "appearance_peak_time_min": [
+     27.0,
+     39.0,
+     54.099999999999994
+    ],
+    "appearance_umol": [
+     9215.837255595497,
+     9275.927278963132,
+     9281.164927983944
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     92.58402783669496,
+     156.70084567166657,
+     263.5658907145989
+    ],
+    "lnaa6_peak_time_min": [
+     53.0,
+     73.0,
+     97.05
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     11255.048301045676,
+     21357.468059475214,
+     38281.35489564046
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    3.0
+   ],
+   "central": {
+    "appearance_half_time_min": 45.0,
+    "appearance_peak_time_min": 38.0,
+    "appearance_umol": 9276.139379964756,
+    "lnaa6_peak_rise_umol_per_l": 157.59024352371466,
+    "lnaa6_peak_time_min": 71.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 20822.227568877723
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 12272.699409911165,
+      "ingested_umol": 13486.482868034247,
+      "name": "soy drink",
+      "profile_basis": "protein_type_table"
+     }
+    ],
+    "digestible_umol": 12272.699409911165,
+    "ingested_umol": 13486.482868034247
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 0,
+    "foods": 1,
+    "protein_type": 0
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 75.0,
+     "carbohydrate_grams": 3.0,
+     "catalog_protein_source": "soy",
+     "fat_grams": 4.0,
+     "name": "soy drink",
+     "physical_form": "liquid",
+     "portion_grams": 240.0,
+     "protein_grams": 7.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "known_tofu_drink",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 3.0,
+     "fat_g": 4.0,
+     "form": "liquid",
+     "kcal": 75.0,
+     "name": "soy drink",
+     "protein_g": 7.0,
+     "protein_type": "soy",
+     "water_ml": 240.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     38.95,
+     57.0,
+     74.0
+    ],
+    "appearance_peak_time_min": [
+     29.95,
+     44.0,
+     60.19999999999999
+    ],
+    "appearance_umol": [
+     9012.967942168818,
+     9286.53676822555,
+     9349.539984744397
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     49.69440182276223,
+     119.40081297831443,
+     224.77631418181622
+    ],
+    "lnaa6_peak_time_min": [
+     57.0,
+     79.0,
+     106.05
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     6560.289648472171,
+     17571.934257285524,
+     33866.5566130434
+    ]
+   },
+   "carbohydrate_basis": [
+    "default_share"
+   ],
+   "carbohydrate_grams": [
+    6.4625
+   ],
+   "central": {
+    "appearance_half_time_min": 55.0,
+    "appearance_peak_time_min": 42.0,
+    "appearance_umol": 9287.550367808974,
+    "lnaa6_peak_rise_umol_per_l": 116.86144719988943,
+    "lnaa6_peak_time_min": 77.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 16826.909648590685
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 12301.851346762842,
+      "ingested_umol": 13371.577550829175,
+      "name": "soy drink",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 12301.851346762842,
+    "ingested_umol": 13371.577550829175
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 1,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 75.0,
+     "carbohydrate_grams": null,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "soy drink",
+     "physical_form": "liquid",
+     "portion_grams": 240.0,
+     "protein_grams": 7.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "default_tofu_drink",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": null,
+     "form": "liquid",
+     "kcal": 75.0,
+     "name": "soy drink",
+     "protein_g": 7.0,
+     "protein_type": "mixed",
+     "water_ml": 240.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     84.95,
+     108.0,
+     135.05
+    ],
+    "appearance_peak_time_min": [
+     71.0,
+     99.5,
+     130.05
+    ],
+    "appearance_umol": [
+     26529.151996854547,
+     31627.614438400065,
+     33149.48162058741
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     231.12017475534347,
+     455.3516753815368,
+     740.8389345603149
+    ],
+    "lnaa6_peak_time_min": [
+     119.8,
+     156.0,
+     193.14999999999998
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     33184.769732332585,
+     66540.23051744665,
+     112386.8772360078
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    0.7
+   ],
+   "central": {
+    "appearance_half_time_min": 104.0,
+    "appearance_peak_time_min": 92.0,
+    "appearance_umol": 31943.164831078342,
+    "lnaa6_peak_rise_umol_per_l": 452.4261821845032,
+    "lnaa6_peak_time_min": 146.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 68844.22106213562
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 43807.34427774643,
+      "ingested_umol": 48192.89799532061,
+      "name": "egg",
+      "profile_basis": "measured"
+     }
+    ],
+    "digestible_umol": 43807.34427774643,
+    "ingested_umol": 48192.89799532061
+   },
+   "composition_defaults": {
+    "amino_acids": 0,
+    "carbohydrate": 0,
+    "foods": 1,
+    "protein_type": 0
+   },
+   "foods": [
+    {
+     "amino_acids_g": {
+      "his": 0.7,
+      "ile": 1.2,
+      "leu": 2.1,
+      "met": 0.6,
+      "phe": 1.0,
+      "trp": 0.3,
+      "tyr": 0.8,
+      "val": 1.3
+     },
+     "calories": 143.0,
+     "carbohydrate_grams": 0.7,
+     "catalog_protein_source": "egg",
+     "fat_grams": 9.5,
+     "name": "egg",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 12.6,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "measured_egg",
+   "meal": [
+    {
+     "amino_acids_g": {
+      "his": 0.7,
+      "ile": 1.2,
+      "leu": 2.1,
+      "met": 0.6,
+      "phe": 1.0,
+      "trp": 0.3,
+      "tyr": 0.8,
+      "val": 1.3
+     },
+     "carbohydrate_g": 0.7,
+     "fat_g": 9.5,
+     "form": "solid",
+     "kcal": 143.0,
+     "name": "egg",
+     "protein_g": 12.6,
+     "protein_type": "egg",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     83.95,
+     107.0,
+     135.05
+    ],
+    "appearance_peak_time_min": [
+     69.95,
+     95.5,
+     125.0
+    ],
+    "appearance_umol": [
+     27060.354491523707,
+     32062.257678175447,
+     33558.83822659997
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     198.95958893589966,
+     423.5250746829477,
+     719.1493073421143
+    ],
+    "lnaa6_peak_time_min": [
+     117.7,
+     152.5,
+     191.05
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     28917.141298079456,
+     62716.63437015838,
+     109848.27808898967
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    7.0
+   ],
+   "central": {
+    "appearance_half_time_min": 103.0,
+    "appearance_peak_time_min": 89.0,
+    "appearance_umol": 32346.861156622184,
+    "lnaa6_peak_rise_umol_per_l": 422.98173747623275,
+    "lnaa6_peak_time_min": 143.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 64736.403697330694
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 44337.46615569496,
+      "ingested_umol": 48192.89799532061,
+      "name": "yogurt",
+      "profile_basis": "measured"
+     }
+    ],
+    "digestible_umol": 44337.46615569496,
+    "ingested_umol": 48192.89799532061
+   },
+   "composition_defaults": {
+    "amino_acids": 0,
+    "carbohydrate": 0,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": {
+      "his": 0.7,
+      "ile": 1.2,
+      "leu": 2.1,
+      "met": 0.6,
+      "phe": 1.0,
+      "trp": 0.3,
+      "tyr": 0.8,
+      "val": 1.3
+     },
+     "calories": 130.0,
+     "carbohydrate_grams": 7.0,
+     "catalog_protein_source": "dairy",
+     "fat_grams": 3.0,
+     "name": "yogurt",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 12.6,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "measured_without_a_type",
+   "meal": [
+    {
+     "amino_acids_g": {
+      "his": 0.7,
+      "ile": 1.2,
+      "leu": 2.1,
+      "met": 0.6,
+      "phe": 1.0,
+      "trp": 0.3,
+      "tyr": 0.8,
+      "val": 1.3
+     },
+     "carbohydrate_g": 7.0,
+     "fat_g": 3.0,
+     "form": "solid",
+     "kcal": 130.0,
+     "name": "yogurt",
+     "protein_g": 12.6,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     103.85,
+     139.0,
+     153.0
+    ],
+    "appearance_peak_time_min": [
+     106.9,
+     160.0,
+     212.25
+    ],
+    "appearance_umol": [
+     29650.977237268344,
+     41124.41999638491,
+     45969.025498326766
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     225.49722862245665,
+     467.33826012109375,
+     894.3373907963687
+    ],
+    "lnaa6_peak_time_min": [
+     143.9,
+     210.0,
+     240.0
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     28359.002111416925,
+     62259.13367918458,
+     118648.14549809993
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated",
+    "stated",
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    12.0,
+    0.0,
+    12.0
+   ],
+   "central": {
+    "appearance_half_time_min": 134.0,
+    "appearance_peak_time_min": 152.0,
+    "appearance_umol": 43236.189202271176,
+    "lnaa6_peak_rise_umol_per_l": 499.7388080527053,
+    "lnaa6_peak_time_min": 193.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 68815.15579375552
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 14059.258682014673,
+      "ingested_umol": 15281.80291523334,
+      "name": "milk",
+      "profile_basis": "mixed_default"
+     },
+     {
+      "digestible_umol": 31633.33203453302,
+      "ingested_umol": 34384.05655927502,
+      "name": "cod",
+      "profile_basis": "mixed_default"
+     },
+     {
+      "digestible_umol": 15816.66601726651,
+      "ingested_umol": 17192.02827963751,
+      "name": "lentils",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 61509.25673381421,
+    "ingested_umol": 66857.88775414586
+   },
+   "composition_defaults": {
+    "amino_acids": 3,
+    "carbohydrate": 0,
+    "foods": 3,
+    "protein_type": 3
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 150.0,
+     "carbohydrate_grams": 12.0,
+     "catalog_protein_source": "dairy",
+     "fat_grams": 8.0,
+     "name": "milk",
+     "physical_form": "liquid",
+     "portion_grams": 244.0,
+     "protein_grams": 8.0,
+     "source_doc_id": "USDA_FDC"
+    },
+    {
+     "amino_acids_g": null,
+     "calories": 82.0,
+     "carbohydrate_grams": 0.0,
+     "catalog_protein_source": "fish",
+     "fat_grams": 0.7,
+     "name": "cod",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 18.0,
+     "source_doc_id": "USDA_FDC"
+    },
+    {
+     "amino_acids_g": null,
+     "calories": 116.0,
+     "carbohydrate_grams": 12.0,
+     "catalog_protein_source": "legume",
+     "fat_grams": 0.4,
+     "name": "lentils",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 9.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "sources_without_a_type",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 12.0,
+     "fat_g": 8.0,
+     "form": "liquid",
+     "kcal": 150.0,
+     "name": "milk",
+     "protein_g": 8.0,
+     "protein_type": "mixed",
+     "water_ml": 244.0
+    },
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 0.0,
+     "fat_g": 0.7,
+     "form": "solid",
+     "kcal": 82.0,
+     "name": "cod",
+     "protein_g": 18.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    },
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 12.0,
+     "fat_g": 0.4,
+     "form": "solid",
+     "kcal": 116.0,
+     "name": "lentils",
+     "protein_g": 9.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     91.9,
+     118.0,
+     142.0
+    ],
+    "appearance_peak_time_min": [
+     78.95,
+     113.5,
+     151.0
+    ],
+    "appearance_umol": [
+     5076.163342891933,
+     6270.9619877013265,
+     6601.778102171034
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     0.2569553042303142,
+     8.245080796952436,
+     71.20655658501315
+    ],
+    "lnaa6_peak_time_min": [
+     19.9,
+     92.5,
+     172.34999999999997
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     -10544.934458542857,
+     249.14877979382186,
+     10918.019082040204
+    ]
+   },
+   "carbohydrate_basis": [
+    "energy_remainder"
+   ],
+   "carbohydrate_grams": [
+    22.5
+   ],
+   "central": {
+    "appearance_half_time_min": 112.0,
+    "appearance_peak_time_min": 107.0,
+    "appearance_umol": 6357.266481548712,
+    "lnaa6_peak_rise_umol_per_l": 5.810780077432469,
+    "lnaa6_peak_time_min": 67.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": -1186.727654719834
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 8787.036676259171,
+      "ingested_umol": 9551.126822020839,
+      "name": "snack",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 8787.036676259171,
+    "ingested_umol": 9551.126822020839
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 1,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": null,
+     "catalog_protein_source": null,
+     "fat_grams": 10.0,
+     "name": "snack",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "fat_without_carbohydrate",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": 10.0,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "snack",
+     "protein_g": 5.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     91.9,
+     118.0,
+     142.0
+    ],
+    "appearance_peak_time_min": [
+     78.95,
+     113.5,
+     151.0
+    ],
+    "appearance_umol": [
+     5076.163342891933,
+     6270.9619877013265,
+     6601.778102171034
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     0.10754348652474165,
+     2.540137463836288,
+     59.549661614058486
+    ],
+    "lnaa6_peak_time_min": [
+     14.9,
+     43.0,
+     164.14999999999998
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     -15090.150044289823,
+     -3108.9417305544102,
+     8819.78286576949
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    30.0
+   ],
+   "central": {
+    "appearance_half_time_min": 112.0,
+    "appearance_peak_time_min": 107.0,
+    "appearance_umol": 6357.266481548712,
+    "lnaa6_peak_rise_umol_per_l": 2.0856002356642875,
+    "lnaa6_peak_time_min": 37.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": -4449.560105117504
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 8787.036676259171,
+      "ingested_umol": 9551.126822020839,
+      "name": "snack",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 8787.036676259171,
+    "ingested_umol": 9551.126822020839
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 0,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": 30.0,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "snack",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "carbohydrate_without_fat",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 30.0,
+     "fat_g": null,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "snack",
+     "protein_g": 5.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     91.9,
+     118.0,
+     142.0
+    ],
+    "appearance_peak_time_min": [
+     78.95,
+     113.5,
+     151.0
+    ],
+    "appearance_umol": [
+     5076.163342891933,
+     6270.9619877013265,
+     6601.778102171034
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     0.1926358411320905,
+     5.218399205839489,
+     66.73201244240099
+    ],
+    "lnaa6_peak_time_min": [
+     17.9,
+     69.5,
+     166.25
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     -11977.359670501643,
+     -852.4332623069553,
+     10165.335096346502
+    ]
+   },
+   "carbohydrate_basis": [
+    "default_share"
+   ],
+   "carbohydrate_grams": [
+    24.750000000000004
+   ],
+   "central": {
+    "appearance_half_time_min": 112.0,
+    "appearance_peak_time_min": 107.0,
+    "appearance_umol": 6357.266481548712,
+    "lnaa6_peak_rise_umol_per_l": 4.047698927784381,
+    "lnaa6_peak_time_min": 53.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": -2224.9561579261863
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 8787.036676259171,
+      "ingested_umol": 9551.126822020839,
+      "name": "snack",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 8787.036676259171,
+    "ingested_umol": 9551.126822020839
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 1,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": null,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "snack",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "energy_and_protein_only",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": null,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "snack",
+     "protein_g": 5.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     91.0,
+     116.0,
+     140.0
+    ],
+    "appearance_peak_time_min": [
+     77.9,
+     108.0,
+     142.05
+    ],
+    "appearance_umol": [
+     9339.523706901848,
+     11673.052166090765,
+     12458.683470437689
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     3.438785743678625,
+     80.75453906246821,
+     199.58701766769175
+    ],
+    "lnaa6_peak_time_min": [
+     45.75,
+     145.0,
+     192.45
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     -1759.6935582209478,
+     11907.453024116698,
+     29937.36865946381
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    20.0
+   ],
+   "central": {
+    "appearance_half_time_min": 111.0,
+    "appearance_peak_time_min": 100.0,
+    "appearance_umol": 11835.671713867327,
+    "lnaa6_peak_rise_umol_per_l": 76.6255423681431,
+    "lnaa6_peak_time_min": 137.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 11372.92392344816
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 16669.586034774213,
+      "ingested_umol": 18460.228166970333,
+      "name": "seed food",
+      "profile_basis": "protein_type_table"
+     }
+    ],
+    "digestible_umol": 16669.586034774213,
+    "ingested_umol": 18460.228166970333
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 0,
+    "foods": 1,
+    "protein_type": 0
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": null,
+     "carbohydrate_grams": 20.0,
+     "catalog_protein_source": "grain",
+     "fat_grams": 5.0,
+     "name": "seed food",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 10.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "energy_from_macros",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 20.0,
+     "fat_g": 5.0,
+     "form": "solid",
+     "kcal": 165.0,
+     "name": "seed food",
+     "protein_g": 10.0,
+     "protein_type": "cereal",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     95.85,
+     122.0,
+     145.0
+    ],
+    "appearance_peak_time_min": [
+     81.0,
+     117.5,
+     156.1
+    ],
+    "appearance_umol": [
+     4652.601646752971,
+     5798.714815006528,
+     6209.279797725321
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     0.02509471105633452,
+     0.6162587970677009,
+     41.484336306021724
+    ],
+    "lnaa6_peak_time_min": [
+     10.9,
+     25.5,
+     156.14999999999998
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     -18620.94745410232,
+     -6058.539946205697,
+     5522.9421480356505
+    ]
+   },
+   "carbohydrate_basis": [
+    "energy_remainder"
+   ],
+   "carbohydrate_grams": [
+    36.0
+   ],
+   "central": {
+    "appearance_half_time_min": 116.0,
+    "appearance_peak_time_min": 111.0,
+    "appearance_umol": 5893.650446606878,
+    "lnaa6_peak_rise_umol_per_l": 0.5087317803520364,
+    "lnaa6_peak_time_min": 22.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": -7932.087274928393
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 8334.793017387106,
+      "ingested_umol": 9230.114083485167,
+      "name": "regional food",
+      "profile_basis": "protein_type_table"
+     }
+    ],
+    "digestible_umol": 8334.793017387106,
+    "ingested_umol": 9230.114083485167
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 1,
+    "foods": 1,
+    "protein_type": 0
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": 30.0,
+     "catalog_protein_source": "grain",
+     "fat_grams": 4.0,
+     "name": "regional food",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "CHINA_CDC_FOOD_PLATFORM"
+    }
+   ],
+   "id": "carbohydrate_convention_unverified",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": 4.0,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "regional food",
+     "protein_g": 5.0,
+     "protein_type": "cereal",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     91.9,
+     118.0,
+     142.0
+    ],
+    "appearance_peak_time_min": [
+     78.95,
+     113.5,
+     151.0
+    ],
+    "appearance_umol": [
+     5076.163342891933,
+     6270.9619877013265,
+     6601.778102171034
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     0.1926358411320905,
+     5.218399205839489,
+     66.73201244240099
+    ],
+    "lnaa6_peak_time_min": [
+     17.9,
+     69.5,
+     166.25
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     -11977.359670501643,
+     -852.4332623069553,
+     10165.335096346502
+    ]
+   },
+   "carbohydrate_basis": [
+    "default_share"
+   ],
+   "carbohydrate_grams": [
+    24.750000000000004
+   ],
+   "central": {
+    "appearance_half_time_min": 112.0,
+    "appearance_peak_time_min": 107.0,
+    "appearance_umol": 6357.266481548712,
+    "lnaa6_peak_rise_umol_per_l": 4.047698927784381,
+    "lnaa6_peak_time_min": 53.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": -2224.9561579261863
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 8787.036676259171,
+      "ingested_umol": 9551.126822020839,
+      "name": "bad record",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 8787.036676259171,
+    "ingested_umol": 9551.126822020839
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 1,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 200.0,
+     "carbohydrate_grams": -3.0,
+     "catalog_protein_source": null,
+     "fat_grams": -1.0,
+     "name": "bad record",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "impossible_amounts_are_missing",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": null,
+     "fat_g": null,
+     "form": "solid",
+     "kcal": 200.0,
+     "name": "bad record",
+     "protein_g": 5.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    }
+   ]
+  },
+  {
+   "assumed_form": "liquid",
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     26.95,
+     40.5,
+     55.0
+    ],
+    "appearance_peak_time_min": [
+     14.0,
+     21.0,
+     28.099999999999994
+    ],
+    "appearance_umol": [
+     2597.7162887601894,
+     2659.56706256684,
+     2670.923880032
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     19.735242878458696,
+     39.16968938049587,
+     69.33661752239773
+    ],
+    "lnaa6_peak_time_min": [
+     47.0,
+     64.5,
+     90.05
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     2822.0861920262905,
+     5886.993374519173,
+     10682.463581169482
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    1.0
+   ],
+   "central": {
+    "appearance_half_time_min": 40.0,
+    "appearance_peak_time_min": 20.0,
+    "appearance_umol": 2658.6594391044896,
+    "lnaa6_peak_rise_umol_per_l": 38.2506745985894,
+    "lnaa6_peak_time_min": 64.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 5662.266490196663
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 3514.8146705036684,
+      "ingested_umol": 3820.450728808335,
+      "name": "broth",
+      "profile_basis": "mixed_default"
+     }
+    ],
+    "digestible_umol": 3514.8146705036684,
+    "ingested_umol": 3820.450728808335
+   },
+   "composition_defaults": {
+    "amino_acids": 1,
+    "carbohydrate": 0,
+    "foods": 1,
+    "protein_type": 1
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 20.0,
+     "carbohydrate_grams": 1.0,
+     "catalog_protein_source": null,
+     "fat_grams": 0.5,
+     "name": "broth",
+     "physical_form": "unknown",
+     "portion_grams": 200.0,
+     "protein_grams": 2.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "unknown_form_assumed_liquid",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 1.0,
+     "fat_g": 0.5,
+     "form": "liquid",
+     "kcal": 20.0,
+     "name": "broth",
+     "protein_g": 2.0,
+     "protein_type": "mixed",
+     "water_ml": 200.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "bands_p05_p50_p95": {
+    "appearance_half_time_min": [
+     95.85,
+     126.0,
+     145.1
+    ],
+    "appearance_peak_time_min": [
+     86.95,
+     125.5,
+     167.05
+    ],
+    "appearance_umol": [
+     24876.310556337645,
+     30846.94279764965,
+     32961.93409772708
+    ],
+    "lnaa6_peak_rise_umol_per_l": [
+     112.18520885186959,
+     326.30673276324796,
+     628.4597101132707
+    ],
+    "lnaa6_peak_time_min": [
+     129.9,
+     175.0,
+     232.14999999999998
+    ],
+    "lnaa6_pre_umol_per_l": [
+     565.0,
+     565.0,
+     565.0
+    ],
+    "lnaa6_rise_area_umol_min_per_l": [
+     15665.34711185653,
+     47410.307294073515,
+     94213.49141949702
+    ]
+   },
+   "carbohydrate_basis": [
+    "stated",
+    "stated",
+    "stated"
+   ],
+   "carbohydrate_grams": [
+    25.0,
+    0.7,
+    0.0
+   ],
+   "central": {
+    "appearance_half_time_min": 118.0,
+    "appearance_peak_time_min": 120.0,
+    "appearance_umol": 31613.03945099426,
+    "lnaa6_peak_rise_umol_per_l": 341.12503846624793,
+    "lnaa6_peak_time_min": 162.0,
+    "lnaa6_pre_umol_per_l": 565.0,
+    "lnaa6_rise_area_umol_min_per_l": 49923.68870096895
+   },
+   "competing_lnaa_load": {
+    "components": [
+     {
+      "digestible_umol": 0.0,
+      "ingested_umol": 0.0,
+      "name": "sugar",
+      "profile_basis": "mixed_default"
+     },
+     {
+      "digestible_umol": 43807.34427774643,
+      "ingested_umol": 48192.89799532061,
+      "name": "egg",
+      "profile_basis": "measured"
+     }
+    ],
+    "digestible_umol": 43807.34427774643,
+    "ingested_umol": 48192.89799532061
+   },
+   "composition_defaults": {
+    "amino_acids": 0,
+    "carbohydrate": 0,
+    "foods": 2,
+    "protein_type": 0
+   },
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 100.0,
+     "carbohydrate_grams": 25.0,
+     "catalog_protein_source": null,
+     "fat_grams": 0.0,
+     "name": "sugar",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 0.0,
+     "source_doc_id": "USDA_FDC"
+    },
+    {
+     "amino_acids_g": {
+      "his": 0.7,
+      "ile": 1.2,
+      "leu": 2.1,
+      "met": 0.6,
+      "phe": 1.0,
+      "trp": 0.3,
+      "tyr": 0.8,
+      "val": 1.3
+     },
+     "calories": 143.0,
+     "carbohydrate_grams": 0.7,
+     "catalog_protein_source": "egg",
+     "fat_grams": 9.5,
+     "name": "egg",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 12.6,
+     "source_doc_id": "USDA_FDC"
+    },
+    {
+     "amino_acids_g": null,
+     "calories": 0.0,
+     "carbohydrate_grams": 0.0,
+     "catalog_protein_source": null,
+     "fat_grams": 0.0,
+     "name": "water",
+     "physical_form": "liquid",
+     "portion_grams": 250.0,
+     "protein_grams": 0.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "no_protein_no_type_to_default",
+   "meal": [
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 25.0,
+     "fat_g": 0.0,
+     "form": "solid",
+     "kcal": 100.0,
+     "name": "sugar",
+     "protein_g": 0.0,
+     "protein_type": "mixed",
+     "water_ml": 0.0
+    },
+    {
+     "amino_acids_g": {
+      "his": 0.7,
+      "ile": 1.2,
+      "leu": 2.1,
+      "met": 0.6,
+      "phe": 1.0,
+      "trp": 0.3,
+      "tyr": 0.8,
+      "val": 1.3
+     },
+     "carbohydrate_g": 0.7,
+     "fat_g": 9.5,
+     "form": "solid",
+     "kcal": 143.0,
+     "name": "egg",
+     "protein_g": 12.6,
+     "protein_type": "egg",
+     "water_ml": 0.0
+    },
+    {
+     "amino_acids_g": null,
+     "carbohydrate_g": 0.0,
+     "fat_g": 0.0,
+     "form": "water",
+     "kcal": 0.0,
+     "name": "water",
+     "protein_g": 0.0,
+     "protein_type": "mixed",
+     "water_ml": 250.0
+    }
+   ]
+  },
+  {
+   "assumed_form": null,
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": null,
+     "carbohydrate_grams": 20.0,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "unknown energy",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "missing_energy_not_modeled",
+   "meal": null
+  },
+  {
+   "assumed_form": null,
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 100.0,
+     "carbohydrate_grams": 20.0,
+     "catalog_protein_source": null,
+     "fat_grams": 1.0,
+     "name": "unknown protein",
+     "physical_form": "solid",
+     "portion_grams": 100.0,
+     "protein_grams": null,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "missing_protein_not_modeled",
+   "meal": null
+  },
+  {
+   "assumed_form": null,
+   "foods": [
+    {
+     "amino_acids_g": null,
+     "calories": 100.0,
+     "carbohydrate_grams": null,
+     "catalog_protein_source": null,
+     "fat_grams": null,
+     "name": "unknown form",
+     "physical_form": "unknown",
+     "portion_grams": 100.0,
+     "protein_grams": 5.0,
+     "source_doc_id": "USDA_FDC"
+    }
+   ],
+   "id": "unknown_form_not_modeled",
+   "meal": null
+  }
+ ],
  "boundary": "Synthetic scenarios and population-typical curves for cross-runtime agreement only; not predictions for any person and not dosing, timing or dietary advice.",
  "curves": [
   {

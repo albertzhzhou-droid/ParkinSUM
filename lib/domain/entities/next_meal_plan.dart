@@ -205,6 +205,7 @@ final class NextMealModeledEffect {
     required this.plasmaLow,
     required this.plasmaHigh,
     required this.plasmaBand,
+    required this.compositionDefaults,
   });
 
   factory NextMealModeledEffect.unavailable(
@@ -220,6 +221,7 @@ final class NextMealModeledEffect {
     plasmaLow: null,
     plasmaHigh: null,
     plasmaBand: null,
+    compositionDefaults: null,
   );
 
   /// [centralLow] equals [centralHigh] unless [bracketed].
@@ -232,6 +234,7 @@ final class NextMealModeledEffect {
     double? plasmaLow,
     double? plasmaHigh,
     PhysiologyBand? plasmaBand,
+    PhysiologyCompositionDefaults? compositionDefaults,
   }) => NextMealModeledEffect._(
     availability: bracketed
         ? NextMealModelAvailability.bracketed
@@ -244,6 +247,7 @@ final class NextMealModeledEffect {
     plasmaLow: plasmaLow,
     plasmaHigh: plasmaHigh,
     plasmaBand: plasmaBand,
+    compositionDefaults: compositionDefaults,
   );
 
   final NextMealModelAvailability availability;
@@ -259,6 +263,10 @@ final class NextMealModeledEffect {
   /// lowest 5th and the highest 95th percentile of both assumptions. Null
   /// when only central values were computed.
   final PhysiologyBand? band;
+
+  /// Which composition inputs fell back to the model's stated defaults; null
+  /// when nothing was modeled.
+  final PhysiologyCompositionDefaults? compositionDefaults;
 
   /// Plasma levodopa area relative to no meal; null when not computed.
   final double? plasmaLow;

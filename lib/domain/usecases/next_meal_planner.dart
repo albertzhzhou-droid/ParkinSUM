@@ -51,12 +51,18 @@ final class NextMealPlanner {
   final Map<String, PhysiologyMealTimingComparison?> _bandCache = {};
   final Map<String, PhysiologyCurveComparison?> _curveCache = {};
 
-  static final Map<String, double> _mixedProteinLnaaShare = () {
-    final composition = PhysiologyParameterValues.central().map(
-      'aa.mixed_protein_composition_g_per_g',
-    );
-    return {for (final a in physiologyLnaaSix) a: composition[a]!};
-  }();
+  /// Competing LNAA grams per gram of protein of the model's protein type.
+  static double _lnaaShare(String proteinType) =>
+      _lnaaShareByType[proteinType] ??= () {
+        final grams = PhysiologyComponent(
+          'protein',
+          PhysiologyComponentForm.solid,
+          proteinG: 1.0,
+          proteinType: proteinType,
+        ).aminoAcidGrams(PhysiologyParameterValues.central());
+        return physiologyLnaaSix.fold<double>(0, (sum, a) => sum + grams[a]!);
+      }();
+  static final Map<String, double> _lnaaShareByType = {};
 
   // ---------------------------------------------------------------------------
   // Candidate set.
@@ -120,10 +126,7 @@ final class NextMealPlanner {
       lnaa = profile.competingLnaaGrams;
       lnaaBasis = NextMealLnaaBasis.measured;
     } else if (protein != null) {
-      lnaa = _mixedProteinLnaaShare.values.fold<double>(
-        0,
-        (sum, share) => sum + protein * share,
-      );
+      lnaa = protein * _lnaaShare(physiologyProteinType(component));
       lnaaBasis = NextMealLnaaBasis.estimatedFromProtein;
     } else {
       lnaa = null;
@@ -340,6 +343,7 @@ final class NextMealPlanner {
         offsetMinutes: offset,
         centralLow: _min(values),
         centralHigh: _max(values),
+        compositionDefaults: prepared.compositionDefaults,
       );
     }
     final comparisons = [
@@ -353,7 +357,7 @@ final class NextMealPlanner {
           ),
         )!,
     ];
-    return _effectOf(comparisons, offset);
+    return _effectOf(comparisons, offset, prepared.compositionDefaults);
   }
 
   /// Plasma levodopa and brain-entry index of the plate and of no meal over
@@ -381,7 +385,11 @@ final class NextMealPlanner {
         )!,
     ];
     return NextMealPlateCurves(
-      effect: _effectOf([for (final s in scenarios) s.summary], offset),
+      effect: _effectOf(
+        [for (final s in scenarios) s.summary],
+        offset,
+        prepared.compositionDefaults,
+      ),
       scenarios: List.unmodifiable(scenarios),
       doseAt: context.doseAt,
     );
@@ -390,6 +398,7 @@ final class NextMealPlanner {
   NextMealModeledEffect _effectOf(
     List<PhysiologyMealTimingComparison> comparisons,
     int offset,
+    PhysiologyCompositionDefaults? compositionDefaults,
   ) {
     final central = [for (final c in comparisons) c.brainDeliveryCentral];
     final plasma = [for (final c in comparisons) c.plasmaCentral];
@@ -402,6 +411,7 @@ final class NextMealPlanner {
       plasmaLow: _min(plasma),
       plasmaHigh: _max(plasma),
       plasmaBand: _envelope([for (final c in comparisons) c.plasmaBand]),
+      compositionDefaults: compositionDefaults,
     );
   }
 
@@ -482,6 +492,8 @@ final class NextMealPlanner {
     c.fatGrams,
     c.calories,
     c.portionGrams,
+    c.sourceDocId,
+    physiologyProteinType(c),
     c.aminoAcidProfile == null ? 'mixed' : 'profile',
   ].join(':');
 
@@ -500,6 +512,11 @@ final class NextMealPlanner {
                     e.key: e.value * servings,
                 },
           waterMl: c.waterMl * servings,
+          carbohydrateG: c.carbohydrateG == null
+              ? null
+              : c.carbohydrateG! * servings,
+          fatG: c.fatG == null ? null : c.fatG! * servings,
+          proteinType: c.proteinType,
         );
 
   T? _cached<T>(Map<String, T?> cache, String key, T? Function() compute) {
@@ -788,13 +805,21 @@ final class _Scenario {
 }
 
 final class _PreparedPlate {
-  const _PreparedPlate({required this.offset, required this.scenarios})
-    : unavailable = null;
+  _PreparedPlate({required this.offset, required this.scenarios})
+    : unavailable = null,
+      compositionDefaults = physiologyCompositionDefaults(
+        scenarios.first.components,
+      );
   const _PreparedPlate.unavailable(NextMealModeledEffect this.unavailable)
     : offset = null,
-      scenarios = const [];
+      scenarios = const [],
+      compositionDefaults = null;
 
   final int? offset;
   final List<_Scenario> scenarios;
   final NextMealModeledEffect? unavailable;
+
+  /// The same for every form assumption: form changes neither composition
+  /// nor protein type.
+  final PhysiologyCompositionDefaults? compositionDefaults;
 }

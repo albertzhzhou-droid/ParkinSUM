@@ -65,6 +65,14 @@ LNAA_SIX = ("leu", "ile", "val", "phe", "tyr", "trp")
 BBB_SET = LNAA_SIX + ("met", "his")
 KCAL_PER_G = {"protein": 4.0, "carbohydrate": 4.0, "fat": 9.0}
 PROTEIN_TYPES = ("mixed", "whey", "casein", "soy", "meat", "egg", "cereal")
+# Catalog protein sources with a model protein type. Every other source stays
+# on the stated 'mixed' default: the dairy group does not separate casein from
+# whey (it holds ricotta and human milk), and fish and non-soy legumes have no
+# table of their own.
+PROTEIN_TYPE_BY_CATALOG_SOURCE = {"meat": "meat", "egg": "egg", "grain": "cereal", "soy": "soy"}
+# Sources whose carbohydrate convention (available or including fibre) is not
+# verified; their value is not read as available carbohydrate.
+CARBOHYDRATE_UNVERIFIED_SOURCES = ("CHINA_CDC_FOOD_PLATFORM",)
 
 SERIES_KEYS = ("t", "stomach_kcal", "stomach_retention_solid", "energy_out_kcal_per_min", "water_ml",
                "levodopa_mg_per_l", "lnaa6_umol_per_l", "brain_entry_index", "brain_delivery_index",
@@ -123,6 +131,65 @@ class Component:
         if self.fat_g is not None:
             return max(non_protein - KCAL_PER_G["fat"] * self.fat_g, 0.0) / KCAL_PER_G["carbohydrate"]
         return default_share * non_protein / KCAL_PER_G["carbohydrate"]
+
+    def carbohydrate_basis(self) -> str:
+        if self.carbohydrate_g is not None:
+            return "stated"
+        return "energy_remainder" if self.fat_g is not None else "default_share"
+
+
+def _present(value: Optional[float]) -> Optional[float]:
+    """A stored amount, or None when it cannot be one (never read as 0)."""
+    return value if value is not None and math.isfinite(value) and value >= 0 else None
+
+
+def component_from_food(food: Dict[str, object], assumed_form: Optional[str] = None) -> Optional[Component]:
+    """Mirrors physiologyComponentFromFood in the app's meal converter.
+
+    `food` has the app's per-portion fields: name, physical_form, protein_grams,
+    carbohydrate_grams, fat_grams, calories, portion_grams, source_doc_id,
+    catalog_protein_source and amino_acids_g (a complete measured profile or
+    None). Returns None when protein, energy or the physical form is missing.
+    """
+    protein = food["protein_grams"]
+    carbohydrate = _present(food["carbohydrate_grams"])
+    fat = _present(food["fat_grams"])
+    kcal = food["calories"]
+    if kcal is None and protein is not None and food["carbohydrate_grams"] is not None \
+            and food["fat_grams"] is not None:
+        kcal = (KCAL_PER_G["protein"] * protein + KCAL_PER_G["carbohydrate"] * food["carbohydrate_grams"]
+                + KCAL_PER_G["fat"] * food["fat_grams"])
+    if protein is None or kcal is None:
+        return None
+    physical_form = food["physical_form"]
+    if physical_form == "unknown" and assumed_form is not None:
+        physical_form = assumed_form
+    if physical_form in ("solid", "mixed"):
+        form = "solid"
+    elif physical_form == "liquid":
+        form = "liquid" if kcal > 0 else "water"
+    else:
+        return None
+    if food["source_doc_id"] in CARBOHYDRATE_UNVERIFIED_SOURCES:
+        carbohydrate = None
+    return Component(name=food["name"], form=form, kcal=kcal, protein_g=protein,
+                     amino_acids_g=food["amino_acids_g"],
+                     water_ml=0.0 if form == "solid" else (food["portion_grams"] or 0.0),
+                     carbohydrate_g=carbohydrate, fat_g=fat,
+                     protein_type=PROTEIN_TYPE_BY_CATALOG_SOURCE.get(food["catalog_protein_source"], "mixed"))
+
+
+def composition_defaults(meal: List[Component]) -> Dict[str, int]:
+    """Mirrors physiologyCompositionDefaults: how many foods of a meal fell
+    back to a stated default for each input. A food without protein has no
+    protein type or amino-acid profile to default.
+    """
+    foods = [c for c in meal if c.form != "water"]
+    with_protein = [c for c in foods if c.protein_g > 0]
+    return {"foods": len(foods),
+            "carbohydrate": sum(1 for c in foods if c.carbohydrate_basis() != "stated"),
+            "protein_type": sum(1 for c in with_protein if c.protein_type == "mixed"),
+            "amino_acids": sum(1 for c in with_protein if c.profile_basis() != "measured")}
 
 
 @dataclass

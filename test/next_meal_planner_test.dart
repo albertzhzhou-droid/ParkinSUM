@@ -9,6 +9,7 @@ import 'package:parkinsum_companion/domain/entities/next_meal_plan.dart';
 import 'package:parkinsum_companion/domain/usecases/administration_dose_confirmation_coordinator.dart';
 import 'package:parkinsum_companion/domain/usecases/food_serving_reference_resolver.dart';
 import 'package:parkinsum_companion/domain/usecases/next_meal_planner.dart';
+import 'package:parkinsum_companion/domain/usecases/physiology_reference_model.dart';
 import 'package:parkinsum_companion/domain/usecases/physiology_reference_trace_provider.dart';
 
 // Synthetic foods, medicines and intakes only.
@@ -100,6 +101,99 @@ void main() {
     ownerScope: _profile.patientId,
     observedAt: _doseAt.add(const Duration(hours: 2)),
   );
+
+  group('composition reaches the model', () {
+    final beef = _food(
+      'beef',
+      texture: 'solid',
+      sourceSystem: 'USDA_FDC',
+      code: '173407',
+    );
+
+    test('a plate carries carbohydrate, fat and type through servings', () {
+      final p = planner();
+      final candidate = p.candidateFor(beef);
+      final one = physiologyComponentFromFood(candidate.component)!;
+      expect(one.proteinType, 'meat');
+      expect(one.carbohydrateG, isNotNull);
+      final doubled = PhysiologyComponent(
+        one.name,
+        one.form,
+        kcal: one.kcal * 2,
+        proteinG: one.proteinG * 2,
+        carbohydrateG: one.carbohydrateG! * 2,
+        fatG: one.fatG! * 2,
+        proteinType: 'meat',
+      );
+      final effect = p.plateEffect(
+        [NextMealPlateItem(candidate, 2)],
+        context(p),
+        withBand: false,
+      );
+      expect(
+        effect.centralLow,
+        provider.centralBrainDeliveryRelative([doubled], 30),
+      );
+      final untyped = PhysiologyComponent(
+        doubled.name,
+        doubled.form,
+        kcal: doubled.kcal,
+        proteinG: doubled.proteinG,
+      );
+      expect(
+        effect.centralLow,
+        isNot(provider.centralBrainDeliveryRelative([untyped], 30)),
+      );
+    });
+
+    test('foods that differ only in type do not share a cached value', () {
+      final p = planner();
+      final typed = p.candidateEffect(p.candidateFor(beef), context(p));
+      final untyped = p.candidateEffect(
+        p.candidateFor(
+          _food(
+            'beef',
+            texture: 'solid',
+            sourceSystem: 'USDA_FDC',
+            code: '999999999',
+          ),
+        ),
+        context(p),
+      );
+      expect(typed.centralLow, isNot(untyped.centralLow));
+    });
+
+    test('card and plate effects report the defaults they used', () {
+      final p = planner();
+      final known = p.candidateEffect(p.candidateFor(beef), context(p));
+      expect(known.compositionDefaults!.proteinType, 0);
+      expect(known.compositionDefaults!.carbohydrate, 0);
+      final unknown = p.plateEffect([
+        NextMealPlateItem(
+          p.candidateFor(
+            _food('u', texture: 'solid', missing: const {'carbsG', 'fatG'}),
+          ),
+          1,
+        ),
+        NextMealPlateItem(p.candidateFor(beef), 1),
+      ], context(p));
+      final defaults = unknown.compositionDefaults!;
+      expect(defaults.foods, 2);
+      expect(defaults.carbohydrate, 1);
+      expect(defaults.proteinType, 1);
+      final bracketed = p.candidateEffect(
+        p.candidateFor(_food('b', missing: const {'carbsG', 'fatG'})),
+        context(p),
+      );
+      expect(bracketed.bracketed, isTrue);
+      expect(bracketed.compositionDefaults!.carbohydrate, 1);
+      final unavailable = p.candidateEffect(
+        p.candidateFor(beef),
+        context(p, drugs: const []),
+      );
+      expect(unavailable.compositionDefaults, isNull);
+    });
+  });
 
   group('candidate set', () {
     test('keeps one entry per id and per source record, per serving', () {

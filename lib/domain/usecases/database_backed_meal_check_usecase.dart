@@ -8,6 +8,7 @@ import '../../core/models/interaction_result.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/user_profile.dart';
 import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/physiology_composition_defaults_copy.dart';
 import '../../algorithm_sdk/algorithm_component_graph_identity.dart';
 import '../../algorithm_sdk/algorithm_configuration_identity.dart';
 import '../entities/cdss_runtime.dart';
@@ -945,7 +946,10 @@ class DatabaseBackedMealCheckUseCase {
     );
     return effect == null
         ? const _ModeledTiming.notModeled()
-        : _ModeledTiming.modeled(effect);
+        : _ModeledTiming.modeled(
+            effect,
+            physiologyCompositionDefaults(components),
+          );
   }
 
   /// One descriptive note for the first levodopa-like medicine the model
@@ -963,18 +967,23 @@ class DatabaseBackedMealCheckUseCase {
       if (effect == null) return const [];
       String percent(double ratio) => (ratio * 100).round().toString();
       final median = percent(effect.band.p50);
-      return [
-        i18n.tr(
-          int.parse(median) < 100
-              ? 'mealcheck.physiology_timing_lower'
-              : 'mealcheck.physiology_timing_similar',
-          {
-            'percent': median,
-            'low': percent(effect.band.p05),
-            'high': percent(effect.band.p95),
-          },
-        ),
-      ];
+      final note = i18n.tr(
+        int.parse(median) < 100
+            ? 'mealcheck.physiology_timing_lower'
+            : 'mealcheck.physiology_timing_similar',
+        {
+          'percent': median,
+          'low': percent(effect.band.p05),
+          'high': percent(effect.band.p95),
+        },
+      );
+      final defaults = physiologyCompositionDefaultsText(
+        i18n,
+        timing.compositionDefaults!,
+      );
+      // One note, so the disclosure cannot be cut off from the value it
+      // qualifies.
+      return [defaults == null ? note : '$note $defaults'];
     }
     return const [];
   }
@@ -1175,13 +1184,22 @@ class _DrugMealScoreInput {
 /// immediate release); otherwise [effect], null when a meal input is missing
 /// or the offset is outside the modeled range.
 final class _ModeledTiming {
-  const _ModeledTiming.skipped() : skipped = true, effect = null;
-  const _ModeledTiming.notModeled() : skipped = false, effect = null;
-  const _ModeledTiming.modeled(PhysiologyMealTimingEffect this.effect)
-    : skipped = false;
+  const _ModeledTiming.skipped()
+    : skipped = true,
+      effect = null,
+      compositionDefaults = null;
+  const _ModeledTiming.notModeled()
+    : skipped = false,
+      effect = null,
+      compositionDefaults = null;
+  const _ModeledTiming.modeled(
+    PhysiologyMealTimingEffect this.effect,
+    PhysiologyCompositionDefaults this.compositionDefaults,
+  ) : skipped = false;
 
   final bool skipped;
   final PhysiologyMealTimingEffect? effect;
+  final PhysiologyCompositionDefaults? compositionDefaults;
 }
 
 class _MealConflictScoreResult {

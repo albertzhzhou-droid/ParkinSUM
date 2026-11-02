@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/i18n/app_i18n.dart';
+import '../../core/i18n/physiology_composition_defaults_copy.dart';
 import '../../core/models/food_item.dart';
 import '../../core/theme/paper_theme.dart';
 import '../../domain/entities/food_serving_reference.dart';
@@ -173,13 +174,33 @@ class PlannerEffectLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = plannerEffectText(i18n, effect);
-    return PlannerChip(
+    final chip = PlannerChip(
       label: text,
       tone: effect.modeled ? PlannerChipTone.info : PlannerChipTone.warn,
       icon: effect.modeled ? Icons.show_chart_rounded : Icons.block_outlined,
       semanticsLabel: effect.modeled
           ? '$text. ${i18n.tr('planner.modeled_semantics_suffix')}'
           : text,
+    );
+    final composition = effect.compositionDefaults;
+    final defaults = composition == null
+        ? null
+        : physiologyCompositionDefaultsText(i18n, composition);
+    if (defaults == null) return chip;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        chip,
+        const SizedBox(height: 4),
+        Text(
+          defaults,
+          key: const ValueKey('next-meal-composition-defaults'),
+          style: TextStyle(
+            fontSize: 12,
+            color: PlannerPalette.of(context).muted,
+          ),
+        ),
+      ],
     );
   }
 }

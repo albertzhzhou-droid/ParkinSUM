@@ -1853,6 +1853,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.historical_analysis':
         '引擎没有把这顿历史餐继续当作“当前正在消化的风险”。本餐距现在约 {hours} 小时，当前工程活跃窗口为 {window} 小时；因此不再因旧餐次生成当前高风险。',
     'mealcheck.historical_note': '历史餐次保护：超过 {window} 小时的非连续肠内营养餐次不会触发当前时序风险。',
+    'mealcheck.physiology_defaults': '模型对缺失的成分使用了说明过的默认值：{items}。缺失值不按 0 计算。',
+    'mealcheck.physiology_default_carbohydrate': '碳水化合物（{count}/{total} 种食物）',
+    'mealcheck.physiology_default_protein_type': '蛋白质类型（{count}/{total} 种食物）',
+    'mealcheck.physiology_default_amino_acids': '氨基酸谱（{count}/{total} 种食物）',
     'mealcheck.physiology_timing_lower':
         '在这个教育性模型中，这一进餐时间会使模型估算的左旋多巴入脑量降至无进餐时的约 {percent}%（人群范围 {low}–{high}%，服药后 4 小时内）。这些是人群典型的模型曲线，不是对你的预测，也不是服药时间建议。',
     'mealcheck.physiology_timing_similar':
@@ -3763,6 +3767,15 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'The engine did not treat this historical meal as an active current digestion risk. The meal is about {hours} hours old, while the current operational activity window is {window} hours, so it no longer produces a current high-risk alert.',
     'mealcheck.historical_note':
         'Historical-meal guard: non-continuous-enteral meals older than {window} hours do not trigger current timing risk.',
+    'mealcheck.physiology_defaults':
+        'The model used its stated defaults for missing composition: {items}. '
+        'A missing value is not counted as 0.',
+    'mealcheck.physiology_default_carbohydrate':
+        'carbohydrate ({count} of {total} foods)',
+    'mealcheck.physiology_default_protein_type':
+        'protein type ({count} of {total} foods)',
+    'mealcheck.physiology_default_amino_acids':
+        'amino-acid profile ({count} of {total} foods)',
     'mealcheck.physiology_timing_lower':
         'In this educational model, this meal timing lowers modeled brain entry of levodopa to about {percent}% of no meal (population band {low}–{high}%, over the 4 hours after the dose). These are population-typical model curves, not a prediction for you and not timing advice.',
     'mealcheck.physiology_timing_similar':
@@ -4843,6 +4856,15 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Le moteur ne traite pas ce repas historique comme un risque digestif encore actif. Le repas date denviron {hours} heures, alors que la fenetre operationnelle active actuelle est de {window} heures; il ne genere donc plus dalerte de risque eleve actuelle.',
     'mealcheck.historical_note':
         'Garde-fou repas historique : les repas hors nutrition enterale continue de plus de {window} heures ne declenchent pas de risque horaire actuel.',
+    'mealcheck.physiology_defaults':
+        'Le modèle a utilisé ses valeurs par défaut déclarées pour la composition manquante : {items}. '
+        'Une valeur manquante n’est pas comptée comme 0.',
+    'mealcheck.physiology_default_carbohydrate':
+        'glucides ({count} aliments sur {total})',
+    'mealcheck.physiology_default_protein_type':
+        'type de protéine ({count} aliments sur {total})',
+    'mealcheck.physiology_default_amino_acids':
+        'profil d’acides aminés ({count} aliments sur {total})',
     'mealcheck.physiology_timing_lower':
         'Dans ce modèle éducatif, ce moment de repas abaisse l’entrée cérébrale modélisée de la lévodopa à environ {percent} % de celle sans repas (plage de population {low}–{high} %, sur les 4 heures suivant la prise). Ce sont des courbes de modèle typiques d’une population, ni une prédiction pour vous ni un conseil d’horaire.',
     'mealcheck.physiology_timing_similar':
@@ -5854,6 +5876,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'エンジンは、この履歴食を現在も消化中のリスクとして扱いません。本食は現在から約 {hours} 時間前で、現在の運用上のアクティブ時間枠は {window} 時間です。そのため、古い食事だけでは現在の高リスク警告を出しません。',
     'mealcheck.historical_note':
         '履歴食ガード：連続経腸栄養ではない食事は、{window} 時間を超えると現在の時系列リスクを発火しません。',
+    'mealcheck.physiology_defaults':
+        'モデルは不足している成分に、明示された既定値を使用しました：{items}。不足している値は 0 として数えません。',
+    'mealcheck.physiology_default_carbohydrate': '炭水化物（{total} 食品中 {count}）',
+    'mealcheck.physiology_default_protein_type':
+        'たんぱく質の種類（{total} 食品中 {count}）',
+    'mealcheck.physiology_default_amino_acids':
+        'アミノ酸プロファイル（{total} 食品中 {count}）',
     'mealcheck.physiology_timing_lower':
         'この教育用モデルでは、この食事のタイミングにより、モデル上のレボドパの脳内移行が食事なしの場合の約{percent}%に下がります（集団の範囲 {low}–{high}%、服用後4時間）。これは集団の典型的なモデル曲線であり、あなたへの予測や服用時間の助言ではありません。',
     'mealcheck.physiology_timing_similar':

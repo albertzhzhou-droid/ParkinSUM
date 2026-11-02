@@ -10,7 +10,11 @@ library;
 
 import 'dart:math' as math;
 
+import 'package:parkinsum_companion/domain/entities/amino_acid_profile.dart';
+import 'package:parkinsum_companion/domain/entities/meal_composition.dart';
 import 'package:parkinsum_companion/domain/entities/physiology_reference_parameters.dart';
+import 'package:parkinsum_companion/domain/entities/protein_source.dart';
+import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 import 'package:parkinsum_companion/domain/usecases/physiology_nutrition_outputs.dart';
 import 'package:parkinsum_companion/domain/usecases/physiology_reference_model.dart';
 import 'package:parkinsum_companion/domain/usecases/physiology_reference_trace_provider.dart';
@@ -75,6 +79,46 @@ PhysiologyComponent physiologyComponentFromSpec(Map<String, dynamic> spec) {
     carbohydrateG: (spec['carbohydrate_g'] as num?)?.toDouble(),
     fatG: (spec['fat_g'] as num?)?.toDouble(),
     proteinType: spec['protein_type'] as String,
+  );
+}
+
+/// A meal-converter input from the fixture's per-portion fields.
+FoodComponent physiologyFoodFromSpec(Map<String, dynamic> spec) {
+  double? d(String key) => (spec[key] as num?)?.toDouble();
+  final amino = (spec['amino_acids_g'] as Map<String, dynamic>?)?.map(
+    (key, value) => MapEntry(key, (value as num).toDouble()),
+  );
+  final catalogSource = spec['catalog_protein_source'] as String?;
+  return FoodComponent(
+    id: spec['name'] as String,
+    name: spec['name'] as String,
+    physicalForm: MealPhysicalForm.values.byName(
+      spec['physical_form'] as String,
+    ),
+    proteinGrams: d('protein_grams'),
+    fatGrams: d('fat_grams'),
+    fiberGrams: null,
+    carbohydrateGrams: d('carbohydrate_grams'),
+    calories: d('calories'),
+    portionGrams: d('portion_grams'),
+    sourceDocId: spec['source_doc_id'] as String?,
+    catalogProteinSource: catalogSource == null
+        ? null
+        : ProteinSourceType.values.byName(catalogSource),
+    aminoAcidProfile: amino == null
+        ? null
+        : AminoAcidProfile(
+            leucine: amino['leu'],
+            isoleucine: amino['ile'],
+            valine: amino['val'],
+            phenylalanine: amino['phe'],
+            tyrosine: amino['tyr'],
+            tryptophan: amino['trp'],
+            methionine: amino['met'],
+            histidine: amino['his'],
+            unit: 'g',
+            basis: 'per_serving',
+          ),
   );
 }
 
@@ -398,23 +442,22 @@ PhysiologyAgreementReport comparePhysiologyAgreement(
     draws: nutritionConvention['draws'] as int,
     seed: nutritionConvention['seed'] as int,
   );
-  for (final raw in fixture['nutrition_outputs'] as List) {
-    final entry = raw as Map<String, dynamic>;
-    final id = entry['id'] as String;
-    final meal = [
-      for (final component in entry['meal'] as List)
-        physiologyComponentFromSpec(component as Map<String, dynamic>),
-    ];
+  void checkNutrition(
+    String section,
+    String id,
+    Map<String, dynamic> entry,
+    List<PhysiologyComponent> meal,
+  ) {
     final summary = nutrition.summarize(meal);
     final load = entry['competing_lnaa_load'] as Map<String, dynamic>;
     check(
-      'nutrition_outputs',
+      section,
       '$id.load.ingested',
       load['ingested_umol'],
       summary.load.ingestedUmol,
     );
     check(
-      'nutrition_outputs',
+      section,
       '$id.load.digestible',
       load['digestible_umol'],
       summary.load.digestibleUmol,
@@ -431,13 +474,13 @@ PhysiologyAgreementReport comparePhysiologyAgreement(
       final row = rows[i] as Map<String, dynamic>;
       final dart = summary.load.components[i];
       check(
-        'nutrition_outputs',
+        section,
         '$id.load[$i].ingested',
         row['ingested_umol'],
         dart.ingestedUmol,
       );
       check(
-        'nutrition_outputs',
+        section,
         '$id.load[$i].digestible',
         row['digestible_umol'],
         dart.digestibleUmol,
@@ -458,22 +501,114 @@ PhysiologyAgreementReport comparePhysiologyAgreement(
       failures.add('$id.central: keys differ');
     }
     for (final key in PhysiologyMealResponse.keys) {
-      check(
-        'nutrition_outputs',
-        '$id.central.$key',
-        central[key],
-        summary.central[key],
-      );
+      check(section, '$id.central.$key', central[key], summary.central[key]);
       final expected = bands[key] as List;
       for (var i = 0; i < 3; i++) {
         check(
-          'nutrition_outputs',
+          section,
           '$id.bands.$key[$i]',
           expected[i],
           summary.bands[key]![i],
         );
       }
     }
+  }
+
+  for (final raw in fixture['nutrition_outputs'] as List) {
+    final entry = raw as Map<String, dynamic>;
+    checkNutrition('nutrition_outputs', entry['id'] as String, entry, [
+      for (final component in entry['meal'] as List)
+        physiologyComponentFromSpec(component as Map<String, dynamic>),
+    ]);
+  }
+
+  // The app's meal converter: same foods in, same components and outputs out.
+  final appMeals = fixture['app_meal_convention'] as Map<String, dynamic>;
+  final typeBySource = {
+    for (final e in physiologyProteinTypeByCatalogSource.entries)
+      e.key.name: e.value,
+  };
+  final expectedTypes = appMeals['protein_type_by_catalog_source'] as Map;
+  if (expectedTypes.length != typeBySource.length ||
+      expectedTypes.entries.any((e) => typeBySource[e.key] != e.value)) {
+    failures.add('app_meal_convention: protein type mapping differs');
+  }
+  for (final raw in fixture['app_meal_conversions'] as List) {
+    final entry = raw as Map<String, dynamic>;
+    final id = entry['id'] as String;
+    final assumed = entry['assumed_form'] as String?;
+    final converted = [
+      for (final food in entry['foods'] as List)
+        physiologyComponentFromFood(
+          physiologyFoodFromSpec(food as Map<String, dynamic>),
+          assumedForm: assumed == null
+              ? null
+              : MealPhysicalForm.values.byName(assumed),
+        ),
+    ];
+    final expected = entry['meal'] as List?;
+    if (expected == null) {
+      if (converted.any((c) => c != null)) {
+        failures.add('$id: the converter should abstain');
+      }
+      counts['app_meal_conversions'] =
+          (counts['app_meal_conversions'] ?? 0) + 1;
+      continue;
+    }
+    if (converted.any((c) => c == null)) {
+      failures.add('$id: the converter abstained');
+      continue;
+    }
+    final meal = converted.cast<PhysiologyComponent>();
+    final carbShare =
+        PhysiologyParameterValues.central()['insulin.default_carbohydrate_energy_share'];
+    for (var i = 0; i < meal.length; i++) {
+      final want = physiologyComponentFromSpec(
+        expected[i] as Map<String, dynamic>,
+      );
+      final got = meal[i];
+      if (want.name != got.name ||
+          want.form != got.form ||
+          want.proteinType != got.proteinType ||
+          (want.carbohydrateG == null) != (got.carbohydrateG == null) ||
+          (want.fatG == null) != (got.fatG == null) ||
+          (want.aminoAcidsG == null) != (got.aminoAcidsG == null)) {
+        failures.add('$id[$i]: component differs');
+        continue;
+      }
+      check('app_meal_conversions', '$id[$i].kcal', want.kcal, got.kcal);
+      check(
+        'app_meal_conversions',
+        '$id[$i].protein',
+        want.proteinG,
+        got.proteinG,
+      );
+      check('app_meal_conversions', '$id[$i].water', want.waterMl, got.waterMl);
+      check(
+        'app_meal_conversions',
+        '$id[$i].carbohydrate',
+        (entry['carbohydrate_grams'] as List)[i],
+        got.carbohydrateGrams(carbShare),
+      );
+      const basisNames = {
+        PhysiologyCarbohydrateBasis.stated: 'stated',
+        PhysiologyCarbohydrateBasis.energyRemainder: 'energy_remainder',
+        PhysiologyCarbohydrateBasis.defaultShare: 'default_share',
+      };
+      if ((entry['carbohydrate_basis'] as List)[i] !=
+          basisNames[got.carbohydrateBasis]) {
+        failures.add('$id[$i]: carbohydrate basis differs');
+      }
+    }
+    final defaults = entry['composition_defaults'] as Map<String, dynamic>;
+    final dartDefaults = physiologyCompositionDefaults(meal);
+    if (defaults['foods'] != dartDefaults.foods ||
+        defaults['carbohydrate'] != dartDefaults.carbohydrate ||
+        defaults['protein_type'] != dartDefaults.proteinType ||
+        defaults['amino_acids'] != dartDefaults.aminoAcids) {
+      failures.add('$id: composition defaults differ');
+    }
+    checkNutrition('app_meal_conversions', id, entry, meal);
   }
 
   return PhysiologyAgreementReport(
