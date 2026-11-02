@@ -25,15 +25,15 @@ void main() {
   }
 
   test(
-    'synthetic fixture pins exact v85 software identity without qualification',
+    'synthetic fixture pins exact v86 software identity without qualification',
     () {
       const expectedConfiguration =
-          '89da3b0b534b8031ddb7187b35762dedb99dc887a107e1bf7cfb0c71f951d088';
+          'b622e741fdd9434e2deb8accfe7a07ea3216f155145e88eaead4f70cb4721d70';
       const expectedSourceBundle =
-          'd1124024d1d5882b04e1e8c2bdc02e4c107e9f4389355f0fca972bcbbad1ccf1';
+          '8b0d752935421666ead624c612b0ff6ad9cd82902455ff790d7a4020a86129fd';
       final fixture = current();
 
-      expect(AlgorithmConfigurationIdentity.defaultVersion, '2026.10.20-v85');
+      expect(AlgorithmConfigurationIdentity.defaultVersion, '2026.10.20-v86');
       expect(fixture.configurationSha256, expectedConfiguration);
       expect(fixture.algorithmSourceBundleSha256, expectedSourceBundle);
       expect(

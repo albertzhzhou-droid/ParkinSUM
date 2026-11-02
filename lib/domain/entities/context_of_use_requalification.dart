@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v72';
+  static const String ledgerVersion = '2026.10.20-v73';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'b622e741fdd9434e2deb8accfe7a07ea3216f155145e88eaead4f70cb4721d70';
+  static const String historicalV85ConfigurationSha256 =
       '89da3b0b534b8031ddb7187b35762dedb99dc887a107e1bf7cfb0c71f951d088';
   static const String historicalV84ConfigurationSha256 =
       '63bb983915c2f6517878da99ecd497f4990dda44f9718ed77cc956046de1de5f';
@@ -1604,7 +1606,7 @@ final class ContextOfUseRequalificationLedger {
               nextMealPlannerAndDirectionAwareTimingCandidateRecord
                   .currentConfigurationSha256,
           currentManifestSha256: expectedCurrentManifestSha256,
-          currentConfigurationSha256: expectedCurrentConfigurationSha256,
+          currentConfigurationSha256: historicalV85ConfigurationSha256,
           evidenceCurrencyRegistrySha256:
               nextMealPlannerAndDirectionAwareTimingCandidateRecord
                   .evidenceCurrencyRegistrySha256,
@@ -1651,6 +1653,55 @@ final class ContextOfUseRequalificationLedger {
               'acceptance. All evidence holds and blocked promotion remain in '
               'force.',
         );
+    final appMealCompositionCandidateRecord = ContextOfUseRequalificationRecord(
+      sequence: 35,
+      changeKind: 'software_identity_candidate_rebind',
+      previousManifestSha256:
+          physiologyReferenceModelV3NutritionSideCandidateRecord
+              .currentManifestSha256,
+      previousConfigurationSha256:
+          physiologyReferenceModelV3NutritionSideCandidateRecord
+              .currentConfigurationSha256,
+      currentManifestSha256: expectedCurrentManifestSha256,
+      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      evidenceCurrencyRegistrySha256:
+          physiologyReferenceModelV3NutritionSideCandidateRecord
+              .evidenceCurrencyRegistrySha256,
+      evidenceSynthesisRegistrySha256:
+          physiologyReferenceModelV3NutritionSideCandidateRecord
+              .evidenceSynthesisRegistrySha256,
+      semanticDiffSha256: physiologyReferenceModelV3NutritionSideCandidateRecord
+          .semanticDiffSha256,
+      affectedProviderIds:
+          physiologyReferenceModelV3NutritionSideCandidateRecord
+              .affectedProviderIds,
+      affectedPredicateIds:
+          physiologyReferenceModelV3NutritionSideCandidateRecord
+              .affectedPredicateIds,
+      changeClasses:
+          physiologyReferenceModelV3NutritionSideCandidateRecord.changeClasses,
+      modelRisk:
+          physiologyReferenceModelV3NutritionSideCandidateRecord.modelRisk,
+      questionOfInterest: physiologyReferenceModelV3NutritionSideCandidateRecord
+          .questionOfInterest,
+      contextOfUse:
+          physiologyReferenceModelV3NutritionSideCandidateRecord.contextOfUse,
+      author: 'automated-local-software-integration',
+      recordedAtUtc: '2026-11-02T00:00:00.000Z',
+      releaseArtifact: 'unreleased-worktree:app-meal-composition-v86',
+      evidenceDecisions: physiologyReferenceModelV3NutritionSideCandidateRecord
+          .evidenceDecisions,
+      releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+      approvalSignature: null,
+      decisionBoundary:
+          'The v86 candidate binds app meals reaching physiology reference '
+          'model v3 with catalog carbohydrate, fat and protein type. All '
+          'thirty-four prior whole records and their digests remain exact. The '
+          'change supplies no new scientific evidence, independent review, '
+          'clinical qualification, authenticated approval or release '
+          'acceptance. All evidence holds and blocked promotion remain in '
+          'force.',
+    );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1692,6 +1743,7 @@ final class ContextOfUseRequalificationLedger {
         physiologyReferenceTraceProviderCandidateRecord,
         nextMealPlannerAndDirectionAwareTimingCandidateRecord,
         physiologyReferenceModelV3NutritionSideCandidateRecord,
+        appMealCompositionCandidateRecord,
       ],
     );
   }
