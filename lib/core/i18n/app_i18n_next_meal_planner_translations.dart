@@ -174,6 +174,7 @@ const Map<String, Map<String, String>> kNextMealPlannerTranslations = {
     'planner.nutrition_peak_time': 'Reached after',
     'planner.nutrition_half': 'Half absorbed after',
     'planner.nutrition_minutes': '{low}–{high} min',
+    'planner.nutrition_minutes_or_later': '{low} min or later',
     'planner.nutrition_range_note':
         'Ranges cover 90% of {draws} simulated adults (seed {seed}).',
     'planner.nutrition_by_food': 'By food',
@@ -437,6 +438,7 @@ const Map<String, Map<String, String>> kNextMealPlannerTranslations = {
     'planner.nutrition_peak_time': '达到时间',
     'planner.nutrition_half': '吸收一半的时间',
     'planner.nutrition_minutes': '{low}–{high} 分钟',
+    'planner.nutrition_minutes_or_later': '{low} 分钟或更晚',
     'planner.nutrition_range_note': '范围覆盖 {draws} 位模拟成年人中的 90%（种子 {seed}）。',
     'planner.nutrition_by_food': '按食物',
     'planner.nutrition_share_value': '{value} 毫摩尔，{percent}%',

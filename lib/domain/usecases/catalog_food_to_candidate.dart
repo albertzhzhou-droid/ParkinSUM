@@ -1,3 +1,5 @@
+import '../../core/constants/p0_food_source_seed.dart';
+import '../../core/constants/seed_food_composition_table.dart';
 import '../../core/models/food_item.dart';
 import '../../core/models/meal.dart';
 import '../entities/food_serving_reference.dart';
@@ -41,11 +43,19 @@ ProteinSourceType? curatedProteinSourceForFoodItem(FoodItem item) {
 /// [textureClassToPhysicalForm]: texture also sets the IDDSI level, and the
 /// form feeds the gastric model and the meal check, which do not change.
 MealPhysicalForm? curatedPhysicalFormForFoodItem(FoodItem item) =>
-    switch (_curatedReferenceRow(item)?.physicalForm) {
+    switch (_curatedReferenceRow(item)?.physicalForm ??
+    _curatedBuiltInForm(item)) {
       'solid' => MealPhysicalForm.solid,
       'liquid' => MealPhysicalForm.liquid,
       _ => null,
     };
+
+String? _curatedBuiltInForm(FoodItem item) => switch (item.sourceSystem) {
+  'CIQUAL' => p0FoodPhysicalForms[item.id],
+  'LOCAL_SEED_CATALOG' ||
+  'LOCAL_SEED_CATALOG_REGIONAL' => seedFoodCompositions[item.id]?.physicalForm,
+  _ => null,
+};
 
 ReferenceFoodCompositionRow? _curatedReferenceRow(FoodItem item) {
   final fdcId = item.sourceSystem.startsWith('USDA_FDC')

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:parkinsum_companion/core/constants/p0_food_source_seed.dart';
 import 'package:parkinsum_companion/core/constants/reference_food_catalog.dart';
 import 'package:parkinsum_companion/core/constants/reference_food_composition_table.dart';
 import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
 import 'package:parkinsum_companion/core/i18n/app_i18n_next_meal_planner_translations.dart';
 import 'package:parkinsum_companion/core/models/food_item.dart';
 import 'package:parkinsum_companion/core/utils/texture_support.dart';
+import 'package:parkinsum_companion/data/datasources/remote/regional_seed_catalog_importer.dart';
+import 'package:parkinsum_companion/data/datasources/remote/seed_catalog_importer.dart';
 import 'package:parkinsum_companion/domain/entities/next_meal_plan.dart';
 import 'package:parkinsum_companion/domain/entities/time_axis_events.dart';
 import 'package:parkinsum_companion/domain/usecases/catalog_food_to_candidate.dart';
@@ -100,6 +103,104 @@ void main() {
       ).components.single;
       expect(component.catalogPhysicalForm, MealPhysicalForm.solid);
       expect(component.toJson().toString(), isNot(contains('catalog')));
+    });
+  });
+
+  group('form across the built-in catalogs', () {
+    ({int stated, int bracketed, int noComposition}) coverage(
+      List<FoodItem> foods,
+    ) {
+      var stated = 0, bracketed = 0, noComposition = 0;
+      for (final food in foods) {
+        final component = foodItemToCandidateFood(food).components.single;
+        if (physiologyNutritionComponentFromFood(component) != null) {
+          stated++;
+        } else if (physiologyNutritionComponentFromFood(
+              component,
+              assumedForm: MealPhysicalForm.solid,
+            ) !=
+            null) {
+          bracketed++;
+        } else {
+          noComposition++;
+        }
+      }
+      return (
+        stated: stated,
+        bracketed: bracketed,
+        noComposition: noComposition,
+      );
+    }
+
+    test('the default catalog states 224 of 244', () {
+      expect(coverage(buildP0FoodCatalog()), (
+        stated: 18,
+        bracketed: 2,
+        noComposition: 0,
+      ));
+      expect(coverage(_catalog), (
+        stated: 206,
+        bracketed: 18,
+        noComposition: 0,
+      ));
+    });
+
+    test('every seed food with a composition states a form', () {
+      expect(
+        coverage(
+          const SeedCatalogImporter().importSeedCatalog().projectedFoods,
+        ),
+        (stated: 87, bracketed: 0, noComposition: 4),
+      );
+      expect(
+        coverage(
+          const RegionalSeedCatalogImporter()
+              .importRegionalSeedCatalog()
+              .projectedFoods,
+        ),
+        (stated: 55, bracketed: 0, noComposition: 40),
+      );
+    });
+
+    test('oats and olive oil stay unstated', () {
+      for (final id in ['food_oats', 'food_olive_oil']) {
+        final food = buildP0FoodCatalog().singleWhere((f) => f.id == id);
+        expect(curatedPhysicalFormForFoodItem(food), isNull, reason: id);
+      }
+    });
+
+    test('never changes the timing converter or the stored form', () {
+      for (final food in [
+        ...buildP0FoodCatalog(),
+        ...const SeedCatalogImporter().importSeedCatalog().projectedFoods,
+        ...const RegionalSeedCatalogImporter()
+            .importRegionalSeedCatalog()
+            .projectedFoods,
+      ]) {
+        final component = foodItemToCandidateFood(food).components.single;
+        if (component.catalogPhysicalForm == null) continue;
+        expect(
+          component.physicalForm,
+          MealPhysicalForm.unknown,
+          reason: food.id,
+        );
+        expect(physiologyComponentFromFood(component), isNull, reason: food.id);
+      }
+    });
+
+    test('a food from another source with the same id gets no form', () {
+      final imported = FoodItem(
+        id: 'food_banana',
+        name: 'Banana',
+        category: FoodCategory.fruit,
+        proteinG: 1,
+        carbsG: 20,
+        fatG: 0,
+        fiberG: 2,
+        sodiumMg: 0,
+        sourceSystem: 'OFF',
+      );
+      expect(curatedPhysicalFormForFoodItem(imported), isNull);
     });
   });
 
@@ -303,6 +404,30 @@ void main() {
       );
     });
 
+    testWidgets('says when the peak can fall after the window', (tester) async {
+      NextMealPlateNutrition plate(double highMin) =>
+          NextMealPlateNutrition.modeled(
+            digestibleMmol: 10,
+            peakRiseUmolPerL: const NextMealRange(100, 200),
+            peakTimeMin: NextMealRange(170, highMin),
+            windowMin: 240,
+            halfAppearedMin: const NextMealRange(120, 150),
+            shares: const [],
+            foods: 1,
+            foodsWithoutForm: 0,
+            compositionDefaults: _planner.plateNutrition([
+              _item('chicken breast, meat only, roasted'),
+            ]).compositionDefaults!,
+            draws: 12,
+            seed: 1,
+          );
+      await pump(tester, plate(240));
+      expect(find.text('170 min or later'), findsOneWidget);
+      await pump(tester, plate(235));
+      expect(find.text('170 min or later'), findsNothing);
+      expect(find.text('170–235 min'), findsOneWidget);
+    });
+
     testWidgets('gives the reason when a plate is not modeled', (tester) async {
       await pump(
         tester,
@@ -322,7 +447,7 @@ void main() {
         final copy = locale.entries
             .where((e) => e.key.startsWith('planner.nutrition_'))
             .where((e) => e.key != 'planner.nutrition_boundary');
-        expect(copy, hasLength(13));
+        expect(copy, hasLength(14));
         for (final entry in copy) {
           expect(entry.value, isNot(matches(forbidden)), reason: entry.key);
         }

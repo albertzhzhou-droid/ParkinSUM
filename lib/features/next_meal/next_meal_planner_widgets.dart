@@ -1268,7 +1268,14 @@ class PlannerPlateNutritionPanel extends StatelessWidget {
             'high': _rounded(peak.high),
           }),
         ),
-        ('planner.nutrition_peak_time', _minutes(nutrition.peakTimeMin!)),
+        (
+          'planner.nutrition_peak_time',
+          nutrition.peakReachesWindowEnd
+              ? i18n.tr('planner.nutrition_minutes_or_later', {
+                  'low': _rounded(nutrition.peakTimeMin!.low),
+                })
+              : _minutes(nutrition.peakTimeMin!),
+        ),
         ('planner.nutrition_half', _minutes(half)),
       ],
     ];

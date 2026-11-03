@@ -410,7 +410,7 @@ Physical form has two sources, and which one applies depends on the output:
 | Output | Reads | Foods of 244 with a form |
 | --- | --- | --- |
 | Timing comparisons (meal check, planner chips and curves) | `FoodComponent.physicalForm`, from `textureClass` | 38 |
-| Nutrition outputs (plate panel) | `physicalForm`, else `catalogPhysicalForm`, the curated form as eaten | 208 |
+| Nutrition outputs (plate panel) | `physicalForm`, else `catalogPhysicalForm`, the curated form as eaten | 224 |
 
 `physicalForm` was not widened, on purpose: it also feeds the gastric model and
 the meal check's score, and the decision of 2026-10-23 keeps drug-side outputs
@@ -420,9 +420,17 @@ of the 224 USDA records. The other 18 stay unstated because preparation decides
 the form or the food is not eaten as such: oils and butter, raw egg, protein
 powders, syrups, honey, sugar, salt, flour, gluten and cornmeal. Oils matter
 most: the liquid path counts the portion as water. Dry grains and pulses are
-`solid`, as eaten cooked. Of the 20 CIQUAL foods, 18 have no form and stay
-bracketed; curating them is the next step. Foods with neither form are modeled
-as solid and as liquid and each range spans both.
+`solid`, as eaten cooked. Of the 18 CIQUAL foods with no stored form, 16 are
+curated in `p0FoodPhysicalForms`; oats and olive oil stay unstated for the same
+reason. The optional `form` key in `tool/data/seed_food_sources.json` covers the
+44 imported seed and regional foods that have a composition and no stored form,
+so all 142 such foods have a form. The other 44 seed and regional foods have no
+composition record and are not modeled, whatever their form. Foods with neither
+form are modeled as solid and as liquid and each range spans both.
+
+The panel models 240 min after the meal. When the 95th percentile of peak time
+rounds to that limit, it shows the lower value "or later", because the rise may
+still be climbing there and 240 would be the window's limit, not a modeled peak.
 
 Carbohydrate must be available carbohydrate. The USDA paths subtract fibre,
 CIQUAL states it that way, and the China CDC convention is unverified, so those

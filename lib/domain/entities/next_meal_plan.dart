@@ -172,6 +172,7 @@ final class NextMealPlateNutrition {
     required double this.digestibleMmol,
     required NextMealRange this.peakRiseUmolPerL,
     required NextMealRange this.peakTimeMin,
+    required this.windowMin,
     required this.halfAppearedMin,
     required this.shares,
     required this.foods,
@@ -185,6 +186,7 @@ final class NextMealPlateNutrition {
     : digestibleMmol = null,
       peakRiseUmolPerL = null,
       peakTimeMin = null,
+      windowMin = 0,
       halfAppearedMin = null,
       shares = const [],
       foods = 0,
@@ -199,6 +201,14 @@ final class NextMealPlateNutrition {
   /// 5th to 95th percentile; across both forms when a form is unknown.
   final NextMealRange? peakRiseUmolPerL;
   final NextMealRange? peakTimeMin;
+
+  /// Length of the modeled response window.
+  final double windowMin;
+
+  /// Whether the rise can still be climbing where the window ends, so the
+  /// upper peak time is the window's limit and not a modeled peak.
+  bool get peakReachesWindowEnd =>
+      peakTimeMin != null && peakTimeMin!.high.round() >= windowMin;
 
   /// Null when the plate has no amino acids to appear.
   final NextMealRange? halfAppearedMin;
