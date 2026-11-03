@@ -263,11 +263,13 @@ final class ContextOfUseRequalificationLedger {
   static const String schema =
       'parkinsum.context-of-use-requalification-ledger/1';
   static const int schemaVersion = 1;
-  static const String ledgerVersion = '2026.10.20-v74';
+  static const String ledgerVersion = '2026.10.20-v75';
 
   static const String expectedCurrentManifestSha256 =
       '3e560401c21a1fd3eec3ed75e24f8753797e7e8d14f70b495086bb5fe2db0dc7';
   static const String expectedCurrentConfigurationSha256 =
+      'ade1dbda985bcc61b9a6fc3e71d9425ad4369136eaf0e5f45b8beac7e27d46d6';
+  static const String historicalV87ConfigurationSha256 =
       'e4452fe7aa1cb6d14c30d9052f4adf60a2d20821bf6a249e8c7759910082236a';
   static const String historicalV86ConfigurationSha256 =
       'b622e741fdd9434e2deb8accfe7a07ea3216f155145e88eaead4f70cb4721d70';
@@ -1712,7 +1714,7 @@ final class ContextOfUseRequalificationLedger {
       previousConfigurationSha256:
           appMealCompositionCandidateRecord.currentConfigurationSha256,
       currentManifestSha256: expectedCurrentManifestSha256,
-      currentConfigurationSha256: expectedCurrentConfigurationSha256,
+      currentConfigurationSha256: historicalV87ConfigurationSha256,
       evidenceCurrencyRegistrySha256:
           appMealCompositionCandidateRecord.evidenceCurrencyRegistrySha256,
       evidenceSynthesisRegistrySha256:
@@ -1741,6 +1743,47 @@ final class ContextOfUseRequalificationLedger {
           'acceptance. All evidence holds and blocked promotion remain in '
           'force.',
     );
+    final curateFoodFormForTheRemainingBuiltInFoodsCandidateRecord =
+        ContextOfUseRequalificationRecord(
+          sequence: 37,
+          changeKind: 'software_identity_candidate_rebind',
+          previousManifestSha256:
+              plateAminoAcidResponseCandidateRecord.currentManifestSha256,
+          previousConfigurationSha256:
+              plateAminoAcidResponseCandidateRecord.currentConfigurationSha256,
+          currentManifestSha256: expectedCurrentManifestSha256,
+          currentConfigurationSha256: expectedCurrentConfigurationSha256,
+          evidenceCurrencyRegistrySha256: plateAminoAcidResponseCandidateRecord
+              .evidenceCurrencyRegistrySha256,
+          evidenceSynthesisRegistrySha256: plateAminoAcidResponseCandidateRecord
+              .evidenceSynthesisRegistrySha256,
+          semanticDiffSha256:
+              plateAminoAcidResponseCandidateRecord.semanticDiffSha256,
+          affectedProviderIds:
+              plateAminoAcidResponseCandidateRecord.affectedProviderIds,
+          affectedPredicateIds:
+              plateAminoAcidResponseCandidateRecord.affectedPredicateIds,
+          changeClasses: plateAminoAcidResponseCandidateRecord.changeClasses,
+          modelRisk: plateAminoAcidResponseCandidateRecord.modelRisk,
+          questionOfInterest:
+              plateAminoAcidResponseCandidateRecord.questionOfInterest,
+          contextOfUse: plateAminoAcidResponseCandidateRecord.contextOfUse,
+          author: 'automated-local-software-integration',
+          recordedAtUtc: '2026-11-03T00:00:00.000Z',
+          releaseArtifact:
+              'unreleased-worktree:curate-food-form-for-the-remaining-built-in-foods-v88',
+          evidenceDecisions:
+              plateAminoAcidResponseCandidateRecord.evidenceDecisions,
+          releaseDisposition: CouReleaseDisposition.blockedPendingEvidence,
+          approvalSignature: null,
+          decisionBoundary:
+              'The v88 candidate curates food form for the remaining built-in '
+              'foods and marks a peak at the window limit. All thirty-six prior '
+              'whole records and their digests remain exact. The change supplies '
+              'no new scientific evidence, independent review, clinical '
+              'qualification, authenticated approval or release acceptance. All '
+              'evidence holds and blocked promotion remain in force.',
+        );
     return ContextOfUseRequalificationLedger._(
       manifest: manifest,
       currentConfigurationSha256: configurationSha256,
@@ -1784,6 +1827,7 @@ final class ContextOfUseRequalificationLedger {
         physiologyReferenceModelV3NutritionSideCandidateRecord,
         appMealCompositionCandidateRecord,
         plateAminoAcidResponseCandidateRecord,
+        curateFoodFormForTheRemainingBuiltInFoodsCandidateRecord,
       ],
     );
   }

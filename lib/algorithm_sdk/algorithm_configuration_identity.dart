@@ -125,7 +125,9 @@ final class AlgorithmConfigurationIdentity {
   // carbohydrate, fat and protein type.
   // v87 binds the curated physical form as eaten and the planner's plate
   // nutrition panel; stored scores are unchanged.
-  static const String defaultVersion = '2026.10.20-v87';
+  // v88 curates food form for the remaining built-in foods and marks a peak at
+  // the window limit.
+  static const String defaultVersion = '2026.10.20-v88';
 
   /// SHA-256 over `path:file_sha256\n` for every source path owned by the
   /// algorithm registry, sorted lexicographically. The identity source itself
@@ -133,7 +135,7 @@ final class AlgorithmConfigurationIdentity {
   /// and configuration are already the payload being hashed. This closes the
   /// gap between individually modeled parameters and remaining inline logic.
   static const String registeredAlgorithmSourceBundleSha256 =
-      'af26180a5dc768780eee1670510dc7dce710fcb9b95c185b6dc16c50b0df2a00';
+      'ff3d623915e489a1f4e28f24efc7b536af3ac1e58c7c4c964b5fcee348a40533';
 
   /// Exact production files that currently contain result-affecting constants
   /// or formula branches which are not all represented by injectable objects.
