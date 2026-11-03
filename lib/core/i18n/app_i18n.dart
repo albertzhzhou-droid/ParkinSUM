@@ -1,5 +1,7 @@
 import '../constants/reference_food_composition_table.dart';
+import 'app_i18n_advanced_dishes_translations.dart';
 import 'app_i18n_diary_strip_translations.dart';
+import 'app_i18n_next_meal_planner_translations.dart';
 import 'app_i18n_full_translations.dart';
 import 'app_i18n_log_view_translations.dart';
 
@@ -522,7 +524,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'onboarding.active_medications_help':
         '请选择正在使用、需要参与餐食冲突检查的药物。也可以先跳过，之后在药品页补充。',
     'onboarding.record_initial_intake': '记录最近一次服药',
-    'onboarding.record_initial_intake_help': '如果刚刚或今天已经服药，记录时间可以让下一餐推荐立即考虑时间窗。',
+    'onboarding.record_initial_intake_help':
+        '如果刚刚或今天已经服药，记录时间后，下一餐规划页可以立即把这次服药显示在时间轴上。',
     'onboarding.initial_intake_drug': '服药药物',
     'onboarding.initial_intake_drug_help': '只列出本步骤已选择的激活药物。',
     'onboarding.initial_intake_time': '服药时间',
@@ -620,7 +623,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.log_intake_hint': '你已服用的一次药物剂量',
     'dashboard.log_observation_hint': '血压、症状或运动状态',
     'dashboard.open_timeline': '打开时间线',
-    'dashboard.open_next_meal': '打开下餐推荐',
+    'dashboard.open_next_meal': '打开下一餐规划',
     'library.my_medications': '我的药物',
     'library.catalog': '食物与药物',
     'observatory.title': '算法观测台',
@@ -1850,6 +1853,10 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.historical_analysis':
         '引擎没有把这顿历史餐继续当作“当前正在消化的风险”。本餐距现在约 {hours} 小时，当前工程活跃窗口为 {window} 小时；因此不再因旧餐次生成当前高风险。',
     'mealcheck.historical_note': '历史餐次保护：超过 {window} 小时的非连续肠内营养餐次不会触发当前时序风险。',
+    'mealcheck.physiology_defaults': '模型对缺失的成分使用了说明过的默认值：{items}。缺失值不按 0 计算。',
+    'mealcheck.physiology_default_carbohydrate': '碳水化合物（{count}/{total} 种食物）',
+    'mealcheck.physiology_default_protein_type': '蛋白质类型（{count}/{total} 种食物）',
+    'mealcheck.physiology_default_amino_acids': '氨基酸谱（{count}/{total} 种食物）',
     'mealcheck.physiology_timing_lower':
         '在这个教育性模型中，这一进餐时间会使模型估算的左旋多巴入脑量降至无进餐时的约 {percent}%（人群范围 {low}–{high}%，服药后 4 小时内）。这些是人群典型的模型曲线，不是对你的预测，也不是服药时间建议。',
     'mealcheck.physiology_timing_similar':
@@ -1873,6 +1880,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.score_factor_rule_decision': '规则决定权重',
     'mealcheck.score_factor_levodopa_interference': '左旋多巴干扰权重',
     'mealcheck.score_factor_protein_timing': '蛋白时序惩罚',
+    'mealcheck.score_factor_protein_timing_modeled':
+        '蛋白时序（模型中脑内进入约为无餐时的 {percent}%）',
     'mealcheck.score_factor_high_fat': '高脂餐修正',
     'mealcheck.score_factor_iron_levodopa': '铁剂-左旋多巴修正',
     'mealcheck.score_factor_enteral_feed': '连续肠内营养修正',
@@ -2137,7 +2146,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Select medications that should participate in meal-conflict checks. You can skip this and add them later from the medication page.',
     'onboarding.record_initial_intake': 'Record most recent intake',
     'onboarding.record_initial_intake_help':
-        'If a dose was taken recently or today, its time lets next-meal recommendations consider the timing window immediately.',
+        'If a dose was taken recently or today, recording its time lets the meal planner show it on the timeline right away.',
     'onboarding.initial_intake_drug': 'Intake medication',
     'onboarding.initial_intake_drug_help':
         'Only medications selected above are listed.',
@@ -2245,7 +2254,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'dashboard.log_intake_hint': 'A medication dose you took',
     'dashboard.log_observation_hint': 'Blood pressure, symptoms or motor state',
     'dashboard.open_timeline': 'Open timeline',
-    'dashboard.open_next_meal': 'Open next meal',
+    'dashboard.open_next_meal': 'Open the meal planner',
     'library.my_medications': 'My medications',
     'library.catalog': 'Foods & drugs',
     'observatory.title': 'Algorithm Observatory',
@@ -3758,6 +3767,15 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'The engine did not treat this historical meal as an active current digestion risk. The meal is about {hours} hours old, while the current operational activity window is {window} hours, so it no longer produces a current high-risk alert.',
     'mealcheck.historical_note':
         'Historical-meal guard: non-continuous-enteral meals older than {window} hours do not trigger current timing risk.',
+    'mealcheck.physiology_defaults':
+        'The model used its stated defaults for missing composition: {items}. '
+        'A missing value is not counted as 0.',
+    'mealcheck.physiology_default_carbohydrate':
+        'carbohydrate ({count} of {total} foods)',
+    'mealcheck.physiology_default_protein_type':
+        'protein type ({count} of {total} foods)',
+    'mealcheck.physiology_default_amino_acids':
+        'amino-acid profile ({count} of {total} foods)',
     'mealcheck.physiology_timing_lower':
         'In this educational model, this meal timing lowers modeled brain entry of levodopa to about {percent}% of no meal (population band {low}–{high}%, over the 4 hours after the dose). These are population-typical model curves, not a prediction for you and not timing advice.',
     'mealcheck.physiology_timing_similar':
@@ -3790,6 +3808,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.score_factor_levodopa_interference':
         'Levodopa interference weight',
     'mealcheck.score_factor_protein_timing': 'Protein timing penalty',
+    'mealcheck.score_factor_protein_timing_modeled':
+        'Protein timing (modeled brain entry about {percent}% of no meal)',
     'mealcheck.score_factor_high_fat': 'High-fat meal modifier',
     'mealcheck.score_factor_iron_levodopa': 'Iron-levodopa modifier',
     'mealcheck.score_factor_enteral_feed': 'Continuous enteral feed modifier',
@@ -3820,7 +3840,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'This meal contains about {protein} g of protein, which is in a higher-risk range. Taking it close to {drug} may compete more strongly for absorption.',
     'legacy.high_protein': 'Protein may affect medication absorption',
     'legacy.high_protein_detail':
-        'This meal contains about {protein} g of protein and may compete with {drug} during absorption. Consider scheduling higher-protein meals away from dosing time.',
+        'This meal contains about {protein} g of protein, which may compete with {drug} for absorption. Review timing questions with a qualified clinician.',
     'legacy.tyramine': 'Possible high-tyramine food risk',
     'legacy.tyramine_detail':
         'This meal includes foods marked as high tyramine. Combined with {drug}, it may increase adverse-effect risk.',
@@ -4836,6 +4856,15 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'Le moteur ne traite pas ce repas historique comme un risque digestif encore actif. Le repas date denviron {hours} heures, alors que la fenetre operationnelle active actuelle est de {window} heures; il ne genere donc plus dalerte de risque eleve actuelle.',
     'mealcheck.historical_note':
         'Garde-fou repas historique : les repas hors nutrition enterale continue de plus de {window} heures ne declenchent pas de risque horaire actuel.',
+    'mealcheck.physiology_defaults':
+        'Le modèle a utilisé ses valeurs par défaut déclarées pour la composition manquante : {items}. '
+        'Une valeur manquante n’est pas comptée comme 0.',
+    'mealcheck.physiology_default_carbohydrate':
+        'glucides ({count} aliments sur {total})',
+    'mealcheck.physiology_default_protein_type':
+        'type de protéine ({count} aliments sur {total})',
+    'mealcheck.physiology_default_amino_acids':
+        'profil d’acides aminés ({count} aliments sur {total})',
     'mealcheck.physiology_timing_lower':
         'Dans ce modèle éducatif, ce moment de repas abaisse l’entrée cérébrale modélisée de la lévodopa à environ {percent} % de celle sans repas (plage de population {low}–{high} %, sur les 4 heures suivant la prise). Ce sont des courbes de modèle typiques d’une population, ni une prédiction pour vous ni un conseil d’horaire.',
     'mealcheck.physiology_timing_similar':
@@ -4866,6 +4895,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.score_factor_levodopa_interference':
         'Poids d interference levodopa',
     'mealcheck.score_factor_protein_timing': 'Penalite horaire proteines',
+    'mealcheck.score_factor_protein_timing_modeled':
+        'Horaire des protéines (entrée cérébrale modélisée ≈ {percent} % du cas sans repas)',
     'mealcheck.score_factor_high_fat': 'Modificateur repas riche en lipides',
     'mealcheck.score_factor_iron_levodopa': 'Modificateur fer-levodopa',
     'mealcheck.score_factor_enteral_feed':
@@ -4900,7 +4931,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'legacy.high_protein':
         'Les proteines peuvent affecter labsorption du medicament',
     'legacy.high_protein_detail':
-        'Ce repas contient environ {protein} g de proteines et peut entrer en concurrence avec {drug} pendant labsorption. Envisagez de programmer les repas plus proteines loin de la prise.',
+        'Ce repas contient environ {protein} g de proteines, qui peuvent entrer en concurrence avec {drug} pour labsorption. Voyez les questions d horaire avec un clinicien qualifie.',
     'legacy.tyramine': 'Risque possible daliments riches en tyramine',
     'legacy.tyramine_detail':
         'Ce repas comprend des aliments marques comme riches en tyramine. Avec {drug}, cela peut augmenter le risque deffets indesirables.',
@@ -5845,6 +5876,13 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'エンジンは、この履歴食を現在も消化中のリスクとして扱いません。本食は現在から約 {hours} 時間前で、現在の運用上のアクティブ時間枠は {window} 時間です。そのため、古い食事だけでは現在の高リスク警告を出しません。',
     'mealcheck.historical_note':
         '履歴食ガード：連続経腸栄養ではない食事は、{window} 時間を超えると現在の時系列リスクを発火しません。',
+    'mealcheck.physiology_defaults':
+        'モデルは不足している成分に、明示された既定値を使用しました：{items}。不足している値は 0 として数えません。',
+    'mealcheck.physiology_default_carbohydrate': '炭水化物（{total} 食品中 {count}）',
+    'mealcheck.physiology_default_protein_type':
+        'たんぱく質の種類（{total} 食品中 {count}）',
+    'mealcheck.physiology_default_amino_acids':
+        'アミノ酸プロファイル（{total} 食品中 {count}）',
     'mealcheck.physiology_timing_lower':
         'この教育用モデルでは、この食事のタイミングにより、モデル上のレボドパの脳内移行が食事なしの場合の約{percent}%に下がります（集団の範囲 {low}–{high}%、服用後4時間）。これは集団の典型的なモデル曲線であり、あなたへの予測や服用時間の助言ではありません。',
     'mealcheck.physiology_timing_similar':
@@ -5871,6 +5909,8 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
     'mealcheck.score_factor_rule_decision': 'ルール判定の重み',
     'mealcheck.score_factor_levodopa_interference': 'レボドパ干渉重み',
     'mealcheck.score_factor_protein_timing': 'タンパク質タイミングペナルティ',
+    'mealcheck.score_factor_protein_timing_modeled':
+        'タンパク質タイミング（モデル上の脳内移行は食事なしの約{percent}%）',
     'mealcheck.score_factor_high_fat': '高脂肪食補正',
     'mealcheck.score_factor_iron_levodopa': '鉄-レボドパ補正',
     'mealcheck.score_factor_enteral_feed': '連続経腸栄養補正',
@@ -5891,7 +5931,7 @@ _strings = _mergeFoodCatalogProvenanceTranslations({
         'この食事には約 {protein} g のたんぱく質が含まれており、より高いリスク帯です。{drug} の近い時間帯では吸収競合が強まる可能性があります。',
     'legacy.high_protein': 'たんぱく質が薬の吸収に影響する可能性があります',
     'legacy.high_protein_detail':
-        'この食事には約 {protein} g のたんぱく質が含まれており、{drug} の吸収と競合する可能性があります。高たんぱく食は服薬時間から離して検討してください。',
+        'この食事には約 {protein} g のたんぱく質が含まれており、{drug} の吸収と競合する可能性があります。時間に関する疑問は資格のある医療者と確認してください。',
     'legacy.tyramine': '高チラミン食品のリスクの可能性',
     'legacy.tyramine_detail':
         'この食事には高チラミンとマークされた食品が含まれています。{drug} と併用すると副作用リスクが高まる可能性があります。',
@@ -6134,6 +6174,9 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
       ...?_candidateServingTranslations[entry.key],
       ...?_foodDisplayTranslations[entry.key],
       ...?kDiaryStripTranslations[entry.key],
+      ...?kNextMealPlannerTranslations[entry.key],
+      ...?kAdvancedDishesUiTranslations[entry.key],
+      ...?_advancedDishCatalogTranslations[entry.key],
       'onboarding.medication_search':
           _medicationSearchTranslations[entry.key] ??
           _medicationSearchTranslations['en']!,
@@ -6145,6 +6188,8 @@ Map<String, Map<String, String>> _mergeFoodCatalogProvenanceTranslations(
           : kInteractionReviewEnglish),
     },
 };
+
+final _advancedDishCatalogTranslations = advancedDishCatalogTranslations();
 
 /// Placeholder of the medications-only onboarding search field.
 const _medicationSearchTranslations = <String, String>{

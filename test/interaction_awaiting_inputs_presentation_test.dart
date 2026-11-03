@@ -9,6 +9,7 @@ import 'package:parkinsum_companion/core/i18n/app_i18n.dart';
 import 'package:parkinsum_companion/core/models/interaction_result.dart';
 import 'package:parkinsum_companion/core/services/services.dart';
 import 'package:parkinsum_companion/core/state/app_state.dart';
+import 'package:parkinsum_companion/domain/usecases/database_backed_meal_check_usecase.dart';
 import 'package:parkinsum_companion/features/shared/interaction_result_view.dart';
 import 'package:provider/provider.dart';
 
@@ -73,6 +74,58 @@ void main() {
     expect(zhSummary, startsWith('暂时无法评估'));
     expect(zhSummary, isNot(contains('高风险')));
     expect(zh.awaitingInputsHeadline(result), '暂时无法评估——请补充用药时间、剂量');
+  });
+
+  test('a rule-requested review keeps its clinician-review next action', () {
+    // The continuous enteral-feed rule asks for review with the time and
+    // dose present; only a missing-input review asks for them.
+    for (final locale in ['en-US', 'zh-CN']) {
+      final i18n = AppI18n.fromLocaleTag(locale);
+      final copy = ResponseCopyService(i18n: i18n);
+      final ruleReview = DatabaseBackedMealCheckUseCase.describeMachineAction(
+        i18n,
+        const {
+          'type': 'require_manual_review',
+          'params': {'review_queue': 'pd_nutrition_pharmacy'},
+        },
+      );
+      expect(ruleReview, i18n.tr('interaction.action_manual_review'));
+      expect(copy.nextAction(ruleReview), ruleReview, reason: locale);
+      expect(
+        copy.nextAction(ruleReview),
+        isNot(i18n.tr('copy.next_action_complete_med_timing')),
+      );
+
+      for (final params in const [
+        {'reason': 'missing_dose_drug_time'},
+        {
+          'missing_fields': ['dose'],
+        },
+      ]) {
+        final missing = DatabaseBackedMealCheckUseCase.describeMachineAction(
+          i18n,
+          {'type': 'require_manual_review', 'params': params},
+        );
+        expect(
+          copy.nextAction(missing),
+          i18n.tr('copy.next_action_complete_med_timing'),
+          reason: '$locale $params',
+        );
+        // A missing-input review stays a "can't assess yet" result.
+        expect(
+          copy.awaitingMissingInputs(_result(nextActions: [missing])),
+          isTrue,
+        );
+      }
+    }
+    expect(
+      en.nextAction(
+        'This result needs manual review by a qualified clinician before it '
+        'is relied on.',
+      ),
+      'This result needs manual review by a qualified clinician before it is '
+      'relied on.',
+    );
   });
 
   test('another elevated issue keeps the risk presentation', () {

@@ -525,6 +525,17 @@
       "declaration_name": null
     },
     {
+      "algorithm_id": "next_meal_planner",
+      "logical_root_id": "algorithm-root/next_meal_planner",
+      "result_sink_id": "algorithm-result-sink/next_meal_planner",
+      "source_path": "lib/domain/usecases/next_meal_planner.dart",
+      "canonical_package_uri": "package:parkinsum_companion/domain/usecases/next_meal_planner.dart",
+      "library_uri": "package:parkinsum_companion/domain/usecases/next_meal_planner.dart",
+      "declaration_kind": "library",
+      "enclosing_declaration": null,
+      "declaration_name": null
+    },
+    {
       "algorithm_id": "package_dose_calculator",
       "logical_root_id": "algorithm-root/package_dose_calculator",
       "result_sink_id": "algorithm-result-sink/package_dose_calculator",

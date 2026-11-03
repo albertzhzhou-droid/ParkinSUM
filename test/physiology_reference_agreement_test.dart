@@ -24,6 +24,8 @@ void main() {
         'timing_rows',
         'population_bands',
         'meal_timing_effects',
+        'nutrition_outputs',
+        'app_meal_conversions',
       });
       final curveIds = {
         for (final curve in fixture['curves'] as List) curve['id'] as String,

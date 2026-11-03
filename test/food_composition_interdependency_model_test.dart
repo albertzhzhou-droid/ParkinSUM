@@ -140,6 +140,7 @@ void main() {
         group: cooked.group,
         preparationState: cooked.preparationState,
         textureClass: cooked.textureClass,
+        physicalForm: cooked.physicalForm,
         // Energy of the dry grain pasted into the cooked record.
         energyKcal: 365,
         proteinG: cooked.proteinG,

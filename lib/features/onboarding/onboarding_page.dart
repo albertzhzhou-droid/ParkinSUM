@@ -217,7 +217,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
           children: [
             PaperSelectField<String>(
               label: i18n.tr('onboarding.registration_region'),
-              helper: i18n.tr('onboarding.registration_region_help'),
+              helper:
+                  [
+                    i18n.tr('onboarding.registration_region_help'),
+                    i18n.tr('planner.onboarding_region_note'),
+                  ].join(
+                    const {'zh', 'ja'}.contains(i18n.languageFamily) ? '' : ' ',
+                  ),
               value: _registrationRegion,
               options: kSupportedRegistrationRegions
                   .map(
@@ -687,6 +693,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       initialIntakeAt: _recordInitialIntake ? _initialIntakeAt : null,
       initialIntakeDoseNote: _doseController.text,
       initialIntakeProductSelection: _initialIntakeProductSelection,
+      initialIntakeProduct: _initialIntakeProduct,
     );
     try {
       final initialDrugId = draft.initialIntakeDrugId;

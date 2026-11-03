@@ -162,7 +162,7 @@
       "output_type": "informational",
       "locale": "en",
       "used_default_locale_fallback": false,
-      "text": "This meal contains about 25.0 g of protein and may compete with Sample during absorption. Consider scheduling higher-protein meals away from dosing time.",
+      "text": "This meal contains about 25.0 g of protein, which may compete with Sample for absorption. Review timing questions with a qualified clinician.",
       "bound_placeholders": {
         "protein": "25.0",
         "drug": "Sample"

@@ -18,13 +18,13 @@ npm run physiology:reality                                 # reality checks + fi
 
 | File | Purpose |
 | --- | --- |
-| `model.py` | Stomach, levodopa, amino-acid and blood-brain-barrier equations; seeded population draws |
-| `parameters.json` | Every value with unit, source and status (literature, calibrated, heuristic, verify) |
+| `model.py` | Stomach, levodopa (unchanged since v2), amino-acid (protein type, digestibility, splanchnic first pass, insulin action, habitual intake) and blood-brain-barrier equations; nutrition-only outputs (`competing_lnaa_load`, `meal_response`); seeded population draws |
+| `parameters.json` | Every value with unit, source and status (literature, calibrated, heuristic, verify), including USDA FDC protein-type amino-acid profiles |
 | `scenarios.py` | Published experiments rebuilt from their abstracts, with stated assumptions |
-| `calibrate.py` | Fits the three calibrated parameters to their named targets only |
-| `reality_checks.py` | 15 checks labelled calibrated, independent, structural or known gap; non-zero exit on failure |
+| `calibrate.py` | Fits the four calibrated parameters to their named targets only |
+| `reality_checks.py` | 28 checks labelled calibrated, independent, structural or known gap; non-zero exit on failure |
 | `whatif.py` | Meal-offset comparison with 5th-95th percentile bands and a theme-aware SVG |
-| `agreement.py` | Writes or checks `test/fixtures/physiology_reference_agreement.json`, which the Dart port (`lib/domain/usecases/physiology_reference_model.dart`) must reproduce |
+| `agreement.py` | Includes `component_from_food` and `nutrition_component_from_food` cases, the Python mirrors of the app's meal converters (full, partial and missing composition; a curated form filling an unknown stored form). Writes or checks `test/fixtures/physiology_reference_agreement.json`, which the Dart port (`lib/domain/usecases/physiology_reference_model.dart`) must reproduce |
 
 Outputs are population-typical curves for synthetic scenarios. They are not
 predictions for any person and not dosing, timing or dietary advice.

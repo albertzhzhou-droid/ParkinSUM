@@ -94,6 +94,11 @@ final class ReferenceFoodCompositionRow {
   final String preparationState;
   final String? textureClass;
 
+  /// 'solid' or 'liquid' as eaten; null where it depends on preparation.
+  /// Read only by the physiology model's nutrition outputs. Separate from
+  /// [textureClass], which also sets the IDDSI level.
+  final String? physicalForm;
+
   final double? energyKcal;
   final double? proteinG;
   final double? fatG;
@@ -123,6 +128,7 @@ final class ReferenceFoodCompositionRow {
     required this.group,
     required this.preparationState,
     required this.textureClass,
+    required this.physicalForm,
     required this.energyKcal,
     required this.proteinG,
     required this.fatG,

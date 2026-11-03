@@ -1,7 +1,7 @@
 {
   "$schema": "parkinsum.physiology-reference-parameters/1",
-  "parameter_set_id": "physiology_reference_v2_prototype",
-  "parameter_set_version": "2026.10.20-v0",
+  "parameter_set_id": "physiology_reference_v3_prototype",
+  "parameter_set_version": "2026.10.23-v1",
   "boundary": "Educational research prototype. Population-typical values only; not patient estimates, clinical cutoffs, or dosing, timing or dietary advice.",
   "status_vocabulary": {
     "literature": "Point value taken from the cited publication.",
@@ -106,20 +106,102 @@
       "note": "Default when a food has no amino-acid profile. The six competing LNAAs sum to 0.267, the all-food median of the repository's FDC 2025-04-24 SR Legacy calibration (lib/core/constants/lnaa_protein_fraction_calibration_table.dart); the split between amino acids is a typical mixed-protein pattern."
     },
     {
-      "id": "aa.digestion_absorption_half_time_min",
-      "value": 30.0,
+      "id": "aa.composition_by_protein_type_g_per_g",
+      "value": {
+        "whey.leu": 0.09225,
+        "whey.ile": 0.05574,
+        "whey.val": 0.05403,
+        "whey.phe": 0.03155,
+        "whey.tyr": 0.02814,
+        "whey.trp": 0.01589,
+        "whey.met": 0.01868,
+        "whey.his": 0.01837,
+        "casein.leu": 0.10036,
+        "casein.ile": 0.05315,
+        "casein.val": 0.06727,
+        "casein.phe": 0.05189,
+        "casein.tyr": 0.05432,
+        "casein.trp": 0.01322,
+        "casein.met": 0.02419,
+        "casein.his": 0.02932,
+        "soy.leu": 0.07678,
+        "soy.ile": 0.04813,
+        "soy.val": 0.04643,
+        "soy.phe": 0.05198,
+        "soy.tyr": 0.03647,
+        "soy.trp": 0.01268,
+        "soy.met": 0.0128,
+        "soy.his": 0.02605,
+        "meat.leu": 0.08954,
+        "meat.ile": 0.04888,
+        "meat.val": 0.05171,
+        "meat.phe": 0.04163,
+        "meat.tyr": 0.03894,
+        "meat.trp": 0.01184,
+        "meat.met": 0.02775,
+        "meat.his": 0.03821,
+        "egg.leu": 0.08646,
+        "egg.ile": 0.05342,
+        "egg.val": 0.06831,
+        "egg.phe": 0.05414,
+        "egg.tyr": 0.03973,
+        "egg.trp": 0.0133,
+        "egg.met": 0.03025,
+        "egg.his": 0.0246,
+        "cereal.leu": 0.07452,
+        "cereal.ile": 0.03825,
+        "cereal.val": 0.05232,
+        "cereal.phe": 0.05057,
+        "cereal.tyr": 0.03004,
+        "cereal.trp": 0.01384,
+        "cereal.met": 0.01574,
+        "cereal.his": 0.02091
+      },
+      "unit": "g amino acid per g protein, keyed protein_type.amino_acid",
+      "status": "literature",
+      "source": "USDA FoodData Central SR Legacy (release 2025-04-24; public domain): whey FDC 171283 (Whey, sweet, dried); casein FDC 172179 (Cheese, cottage, creamed (casein curd)); soy FDC 174276 (Soy protein isolate); meat FDC 173407 (Beef, loin, top sirloin petite roast, lean, roasted); egg FDC 171287 (Egg, whole, raw, fresh); cereal FDC 173904 (Cereals, oats, regular and quick, dry). FDC 172179, 173407, 171287 and 173904 from tool/data/fdc_2025-04-24/food_nutrient_sr_legacy_subset.csv; FDC 171283 and 174276 from the FDC API.",
+      "note": "Amino-acid pattern used when a component states its protein type but no measured profile; each value is the food's amino acid divided by its protein. A measured profile always takes precedence, and 'mixed' keeps aa.mixed_protein_composition_g_per_g. Cottage-cheese curd stands in for casein (its protein is mostly casein); oats stand in for cereal."
+    },
+    {
+      "id": "aa.true_ileal_digestibility_by_protein_type",
+      "value": {
+        "mixed": 0.92,
+        "whey": 0.946,
+        "casein": 0.946,
+        "soy": 0.91,
+        "meat": 0.921,
+        "egg": 0.909,
+        "cereal": 0.903
+      },
+      "unit": "fraction of ingested protein absorbed by the end of the ileum",
+      "status": "literature",
+      "source": "Human 15N ileal-intubation studies: milk protein 94.5-94.8% (Gaudichon C et al. J Nutr 1999;129:890-5, DOI 10.1093/jn/129.4.890); soy protein isolate 91% (Mariotti F et al. J Nutr 1999;129:1992-7, DOI 10.1093/jn/129.11.1992); cooked egg 90.9% (Evenepoel P et al. J Nutr 1998;128:1716-22, DOI 10.1093/jn/128.10.1716); bovine meat 94.1% (55 C, 5 min) and 90.1% (90 C, 30 min) (Oberli M et al. J Nutr 2015;145:2221-8, DOI 10.3945/jn.115.216838); wheat 90.3% (Bos C et al. Am J Clin Nutr 2005;81:87-94, DOI 10.1093/ajcn/81.1.87).",
+      "note": "Protein-level true ileal digestibility applied to every amino acid; the undigested remainder never reaches plasma. Milk protein stands in for whey and casein, the mean of the two cooking conditions for meat, and wheat for cereal. 'mixed' (0.92) is a heuristic between the plant (~0.90) and animal (~0.92-0.95) values. Per-amino-acid digestibility (Gaudichon 2002 found lower values for several amino acids with soy) is not modeled."
+    },
+    {
+      "id": "aa.digestion_half_time_by_protein_type_min",
+      "value": {
+        "mixed": 30.0,
+        "whey": 15.0,
+        "soy": 20.0,
+        "egg": 30.0,
+        "casein": 30.0,
+        "cereal": 35.0,
+        "meat": 40.0
+      },
       "unit": "min",
       "status": "heuristic",
-      "note": "Digestion and absorption after the duodenum. Fast versus slow proteins differ mainly through gastric behaviour (Boirie Y et al. PNAS 1997;94:14930-5, DOI 10.1073/pnas.94.26.14930), which the stomach model carries.",
+      "source": "Boirie Y et al. PNAS 1997;94:14930-5 (DOI 10.1073/pnas.94.26.14930); Bos C et al. J Nutr 2003;133:1308-15 (DOI 10.1093/jn/133.5.1308): dietary amino acids peaked at 2.5 h after soy vs 3.9 h after milk protein in a mixed meal; Tang JE et al. J Appl Physiol 2009;107:987-92 (DOI 10.1152/japplphysiol.00076.2009): blood leucine rose more after whey hydrolysate than soy or casein; Pennings B et al. Am J Clin Nutr 2013;98:121-8 (DOI 10.3945/ajcn.112.051201): beef protein appears more slowly from steak than from minced beef.",
+      "note": "Digestion and absorption after the duodenum, by protein type (replaces v2's single 30 min half-time, kept for 'mixed'). The order whey < soy < egg = mixed = casein < cereal < meat follows the cited comparisons; magnitudes are illustrative. Casein's main slowing comes from gastric coagulation (component form 'coagulating').",
       "iiv_cv": 0.3
     },
     {
       "id": "aa.systemic_fraction",
       "value": {
-        "leu": 0.75,
-        "ile": 0.75,
-        "val": 0.75,
-        "phe": 0.6,
+        "leu": 0.8,
+        "ile": 0.8,
+        "val": 0.8,
+        "phe": 0.7,
         "tyr": 0.6,
         "trp": 0.6,
         "met": 0.6,
@@ -127,11 +209,12 @@
       },
       "unit": "fraction",
       "status": "heuristic",
-      "note": "Fraction of absorbed amino acid escaping first-pass splanchnic uptake. Branched-chain amino acids are extracted less by the liver than aromatic ones; magnitudes are illustrative and absorbed into the calibrated plasma volume."
+      "note": "Fraction of absorbed amino acid escaping first-pass splanchnic uptake. Leucine (0.80) and phenylalanine (0.70) follow the cited tracer studies; isoleucine and valine are assumed to behave like leucine, and tyrosine, tryptophan, methionine and histidine keep v2's illustrative 0.6. Absorbed into the calibrated plasma volume.",
+      "source": "Matthews DE et al. Am J Physiol 1993;264:E109-18 (DOI 10.1152/ajpendo.1993.264.1.E109): the splanchnic bed sequestered 17-21% of enteral leucine and 29% of enteral phenylalanine on the first pass; Matthews DE et al. Metabolism 1999;48:1555-63 (DOI 10.1016/s0026-0495(99)90245-7): 30.7% for phenylalanine."
     },
     {
       "id": "aa.plasma_distribution_volume_l",
-      "value": 73.9,
+      "value": 29.3,
       "unit": "L",
       "status": "calibrated",
       "source": "Carter JH et al. Neurology 1989;39:552-6 (DOI 10.1212/wnl.39.4.552): mean plasma LNAA 732 nmol/mL on 1.6 g/kg/day protein and 640 on 0.8 g/kg/day evenly distributed; 542 on 0.8 g/kg/day restricted to the evening meal.",
@@ -163,6 +246,26 @@
       "note": "Typical adult fasting plasma values (mid reference range). The six competing LNAAs sum to 565 umol/L, close to the 542 nmol/mL Carter et al. reported on a daytime-protein-restricted diet. Replace with a cited reference-range table before promotion."
     },
     {
+      "id": "aa.reference_habitual_protein_g_per_kg_day",
+      "value": 1.0,
+      "unit": "g/kg/day",
+      "status": "heuristic",
+      "note": "Habitual protein intake at which the fasting values apply unchanged; scenarios that state no habitual intake use it."
+    },
+    {
+      "id": "aa.habitual_fasting_nitrogen_loss_mg_per_kg_day",
+      "value": {
+        "0.36": 47.0,
+        "0.77": 60.0,
+        "1.59": 95.0,
+        "2.31": 140.0
+      },
+      "unit": "mg N/kg/day by habitual protein intake (g/kg/day)",
+      "status": "literature",
+      "source": "Price GM et al. Clin Sci 1994;86:91-102 (DOI 10.1042/cs0860091): after 12 days on 0.36, 0.77, 1.59 and 2.31 g protein/kg/day, fasting nitrogen losses were 47, 60, 95 and 140 mg/kg/day; fasting amino-acid losses rose with intake ([13C]leucine).",
+      "note": "When a scenario states a habitual intake, the amino-acid relaxation rate is scaled by the fasting nitrogen loss at that intake (linear interpolation) relative to the loss at the reference intake: oxidative disposal adapts to habitual protein. The mapping from nitrogen loss to plasma relaxation is a modeling choice."
+    },
+    {
       "id": "bbb.km_umol_per_l",
       "value": {
         "phe": 11,
@@ -179,6 +282,61 @@
       "source": "Smith QR et al. J Neurochem 1987;49:1651-8 (DOI 10.1111/j.1471-4159.1987.tb01039.x): complete set of blood-brain-barrier neutral amino acid transport constants (rat, in situ perfusion). Pardridge & Choi 1986 (PMID 3519291) report human brain-capillary phenylalanine Km close to rat values.",
       "note": "Transcribed values; re-check against the paper's table before promotion. Rat, anesthetized; human values may differ, so the set carries a common variability factor.",
       "iiv_cv": 0.3
+    },
+    {
+      "id": "insulin.default_carbohydrate_energy_share",
+      "value": 0.55,
+      "unit": "fraction of non-protein energy",
+      "status": "heuristic",
+      "note": "Carbohydrate share of non-protein energy assumed when a component gives neither carbohydrate nor fat grams (fat supplies the rest). With fat grams, carbohydrate is the energy left after protein and fat."
+    },
+    {
+      "id": "insulin.carbohydrate_absorption_half_time_min",
+      "value": 15.0,
+      "unit": "min",
+      "status": "heuristic",
+      "note": "Absorption of carbohydrate after it leaves the stomach; gastric emptying is the slower, rate-limiting step for most meals."
+    },
+    {
+      "id": "insulin.action_half_time_min",
+      "value": 25.0,
+      "unit": "min",
+      "status": "heuristic",
+      "note": "Delay between carbohydrate absorption and insulin action on plasma amino acids. Declared before fitting; Shaham 2008's half-maximal amino-acid decline at 50-72 min is then an independent check."
+    },
+    {
+      "id": "insulin.half_effect_carbohydrate_g_per_min",
+      "value": 0.3,
+      "unit": "g/min",
+      "status": "heuristic",
+      "note": "Carbohydrate absorption rate giving half the maximal insulin effect."
+    },
+    {
+      "id": "insulin.max_lnaa_target_reduction",
+      "value": 0.8895,
+      "unit": "fraction",
+      "status": "calibrated",
+      "source": "Shaham O et al. Mol Syst Biol 2008;4:214 (DOI 10.1038/msb.2008.50): after 75 g oral glucose in healthy adults, plasma leucine/isoleucine fell 33% over 2 h (amino acids 14-36%), with half-maximal decline at 50-72 min.",
+      "note": "Maximal lowering of the plasma amino-acid relaxation target by insulin action, for a sensitivity of 1. Fitted to the 33% leucine/isoleucine fall at 120 min only.",
+      "iiv_cv": 0.3,
+      "iiv_source": "Shaham 2008 report the leucine/isoleucine excursion as a marker that differs between individuals with insulin sensitivity; 30% is illustrative."
+    },
+    {
+      "id": "insulin.lnaa_sensitivity",
+      "value": {
+        "leu": 1.0,
+        "ile": 1.0,
+        "val": 1.0,
+        "phe": 0.5,
+        "tyr": 0.5,
+        "trp": 0.5,
+        "met": 0.5,
+        "his": 0.5
+      },
+      "unit": "relative",
+      "status": "heuristic",
+      "source": "Shaham 2008 (DOI 10.1038/msb.2008.50): branched-chain amino acids fell most (33%); amino acids overall 14-36%. Fernstrom JD et al. Am J Clin Nutr 1979;32:1912-22 (DOI 10.1093/ajcn/32.9.1912): a protein-free diet lowered daytime plasma levels of all large neutral amino acids.",
+      "note": "Branched-chain amino acids carry the full insulin effect; the others half of it."
     }
   ]
 }
