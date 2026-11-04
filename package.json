@@ -139,6 +139,7 @@
   },
   "overrides": {
     "uuid": "^11.1.1",
+    "glob": "^14.0.3",
     "@firebase/firestore": {
       "@grpc/grpc-js": "^1.14.6"
     },
