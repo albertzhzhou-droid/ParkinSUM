@@ -870,6 +870,28 @@ const _p0FoodSeeds = <_P0FoodSeed>[
   ),
 ];
 
+/// Curated form as eaten of the built-in CIQUAL foods whose texture stores
+/// none, read for nutrition outputs only. Oats (dry flakes or cooked porridge)
+/// and olive oil stay unstated because preparation decides their form.
+const Map<String, String> p0FoodPhysicalForms = {
+  'food_banana': 'solid',
+  'food_spinach': 'solid',
+  'food_milk': 'liquid',
+  'food_beef': 'solid',
+  'food_chicken_breast': 'solid',
+  'food_apple': 'solid',
+  'food_blueberry': 'solid',
+  'food_tomato': 'solid',
+  'food_broccoli': 'solid',
+  'food_brown_rice': 'solid',
+  'food_salmon': 'solid',
+  'food_fava_beans': 'solid',
+  'food_potato_boiled': 'solid',
+  'food_walnuts': 'solid',
+  'food_cheddar_cheese': 'solid',
+  'food_egg_boiled': 'solid',
+};
+
 /// 供 UI / AppDatabase 使用的轻量食品目录。
 ///
 /// 重要说明：

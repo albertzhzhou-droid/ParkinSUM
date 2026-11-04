@@ -403,6 +403,7 @@ final class NextMealPlanner {
       digestibleMmol: load.digestibleUmol / 1000,
       peakRiseUmolPerL: span('lnaa6_peak_rise_umol_per_l'),
       peakTimeMin: span('lnaa6_peak_time_min'),
+      windowMin: physiologyNutritionHorizonMin,
       halfAppearedMin: load.digestibleUmol > 0
           ? span('appearance_half_time_min')
           : null,

@@ -10331,3 +10331,27 @@ every unrelated dirty path and prior timeline entry. Do not reset whole files.
 ### Surgical rollback
 
 - Drop the rebind commit, then revert the feature commit. No stored data or migration is involved; `catalogPhysicalForm` is never persisted.
+
+## 2026-11-02 — FOOD-FORM-COMPLETE-20261102 — Curated form for the remaining built-in foods
+
+### Baseline and scope
+
+- Branch `nutrition/complete-food-form` from `nutrition/plate-amino-acid-response` `55654be` (#184, not yet merged). Nutrition side only.
+
+### Changes
+
+- `lib/core/constants/p0_food_source_seed.dart`: `p0FoodPhysicalForms` states the form of 16 of the 18 CIQUAL foods with no stored form. Oats and olive oil stay unstated because preparation decides.
+- `tool/data/seed_food_sources.json`, `tool/seed_food_composition_codegen.dart`, `lib/domain/entities/seed_food_composition.dart`: optional `form` key, set on the 44 seed and regional foods that have a composition and no stored form, and emitted as `physicalForm`.
+- `lib/domain/usecases/catalog_food_to_candidate.dart`: `curatedPhysicalFormForFoodItem` also reads these, matched on source system and id, so an imported food that shares an id gets none.
+- `lib/domain/entities/next_meal_plan.dart`, `lib/domain/usecases/next_meal_planner.dart`, `lib/features/next_meal/next_meal_planner_widgets.dart`: the panel shows the lower peak time "or later" when the 95th percentile rounds to the 240 min window limit. New `planner.nutrition_minutes_or_later` key in en and zh.
+- `docs/design/PHYSIOLOGY_MODEL_V2.md`: coverage and the window rule.
+
+### Verification and remaining boundaries
+
+- `test/next_meal_plate_nutrition_test.dart` pins coverage per catalog, the two unstated CIQUAL foods, that the timing converter and stored form stay unchanged for every curated CIQUAL, seed and regional food, that a food from another source gets no form, and the window wording.
+- Coverage: nutrition outputs have a form for 224 of 244 default foods, up from 208. All 142 imported seed and regional foods with a composition have one. Timing comparisons stay at 38 of 244.
+- Boundaries: 20 default foods stay bracketed. 44 seed and regional foods have no composition record, so they are not modeled. Seed and regional foods reach the app only after the offline import. Not a prediction for any person and not dietary advice.
+
+### Surgical rollback
+
+- Drop the rebind commit, then revert the feature commit. No stored data or migration is involved; the curated form is never persisted.

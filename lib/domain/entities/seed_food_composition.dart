@@ -30,6 +30,10 @@ class SeedFoodComposition {
   final SeedCompositionMatch match;
   final String? note;
 
+  /// Curated form as eaten ('solid' or 'liquid'), set where the texture
+  /// stores none; read for nutrition outputs only.
+  final String? physicalForm;
+
   final double? energyKcal;
   final double? proteinG;
   final double? fatG;
@@ -48,6 +52,7 @@ class SeedFoodComposition {
     required this.sourceDescription,
     required this.match,
     this.note,
+    this.physicalForm,
     required this.energyKcal,
     required this.proteinG,
     required this.fatG,

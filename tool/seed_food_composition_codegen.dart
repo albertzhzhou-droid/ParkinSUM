@@ -129,6 +129,10 @@ String renderSeedTable({
       throw StateError('${entry.key}: $source $fdcId not in subset');
     }
     final note = spec['note'] as String?;
+    final form = spec['form'] as String?;
+    if (form != null && form != 'solid' && form != 'liquid') {
+      throw StateError('${entry.key}: unknown form $form');
+    }
     matched
       ..writeln('  ${_dartString(entry.key)}: SeedFoodComposition(')
       ..writeln(
@@ -138,7 +142,10 @@ String renderSeedTable({
       ..writeln('    fdcId: $fdcId,')
       ..writeln('    sourceDescription: ${_dartString(record.description)},')
       ..writeln('    match: SeedCompositionMatch.${spec['match']},')
-      ..writeln('    note: ${note == null ? 'null' : _dartString(note)},');
+      ..writeln('    note: ${note == null ? 'null' : _dartString(note)},')
+      ..writeln(
+        '    physicalForm: ${form == null ? 'null' : _dartString(form)},',
+      );
     for (final field in fnddsNutrientIds.keys) {
       matched.writeln('    $field: ${_dartDouble(record.values[field])},');
     }
