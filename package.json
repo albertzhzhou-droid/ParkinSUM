@@ -150,12 +150,12 @@
     }
   },
   "devDependencies": {
-    "@cqframework/cql": "5.4.0",
+    "@cqframework/cql": "5.5.0",
     "@firebase/rules-unit-testing": "^5.0.1",
-    "@playwright/cli": "0.1.22",
+    "@playwright/cli": "0.1.23",
     "cql-exec-fhir": "2.2.0",
     "cql-execution": "3.3.2",
     "firebase": "^12.17.1",
-    "firebase-tools": "15.34.0"
+    "firebase-tools": "15.35.0"
   }
 }
